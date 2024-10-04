@@ -200,11 +200,17 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	}
 
 	// Setup a simulated backend
+	// TODO: remove deprecated call
+	//nolint:staticcheck
 	genesisAlloc := map[common.Address]core.GenesisAccount{}
 	for _, auth := range auths {
+		// TODO: remove deprecated call
+		//nolint:staticcheck
 		genesisAlloc[auth.From] = core.GenesisAccount{Balance: big.NewInt(1e18)}
 	}
 	blockGasLimit := uint64(8000000)
+	// TODO: remove deprecated call
+	//nolint:staticcheck
 	sim := backends.NewSimulatedBackend(genesisAlloc, blockGasLimit)
 
 	// Deploy a ManyChainMultiSig contract with any of the signers
