@@ -1,6 +1,6 @@
 module github.com/smartcontractkit/mcms
 
-go 1.22.2
+go 1.23.2
 
 require (
 	github.com/ethereum/go-ethereum v1.14.11
