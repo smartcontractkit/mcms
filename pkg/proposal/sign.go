@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 
 	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms"
 )
 
@@ -40,5 +41,6 @@ func SignPlainKey(privateKey *ecdsa.PrivateKey, proposal Proposal) error {
 
 	// Add signature to proposal
 	proposal.AddSignature(sigObj)
+
 	return nil
 }

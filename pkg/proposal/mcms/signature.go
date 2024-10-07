@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
 
@@ -22,7 +23,7 @@ func NewSignatureFromBytes(sig []byte) (Signature, error) {
 	return Signature{
 		R: common.BytesToHash(sig[:32]),
 		S: common.BytesToHash(sig[32:64]),
-		V: uint8(sig[64]),
+		V: sig[64],
 	}, nil
 }
 
@@ -39,7 +40,7 @@ func (s Signature) ToGethSignature() gethwrappers.ManyChainMultiSigSignature {
 }
 
 func (s Signature) ToBytes() []byte {
-	return append(s.R.Bytes(), append(s.S.Bytes(), []byte{byte(s.V)}...)...)
+	return append(s.R.Bytes(), append(s.S.Bytes(), []byte{s.V}...)...)
 }
 
 func (s Signature) Recover(hash common.Hash) (common.Address, error) {
@@ -66,5 +67,6 @@ func recoverAddressFromSignature(hash common.Hash, sig []byte) (common.Address, 
 
 	// Derive the Ethereum address from the public key
 	recoveredAddr := crypto.PubkeyToAddress(*pubKey)
+
 	return recoveredAddr, nil
 }

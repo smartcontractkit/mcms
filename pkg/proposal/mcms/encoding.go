@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/smartcontractkit/mcms/pkg/merkle"
@@ -20,6 +21,7 @@ func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifi
 	for _, tx := range transactions {
 		txCounts[tx.ChainIdentifier]++
 	}
+
 	return txCounts
 }
 
@@ -61,6 +63,7 @@ func buildRootMetadatas(
 			OverridePreviousRoot: overridePreviousRoot,
 		}
 	}
+
 	return rootMetadatas, nil
 }
 
@@ -103,6 +106,7 @@ func sortedChainIdentifiers(chainMetadata map[ChainIdentifier]ChainMetadata) []C
 		chainIdentifiers = append(chainIdentifiers, chainID)
 	}
 	sort.Slice(chainIdentifiers, func(i, j int) bool { return chainIdentifiers[i] < chainIdentifiers[j] })
+
 	return chainIdentifiers
 }
 

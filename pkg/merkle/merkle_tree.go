@@ -65,6 +65,7 @@ func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
 
 			// Move to the next layer
 			found = true
+
 			break
 		}
 

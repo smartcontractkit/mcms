@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
@@ -175,6 +176,7 @@ func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Addres
 	sort.Slice(signerObjs, func(i, j int) bool {
 		addressA := new(big.Int).SetBytes(signerObjs[i].Addr.Bytes())
 		addressB := new(big.Int).SetBytes(signerObjs[j].Addr.Bytes())
+
 		return addressA.Cmp(addressB) < 0
 	})
 

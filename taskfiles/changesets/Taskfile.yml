@@ -1,0 +1,49 @@
+version: '3'
+
+tasks:
+  init:
+    desc: "Initialize the .changeset folder"
+    cmds:
+      - pnpm changeset init
+
+  add:
+    desc: "Add a new changeset"
+    cmds:
+      - pnpm changeset add
+
+  add-empty:
+    desc: "Add an empty changeset"
+    cmds:
+      - pnpm changeset add --empty
+
+  add-open:
+    desc: "Add a new changeset and open in an editor"
+    cmds:
+      - pnpm changeset add --open
+
+  version:
+    desc: "Update versions based on changesets"
+    cmds:
+      - pnpm changeset version
+
+  status:
+    desc: "Check the status of changesets"
+    cmds:
+      - pnpm changeset status
+
+  status-verbose:
+    desc: "Check the status of changesets with verbose output"
+    cmds:
+      - pnpm changeset status --verbose
+
+  pre-enter:
+    desc: "Enter pre-release mode with a specific tag"
+    vars:
+      tag: "next"
+    cmds:
+      - pnpm changeset pre enter {{.tag}}
+
+  pre-exit:
+    desc: "Exit pre-release mode"
+    cmds:
+      - pnpm changeset pre exit

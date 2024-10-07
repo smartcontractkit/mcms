@@ -1,0 +1,85 @@
+run:
+  timeout: 5m
+linters:
+  enable:
+    - asciicheck
+    - bidichk
+    - containedctx
+    - contextcheck
+    - copyloopvar
+    - decorder
+    - dogsled
+    - dupword
+    - durationcheck
+    # - err113 # disabled because it currently fails on the codebase
+    - errchkjson
+    # - errname # disabled because it currently fails on the codebase
+    - errorlint
+    - exhaustive
+    - fatcontext
+    # - forbidigo # disabled because it currently fails on the codebase in gethwrappers
+    - goconst
+    - gofmt
+    - goimports
+    # - gosec # disabled because it currently fails on the codebase in many places
+    # - intrange # disabled because it currently fails on the codebase
+    - makezero
+    - loggercheck
+    - makezero
+    - misspell
+    # - mnd # disabled because it currently fails on the codebase
+    - nilerr
+    - nilnil
+    - nlreturn
+    - nolintlint
+    # - paralleltest # Discussion whether we should have this
+    - prealloc
+    - reassign
+    # - revive # disabled because it currently fails on the codebase
+    - testifylint
+    - thelper
+    - tparallel
+    - unconvert
+    # - unparam # disabled because it currently fails on the codebase
+    - usestdlibvars
+    - wastedassign
+    - whitespace
+linters-settings:
+  goconst:
+    min-len: 5
+  goimports:
+    local-prefixes: github.com/smartcontractkit/mcms
+#   govet:
+#     enable:
+#       - shadow
+  nlreturn:
+    block-size: 2
+#   revive:
+#     confidence: 1.0
+#     rules:
+#       - name: context-as-argument
+#       - name: context-keys-type
+#       - name: dot-imports
+#       - name: error-return
+#       - name: error-strings
+#       - name: error-naming
+#       - name: if-return
+#       - name: increment-decrement
+#       - name: var-naming
+#       - name: var-declaration
+#       - name: package-comments
+#       - name: range
+#       - name: receiver-naming
+#       - name: time-naming
+#       - name: unexported-return
+#       - name: indent-error-flow
+#       - name: errorf
+#       - name: empty-block
+#       - name: superfluous-else
+#       - name: unreachable-code
+#       - name: redefines-builtin-id
+issues:
+  exclude-dirs:
+    # Exclude the directory from linting because it will soon be removed and only contains
+    # generated code. Can be removed once the gethwrappers directory is removed.
+    - pkg/gethwrappers

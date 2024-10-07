@@ -5,8 +5,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
 
 func TestToGethSignature(t *testing.T) {
@@ -53,7 +55,7 @@ func TestNewSignatureFromBytes(t *testing.T) {
 	}
 
 	result, err := NewSignatureFromBytes(sigBytes)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
 
@@ -65,7 +67,7 @@ func TestNewSignatureFromBytes_InvalidLength(t *testing.T) {
 	}
 
 	_, err := NewSignatureFromBytes(sigBytes)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, "invalid signature length: 17", err.Error())
 }
 
@@ -94,18 +96,18 @@ func TestToBytes(t *testing.T) {
 
 func TestRecover(t *testing.T) {
 	pk, err := crypto.GenerateKey()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	hash := common.HexToHash("0xabcdef1234567890")
 	sig, err := crypto.Sign(hash.Bytes(), pk)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	sigObj, err := NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	expected := crypto.PubkeyToAddress(pk.PublicKey)
 
 	result, err := sigObj.Recover(hash)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }

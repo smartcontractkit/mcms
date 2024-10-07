@@ -5,9 +5,11 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCalculateTransactionCounts(t *testing.T) {
@@ -54,7 +56,7 @@ func TestBuildRootMetadatas_Success(t *testing.T) {
 	}
 
 	result, err := buildRootMetadatas(chainMetadata, txCounts, true, false)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, expected, result)
 }
 
@@ -67,7 +69,7 @@ func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
 	}
 
 	result, err := buildRootMetadatas(chainMetadata, txCounts, true, false)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.IsType(t, &errors.ErrInvalidChainID{}, err)
 }
@@ -197,7 +199,7 @@ func TestBuildMerkleTree(t *testing.T) {
 	}
 
 	tree, err := buildMerkleTree(chainIdentifiers, rootMetadatas, ops)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tree)
 	assert.NotEmpty(t, tree.Root)
 }
@@ -212,7 +214,7 @@ func TestMetadataEncoder(t *testing.T) {
 	}
 
 	hash, err := metadataEncoder(rootMetadata)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, common.HexToHash("0xc38c406774af2c0a887d4793f40712670e8833c6d71251fdb4f8251b6e0c96e5"), hash)
 }
 
@@ -227,6 +229,6 @@ func TestTxEncoder(t *testing.T) {
 	}
 
 	hash, err := txEncoder(op)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, common.HexToHash("0xea87ccae6f56402661aca3f9119809f710068ad47a8b6bf5376fbe25b989d28a"), hash)
 }

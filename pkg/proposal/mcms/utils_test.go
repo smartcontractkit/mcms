@@ -6,12 +6,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestFromFile(t *testing.T) {
 	// Create a temporary file for testing
 	file, err := os.CreateTemp("", "testfile")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	defer os.Remove(file.Name())
 
 	// Define a sample struct
@@ -28,14 +29,14 @@ func TestFromFile(t *testing.T) {
 		Email: "johndoe@example.com",
 	}
 	sampleJSON, err := json.Marshal(sampleData)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	err = os.WriteFile(file.Name(), sampleJSON, 0644)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Call the FromFile function
 	var result SampleStruct
 	err = FromFile(file.Name(), &result)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Assert the result
 	assert.Equal(t, sampleData, result)
@@ -53,14 +54,14 @@ func TestProposalFromFile(t *testing.T) {
 	}
 
 	tempFile, err := os.CreateTemp("", "mcms.json")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	proposalBytes, err := json.Marshal(mcmsProposal)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	err = os.WriteFile(tempFile.Name(), proposalBytes, 0644)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	fileProposal, err := NewProposalFromFile(tempFile.Name())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, mcmsProposal, *fileProposal)
 }

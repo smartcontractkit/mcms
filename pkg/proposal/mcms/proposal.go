@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 )
 
@@ -66,6 +67,7 @@ func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &out, nil
 }
 
@@ -109,6 +111,7 @@ func (m *MCMSProposal) Validate() error {
 			}
 		}
 	}
+
 	return nil
 }
 

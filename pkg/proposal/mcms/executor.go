@@ -9,11 +9,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"golang.org/x/exp/slices"
+
 	c "github.com/smartcontractkit/mcms/pkg/config"
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/smartcontractkit/mcms/pkg/merkle"
-	"golang.org/x/exp/slices"
 )
 
 type Executor struct {
@@ -54,6 +55,7 @@ func (e *Executor) SigningHash() (common.Hash, error) {
 	binary.BigEndian.PutUint32(validUntilBytes[28:], e.Proposal.ValidUntil) // Place the uint32 in the last 4 bytes
 
 	hashToSign := crypto.Keccak256Hash(e.Tree.Root.Bytes(), validUntilBytes[:])
+
 	return toEthSignedMessageHash(hashToSign), nil
 }
 
@@ -187,7 +189,7 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 	}
 
 	// spread the signers to get address from the configuration
-	var contractSigners []common.Address
+	contractSigners := make([]common.Address, 0, len(config.Signers))
 	for _, s := range config.Signers {
 		contractSigners = append(contractSigners, s.Addr)
 	}
@@ -328,6 +330,7 @@ func (e *Executor) SetRootOnChain(client bind.ContractBackend, auth *bind.Transa
 	sort.Slice(sortedSignatures, func(i, j int) bool {
 		recoveredSignerA, _ := sortedSignatures[i].Recover(hash)
 		recoveredSignerB, _ := sortedSignatures[j].Recover(hash)
+
 		return recoveredSignerA.Cmp(recoveredSignerB) < 0
 	})
 
