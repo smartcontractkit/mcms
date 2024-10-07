@@ -188,7 +188,7 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 	}
 
 	// spread the signers to get address from the configuration
-	var contractSigners []common.Address
+	contractSigners := make([]common.Address, 0, len(config.Signers))
 	for _, s := range config.Signers {
 		contractSigners = append(contractSigners, s.Addr)
 	}
