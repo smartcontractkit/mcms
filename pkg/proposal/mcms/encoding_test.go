@@ -5,9 +5,10 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestCalculateTransactionCounts(t *testing.T) {

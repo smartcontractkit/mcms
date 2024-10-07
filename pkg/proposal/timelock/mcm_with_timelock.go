@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	owner "github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms"

@@ -15,12 +15,13 @@ import (
 	"github.com/ethereum/go-ethereum/core"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/smartcontractkit/mcms/pkg/config"
 	mcm_errors "github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")

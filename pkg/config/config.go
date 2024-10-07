@@ -5,6 +5,7 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
