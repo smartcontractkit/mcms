@@ -58,4 +58,5 @@ jobs:
           gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
           gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
           # goreleaser inputs
+          node-version: "21.x"
           goreleaser-args: ""
