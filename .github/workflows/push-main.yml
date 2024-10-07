@@ -38,8 +38,8 @@ jobs:
           git-email: app-token-issuer-infra-releng[bot]@users.noreply.github.com
           # aws inputs
           aws-region: ${{ secrets.AWS_REGION }}
-          aws-role-arn: ${{ secrets.AWS_OIDC_IAM_ROLE_ARN_GATI }}
-          aws-lambda-url: ${{ secrets.AWS_LAMBDA_URL_GATI }}
+          aws-role-arn: ${{ secrets.AWS_OIDC_MCMS_CI_CHANGESET_TOKEN_ISSUER_ROLE_ARN }}
+          aws-lambda-url: ${{ secrets.GATI_LAMBDA_DEPLOYMENT_AUTOMATION_URL }}
           # grafana inputs
           metrics-job-name: cd-release
           gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
