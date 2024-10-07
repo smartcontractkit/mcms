@@ -33,7 +33,7 @@ linters:
     # - nlreturn # disabled because it currently fails on the codebase
     - nolintlint
     # - paralleltest # Discussion whether we should have this
-    # - prealloc # disabled because it currently fails on the codebase
+    - prealloc # disabled because it currently fails on the codebase
     - reassign
     # - revive # disabled because it currently fails on the codebase
     # - testifylint # disabled because it currently fails on the codebase
