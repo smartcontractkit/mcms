@@ -215,7 +215,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	sim := backends.NewSimulatedBackend(genesisAlloc, blockGasLimit)
 
 	// Deploy a ManyChainMultiSig contract with any of the signers
-	mcmAddr, tx, mcms, err := gethwrappers.DeployManyChainMultiSig(auths[0], sim)
+	mcmAddr, tx, mcmsContract, err := gethwrappers.DeployManyChainMultiSig(auths[0], sim)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -241,14 +241,14 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	}
 
 	// Set the config
-	config := &config.Config{
+	cfg := &config.Config{
 		Quorum:       uint8(numSigners),
 		Signers:      signers,
 		GroupSigners: []config.Config{},
 	}
-	quorums, parents, signersAddresses, signerGroups := config.ExtractSetConfigInputs()
+	quorums, parents, signersAddresses, signerGroups := cfg.ExtractSetConfigInputs()
 
-	tx, err = mcms.SetConfig(auths[0], signersAddresses, signerGroups, quorums, parents, false)
+	tx, err = mcmsContract.SetConfig(auths[0], signersAddresses, signerGroups, quorums, parents, false)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -287,7 +287,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	}
 
 	// Transfer the ownership of the ManyChainMultiSig to the timelock
-	tx, err = mcms.TransferOwnership(auths[0], timelock.Address())
+	tx, err = mcmsContract.TransferOwnership(auths[0], timelock.Address())
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -314,7 +314,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	// Accept the ownership of the ManyChainMultiSig
 	tx, err = timelock.BypasserExecuteBatch(auths[0], []gethwrappers.RBACTimelockCall{
 		{
-			Target: mcms.Address(),
+			Target: mcmsContract.Address(),
 			Data:   acceptOwnershipData,
 			Value:  big.NewInt(0),
 		},
@@ -366,7 +366,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 		return nil, nil, nil, nil, nil, err
 	}
 
-	return keys, auths, sim, mcms, timelock, nil
+	return keys, auths, sim, mcmsContract, timelock, nil
 }
 
 func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {

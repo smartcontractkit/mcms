@@ -49,11 +49,11 @@ func transformHashes(hashes []common.Hash) [][32]byte {
 func transformMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig) (map[ChainIdentifier]*config.Config, error) {
 	m := make(map[ChainIdentifier]*config.Config)
 	for k, v := range configs {
-		config, err := config.NewConfigFromRaw(v)
+		cfg, err := config.NewConfigFromRaw(v)
 		if err != nil {
 			return nil, err
 		}
-		m[k] = config
+		m[k] = cfg
 	}
 
 	return m, nil
@@ -61,7 +61,7 @@ func transformMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMult
 
 // ABIEncode is the equivalent of abi.encode.
 // See a full set of examples https://github.com/ethereum/go-ethereum/blob/420b78659bef661a83c5c442121b13f13288c09f/accounts/abi/packing_test.go#L31
-func ABIEncode(abiStr string, values ...interface{}) ([]byte, error) {
+func ABIEncode(abiStr string, values ...any) ([]byte, error) {
 	// Create a dummy method with arguments
 	inDef := fmt.Sprintf(`[{ "name" : "method", "type": "function", "inputs": %s}]`, abiStr)
 	inAbi, err := abi.JSON(strings.NewReader(inDef))
@@ -78,7 +78,7 @@ func ABIEncode(abiStr string, values ...interface{}) ([]byte, error) {
 
 // ABIDecode is the equivalent of abi.decode.
 // See a full set of examples https://github.com/ethereum/go-ethereum/blob/420b78659bef661a83c5c442121b13f13288c09f/accounts/abi/packing_test.go#L31
-func ABIDecode(abiStr string, data []byte) ([]interface{}, error) {
+func ABIDecode(abiStr string, data []byte) ([]any, error) {
 	inDef := fmt.Sprintf(`[{ "name" : "method", "type": "function", "outputs": %s}]`, abiStr)
 	inAbi, err := abi.JSON(strings.NewReader(inDef))
 	if err != nil {
@@ -89,7 +89,7 @@ func ABIDecode(abiStr string, data []byte) ([]interface{}, error) {
 }
 
 // Generic function to read a file and unmarshal its contents into the provided struct
-func FromFile(filePath string, out interface{}) error {
+func FromFile(filePath string, out any) error {
 	// Load file from path
 	fileBytes, err := os.ReadFile(filePath)
 	if err != nil {
@@ -105,7 +105,7 @@ func FromFile(filePath string, out interface{}) error {
 	return nil
 }
 
-func WriteProposalToFile(proposal interface{}, filePath string) error {
+func WriteProposalToFile(proposal any, filePath string) error {
 	proposalBytes, err := json.Marshal(proposal)
 	if err != nil {
 		return err
