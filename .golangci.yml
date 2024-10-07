@@ -18,10 +18,9 @@ linters:
     - exhaustive
     - fatcontext
     # - forbidigo # disabled because it currently fails on the codebase in gethwrappers
-    - gci
     - goconst
     - gofmt
-    # - goimports # disabled because it currently fails on the codebase
+    - goimports
     # - gosec # disabled because it currently fails on the codebase in many places
     # - intrange # disabled because it currently fails on the codebase
     - makezero
@@ -48,8 +47,8 @@ linters:
 linters-settings:
   goconst:
     min-len: 5
-  # goimports:
-  #   local-prefixes: github.com/smartcontractkit/mcms
+  goimports:
+    local-prefixes: github.com/smartcontractkit/mcms
 #   govet:
 #     enable:
 #       - shadow

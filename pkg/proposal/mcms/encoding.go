@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/smartcontractkit/mcms/pkg/merkle"

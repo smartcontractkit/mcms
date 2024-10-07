@@ -5,8 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
 
 func TestToGethSignature(t *testing.T) {
