@@ -189,7 +189,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	// Generate a private key
 	keys := make([]*ecdsa.PrivateKey, numSigners)
 	auths := make([]*bind.TransactOpts, numSigners)
-	for i := uint64(0); i < numSigners; i++ {
+	for i := range numSigners {
 		key, _ := crypto.GenerateKey()
 		auth, err := bind.NewKeyedTransactorWithChainID(key, big.NewInt(1337))
 		if err != nil {

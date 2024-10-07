@@ -48,7 +48,7 @@ func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
 	proof := make([]common.Hash, 0)
 
 	targetHash := hash
-	for i := 0; i < len(t.Layers); i++ {
+	for i := range len(t.Layers) {
 		found := false
 		for j, h := range t.Layers[i] {
 			if h != targetHash {
