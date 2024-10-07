@@ -22,7 +22,7 @@ linters:
     - gofmt
     - goimports
     # - gosec # disabled because it currently fails on the codebase in many places
-    # - intrange # disabled because it currently fails on the codebase
+    - intrange
     - makezero
     - loggercheck
     - makezero

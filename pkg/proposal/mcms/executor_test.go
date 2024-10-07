@@ -24,7 +24,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	// Generate a private key
 	keys := make([]*ecdsa.PrivateKey, numSigners)
 	auths := make([]*bind.TransactOpts, numSigners)
-	for i := uint64(0); i < numSigners; i++ {
+	for i := range numSigners {
 		key, _ := crypto.GenerateKey()
 		auth, err := bind.NewKeyedTransactorWithChainID(key, big.NewInt(1337))
 		if err != nil {
@@ -232,7 +232,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
 	}
@@ -299,7 +299,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Sign the hash
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		sig, err := crypto.Sign(hash.Bytes(), keys[i])
 		require.NoError(t, err)
 
@@ -458,7 +458,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		// Execute the proposal
 		tx, err = executor.ExecuteOnChain(sim, auths[0], i)
 		require.NoError(t, err)
@@ -494,7 +494,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
 	}
@@ -570,7 +570,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.NoError(t, err)
 
 	// Sign the hash
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		sig, err := crypto.Sign(hash.Bytes(), keys[i])
 		require.NoError(t, err)
 
@@ -598,7 +598,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		// Execute the proposal
 		tx, err = executor.ExecuteOnChain(sim, auths[0], i)
 		require.NoError(t, err)
@@ -634,7 +634,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
 	}
@@ -710,7 +710,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	require.NoError(t, err)
 
 	// Sign the hash
-	for i := 0; i < 2; i++ {
+	for i := range 2 {
 		sig, err := crypto.Sign(hash.Bytes(), keys[i])
 		require.NoError(t, err)
 
@@ -733,7 +733,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
 	}
@@ -814,7 +814,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	require.NoError(t, err)
 
 	// Sign the hash
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		sig, err := crypto.Sign(hash.Bytes(), keys[i])
 		require.NoError(t, err)
 
