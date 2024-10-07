@@ -124,7 +124,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 
 	switch m.Operation {
 	case Schedule, Cancel, Bypass:
-		break
+		// NOOP
 	default:
 		return &errors.ErrInvalidTimelockOperation{
 			ReceivedTimelockOperation: string(m.Operation),

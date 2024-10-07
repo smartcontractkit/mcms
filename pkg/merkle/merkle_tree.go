@@ -108,9 +108,9 @@ func (e *ErrMerkleTreeNodeNotFound) Error() string {
 func hashPair(a, b common.Hash) common.Hash {
 	if a.Cmp(b) < 0 {
 		return efficientHash(a, b)
-	} else {
-		return efficientHash(b, a)
 	}
+
+	return efficientHash(b, a)
 }
 
 func efficientHash(a, b common.Hash) common.Hash {

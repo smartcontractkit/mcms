@@ -76,13 +76,13 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 		signers[i] = auth.From
 	}
 
-	// Set the config
-	config := &config.Config{
+	// Set the cfg
+	cfg := &config.Config{
 		Quorum:       uint8(numSigners),
 		Signers:      signers,
 		GroupSigners: []config.Config{},
 	}
-	quorums, parents, signersAddresses, signerGroups := config.ExtractSetConfigInputs()
+	quorums, parents, signersAddresses, signerGroups := cfg.ExtractSetConfigInputs()
 
 	tx, err = mcms.SetConfig(auths[0], signersAddresses, signerGroups, quorums, parents, false)
 	if err != nil {

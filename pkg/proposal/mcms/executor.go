@@ -101,10 +101,10 @@ func (e *Executor) ValidateMCMSConfigs(clients map[ChainIdentifier]ContractDeplo
 	return nil
 }
 
-func (m *Executor) GetCurrentOpCounts(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]big.Int, error) {
+func (e *Executor) GetCurrentOpCounts(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]big.Int, error) {
 	opCounts := make(map[ChainIdentifier]big.Int)
 
-	callers, err := m.getMCMSCallers(clients)
+	callers, err := e.getMCMSCallers(clients)
 	if err != nil {
 		return nil, err
 	}
@@ -121,10 +121,10 @@ func (m *Executor) GetCurrentOpCounts(clients map[ChainIdentifier]ContractDeploy
 	return opCounts, nil
 }
 
-func (m *Executor) GetConfigs(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig, error) {
+func (e *Executor) GetConfigs(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig, error) {
 	configs := make(map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig)
 
-	callers, err := m.getMCMSCallers(clients)
+	callers, err := e.getMCMSCallers(clients)
 	if err != nil {
 		return nil, err
 	}
