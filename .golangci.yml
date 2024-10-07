@@ -30,10 +30,10 @@ linters:
     # - mnd # disabled because it currently fails on the codebase
     - nilerr
     - nilnil
-    # - nlreturn # disabled because it currently fails on the codebase
+    - nlreturn
     - nolintlint
     # - paralleltest # Discussion whether we should have this
-    - prealloc # disabled because it currently fails on the codebase
+    - prealloc
     - reassign
     # - revive # disabled because it currently fails on the codebase
     - testifylint
@@ -43,7 +43,7 @@ linters:
     # - unparam # disabled because it currently fails on the codebase
     - usestdlibvars
     - wastedassign
-    # - whitespace # disabled because it currently fails on codebase
+    - whitespace
 linters-settings:
   goconst:
     min-len: 5
@@ -52,6 +52,8 @@ linters-settings:
 #   govet:
 #     enable:
 #       - shadow
+  nlreturn:
+    block-size: 2
 #   revive:
 #     confidence: 1.0
 #     rules:
@@ -76,3 +78,8 @@ linters-settings:
 #       - name: superfluous-else
 #       - name: unreachable-code
 #       - name: redefines-builtin-id
+issues:
+  exclude-dirs:
+    # Exclude the directory from linting because it will soon be removed and only contains
+    # generated code. Can be removed once the gethwrappers directory is removed.
+    - pkg/gethwrappers

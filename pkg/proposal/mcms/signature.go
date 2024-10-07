@@ -67,5 +67,6 @@ func recoverAddressFromSignature(hash common.Hash, sig []byte) (common.Address, 
 
 	// Derive the Ethereum address from the public key
 	recoveredAddr := crypto.PubkeyToAddress(*pubKey)
+
 	return recoveredAddr, nil
 }

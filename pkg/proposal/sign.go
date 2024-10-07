@@ -41,5 +41,6 @@ func SignPlainKey(privateKey *ecdsa.PrivateKey, proposal Proposal) error {
 
 	// Add signature to proposal
 	proposal.AddSignature(sigObj)
+
 	return nil
 }
