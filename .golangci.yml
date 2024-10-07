@@ -39,7 +39,7 @@ linters:
     - testifylint
     - thelper
     - tparallel
-    # - unconvert # disabled because it currently fails on the codebase
+    - unconvert
     # - unparam # disabled because it currently fails on the codebase
     - usestdlibvars
     - wastedassign
