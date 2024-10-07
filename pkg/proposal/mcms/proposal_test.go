@@ -6,6 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")
@@ -40,7 +41,7 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 		},
 	)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, proposal)
 }
 
@@ -71,8 +72,8 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 		},
 	)
 
-	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "invalid version: ")
+	require.Error(t, err)
+	require.EqualError(t, err, "invalid version: ")
 	assert.Nil(t, proposal)
 }
 
@@ -103,8 +104,8 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 		},
 	)
 
-	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "invalid valid until: 0")
+	require.Error(t, err)
+	require.EqualError(t, err, "invalid valid until: 0")
 	assert.Nil(t, proposal)
 }
 
@@ -130,8 +131,8 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 		},
 	)
 
-	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "no chain metadata")
+	require.Error(t, err)
+	require.EqualError(t, err, "no chain metadata")
 	assert.Nil(t, proposal)
 }
 
@@ -162,8 +163,8 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 		},
 	)
 
-	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "invalid description: ")
+	require.Error(t, err)
+	require.EqualError(t, err, "invalid description: ")
 	assert.Nil(t, proposal)
 }
 
@@ -183,8 +184,8 @@ func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
 		[]ChainOperation{},
 	)
 
-	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "no transactions")
+	require.Error(t, err)
+	require.EqualError(t, err, "no transactions")
 	assert.Nil(t, proposal)
 }
 
@@ -215,7 +216,7 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 		},
 	)
 
-	assert.Error(t, err)
-	assert.Equal(t, err.Error(), "missing chain metadata for chain 3")
+	require.Error(t, err)
+	require.EqualError(t, err, "missing chain metadata for chain 3")
 	assert.Nil(t, proposal)
 }

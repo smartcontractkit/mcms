@@ -36,7 +36,7 @@ linters:
     - prealloc # disabled because it currently fails on the codebase
     - reassign
     # - revive # disabled because it currently fails on the codebase
-    # - testifylint # disabled because it currently fails on the codebase
+    - testifylint
     - thelper
     - tparallel
     # - unconvert # disabled because it currently fails on the codebase

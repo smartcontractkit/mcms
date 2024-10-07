@@ -63,7 +63,7 @@ func TestValidate_ValidProposal(t *testing.T) {
 		"1h",
 	)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, proposal)
 }
 
@@ -101,7 +101,7 @@ func TestValidate_InvalidOperation(t *testing.T) {
 		"1h",
 	)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, proposal)
 	assert.IsType(t, &mcm_errors.ErrInvalidTimelockOperation{}, err)
 }
@@ -140,9 +140,9 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 		"invalid",
 	)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, proposal)
-	assert.Equal(t, err.Error(), "time: invalid duration \"invalid\"")
+	assert.EqualError(t, err, "time: invalid duration \"invalid\"")
 }
 
 func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
@@ -179,7 +179,7 @@ func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
 		"invalid",
 	)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, proposal)
 }
 
@@ -371,7 +371,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 
 func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
@@ -380,15 +380,15 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 
 	// Construct example transaction to grant EOA the PROPOSER role
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	grantRoleData, err := timelockAbi.Pack("grantRole", role, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Validate Contract State and verify role does not exist
 	hasRole, err := timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 
 	// Construct example transaction
@@ -422,7 +422,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 		Schedule,
 		"5s",
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
@@ -430,48 +430,48 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a signature
 	sigObj, err := mcms.NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err := executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
 	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -494,13 +494,13 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	}
 
 	isOperation, err := timelock.IsOperation(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperation)
 	isOperationPending, err := timelock.IsOperationPending(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperationPending)
 	isOperationReady, err := timelock.IsOperationReady(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperationReady)
 
 	// sleep for 5 seconds and then mine a block
@@ -509,40 +509,40 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 
 	// Check that the operation is now ready
 	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperationReady)
 
 	// Execute the operation
 	tx, err = timelock.ExecuteBatch(auths[0], grantRoleCall, ZERO_HASH, ZERO_HASH)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err = bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Check that the operation is done
 	isOperationDone, err := timelock.IsOperationDone(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperationDone)
 
 	// Check that the operation is no longer pending
 	isOperationPending, err = timelock.IsOperationPending(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperationPending)
 
 	// Validate Contract State and verify role was granted
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, hasRole)
 }
 
 func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
@@ -551,15 +551,15 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 
 	// Construct example transaction to grant EOA the PROPOSER role
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	grantRoleData, err := timelockAbi.Pack("grantRole", role, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Validate Contract State and verify role does not exist
 	hasRole, err := timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 
 	// Construct example transaction
@@ -593,7 +593,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 		Schedule,
 		"5s",
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
@@ -601,48 +601,48 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a signature
 	sigObj, err := mcms.NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err := executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
 	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -657,18 +657,18 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 
 	// Check operation state and see that it was scheduled
 	isOperation, err := timelock.IsOperation(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperation)
 	isOperationPending, err := timelock.IsOperationPending(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperationPending)
 	isOperationReady, err := timelock.IsOperationReady(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperationReady)
 
 	// Get and validate the current operation count
 	currOpCount, err := mcmsObj.GetOpCount(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, currOpCount.Int64(), int64(len(proposal.Transactions)))
 
 	// Generate a new proposal to cancel the operation
@@ -682,66 +682,66 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 
 	// Construct executor
 	executor, err = proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err = executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	sig, err = crypto.Sign(hash.Bytes(), keys[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a signature
 	sigObj, err = mcms.NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err = executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err = executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err = mcmsObj.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
 	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err = bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Verify operation state and confirm it was cancelled
 	isOperation, err = timelock.IsOperation(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperation)
 	isOperationPending, err = timelock.IsOperationPending(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperationPending)
 	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperationReady)
 }
 
 func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
@@ -750,15 +750,15 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 
 	// Construct example transaction to grant EOA the PROPOSER role
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	grantRoleData, err := timelockAbi.Pack("grantRole", role, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Validate Contract State and verify role does not exist
 	hasRole, err := timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 
 	// Construct example transaction
@@ -792,7 +792,7 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 		Bypass,
 		"",
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
@@ -800,60 +800,60 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a signature
 	sigObj, err := mcms.NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err := executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
 	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Validate Contract State and verify role was granted
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, role, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, hasRole)
 }
 
 func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
@@ -862,18 +862,18 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 
 	// Construct example transactions
 	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	operations := make([]mcms.Operation, 3)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
 		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		operations[i] = mcms.Operation{
 			To:    timelock.Address(),
 			Value: big.NewInt(0),
@@ -883,13 +883,13 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 
 	// Validate Contract State and verify role does not exist
 	hasRole, err := timelock.HasRole(&bind.CallOpts{}, proposerRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, bypasserRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 
 	// Construct example transaction
@@ -917,7 +917,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 		Schedule,
 		"5s",
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
@@ -925,48 +925,48 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a signature
 	sigObj, err := mcms.NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err := executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
 	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -999,13 +999,13 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	}
 
 	isOperation, err := timelock.IsOperation(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperation)
 	isOperationPending, err := timelock.IsOperationPending(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperationPending)
 	isOperationReady, err := timelock.IsOperationReady(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperationReady)
 
 	// sleep for 5 seconds and then mine a block
@@ -1014,46 +1014,46 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 
 	// Check that the operation is now ready
 	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperationReady)
 
 	// Execute the operation
 	tx, err = timelock.ExecuteBatch(auths[0], grantRoleCalls, ZERO_HASH, ZERO_HASH)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err = bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Check that the operation is done
 	isOperationDone, err := timelock.IsOperationDone(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperationDone)
 
 	// Check that the operation is no longer pending
 	isOperationPending, err = timelock.IsOperationPending(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperationPending)
 
 	// Validate Contract State and verify role was granted
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, proposerRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, hasRole)
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, bypasserRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, hasRole)
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, hasRole)
 }
 
 func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
@@ -1062,18 +1062,18 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 
 	// Construct example transactions
 	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	operations := make([]mcms.Operation, 3)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
 		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		operations[i] = mcms.Operation{
 			To:    timelock.Address(),
 			Value: big.NewInt(0),
@@ -1083,13 +1083,13 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 
 	// Validate Contract State and verify role does not exist
 	hasRole, err := timelock.HasRole(&bind.CallOpts{}, proposerRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, bypasserRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 
 	// Construct example transaction
@@ -1117,7 +1117,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 		Schedule,
 		"5s",
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
@@ -1125,48 +1125,48 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a signature
 	sigObj, err := mcms.NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err := executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
 	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -1181,18 +1181,18 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 
 	// Check operation state and see that it was scheduled
 	isOperation, err := timelock.IsOperation(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperation)
 	isOperationPending, err := timelock.IsOperationPending(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, isOperationPending)
 	isOperationReady, err := timelock.IsOperationReady(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperationReady)
 
 	// Get and validate the current operation count
 	currOpCount, err := mcmsObj.GetOpCount(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, currOpCount.Int64(), int64(len(proposal.Transactions)))
 
 	// Generate a new proposal to cancel the operation
@@ -1206,66 +1206,66 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 
 	// Construct executor
 	executor, err = proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err = executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	sig, err = crypto.Sign(hash.Bytes(), keys[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a signature
 	sigObj, err = mcms.NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err = executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err = executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err = mcmsObj.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
 	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err = bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Verify operation state and confirm it was cancelled
 	isOperation, err = timelock.IsOperation(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperation)
 	isOperationPending, err = timelock.IsOperationPending(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperationPending)
 	isOperationReady, err = timelock.IsOperationReady(&bind.CallOpts{}, operationId)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, isOperationReady)
 }
 
 func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
@@ -1274,18 +1274,18 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 
 	// Construct example transactions
 	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	operations := make([]mcms.Operation, 3)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
 		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		operations[i] = mcms.Operation{
 			To:    timelock.Address(),
 			Value: big.NewInt(0),
@@ -1295,13 +1295,13 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 
 	// Validate Contract State and verify role does not exist
 	hasRole, err := timelock.HasRole(&bind.CallOpts{}, proposerRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, bypasserRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.False(t, hasRole)
 
 	// Construct example transaction
@@ -1329,7 +1329,7 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 		Bypass,
 		"",
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
@@ -1337,60 +1337,60 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a signature
 	sigObj, err := mcms.NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executor.Proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err := executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
 	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Validate Contract State and verify role was granted
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, proposerRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, hasRole)
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, bypasserRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, hasRole)
 	hasRole, err = timelock.HasRole(&bind.CallOpts{}, cancellerRole, auths[0].From)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.True(t, hasRole)
 }
 
@@ -1411,14 +1411,14 @@ func TestTimelockProposalFromFile(t *testing.T) {
 	}
 
 	tempFile, err := os.CreateTemp("", "timelock.json")
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	proposalBytes, err := json.Marshal(mcmsProposal)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	err = os.WriteFile(tempFile.Name(), proposalBytes, 0644)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	fileProposal, err := NewMCMSWithTimelockProposalFromFile(tempFile.Name())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, mcmsProposal, *fileProposal)
 }
