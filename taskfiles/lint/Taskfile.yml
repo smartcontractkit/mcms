@@ -4,8 +4,7 @@ tasks:
   check:
     desc: "Run Go lint checks"
     cmds:
-      - | 
-        golangci-lint run
+      - golangci-lint run
   fix:
     desc: "Fix Go lint issues"
     cmds:

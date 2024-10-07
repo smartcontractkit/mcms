@@ -3,5 +3,8 @@
 version: "3"
 
 includes:
-    lint:
-        taskfile: ./taskfiles/lint/Taskfile.yml
+  install:
+    taskfile: ./taskfiles/install/Taskfile.yml
+
+  lint:
+    taskfile: ./taskfiles/lint/Taskfile.yml
