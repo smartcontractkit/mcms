@@ -5,6 +5,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
@@ -16,7 +17,7 @@ func TestNewConfig(t *testing.T) {
 	}
 	config, err := NewConfig(1, signers, groupSigners)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, config)
 	assert.Equal(t, uint8(1), config.Quorum)
 	assert.Equal(t, signers, config.Signers)
@@ -34,7 +35,7 @@ func TestNewConfigFromRaw(t *testing.T) {
 	}
 	config, err := NewConfigFromRaw(rawConfig)
 
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, config)
 	assert.Equal(t, uint8(1), config.Quorum)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1")}, config.Signers)
@@ -46,14 +47,14 @@ func TestValidate_Success(t *testing.T) {
 	// Test case 1: Valid configuration
 	config, err := NewConfig(2, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
 	assert.NotNil(t, config)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 }
 
 func TestValidate_InvalidQuorum(t *testing.T) {
 	// Test case 2: Quorum is 0
 	config, err := NewConfig(0, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
 	assert.Nil(t, config)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
 }
 
@@ -61,7 +62,7 @@ func TestValidate_InvalidSigners(t *testing.T) {
 	// Test case 3: No signers or groups
 	config, err := NewConfig(2, []common.Address{}, []Config{})
 	assert.Nil(t, config)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Config must have at least one signer or group", err.Error())
 }
 
@@ -69,7 +70,7 @@ func TestValidate_InvalidQuorumCount(t *testing.T) {
 	// Test case 4: Quorum is greater than the number of signers and groups
 	config, err := NewConfig(3, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
 	assert.Nil(t, config)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Quorum must be less than or equal to the number of signers and groups", err.Error())
 }
 
@@ -79,7 +80,7 @@ func TestValidate_InvalidGroupSigner(t *testing.T) {
 		{Quorum: 0, Signers: []common.Address{}},
 	})
 	assert.Nil(t, config)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
 }
 
@@ -90,7 +91,7 @@ func TestToRawConfig(t *testing.T) {
 	}
 	config, err := NewConfig(1, signers, groupSigners)
 	assert.NotNil(t, config)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	rawConfig := config.ToRawConfig()
 
@@ -109,7 +110,7 @@ func TestToRawConfig(t *testing.T) {
 func TestExtractSetConfigInputs_EmptyConfig(t *testing.T) {
 	config, err := NewConfig(0, []common.Address{}, []Config{})
 	assert.Nil(t, config)
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
 }
 
@@ -130,7 +131,7 @@ func TestExtractSetConfigInputs(t *testing.T) {
 	}
 	config, err := NewConfig(2, signers, groupSigners)
 	assert.NotNil(t, config)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
 
@@ -149,7 +150,7 @@ func TestExtractSetConfigInputs_OnlyRootSigners(t *testing.T) {
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	config, err := NewConfig(1, signers, []Config{})
 	assert.NotNil(t, config)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
 
@@ -189,7 +190,7 @@ func TestExtractSetConfigInputs_OnlyGroups(t *testing.T) {
 	}
 	config, err := NewConfig(2, []common.Address{}, groupSigners)
 	assert.NotNil(t, config)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
 
@@ -228,7 +229,7 @@ func TestExtractSetConfigInputs_NestedSignersAndGroups(t *testing.T) {
 	}
 	config, err := NewConfig(2, signers, groupSigners)
 	assert.NotNil(t, config)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
 
@@ -267,7 +268,7 @@ func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
 	}
 	config, err := NewConfig(2, signers, groupSigners)
 	assert.NotNil(t, config)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
 
@@ -283,11 +284,11 @@ func TestConfigEquals_Success(t *testing.T) {
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
 	config1, err := NewConfig(2, signers, groupSigners)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, config1)
 
 	config2, err := NewConfig(2, signers, groupSigners)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, config2)
 
 	assert.True(t, config1.Equals(config2))
@@ -298,11 +299,11 @@ func TestConfigEquals_Failure_MismatchingQuorum(t *testing.T) {
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
 	config1, err := NewConfig(2, signers, groupSigners)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, config1)
 
 	config2, err := NewConfig(1, signers, groupSigners)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, config2)
 
 	assert.False(t, config1.Equals(config2))
@@ -316,11 +317,11 @@ func TestConfigEquals_Failure_MismatchingSigners(t *testing.T) {
 	}
 	config1, err := NewConfig(2, signers1, groupSigners)
 	assert.NotNil(t, config1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	config2, err := NewConfig(2, signers2, groupSigners)
 	assert.NotNil(t, config2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.False(t, config1.Equals(config2))
 }
@@ -335,11 +336,11 @@ func TestConfigEquals_Failure_MismatchingGroupSigners(t *testing.T) {
 	}
 	config1, err := NewConfig(2, signers, groupSigners1)
 	assert.NotNil(t, config1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	config2, err := NewConfig(2, signers, groupSigners2)
 	assert.NotNil(t, config2)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	assert.False(t, config1.Equals(config2))
 }

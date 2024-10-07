@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/pkg/config"
 	owner_errors "github.com/smartcontractkit/mcms/pkg/errors"
@@ -102,7 +103,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
@@ -119,7 +120,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		[]common.Address{},
 		[]common.Address{},
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, addr)
 	assert.NotNil(t, tx)
 	assert.NotNil(t, timelock)
@@ -127,11 +128,11 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 
 	// Construct example transaction
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	grantRoleData, err := timelockAbi.Pack("grantRole", role, mcms.Address())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a proposal
 	proposal := MCMSProposal{
@@ -162,73 +163,73 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Get the message to sign
 	_, err = executor.SigningMessage()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a signature
 	sigObj, err := NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err = executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err := mcms.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
 	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// // Check the state of the MCMS contract
 	newOpCount, err := mcms.GetOpCount(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, newOpCount)
 	assert.Equal(t, uint64(1), newOpCount.Uint64())
 
 	// Check the state of the timelock contract
 	proposerCount, err := timelock.GetRoleMemberCount(&bind.CallOpts{}, role)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, big.NewInt(1), proposerCount)
 	proposer, err := timelock.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, mcms.Address(), proposer)
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
 	for i := 0; i < 3; i++ {
@@ -247,7 +248,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		[]common.Address{},
 		[]common.Address{},
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, addr)
 	assert.NotNil(t, tx)
 	assert.NotNil(t, timelock)
@@ -255,11 +256,11 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 
 	// Construct example transaction
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	grantRoleData, err := timelockAbi.Pack("grantRole", role, mcms.Address())
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a proposal
 	proposal := MCMSProposal{
@@ -290,71 +291,71 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	for i := 0; i < 3; i++ {
 		sig, err := crypto.Sign(hash.Bytes(), keys[i])
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// Construct a signature
 		sigObj, err := NewSignatureFromBytes(sig)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err = executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err := mcms.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
 	tx, err = executor.ExecuteOnChain(sim, auths[0], 0)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, receipt)
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Check the state of the MCMS contract
 	newOpCount, err := mcms.GetOpCount(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, newOpCount)
 	assert.Equal(t, uint64(1), newOpCount.Uint64())
 
 	// Check the state of the timelock contract
 	proposerCount, err := timelock.GetRoleMemberCount(&bind.CallOpts{}, role)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, big.NewInt(1), proposerCount)
 	proposer, err := timelock.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, mcms.Address(), proposer)
 }
 
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
@@ -371,7 +372,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		[]common.Address{},
 		[]common.Address{},
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, addr)
 	assert.NotNil(t, tx)
 	assert.NotNil(t, timelock)
@@ -379,20 +380,20 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 
 	// Construct example transactions
 	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executorRole, err := timelock.EXECUTORROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	operations := make([]ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		operations[i] = ChainOperation{
 			ChainIdentifier: TestChain1,
 			Operation: Operation{
@@ -423,36 +424,36 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	sig, err := crypto.Sign(hash.Bytes(), keys[0])
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Construct a signature
 	sigObj, err := NewSignatureFromBytes(sig)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err = executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err := mcms.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
@@ -460,37 +461,37 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	for i := 0; i < 4; i++ {
 		// Execute the proposal
 		tx, err = executor.ExecuteOnChain(sim, auths[0], i)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, tx)
 		sim.Commit()
 
 		// Wait for the transaction to be mined
 		receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, receipt)
 		assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 	}
 
 	// Check the state of the MCMS contract
 	newOpCount, err := mcms.GetOpCount(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, newOpCount)
 	assert.Equal(t, uint64(4), newOpCount.Uint64())
 
 	// Check the state of the timelock contract
 	for _, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		roleCount, err := timelock.GetRoleMemberCount(&bind.CallOpts{}, role)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, big.NewInt(1), roleCount)
 		roleMember, err := timelock.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, mcms.Address(), roleMember)
 	}
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
 	for i := 0; i < 3; i++ {
@@ -509,7 +510,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		[]common.Address{},
 		[]common.Address{},
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, addr)
 	assert.NotNil(t, tx)
 	assert.NotNil(t, timelock)
@@ -517,20 +518,20 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	// Construct example transactions
 	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executorRole, err := timelock.EXECUTORROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	operations := make([]ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		operations[i] = ChainOperation{
 			ChainIdentifier: TestChain1,
 			Operation: Operation{
@@ -561,38 +562,38 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	for i := 0; i < 3; i++ {
 		sig, err := crypto.Sign(hash.Bytes(), keys[i])
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// Construct a signature
 		sigObj, err := NewSignatureFromBytes(sig)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.True(t, quorumMet)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// SetRoot on the contract
 	tx, err = executor.SetRootOnChain(sim, auths[0], TestChain1)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, tx)
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
 	root, err := mcms.GetRoot(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
@@ -600,37 +601,37 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	for i := 0; i < 4; i++ {
 		// Execute the proposal
 		tx, err = executor.ExecuteOnChain(sim, auths[0], i)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, tx)
 		sim.Commit()
 
 		// Wait for the transaction to be mined
 		receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.NotNil(t, receipt)
 		assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 	}
 
 	// Check the state of the MCMS contract
 	newOpCount, err := mcms.GetOpCount(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, newOpCount)
 	assert.Equal(t, uint64(4), newOpCount.Uint64())
 
 	// Check the state of the timelock contract
 	for _, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		roleCount, err := timelock.GetRoleMemberCount(&bind.CallOpts{}, role)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, big.NewInt(1), roleCount)
 		roleMember, err := timelock.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		assert.Equal(t, mcms.Address(), roleMember)
 	}
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *testing.T) {
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
 	for i := 0; i < 3; i++ {
@@ -649,7 +650,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 		[]common.Address{},
 		[]common.Address{},
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, addr)
 	assert.NotNil(t, tx)
 	assert.NotNil(t, timelock)
@@ -657,20 +658,20 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 
 	// Construct example transactions
 	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executorRole, err := timelock.EXECUTORROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	operations := make([]ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		operations[i] = ChainOperation{
 			ChainIdentifier: TestChain1,
 			Operation: Operation{
@@ -701,35 +702,35 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	for i := 0; i < 2; i++ {
 		sig, err := crypto.Sign(hash.Bytes(), keys[i])
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// Construct a signature
 		sigObj, err := NewSignatureFromBytes(sig)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.False(t, quorumMet)
-	assert.Error(t, err)
+	require.Error(t, err)
 	// assert error is of type ErrQuorumNotMet
 	assert.IsType(t, &owner_errors.ErrQuorumNotMet{}, err)
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *testing.T) {
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
 	for i := 0; i < 3; i++ {
@@ -739,7 +740,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 
 	// Generate a new key
 	newKey, err := crypto.GenerateKey()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	keys[2] = newKey
 
 	// Deploy a timelock contract for testing
@@ -753,7 +754,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 		[]common.Address{},
 		[]common.Address{},
 	)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, addr)
 	assert.NotNil(t, tx)
 	assert.NotNil(t, timelock)
@@ -761,20 +762,20 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 
 	// Construct example transactions
 	proposerRole, err := timelock.PROPOSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	bypasserRole, err := timelock.BYPASSERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	executorRole, err := timelock.EXECUTORROLE(&bind.CallOpts{})
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	operations := make([]ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		operations[i] = ChainOperation{
 			ChainIdentifier: TestChain1,
 			Operation: Operation{
@@ -805,28 +806,28 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, executor)
 
 	// Get the hash to sign
 	hash, err := executor.SigningHash()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 
 	// Sign the hash
 	for i := 0; i < 3; i++ {
 		sig, err := crypto.Sign(hash.Bytes(), keys[i])
-		assert.NoError(t, err)
+		require.NoError(t, err)
 
 		// Construct a signature
 		sigObj, err := NewSignatureFromBytes(sig)
-		assert.NoError(t, err)
+		require.NoError(t, err)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
 
 	// Validate the signatures
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.False(t, quorumMet)
-	assert.Error(t, err)
+	require.Error(t, err)
 	// assert error is of type ErrQuorumNotMet
 	assert.IsType(t, &owner_errors.ErrInvalidSignature{}, err)
 }
