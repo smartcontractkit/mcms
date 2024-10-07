@@ -77,6 +77,7 @@ func NewMCMSWithTimelockProposalFromFile(filePath string) (*MCMSWithTimelockProp
 	if err != nil {
 		return nil, err
 	}
+
 	return &out, nil
 }
 

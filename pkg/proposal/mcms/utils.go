@@ -24,6 +24,7 @@ func transformMCMAddresses(metadatas map[ChainIdentifier]ChainMetadata) map[Chai
 	for k, v := range metadatas {
 		m[k] = v.MCMAddress
 	}
+
 	return m
 }
 
@@ -32,6 +33,7 @@ func transformSignatures(signatures []Signature) []gethwrappers.ManyChainMultiSi
 	for i, sig := range signatures {
 		sigs[i] = sig.ToGethSignature()
 	}
+
 	return sigs
 }
 
@@ -40,6 +42,7 @@ func transformHashes(hashes []common.Hash) [][32]byte {
 	for i, h := range hashes {
 		m[i] = [32]byte(h)
 	}
+
 	return m
 }
 
@@ -52,6 +55,7 @@ func transformMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMult
 		}
 		m[k] = config
 	}
+
 	return m, nil
 }
 
@@ -68,6 +72,7 @@ func ABIEncode(abiStr string, values ...interface{}) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return res[4:], nil
 }
 
@@ -79,6 +84,7 @@ func ABIDecode(abiStr string, data []byte) ([]interface{}, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return inAbi.Unpack("method", data)
 }
 

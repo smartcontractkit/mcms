@@ -55,6 +55,7 @@ func (e *Executor) SigningHash() (common.Hash, error) {
 	binary.BigEndian.PutUint32(validUntilBytes[28:], e.Proposal.ValidUntil) // Place the uint32 in the last 4 bytes
 
 	hashToSign := crypto.Keccak256Hash(e.Tree.Root.Bytes(), validUntilBytes[:])
+
 	return toEthSignedMessageHash(hashToSign), nil
 }
 
@@ -329,6 +330,7 @@ func (e *Executor) SetRootOnChain(client bind.ContractBackend, auth *bind.Transa
 	sort.Slice(sortedSignatures, func(i, j int) bool {
 		recoveredSignerA, _ := sortedSignatures[i].Recover(hash)
 		recoveredSignerB, _ := sortedSignatures[j].Recover(hash)
+
 		return recoveredSignerA.Cmp(recoveredSignerB) < 0
 	})
 

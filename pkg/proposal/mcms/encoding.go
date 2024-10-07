@@ -21,6 +21,7 @@ func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifi
 	for _, tx := range transactions {
 		txCounts[tx.ChainIdentifier]++
 	}
+
 	return txCounts
 }
 
@@ -62,6 +63,7 @@ func buildRootMetadatas(
 			OverridePreviousRoot: overridePreviousRoot,
 		}
 	}
+
 	return rootMetadatas, nil
 }
 
@@ -104,6 +106,7 @@ func sortedChainIdentifiers(chainMetadata map[ChainIdentifier]ChainMetadata) []C
 		chainIdentifiers = append(chainIdentifiers, chainID)
 	}
 	sort.Slice(chainIdentifiers, func(i, j int) bool { return chainIdentifiers[i] < chainIdentifiers[j] })
+
 	return chainIdentifiers
 }
 

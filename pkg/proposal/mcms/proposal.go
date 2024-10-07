@@ -67,6 +67,7 @@ func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &out, nil
 }
 
@@ -110,6 +111,7 @@ func (m *MCMSProposal) Validate() error {
 			}
 		}
 	}
+
 	return nil
 }
 
