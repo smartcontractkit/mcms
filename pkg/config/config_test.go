@@ -4,8 +4,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
 
 func TestNewConfig(t *testing.T) {

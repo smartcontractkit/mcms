@@ -1,7 +1,7 @@
 version: '3'
 
 tasks:
-  check:
+  default:
     desc: "Run Go lint checks"
     cmds:
       - golangci-lint run

@@ -41,3 +41,11 @@ Run the entire test suite with:
 `task test`
 
 More `test` commands can be found by running `task -l`
+
+### Running Linters
+
+Run the linters with:
+
+`task lint`
+
+More `lint` commands can be found by running `task -l`

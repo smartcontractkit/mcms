@@ -9,11 +9,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"golang.org/x/exp/slices"
+
 	c "github.com/smartcontractkit/mcms/pkg/config"
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/smartcontractkit/mcms/pkg/merkle"
-	"golang.org/x/exp/slices"
 )
 
 type Executor struct {
