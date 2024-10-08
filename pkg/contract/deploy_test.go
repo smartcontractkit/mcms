@@ -18,6 +18,8 @@ func fakeContractDeployment() DeployFunc[string] {
 }
 
 func Test_Deploy(t *testing.T) {
+	t.Parallel()
+
 	addr, err := Deploy(fakeContractDeployment())
 	require.NoError(t, err)
 
