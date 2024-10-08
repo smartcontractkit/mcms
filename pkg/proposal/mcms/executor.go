@@ -171,10 +171,11 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 
 	recoveredSigners := make([]common.Address, len(e.Proposal.Signatures))
 	for i, sig := range e.Proposal.Signatures {
-		recoveredAddr, err := sig.Recover(hash)
-		if err != nil {
-			return false, err
+		recoveredAddr, rerr := sig.Recover(hash)
+		if rerr != nil {
+			return false, rerr
 		}
+
 		recoveredSigners[i] = recoveredAddr
 	}
 
@@ -229,10 +230,11 @@ func (e *Executor) ValidateSignatures(clients map[ChainIdentifier]ContractDeploy
 
 	recoveredSigners := make([]common.Address, len(e.Proposal.Signatures))
 	for i, sig := range e.Proposal.Signatures {
-		recoveredAddr, err := sig.Recover(hash)
-		if err != nil {
-			return false, err
+		recoveredAddr, rerr := sig.Recover(hash)
+		if rerr != nil {
+			return false, rerr
 		}
+
 		recoveredSigners[i] = recoveredAddr
 	}
 
