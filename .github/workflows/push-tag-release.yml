@@ -52,10 +52,16 @@ jobs:
           app-name: mcms-lib
           publish: "false" # do not publish docker image to ECR
           update-git-tag: "true"
+
+          # goreleaser inputs
+          goreleaser-args: "--config .goreleaser.yml"
+          goreleaser-version: '~> v2'
+          goreleaser-dist: goreleaser-pro
+          goreleaser-key: ${{ secrets.GORELEASER_KEY }}
+
           # grafana inputs
           metrics-job-name: cicd-publish-release
           gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
           gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
           gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
-          # goreleaser inputs
-          goreleaser-args: ""
+
