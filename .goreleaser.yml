@@ -1,2 +1,20 @@
+# Make sure to check the documentation at https://goreleaser.com
+version: 2
+project_name: mcms
+
 builds:
   - skip: true
+
+release:
+  github:
+    owner: smartcontractkit
+    name: mcms
+  prerelease: auto
+  footer: |
+    Check out the official changelog [here](https://github.com/smartcontractkit/mcms/blob/main/CHANGELOG.md)
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  disable: true
