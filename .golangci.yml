@@ -12,7 +12,7 @@ linters:
     - dupword
     - durationcheck
     - errchkjson
-    # - errname # disabled because it currently fails on the codebase
+    - errname
     - errorlint
     - exhaustive
     - fatcontext
@@ -26,7 +26,7 @@ linters:
     - loggercheck
     - makezero
     - misspell
-    # - mnd # disabled because it currently fails on the codebase
+    - mnd
     - nilerr
     - nilnil
     - nlreturn
@@ -101,3 +101,16 @@ issues:
     - path: _test\.go
       linters:
         - unparam # No need to check for unused parameters in tests, since there are often false positives
+    - path: pkg/proposal/mcms/signature.go
+      linters:
+        - mnd # This file contains magic numbers which need to be fixed
+    - path: pkg/merkle/merkle_tree.go
+      linters:
+        - mnd # This file contains magic numbers which need to be fixed
+        - errname # This file contains an error variable that is not named according to the error naming convention
+    - path: pkg/proposal/mcms/utils.go
+      linters:
+        - mnd # This file contains magic numbers which need to be fixed
+    - path: pkg/errors
+      linters:
+        - errname # This file contains an error variable that is not named according to the error naming convention
