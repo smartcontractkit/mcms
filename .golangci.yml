@@ -31,7 +31,7 @@ linters:
     - nilnil
     - nlreturn
     - nolintlint
-    # - paralleltest # Discussion whether we should have this
+    - paralleltest
     - prealloc
     - reassign
     - revive
