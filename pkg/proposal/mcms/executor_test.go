@@ -24,7 +24,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	// Generate a private key
 	keys := make([]*ecdsa.PrivateKey, numSigners)
 	auths := make([]*bind.TransactOpts, numSigners)
-	for i := uint64(0); i < numSigners; i++ {
+	for i := range numSigners {
 		key, _ := crypto.GenerateKey()
 		auth, err := bind.NewKeyedTransactorWithChainID(key, big.NewInt(1337))
 		if err != nil {
@@ -76,13 +76,13 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 		signers[i] = auth.From
 	}
 
-	// Set the config
-	config := &config.Config{
+	// Set the cfg
+	cfg := &config.Config{
 		Quorum:       uint8(numSigners),
 		Signers:      signers,
 		GroupSigners: []config.Config{},
 	}
-	quorums, parents, signersAddresses, signerGroups := config.ExtractSetConfigInputs()
+	quorums, parents, signersAddresses, signerGroups := cfg.ExtractSetConfigInputs()
 
 	tx, err = mcms.SetConfig(auths[0], signersAddresses, signerGroups, quorums, parents, false)
 	if err != nil {
@@ -102,6 +102,8 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 }
 
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -228,11 +230,13 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
 	}
@@ -299,13 +303,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Sign the hash
-	for i := 0; i < 3; i++ {
-		sig, err := crypto.Sign(hash.Bytes(), keys[i])
-		require.NoError(t, err)
+	for i := range 3 {
+		sig, serr := crypto.Sign(hash.Bytes(), keys[i])
+		require.NoError(t, serr)
 
 		// Construct a signature
-		sigObj, err := NewSignatureFromBytes(sig)
-		require.NoError(t, err)
+		sigObj, serr := NewSignatureFromBytes(sig)
+		require.NoError(t, serr)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
 
@@ -354,6 +358,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 }
 
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -392,8 +398,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 
 	operations := make([]ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
-		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
-		require.NoError(t, err)
+		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
+		require.NoError(t, perr)
 		operations[i] = ChainOperation{
 			ChainIdentifier: TestChain1,
 			Operation: Operation{
@@ -458,7 +464,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		// Execute the proposal
 		tx, err = executor.ExecuteOnChain(sim, auths[0], i)
 		require.NoError(t, err)
@@ -466,8 +472,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		sim.Commit()
 
 		// Wait for the transaction to be mined
-		receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-		require.NoError(t, err)
+		receipt, merr := bind.WaitMined(auths[0].Context, sim, tx)
+		require.NoError(t, merr)
 		assert.NotNil(t, receipt)
 		assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 	}
@@ -490,11 +496,13 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
 	}
@@ -530,8 +538,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	operations := make([]ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
-		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
-		require.NoError(t, err)
+		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
+		require.NoError(t, perr)
 		operations[i] = ChainOperation{
 			ChainIdentifier: TestChain1,
 			Operation: Operation{
@@ -570,13 +578,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.NoError(t, err)
 
 	// Sign the hash
-	for i := 0; i < 3; i++ {
-		sig, err := crypto.Sign(hash.Bytes(), keys[i])
-		require.NoError(t, err)
+	for i := range 3 {
+		sig, serr := crypto.Sign(hash.Bytes(), keys[i])
+		require.NoError(t, serr)
 
 		// Construct a signature
-		sigObj, err := NewSignatureFromBytes(sig)
-		require.NoError(t, err)
+		sigObj, serr := NewSignatureFromBytes(sig)
+		require.NoError(t, serr)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
 
@@ -598,7 +606,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		// Execute the proposal
 		tx, err = executor.ExecuteOnChain(sim, auths[0], i)
 		require.NoError(t, err)
@@ -606,8 +614,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		sim.Commit()
 
 		// Wait for the transaction to be mined
-		receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
-		require.NoError(t, err)
+		receipt, merr := bind.WaitMined(auths[0].Context, sim, tx)
+		require.NoError(t, merr)
 		assert.NotNil(t, receipt)
 		assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 	}
@@ -630,11 +638,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
 	}
@@ -670,8 +680,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 
 	operations := make([]ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
-		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
-		require.NoError(t, err)
+		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
+		require.NoError(t, perr)
 		operations[i] = ChainOperation{
 			ChainIdentifier: TestChain1,
 			Operation: Operation{
@@ -710,13 +720,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	require.NoError(t, err)
 
 	// Sign the hash
-	for i := 0; i < 2; i++ {
-		sig, err := crypto.Sign(hash.Bytes(), keys[i])
-		require.NoError(t, err)
+	for i := range 2 {
+		sig, serr := crypto.Sign(hash.Bytes(), keys[i])
+		require.NoError(t, serr)
 
 		// Construct a signature
-		sigObj, err := NewSignatureFromBytes(sig)
-		require.NoError(t, err)
+		sigObj, serr := NewSignatureFromBytes(sig)
+		require.NoError(t, serr)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
 
@@ -729,11 +739,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
 	assert.NotNil(t, mcms)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
 	}
@@ -774,8 +786,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 
 	operations := make([]ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
-		data, err := timelockAbi.Pack("grantRole", role, mcms.Address())
-		require.NoError(t, err)
+		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
+		require.NoError(t, perr)
 		operations[i] = ChainOperation{
 			ChainIdentifier: TestChain1,
 			Operation: Operation{
@@ -814,13 +826,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	require.NoError(t, err)
 
 	// Sign the hash
-	for i := 0; i < 3; i++ {
-		sig, err := crypto.Sign(hash.Bytes(), keys[i])
-		require.NoError(t, err)
+	for i := range 3 {
+		sig, serr := crypto.Sign(hash.Bytes(), keys[i])
+		require.NoError(t, serr)
 
 		// Construct a signature
-		sigObj, err := NewSignatureFromBytes(sig)
-		require.NoError(t, err)
+		sigObj, serr := NewSignatureFromBytes(sig)
+		require.NoError(t, serr)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
 

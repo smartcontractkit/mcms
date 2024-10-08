@@ -13,6 +13,8 @@ import (
 )
 
 func TestCalculateTransactionCounts(t *testing.T) {
+	t.Parallel()
+
 	transactions := []ChainOperation{
 		{ChainIdentifier: TestChain1},
 		{ChainIdentifier: TestChain1},
@@ -29,6 +31,8 @@ func TestCalculateTransactionCounts(t *testing.T) {
 }
 
 func TestBuildRootMetadatas_Success(t *testing.T) {
+	t.Parallel()
+
 	chainMetadata := map[ChainIdentifier]ChainMetadata{
 		TestChain1: {MCMAddress: common.HexToAddress("0x1"), StartingOpCount: 0},
 		TestChain2: {MCMAddress: common.HexToAddress("0x2"), StartingOpCount: 3},
@@ -61,6 +65,8 @@ func TestBuildRootMetadatas_Success(t *testing.T) {
 }
 
 func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
+	t.Parallel()
+
 	chainMetadata := map[ChainIdentifier]ChainMetadata{
 		0: {MCMAddress: common.HexToAddress("0x1"), StartingOpCount: 0},
 	}
@@ -75,6 +81,8 @@ func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
 }
 
 func TestBuildOperations(t *testing.T) {
+	t.Parallel()
+
 	transactions := []ChainOperation{
 		{ChainIdentifier: TestChain1,
 			Operation: Operation{
@@ -145,6 +153,8 @@ func TestBuildOperations(t *testing.T) {
 }
 
 func TestSortedChainIdentifiers(t *testing.T) {
+	t.Parallel()
+
 	chainMetadata := map[ChainIdentifier]ChainMetadata{
 		TestChain2: {},
 		TestChain1: {},
@@ -158,6 +168,8 @@ func TestSortedChainIdentifiers(t *testing.T) {
 }
 
 func TestBuildMerkleTree(t *testing.T) {
+	t.Parallel()
+
 	chainIdentifiers := []ChainIdentifier{TestChain1, TestChain2}
 	ops := map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp{
 		TestChain1: {
@@ -205,6 +217,8 @@ func TestBuildMerkleTree(t *testing.T) {
 }
 
 func TestMetadataEncoder(t *testing.T) {
+	t.Parallel()
+
 	rootMetadata := gethwrappers.ManyChainMultiSigRootMetadata{
 		ChainId:              new(big.Int).SetUint64(uint64(1337)),
 		MultiSig:             common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
@@ -219,6 +233,8 @@ func TestMetadataEncoder(t *testing.T) {
 }
 
 func TestTxEncoder(t *testing.T) {
+	t.Parallel()
+
 	op := gethwrappers.ManyChainMultiSigOp{
 		ChainId:  new(big.Int).SetUint64(uint64(1337)),
 		MultiSig: common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),

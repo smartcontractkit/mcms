@@ -10,6 +10,8 @@ import (
 )
 
 func TestNewMerkleTree(t *testing.T) {
+	t.Parallel()
+
 	leaves := []common.Hash{
 		crypto.Keccak256Hash([]byte("leaf1")),
 		crypto.Keccak256Hash([]byte("leaf2")),
@@ -25,6 +27,8 @@ func TestNewMerkleTree(t *testing.T) {
 }
 
 func TestNewMerkleTree_OddNumberOfLeaves(t *testing.T) {
+	t.Parallel()
+
 	leaves := []common.Hash{
 		crypto.Keccak256Hash([]byte("leaf1")),
 		crypto.Keccak256Hash([]byte("leaf2")),
@@ -39,6 +43,8 @@ func TestNewMerkleTree_OddNumberOfLeaves(t *testing.T) {
 }
 
 func TestNewMerkleTree_OddIntermediateLayer(t *testing.T) {
+	t.Parallel()
+
 	leaves := []common.Hash{
 		crypto.Keccak256Hash([]byte("leaf1")),
 		crypto.Keccak256Hash([]byte("leaf2")),
@@ -55,6 +61,8 @@ func TestNewMerkleTree_OddIntermediateLayer(t *testing.T) {
 }
 
 func TestGetProof_EvenNumberOfLeaves(t *testing.T) {
+	t.Parallel()
+
 	leaves := []common.Hash{
 		crypto.Keccak256Hash([]byte("leaf1")),
 		crypto.Keccak256Hash([]byte("leaf2")),
@@ -80,6 +88,8 @@ func TestGetProof_EvenNumberOfLeaves(t *testing.T) {
 }
 
 func TestGetProof_OddNumberOfLeaves(t *testing.T) {
+	t.Parallel()
+
 	leaves := []common.Hash{
 		crypto.Keccak256Hash([]byte("leaf1")),
 		crypto.Keccak256Hash([]byte("leaf2")),
@@ -104,6 +114,8 @@ func TestGetProof_OddNumberOfLeaves(t *testing.T) {
 }
 
 func TestGetProof_OddIntermediateLayer(t *testing.T) {
+	t.Parallel()
+
 	leaves := []common.Hash{
 		crypto.Keccak256Hash([]byte("leaf1")),
 		crypto.Keccak256Hash([]byte("leaf2")),
@@ -130,6 +142,8 @@ func TestGetProof_OddIntermediateLayer(t *testing.T) {
 }
 
 func TestGetProof_HashNotFound(t *testing.T) {
+	t.Parallel()
+
 	leaves := []common.Hash{
 		crypto.Keccak256Hash([]byte("leaf1")),
 		crypto.Keccak256Hash([]byte("leaf2")),
@@ -146,6 +160,8 @@ func TestGetProof_HashNotFound(t *testing.T) {
 }
 
 func TestErrMerkleTreeNodeNotFound_Error(t *testing.T) {
+	t.Parallel()
+
 	hash := crypto.Keccak256Hash([]byte("non-existent"))
 	err := &ErrMerkleTreeNodeNotFound{TargetHash: hash}
 

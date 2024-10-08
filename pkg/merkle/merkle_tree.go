@@ -48,7 +48,7 @@ func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
 	proof := make([]common.Hash, 0)
 
 	targetHash := hash
-	for i := 0; i < len(t.Layers); i++ {
+	for i := range len(t.Layers) {
 		found := false
 		for j, h := range t.Layers[i] {
 			if h != targetHash {
@@ -108,9 +108,9 @@ func (e *ErrMerkleTreeNodeNotFound) Error() string {
 func hashPair(a, b common.Hash) common.Hash {
 	if a.Cmp(b) < 0 {
 		return efficientHash(a, b)
-	} else {
-		return efficientHash(b, a)
 	}
+
+	return efficientHash(b, a)
 }
 
 func efficientHash(a, b common.Hash) common.Hash {

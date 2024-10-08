@@ -11,6 +11,8 @@ import (
 )
 
 func TestNewConfig(t *testing.T) {
+	t.Parallel()
+
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
@@ -25,6 +27,8 @@ func TestNewConfig(t *testing.T) {
 }
 
 func TestNewConfigFromRaw(t *testing.T) {
+	t.Parallel()
+
 	rawConfig := gethwrappers.ManyChainMultiSigConfig{
 		GroupQuorums: [32]uint8{1, 1},
 		GroupParents: [32]uint8{0, 0},
@@ -44,6 +48,8 @@ func TestNewConfigFromRaw(t *testing.T) {
 }
 
 func TestValidate_Success(t *testing.T) {
+	t.Parallel()
+
 	// Test case 1: Valid configuration
 	config, err := NewConfig(2, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
 	assert.NotNil(t, config)
@@ -51,6 +57,8 @@ func TestValidate_Success(t *testing.T) {
 }
 
 func TestValidate_InvalidQuorum(t *testing.T) {
+	t.Parallel()
+
 	// Test case 2: Quorum is 0
 	config, err := NewConfig(0, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
 	assert.Nil(t, config)
@@ -59,6 +67,8 @@ func TestValidate_InvalidQuorum(t *testing.T) {
 }
 
 func TestValidate_InvalidSigners(t *testing.T) {
+	t.Parallel()
+
 	// Test case 3: No signers or groups
 	config, err := NewConfig(2, []common.Address{}, []Config{})
 	assert.Nil(t, config)
@@ -67,6 +77,8 @@ func TestValidate_InvalidSigners(t *testing.T) {
 }
 
 func TestValidate_InvalidQuorumCount(t *testing.T) {
+	t.Parallel()
+
 	// Test case 4: Quorum is greater than the number of signers and groups
 	config, err := NewConfig(3, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
 	assert.Nil(t, config)
@@ -75,6 +87,8 @@ func TestValidate_InvalidQuorumCount(t *testing.T) {
 }
 
 func TestValidate_InvalidGroupSigner(t *testing.T) {
+	t.Parallel()
+
 	// Test case 5: Invalid group signer
 	config, err := NewConfig(2, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{
 		{Quorum: 0, Signers: []common.Address{}},
@@ -85,6 +99,8 @@ func TestValidate_InvalidGroupSigner(t *testing.T) {
 }
 
 func TestToRawConfig(t *testing.T) {
+	t.Parallel()
+
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
@@ -108,6 +124,8 @@ func TestToRawConfig(t *testing.T) {
 // Signers: []
 // Group signers: []
 func TestExtractSetConfigInputs_EmptyConfig(t *testing.T) {
+	t.Parallel()
+
 	config, err := NewConfig(0, []common.Address{}, []Config{})
 	assert.Nil(t, config)
 	require.Error(t, err)
@@ -125,6 +143,8 @@ func TestExtractSetConfigInputs_EmptyConfig(t *testing.T) {
 //		Group signers: []
 //	}]
 func TestExtractSetConfigInputs(t *testing.T) {
+	t.Parallel()
+
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
@@ -147,6 +167,8 @@ func TestExtractSetConfigInputs(t *testing.T) {
 // Signers: [0x1, 0x2]
 // Group signers: []
 func TestExtractSetConfigInputs_OnlyRootSigners(t *testing.T) {
+	t.Parallel()
+
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	config, err := NewConfig(1, signers, []Config{})
 	assert.NotNil(t, config)
@@ -183,6 +205,8 @@ func TestExtractSetConfigInputs_OnlyRootSigners(t *testing.T) {
 //		 Group signers: []
 //	}]
 func TestExtractSetConfigInputs_OnlyGroups(t *testing.T) {
+	t.Parallel()
+
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x4")}},
@@ -220,6 +244,8 @@ func TestExtractSetConfigInputs_OnlyGroups(t *testing.T) {
 //			Group signers: []
 //		}]
 func TestExtractSetConfigInputs_NestedSignersAndGroups(t *testing.T) {
+	t.Parallel()
+
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}, GroupSigners: []Config{
@@ -259,6 +285,8 @@ func TestExtractSetConfigInputs_NestedSignersAndGroups(t *testing.T) {
 //			Group signers: []
 //		}]
 func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
+	t.Parallel()
+
 	signers := []common.Address{common.HexToAddress("0x2"), common.HexToAddress("0x1")}
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}, GroupSigners: []Config{
@@ -279,6 +307,8 @@ func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
 }
 
 func TestConfigEquals_Success(t *testing.T) {
+	t.Parallel()
+
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
@@ -294,6 +324,8 @@ func TestConfigEquals_Success(t *testing.T) {
 	assert.True(t, config1.Equals(config2))
 }
 func TestConfigEquals_Failure_MismatchingQuorum(t *testing.T) {
+	t.Parallel()
+
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	groupSigners := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
@@ -310,6 +342,8 @@ func TestConfigEquals_Failure_MismatchingQuorum(t *testing.T) {
 }
 
 func TestConfigEquals_Failure_MismatchingSigners(t *testing.T) {
+	t.Parallel()
+
 	signers1 := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	signers2 := []common.Address{common.HexToAddress("0x1")}
 	groupSigners := []Config{
@@ -327,6 +361,8 @@ func TestConfigEquals_Failure_MismatchingSigners(t *testing.T) {
 }
 
 func TestConfigEquals_Failure_MismatchingGroupSigners(t *testing.T) {
+	t.Parallel()
+
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
 	groupSigners1 := []Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
