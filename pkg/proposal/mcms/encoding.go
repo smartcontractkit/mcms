@@ -55,11 +55,15 @@ func buildRootMetadatas(
 		if isSim {
 			chain.EvmChainID = 1337
 		}
+
+		preOpCount := new(big.Int).SetUint64(metadata.StartingOpCount)
+		postOpCount := new(big.Int).SetUint64(metadata.StartingOpCount + currentTxCount)
+
 		rootMetadatas[chainID] = gethwrappers.ManyChainMultiSigRootMetadata{
 			ChainId:              new(big.Int).SetUint64(chain.EvmChainID),
 			MultiSig:             metadata.MCMAddress,
-			PreOpCount:           big.NewInt(int64(metadata.StartingOpCount)),                         // TODO: handle overflow
-			PostOpCount:          big.NewInt(int64(metadata.StartingOpCount) + int64(currentTxCount)), // TODO: handle overflow
+			PreOpCount:           preOpCount,
+			PostOpCount:          postOpCount,
 			OverridePreviousRoot: overridePreviousRoot,
 		}
 	}
