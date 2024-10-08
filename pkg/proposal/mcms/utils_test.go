@@ -10,6 +10,8 @@ import (
 )
 
 func TestFromFile(t *testing.T) {
+	t.Parallel()
+
 	// Create a temporary file for testing
 	file, err := os.CreateTemp("", "testfile")
 	require.NoError(t, err)
@@ -43,6 +45,8 @@ func TestFromFile(t *testing.T) {
 }
 
 func TestProposalFromFile(t *testing.T) {
+	t.Parallel()
+
 	mcmsProposal := MCMSProposal{
 		Version:              "1",
 		ValidUntil:           100,

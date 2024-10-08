@@ -102,6 +102,8 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 }
 
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -228,6 +230,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
@@ -354,6 +358,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 }
 
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -490,6 +496,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
@@ -630,6 +638,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
@@ -729,6 +739,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)

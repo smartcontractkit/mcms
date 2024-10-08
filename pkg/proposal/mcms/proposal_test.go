@@ -15,6 +15,8 @@ var TestChain2 = ChainIdentifier(16015286601757825753)
 var TestChain3 = ChainIdentifier(10344971235874465080)
 
 func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
@@ -46,6 +48,8 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 }
 
 func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewProposal(
 		"",
 		2004259681,
@@ -78,6 +82,8 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 }
 
 func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewProposal(
 		"1.0",
 		0,
@@ -110,6 +116,8 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 }
 
 func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
@@ -137,6 +145,8 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 }
 
 func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
@@ -169,6 +179,8 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 }
 
 func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
@@ -190,6 +202,8 @@ func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
 }
 
 func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
