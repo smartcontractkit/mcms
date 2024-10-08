@@ -30,6 +30,8 @@ var TestChain2 = mcms.ChainIdentifier(16015286601757825753)
 var TestChain3 = mcms.ChainIdentifier(10344971235874465080)
 
 func TestValidate_ValidProposal(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -68,6 +70,8 @@ func TestValidate_ValidProposal(t *testing.T) {
 }
 
 func TestValidate_InvalidOperation(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -107,6 +111,8 @@ func TestValidate_InvalidOperation(t *testing.T) {
 }
 
 func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -146,6 +152,8 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 }
 
 func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
+	t.Parallel()
+
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -370,6 +378,8 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 }
 
 func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -541,6 +551,8 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 }
 
 func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -740,6 +752,8 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 }
 
 func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -852,6 +866,8 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 }
 
 func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -1052,6 +1068,8 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 }
 
 func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -1264,6 +1282,8 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 }
 
 func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
+	t.Parallel()
+
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -1395,6 +1415,8 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 }
 
 func TestTimelockProposalFromFile(t *testing.T) {
+	t.Parallel()
+
 	mcmsProposal := MCMSWithTimelockProposal{
 		MCMSProposal: mcms.MCMSProposal{
 			Version:              "1",
