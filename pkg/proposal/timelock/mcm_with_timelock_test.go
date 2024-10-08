@@ -488,8 +488,8 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	// Check all the logs
 	var operationId common.Hash
 	for _, log := range receipt.Logs {
-		event, err := timelock.ParseCallScheduled(*log)
-		if err == nil {
+		event, perr := timelock.ParseCallScheduled(*log)
+		if perr == nil {
 			operationId = event.Id
 		}
 	}
@@ -661,8 +661,8 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	// Check all the logs
 	var operationId common.Hash
 	for _, log := range receipt.Logs {
-		event, err := timelock.ParseCallScheduled(*log)
-		if err == nil {
+		event, perr := timelock.ParseCallScheduled(*log)
+		if perr == nil {
 			operationId = event.Id
 		}
 	}
@@ -888,8 +888,8 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 
 	operations := make([]mcms.Operation, 3)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
-		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
-		require.NoError(t, err)
+		data, perr := timelockAbi.Pack("grantRole", role, auths[0].From)
+		require.NoError(t, perr)
 		operations[i] = mcms.Operation{
 			To:    timelock.Address(),
 			Value: big.NewInt(0),
@@ -989,8 +989,8 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	// Check all the logs
 	var operationId common.Hash
 	for _, log := range receipt.Logs {
-		event, err := timelock.ParseCallScheduled(*log)
-		if err == nil {
+		event, perr := timelock.ParseCallScheduled(*log)
+		if perr == nil {
 			operationId = event.Id
 		}
 	}
@@ -1090,8 +1090,8 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 
 	operations := make([]mcms.Operation, 3)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
-		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
-		require.NoError(t, err)
+		data, perr := timelockAbi.Pack("grantRole", role, auths[0].From)
+		require.NoError(t, perr)
 		operations[i] = mcms.Operation{
 			To:    timelock.Address(),
 			Value: big.NewInt(0),
@@ -1191,8 +1191,8 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	// Check all the logs
 	var operationId common.Hash
 	for _, log := range receipt.Logs {
-		event, err := timelock.ParseCallScheduled(*log)
-		if err == nil {
+		event, perr := timelock.ParseCallScheduled(*log)
+		if perr == nil {
 			operationId = event.Id
 		}
 	}
@@ -1304,8 +1304,8 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 
 	operations := make([]mcms.Operation, 3)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole} {
-		data, err := timelockAbi.Pack("grantRole", role, auths[0].From)
-		require.NoError(t, err)
+		data, perr := timelockAbi.Pack("grantRole", role, auths[0].From)
+		require.NoError(t, perr)
 		operations[i] = mcms.Operation{
 			To:    timelock.Address(),
 			Value: big.NewInt(0),
