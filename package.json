@@ -2,16 +2,16 @@
   "name": "@smartcontractkit/mcms",
   "version": "0.0.2",
   "description": "Tools/Libraries to Deploy/Manage/Interact with MCMS",
-  "repository": "https://github.com/smartcontractkit/mcms",
-  "author": "Chainlink Labs",
+  "private": true,
   "scripts": {
     "ci:changeset:publish": "pnpm changeset publish",
     "ci:changeset:version": "pnpm changeset version && pnpm version --patch"
   },
+  "author": "@smartcontractkit",
   "devDependencies": {
     "@changesets/changelog-github": "^0.4.8",
     "@changesets/cli": "~2.26.2",
     "changeset": "^0.2.6"
   },
-  "license": "MIT"
+  "repository": "https://github.com/smartcontractkit/mcms"
 }
