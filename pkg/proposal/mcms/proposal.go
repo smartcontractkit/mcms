@@ -23,7 +23,7 @@ type MCMSProposal struct {
 	OverridePreviousRoot bool        `json:"overridePreviousRoot"`
 
 	// Map of chain identifier to chain metadata
-	ChainMetadata map[ChainIdentifier]ChainMetadata `json:"chainMetadata"`
+	ChainMetadata ChainMetadatas `json:"chainMetadata"`
 
 	// This is intended to be displayed as-is to signers, to give them
 	// context for the change. File authors should templatize strings for
@@ -39,7 +39,7 @@ func NewProposal(
 	validUntil uint32,
 	signatures []Signature,
 	overridePreviousRoot bool,
-	chainMetadata map[ChainIdentifier]ChainMetadata,
+	chainMetadata ChainMetadatas,
 	description string,
 	transactions []ChainOperation,
 ) (*MCMSProposal, error) {
@@ -104,9 +104,9 @@ func (m *MCMSProposal) Validate() error {
 
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
-		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
+		if _, ok := m.ChainMetadata[t.ChainID]; !ok {
 			return &errors.ErrMissingChainDetails{
-				ChainIdentifier: uint64(t.ChainIdentifier),
+				ChainIdentifier: uint64(t.ChainID),
 				Parameter:       "chain metadata",
 			}
 		}
