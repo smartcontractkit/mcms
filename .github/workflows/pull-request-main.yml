@@ -21,7 +21,7 @@ jobs:
           golangci-lint-version: v1.61.0
 
   ci-lint-misc:
-    name: Linting GH Actions files and shell scripts
+    name: Lint GH Actions and scripts
     runs-on: ubuntu-latest
     steps:
       - name: Linting Misc (yaml + sh files)
