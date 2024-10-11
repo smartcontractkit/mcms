@@ -33,3 +33,18 @@ jobs:
         with:
           go-test-cmd: go test -coverprofile=coverage.txt $(go list ./pkg/...)
           use-go-cache: true
+
+  ci-sonarqube:
+    name: Sonarqube Scan
+    needs: [ ci-lint, ci-test ]
+    runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
+    steps:
+      - name: Scanning with Sonarqube
+        uses: smartcontractkit/.github/actions/ci-sonarqube-go@568bf84171110fbfc8efe24fd1625d1bdd2783c5
+        with:
+          # sonarqube inputs
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
+          include-lint: true
+
