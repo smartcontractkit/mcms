@@ -109,7 +109,8 @@ func TestToRawConfig(t *testing.T) {
 	assert.NotNil(t, config)
 	require.NoError(t, err)
 
-	rawConfig := config.ToRawConfig()
+	rawConfig, err := config.ToRawConfig()
+	require.NoError(t, err)
 
 	assert.Equal(t, [32]uint8{1, 1}, rawConfig.GroupQuorums)
 	assert.Equal(t, [32]uint8{0, 0}, rawConfig.GroupParents)
@@ -153,8 +154,8 @@ func TestExtractSetConfigInputs(t *testing.T) {
 	assert.NotNil(t, config)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
-
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := config.ExtractSetConfigInputs()
+	require.NoError(t, err)
 	assert.Equal(t, [32]uint8{2, 1}, groupQuorums)
 	assert.Equal(t, [32]uint8{0, 0}, groupParents)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3")}, signerAddresses)
@@ -174,8 +175,9 @@ func TestExtractSetConfigInputs_OnlyRootSigners(t *testing.T) {
 	assert.NotNil(t, config)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := config.ExtractSetConfigInputs()
 
+	require.NoError(t, err)
 	assert.Equal(t, [32]uint8{1, 0}, groupQuorums)
 	assert.Equal(t, [32]uint8{0, 0}, groupParents)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, signerAddresses)
@@ -216,8 +218,9 @@ func TestExtractSetConfigInputs_OnlyGroups(t *testing.T) {
 	assert.NotNil(t, config)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := config.ExtractSetConfigInputs()
 
+	require.NoError(t, err)
 	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
 	assert.Equal(t, [32]uint8{0, 0, 0, 0}, groupParents)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
@@ -257,8 +260,9 @@ func TestExtractSetConfigInputs_NestedSignersAndGroups(t *testing.T) {
 	assert.NotNil(t, config)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := config.ExtractSetConfigInputs()
 
+	require.NoError(t, err)
 	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
 	assert.Equal(t, [32]uint8{0, 0, 1, 0}, groupParents)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
@@ -298,8 +302,9 @@ func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
 	assert.NotNil(t, config)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups := config.ExtractSetConfigInputs()
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := config.ExtractSetConfigInputs()
 
+	require.NoError(t, err)
 	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
 	assert.Equal(t, [32]uint8{0, 0, 1, 0}, groupParents)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)

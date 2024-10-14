@@ -249,12 +249,19 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	}
 
 	// Set the config
+	castedNumSigner, err := mcms.SafeCastUint64ToUint8(numSigners)
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
 	cfg := &config.Config{
-		Quorum:       uint8(numSigners),
+		Quorum:       castedNumSigner,
 		Signers:      signers,
 		GroupSigners: []config.Config{},
 	}
-	quorums, parents, signersAddresses, signerGroups := cfg.ExtractSetConfigInputs()
+	quorums, parents, signersAddresses, signerGroups, err := cfg.ExtractSetConfigInputs()
+	if err != nil {
+		return nil, nil, nil, nil, nil, err
+	}
 
 	tx, err = mcmsContract.SetConfig(auths[0], signersAddresses, signerGroups, quorums, parents, false)
 	if err != nil {

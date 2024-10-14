@@ -1,14 +1,20 @@
 package config
 
 import (
+	"fmt"
+
 	"math/big"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/spf13/cast"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
+
+const maxUint8Value = 255
 
 // Config is a struct that holds all the configuration for the owner contracts
 type Config struct {
@@ -94,24 +100,32 @@ func (c *Config) Validate() error {
 	return nil
 }
 
-func (c *Config) ToRawConfig() gethwrappers.ManyChainMultiSigConfig {
-	groupQuorums, groupParents, signerAddresses, signerGroups := c.ExtractSetConfigInputs()
-
+func (c *Config) ToRawConfig() (gethwrappers.ManyChainMultiSigConfig, error) {
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := c.ExtractSetConfigInputs()
+	if err != nil {
+		return gethwrappers.ManyChainMultiSigConfig{}, err
+	}
+	// Check the length of signerAddresses up-front
+	if len(signerAddresses) > maxUint8Value+1 {
+		return gethwrappers.ManyChainMultiSigConfig{}, &errors.ErrTooManySigners{NumSigners: uint64(len(signerAddresses))}
+	}
 	// convert to gethwrappers types
 	signers := make([]gethwrappers.ManyChainMultiSigSigner, len(signerAddresses))
+	idx := uint8(0)
 	for i, signer := range signerAddresses {
 		signers[i] = gethwrappers.ManyChainMultiSigSigner{
 			Addr:  signer,
 			Group: signerGroups[i],
-			Index: uint8(i),
+			Index: idx,
 		}
+		idx += 1
 	}
 
 	return gethwrappers.ManyChainMultiSigConfig{
 		GroupQuorums: groupQuorums,
 		GroupParents: groupParents,
 		Signers:      signers,
-	}
+	}, nil
 }
 
 func (c *Config) Equals(other *Config) bool {
@@ -151,12 +165,14 @@ func (c *Config) Equals(other *Config) bool {
 	return true
 }
 
-func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Address, []uint8) {
+func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Address, []uint8, error) {
 	var groupQuorums, groupParents, signerGroups []uint8 = []uint8{}, []uint8{}, []uint8{}
 	var signers []common.Address = []common.Address{}
 
-	extractGroupsAndSigners(c, 0, &groupQuorums, &groupParents, &signers, &signerGroups)
-
+	err := extractGroupsAndSigners(c, 0, &groupQuorums, &groupParents, &signers, &signerGroups)
+	if err != nil {
+		return [32]uint8{}, [32]uint8{}, []common.Address{}, []uint8{}, err
+	}
 	// fill the rest of the arrays with 0s
 	for i := len(groupQuorums); i < 32; i++ {
 		groupQuorums = append(groupQuorums, 0)
@@ -188,27 +204,39 @@ func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Addres
 		orderedSignerGroups[i] = signer.Group
 	}
 
-	return [32]uint8(groupQuorums), [32]uint8(groupParents), orderedSignerAddresses, orderedSignerGroups
+	return [32]uint8(groupQuorums), [32]uint8(groupParents), orderedSignerAddresses, orderedSignerGroups, nil
 }
 
-func extractGroupsAndSigners(group *Config, parentIdx int, groupQuorums *[]uint8, groupParents *[]uint8, signers *[]common.Address, signerGroups *[]uint8) {
+func extractGroupsAndSigners(group *Config, parentIdx uint8, groupQuorums *[]uint8, groupParents *[]uint8, signers *[]common.Address, signerGroups *[]uint8) error {
 	// Append the group's quorum and parent index to the respective slices
 	*groupQuorums = append(*groupQuorums, group.Quorum)
-	*groupParents = append(*groupParents, uint8(parentIdx))
+	*groupParents = append(*groupParents, parentIdx)
 
 	// Assign the current group index
 	currentGroupIdx := len(*groupQuorums) - 1
 
+	// Check if currentGroupIdx is within the uint8 range
+	if currentGroupIdx > int(maxUint8Value) {
+		return fmt.Errorf("group index %d exceeds uint8 range", currentGroupIdx)
+	}
+
+	// Safe to cast currentGroupIdx to uint8
+	currentGroupIdxUint8 := cast.ToUint8(currentGroupIdx)
+
 	// For each string signer, append the signer and its group index
 	for _, signer := range group.Signers {
 		*signers = append(*signers, signer)
-		*signerGroups = append(*signerGroups, uint8(currentGroupIdx))
+		*signerGroups = append(*signerGroups, currentGroupIdxUint8)
 	}
 
 	// Recursively handle the nested multisig groups
 	for _, groupSigner := range group.GroupSigners {
-		extractGroupsAndSigners(&groupSigner, currentGroupIdx, groupQuorums, groupParents, signers, signerGroups)
+		if err := extractGroupsAndSigners(&groupSigner, currentGroupIdxUint8, groupQuorums, groupParents, signers, signerGroups); err != nil {
+			return err
+		}
 	}
+
+	return nil
 }
 
 func unorderedArrayEquals[T comparable](a, b []T) bool {

@@ -81,7 +81,11 @@ func (m *MCMSProposal) Validate() error {
 	// Get the current Unix timestamp as an int64
 	currentTime := time.Now().Unix()
 
-	if m.ValidUntil <= uint32(currentTime) {
+	currentTimeCasted, err := SafeCastIntToUint32(int(currentTime))
+	if err != nil {
+		return err
+	}
+	if m.ValidUntil <= currentTimeCasted {
 		// ValidUntil is a Unix timestamp, so it should be greater than the current time
 		return &errors.ErrInvalidValidUntil{
 			ReceivedValidUntil: m.ValidUntil,

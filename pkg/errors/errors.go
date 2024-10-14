@@ -138,3 +138,11 @@ type ErrInconsistentConfigs struct {
 func (e *ErrInconsistentConfigs) Error() string {
 	return fmt.Sprintf("inconsistent configs for chains %v and %v", e.ChainIdentifierA, e.ChainIdentifierB)
 }
+
+type ErrTooManySigners struct {
+	NumSigners uint64
+}
+
+func (e *ErrTooManySigners) Error() string {
+	return fmt.Sprintf("too many signers: %v max number is 255", e.NumSigners)
+}
