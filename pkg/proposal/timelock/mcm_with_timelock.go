@@ -88,32 +88,8 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 		}
 	}
 
-	// Get the current Unix timestamp as an int64
-	currentTime := time.Now().Unix()
-
-	currentTimeCasted, errCast := mcms.SafeCastInt64ToUint32(currentTime)
-	if errCast != nil {
-		return errCast
-	}
-	if m.ValidUntil <= currentTimeCasted {
-		// ValidUntil is a Unix timestamp, so it should be greater than the current time
-		return &errors.ErrInvalidValidUntil{
-			ReceivedValidUntil: m.ValidUntil,
-		}
-	}
-
-	if len(m.ChainMetadata) == 0 {
-		return &errors.ErrNoChainMetadata{}
-	}
-
-	if len(m.Transactions) == 0 {
-		return &errors.ErrNoTransactions{}
-	}
-
-	if m.Description == "" {
-		return &errors.ErrInvalidDescription{
-			ReceivedDescription: m.Description,
-		}
+	if err := mcms.ProposalValidateBasic(m.MCMSProposal); err != nil {
+		return err
 	}
 
 	// Validate all chains in transactions have an entry in chain metadata

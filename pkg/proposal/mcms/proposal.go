@@ -71,13 +71,8 @@ func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	return &out, nil
 }
 
-func (m *MCMSProposal) Validate() error {
-	if m.Version == "" {
-		return &errors.ErrInvalidVersion{
-			ReceivedVersion: m.Version,
-		}
-	}
-
+// ProposalValidateBasic basic validation for an MCMS proposal
+func ProposalValidateBasic(proposal MCMSProposal) error {
 	// Get the current Unix timestamp as an int64
 	currentTime := time.Now().Unix()
 
@@ -85,25 +80,37 @@ func (m *MCMSProposal) Validate() error {
 	if err != nil {
 		return err
 	}
-	if m.ValidUntil <= currentTimeCasted {
+	if proposal.ValidUntil <= currentTimeCasted {
 		// ValidUntil is a Unix timestamp, so it should be greater than the current time
 		return &errors.ErrInvalidValidUntil{
-			ReceivedValidUntil: m.ValidUntil,
+			ReceivedValidUntil: proposal.ValidUntil,
 		}
 	}
-
-	if len(m.ChainMetadata) == 0 {
+	if len(proposal.ChainMetadata) == 0 {
 		return &errors.ErrNoChainMetadata{}
 	}
 
-	if len(m.Transactions) == 0 {
+	if len(proposal.Transactions) == 0 {
 		return &errors.ErrNoTransactions{}
 	}
 
-	if m.Description == "" {
+	if proposal.Description == "" {
 		return &errors.ErrInvalidDescription{
-			ReceivedDescription: m.Description,
+			ReceivedDescription: proposal.Description,
 		}
+	}
+
+	return nil
+}
+func (m *MCMSProposal) Validate() error {
+	if m.Version == "" {
+		return &errors.ErrInvalidVersion{
+			ReceivedVersion: m.Version,
+		}
+	}
+
+	if err := ProposalValidateBasic(*m); err != nil {
+		return err
 	}
 
 	// Validate all chains in transactions have an entry in chain metadata
