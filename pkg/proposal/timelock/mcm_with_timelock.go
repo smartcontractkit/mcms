@@ -63,9 +63,9 @@ func NewMCMSWithTimelockProposal(
 		Transactions:      transactions,
 	}
 
-	err := proposal.Validate()
-	if err != nil {
-		return nil, err
+	errValidate := proposal.Validate()
+	if errValidate != nil {
+		return nil, errValidate
 	}
 
 	return &proposal, nil
@@ -73,9 +73,9 @@ func NewMCMSWithTimelockProposal(
 
 func NewMCMSWithTimelockProposalFromFile(filePath string) (*MCMSWithTimelockProposal, error) {
 	var out MCMSWithTimelockProposal
-	err := mcms.FromFile(filePath, &out)
-	if err != nil {
-		return nil, err
+	errFromFile := mcms.FromFile(filePath, &out)
+	if errFromFile != nil {
+		return nil, errFromFile
 	}
 
 	return &out, nil
@@ -91,9 +91,9 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	// Get the current Unix timestamp as an int64
 	currentTime := time.Now().Unix()
 
-	currentTimeCasted, err := mcms.SafeCastInt64ToUint32(currentTime)
-	if err != nil {
-		return err
+	currentTimeCasted, errCast := mcms.SafeCastInt64ToUint32(currentTime)
+	if errCast != nil {
+		return errCast
 	}
 	if m.ValidUntil <= currentTimeCasted {
 		// ValidUntil is a Unix timestamp, so it should be greater than the current time
@@ -148,9 +148,9 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 
 func (m *MCMSWithTimelockProposal) ToExecutor(sim bool) (*mcms.Executor, error) {
 	// Convert the proposal to an MCMS only proposal
-	mcmOnly, err := m.toMCMSOnlyProposal()
-	if err != nil {
-		return nil, err
+	mcmOnly, errToMcms := m.toMCMSOnlyProposal()
+	if errToMcms != nil {
+		return nil, errToMcms
 	}
 
 	return mcmOnly.ToExecutor(sim)
@@ -190,18 +190,19 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 		salt := ZERO_HASH
 		delay, _ := time.ParseDuration(m.MinDelay)
 
-		abi, err := owner.RBACTimelockMetaData.GetAbi()
-		if err != nil {
-			return mcms.MCMSProposal{}, err
+		abi, errAbi := owner.RBACTimelockMetaData.GetAbi()
+		if errAbi != nil {
+			return mcms.MCMSProposal{}, errAbi
 		}
 
-		operationId, err := hashOperationBatch(calls, predecessor, salt)
-		if err != nil {
-			return mcms.MCMSProposal{}, err
+		operationId, errHash := hashOperationBatch(calls, predecessor, salt)
+		if errHash != nil {
+			return mcms.MCMSProposal{}, errHash
 		}
 
 		// Encode the data based on the operation
 		var data []byte
+		var err error
 		switch m.Operation {
 		case Schedule:
 			data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))

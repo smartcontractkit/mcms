@@ -65,8 +65,8 @@ func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) (*Config, 
 		}
 	}
 
-	if err := groups[0].Validate(); err != nil {
-		return nil, err
+	if errValidate := groups[0].Validate(); errValidate != nil {
+		return nil, errValidate
 	}
 
 	return &groups[0], nil
@@ -101,9 +101,9 @@ func (c *Config) Validate() error {
 }
 
 func (c *Config) ToRawConfig() (gethwrappers.ManyChainMultiSigConfig, error) {
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := c.ExtractSetConfigInputs()
-	if err != nil {
-		return gethwrappers.ManyChainMultiSigConfig{}, err
+	groupQuorums, groupParents, signerAddresses, signerGroups, errSetConfig := c.ExtractSetConfigInputs()
+	if errSetConfig != nil {
+		return gethwrappers.ManyChainMultiSigConfig{}, errSetConfig
 	}
 	// Check the length of signerAddresses up-front
 	if len(signerAddresses) > maxUint8Value+1 {
@@ -166,12 +166,12 @@ func (c *Config) Equals(other *Config) bool {
 }
 
 func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Address, []uint8, error) {
-	var groupQuorums, groupParents, signerGroups []uint8 = []uint8{}, []uint8{}, []uint8{}
-	var signers []common.Address = []common.Address{}
+	var groupQuorums, groupParents, signerGroups = []uint8{}, []uint8{}, []uint8{}
+	var signers = []common.Address{}
 
-	err := extractGroupsAndSigners(c, 0, &groupQuorums, &groupParents, &signers, &signerGroups)
-	if err != nil {
-		return [32]uint8{}, [32]uint8{}, []common.Address{}, []uint8{}, err
+	errExtract := extractGroupsAndSigners(c, 0, &groupQuorums, &groupParents, &signers, &signerGroups)
+	if errExtract != nil {
+		return [32]uint8{}, [32]uint8{}, []common.Address{}, []uint8{}, errExtract
 	}
 	// fill the rest of the arrays with 0s
 	for i := len(groupQuorums); i < 32; i++ {
