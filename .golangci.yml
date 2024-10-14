@@ -51,7 +51,6 @@ linters-settings:
   gosec:
     excludes:
       - G115 # TODO: Resolve integer overflow issues
-      - G306 # TODO: Resolve WriteFile permissions issues
   govet:
     enable:
       - shadow
