@@ -71,8 +71,8 @@ func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	return &out, nil
 }
 
-// ProposalValidateBasic basic validation for an MCMS proposal
-func ProposalValidateBasic(proposal MCMSProposal) error {
+// proposalValidateBasic basic validation for an MCMS proposal
+func proposalValidateBasic(proposal MCMSProposal) error {
 	// Get the current Unix timestamp as an int64
 	currentTime := time.Now().Unix()
 
@@ -109,7 +109,7 @@ func (m *MCMSProposal) Validate() error {
 		}
 	}
 
-	if err := ProposalValidateBasic(*m); err != nil {
+	if err := proposalValidateBasic(*m); err != nil {
 		return err
 	}
 

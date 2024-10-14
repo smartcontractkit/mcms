@@ -36,8 +36,8 @@ type MCMSWithTimelockProposal struct {
 	Transactions []BatchChainOperation `json:"transactions"`
 }
 
-// TimelockProposalValidateBasic basic validation for an MCMS proposal
-func TimelockProposalValidateBasic(timelockProposal MCMSWithTimelockProposal) error {
+// timeLockProposalValidateBasic basic validation for an MCMS proposal
+func timeLockProposalValidateBasic(timelockProposal MCMSWithTimelockProposal) error {
 	// Get the current Unix timestamp as an int64
 	currentTime := time.Now().Unix()
 
@@ -129,7 +129,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 		}
 	}
 
-	if err := TimelockProposalValidateBasic(*m); err != nil {
+	if err := timeLockProposalValidateBasic(*m); err != nil {
 		return err
 	}
 
