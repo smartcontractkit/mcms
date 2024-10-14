@@ -65,3 +65,25 @@ jobs:
           gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
           gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
 
+  notify-slack:
+    if: ${{ success() }}
+    needs:
+      - cicd-publish-release
+    runs-on: ubuntu-latest
+    environment: build-publish
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
+
+      - name: Set tag for Slack notification
+        run: echo "TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+        shell: bash
+
+      - name: Notify Slack
+        uses: smartcontractkit/.github/actions/slack-notify-git-ref@31e00facdd8f57a2bc7868b5e4c8591bf2aa3727 # slack-notify-git-ref@0.1.0
+        with:
+          slack-channel-id: ${{ secrets.SLACK_CHANNEL_MCMS }}
+          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN_RELENG }} # Releng Bot
+          git-ref: ${{ env.TAG }}
+          git-ref-type: tag
+          changelog-url: 'https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG }}'
