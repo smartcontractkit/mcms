@@ -36,6 +36,37 @@ type MCMSWithTimelockProposal struct {
 	Transactions []BatchChainOperation `json:"transactions"`
 }
 
+// TimelockProposalValidateBasic basic validation for an MCMS proposal
+func TimelockProposalValidateBasic(timelockProposal MCMSWithTimelockProposal) error {
+	// Get the current Unix timestamp as an int64
+	currentTime := time.Now().Unix()
+
+	currentTimeCasted, err := mcms.SafeCastIntToUint32(int(currentTime))
+	if err != nil {
+		return err
+	}
+	if timelockProposal.ValidUntil <= currentTimeCasted {
+		// ValidUntil is a Unix timestamp, so it should be greater than the current time
+		return &errors.ErrInvalidValidUntil{
+			ReceivedValidUntil: timelockProposal.ValidUntil,
+		}
+	}
+	if len(timelockProposal.ChainMetadata) == 0 {
+		return &errors.ErrNoChainMetadata{}
+	}
+
+	if len(timelockProposal.Transactions) == 0 {
+		return &errors.ErrNoTransactions{}
+	}
+
+	if timelockProposal.Description == "" {
+		return &errors.ErrInvalidDescription{
+			ReceivedDescription: timelockProposal.Description,
+		}
+	}
+
+	return nil
+}
 func NewMCMSWithTimelockProposal(
 	version string,
 	validUntil uint32,
@@ -88,10 +119,6 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 		}
 	}
 
-	if err := mcms.ProposalValidateBasic(m.MCMSProposal); err != nil {
-		return err
-	}
-
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
@@ -100,6 +127,10 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 				Parameter:       "chain metadata",
 			}
 		}
+	}
+
+	if err := TimelockProposalValidateBasic(*m); err != nil {
+		return err
 	}
 
 	switch m.Operation {
