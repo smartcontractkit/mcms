@@ -114,7 +114,7 @@ func WriteProposalToFile(proposal any, filePath string) error {
 		return err
 	}
 
-	err = os.WriteFile(filePath, proposalBytes, 0644)
+	err = os.WriteFile(filePath, proposalBytes, 0600)
 	if err != nil {
 		return err
 	}

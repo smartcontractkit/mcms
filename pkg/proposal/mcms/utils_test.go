@@ -32,7 +32,7 @@ func TestFromFile(t *testing.T) {
 	}
 	sampleJSON, err := json.Marshal(sampleData)
 	require.NoError(t, err)
-	err = os.WriteFile(file.Name(), sampleJSON, 0644)
+	err = os.WriteFile(file.Name(), sampleJSON, 0600)
 	require.NoError(t, err)
 
 	// Call the FromFile function
@@ -62,7 +62,7 @@ func TestProposalFromFile(t *testing.T) {
 
 	proposalBytes, err := json.Marshal(mcmsProposal)
 	require.NoError(t, err)
-	err = os.WriteFile(tempFile.Name(), proposalBytes, 0644)
+	err = os.WriteFile(tempFile.Name(), proposalBytes, 0600)
 	require.NoError(t, err)
 
 	fileProposal, err := NewProposalFromFile(tempFile.Name())

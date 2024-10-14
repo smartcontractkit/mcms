@@ -1,7 +1,5 @@
 <div align="center">
   <h1>Many Chain Multisig System</h1>
-  <a href='https://github.com/smartcontractkit/mcms/actions/workflows/push-main.yml'><img src="https://github.com/smartcontractkit/mcms/actions/workflows/push-main.yml/badge.svg" /></a>
-  <br/>
   <br/>
 </div>
 
@@ -49,12 +47,3 @@ Run the linters with:
 `task lint`
 
 More `lint` commands can be found by running `task -l`
-
-## Documentation
-
-We use [Docsify](https://docsify.js.org) for our documentations.
-
-```bash
-pnpm install
-pnpm run docs
-````
