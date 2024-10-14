@@ -58,8 +58,3 @@ We use [Docsify](https://docsify.js.org) for our documentations.
 pnpm install
 pnpm run docs
 ````
-
-### Testing
-
-It is important that you provide a test suite for your code. This will help everyone understand your code better and
-ensure that it works as expected.
