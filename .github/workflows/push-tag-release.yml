@@ -76,7 +76,7 @@ jobs:
         uses: actions/checkout@9bb56186c3b09b4f86b1c65136769dd318469633 # v4.1.2
 
       - name: Set tag for Slack notification
-        run: echo "TAG=${{ github.ref_name }}" >> $GITHUB_ENV
+        run: echo 'TAG=${{ github.ref_name }}' >> $GITHUB_ENV
         shell: bash
 
       - name: Notify Slack
