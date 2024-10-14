@@ -50,7 +50,7 @@ Run the linters with:
 
 More `lint` commands can be found by running `task -l`
 
-### Run Docsify Locally
+## Documentation
 
 We use [Docsify](https://docsify.js.org) for our documentations.
 
