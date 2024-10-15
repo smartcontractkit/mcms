@@ -5,16 +5,10 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/smartcontractkit/mcms/pkg/merkle"
 )
-
-var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
-var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA"))
 
 func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifier]uint64 {
 	txCounts := make(map[ChainIdentifier]uint64)
@@ -25,56 +19,12 @@ func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifi
 	return txCounts
 }
 
-func buildRootMetadatas(
-	chainMetadata map[ChainIdentifier]ChainMetadata,
-	txCounts map[ChainIdentifier]uint64,
-	overridePreviousRoot bool,
-	isSim bool,
-) (map[ChainIdentifier]RootMetadata[any], error) {
-	rootMetadatas := make(map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata)
-
-	for chainID, metadata := range chainMetadata {
-		chain, exists := chain_selectors.ChainBySelector(uint64(chainID))
-		if !exists {
-			return nil, &errors.ErrInvalidChainID{
-				ReceivedChainID: uint64(chainID),
-			}
-		}
-
-		currentTxCount, ok := txCounts[chainID]
-		if !ok {
-			return nil, &errors.ErrMissingChainDetails{
-				ChainIdentifier: uint64(chainID),
-				Parameter:       "transaction count",
-			}
-		}
-
-		// Simulated chains always have block.chainid = 1337
-		// So for setRoot to execute (not throw WrongChainId) we must
-		// override the evmChainID to be 1337.
-		if isSim {
-			chain.EvmChainID = 1337
-		}
-
-		preOpCount := new(big.Int).SetUint64(metadata.StartingOpCount)
-		postOpCount := new(big.Int).SetUint64(metadata.StartingOpCount + currentTxCount)
-
-		rootMetadatas[chainID] = gethwrappers.ManyChainMultiSigRootMetadata{
-			ChainId:              new(big.Int).SetUint64(chain.EvmChainID),
-			MultiSig:             metadata.MCMAddress,
-			PreOpCount:           preOpCount,
-			PostOpCount:          postOpCount,
-			OverridePreviousRoot: overridePreviousRoot,
-		}
-	}
-
-	return rootMetadatas, nil
-}
-
 func buildOperations(
 	transactions []ChainOperation,
-	rootMetadatas map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
+	rootMetadatas ChainMetadatas,
 	txCounts map[ChainIdentifier]uint64,
+	overridePreviousRoot bool,
+	sim bool,
 ) (map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp, []gethwrappers.ManyChainMultiSigOp) {
 	ops := make(map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp)
 	chainAgnosticOps := make([]gethwrappers.ManyChainMultiSigOp, 0)
@@ -83,22 +33,22 @@ func buildOperations(
 	for _, tx := range transactions {
 		rootMetadata := rootMetadatas[tx.ChainID]
 		if _, ok := ops[tx.ChainID]; !ok {
-			ops[tx.ChainID] = make([]gethwrappers.ManyChainMultiSigOp, txCounts[tx.ChainIdentifier])
+			ops[tx.ChainID] = make([]gethwrappers.ManyChainMultiSigOp, txCounts[tx.ChainID])
 			chainIdx[tx.ChainID] = 0
 		}
 
 		op := gethwrappers.ManyChainMultiSigOp{
 			ChainId:  rootMetadata.ChainId,
 			MultiSig: rootMetadata.MultiSig,
-			Nonce:    big.NewInt(rootMetadata.PreOpCount.Int64() + int64(chainIdx[tx.ChainIdentifier])),
+			Nonce:    big.NewInt(rootMetadata.PreOpCount.Int64() + int64(chainIdx[tx.ChainID])),
 			To:       tx.To,
 			Data:     tx.Data,
 			Value:    tx.Value,
 		}
 
 		chainAgnosticOps = append(chainAgnosticOps, op)
-		ops[tx.ChainIdentifier][chainIdx[tx.ChainIdentifier]] = op
-		chainIdx[tx.ChainIdentifier]++
+		ops[tx.ChainID][chainIdx[tx.ChainID]] = op
+		chainIdx[tx.ChainID]++
 	}
 
 	return ops, chainAgnosticOps

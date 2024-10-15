@@ -9,11 +9,13 @@ import (
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
 
+var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
+
 type ChainIdentifier uint64
 
 type Operation[R any] interface {
-	Verbose() R
-	Hash() (common.Hash, error)
+	Verbose(chainID uint64, nonce uint64, multisig string) R
+	Hash(chainID uint64, nonce uint64, multisig string) (common.Hash, error)
 }
 
 type OperationMetadata struct {
@@ -55,12 +57,18 @@ type EVMOperation struct {
 	Value *big.Int       `json:"value"`
 }
 
-func (e *EVMOperation) Verbose() gethwrappers.ManyChainMultiSigOp {
-	// TODO: Implement
-	return gethwrappers.ManyChainMultiSigOp{}
+func (e *EVMOperation) Verbose(chainID uint64, nonce uint64, multisig string) gethwrappers.ManyChainMultiSigOp {
+	return gethwrappers.ManyChainMultiSigOp{
+		ChainId:  new(big.Int).SetUint64(chainID),
+		MultiSig: common.HexToAddress(multisig),
+		Nonce:    new(big.Int).SetUint64(nonce),
+		To:       e.To,
+		Data:     e.Data,
+		Value:    e.Value,
+	}
 }
 
-func (e *EVMOperation) Hash() (common.Hash, error) {
+func (e *EVMOperation) Hash(chainID uint64, nonce uint64, multisig string) (common.Hash, error) {
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
 	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, e.Verbose())
 	if err != nil {
@@ -76,10 +84,10 @@ type ExampleChainOperation struct {
 	Value uint64 `json:"value"`
 }
 
-func (e *ExampleChainOperation) Verbose() struct{} {
+func (e *ExampleChainOperation) Verbose(chainID uint64, nonce uint64, multisig string) struct{} {
 	return struct{}{}
 }
 
-func (e *ExampleChainOperation) Hash() (common.Hash, error) {
+func (e *ExampleChainOperation) Hash(chainID uint64, nonce uint64, multisig string) (common.Hash, error) {
 	return common.Hash{}, nil
 }
