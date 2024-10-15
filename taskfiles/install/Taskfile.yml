@@ -3,9 +3,12 @@ version: '3'
 includes:
   asdf:
     taskfile: ./asdf.yml
+  pnpm:
+    taskfile: ./pnpm.yml
 
 tasks:
   tools:
     desc: Installs development tools
     cmds:
-      - task: asdf:tools
+      - task: asdf:install
+      - task: pnpm:install
