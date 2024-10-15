@@ -99,12 +99,3 @@ issues:
     - path: _test\.go
       linters:
         - unparam # No need to check for unused parameters in tests, since there are often false positives
-    - path: pkg/proposal/mcms/signature.go
-      linters:
-        - mnd # This file contains magic numbers which need to be fixed
-    - path: pkg/merkle/merkle_tree.go
-      linters:
-        - mnd # This file contains magic numbers which need to be fixed
-    - path: pkg/proposal/mcms/utils.go
-      linters:
-        - mnd # This file contains magic numbers which need to be fixed
