@@ -82,20 +82,20 @@ func proposalValidateBasic(proposal MCMSProposal) error {
 	}
 	if proposal.ValidUntil <= currentTimeCasted {
 		// ValidUntil is a Unix timestamp, so it should be greater than the current time
-		return &errors.ErrInvalidValidUntil{
+		return &errors.InvalidValidUntilError{
 			ReceivedValidUntil: proposal.ValidUntil,
 		}
 	}
 	if len(proposal.ChainMetadata) == 0 {
-		return &errors.ErrNoChainMetadata{}
+		return &errors.NoChainMetadataError{}
 	}
 
 	if len(proposal.Transactions) == 0 {
-		return &errors.ErrNoTransactions{}
+		return &errors.NoTransactionsError{}
 	}
 
 	if proposal.Description == "" {
-		return &errors.ErrInvalidDescription{
+		return &errors.InvalidDescriptionError{
 			ReceivedDescription: proposal.Description,
 		}
 	}
@@ -104,7 +104,7 @@ func proposalValidateBasic(proposal MCMSProposal) error {
 }
 func (m *MCMSProposal) Validate() error {
 	if m.Version == "" {
-		return &errors.ErrInvalidVersion{
+		return &errors.InvalidVersionError{
 			ReceivedVersion: m.Version,
 		}
 	}
@@ -116,7 +116,7 @@ func (m *MCMSProposal) Validate() error {
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
-			return &errors.ErrMissingChainDetails{
+			return &errors.MissingChainDetailsError{
 				ChainIdentifier: uint64(t.ChainIdentifier),
 				Parameter:       "chain metadata",
 			}

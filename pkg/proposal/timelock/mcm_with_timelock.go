@@ -47,20 +47,20 @@ func timeLockProposalValidateBasic(timelockProposal MCMSWithTimelockProposal) er
 	}
 	if timelockProposal.ValidUntil <= currentTimeCasted {
 		// ValidUntil is a Unix timestamp, so it should be greater than the current time
-		return &errors.ErrInvalidValidUntil{
+		return &errors.InvalidValidUntilError{
 			ReceivedValidUntil: timelockProposal.ValidUntil,
 		}
 	}
 	if len(timelockProposal.ChainMetadata) == 0 {
-		return &errors.ErrNoChainMetadata{}
+		return &errors.NoChainMetadataError{}
 	}
 
 	if len(timelockProposal.Transactions) == 0 {
-		return &errors.ErrNoTransactions{}
+		return &errors.NoTransactionsError{}
 	}
 
 	if timelockProposal.Description == "" {
-		return &errors.ErrInvalidDescription{
+		return &errors.InvalidDescriptionError{
 			ReceivedDescription: timelockProposal.Description,
 		}
 	}
@@ -114,7 +114,7 @@ func NewMCMSWithTimelockProposalFromFile(filePath string) (*MCMSWithTimelockProp
 
 func (m *MCMSWithTimelockProposal) Validate() error {
 	if m.Version == "" {
-		return &errors.ErrInvalidVersion{
+		return &errors.InvalidVersionError{
 			ReceivedVersion: m.Version,
 		}
 	}
@@ -122,7 +122,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
-			return &errors.ErrMissingChainDetails{
+			return &errors.MissingChainDetailsError{
 				ChainIdentifier: uint64(t.ChainIdentifier),
 				Parameter:       "chain metadata",
 			}
@@ -137,7 +137,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	case Schedule, Cancel, Bypass:
 		// NOOP
 	default:
-		return &errors.ErrInvalidTimelockOperation{
+		return &errors.InvalidTimelockOperationError{
 			ReceivedTimelockOperation: string(m.Operation),
 		}
 	}
@@ -227,7 +227,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 				return mcms.MCMSProposal{}, err
 			}
 		default:
-			return mcms.MCMSProposal{}, &errors.ErrInvalidTimelockOperation{
+			return mcms.MCMSProposal{}, &errors.InvalidTimelockOperationError{
 				ReceivedTimelockOperation: string(m.Operation),
 			}
 		}

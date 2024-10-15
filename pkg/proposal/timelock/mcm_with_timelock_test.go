@@ -107,7 +107,7 @@ func TestValidate_InvalidOperation(t *testing.T) {
 
 	require.Error(t, err)
 	assert.Nil(t, proposal)
-	assert.IsType(t, &mcm_errors.ErrInvalidTimelockOperation{}, err)
+	assert.IsType(t, &mcm_errors.InvalidTimelockOperationError{}, err)
 }
 
 func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
@@ -149,6 +149,193 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 	require.Error(t, err)
 	assert.Nil(t, proposal)
 	assert.EqualError(t, err, "time: invalid duration \"invalid\"")
+}
+
+func TestValidate_InvalidUntilTimeError(t *testing.T) {
+	t.Parallel()
+
+	proposal, err := NewMCMSWithTimelockProposal(
+		"1.0",
+		1697398311, // Old date (2023-10-15)
+		[]mcms.Signature{},
+		false,
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+			TestChain1: {
+				StartingOpCount: 1,
+				MCMAddress:      TestAddress,
+			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
+		},
+		"Sample description",
+		[]BatchChainOperation{
+			{
+				ChainIdentifier: TestChain1,
+				Batch: []mcms.Operation{
+					{
+						To:           TestAddress,
+						Value:        big.NewInt(0),
+						Data:         common.Hex2Bytes("0x"),
+						ContractType: "Sample contract",
+						Tags:         []string{"tag1", "tag2"},
+					},
+				},
+			},
+		},
+		Schedule,
+		"invalid",
+	)
+
+	require.Error(t, err)
+	assert.Nil(t, proposal)
+	assert.EqualError(t, err, "invalid valid until: 1697398311")
+}
+
+func TestValidate_InvalidNoChainMetadata(t *testing.T) {
+	t.Parallel()
+
+	proposal, err := NewMCMSWithTimelockProposal(
+		"1.0",
+		2004259681,
+		[]mcms.Signature{},
+		false,
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
+		},
+		"Sample description",
+		[]BatchChainOperation{
+			{
+				ChainIdentifier: TestChain1,
+				Batch: []mcms.Operation{
+					{
+						To:           TestAddress,
+						Value:        big.NewInt(0),
+						Data:         common.Hex2Bytes("0x"),
+						ContractType: "Sample contract",
+						Tags:         []string{"tag1", "tag2"},
+					},
+				},
+			},
+		},
+		Schedule,
+		"1h",
+	)
+
+	require.Error(t, err)
+	assert.Nil(t, proposal)
+	assert.EqualError(t, err, "missing chain metadata for chain 3379446385462418246")
+}
+
+func TestValidate_InvalidNoTransactions(t *testing.T) {
+	t.Parallel()
+
+	proposal, err := NewMCMSWithTimelockProposal(
+		"1.0",
+		2004259681,
+		[]mcms.Signature{},
+		false,
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+			TestChain1: {
+				StartingOpCount: 1,
+				MCMAddress:      TestAddress,
+			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
+		},
+		"Sample description",
+		[]BatchChainOperation{},
+		Schedule,
+		"1h",
+	)
+
+	require.Error(t, err)
+	assert.Nil(t, proposal)
+	assert.EqualError(t, err, "no transactions")
+}
+
+func TestValidate_InvalidNoDescription(t *testing.T) {
+	t.Parallel()
+
+	proposal, err := NewMCMSWithTimelockProposal(
+		"1.0",
+		2004259681,
+		[]mcms.Signature{},
+		false,
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+			TestChain1: {
+				StartingOpCount: 1,
+				MCMAddress:      TestAddress,
+			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
+		},
+		"",
+		[]BatchChainOperation{
+			{
+				ChainIdentifier: TestChain1,
+				Batch: []mcms.Operation{
+					{
+						To:           TestAddress,
+						Value:        big.NewInt(0),
+						Data:         common.Hex2Bytes("0x"),
+						ContractType: "Sample contract",
+						Tags:         []string{"tag1", "tag2"},
+					},
+				},
+			},
+		},
+		Schedule,
+		"1h",
+	)
+
+	require.Error(t, err)
+	assert.Nil(t, proposal)
+	assert.EqualError(t, err, "invalid description: ")
+}
+
+func TestValidate_InvalidVersion(t *testing.T) {
+	t.Parallel()
+
+	proposal, err := NewMCMSWithTimelockProposal(
+		"",
+		2004259681,
+		[]mcms.Signature{},
+		false,
+		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+			TestChain1: {
+				StartingOpCount: 1,
+				MCMAddress:      TestAddress,
+			},
+		},
+		map[mcms.ChainIdentifier]common.Address{
+			TestChain1: TestAddress,
+		},
+		"test",
+		[]BatchChainOperation{
+			{
+				ChainIdentifier: TestChain1,
+				Batch: []mcms.Operation{
+					{
+						To:           TestAddress,
+						Value:        big.NewInt(0),
+						Data:         common.Hex2Bytes("0x"),
+						ContractType: "Sample contract",
+						Tags:         []string{"tag1", "tag2"},
+					},
+				},
+			},
+		},
+		Schedule,
+		"1h",
+	)
+
+	require.Error(t, err)
+	assert.Nil(t, proposal)
+	assert.EqualError(t, err, "invalid version: ")
 }
 
 func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {

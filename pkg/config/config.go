@@ -74,19 +74,19 @@ func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) (*Config, 
 
 func (c *Config) Validate() error {
 	if c.Quorum == 0 {
-		return &errors.ErrInvalidMCMSConfig{
+		return &errors.InvalidMCMSConfigError{
 			Reason: "Quorum must be greater than 0",
 		}
 	}
 
 	if len(c.Signers) == 0 && len(c.GroupSigners) == 0 {
-		return &errors.ErrInvalidMCMSConfig{
+		return &errors.InvalidMCMSConfigError{
 			Reason: "Config must have at least one signer or group",
 		}
 	}
 
 	if (len(c.Signers) + len(c.GroupSigners)) < int(c.Quorum) {
-		return &errors.ErrInvalidMCMSConfig{
+		return &errors.InvalidMCMSConfigError{
 			Reason: "Quorum must be less than or equal to the number of signers and groups",
 		}
 	}
@@ -107,7 +107,7 @@ func (c *Config) ToRawConfig() (gethwrappers.ManyChainMultiSigConfig, error) {
 	}
 	// Check the length of signerAddresses up-front
 	if len(signerAddresses) > maxUint8Value+1 {
-		return gethwrappers.ManyChainMultiSigConfig{}, &errors.ErrTooManySigners{NumSigners: uint64(len(signerAddresses))}
+		return gethwrappers.ManyChainMultiSigConfig{}, &errors.TooManySignersError{NumSigners: uint64(len(signerAddresses))}
 	}
 	// convert to gethwrappers types
 	signers := make([]gethwrappers.ManyChainMultiSigSigner, len(signerAddresses))

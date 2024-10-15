@@ -77,7 +77,7 @@ func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
 	result, err := buildRootMetadatas(chainMetadata, txCounts, true, false)
 	require.Error(t, err)
 	assert.Nil(t, result)
-	assert.IsType(t, &errors.ErrInvalidChainID{}, err)
+	assert.IsType(t, &errors.InvalidChainIDError{}, err)
 }
 
 func TestBuildOperations(t *testing.T) {

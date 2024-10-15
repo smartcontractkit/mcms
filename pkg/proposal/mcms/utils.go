@@ -91,7 +91,7 @@ func ABIDecode(abiStr string, data []byte) ([]any, error) {
 	return inAbi.Unpack("method", data)
 }
 
-// Generic function to read a file and unmarshal its contents into the provided struct
+// FromFile generic function to read a file and unmarshal its contents into the provided struct
 func FromFile(filePath string, out any) error {
 	// Load file from path
 	fileBytes, err := os.ReadFile(filePath)
@@ -108,6 +108,7 @@ func FromFile(filePath string, out any) error {
 	return nil
 }
 
+// WriteProposalToFile writes a proposal to the provided file path
 func WriteProposalToFile(proposal any, filePath string) error {
 	proposalBytes, err := json.Marshal(proposal)
 	if err != nil {

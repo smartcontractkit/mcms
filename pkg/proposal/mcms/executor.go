@@ -91,7 +91,7 @@ func (e *Executor) ValidateMCMSConfigs(clients map[ChainIdentifier]ContractDeplo
 		}
 
 		if !wrappedConfigs[chain].Equals(wrappedConfigs[sortedChains[i-1]]) {
-			return &errors.ErrInconsistentConfigs{
+			return &errors.InconsistentConfigsError{
 				ChainIdentifierA: uint64(chain),
 				ChainIdentifierB: uint64(sortedChains[i-1]),
 			}
@@ -147,7 +147,7 @@ func (e *Executor) getMCMSCallers(clients map[ChainIdentifier]ContractDeployBack
 	for chain, mcmAddress := range mcms {
 		client, ok := clients[chain]
 		if !ok {
-			return nil, &errors.ErrMissingChainClient{
+			return nil, &errors.MissingChainClientError{
 				ChainIdentifier: uint64(chain),
 			}
 		}
@@ -198,7 +198,7 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 	// Validate that all signers are valid
 	for _, signer := range recoveredSigners {
 		if !slices.Contains(contractSigners, signer) {
-			return false, &errors.ErrInvalidSignature{
+			return false, &errors.InvalidSignatureError{
 				ChainIdentifier:  uint64(chain),
 				MCMSAddress:      e.RootMetadatas[chain].MultiSig,
 				RecoveredAddress: signer,
@@ -214,7 +214,7 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 	}
 
 	if !isReadyToSetRoot(*newConfig, recoveredSigners) {
-		return false, &errors.ErrQuorumNotMet{
+		return false, &errors.QuorumNotMetError{
 			ChainIdentifier: uint64(chain),
 		}
 	}
@@ -255,7 +255,7 @@ func (e *Executor) ValidateSignatures(clients map[ChainIdentifier]ContractDeploy
 			}
 
 			if !found {
-				return false, &errors.ErrInvalidSignature{
+				return false, &errors.InvalidSignatureError{
 					ChainIdentifier:  uint64(chain),
 					RecoveredAddress: signer,
 				}
@@ -271,7 +271,7 @@ func (e *Executor) ValidateSignatures(clients map[ChainIdentifier]ContractDeploy
 
 	for chain, config := range wrappedConfigs {
 		if !isReadyToSetRoot(*config, recoveredSigners) {
-			return false, &errors.ErrQuorumNotMet{
+			return false, &errors.QuorumNotMetError{
 				ChainIdentifier: uint64(chain),
 			}
 		}

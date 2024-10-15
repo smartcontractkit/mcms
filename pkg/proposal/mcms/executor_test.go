@@ -740,8 +740,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.False(t, quorumMet)
 	require.Error(t, err)
-	// assert error is of type ErrQuorumNotMet
-	assert.IsType(t, &owner_errors.ErrQuorumNotMet{}, err)
+	// assert error is of type QuorumNotMetError
+	assert.IsType(t, &owner_errors.QuorumNotMetError{}, err)
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *testing.T) {
@@ -846,6 +846,6 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.False(t, quorumMet)
 	require.Error(t, err)
-	// assert error is of type ErrQuorumNotMet
-	assert.IsType(t, &owner_errors.ErrInvalidSignature{}, err)
+	// assert error is of type QuorumNotMetError
+	assert.IsType(t, &owner_errors.InvalidSignatureError{}, err)
 }
