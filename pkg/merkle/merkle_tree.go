@@ -72,7 +72,7 @@ func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
 		if !found {
 			// If the hash is not found in the current layer, it is not in the tree
 			// THIS SHOULD NEVER HAPPEN
-			return nil, &ErrMerkleTreeNodeNotFound{
+			return nil, &MerkleTreeNodeNotFoundError{
 				TargetHash: targetHash,
 			}
 		}
@@ -97,11 +97,11 @@ func (t *MerkleTree) GetProofs() (map[common.Hash][]common.Hash, error) {
 	return proofs, nil
 }
 
-type ErrMerkleTreeNodeNotFound struct {
+type MerkleTreeNodeNotFoundError struct {
 	TargetHash common.Hash
 }
 
-func (e *ErrMerkleTreeNodeNotFound) Error() string {
+func (e *MerkleTreeNodeNotFoundError) Error() string {
 	return "merkle tree does not contain hash: " + e.TargetHash.String()
 }
 
