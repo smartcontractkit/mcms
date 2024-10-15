@@ -48,8 +48,6 @@ linters-settings:
     min-len: 5
   goimports:
     local-prefixes: github.com/smartcontractkit/mcms
-  gosec:
-    excludes:
   govet:
     enable:
       - shadow
