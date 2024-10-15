@@ -71,41 +71,52 @@ func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	return &out, nil
 }
 
+// proposalValidateBasic basic validation for an MCMS proposal
+func proposalValidateBasic(proposal MCMSProposal) error {
+	// Get the current Unix timestamp as an int64
+	currentTime := time.Now().Unix()
+
+	currentTimeCasted, err := SafeCastIntToUint32(int(currentTime))
+	if err != nil {
+		return err
+	}
+	if proposal.ValidUntil <= currentTimeCasted {
+		// ValidUntil is a Unix timestamp, so it should be greater than the current time
+		return &errors.InvalidValidUntilError{
+			ReceivedValidUntil: proposal.ValidUntil,
+		}
+	}
+	if len(proposal.ChainMetadata) == 0 {
+		return &errors.NoChainMetadataError{}
+	}
+
+	if len(proposal.Transactions) == 0 {
+		return &errors.NoTransactionsError{}
+	}
+
+	if proposal.Description == "" {
+		return &errors.InvalidDescriptionError{
+			ReceivedDescription: proposal.Description,
+		}
+	}
+
+	return nil
+}
 func (m *MCMSProposal) Validate() error {
 	if m.Version == "" {
-		return &errors.ErrInvalidVersion{
+		return &errors.InvalidVersionError{
 			ReceivedVersion: m.Version,
 		}
 	}
 
-	// Get the current Unix timestamp as an int64
-	currentTime := time.Now().Unix()
-
-	if m.ValidUntil <= uint32(currentTime) {
-		// ValidUntil is a Unix timestamp, so it should be greater than the current time
-		return &errors.ErrInvalidValidUntil{
-			ReceivedValidUntil: m.ValidUntil,
-		}
-	}
-
-	if len(m.ChainMetadata) == 0 {
-		return &errors.ErrNoChainMetadata{}
-	}
-
-	if len(m.Transactions) == 0 {
-		return &errors.ErrNoTransactions{}
-	}
-
-	if m.Description == "" {
-		return &errors.ErrInvalidDescription{
-			ReceivedDescription: m.Description,
-		}
+	if err := proposalValidateBasic(*m); err != nil {
+		return err
 	}
 
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
-			return &errors.ErrMissingChainDetails{
+			return &errors.MissingChainDetailsError{
 				ChainIdentifier: uint64(t.ChainIdentifier),
 				Parameter:       "chain metadata",
 			}

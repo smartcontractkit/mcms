@@ -36,14 +36,14 @@ func buildRootMetadatas(
 	for chainID, metadata := range chainMetadata {
 		chain, exists := chain_selectors.ChainBySelector(uint64(chainID))
 		if !exists {
-			return nil, &errors.ErrInvalidChainID{
+			return nil, &errors.InvalidChainIDError{
 				ReceivedChainID: uint64(chainID),
 			}
 		}
 
 		currentTxCount, ok := txCounts[chainID]
 		if !ok {
-			return nil, &errors.ErrMissingChainDetails{
+			return nil, &errors.MissingChainDetailsError{
 				ChainIdentifier: uint64(chainID),
 				Parameter:       "transaction count",
 			}

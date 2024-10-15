@@ -76,14 +76,20 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 		signers[i] = auth.From
 	}
 
-	// Set the cfg
+	// Set the quorum
+	quorum, err := SafeCastUint64ToUint8(numSigners)
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
 	cfg := &config.Config{
-		Quorum:       uint8(numSigners),
+		Quorum:       quorum,
 		Signers:      signers,
 		GroupSigners: []config.Config{},
 	}
-	quorums, parents, signersAddresses, signerGroups := cfg.ExtractSetConfigInputs()
-
+	quorums, parents, signersAddresses, signerGroups, err := cfg.ExtractSetConfigInputs()
+	if err != nil {
+		return nil, nil, nil, nil, err
+	}
 	tx, err = mcms.SetConfig(auths[0], signersAddresses, signerGroups, quorums, parents, false)
 	if err != nil {
 		return nil, nil, nil, nil, err
@@ -734,8 +740,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.False(t, quorumMet)
 	require.Error(t, err)
-	// assert error is of type ErrQuorumNotMet
-	assert.IsType(t, &owner_errors.ErrQuorumNotMet{}, err)
+	// assert error is of type QuorumNotMetError
+	assert.IsType(t, &owner_errors.QuorumNotMetError{}, err)
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *testing.T) {
@@ -840,6 +846,6 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	quorumMet, err := executor.ValidateSignatures(callers)
 	assert.False(t, quorumMet)
 	require.Error(t, err)
-	// assert error is of type ErrQuorumNotMet
-	assert.IsType(t, &owner_errors.ErrInvalidSignature{}, err)
+	// assert error is of type QuorumNotMetError
+	assert.IsType(t, &owner_errors.InvalidSignatureError{}, err)
 }

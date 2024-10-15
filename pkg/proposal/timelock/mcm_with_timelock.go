@@ -36,6 +36,37 @@ type MCMSWithTimelockProposal struct {
 	Transactions []BatchChainOperation `json:"transactions"`
 }
 
+// timeLockProposalValidateBasic basic validation for an MCMS proposal
+func timeLockProposalValidateBasic(timelockProposal MCMSWithTimelockProposal) error {
+	// Get the current Unix timestamp as an int64
+	currentTime := time.Now().Unix()
+
+	currentTimeCasted, err := mcms.SafeCastIntToUint32(int(currentTime))
+	if err != nil {
+		return err
+	}
+	if timelockProposal.ValidUntil <= currentTimeCasted {
+		// ValidUntil is a Unix timestamp, so it should be greater than the current time
+		return &errors.InvalidValidUntilError{
+			ReceivedValidUntil: timelockProposal.ValidUntil,
+		}
+	}
+	if len(timelockProposal.ChainMetadata) == 0 {
+		return &errors.NoChainMetadataError{}
+	}
+
+	if len(timelockProposal.Transactions) == 0 {
+		return &errors.NoTransactionsError{}
+	}
+
+	if timelockProposal.Description == "" {
+		return &errors.InvalidDescriptionError{
+			ReceivedDescription: timelockProposal.Description,
+		}
+	}
+
+	return nil
+}
 func NewMCMSWithTimelockProposal(
 	version string,
 	validUntil uint32,
@@ -63,9 +94,9 @@ func NewMCMSWithTimelockProposal(
 		Transactions:      transactions,
 	}
 
-	err := proposal.Validate()
-	if err != nil {
-		return nil, err
+	errValidate := proposal.Validate()
+	if errValidate != nil {
+		return nil, errValidate
 	}
 
 	return &proposal, nil
@@ -73,9 +104,9 @@ func NewMCMSWithTimelockProposal(
 
 func NewMCMSWithTimelockProposalFromFile(filePath string) (*MCMSWithTimelockProposal, error) {
 	var out MCMSWithTimelockProposal
-	err := mcms.FromFile(filePath, &out)
-	if err != nil {
-		return nil, err
+	errFromFile := mcms.FromFile(filePath, &out)
+	if errFromFile != nil {
+		return nil, errFromFile
 	}
 
 	return &out, nil
@@ -83,50 +114,30 @@ func NewMCMSWithTimelockProposalFromFile(filePath string) (*MCMSWithTimelockProp
 
 func (m *MCMSWithTimelockProposal) Validate() error {
 	if m.Version == "" {
-		return &errors.ErrInvalidVersion{
+		return &errors.InvalidVersionError{
 			ReceivedVersion: m.Version,
-		}
-	}
-
-	// Get the current Unix timestamp as an int64
-	currentTime := time.Now().Unix()
-
-	if m.ValidUntil <= uint32(currentTime) {
-		// ValidUntil is a Unix timestamp, so it should be greater than the current time
-		return &errors.ErrInvalidValidUntil{
-			ReceivedValidUntil: m.ValidUntil,
-		}
-	}
-
-	if len(m.ChainMetadata) == 0 {
-		return &errors.ErrNoChainMetadata{}
-	}
-
-	if len(m.Transactions) == 0 {
-		return &errors.ErrNoTransactions{}
-	}
-
-	if m.Description == "" {
-		return &errors.ErrInvalidDescription{
-			ReceivedDescription: m.Description,
 		}
 	}
 
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
-			return &errors.ErrMissingChainDetails{
+			return &errors.MissingChainDetailsError{
 				ChainIdentifier: uint64(t.ChainIdentifier),
 				Parameter:       "chain metadata",
 			}
 		}
 	}
 
+	if err := timeLockProposalValidateBasic(*m); err != nil {
+		return err
+	}
+
 	switch m.Operation {
 	case Schedule, Cancel, Bypass:
 		// NOOP
 	default:
-		return &errors.ErrInvalidTimelockOperation{
+		return &errors.InvalidTimelockOperationError{
 			ReceivedTimelockOperation: string(m.Operation),
 		}
 	}
@@ -144,9 +155,9 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 
 func (m *MCMSWithTimelockProposal) ToExecutor(sim bool) (*mcms.Executor, error) {
 	// Convert the proposal to an MCMS only proposal
-	mcmOnly, err := m.toMCMSOnlyProposal()
-	if err != nil {
-		return nil, err
+	mcmOnly, errToMcms := m.toMCMSOnlyProposal()
+	if errToMcms != nil {
+		return nil, errToMcms
 	}
 
 	return mcmOnly.ToExecutor(sim)
@@ -186,18 +197,19 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 		salt := ZERO_HASH
 		delay, _ := time.ParseDuration(m.MinDelay)
 
-		abi, err := owner.RBACTimelockMetaData.GetAbi()
-		if err != nil {
-			return mcms.MCMSProposal{}, err
+		abi, errAbi := owner.RBACTimelockMetaData.GetAbi()
+		if errAbi != nil {
+			return mcms.MCMSProposal{}, errAbi
 		}
 
-		operationId, err := hashOperationBatch(calls, predecessor, salt)
-		if err != nil {
-			return mcms.MCMSProposal{}, err
+		operationId, errHash := hashOperationBatch(calls, predecessor, salt)
+		if errHash != nil {
+			return mcms.MCMSProposal{}, errHash
 		}
 
 		// Encode the data based on the operation
 		var data []byte
+		var err error
 		switch m.Operation {
 		case Schedule:
 			data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
@@ -215,7 +227,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 				return mcms.MCMSProposal{}, err
 			}
 		default:
-			return mcms.MCMSProposal{}, &errors.ErrInvalidTimelockOperation{
+			return mcms.MCMSProposal{}, &errors.InvalidTimelockOperationError{
 				ReceivedTimelockOperation: string(m.Operation),
 			}
 		}
