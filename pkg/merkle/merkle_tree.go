@@ -5,6 +5,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
+const HashPairSize = 2
+
 type MerkleTree struct {
 	// Root hash of the merkle tree
 	Root common.Hash
@@ -27,10 +29,10 @@ func NewMerkleTree(leaves []common.Hash) *MerkleTree {
 		layers = append(layers, currHashes)
 
 		// Calculate the parent hashes
-		tempHashes := make([]common.Hash, len(currHashes)/2)
-		for i := 0; i < len(currHashes); i += 2 {
+		tempHashes := make([]common.Hash, len(currHashes)/HashPairSize)
+		for i := 0; i < len(currHashes); i += HashPairSize {
 			// Sort the pair of hashes before hashing
-			tempHashes[i/2] = hashPair(currHashes[i], currHashes[i+1])
+			tempHashes[i/HashPairSize] = hashPair(currHashes[i], currHashes[i+1])
 		}
 
 		// Set the current hashes to the parent hashes

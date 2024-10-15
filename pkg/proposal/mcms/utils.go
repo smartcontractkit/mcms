@@ -17,6 +17,8 @@ import (
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
 
+const FilePermissionsUserOnly = 0600
+
 type ContractDeployBackend interface {
 	bind.ContractBackend
 	bind.DeployBackend
@@ -115,7 +117,7 @@ func WriteProposalToFile(proposal any, filePath string) error {
 		return err
 	}
 
-	err = os.WriteFile(filePath, proposalBytes, 0600)
+	err = os.WriteFile(filePath, proposalBytes, FilePermissionsUserOnly)
 	if err != nil {
 		return err
 	}
