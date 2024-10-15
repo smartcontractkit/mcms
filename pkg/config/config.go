@@ -2,12 +2,10 @@ package config
 
 import (
 	"fmt"
-
 	"math/big"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/spf13/cast"
 
 	"github.com/smartcontractkit/mcms/pkg/errors"

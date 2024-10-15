@@ -156,14 +156,14 @@ func TestGetProof_HashNotFound(t *testing.T) {
 	proof, err := tree.GetProof(nonExistentHash)
 	require.Error(t, err)
 	assert.Nil(t, proof)
-	assert.IsType(t, &ErrMerkleTreeNodeNotFound{}, err)
+	assert.IsType(t, &MerkleTreeNodeNotFoundError{}, err)
 }
 
 func TestErrMerkleTreeNodeNotFound_Error(t *testing.T) {
 	t.Parallel()
 
 	hash := crypto.Keccak256Hash([]byte("non-existent"))
-	err := &ErrMerkleTreeNodeNotFound{TargetHash: hash}
+	err := &MerkleTreeNodeNotFoundError{TargetHash: hash}
 
 	expectedErrorMessage := "merkle tree does not contain hash: " + hash.String()
 	assert.Equal(t, expectedErrorMessage, err.Error())
