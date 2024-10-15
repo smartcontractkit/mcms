@@ -3,6 +3,12 @@
 version: "3"
 
 includes:
+  changeset:
+    taskfile: ./taskfiles/changesets/Taskfile.yml
+
+  docs:
+    taskfile: ./taskfiles/docs/Taskfile.yml
+
   install:
     taskfile: ./taskfiles/install/Taskfile.yml
 
@@ -12,5 +18,3 @@ includes:
   test:
     taskfile: ./taskfiles/test/Taskfile.yml
 
-  changeset:
-    taskfile: ./taskfiles/changesets/Taskfile.yml

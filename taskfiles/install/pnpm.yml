@@ -1,0 +1,9 @@
+version: '3'
+
+tasks:
+  install:
+    internal: true
+    desc: Installs the tools defined in package.json
+    dir: '{{.USER_WORKING_DIR}}'
+    cmds:
+      - pnpm install

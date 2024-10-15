@@ -1,0 +1,7 @@
+version: '3'
+
+tasks:
+  default:
+    desc: Run the local docsify server
+    cmds:
+      - pnpm run docs
