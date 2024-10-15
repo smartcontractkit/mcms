@@ -3,12 +3,13 @@ package mcms
 import (
 	"encoding/hex"
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
+
 	"math"
 	"math/big"
 	"os"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -120,11 +121,12 @@ func TestSafeCastIntToUint32(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result, err := SafeCastIntToUint32(tt.value)
 			if tt.expectError {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expected, result)
 			}
 		})
@@ -184,14 +186,15 @@ func TestABIDecode(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			data, err := hex.DecodeString(tt.dataHex)
 			require.NoError(t, err)
 
 			result, err := ABIDecode(tt.abiStr, data)
 			if tt.expectError {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expected, result)
 			}
 		})
@@ -200,7 +203,6 @@ func TestABIDecode(t *testing.T) {
 
 func TestSafeCastInt64ToUint32(t *testing.T) {
 	t.Parallel()
-
 	tests := []struct {
 		name        string
 		value       int64
@@ -214,11 +216,12 @@ func TestSafeCastInt64ToUint32(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result, err := SafeCastInt64ToUint32(tt.value)
 			if tt.expectError {
 				assert.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expected, result)
 			}
 		})
@@ -227,7 +230,6 @@ func TestSafeCastInt64ToUint32(t *testing.T) {
 
 func TestSafeCastUint64ToUint8(t *testing.T) {
 	t.Parallel()
-
 	tests := []struct {
 		name        string
 		value       uint64
@@ -240,11 +242,12 @@ func TestSafeCastUint64ToUint8(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result, err := SafeCastUint64ToUint8(tt.value)
 			if tt.expectError {
-				assert.Error(t, err)
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expected, result)
 			}
 		})

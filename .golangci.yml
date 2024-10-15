@@ -50,7 +50,6 @@ linters-settings:
     local-prefixes: github.com/smartcontractkit/mcms
   gosec:
     excludes:
-      - G306 # TODO: Resolve WriteFile permissions issues
   govet:
     enable:
       - shadow
