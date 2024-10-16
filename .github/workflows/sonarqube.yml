@@ -20,11 +20,11 @@ jobs:
         id: report-workflow
         run: |
           if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-            echo "test-report-workflow=pull-request-main.yml" >> $GITHUB_ENV
-            echo "lint-report-workflow=pull-request-main.yml" >> $GITHUB_ENV
+            echo "test-report-workflow=pull-request-main.yml" >> "$GITHUB_ENV"
+            echo "lint-report-workflow=pull-request-main.yml" >> "$GITHUB_ENV"
           else
-            echo "test-report-workflow=push-main.yml" >> $GITHUB_ENV
-            echo "lint-report-workflow=push-main.yml" >> $GITHUB_ENV
+            echo "test-report-workflow=push-main.yml" >> "$GITHUB_ENV"
+            echo "lint-report-workflow=push-main.yml" >> "$GITHUB_ENV"
           fi
       - name: Scanning with Sonarqube
         uses: smartcontractkit/.github/actions/ci-sonarqube-go@c4705bfdbf6c8e57c080d82a3c4f013aa96a2dfb
