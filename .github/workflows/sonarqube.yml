@@ -13,7 +13,6 @@ jobs:
 
   ci-sonarqube:
     name: Sonarqube Scan
-    needs: [ ci-lint, ci-test ]
     runs-on: ubuntu-latest
     if: github.actor != 'dependabot[bot]'
     steps:
