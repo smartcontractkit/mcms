@@ -1,12 +1,12 @@
 package mcms
 
 import (
-	"math/big"
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	mcm_errors "github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/merkle"
 )
 
@@ -19,39 +19,40 @@ func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifi
 	return txCounts
 }
 
-func buildOperations(
-	transactions []ChainOperation,
-	rootMetadatas ChainMetadatas,
-	txCounts map[ChainIdentifier]uint64,
-	overridePreviousRoot bool,
-	sim bool,
-) (map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp, []gethwrappers.ManyChainMultiSigOp) {
-	ops := make(map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp)
-	chainAgnosticOps := make([]gethwrappers.ManyChainMultiSigOp, 0)
-	chainIdx := make(map[ChainIdentifier]uint32, len(rootMetadatas))
-
-	for _, tx := range transactions {
-		rootMetadata := rootMetadatas[tx.ChainID]
-		if _, ok := ops[tx.ChainID]; !ok {
-			ops[tx.ChainID] = make([]gethwrappers.ManyChainMultiSigOp, txCounts[tx.ChainID])
-			chainIdx[tx.ChainID] = 0
+func buildEncoders(
+	metadatas map[ChainIdentifier]ChainMetadata,
+	isSim bool,
+) (map[ChainIdentifier]MetadataEncoder, map[ChainIdentifier]OperationEncoder, error) {
+	metadataEncoders := make(map[ChainIdentifier]MetadataEncoder)
+	opEncoders := make(map[ChainIdentifier]OperationEncoder)
+	for chainID, metadata := range metadatas {
+		chain, exists := chain_selectors.ChainBySelector(uint64(chainID))
+		if !exists {
+			return nil, nil, &mcm_errors.ErrInvalidChainID{
+				ReceivedChainID: uint64(chainID),
+			}
 		}
 
-		op := gethwrappers.ManyChainMultiSigOp{
-			ChainId:  rootMetadata.ChainId,
-			MultiSig: rootMetadata.MultiSig,
-			Nonce:    big.NewInt(rootMetadata.PreOpCount.Int64() + int64(chainIdx[tx.ChainID])),
-			To:       tx.To,
-			Data:     tx.Data,
-			Value:    tx.Value,
+		// Simulated chains always have block.chainid = 1337
+		// So for setRoot to execute (not throw WrongChainId) we must
+		// override the evmChainID to be 1337.
+		if isSim {
+			chain.EvmChainID = 1337
 		}
 
-		chainAgnosticOps = append(chainAgnosticOps, op)
-		ops[tx.ChainID][chainIdx[tx.ChainID]] = op
-		chainIdx[tx.ChainID]++
+		// TODO: this should be a switch statement that generates the
+		// chain-specific metadata encoder
+		metadataEncoders[chainID] = &EVMMetadataEncoder{
+			ChainId: chain.EvmChainID,
+		}
+
+		opEncoders[chainID] = &EVMOperationEncoder{
+			ChainId:  chain.EvmChainID,
+			Multisig: common.HexToAddress(metadata.MCMAddress),
+		}
 	}
 
-	return ops, chainAgnosticOps
+	return metadataEncoders, opEncoders, nil
 }
 
 func sortedChainIdentifiers(chainMetadata map[ChainIdentifier]ChainMetadata) []ChainIdentifier {
@@ -66,25 +67,31 @@ func sortedChainIdentifiers(chainMetadata map[ChainIdentifier]ChainMetadata) []C
 
 func buildMerkleTree(
 	chainIdentifiers []ChainIdentifier,
-	rootMetadatas map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
-	ops map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp,
+	txCounts map[ChainIdentifier]uint64,
+	metadataEncoders map[ChainIdentifier]MetadataEncoder,
+	operationsEncoders map[ChainIdentifier]OperationEncoder,
+	metadatas map[ChainIdentifier]ChainMetadata,
+	ops []ChainOperation,
+	overridePreviousRoot bool,
 ) (*merkle.MerkleTree, error) {
 	hashLeaves := make([]common.Hash, 0)
+	chainIdx := make(map[ChainIdentifier]uint32, len(metadatas))
 
 	for _, chainID := range chainIdentifiers {
-		encodedRootMetadata, err := metadataEncoder(rootMetadatas[chainID])
+		encodedRootMetadata, err := metadataEncoders[chainID].Hash(metadatas[chainID], txCounts[chainID], overridePreviousRoot)
 		if err != nil {
 			return nil, err
 		}
 		hashLeaves = append(hashLeaves, encodedRootMetadata)
+	}
 
-		for _, op := range ops[chainID] {
-			encodedOp, err := txEncoder(op)
-			if err != nil {
-				return nil, err
-			}
-			hashLeaves = append(hashLeaves, encodedOp)
+	for _, op := range ops {
+		encodedOp, err := operationsEncoders[op.ChainID].Hash(op, chainIdx[op.ChainID])
+		if err != nil {
+			return nil, err
 		}
+		hashLeaves = append(hashLeaves, encodedOp)
+		chainIdx[op.ChainID]++
 	}
 
 	// sort the hashes and sort the pairs

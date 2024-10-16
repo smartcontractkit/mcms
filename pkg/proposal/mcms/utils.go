@@ -22,7 +22,7 @@ type ContractDeployBackend interface {
 func transformMCMAddresses(metadatas map[ChainIdentifier]ChainMetadata) map[ChainIdentifier]common.Address {
 	m := make(map[ChainIdentifier]common.Address)
 	for k, v := range metadatas {
-		m[k] = v.MCMAddress
+		m[k] = common.HexToAddress(v.MCMAddress)
 	}
 
 	return m

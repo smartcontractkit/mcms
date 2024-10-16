@@ -1,10 +1,14 @@
 package mcms
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
@@ -13,9 +17,12 @@ var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY
 
 type ChainIdentifier uint64
 
-type Operation[R any] interface {
-	Verbose(chainID uint64, nonce uint64, multisig string) R
-	Hash(chainID uint64, nonce uint64, multisig string) (common.Hash, error)
+type OperationEncoder interface {
+	Hash(operation ChainOperation, nonce uint32) (common.Hash, error)
+}
+
+type OperationExecutor interface {
+	Execute(operation ChainOperation, nonce uint32, proof []common.Hash) error
 }
 
 type OperationMetadata struct {
@@ -24,53 +31,40 @@ type OperationMetadata struct {
 }
 
 type ChainOperation struct {
-	ChainID ChainIdentifier `json:"chainIdentifier"`
-	Operation[any]
+	ChainID          ChainIdentifier `json:"chainIdentifier"`
+	To               string          `json:"to"`
+	Data             []byte          `json:"data"`
+	AdditionalFields json.RawMessage `json:"additionalFields"`
 	OperationMetadata
 }
 
-func (co *ChainOperation) UnmarshalJSON(data []byte) error {
-	// Step 1: Define a temporary struct for the fields we want to unmarshal first
-	var temp struct {
-		ChainID           ChainIdentifier   `json:"chainIdentifier"`
-		OperationMetadata OperationMetadata `json:"operationMetadata"`
-	}
-
-	// Unmarshal only the ChainID and OperationMetadata
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-
-	// Step 2: Set ChainID and OperationMetadata on the actual ChainOperation struct
-	co.ChainID = temp.ChainID
-	co.OperationMetadata = temp.OperationMetadata
-
-	// Step 3: Unmarshal the Operation field based on ChainID
-	// TODO: Implement
-
-	return nil
+type EVMAdditionalFields struct {
+	Value *big.Int `json:"value"`
 }
 
-type EVMOperation struct {
-	To    common.Address `json:"to"`
-	Data  []byte         `json:"data"`
-	Value *big.Int       `json:"value"`
+type EVMOperationEncoder struct {
+	ChainId  uint64
+	Multisig common.Address
 }
 
-func (e *EVMOperation) Verbose(chainID uint64, nonce uint64, multisig string) gethwrappers.ManyChainMultiSigOp {
-	return gethwrappers.ManyChainMultiSigOp{
-		ChainId:  new(big.Int).SetUint64(chainID),
-		MultiSig: common.HexToAddress(multisig),
-		Nonce:    new(big.Int).SetUint64(nonce),
-		To:       e.To,
-		Data:     e.Data,
-		Value:    e.Value,
+func (e *EVMOperationEncoder) Hash(operation ChainOperation, nonce uint32) (common.Hash, error) {
+	// Unmarshal additional fields
+	var additionalFields EVMAdditionalFields
+	if err := json.Unmarshal(operation.AdditionalFields, &additionalFields); err != nil {
+		return common.Hash{}, err
 	}
-}
 
-func (e *EVMOperation) Hash(chainID uint64, nonce uint64, multisig string) (common.Hash, error) {
+	op := gethwrappers.ManyChainMultiSigOp{
+		ChainId:  new(big.Int).SetUint64(e.ChainId),
+		MultiSig: e.Multisig,
+		Nonce:    new(big.Int).SetUint64(uint64(nonce)),
+		To:       common.HexToAddress(operation.To),
+		Data:     operation.Data,
+		Value:    additionalFields.Value,
+	}
+
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
-	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, e.Verbose())
+	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, op)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -78,16 +72,46 @@ func (e *EVMOperation) Hash(chainID uint64, nonce uint64, multisig string) (comm
 	return crypto.Keccak256Hash(encoded), nil
 }
 
-type ExampleChainOperation struct {
-	To    string `json:"to"`
-	Data  []byte `json:"data"`
-	Value uint64 `json:"value"`
+type EVMOperationExecutor struct {
+	EVMOperationEncoder
+	client ContractDeployBackend
+	auth   *bind.TransactOpts
 }
 
-func (e *ExampleChainOperation) Verbose(chainID uint64, nonce uint64, multisig string) struct{} {
-	return struct{}{}
-}
+func (e *EVMOperationExecutor) Execute(operation ChainOperation, nonce uint64, proof []common.Hash) error {
+	// Unmarshal additional fields
+	var additionalFields EVMAdditionalFields
+	if err := json.Unmarshal(operation.AdditionalFields, &additionalFields); err != nil {
+		return err
+	}
 
-func (e *ExampleChainOperation) Hash(chainID uint64, nonce uint64, multisig string) (common.Hash, error) {
-	return common.Hash{}, nil
+	op := gethwrappers.ManyChainMultiSigOp{
+		ChainId:  new(big.Int).SetUint64(e.ChainId),
+		MultiSig: e.Multisig,
+		Nonce:    new(big.Int).SetUint64(nonce),
+		To:       common.HexToAddress(operation.To),
+		Data:     operation.Data,
+		Value:    additionalFields.Value,
+	}
+
+	mcms, err := gethwrappers.NewManyChainMultiSig(e.Multisig, e.client)
+	if err != nil {
+		return err
+	}
+
+	tx, err := mcms.Execute(e.auth, op, transformHashes(proof))
+	if err != nil {
+		return err
+	}
+
+	receipt, err := bind.WaitMined(context.Background(), e.client, tx)
+	if err != nil {
+		return err
+	}
+
+	if receipt.Status != types.ReceiptStatusSuccessful {
+		return errors.New("transaction failed")
+	}
+
+	return nil
 }
