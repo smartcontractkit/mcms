@@ -1,4 +1,4 @@
-name: pull-request-main
+name: SonarQube checks
 
 on:
   merge_group:
