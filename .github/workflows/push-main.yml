@@ -58,7 +58,8 @@ jobs:
       - name: Scanning with Sonarqube
         uses: smartcontractkit/.github/actions/ci-sonarqube-go@c4705bfdbf6c8e57c080d82a3c4f013aa96a2dfb
         with:
-          # sonarqube inputs
+          test-report-workflow: "push-main.yaml"
+          lint-report-workflow: "push-main.yaml"
           sonar-token: ${{ secrets.SONAR_TOKEN }}
           sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
           include-lint: true
