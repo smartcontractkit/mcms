@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"math/big"
-	"sort"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -21,33 +20,40 @@ type ChainMetadata struct {
 }
 
 type MetadataEncoder interface {
-	Hash(metadata ChainMetadata, txCount uint64, overridePreviousRoot bool) (common.Hash, error)
+	Hash(metadata ChainMetadata) (common.Hash, error)
 }
 
 type MetadataExecutor interface {
 	Execute(
 		metadata ChainMetadata,
-		txCount uint64,
-		overridePreviousRoot bool,
+		proof []common.Hash,
 		root [32]byte,
 		validUntil uint32,
-		signingHash common.Hash,
-		signatures []Signature,
-		proof []common.Hash,
+		sortedSignatures []Signature,
 	) error
 }
 
 type EVMMetadataEncoder struct {
-	ChainId uint64
+	ChainId              uint64
+	TxCount              uint64
+	OverridePreviousRoot bool
 }
 
-func (e *EVMMetadataEncoder) Hash(metadata ChainMetadata, txCount uint64, overridePreviousRoot bool) (common.Hash, error) {
+func NewEVMMetadataEncoder(chainId uint64, txCount uint64, overridePreviousRoot bool) *EVMMetadataEncoder {
+	return &EVMMetadataEncoder{
+		ChainId:              chainId,
+		TxCount:              txCount,
+		OverridePreviousRoot: overridePreviousRoot,
+	}
+}
+
+func (e *EVMMetadataEncoder) Hash(metadata ChainMetadata) (common.Hash, error) {
 	metadataObj := gethwrappers.ManyChainMultiSigRootMetadata{
 		ChainId:              new(big.Int).SetUint64(e.ChainId),
 		MultiSig:             common.HexToAddress(metadata.MCMAddress),
 		PreOpCount:           new(big.Int).SetUint64(metadata.StartingOpCount),
-		PostOpCount:          new(big.Int).SetUint64(metadata.StartingOpCount + txCount),
-		OverridePreviousRoot: overridePreviousRoot,
+		PostOpCount:          new(big.Int).SetUint64(metadata.StartingOpCount + e.TxCount),
+		OverridePreviousRoot: e.OverridePreviousRoot,
 	}
 
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
@@ -65,37 +71,37 @@ type EVMMetadataExecutor struct {
 	auth   *bind.TransactOpts
 }
 
+func NewEVMMetadataExecutor(
+	encoder EVMMetadataEncoder,
+	client ContractDeployBackend,
+	auth *bind.TransactOpts,
+) *EVMMetadataExecutor {
+	return &EVMMetadataExecutor{
+		EVMMetadataEncoder: encoder,
+		client:             client,
+		auth:               auth,
+	}
+}
+
 func (e *EVMMetadataExecutor) Execute(
 	metadata ChainMetadata,
-	txCount uint64,
-	overridePreviousRoot bool,
 	root [32]byte,
 	validUntil uint32,
-	signingHash common.Hash,
-	signatures []Signature,
+	sortedSignatures []Signature,
 	proof []common.Hash,
 ) error {
 	metadataObj := gethwrappers.ManyChainMultiSigRootMetadata{
 		ChainId:              new(big.Int).SetUint64(e.ChainId),
 		MultiSig:             common.HexToAddress(metadata.MCMAddress),
 		PreOpCount:           new(big.Int).SetUint64(metadata.StartingOpCount),
-		PostOpCount:          new(big.Int).SetUint64(metadata.StartingOpCount + txCount),
-		OverridePreviousRoot: overridePreviousRoot,
+		PostOpCount:          new(big.Int).SetUint64(metadata.StartingOpCount + e.TxCount),
+		OverridePreviousRoot: e.OverridePreviousRoot,
 	}
 
 	mcms, err := gethwrappers.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
 		return err
 	}
-
-	// Sort signatures by recovered address
-	sortedSignatures := signatures
-	sort.Slice(sortedSignatures, func(i, j int) bool {
-		recoveredSignerA, _ := sortedSignatures[i].Recover(signingHash)
-		recoveredSignerB, _ := sortedSignatures[j].Recover(signingHash)
-
-		return recoveredSignerA.Cmp(recoveredSignerB) < 0
-	})
 
 	tx, err := mcms.SetRoot(
 		e.auth,
@@ -105,6 +111,9 @@ func (e *EVMMetadataExecutor) Execute(
 		transformHashes(proof),
 		transformSignatures(sortedSignatures),
 	)
+	if err != nil {
+		return err
+	}
 
 	receipt, err := bind.WaitMined(context.Background(), e.client, tx)
 	if err != nil {

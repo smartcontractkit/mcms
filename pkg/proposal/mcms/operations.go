@@ -16,13 +16,12 @@ import (
 var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
 
 type ChainIdentifier uint64
-
 type OperationEncoder interface {
-	Hash(operation ChainOperation, nonce uint32) (common.Hash, error)
+	Hash(nonce uint64, operation ChainOperation) (common.Hash, error)
 }
 
 type OperationExecutor interface {
-	Execute(operation ChainOperation, nonce uint32, proof []common.Hash) error
+	Execute(nonce uint64, proof []common.Hash, operation ChainOperation) error
 }
 
 type OperationMetadata struct {
@@ -47,7 +46,14 @@ type EVMOperationEncoder struct {
 	Multisig common.Address
 }
 
-func (e *EVMOperationEncoder) Hash(operation ChainOperation, nonce uint32) (common.Hash, error) {
+func NewEVMOperationEncoder(chainId uint64, multisig common.Address) *EVMOperationEncoder {
+	return &EVMOperationEncoder{
+		ChainId:  chainId,
+		Multisig: multisig,
+	}
+}
+
+func (e *EVMOperationEncoder) Hash(nonce uint64, operation ChainOperation) (common.Hash, error) {
 	// Unmarshal additional fields
 	var additionalFields EVMAdditionalFields
 	if err := json.Unmarshal(operation.AdditionalFields, &additionalFields); err != nil {
@@ -78,40 +84,50 @@ type EVMOperationExecutor struct {
 	auth   *bind.TransactOpts
 }
 
-func (e *EVMOperationExecutor) Execute(operation ChainOperation, nonce uint64, proof []common.Hash) error {
-	// Unmarshal additional fields
-	var additionalFields EVMAdditionalFields
-	if err := json.Unmarshal(operation.AdditionalFields, &additionalFields); err != nil {
-		return err
+func NewEVMOperationExecutor(encoder *EVMOperationEncoder, client ContractDeployBackend, auth *bind.TransactOpts) *EVMOperationExecutor {
+	return &EVMOperationExecutor{
+		EVMOperationEncoder: *encoder,
+		client:              client,
+		auth:                auth,
 	}
+}
 
-	op := gethwrappers.ManyChainMultiSigOp{
-		ChainId:  new(big.Int).SetUint64(e.ChainId),
-		MultiSig: e.Multisig,
-		Nonce:    new(big.Int).SetUint64(nonce),
-		To:       common.HexToAddress(operation.To),
-		Data:     operation.Data,
-		Value:    additionalFields.Value,
+func (e *EVMOperationExecutor) ExecuteFn(operation ChainOperation, nonce uint64, proof []common.Hash) func() error {
+	return func() error {
+		// Unmarshal additional fields
+		var additionalFields EVMAdditionalFields
+		if err := json.Unmarshal(operation.AdditionalFields, &additionalFields); err != nil {
+			return err
+		}
+
+		op := gethwrappers.ManyChainMultiSigOp{
+			ChainId:  new(big.Int).SetUint64(e.ChainId),
+			MultiSig: e.Multisig,
+			Nonce:    new(big.Int).SetUint64(uint64(nonce)),
+			To:       common.HexToAddress(operation.To),
+			Data:     operation.Data,
+			Value:    additionalFields.Value,
+		}
+
+		mcms, err := gethwrappers.NewManyChainMultiSig(e.Multisig, e.client)
+		if err != nil {
+			return err
+		}
+
+		tx, err := mcms.Execute(e.auth, op, transformHashes(proof))
+		if err != nil {
+			return err
+		}
+
+		receipt, err := bind.WaitMined(context.Background(), e.client, tx)
+		if err != nil {
+			return err
+		}
+
+		if receipt.Status != types.ReceiptStatusSuccessful {
+			return errors.New("transaction failed")
+		}
+
+		return nil
 	}
-
-	mcms, err := gethwrappers.NewManyChainMultiSig(e.Multisig, e.client)
-	if err != nil {
-		return err
-	}
-
-	tx, err := mcms.Execute(e.auth, op, transformHashes(proof))
-	if err != nil {
-		return err
-	}
-
-	receipt, err := bind.WaitMined(context.Background(), e.client, tx)
-	if err != nil {
-		return err
-	}
-
-	if receipt.Status != types.ReceiptStatusSuccessful {
-		return errors.New("transaction failed")
-	}
-
-	return nil
 }
