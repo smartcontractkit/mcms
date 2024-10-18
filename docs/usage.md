@@ -6,9 +6,9 @@ The packages in this directory provide a set of tools that users can use to inte
 
 ### MCMS
 
-Deploy the MCMS contract using the [`DeployManyChainMultiSig`](./gethwrappers/ManyChainMultiSig.go#L76) function
+Deploy the MCMS contract using the [`DeployManyChainMultiSig`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/gethwrappers/ManyChainMultiSig.go#L76) function
 
-The default [`ManyChainMultiSigConfig`](./gethwrappers/ManyChainMultiSig.go#L32) is very unintuitive to define and construct based on the desired group structure. As a result, this library provides a [`Config` Wrapper](./config/config.go#L13) which defines a more intuitive MCMS membership structure for ease of use.
+The default [`ManyChainMultiSigConfig`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/gethwrappers/ManyChainMultiSig.go#L32) is very unintuitive to define and construct based on the desired group structure. As a result, this library provides a [`Config` Wrapper](./config/config.go#L13) which defines a more intuitive MCMS membership structure for ease of use.
 
 The configuration is a nested tree structure where a given group is considered at `quorum` if the sum of `Signers` with Signatures and `GroupSigners` that individually are at `quorum` are greater than or equal to the top-level `quorum`
 
@@ -54,7 +54,7 @@ Note: Signers cannot be repeated in this configuration (i.e. they cannot belong 
 
 ### Timelock
 
-Deploy the RBACTimelock using the [DeployRBACTimelock](./gethwrappers/RBACTimelock.go#L47) function
+Deploy the RBACTimelock using the [DeployRBACTimelock](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/gethwrappers/RBACTimelock.go#L47x) function
 
 Users can configure other addresses with certain roles using the [`GrantRole`](./gethwrappers/RBACTimelock.go#L667) and [`RevokeRole`](./gethwrappers/RBACTimelock.go#L727) functions
 
@@ -62,7 +62,7 @@ Note: These configurations can only be done by the admin, so it's probably easie
 
 ### CallProxy
 
-Deploy the call proxy using the [`DeployCallProxy`](./gethwrappers/CallProxy.go#L41) function
+Deploy the call proxy using the [`DeployCallProxy`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/gethwrappers/CallProxy.go#L41) function
 
 Note: the `target` in the CallProxy is only configurable during deployment and cannot be set after the fact
 
@@ -70,12 +70,12 @@ Note: the `target` in the CallProxy is only configurable during deployment and c
 
 Once relevant MCMS/RBACTimelock/CallProxy contracts are deployed, the way users can interact with these contracts is through a [`Proposal`](./proposal/mcms/proposal.go#L18). At it's core, a `Proposal` is just a list of (currently only EVM) operations that are to be executed through the MCMS, along with additional metadata about individual transactions and the proposal as a whole. Proposals come in two flavors:
 
-1. [`MCMSProposal`](./proposal/mcms/proposal.go#L18): Represents a simple list of operations (`to`,`value`,`data`) that are to be executed through the mcms with no transformation
-2. [`MCMSWithTimelockProposal`](./proposal/timelock/mcm_with_timelock.go#L24): Represents a list of operations that are to be wrapped in a given timelock operation (`Schedule`,`Cancel`,`Bypass`) before being executed through the MCMS. More details about this flavor can be found [below](#nuances-of-mcmswithtimelockproposals)
+1. [`MCMSProposal`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/proposal/mcms/proposal.go#L19): Represents a simple list of operations (`to`,`value`,`data`) that are to be executed through the mcms with no transformation
+2. [`MCMSWithTimelockProposal`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/proposal/timelock/mcm_with_timelock.go#L25): Represents a list of operations that are to be wrapped in a given timelock operation (`Schedule`,`Cancel`,`Bypass`) before being executed through the MCMS. More details about this flavor can be found [below](#nuances-of-mcmswithtimelockproposals)
 
 ### Construction
 
-Proposal types can be constructed with their respective `NewProposal...` functions. For example, [`NewMCMSWithTimelockProposal`](./proposal/timelock/mcm_with_timelock.go#L38) and [`NewMCMSProposal`](./proposal/mcms/proposal.go#L36)
+Proposal types can be constructed with their respective `NewProposal...` functions. For example, [`NewMCMSWithTimelockProposal`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/proposal/timelock/mcm_with_timelock.go#L70) and [`NewMCMSProposal`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/proposal/mcms/proposal.go#L37)
 
 ### Proposal Validation
 
@@ -89,12 +89,12 @@ Proposal types all contain a relevant `Validate()` function that can be used to 
 
 The library provides two functions to help with the execution of an MCMS Proposal:
 
-1. [`SetRootOnChain`](./proposal/mcms/executor.go#L234): Given auth and a ChainIdentifer, calls `setRoot` on the target MCMS for that given chainIdentifier.
-2. [`ExecuteOnChain`](./proposal/mcms/executor.go#L269): Given auth and an index, calls `execute` on the target MCMS for that given operation.
+1. [`SetRootOnChain`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/proposal/mcms/executor.go#L308): Given auth and a ChainIdentifer, calls `setRoot` on the target MCMS for that given chainIdentifier.
+2. [`ExecuteOnChain`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/proposal/mcms/executor.go#L348): Given auth and an index, calls `execute` on the target MCMS for that given operation.
 
 ### Nuances of MCMSWithTimelockProposals
 
-The [`MCMSWithTimelockProposal`](./proposal/timelock/mcm_with_timelock.go#L24) is an extension of the `MCMSProposal` and has the following additional fields:
+The [`MCMSWithTimelockProposal`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/proposal/timelock/mcm_with_timelock.go#L25) is an extension of the `MCMSProposal` and has the following additional fields:
 
 1. `Operation`: One of <`Schedule` | `Cancel` | `Bypass`> which determines how to wrap each call in `Transactions`, wrapping calls in `scheduleBatch`,`cancel`, and `bypasserExecuteBatch` calls, respectively
 2. `MinDelay` is a string representation of a Go `time.Duration` ("1s", "1h", "1d", etc.). This field is only required when `Operation == Schedule` and sets the delay for each transaction to be the provided value in seconds
@@ -105,7 +105,7 @@ The [`MCMSWithTimelockProposal`](./proposal/timelock/mcm_with_timelock.go#L24) i
 
 ### Upgrade Go-Ethereum Wrappers
 
-From within the [gethwrappers/](./gethwrappers/) directory, run the following command:
+From within the [gethwrappers/](https://github.com/smartcontractkit/mcms/tree/main/pkg/gethwrappers) directory, run the following command:
 ```
 bash generate.sh
 ```
