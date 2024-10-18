@@ -4,14 +4,19 @@ In the MCMS, Merkle tree signing is used to efficiently compose and verify multi
 This approach leverages cryptographic proofs provided by a Merkle tree, ensuring that a set of transactions 
 can be signed collectively, maintaining both simplicity and security.
 
-We have adopted the [OpenZeppelin Merkle tree](https://docs.openzeppelin.com/contracts-cairo/0.16.0/api/merkle-tree) implementation for its robustness and widespread use in 
+We have adopted the [OpenZeppelin Merkle tree](https://docs.openzeppelin.com/contracts-cairo/0.16.0/api/merkle-tree) 
+implementation for its robustness and widespread use in 
 smart contract systems. Here's an overview of how Merkle tree signing is applied in MCMS:
 
 ## Why OpenZeppelin's Merkle Tree?
-We chose the OpenZeppelin Merkle tree due to its tried-and-tested design and simplicity. 
+We chose the OpenZeppelin Merkle tree on the Smart Contracts due to its tried-and-tested design and simplicity. 
 The decision to avoid more complex solutions like multiproofs or Merkle tries (which support key-value pairs) 
 aligns with the "Keep It Simple, Stupid" (KISS) principle. This approach avoids unnecessary complexity while still 
 providing the needed cryptographic security.
+
+### Separate Merkle Tree Implementation for the Go Library
+While the EVM smart contracts rely on Open Zeppelin's implementation, we have a separate Merkle
+tree implementation in the OffChain Golang Library. You can check the implementation [here](https://github.com/smartcontractkit/mcms/blob/main/pkg/merkle/merkle_tree.go)
 
 ## Key Decisions
 * **No Multiproofs:** n the context of Merkle tree signing, multiproofs refer to a more advanced method that allows 
