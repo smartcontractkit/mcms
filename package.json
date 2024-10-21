@@ -10,7 +10,7 @@
   },
   "author": "@smartcontractkit",
   "devDependencies": {
-    "@changesets/changelog-github": "^0.4.8",
+    "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "~2.27.9",
     "changeset": "^0.2.6",
     "docsify-cli": "^4.4.4"
