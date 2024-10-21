@@ -8,7 +8,7 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
 - **Timelock Configurations**: Timelocks allow delaying the execution of transactions, giving signers time to review and, if necessary, cancel operations.
 - **Batching**: Transactions can be grouped into batches to be executed together, ensuring atomicity.
 - **Parallel Signing**: The nonce offset helps manage nonces when signing transactions across different chains simultaneously.
-- **Human-Readable Breadcrumbs**: Optional metadata like `contractType` and `tags` can help signers understand the proposal better.
+- **Human-Readable Breadcrumbs**: Non-signed metadata such as `contractType` and `tags` can be used to give additional context to the operations, especially during debugging or reviews. Included in both timelock and non-timelock proposal types.
 
 # MCMS + Timelock Proposal Format
 
@@ -33,7 +33,7 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
   ],
   "chain_metadata": {
     "<CHAIN_IDENTIFIER>": {
-      "nonce_offset": "<offset>",
+      "startingOpCount": "<offset>",
       "mcmAddress": "<MCM_ADDRESS>",
       "timelockAddress": "<TIMELOCK_ADDRESS>"
     }
@@ -87,8 +87,8 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
 - **signatures**: A list of signatures from signers who approve the proposal.
 
 - **chain_metadata**: Chain-specific configuration for the proposal:
-  - **CHAIN_IDENTIFIER**: The blockchain identifier.
-  - **nonce_offset**: A value used for parallel signing to manage nonces across multiple chains.
+  - **CHAIN_IDENTIFIER**: The blockchain identifier, a `uin64` value matching the chain based on the [Chain Selectors Repo Structure](https://github.com/smartcontractkit/chain-selectors)
+  - **startingOpCount**: A value used for parallel signing to manage nonces across multiple chains.
   - **mcmAddress**: The address of the MCM contract on the respective chain.
   - **timelockAddress**: The address of the timelock contract on the respective chain.
 
@@ -96,7 +96,7 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
   - **chain**: The chain identifier where the transaction will be executed.
   - **to**: The target contract address.
   - **payload**: The hexadecimal payload to send to the contract.
-  - **value**: The amount of cryptocurrency (Ether) to transfer.
+  - **additionalFields**: A chain-specific object with data relevant for the execution of operations on each chain.
   - **contractType** (optional): The type of contract, potentially pointing to an ABI or other metadata.
   - **tags** (optional): Tags for categorizing or describing transactions.
 

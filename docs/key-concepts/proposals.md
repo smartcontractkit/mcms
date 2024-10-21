@@ -7,7 +7,7 @@ specific operations, like contract interactions or asset transfers, in a
 coordinated manner across different chains.
 ### General Considerations
 - **MCMS Only Implementation**: This format is used specifically for teams that control only the MCMS, without additional layers like RBACTimelock in their structure. Check [RBAC Timelock proposal](./proposal-timelock.md)
-- **Human-Readable Breadcrumbs**: Non-signed metadata such as `contractType` and `tags` can be used to give additional context to the operations, especially during debugging or reviews.
+- **Human-Readable Breadcrumbs**: Non-signed metadata such as `contractType` and `tags` can be used to give additional context to the operations, especially during debugging or reviews. Included in both timelock and non-timelock proposal types.
 - **Description**: The `description` field provides essential context and should be generated through pipelines to ensure consistency.
 - **ContractTypes / ABI Pointers**: These fields allow developers to add helpful references to contracts' ABI, which can simplify operations like decoding payloads.
 - **Tags**: Tags can help in filtering or categorizing operations, adding flexibility to proposal management.
@@ -40,7 +40,7 @@ coordinated manner across different chains.
       "chain": "<CHAIN_IDENTIFIER>",
       "to": "<TARGET_CONTRACT>",
       "payload": "<HEX_PAYLOAD>",
-      "value": "<ETHER_TO_TRANSFER>",
+      "additionalFields": "<object>",
       "contractType": "<CONTRACT_TYPE>",
       "tags": ["<EXAMPLE_TAG>"]
     },
@@ -48,7 +48,7 @@ coordinated manner across different chains.
       "chain": "<CHAIN_IDENTIFIER>",
       "to": "<TARGET_CONTRACT>",
       "payload": "<HEX_PAYLOAD>",
-      "value": "<ETHER_TO_TRANSFER>",
+      "additionalFields": "<object>",
       "contractType": "<CONTRACT_TYPE>",
       "tags": ["<EXAMPLE_TAG>"]
     }
@@ -69,7 +69,7 @@ coordinated manner across different chains.
 - **signatures**: A list of cryptographic signatures by signers, where each element represents one signature (e.g., `"SIGNATURE_ONE"`, `"SIGNATURE_TWO"`, `"SIGNATURE_THREE"`). These ensure that the proposal has been agreed upon by the necessary parties.
 
 - **chain_metadata**: Contains chain-specific configuration for each blockchain involved in the proposal:
-    - **CHAIN_IDENTIFIER**: The blockchain identifier.
+    - **CHAIN_IDENTIFIER**: The blockchain identifier, a `uin64` value matching the chain based on the [Chain Selectors Repo Structure](https://github.com/smartcontractkit/chain-selectors)
     - **startingOpCount**: Starting operation count, typically used for parallel signing processes.
     - **mcmAddress**: The MCM contract address that will process this proposal on the respective chain.
 
@@ -77,7 +77,7 @@ coordinated manner across different chains.
     - **chain**: The blockchain identifier for the specific transaction.
     - **to**: The target contract address.
     - **payload**: The encoded payload (hexadecimal) to be sent with the transaction.
-    - **value**: The amount of Ether to be transferred (if any) with the transaction.
+    - **additionalFields**: A chain-specific object with data relevant for the execution of operations on each chain.
     - **contractType** (optional): A pointer to the contract's ABI or other relevant metadata.
     - **tags** (optional): Tags are being considered for categorizing or describing transactions. For example, `"EXAMPLE_TAG"`.
 
