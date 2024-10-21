@@ -32,7 +32,7 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
     "<SIGNATURE_THREE>"
   ],
   "chain_metadata": {
-    "<CHAIN_IDENTIFIER>": {
+    "<CHAIN_SELECTOR>": {
       "startingOpCount": "<offset>",
       "mcmAddress": "<MCM_ADDRESS>",
       "timelockAddress": "<TIMELOCK_ADDRESS>"
@@ -40,7 +40,7 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
   },
   "transactions": [
     {
-      "chain": "<CHAIN_IDENTIFIER>",
+      "chain": "<CHAIN_SELECTOR>",
       "to": "<TARGET_CONTRACT>",
       "payload": "<HEX_PAYLOAD>",
       "value": "<ETHER_TO_TRANSFER>",
@@ -48,7 +48,7 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
       "tags": ["<sometag>"]
     },
     {
-      "chain": "<CHAIN_IDENTIFIER>",
+      "chain": "<CHAIN_SELECTOR>",
       "batch": [
         {
           "to": "<TARGET_CONTRACT>",
@@ -87,7 +87,7 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
 - **signatures**: A list of signatures from signers who approve the proposal.
 
 - **chain_metadata**: Chain-specific configuration for the proposal:
-  - **CHAIN_IDENTIFIER**: The blockchain identifier, a `uin64` value matching the chain based on the [Chain Selectors Repo Structure](https://github.com/smartcontractkit/chain-selectors)
+  - **CHAIN_SELECTOR**: The blockchain chain selector ID, a `uin64` value matching the chain based on the [Chain Selectors Repo Structure](https://github.com/smartcontractkit/chain-selectors)
   - **startingOpCount**: A value used for parallel signing to manage nonces across multiple chains.
   - **mcmAddress**: The address of the MCM contract on the respective chain.
   - **timelockAddress**: The address of the timelock contract on the respective chain.

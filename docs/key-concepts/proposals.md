@@ -30,14 +30,14 @@ coordinated manner across different chains.
     "<SIGNATURE_THREE>"
   ],
   "chain_metadata": {
-    "<CHAIN_IDENTIFIER>": {
+    "<CHAIN_SELECTOR>": {
       "startingOpCount": "<STARTING_OP_COUNT>",
       "mcmAddress": "<MCM_ADDRESS>"
     }
   },
   "transactions": [
     {
-      "chain": "<CHAIN_IDENTIFIER>",
+      "chain": "<CHAIN_SELECTOR>",
       "to": "<TARGET_CONTRACT>",
       "payload": "<HEX_PAYLOAD>",
       "additionalFields": "<object>",
@@ -45,7 +45,7 @@ coordinated manner across different chains.
       "tags": ["<EXAMPLE_TAG>"]
     },
     {
-      "chain": "<CHAIN_IDENTIFIER>",
+      "chain": "<CHAIN_SELECTOR>",
       "to": "<TARGET_CONTRACT>",
       "payload": "<HEX_PAYLOAD>",
       "additionalFields": "<object>",
@@ -69,7 +69,7 @@ coordinated manner across different chains.
 - **signatures**: A list of cryptographic signatures by signers, where each element represents one signature (e.g., `"SIGNATURE_ONE"`, `"SIGNATURE_TWO"`, `"SIGNATURE_THREE"`). These ensure that the proposal has been agreed upon by the necessary parties.
 
 - **chain_metadata**: Contains chain-specific configuration for each blockchain involved in the proposal:
-    - **CHAIN_IDENTIFIER**: The blockchain identifier, a `uin64` value matching the chain based on the [Chain Selectors Repo Structure](https://github.com/smartcontractkit/chain-selectors)
+    - **CHAIN_SELECTOR**: The blockchain selector ID, a `uin64` value matching the chain based on the [Chain Selectors Repo Structure](https://github.com/smartcontractkit/chain-selectors)
     - **startingOpCount**: Starting operation count, typically used for parallel signing processes.
     - **mcmAddress**: The MCM contract address that will process this proposal on the respective chain.
 
