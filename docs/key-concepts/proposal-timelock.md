@@ -19,7 +19,7 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
 
 ```json
 {
-  "version": "<proposal format version>",
+  "version": "<PROPOSAL_FORMAT_VERSION>",
   "operation": "<schedule | cancel | bypass>",
   "validUntil": "<UINT256_TIMESTAMP>",
   "minDelay": "24h",
