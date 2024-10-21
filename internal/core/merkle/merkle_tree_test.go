@@ -30,6 +30,12 @@ func TestNewMerkleTree(t *testing.T) {
 			expectedRoot:   common.HexToHash("0xbe80f348526b4646bc0697bf2fe649f1835863538924cb6b91ad4eb57ced0181"),
 		},
 		{
+			name:           "Empty tree",
+			leaves:         []common.Hash{},
+			expectedLayers: 0,
+			expectedRoot:   common.Hash{},
+		},
+		{
 			name: "Odd number of leaves",
 			leaves: []common.Hash{
 				crypto.Keccak256Hash([]byte("leaf1")),
