@@ -19,7 +19,7 @@ While the EVM smart contracts rely on Open Zeppelin's implementation, we have a 
 tree implementation in the OffChain Golang Library. You can check the implementation [here](https://github.com/smartcontractkit/mcms/blob/main/pkg/merkle/merkle_tree.go)
 
 ## Key Decisions
-* **No Multiproofs:** n the context of Merkle tree signing, multiproofs refer to a more advanced method that allows 
+* **No Multiproofs:** In the context of Merkle tree signing, multiproofs refer to a more advanced method that allows 
 for verifying multiple leaves (operations) in the tree with a single proof. While this sounds efficient in certain 
 scenarios, it adds complexity to the implementation and verification process. However, for simplicity and ease of 
 verification, we stick to the single proof approach.
