@@ -18,6 +18,15 @@ providing the needed cryptographic security.
 While the EVM smart contracts rely on Open Zeppelin's implementation, we have a separate Merkle
 tree implementation in the OffChain Golang Library. You can check the implementation [here](https://github.com/smartcontractkit/mcms/blob/main/pkg/merkle/merkle_tree.go)
 
+####  Why 2 separate Merkle tree implementations?
+We need an On-chain implementation (OpenZeppelin for Evm) in order to check if a given hash
+belongs to the merkle root saved on the contract. However the on-chain implementation is not responsible for 
+the merkle tree construction itself. This root that gets saved on the contract (via the `setRoot()` function call) is
+generated OffChain via the Go lib, which has the 2nd merkle tree implementation.
+
+The Go-lib implementation can be reused for non-evm cases as well, however we'll most likely need
+separate merkle tree implementations whenever any new non-evm chain needs to get supported.
+
 ## Key Decisions
 * **No Multiproofs:** In the context of Merkle tree signing, multiproofs refer to a more advanced method that allows 
 for verifying multiple leaves (operations) in the tree with a single proof. While this sounds efficient in certain 
