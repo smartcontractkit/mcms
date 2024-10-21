@@ -9,7 +9,7 @@ const HashPairSize = 2 // Size of hash pairs when computing parent nodes
 
 // MerkleTree represents a cryptographic Merkle tree used to verify data integrity.
 type MerkleTree struct {
-	// Root is the final hash at the top of the Merkle tree, derived from all the leaf nodes.
+	// Root is the final hash at the top of the Merkle tree, derived from the hashes of all the leaf nodes.
 	Root common.Hash
 
 	// Layers contains all tree levels, starting from the leaves. Each subsequent level is derived by hashing pairs of nodes from the previous layer, ultimately leading to the root.
