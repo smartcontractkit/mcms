@@ -49,7 +49,7 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Scanning with Sonarqube
-        uses: smartcontractkit/.github/actions/ci-sonarqube-go@568bf84171110fbfc8efe24fd1625d1bdd2783c5
+        uses: smartcontractkit/.github/actions/ci-sonarqube-go@5f4a9c9c3407dd499a1ebbc658a45b9beb9bf675
         with:
           # sonarqube inputs
           sonar-token: ${{ secrets.SONAR_TOKEN }}
