@@ -3,6 +3,7 @@ package mcms
 import (
 	"github.com/ethereum/go-ethereum/common"
 
+	"encoding/json"
 	"time"
 
 	"github.com/smartcontractkit/mcms/pkg/errors"
@@ -60,19 +61,34 @@ func NewProposal(
 
 	return &proposal, nil
 }
-func (p MCMSProposal) MarshalJSON() {
 
-}
-func (p MCMSProposal) UnmarshalJSON() {
+// MarshalJSON implements the JSON marshaller for MCMSProposal
+func (p MCMSProposal) MarshalJSON() ([]byte, error) {
+	// Validate the proposal before marshalling
+	if err := p.Validate(); err != nil {
+		return nil, err
+	}
 
+	// Directly marshal the proposal as no field adjustments are required
+	return json.Marshal(p)
 }
+
+func (p *MCMSProposal) UnmarshalJSON(data []byte) error {
+	// Unmarshal the JSON data directly into the struct
+	if err := json.Unmarshal(data, p); err != nil {
+		return err
+	}
+
+	// Run validation after unmarshalling
+	return p.Validate()
+}
+
 func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	var out MCMSProposal
 	err := FromFile(filePath, &out)
 	if err != nil {
 		return nil, err
 	}
-
 	return &out, nil
 }
 
@@ -107,6 +123,8 @@ func proposalValidateBasic(proposal MCMSProposal) error {
 
 	return nil
 }
+
+// Validate validates the MCMS proposal, including chain specific fields from the additionalFields field of the proposal
 func (m *MCMSProposal) Validate() error {
 	if m.Version == "" {
 		return &errors.InvalidVersionError{
@@ -127,6 +145,8 @@ func (m *MCMSProposal) Validate() error {
 			}
 		}
 	}
+
+	// TODO: Do chain specific validation fields here
 
 	return nil
 }
