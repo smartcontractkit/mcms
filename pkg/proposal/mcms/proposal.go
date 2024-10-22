@@ -1,9 +1,9 @@
 package mcms
 
 import (
-	"time"
-
 	"github.com/ethereum/go-ethereum/common"
+
+	"time"
 
 	"github.com/smartcontractkit/mcms/pkg/errors"
 )
@@ -60,7 +60,12 @@ func NewProposal(
 
 	return &proposal, nil
 }
+func (p MCMSProposal) MarshalJSON() {
 
+}
+func (p MCMSProposal) UnmarshalJSON() {
+
+}
 func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	var out MCMSProposal
 	err := FromFile(filePath, &out)
