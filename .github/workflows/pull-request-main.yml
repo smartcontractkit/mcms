@@ -38,21 +38,6 @@ jobs:
           gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
           gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
 
-  ci-sonarqube:
-    name: Sonarqube Scan
-    needs: [ ci-lint, ci-lint-misc, ci-test ]
-    runs-on: ubuntu-latest
-    if: github.actor != 'dependabot[bot]'
-    steps:
-      - name: Scanning with Sonarqube
-        uses: smartcontractkit/.github/actions/ci-sonarqube-go@f1f2dac0a20f0e02408eb7f528c768fe95c39229
-        with:
-          # sonarqube inputs
-          sonar-token: ${{ secrets.SONAR_TOKEN }}
-          sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
-          include-lint: true
-
-
   ci-test:
     name: Tests
     runs-on: ubuntu-latest
@@ -71,3 +56,17 @@ jobs:
           gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
           gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
           gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
+
+  ci-sonarqube:
+    name: Sonarqube Scan
+    needs: [ ci-lint, ci-lint-misc, ci-test ]
+    runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
+    steps:
+      - name: Scanning with Sonarqube
+        uses: smartcontractkit/.github/actions/ci-sonarqube-go@f1f2dac0a20f0e02408eb7f528c768fe95c39229
+        with:
+          # sonarqube inputs
+          sonar-token: ${{ secrets.SONAR_TOKEN }}
+          sonar-host-url: ${{ secrets.SONAR_HOST_URL }}
+          include-lint: true
