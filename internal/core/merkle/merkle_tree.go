@@ -8,8 +8,8 @@ import (
 // HashPairSize Size of hash pairs when computing parent nodes
 const HashPairSize = 2
 
-// MerkleTree represents a cryptographic Merkle tree used to verify data integrity.
-type MerkleTree struct {
+// Tree represents a cryptographic Merkle tree used to verify data integrity.
+type Tree struct {
 	// Root is the final hash at the top of the Merkle tree, derived from the hashes of all the leaf nodes.
 	Root common.Hash
 
@@ -19,10 +19,10 @@ type MerkleTree struct {
 
 // NewMerkleTree constructs a Merkle tree from a list of leaf hashes.
 // It recursively hashes pairs of leaves until a single root hash is obtained.
-func NewMerkleTree(leaves []common.Hash) *MerkleTree {
+func NewMerkleTree(leaves []common.Hash) *Tree {
 	layers := make([][]common.Hash, 0)
 	if len(leaves) == 0 {
-		return &MerkleTree{
+		return &Tree{
 			Root:   common.Hash{},
 			Layers: layers,
 		}
@@ -48,7 +48,7 @@ func NewMerkleTree(leaves []common.Hash) *MerkleTree {
 	}
 
 	// Return the Merkle tree with the computed layers and root hash.
-	return &MerkleTree{
+	return &Tree{
 		Root:   currHashes[0],
 		Layers: layers,
 	}
@@ -56,7 +56,7 @@ func NewMerkleTree(leaves []common.Hash) *MerkleTree {
 
 // GetProof generates a Merkle proof for a given leaf hash.
 // A proof is a set of sibling hashes needed to reconstruct the root from this leaf.
-func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
+func (t *Tree) GetProof(hash common.Hash) ([]common.Hash, error) {
 	proof := make([]common.Hash, 0)
 	targetHash := hash
 
@@ -94,7 +94,7 @@ func (t *MerkleTree) GetProof(hash common.Hash) ([]common.Hash, error) {
 
 // GetProofs generates Merkle proofs for all leaves in the tree.
 // It returns a map where the keys are the leaf hashes and the values are their corresponding proofs.
-func (t *MerkleTree) GetProofs() (map[common.Hash][]common.Hash, error) {
+func (t *Tree) GetProofs() (map[common.Hash][]common.Hash, error) {
 	proofs := make(map[common.Hash][]common.Hash)
 
 	// General case: iterate over all leaves in the first layer
