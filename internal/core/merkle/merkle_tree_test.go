@@ -154,7 +154,10 @@ func TestGetProof(t *testing.T) {
 			proof, err := tree.GetProof(tt.nonExistentHash)
 			require.Error(t, err)
 			assert.Nil(t, proof)
-			assert.IsType(t, &TreeNodeNotFoundError{}, err)
+
+			var merkleErr *TreeNodeNotFoundError
+			assert.ErrorAs(t, err, &merkleErr)
+
 		})
 	}
 }
