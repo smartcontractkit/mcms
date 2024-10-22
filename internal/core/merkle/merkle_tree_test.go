@@ -12,6 +12,7 @@ import (
 // TestNewMerkleTree tests the creation of a new Merkle tree
 func TestNewMerkleTree(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name           string
 		leaves         []common.Hash
@@ -62,6 +63,7 @@ func TestNewMerkleTree(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
 			tree := NewMerkleTree(tt.leaves)
 
 			assert.NotNil(t, tree)
@@ -74,6 +76,7 @@ func TestNewMerkleTree(t *testing.T) {
 // TestGetProof tests the generation of Merkle proofs, including handling of non-existent hashes
 func TestGetProof(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name             string
 		leaves           []common.Hash
@@ -128,6 +131,7 @@ func TestGetProof(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
 			tree := NewMerkleTree(tt.leaves)
 
 			// Test valid proofs if expectedProofLen is greater than 0
@@ -158,6 +162,7 @@ func TestGetProof(t *testing.T) {
 // TestErrMerkleTreeNodeNotFound tests different MerkleTreeNodeNotFoundError error messages
 func TestErrMerkleTreeNodeNotFound(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name             string
 		targetHash       common.Hash
@@ -178,6 +183,7 @@ func TestErrMerkleTreeNodeNotFound(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
 			err := &MerkleTreeNodeNotFoundError{TargetHash: tt.targetHash}
 			assert.Equal(t, tt.expectedErrorMsg, err.Error())
 		})
@@ -187,6 +193,7 @@ func TestErrMerkleTreeNodeNotFound(t *testing.T) {
 // TestGetProofs tests the GetProofs method for different tree configurations
 func TestGetProofs(t *testing.T) {
 	t.Parallel()
+
 	tests := []struct {
 		name        string
 		leaves      []common.Hash
@@ -233,6 +240,7 @@ func TestGetProofs(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
+
 			// Create Merkle tree with given leaves
 			tree := NewMerkleTree(tt.leaves)
 
