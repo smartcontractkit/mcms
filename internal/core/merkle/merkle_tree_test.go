@@ -154,12 +154,12 @@ func TestGetProof(t *testing.T) {
 			proof, err := tree.GetProof(tt.nonExistentHash)
 			require.Error(t, err)
 			assert.Nil(t, proof)
-			assert.IsType(t, &MerkleTreeNodeNotFoundError{}, err)
+			assert.IsType(t, &TreeNodeNotFoundError{}, err)
 		})
 	}
 }
 
-// TestErrMerkleTreeNodeNotFound tests different MerkleTreeNodeNotFoundError error messages
+// TestErrMerkleTreeNodeNotFound tests different TreeNodeNotFoundError error messages
 func TestErrMerkleTreeNodeNotFound(t *testing.T) {
 	t.Parallel()
 
@@ -184,10 +184,11 @@ func TestErrMerkleTreeNodeNotFound(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := &MerkleTreeNodeNotFoundError{TargetHash: tt.targetHash}
+			err := &TreeNodeNotFoundError{TargetHash: tt.targetHash}
 			assert.Equal(t, tt.expectedErrorMsg, err.Error())
 		})
 	}
+
 }
 
 // TestGetProofs tests the GetProofs method for different tree configurations
@@ -226,13 +227,13 @@ func TestGetProofs(t *testing.T) {
 			leaves: []common.Hash{
 				crypto.Keccak256Hash([]byte("leaf1")),
 			},
-			expectError: false,
-			expectedLen: 0, // 1 leaf, should return 1 proof (empty)
+			expectError: true, // Single leaf should not be possible to generate a proof for
+			expectedLen: 0,    // 1 leaf, should return 1 proof (empty)
 		},
 		{
 			name:        "Empty leaves",
 			leaves:      []common.Hash{}, // No leaves provided
-			expectError: false,           // Should not error, just return an empty map
+			expectError: true,            // Should error since tree has no layers
 			expectedLen: 0,               // No leaves, should return 0 proofs
 		},
 	}
@@ -243,11 +244,6 @@ func TestGetProofs(t *testing.T) {
 
 			// Create Merkle tree with given leaves
 			tree := NewMerkleTree(tt.leaves)
-
-			// Handle cases where the tree is empty (no layers)
-			if len(tree.Layers) == 0 && tt.expectedLen == 0 {
-				return
-			}
 
 			// Call GetProofs to get proofs for all leaves
 			proofs, err := tree.GetProofs()

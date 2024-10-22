@@ -1,6 +1,7 @@
 package merkle
 
 import (
+	"errors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -83,7 +84,7 @@ func (t *Tree) GetProof(hash common.Hash) ([]common.Hash, error) {
 
 		// Return an error if the hash is not found in the current layer (shouldn't happen).
 		if !found {
-			return nil, &MerkleTreeNodeNotFoundError{
+			return nil, &TreeNodeNotFoundError{
 				TargetHash: targetHash,
 			}
 		}
@@ -96,7 +97,9 @@ func (t *Tree) GetProof(hash common.Hash) ([]common.Hash, error) {
 // It returns a map where the keys are the leaf hashes and the values are their corresponding proofs.
 func (t *Tree) GetProofs() (map[common.Hash][]common.Hash, error) {
 	proofs := make(map[common.Hash][]common.Hash)
-
+	if len(t.Layers) == 0 {
+		return nil, NoLayersError
+	}
 	// General case: iterate over all leaves in the first layer
 	for _, leaf := range t.Layers[0] {
 		proof, err := t.GetProof(leaf)
@@ -109,16 +112,18 @@ func (t *Tree) GetProofs() (map[common.Hash][]common.Hash, error) {
 	return proofs, nil
 }
 
-// MerkleTreeNodeNotFoundError indicates that a target hash could not be found in the tree.
-type MerkleTreeNodeNotFoundError struct {
+// TreeNodeNotFoundError indicates that a target hash could not be found in the tree.
+type TreeNodeNotFoundError struct {
 	// TargetHash is the hash that couldn't be found in the tree.
 	TargetHash common.Hash
 }
 
-// Error implements the error interface for MerkleTreeNodeNotFoundError.
-func (e *MerkleTreeNodeNotFoundError) Error() string {
+// Error implements the error interface for TreeNodeNotFoundError.
+func (e *TreeNodeNotFoundError) Error() string {
 	return "merkle tree does not contain hash: " + e.TargetHash.String()
 }
+
+var NoLayersError = errors.New("no layers in the Merkle tree")
 
 // hashPair takes two hashes and returns their sorted combined hash.
 // Sorting ensures deterministic results regardless of input order.
