@@ -13,7 +13,7 @@ type MerkleTree struct {
 	// Root is the final hash at the top of the Merkle tree, derived from the hashes of all the leaf nodes.
 	Root common.Hash
 
-	// Layers contains all tree levels, starting from the leaves. Each subsequent level is derived by hashing pairs of nodes from the previous layer, ultimately leading to the root.
+	// Layers contains all tree layers, starting from the leaves. Each subsequent layer is derived by hashing pairs of nodes from the previous layer, ultimately leading to the root.
 	Layers [][]common.Hash
 }
 
