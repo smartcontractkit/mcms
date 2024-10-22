@@ -5,7 +5,8 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-const HashPairSize = 2 // Size of hash pairs when computing parent nodes
+// HashPairSize Size of hash pairs when computing parent nodes
+const HashPairSize = 2
 
 // MerkleTree represents a cryptographic Merkle tree used to verify data integrity.
 type MerkleTree struct {
