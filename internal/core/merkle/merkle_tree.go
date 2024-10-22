@@ -2,6 +2,7 @@ package merkle
 
 import (
 	"errors"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
@@ -98,7 +99,7 @@ func (t *Tree) GetProof(hash common.Hash) ([]common.Hash, error) {
 func (t *Tree) GetProofs() (map[common.Hash][]common.Hash, error) {
 	proofs := make(map[common.Hash][]common.Hash)
 	if len(t.Layers) == 0 {
-		return nil, NoLayersError
+		return nil, ErrNoLayers
 	}
 	// General case: iterate over all leaves in the first layer
 	for _, leaf := range t.Layers[0] {
@@ -123,7 +124,7 @@ func (e *TreeNodeNotFoundError) Error() string {
 	return "merkle tree does not contain hash: " + e.TargetHash.String()
 }
 
-var NoLayersError = errors.New("no layers in the Merkle tree")
+var ErrNoLayers = errors.New("no layers in the Merkle tree")
 
 // hashPair takes two hashes and returns their sorted combined hash.
 // Sorting ensures deterministic results regardless of input order.

@@ -157,7 +157,6 @@ func TestGetProof(t *testing.T) {
 
 			var merkleErr *TreeNodeNotFoundError
 			assert.ErrorAs(t, err, &merkleErr)
-
 		})
 	}
 }
@@ -191,7 +190,6 @@ func TestErrMerkleTreeNodeNotFound(t *testing.T) {
 			assert.Equal(t, tt.expectedErrorMsg, err.Error())
 		})
 	}
-
 }
 
 // TestGetProofs tests the GetProofs method for different tree configurations
