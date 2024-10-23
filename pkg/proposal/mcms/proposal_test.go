@@ -1,12 +1,13 @@
 package mcms
 
 import (
-	"math/big"
-	"testing"
-
+	"encoding/json"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"math/big"
+	"testing"
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")
@@ -233,4 +234,174 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 	require.Error(t, err)
 	require.EqualError(t, err, "missing chain metadata for chain 3")
 	assert.Nil(t, proposal)
+}
+
+func TestMCMSProposal_MarshalJSON(t *testing.T) {
+	tests := []struct {
+		name        string
+		proposal    MCMSProposal
+		expectError bool
+	}{
+		{
+			name: "valid proposal",
+			proposal: MCMSProposal{
+				Version:              "v1.0",
+				ValidUntil:           uint32(4128029039),
+				Signatures:           []Signature{},
+				OverridePreviousRoot: false,
+				ChainMetadata: map[ChainIdentifier]ChainMetadata{
+					ChainIdentifier(1): {
+						StartingOpCount: 0,
+						MCMAddress:      common.HexToAddress("0x0000000000000000000000000000000000000000"),
+					},
+				},
+				Description: "Test Proposal",
+				Transactions: []ChainOperation{
+					{
+						Operation:       Operation{},
+						ChainIdentifier: ChainIdentifier(1),
+					},
+				},
+			},
+			expectError: false,
+		},
+		{
+			name: "invalid proposal - missing version",
+			proposal: MCMSProposal{
+				Version:              "",
+				ValidUntil:           uint32(4128029039),
+				Signatures:           []Signature{},
+				OverridePreviousRoot: false,
+				ChainMetadata: map[ChainIdentifier]ChainMetadata{
+					ChainIdentifier(1): {
+						StartingOpCount: 0,
+						MCMAddress:      common.HexToAddress("0x0000000000000000000000000000000000000000"),
+					},
+				},
+				Description:  "Test Proposal",
+				Transactions: []ChainOperation{},
+			},
+			expectError: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			_, err := json.Marshal(tt.proposal)
+			if tt.expectError {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		name            string
+		jsonData        string
+		expectError     bool
+		expectedErrType error
+	}{
+		{
+			name: "valid proposal",
+			jsonData: `{
+				"version": "v1.0",
+				"validUntil": 4128029039,
+				"signatures": [],
+				"overridePreviousRoot": false,
+				"chainMetadata": {
+					"1": {
+						"startingOpCount": 0,
+						"mcmAddress": "0x0000000000000000000000000000000000000000"
+					}
+				},
+				"description": "Test Proposal",
+                "transactions": [
+                  {
+                     "chainIdentifier": 1,
+                     "additionalFields": null
+                  }]
+			}`,
+			expectError: false,
+		},
+		{
+			name: "invalid proposal - missing version",
+			jsonData: `{
+				"version": "",
+				"validUntil": 4128029039,
+				"signatures": [],
+				"overridePreviousRoot": false,
+				"chainMetadata": {
+					"1": {
+						"startingOpCount": 0,
+						"mcmAddress": "0x0000000000000000000000000000000000000000"
+					}
+				},
+				"description": "Test Proposal",
+                "transactions": [
+                  {
+                     "chainIdentifier": 1,
+                     "additionalFields": null
+                  }]
+			}`,
+			expectError:     true,
+			expectedErrType: &errors.InvalidVersionError{},
+		},
+		{
+			name: "invalid proposal - missing chain metadata",
+			jsonData: `{
+				"version": "v1.0",
+				"validUntil": 4128029039,
+				"signatures": [],
+				"overridePreviousRoot": false,
+				"chainMetadata": {},
+				"description": "Test Proposal",
+                "transactions": [
+                  {
+                     "chainIdentifier": 1,
+                     "additionalFields": null
+                  }]
+			}`,
+			expectError:     true,
+			expectedErrType: &errors.NoChainMetadataError{},
+		},
+		{
+			name: "invalid proposal - null AdditionalFields",
+			jsonData: `{
+				"version": "v1.0",
+				"validUntil": 4128029039,
+				"signatures": [],
+				"overridePreviousRoot": false,
+				"chainMetadata": {
+					"1": {
+						"startingOpCount": 0,
+						"mcmAddress": "0x0000000000000000000000000000000000000000"
+					}
+				},
+				"description": "Test Proposal",
+                "transactions": [
+                  {
+                     "chainIdentifier": 1,
+                     "additionalFields": null
+                  }]
+			}`,
+			expectError: false, // This should not throw an error, but set AdditionalFields to nil
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var proposal MCMSProposal
+			err := json.Unmarshal([]byte(tt.jsonData), &proposal)
+
+			if tt.expectError {
+				require.Error(t, err)
+				require.IsType(t, tt.expectedErrType, err)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
 }

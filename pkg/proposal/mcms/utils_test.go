@@ -54,7 +54,7 @@ func TestProposalFromFile(t *testing.T) {
 
 	mcmsProposal := MCMSProposal{
 		Version:    "1",
-		ValidUntil: 1729715787,
+		ValidUntil: 4128029039,
 		Signatures: []Signature{},
 		Transactions: []ChainOperation{
 			{
@@ -91,7 +91,7 @@ func TestWriteProposalToFile(t *testing.T) {
 	// Define a sample proposal struct
 	proposal := MCMSProposal{
 		Version:    "1",
-		ValidUntil: 1729715787,
+		ValidUntil: 4128029039,
 		Signatures: []Signature{},
 		Transactions: []ChainOperation{
 			{

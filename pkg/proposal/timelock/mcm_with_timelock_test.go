@@ -1614,7 +1614,7 @@ func TestTimelockProposalFromFile(t *testing.T) {
 	mcmsProposal := MCMSWithTimelockProposal{
 		MCMSProposal: mcms.MCMSProposal{
 			Version:              "MCMSWithTimelock",
-			ValidUntil:           1729715787,
+			ValidUntil:           4128029039,
 			Signatures:           []mcms.Signature{},
 			OverridePreviousRoot: false,
 			Description:          "Test Proposal",
