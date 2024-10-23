@@ -2,8 +2,9 @@ package mcms
 
 import (
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
 	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/pkg/errors"
 )
@@ -62,36 +63,37 @@ func NewProposal(
 }
 
 // MarshalJSON implements the JSON marshaller for MCMSProposal
-func (p MCMSProposal) MarshalJSON() ([]byte, error) {
+func (m MCMSProposal) MarshalJSON() ([]byte, error) {
 	// Validate the proposal before marshalling
-	if err := p.Validate(); err != nil {
+	if err := m.Validate(); err != nil {
 		return nil, err
 	}
 
 	// Use an alias type to avoid recursion
 	// We could exclude fields here in the future if necessary
 	type Alias MCMSProposal
-	return json.Marshal((*Alias)(&p))
+
+	return json.Marshal((*Alias)(&m))
 }
 
 // UnmarshalJSON implements the JSON unmarshaller for MCMSProposal
-func (p *MCMSProposal) UnmarshalJSON(data []byte) error {
+func (m *MCMSProposal) UnmarshalJSON(data []byte) error {
 	// Use an alias type to avoid recursion
 	type Alias MCMSProposal
 
 	// Unmarshal the JSON data into the alias struct to avoid recursion
-	if err := json.Unmarshal(data, (*Alias)(p)); err != nil {
+	if err := json.Unmarshal(data, (*Alias)(m)); err != nil {
 		return err
 	}
 
 	// Check if AdditionalFields contains "null"
-	for i := range p.Transactions {
-		if string(p.Transactions[i].Operation.AdditionalFields) == "null" {
-			p.Transactions[i].Operation.AdditionalFields = nil
+	for i := range m.Transactions {
+		if string(m.Transactions[i].Operation.AdditionalFields) == "null" {
+			m.Transactions[i].Operation.AdditionalFields = nil
 		}
 	}
 	// Run validation after unmarshalling
-	return p.Validate()
+	return m.Validate()
 }
 func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	var out MCMSProposal
@@ -99,6 +101,7 @@ func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return &out, nil
 }
 

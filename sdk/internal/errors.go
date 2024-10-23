@@ -2,6 +2,7 @@ package internal
 
 import (
 	"fmt"
+
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 )
 

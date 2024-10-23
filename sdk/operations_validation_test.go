@@ -6,10 +6,13 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/smartcontractkit/chain-selectors"
+	"github.com/stretchr/testify/require"
+
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestValidateAdditionalFields(t *testing.T) {
@@ -18,9 +21,13 @@ func TestValidateAdditionalFields(t *testing.T) {
 	validEVMFields := evm.OperationFieldsEVM{
 		Value: big.NewInt(100),
 	}
+	validEVMFieldsJSON, err := json.Marshal(validEVMFields)
+	require.NoError(t, err)
 	invalidEVMFields := evm.OperationFieldsEVM{
 		Value: big.NewInt(-100),
 	}
+	invalidEVMFieldsJSON, err := json.Marshal(invalidEVMFields)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name        string
@@ -32,7 +39,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 			operation: mcms.ChainOperation{
 				ChainIdentifier: mcms.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 				Operation: mcms.Operation{
-					AdditionalFields: marshalJSON(validEVMFields),
+					AdditionalFields: validEVMFieldsJSON,
 				},
 			},
 
@@ -43,7 +50,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 			operation: mcms.ChainOperation{
 				ChainIdentifier: mcms.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 				Operation: mcms.Operation{
-					AdditionalFields: marshalJSON(invalidEVMFields),
+					AdditionalFields: invalidEVMFieldsJSON,
 				},
 			},
 			expectedErr: errors.New("invalid EVM value"),
@@ -77,16 +84,11 @@ func TestValidateAdditionalFields(t *testing.T) {
 			err := ValidateAdditionalFields(tt.operation)
 
 			if tt.expectedErr != nil {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedErr.Error())
 			} else {
 				assert.NoError(t, err)
 			}
 		})
 	}
-}
-
-func marshalJSON(v interface{}) []byte {
-	data, _ := json.Marshal(v)
-	return data
 }

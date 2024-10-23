@@ -3,7 +3,9 @@ package sdk
 import (
 	"encoding/json"
 	"fmt"
+
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/internal"
