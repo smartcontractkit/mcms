@@ -1,9 +1,8 @@
 package mcms
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-
 	"encoding/json"
+	"github.com/ethereum/go-ethereum/common"
 	"time"
 
 	"github.com/smartcontractkit/mcms/pkg/errors"
@@ -69,20 +68,31 @@ func (p MCMSProposal) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	// Directly marshal the proposal as no field adjustments are required
-	return json.Marshal(p)
+	// Use an alias type to avoid recursion
+	// We could exclude fields here in the future if necessary
+	type Alias MCMSProposal
+	return json.Marshal((*Alias)(&p))
 }
 
+// UnmarshalJSON implements the JSON unmarshaller for MCMSProposal
 func (p *MCMSProposal) UnmarshalJSON(data []byte) error {
-	// Unmarshal the JSON data directly into the struct
-	if err := json.Unmarshal(data, p); err != nil {
+	// Use an alias type to avoid recursion
+	type Alias MCMSProposal
+
+	// Unmarshal the JSON data into the alias struct to avoid recursion
+	if err := json.Unmarshal(data, (*Alias)(p)); err != nil {
 		return err
 	}
 
+	// Check if AdditionalFields contains "null"
+	for i := range p.Transactions {
+		if string(p.Transactions[i].Operation.AdditionalFields) == "null" {
+			p.Transactions[i].Operation.AdditionalFields = nil
+		}
+	}
 	// Run validation after unmarshalling
 	return p.Validate()
 }
-
 func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	var out MCMSProposal
 	err := FromFile(filePath, &out)
@@ -111,7 +121,9 @@ func proposalValidateBasic(proposal MCMSProposal) error {
 		return &errors.NoChainMetadataError{}
 	}
 
-	if len(proposal.Transactions) == 0 {
+	// We skip validation on timelock proposals. For time lock proposals this transaction list
+	// will be empty as it is validated in the timelock proposal struct.
+	if len(proposal.Transactions) == 0 && proposal.Version != string(MCMSWithTimelock) {
 		return &errors.NoTransactionsError{}
 	}
 

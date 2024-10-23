@@ -53,13 +53,23 @@ func TestProposalFromFile(t *testing.T) {
 	t.Parallel()
 
 	mcmsProposal := MCMSProposal{
-		Version:              "1",
-		ValidUntil:           100,
-		Signatures:           []Signature{},
-		Transactions:         []ChainOperation{},
+		Version:    "1",
+		ValidUntil: 1729715787,
+		Signatures: []Signature{},
+		Transactions: []ChainOperation{
+			{
+				ChainIdentifier: 1,
+				Operation:       Operation{},
+			},
+		},
 		OverridePreviousRoot: false,
 		Description:          "Test Proposal",
-		ChainMetadata:        make(map[ChainIdentifier]ChainMetadata),
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			ChainIdentifier(1): {
+				StartingOpCount: 0,
+				MCMAddress:      common.HexToAddress("0x5b38da6a701c568545dcfcb03fcb875f56beddc4"),
+			},
+		},
 	}
 
 	tempFile, err := os.CreateTemp("", "mcms.json")
@@ -72,7 +82,7 @@ func TestProposalFromFile(t *testing.T) {
 
 	fileProposal, err := NewProposalFromFile(tempFile.Name())
 	require.NoError(t, err)
-	assert.Equal(t, mcmsProposal, *fileProposal)
+	assert.EqualValues(t, mcmsProposal, *fileProposal)
 }
 
 func TestWriteProposalToFile(t *testing.T) {
@@ -80,13 +90,23 @@ func TestWriteProposalToFile(t *testing.T) {
 
 	// Define a sample proposal struct
 	proposal := MCMSProposal{
-		Version:              "1",
-		ValidUntil:           100,
-		Signatures:           []Signature{},
-		Transactions:         []ChainOperation{},
+		Version:    "1",
+		ValidUntil: 1729715787,
+		Signatures: []Signature{},
+		Transactions: []ChainOperation{
+			{
+				ChainIdentifier: 1,
+				Operation:       Operation{},
+			},
+		},
 		OverridePreviousRoot: false,
 		Description:          "Test Proposal",
-		ChainMetadata:        make(map[ChainIdentifier]ChainMetadata),
+		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+			ChainIdentifier(1): {
+				StartingOpCount: 0,
+				MCMAddress:      common.HexToAddress("0x5b38da6a701c568545dcfcb03fcb875f56beddc4"),
+			},
+		},
 	}
 
 	// Create a temporary file

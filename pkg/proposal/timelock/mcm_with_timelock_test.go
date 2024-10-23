@@ -1613,17 +1613,27 @@ func TestTimelockProposalFromFile(t *testing.T) {
 
 	mcmsProposal := MCMSWithTimelockProposal{
 		MCMSProposal: mcms.MCMSProposal{
-			Version:              "1",
-			ValidUntil:           100,
+			Version:              "MCMSWithTimelock",
+			ValidUntil:           1729715787,
 			Signatures:           []mcms.Signature{},
 			OverridePreviousRoot: false,
 			Description:          "Test Proposal",
-			ChainMetadata:        make(map[mcms.ChainIdentifier]mcms.ChainMetadata),
+			ChainMetadata: map[mcms.ChainIdentifier]mcms.ChainMetadata{
+				mcms.ChainIdentifier(1): {
+					StartingOpCount: 0,
+					MCMAddress:      common.Address{},
+				},
+			},
 		},
 		TimelockAddresses: make(map[mcms.ChainIdentifier]common.Address),
-		Transactions:      make([]BatchChainOperation, 0),
-		Operation:         Schedule,
-		MinDelay:          "1h",
+		Transactions: []BatchChainOperation{
+			{
+				ChainIdentifier: mcms.ChainIdentifier(1),
+				Batch:           []mcms.Operation{},
+			},
+		},
+		Operation: Schedule,
+		MinDelay:  "1h",
 	}
 
 	tempFile, err := os.CreateTemp("", "timelock.json")
@@ -1636,5 +1646,5 @@ func TestTimelockProposalFromFile(t *testing.T) {
 
 	fileProposal, err := NewMCMSWithTimelockProposalFromFile(tempFile.Name())
 	require.NoError(t, err)
-	assert.Equal(t, mcmsProposal, *fileProposal)
+	assert.EqualValues(t, mcmsProposal, *fileProposal)
 }

@@ -4,9 +4,9 @@ import (
 	"math/big"
 	"time"
 
+	"encoding/json"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	owner "github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms"
@@ -110,6 +110,90 @@ func NewMCMSWithTimelockProposalFromFile(filePath string) (*MCMSWithTimelockProp
 	}
 
 	return &out, nil
+}
+
+// MarshalJSON due to the struct embedding we need to separate the marshalling in 3 phases.
+func (p *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
+	// First, marshal the Transactions field from MCMSWithTimelockProposal
+	transactionsBytes, err := json.Marshal(struct {
+		Transactions []BatchChainOperation `json:"transactions"`
+	}{
+		Transactions: p.Transactions,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Then, marshal the embedded MCMSProposal directly
+	mcmsProposalBytes, err := json.Marshal(p.MCMSProposal)
+	if err != nil {
+		return nil, err
+	}
+
+	// Finally, marshal the remaining fields specific to MCMSWithTimelockProposal
+	mcmsWithTimelockFieldsBytes, err := json.Marshal(struct {
+		Operation         TimelockOperation                       `json:"operation"`
+		MinDelay          string                                  `json:"minDelay"`
+		TimelockAddresses map[mcms.ChainIdentifier]common.Address `json:"timelockAddresses"`
+	}{
+		Operation:         p.Operation,
+		MinDelay:          p.MinDelay,
+		TimelockAddresses: p.TimelockAddresses,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// Merge the JSON objects
+	finalJSON, err := mergeJSON(mcmsProposalBytes, transactionsBytes)
+	if err != nil {
+		return nil, err
+	}
+	finalJSON, err = mergeJSON(finalJSON, mcmsWithTimelockFieldsBytes)
+	if err != nil {
+		return nil, err
+	}
+
+	return finalJSON, nil
+}
+
+func (p *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
+
+	// Unmarshal Transactions field from MCMSWithTimelockProposal
+	transactionsFields := struct {
+		Transactions []BatchChainOperation `json:"transactions"`
+	}{}
+
+	if err := json.Unmarshal(data, &transactionsFields); err != nil {
+		return err
+	}
+	p.Transactions = transactionsFields.Transactions
+
+	// Then, unmarshal into the embedded MCMSProposal directly
+	if err := json.Unmarshal(data, &p.MCMSProposal); err != nil {
+		return err
+	}
+	// This field is overridden in MCMSWithTimelockProposal
+	p.MCMSProposal.Transactions = nil
+
+	// Unmarshal the remaining fields specific to MCMSWithTimelockProposal
+	mcmsWithTimelockFields := struct {
+		Operation         TimelockOperation                       `json:"operation"`
+		MinDelay          string                                  `json:"minDelay"`
+		TimelockAddresses map[mcms.ChainIdentifier]common.Address `json:"timelockAddresses"`
+	}{}
+
+	if err := json.Unmarshal(data, &mcmsWithTimelockFields); err != nil {
+		return err
+	}
+
+	// Assign the remaining fields to MCMSWithTimelockProposal
+	p.Operation = mcmsWithTimelockFields.Operation
+	p.MinDelay = mcmsWithTimelockFields.MinDelay
+	p.TimelockAddresses = mcmsWithTimelockFields.TimelockAddresses
+	p.Transactions = transactionsFields.Transactions
+
+	return nil
 }
 
 func (m *MCMSWithTimelockProposal) Validate() error {
@@ -264,4 +348,24 @@ func hashOperationBatch(calls []owner.RBACTimelockCall, predecessor, salt [32]by
 
 	// Return the hash as a [32]byte array
 	return crypto.Keccak256Hash(encoded), nil
+}
+
+func mergeJSON(json1, json2 []byte) ([]byte, error) {
+	var map1, map2 map[string]interface{}
+
+	// Unmarshal both JSON objects into maps
+	if err := json.Unmarshal(json1, &map1); err != nil {
+		return nil, err
+	}
+	if err := json.Unmarshal(json2, &map2); err != nil {
+		return nil, err
+	}
+
+	// Merge map2 into map1
+	for key, value := range map2 {
+		map1[key] = value
+	}
+
+	// Marshal the merged result back into JSON
+	return json.Marshal(map1)
 }

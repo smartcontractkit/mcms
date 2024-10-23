@@ -7,18 +7,9 @@ import (
 	"github.com/smartcontractkit/mcms/pkg/proposal/timelock"
 )
 
-type ProposalType string
-
-const (
-	// MCMSProposalType is a proposal type for the MCMS contract.
-	MCMS ProposalType = "MCMS"
-	// MCMSWithTimelock is a proposal type for the MCMS contract with timelock.
-	MCMSWithTimelock ProposalType = "MCMSWithTimelock"
-)
-
-var StringToProposalType = map[string]ProposalType{
-	"MCMS":             MCMS,
-	"MCMSWithTimelock": MCMSWithTimelock,
+var StringToProposalType = map[string]mcms.ProposalType{
+	"MCMS":             mcms.MCMS,
+	"MCMSWithTimelock": mcms.MCMSWithTimelock,
 }
 
 type Proposal interface {
@@ -27,11 +18,11 @@ type Proposal interface {
 	Validate() error
 }
 
-func LoadProposal(proposalType ProposalType, filePath string) (Proposal, error) {
+func LoadProposal(proposalType mcms.ProposalType, filePath string) (Proposal, error) {
 	switch proposalType {
-	case MCMS:
+	case mcms.MCMS:
 		return mcms.NewProposalFromFile(filePath)
-	case MCMSWithTimelock:
+	case mcms.MCMSWithTimelock:
 		return timelock.NewMCMSWithTimelockProposalFromFile(filePath)
 	default:
 		return nil, errors.New("unknown proposal type")
