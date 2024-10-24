@@ -15,7 +15,7 @@ func SignPlainKey(privateKey *ecdsa.PrivateKey, proposal Proposal) error {
 		return err
 	}
 
-	executor, err := proposal.ToExecutor(false) // TODO: pass in a real backend
+	executor, err := proposal.Signable(false)
 	if err != nil {
 		return err
 	}

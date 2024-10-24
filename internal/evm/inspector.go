@@ -13,6 +13,13 @@ type EVMInspector struct {
 	client ContractDeployBackend
 }
 
+func NewEVMInspector(client ContractDeployBackend) *EVMInspector {
+	return &EVMInspector{
+		EVMConfigurator: EVMConfigurator{},
+		client:          client,
+	}
+}
+
 func (e *EVMInspector) GetConfig(mcmAddress string) (*config.Config, error) {
 	mcms, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
@@ -34,6 +41,10 @@ func (e *EVMInspector) GetOpCount(mcmAddress string) (uint64, error) {
 	}
 
 	opCount, err := mcms.GetOpCount(&bind.CallOpts{})
+	if err != nil {
+		return 0, err
+	}
+
 	return opCount.Uint64(), nil
 }
 

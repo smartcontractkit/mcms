@@ -1,4 +1,4 @@
-package mcms
+package internal
 
 import (
 	"encoding/json"
@@ -6,14 +6,15 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 var TestAddress = "0x1234567890abcdef"
-var TestChain1 = ChainSelector(3379446385462418246)
-var TestChain2 = ChainSelector(16015286601757825753)
-var TestChain3 = ChainSelector(10344971235874465080)
+var TestChain1 = mcms.ChainSelector(3379446385462418246)
+var TestChain2 = mcms.ChainSelector(16015286601757825753)
+var TestChain3 = mcms.ChainSelector(10344971235874465080)
 
 // func TestCalculateTransactionCounts(t *testing.T) {
 // 	t.Parallel()
@@ -54,23 +55,23 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
-		[]Signature{},
+		[]mcms.Signature{},
 		false,
-		map[ChainSelector]ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
-		[]ChainOperation{
+		[]mcms.ChainOperation{
 			{
 				ChainSelector: TestChain1,
-				Operation: Operation{
+				Operation: mcms.Operation{
 					To:               TestAddress,
 					AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
 					Data:             common.Hex2Bytes("0x"),
-					OperationMetadata: OperationMetadata{
+					OperationMetadata: mcms.OperationMetadata{
 						ContractType: "Sample contract",
 						Tags:         []string{"tag1", "tag2"},
 					},
@@ -89,23 +90,23 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 	proposal, err := NewProposal(
 		"",
 		2004259681,
-		[]Signature{},
+		[]mcms.Signature{},
 		false,
-		map[ChainSelector]ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
-		[]ChainOperation{
+		[]mcms.ChainOperation{
 			{
 				ChainSelector: TestChain1,
-				Operation: Operation{
+				Operation: mcms.Operation{
 					To:               TestAddress,
 					AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
 					Data:             common.Hex2Bytes("0x"),
-					OperationMetadata: OperationMetadata{
+					OperationMetadata: mcms.OperationMetadata{
 						ContractType: "Sample contract",
 						Tags:         []string{"tag1", "tag2"},
 					},
@@ -125,23 +126,23 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 	proposal, err := NewProposal(
 		"1.0",
 		0,
-		[]Signature{},
+		[]mcms.Signature{},
 		false,
-		map[ChainSelector]ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
-		[]ChainOperation{
+		[]mcms.ChainOperation{
 			{
 				ChainSelector: TestChain1,
-				Operation: Operation{
+				Operation: mcms.Operation{
 					To:               TestAddress,
 					AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
 					Data:             common.Hex2Bytes("0x"),
-					OperationMetadata: OperationMetadata{
+					OperationMetadata: mcms.OperationMetadata{
 						ContractType: "Sample contract",
 						Tags:         []string{"tag1", "tag2"},
 					},
@@ -161,18 +162,18 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
-		[]Signature{},
+		[]mcms.Signature{},
 		false,
-		map[ChainSelector]ChainMetadata{},
+		map[mcms.ChainSelector]mcms.ChainMetadata{},
 		"Sample description",
-		[]ChainOperation{
+		[]mcms.ChainOperation{
 			{
 				ChainSelector: TestChain1,
-				Operation: Operation{
+				Operation: mcms.Operation{
 					To:               TestAddress,
 					AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
 					Data:             common.Hex2Bytes("0x"),
-					OperationMetadata: OperationMetadata{
+					OperationMetadata: mcms.OperationMetadata{
 						ContractType: "Sample contract",
 						Tags:         []string{"tag1", "tag2"},
 					},
@@ -192,23 +193,23 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
-		[]Signature{},
+		[]mcms.Signature{},
 		false,
-		map[ChainSelector]ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"",
-		[]ChainOperation{
+		[]mcms.ChainOperation{
 			{
 				ChainSelector: TestChain1,
-				Operation: Operation{
+				Operation: mcms.Operation{
 					To:               TestAddress,
 					AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
 					Data:             common.Hex2Bytes("0x"),
-					OperationMetadata: OperationMetadata{
+					OperationMetadata: mcms.OperationMetadata{
 						ContractType: "Sample contract",
 						Tags:         []string{"tag1", "tag2"},
 					},
@@ -228,16 +229,16 @@ func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
-		[]Signature{},
+		[]mcms.Signature{},
 		false,
-		map[ChainSelector]ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
-		[]ChainOperation{},
+		[]mcms.ChainOperation{},
 	)
 
 	require.Error(t, err)
@@ -251,23 +252,23 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
-		[]Signature{},
+		[]mcms.Signature{},
 		false,
-		map[ChainSelector]ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
-		[]ChainOperation{
+		[]mcms.ChainOperation{
 			{
 				ChainSelector: 3,
-				Operation: Operation{
+				Operation: mcms.Operation{
 					To:               TestAddress,
 					AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
 					Data:             common.Hex2Bytes("0x"),
-					OperationMetadata: OperationMetadata{
+					OperationMetadata: mcms.OperationMetadata{
 						ContractType: "Sample contract",
 						Tags:         []string{"tag1", "tag2"},
 					},
@@ -287,11 +288,11 @@ func TestProposalFromFile(t *testing.T) {
 	mcmsProposal := MCMSProposal{
 		Version:              "1",
 		ValidUntil:           100,
-		Signatures:           []Signature{},
-		Transactions:         []ChainOperation{},
+		Signatures:           []mcms.Signature{},
+		Transactions:         []mcms.ChainOperation{},
 		OverridePreviousRoot: false,
 		Description:          "Test Proposal",
-		ChainMetadata:        make(map[ChainSelector]ChainMetadata),
+		ChainMetadata:        make(map[mcms.ChainSelector]mcms.ChainMetadata),
 	}
 
 	tempFile, err := os.CreateTemp("", "mcms.json")

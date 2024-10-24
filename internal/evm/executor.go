@@ -9,9 +9,17 @@ import (
 )
 
 type EVMExecutor struct {
-	EVMEncoder
-	EVMInspector
+	*EVMEncoder
+	*EVMInspector
 	auth *bind.TransactOpts
+}
+
+func NewEVMExecutor(encoder *EVMEncoder, client ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
+	return &EVMExecutor{
+		EVMEncoder:   encoder,
+		EVMInspector: NewEVMInspector(client),
+		auth:         auth,
+	}
 }
 
 func (e *EVMExecutor) ExecuteOperation(

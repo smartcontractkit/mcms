@@ -1,8 +1,8 @@
 package proposal
 
 import (
-	"errors"
-
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 )
 
@@ -21,18 +21,16 @@ var StringToProposalType = map[string]ProposalType{
 }
 
 type Proposal interface {
-	// ToExecutor(sim bool) (*mcms.Executor, error)
+	Signable(sim bool) (Signable, error)
 	AddSignature(signature mcms.Signature)
 	Validate() error
 }
 
-func LoadProposal(proposalType ProposalType, filePath string) (Proposal, error) {
-	switch proposalType {
-	case MCMS:
-		return mcms.NewProposalFromFile(filePath)
-	// case MCMSWithTimelock:
-	// 	return timelock.NewMCMSWithTimelockProposalFromFile(filePath)
-	default:
-		return nil, errors.New("unknown proposal type")
-	}
+type Signable interface {
+	SigningHash() (common.Hash, error)
+	GetCurrentOpCounts() (map[mcms.ChainSelector]uint64, error)
+	GetConfigs() (map[mcms.ChainSelector]*config.Config, error)
+	CheckQuorum(chain mcms.ChainSelector) (bool, error)
+	ValidateSignatures() (bool, error)
+	ValidateConfigs() error
 }

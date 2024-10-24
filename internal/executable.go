@@ -1,13 +1,17 @@
-package mcms
+package internal
 
-import "sort"
+import (
+	"sort"
+
+	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+)
 
 type Executable struct {
 	*Signable
-	Executors map[ChainSelector]Executor
+	Executors map[mcms.ChainSelector]mcms.Executor
 }
 
-func (e *Executable) SetRoot(chainSelector ChainSelector) (string, error) {
+func (e *Executable) SetRoot(chainSelector mcms.ChainSelector) (string, error) {
 	metadata := e.ChainMetadata[chainSelector]
 	metadataHash, err := e.Encoders[chainSelector].HashMetadata(metadata)
 	if err != nil {

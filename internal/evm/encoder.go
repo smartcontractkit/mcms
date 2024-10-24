@@ -19,6 +19,14 @@ type EVMEncoder struct {
 	OverridePreviousRoot bool
 }
 
+func NewEVMEncoder(txCount uint64, chainID uint64, overridePreviousRoot bool) *EVMEncoder {
+	return &EVMEncoder{
+		TxCount:              txCount,
+		ChainID:              chainID,
+		OverridePreviousRoot: overridePreviousRoot,
+	}
+}
+
 func (e *EVMEncoder) HashOperation(opCount uint32, metadata mcms.ChainMetadata, operation mcms.ChainOperation) (common.Hash, error) {
 	// Unmarshall the AdditionalFields from the operation
 	additionalFields := EVMAdditionalFields{}
