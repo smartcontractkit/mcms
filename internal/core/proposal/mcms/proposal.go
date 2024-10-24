@@ -1,17 +1,11 @@
 package mcms
 
 import (
+	"sort"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/smartcontractkit/mcms/pkg/errors"
+	"github.com/smartcontractkit/mcms/internal/core"
 )
-
-type ChainMetadata struct {
-	StartingOpCount uint64         `json:"startingOpCount"`
-	MCMAddress      common.Address `json:"mcmAddress"`
-}
 
 // MCMSProposal is a struct where the target contract is an MCMS contract
 // with no forwarder contracts. This type does not support any type of atomic contract
@@ -23,7 +17,7 @@ type MCMSProposal struct {
 	OverridePreviousRoot bool        `json:"overridePreviousRoot"`
 
 	// Map of chain identifier to chain metadata
-	ChainMetadata map[ChainIdentifier]ChainMetadata `json:"chainMetadata"`
+	ChainMetadata map[ChainSelector]ChainMetadata `json:"chainMetadata"`
 
 	// This is intended to be displayed as-is to signers, to give them
 	// context for the change. File authors should templatize strings for
@@ -39,7 +33,7 @@ func NewProposal(
 	validUntil uint32,
 	signatures []Signature,
 	overridePreviousRoot bool,
-	chainMetadata map[ChainIdentifier]ChainMetadata,
+	chainMetadata map[ChainSelector]ChainMetadata,
 	description string,
 	transactions []ChainOperation,
 ) (*MCMSProposal, error) {
@@ -63,7 +57,7 @@ func NewProposal(
 
 func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	var out MCMSProposal
-	err := FromFile(filePath, &out)
+	err := core.FromFile(filePath, &out)
 	if err != nil {
 		return nil, err
 	}
@@ -76,35 +70,36 @@ func proposalValidateBasic(proposal MCMSProposal) error {
 	// Get the current Unix timestamp as an int64
 	currentTime := time.Now().Unix()
 
-	currentTimeCasted, err := SafeCastIntToUint32(int(currentTime))
+	currentTimeCasted, err := core.SafeCastIntToUint32(int(currentTime))
 	if err != nil {
 		return err
 	}
 	if proposal.ValidUntil <= currentTimeCasted {
 		// ValidUntil is a Unix timestamp, so it should be greater than the current time
-		return &errors.InvalidValidUntilError{
+		return &core.InvalidValidUntilError{
 			ReceivedValidUntil: proposal.ValidUntil,
 		}
 	}
 	if len(proposal.ChainMetadata) == 0 {
-		return &errors.NoChainMetadataError{}
+		return &core.NoChainMetadataError{}
 	}
 
 	if len(proposal.Transactions) == 0 {
-		return &errors.NoTransactionsError{}
+		return &core.NoTransactionsError{}
 	}
 
 	if proposal.Description == "" {
-		return &errors.InvalidDescriptionError{
+		return &core.InvalidDescriptionError{
 			ReceivedDescription: proposal.Description,
 		}
 	}
 
 	return nil
 }
+
 func (m *MCMSProposal) Validate() error {
 	if m.Version == "" {
-		return &errors.InvalidVersionError{
+		return &core.InvalidVersionError{
 			ReceivedVersion: m.Version,
 		}
 	}
@@ -115,9 +110,9 @@ func (m *MCMSProposal) Validate() error {
 
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
-		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
-			return &errors.MissingChainDetailsError{
-				ChainIdentifier: uint64(t.ChainIdentifier),
+		if _, ok := m.ChainMetadata[t.ChainSelector]; !ok {
+			return &core.MissingChainDetailsError{
+				ChainIdentifier: uint64(t.ChainSelector),
 				Parameter:       "chain metadata",
 			}
 		}
@@ -126,14 +121,23 @@ func (m *MCMSProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSProposal) ToExecutor(sim bool) (*Executor, error) {
-	// Create a new executor
-	executor, err := NewProposalExecutor(m, sim)
-	if err != nil {
-		return nil, err
+func (m *MCMSProposal) ChainIdentifiers() []ChainSelector {
+	chainIdentifiers := make([]ChainSelector, 0, len(m.ChainMetadata))
+	for chainID := range m.ChainMetadata {
+		chainIdentifiers = append(chainIdentifiers, chainID)
+	}
+	sort.Slice(chainIdentifiers, func(i, j int) bool { return chainIdentifiers[i] < chainIdentifiers[j] })
+
+	return chainIdentifiers
+}
+
+func (m *MCMSProposal) TransactionCounts() map[ChainSelector]uint64 {
+	txCounts := make(map[ChainSelector]uint64)
+	for _, tx := range m.Transactions {
+		txCounts[tx.ChainSelector]++
 	}
 
-	return executor, nil
+	return txCounts
 }
 
 func (m *MCMSProposal) AddSignature(signature Signature) {

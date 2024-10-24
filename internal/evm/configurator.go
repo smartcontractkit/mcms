@@ -1,4 +1,4 @@
-package config
+package evm
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/config"
-	"github.com/smartcontractkit/mcms/pkgOld/errors"
-	"github.com/smartcontractkit/mcms/pkgOld/gethwrappers"
+	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 	"github.com/spf13/cast"
 )
 
@@ -16,7 +16,7 @@ const maxUint8Value = 255
 
 type EVMConfigurator struct{}
 
-func (e *EVMConfigurator) ToConfig(onchainConfig gethwrappers.ManyChainMultiSigConfig) (*config.Config, error) {
+func (e *EVMConfigurator) ToConfig(onchainConfig bindings.ManyChainMultiSigConfig) (*config.Config, error) {
 	groupToSigners := make([][]common.Address, len(onchainConfig.GroupQuorums))
 	for _, signer := range onchainConfig.Signers {
 		groupToSigners[signer.Group] = append(groupToSigners[signer.Group], signer.Addr)
@@ -49,20 +49,20 @@ func (e *EVMConfigurator) ToConfig(onchainConfig gethwrappers.ManyChainMultiSigC
 	return &groups[0], nil
 }
 
-func (c *EVMConfigurator) SetConfigInputs(contract string, config config.Config) (gethwrappers.ManyChainMultiSigConfig, error) {
+func (c *EVMConfigurator) SetConfigInputs(config config.Config) (bindings.ManyChainMultiSigConfig, error) {
 	groupQuorums, groupParents, signerAddresses, signerGroups, errSetConfig := ExtractSetConfigInputs(&config)
 	if errSetConfig != nil {
-		return gethwrappers.ManyChainMultiSigConfig{}, errSetConfig
+		return bindings.ManyChainMultiSigConfig{}, errSetConfig
 	}
 	// Check the length of signerAddresses up-front
 	if len(signerAddresses) > maxUint8Value+1 {
-		return gethwrappers.ManyChainMultiSigConfig{}, &errors.TooManySignersError{NumSigners: uint64(len(signerAddresses))}
+		return bindings.ManyChainMultiSigConfig{}, &core.TooManySignersError{NumSigners: uint64(len(signerAddresses))}
 	}
-	// convert to gethwrappers types
-	signers := make([]gethwrappers.ManyChainMultiSigSigner, len(signerAddresses))
+	// convert to bindings types
+	signers := make([]bindings.ManyChainMultiSigSigner, len(signerAddresses))
 	idx := uint8(0)
 	for i, signer := range signerAddresses {
-		signers[i] = gethwrappers.ManyChainMultiSigSigner{
+		signers[i] = bindings.ManyChainMultiSigSigner{
 			Addr:  signer,
 			Group: signerGroups[i],
 			Index: idx,
@@ -70,7 +70,7 @@ func (c *EVMConfigurator) SetConfigInputs(contract string, config config.Config)
 		idx += 1
 	}
 
-	return gethwrappers.ManyChainMultiSigConfig{
+	return bindings.ManyChainMultiSigConfig{
 		GroupQuorums: groupQuorums,
 		GroupParents: groupParents,
 		Signers:      signers,
@@ -92,9 +92,9 @@ func ExtractSetConfigInputs(group *config.Config) ([32]uint8, [32]uint8, []commo
 	}
 
 	// Combine SignerAddresses and SignerGroups into a slice of Signer structs
-	signerObjs := make([]gethwrappers.ManyChainMultiSigSigner, len(signers))
+	signerObjs := make([]bindings.ManyChainMultiSigSigner, len(signers))
 	for i := range signers {
-		signerObjs[i] = gethwrappers.ManyChainMultiSigSigner{
+		signerObjs[i] = bindings.ManyChainMultiSigSigner{
 			Addr:  signers[i],
 			Group: signerGroups[i],
 		}

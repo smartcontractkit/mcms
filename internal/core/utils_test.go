@@ -1,18 +1,22 @@
-package mcms
+package core
 
 import (
-	"encoding/hex"
 	"encoding/json"
 
 	"math"
-	"math/big"
 	"os"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Define a sample struct
+type SampleStruct struct {
+	Name  string `json:"name"`
+	Age   int    `json:"age"`
+	Email string `json:"email"`
+}
 
 func TestFromFile(t *testing.T) {
 	t.Parallel()
@@ -21,13 +25,6 @@ func TestFromFile(t *testing.T) {
 	file, err := os.CreateTemp("", "testfile")
 	require.NoError(t, err)
 	defer os.Remove(file.Name())
-
-	// Define a sample struct
-	type SampleStruct struct {
-		Name  string `json:"name"`
-		Age   int    `json:"age"`
-		Email string `json:"email"`
-	}
 
 	// Create a sample JSON file
 	sampleData := SampleStruct{
@@ -49,44 +46,14 @@ func TestFromFile(t *testing.T) {
 	assert.Equal(t, sampleData, result)
 }
 
-func TestProposalFromFile(t *testing.T) {
-	t.Parallel()
-
-	mcmsProposal := MCMSProposal{
-		Version:              "1",
-		ValidUntil:           100,
-		Signatures:           []Signature{},
-		Transactions:         []ChainOperation{},
-		OverridePreviousRoot: false,
-		Description:          "Test Proposal",
-		ChainMetadata:        make(map[ChainIdentifier]ChainMetadata),
-	}
-
-	tempFile, err := os.CreateTemp("", "mcms.json")
-	require.NoError(t, err)
-
-	proposalBytes, err := json.Marshal(mcmsProposal)
-	require.NoError(t, err)
-	err = os.WriteFile(tempFile.Name(), proposalBytes, 0600)
-	require.NoError(t, err)
-
-	fileProposal, err := NewProposalFromFile(tempFile.Name())
-	require.NoError(t, err)
-	assert.Equal(t, mcmsProposal, *fileProposal)
-}
-
 func TestWriteProposalToFile(t *testing.T) {
 	t.Parallel()
 
 	// Define a sample proposal struct
-	proposal := MCMSProposal{
-		Version:              "1",
-		ValidUntil:           100,
-		Signatures:           []Signature{},
-		Transactions:         []ChainOperation{},
-		OverridePreviousRoot: false,
-		Description:          "Test Proposal",
-		ChainMetadata:        make(map[ChainIdentifier]ChainMetadata),
+	proposal := SampleStruct{
+		Name:  "John Doe",
+		Age:   30,
+		Email: "johndoe@example.com",
 	}
 
 	// Create a temporary file
@@ -99,7 +66,7 @@ func TestWriteProposalToFile(t *testing.T) {
 	require.NoError(t, err)
 
 	// Read back the file and assert the content
-	var fileProposal MCMSProposal
+	var fileProposal SampleStruct
 	err = FromFile(tempFile.Name(), &fileProposal)
 	require.NoError(t, err)
 	assert.Equal(t, proposal, fileProposal)
@@ -123,74 +90,6 @@ func TestSafeCastIntToUint32(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			result, err := SafeCastIntToUint32(tt.value)
-			if tt.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
-}
-
-func TestABIDecode(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name        string
-		abiStr      string
-		dataHex     string
-		expected    []any
-		expectError bool
-	}{
-		{
-			name:    "Decode single uint256",
-			abiStr:  `[{"type":"uint256"}]`,
-			dataHex: "000000000000000000000000000000000000000000000000000000000000001e", // 30 in uint256
-			expected: []any{
-				big.NewInt(30),
-			},
-			expectError: false,
-		},
-		{
-			name:        "Decode address",
-			abiStr:      `[{"type":"address"}]`,
-			dataHex:     "0000000000000000000000005b38da6a701c568545dcfcb03fcb875f56beddc4", // valid Ethereum address
-			expected:    []any{common.HexToAddress("0x5b38da6a701c568545dcfcb03fcb875f56beddc4")},
-			expectError: false,
-		},
-		{
-			name:   "Decode string",
-			abiStr: `[{"type":"string"}]`,
-			dataHex: "0000000000000000000000000000000000000000000000000000000000000020" + // offset (32 bytes)
-				"000000000000000000000000000000000000000000000000000000000000000b" + // string length (11 bytes)
-				"48656c6c6f20576f726c64000000000000000000000000000000000000000000", // "Hello World"
-			expected:    []any{"Hello World"},
-			expectError: false,
-		},
-		{
-			name:        "Invalid data",
-			abiStr:      `[{"type":"uint256"}]`,
-			dataHex:     "00000000000000000000000000000000", // Too short for uint256
-			expected:    nil,
-			expectError: true,
-		},
-		{
-			name:        "Invalid ABI string",
-			abiStr:      `[{"type":"invalid"}]`,                                             // Invalid ABI type
-			dataHex:     "000000000000000000000000000000000000000000000000000000000000001e", // 30 in uint256
-			expected:    nil,
-			expectError: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			data, err := hex.DecodeString(tt.dataHex)
-			require.NoError(t, err)
-
-			result, err := ABIDecode(tt.abiStr, data)
 			if tt.expectError {
 				require.Error(t, err)
 			} else {

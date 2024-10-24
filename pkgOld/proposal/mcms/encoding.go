@@ -5,25 +5,12 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/smartcontractkit/mcms/pkg/merkle"
 )
-
-var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
-var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA"))
-
-func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifier]uint64 {
-	txCounts := make(map[ChainIdentifier]uint64)
-	for _, tx := range transactions {
-		txCounts[tx.ChainIdentifier]++
-	}
-
-	return txCounts
-}
 
 func buildRootMetadatas(
 	chainMetadata map[ChainIdentifier]ChainMetadata,
@@ -104,16 +91,6 @@ func buildOperations(
 	return ops, chainAgnosticOps
 }
 
-func sortedChainIdentifiers(chainMetadata map[ChainIdentifier]ChainMetadata) []ChainIdentifier {
-	chainIdentifiers := make([]ChainIdentifier, 0, len(chainMetadata))
-	for chainID := range chainMetadata {
-		chainIdentifiers = append(chainIdentifiers, chainID)
-	}
-	sort.Slice(chainIdentifiers, func(i, j int) bool { return chainIdentifiers[i] < chainIdentifiers[j] })
-
-	return chainIdentifiers
-}
-
 func buildMerkleTree(
 	chainIdentifiers []ChainIdentifier,
 	rootMetadatas map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
@@ -143,24 +120,4 @@ func buildMerkleTree(
 	})
 
 	return merkle.NewMerkleTree(hashLeaves), nil
-}
-
-func metadataEncoder(rootMetadata gethwrappers.ManyChainMultiSigRootMetadata) (common.Hash, error) {
-	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
-	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA, rootMetadata)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	return crypto.Keccak256Hash(encoded), nil
-}
-
-func txEncoder(op gethwrappers.ManyChainMultiSigOp) (common.Hash, error) {
-	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
-	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, op)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	return crypto.Keccak256Hash(encoded), nil
 }
