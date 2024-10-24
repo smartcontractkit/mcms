@@ -18,16 +18,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/pkg/config"
-	mcm_errors "github.com/smartcontractkit/mcms/pkg/errors"
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
-	"github.com/smartcontractkit/mcms/pkg/proposal/mcms"
+	mcm_errors "github.com/smartcontractkit/mcms/internal/core"
+	"github.com/smartcontractkit/mcms/internal/core/config"
+	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")
-var TestChain1 = mcms.ChainIdentifier(3379446385462418246)
-var TestChain2 = mcms.ChainIdentifier(16015286601757825753)
-var TestChain3 = mcms.ChainIdentifier(10344971235874465080)
+var TestChain1 = mcms.ChainSelector(3379446385462418246)
+var TestChain2 = mcms.ChainSelector(16015286601757825753)
+var TestChain3 = mcms.ChainSelector(10344971235874465080)
 
 func TestValidate_ValidProposal(t *testing.T) {
 	t.Parallel()
@@ -37,13 +37,13 @@ func TestValidate_ValidProposal(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: TestAddress,
 		},
 		"Sample description",
@@ -77,13 +77,13 @@ func TestValidate_InvalidOperation(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: TestAddress,
 		},
 		"Sample description",
@@ -118,13 +118,13 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: TestAddress,
 		},
 		"Sample description",
@@ -159,13 +159,13 @@ func TestValidate_InvalidUntilTimeError(t *testing.T) {
 		1697398311, // Old date (2023-10-15)
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: TestAddress,
 		},
 		"Sample description",
@@ -200,8 +200,8 @@ func TestValidate_InvalidNoChainMetadata(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]mcms.ChainMetadata{},
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: TestAddress,
 		},
 		"Sample description",
@@ -236,13 +236,13 @@ func TestValidate_InvalidNoTransactions(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: TestAddress,
 		},
 		"Sample description",
@@ -264,13 +264,13 @@ func TestValidate_InvalidNoDescription(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: TestAddress,
 		},
 		"",
@@ -305,13 +305,13 @@ func TestValidate_InvalidVersion(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: TestAddress,
 		},
 		"test",
@@ -346,13 +346,13 @@ func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: TestAddress,
 		},
 		"Sample description",
@@ -380,7 +380,7 @@ func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
 
 // Constructs a simulated backend with a ManyChainMultiSig contract and a RBACTimelock contract
 // The Admin of the RBACTimelock is itself and the RBACTimelock owns the ManyChainMultiSig
-func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.PrivateKey, []*bind.TransactOpts, *backends.SimulatedBackend, *gethwrappers.ManyChainMultiSig, *gethwrappers.RBACTimelock, error) {
+func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.PrivateKey, []*bind.TransactOpts, *backends.SimulatedBackend, *bindings.ManyChainMultiSig, *bindings.RBACTimelock, error) {
 	// Generate a private key
 	keys := make([]*ecdsa.PrivateKey, numSigners)
 	auths := make([]*bind.TransactOpts, numSigners)
@@ -410,7 +410,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	sim := backends.NewSimulatedBackend(genesisAlloc, blockGasLimit)
 
 	// Deploy a ManyChainMultiSig contract with any of the signers
-	mcmAddr, tx, mcmsContract, err := gethwrappers.DeployManyChainMultiSig(auths[0], sim)
+	mcmAddr, tx, mcmsContract, err := bindings.DeployManyChainMultiSig(auths[0], sim)
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -465,7 +465,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	}
 
 	// Deploy a timelock contract for testing
-	_, tx, timelock, err := gethwrappers.DeployRBACTimelock(
+	_, tx, timelock, err := bindings.DeployRBACTimelock(
 		auths[0],
 		sim,
 		big.NewInt(0),
@@ -504,7 +504,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	}
 
 	// Construct payload for Accepting the ownership of the ManyChainMultiSig
-	mcmsAbi, err := gethwrappers.ManyChainMultiSigMetaData.GetAbi()
+	mcmsAbi, err := bindings.ManyChainMultiSigMetaData.GetAbi()
 	if err != nil {
 		return nil, nil, nil, nil, nil, err
 	}
@@ -514,7 +514,7 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 	}
 
 	// Accept the ownership of the ManyChainMultiSig
-	tx, err = timelock.BypasserExecuteBatch(auths[0], []gethwrappers.RBACTimelockCall{
+	tx, err = timelock.BypasserExecuteBatch(auths[0], []bindings.RBACTimelockCall{
 		{
 			Target: mcmsContract.Address(),
 			Data:   acceptOwnershipData,
@@ -585,7 +585,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	// Construct example transaction to grant EOA the PROPOSER role
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 	grantRoleData, err := timelockAbi.Pack("grantRole", role, auths[0].From)
 	require.NoError(t, err)
@@ -601,13 +601,13 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address(),
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: timelock.Address(),
 		},
 		"Sample description",
@@ -630,7 +630,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
-	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -689,7 +689,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	}
 
 	// Validate Contract State and verify operation was scheduled
-	grantRoleCall := []gethwrappers.RBACTimelockCall{
+	grantRoleCall := []bindings.RBACTimelockCall{
 		{
 			Target: timelock.Address(),
 			Value:  big.NewInt(0),
@@ -758,7 +758,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	// Construct example transaction to grant EOA the PROPOSER role
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 	grantRoleData, err := timelockAbi.Pack("grantRole", role, auths[0].From)
 	require.NoError(t, err)
@@ -774,13 +774,13 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address(),
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: timelock.Address(),
 		},
 		"Sample description",
@@ -803,7 +803,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
-	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -959,7 +959,7 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 	// Construct example transaction to grant EOA the PROPOSER role
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 	grantRoleData, err := timelockAbi.Pack("grantRole", role, auths[0].From)
 	require.NoError(t, err)
@@ -975,13 +975,13 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address(),
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: timelock.Address(),
 		},
 		"Sample description",
@@ -1004,7 +1004,7 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
-	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -1077,7 +1077,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	require.NoError(t, err)
 	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
 	operations := make([]mcms.Operation, 3)
@@ -1108,13 +1108,13 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address(),
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: timelock.Address(),
 		},
 		"Sample description",
@@ -1131,7 +1131,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
-	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -1190,7 +1190,7 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	}
 
 	// Validate Contract State and verify operation was scheduled
-	grantRoleCalls := []gethwrappers.RBACTimelockCall{
+	grantRoleCalls := []bindings.RBACTimelockCall{
 		{
 			Target: timelock.Address(),
 			Value:  big.NewInt(0),
@@ -1279,7 +1279,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	require.NoError(t, err)
 	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
 	operations := make([]mcms.Operation, 3)
@@ -1310,13 +1310,13 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address(),
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: timelock.Address(),
 		},
 		"Sample description",
@@ -1333,7 +1333,7 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
-	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -1493,7 +1493,7 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	require.NoError(t, err)
 	cancellerRole, err := timelock.CANCELLERROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
 	operations := make([]mcms.Operation, 3)
@@ -1524,13 +1524,13 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 		2004259681,
 		[]mcms.Signature{},
 		false,
-		map[mcms.ChainIdentifier]mcms.ChainMetadata{
+		map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address(),
 			},
 		},
-		map[mcms.ChainIdentifier]common.Address{
+		map[mcms.ChainSelector]common.Address{
 			TestChain1: timelock.Address(),
 		},
 		"Sample description",
@@ -1547,7 +1547,7 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	assert.NotNil(t, proposal)
 
 	// Gen caller map for easy access
-	callers := map[mcms.ChainIdentifier]mcms.ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]mcms.ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -1618,9 +1618,9 @@ func TestTimelockProposalFromFile(t *testing.T) {
 			Signatures:           []mcms.Signature{},
 			OverridePreviousRoot: false,
 			Description:          "Test Proposal",
-			ChainMetadata:        make(map[mcms.ChainIdentifier]mcms.ChainMetadata),
+			ChainMetadata:        make(map[mcms.ChainSelector]mcms.ChainMetadata),
 		},
-		TimelockAddresses: make(map[mcms.ChainIdentifier]common.Address),
+		TimelockAddresses: make(map[mcms.ChainSelector]common.Address),
 		Transactions:      make([]BatchChainOperation, 0),
 		Operation:         Schedule,
 		MinDelay:          "1h",

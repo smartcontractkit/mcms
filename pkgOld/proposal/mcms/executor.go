@@ -11,18 +11,18 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"golang.org/x/exp/slices"
 
-	c "github.com/smartcontractkit/mcms/pkg/config"
-	"github.com/smartcontractkit/mcms/pkg/errors"
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
-	"github.com/smartcontractkit/mcms/pkg/merkle"
+	"github.com/smartcontractkit/mcms/internal/core"
+	"github.com/smartcontractkit/mcms/internal/core/config"
+	"github.com/smartcontractkit/mcms/internal/core/merkle"
+	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
 
 type Executor struct {
 	Proposal         *MCMSProposal
-	Tree             *merkle.MerkleTree
-	RootMetadatas    map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata
-	Operations       map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp
-	ChainAgnosticOps []gethwrappers.ManyChainMultiSigOp
+	Tree             *merkle.Tree
+	RootMetadatas    map[ChainIdentifier]bindings.ManyChainMultiSigRootMetadata
+	Operations       map[ChainIdentifier][]bindings.ManyChainMultiSigOp
+	ChainAgnosticOps []bindings.ManyChainMultiSigOp
 }
 
 // NewProposalExecutor constructs a new Executor from a Proposal.
@@ -91,7 +91,7 @@ func (e *Executor) ValidateMCMSConfigs(clients map[ChainIdentifier]ContractDeplo
 		}
 
 		if !wrappedConfigs[chain].Equals(wrappedConfigs[sortedChains[i-1]]) {
-			return &errors.InconsistentConfigsError{
+			return &core.InconsistentConfigsError{
 				ChainIdentifierA: uint64(chain),
 				ChainIdentifierB: uint64(sortedChains[i-1]),
 			}
@@ -121,8 +121,8 @@ func (e *Executor) GetCurrentOpCounts(clients map[ChainIdentifier]ContractDeploy
 	return opCounts, nil
 }
 
-func (e *Executor) GetConfigs(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig, error) {
-	configs := make(map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig)
+func (e *Executor) GetConfigs(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]bindings.ManyChainMultiSigConfig, error) {
+	configs := make(map[ChainIdentifier]bindings.ManyChainMultiSigConfig)
 
 	callers, err := e.getMCMSCallers(clients)
 	if err != nil {
@@ -141,18 +141,18 @@ func (e *Executor) GetConfigs(clients map[ChainIdentifier]ContractDeployBackend)
 	return configs, nil
 }
 
-func (e *Executor) getMCMSCallers(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]*gethwrappers.ManyChainMultiSig, error) {
+func (e *Executor) getMCMSCallers(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]*bindings.ManyChainMultiSig, error) {
 	mcms := transformMCMAddresses(e.Proposal.ChainMetadata)
-	mcmsWrappers := make(map[ChainIdentifier]*gethwrappers.ManyChainMultiSig)
+	mcmsWrappers := make(map[ChainIdentifier]*bindings.ManyChainMultiSig)
 	for chain, mcmAddress := range mcms {
 		client, ok := clients[chain]
 		if !ok {
-			return nil, &errors.MissingChainClientError{
+			return nil, &core.MissingChainClientError{
 				ChainIdentifier: uint64(chain),
 			}
 		}
 
-		mcms, err := gethwrappers.NewManyChainMultiSig(mcmAddress, client)
+		mcms, err := bindings.NewManyChainMultiSig(mcmAddress, client)
 		if err != nil {
 			return nil, err
 		}
@@ -179,7 +179,7 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 		recoveredSigners[i] = recoveredAddr
 	}
 
-	mcm, err := gethwrappers.NewManyChainMultiSig(e.RootMetadatas[chain].MultiSig, client)
+	mcm, err := bindings.NewManyChainMultiSig(e.RootMetadatas[chain].MultiSig, client)
 	if err != nil {
 		return false, err
 	}
@@ -198,7 +198,7 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 	// Validate that all signers are valid
 	for _, signer := range recoveredSigners {
 		if !slices.Contains(contractSigners, signer) {
-			return false, &errors.InvalidSignatureError{
+			return false, &core.InvalidSignatureError{
 				ChainIdentifier:  uint64(chain),
 				MCMSAddress:      e.RootMetadatas[chain].MultiSig,
 				RecoveredAddress: signer,
@@ -208,13 +208,13 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 
 	// Validate if the quorum is met
 
-	newConfig, err := c.NewConfigFromRaw(config)
+	newConfig, err := config.NewConfigFromRaw(config)
 	if err != nil {
 		return false, err
 	}
 
 	if !isReadyToSetRoot(*newConfig, recoveredSigners) {
-		return false, &errors.QuorumNotMetError{
+		return false, &core.QuorumNotMetError{
 			ChainIdentifier: uint64(chain),
 		}
 	}
@@ -255,7 +255,7 @@ func (e *Executor) ValidateSignatures(clients map[ChainIdentifier]ContractDeploy
 			}
 
 			if !found {
-				return false, &errors.InvalidSignatureError{
+				return false, &core.InvalidSignatureError{
 					ChainIdentifier:  uint64(chain),
 					RecoveredAddress: signer,
 				}
@@ -271,7 +271,7 @@ func (e *Executor) ValidateSignatures(clients map[ChainIdentifier]ContractDeploy
 
 	for chain, config := range wrappedConfigs {
 		if !isReadyToSetRoot(*config, recoveredSigners) {
-			return false, &errors.QuorumNotMetError{
+			return false, &core.QuorumNotMetError{
 				ChainIdentifier: uint64(chain),
 			}
 		}
@@ -280,11 +280,11 @@ func (e *Executor) ValidateSignatures(clients map[ChainIdentifier]ContractDeploy
 	return true, nil
 }
 
-func isReadyToSetRoot(rootGroup c.Config, recoveredSigners []common.Address) bool {
+func isReadyToSetRoot(rootGroup config.Config, recoveredSigners []common.Address) bool {
 	return isGroupAtConsensus(rootGroup, recoveredSigners)
 }
 
-func isGroupAtConsensus(group c.Config, recoveredSigners []common.Address) bool {
+func isGroupAtConsensus(group config.Config, recoveredSigners []common.Address) bool {
 	signerApprovalsInGroup := 0
 	for _, signer := range group.Signers {
 		for _, recoveredSigner := range recoveredSigners {
@@ -307,7 +307,7 @@ func isGroupAtConsensus(group c.Config, recoveredSigners []common.Address) bool 
 
 func (e *Executor) SetRootOnChain(client bind.ContractBackend, auth *bind.TransactOpts, chain ChainIdentifier) (*types.Transaction, error) {
 	metadata := e.RootMetadatas[chain]
-	mcms, err := gethwrappers.NewManyChainMultiSig(metadata.MultiSig, client)
+	mcms, err := bindings.NewManyChainMultiSig(metadata.MultiSig, client)
 	if err != nil {
 		return nil, err
 	}
@@ -347,7 +347,7 @@ func (e *Executor) SetRootOnChain(client bind.ContractBackend, auth *bind.Transa
 
 func (e *Executor) ExecuteOnChain(client bind.ContractBackend, auth *bind.TransactOpts, idx int) (*types.Transaction, error) {
 	mcmOperation := e.ChainAgnosticOps[idx]
-	mcms, err := gethwrappers.NewManyChainMultiSig(mcmOperation.MultiSig, client)
+	mcms, err := bindings.NewManyChainMultiSig(mcmOperation.MultiSig, client)
 	if err != nil {
 		return nil, err
 	}

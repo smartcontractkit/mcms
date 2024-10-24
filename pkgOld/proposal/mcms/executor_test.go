@@ -15,12 +15,12 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/pkg/config"
-	owner_errors "github.com/smartcontractkit/mcms/pkg/errors"
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
+	owner_errors "github.com/smartcontractkit/mcms/internal/core"
+	"github.com/smartcontractkit/mcms/internal/core/config"
+	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
 
-func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*bind.TransactOpts, *backends.SimulatedBackend, *gethwrappers.ManyChainMultiSig, error) {
+func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*bind.TransactOpts, *backends.SimulatedBackend, *bindings.ManyChainMultiSig, error) {
 	// Generate a private key
 	keys := make([]*ecdsa.PrivateKey, numSigners)
 	auths := make([]*bind.TransactOpts, numSigners)
@@ -51,7 +51,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	sim := backends.NewSimulatedBackend(genesisAlloc, blockGasLimit)
 
 	// Deploy a ManyChainMultiSig contract with any of the signers
-	_, tx, mcms, err := gethwrappers.DeployManyChainMultiSig(auths[0], sim)
+	_, tx, mcms, err := bindings.DeployManyChainMultiSig(auths[0], sim)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -118,7 +118,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	assert.NotNil(t, mcms)
 
 	// Deploy a timelock contract for testing
-	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
+	addr, tx, timelock, err := bindings.DeployRBACTimelock(
 		auths[0],
 		sim,
 		big.NewInt(0),
@@ -137,7 +137,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	// Construct example transaction
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 	grantRoleData, err := timelockAbi.Pack("grantRole", role, mcms.Address())
 	require.NoError(t, err)
@@ -248,7 +248,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Deploy a timelock contract for testing
-	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
+	addr, tx, timelock, err := bindings.DeployRBACTimelock(
 		auths[0],
 		sim,
 		big.NewInt(0),
@@ -267,7 +267,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	// Construct example transaction
 	role, err := timelock.PROPOSERROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 	grantRoleData, err := timelockAbi.Pack("grantRole", role, mcms.Address())
 	require.NoError(t, err)
@@ -374,7 +374,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	assert.NotNil(t, mcms)
 
 	// Deploy a timelock contract for testing
-	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
+	addr, tx, timelock, err := bindings.DeployRBACTimelock(
 		auths[0],
 		sim,
 		big.NewInt(0),
@@ -399,7 +399,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 	executorRole, err := timelock.EXECUTORROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
 	operations := make([]ChainOperation, 4)
@@ -514,7 +514,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Deploy a timelock contract for testing
-	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
+	addr, tx, timelock, err := bindings.DeployRBACTimelock(
 		auths[0],
 		sim,
 		big.NewInt(0),
@@ -539,7 +539,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.NoError(t, err)
 	executorRole, err := timelock.EXECUTORROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
 	operations := make([]ChainOperation, 4)
@@ -656,7 +656,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	}
 
 	// Deploy a timelock contract for testing
-	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
+	addr, tx, timelock, err := bindings.DeployRBACTimelock(
 		auths[0],
 		sim,
 		big.NewInt(0),
@@ -681,7 +681,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	require.NoError(t, err)
 	executorRole, err := timelock.EXECUTORROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
 	operations := make([]ChainOperation, 4)
@@ -762,7 +762,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	keys[2] = newKey
 
 	// Deploy a timelock contract for testing
-	addr, tx, timelock, err := gethwrappers.DeployRBACTimelock(
+	addr, tx, timelock, err := bindings.DeployRBACTimelock(
 		auths[0],
 		sim,
 		big.NewInt(0),
@@ -787,7 +787,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	require.NoError(t, err)
 	executorRole, err := timelock.EXECUTORROLE(&bind.CallOpts{})
 	require.NoError(t, err)
-	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
 	operations := make([]ChainOperation, 4)

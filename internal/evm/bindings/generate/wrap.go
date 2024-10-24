@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
+	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 	fmt.Println("Generating", className, "contract wrapper")
 	out := fmt.Sprintf("%s.go", className)
 
-	gethwrappers.Abigen(gethwrappers.AbigenArgs{
+	bindings.Abigen(bindings.AbigenArgs{
 		Bin: binPath, ABI: abiPath, Out: out, Type: className, Pkg: pkgName,
 	})
 }

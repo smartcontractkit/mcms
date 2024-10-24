@@ -5,10 +5,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
 
 func TestToGethSignature(t *testing.T) {
@@ -20,7 +19,7 @@ func TestToGethSignature(t *testing.T) {
 		V: 27,
 	}
 
-	expected := gethwrappers.ManyChainMultiSigSignature{
+	expected := bindings.ManyChainMultiSigSignature{
 		R: [32]byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,

@@ -15,6 +15,39 @@ var TestChain1 = ChainSelector(3379446385462418246)
 var TestChain2 = ChainSelector(16015286601757825753)
 var TestChain3 = ChainSelector(10344971235874465080)
 
+// func TestCalculateTransactionCounts(t *testing.T) {
+// 	t.Parallel()
+
+// 	transactions := []ChainOperation{
+// 		{ChainSelector: TestChain1},
+// 		{ChainSelector: TestChain1},
+// 		{ChainSelector: TestChain2},
+// 	}
+
+// 	expected := map[ChainSelector]uint64{
+// 		TestChain1: 2,
+// 		TestChain2: 1,
+// 	}
+
+// 	result := calculateTransactionCounts(transactions)
+// 	assert.Equal(t, expected, result)
+// }
+
+// func TestSortedChainIdentifiers(t *testing.T) {
+// 	t.Parallel()
+
+// 	chainMetadata := map[ChainIdentifier]ChainMetadata{
+// 		TestChain2: {},
+// 		TestChain1: {},
+// 		TestChain3: {},
+// 	}
+
+// 	expected := []ChainIdentifier{TestChain1, TestChain3, TestChain2}
+
+// 	result := sortedChainIdentifiers(chainMetadata)
+// 	assert.Equal(t, expected, result)
+// }
+
 func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 	t.Parallel()
 

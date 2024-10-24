@@ -6,8 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
 
 func TestNewConfig(t *testing.T) {
@@ -24,27 +22,6 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, uint8(1), config.Quorum)
 	assert.Equal(t, signers, config.Signers)
 	assert.Equal(t, groupSigners, config.GroupSigners)
-}
-
-func TestNewConfigFromRaw(t *testing.T) {
-	t.Parallel()
-
-	rawConfig := gethwrappers.ManyChainMultiSigConfig{
-		GroupQuorums: [32]uint8{1, 1},
-		GroupParents: [32]uint8{0, 0},
-		Signers: []gethwrappers.ManyChainMultiSigSigner{
-			{Addr: common.HexToAddress("0x1"), Group: 0},
-			{Addr: common.HexToAddress("0x2"), Group: 1},
-		},
-	}
-	config, err := NewConfigFromRaw(rawConfig)
-
-	require.NoError(t, err)
-	assert.NotNil(t, config)
-	assert.Equal(t, uint8(1), config.Quorum)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x1")}, config.Signers)
-	assert.Equal(t, uint8(1), config.GroupSigners[0].Quorum)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x2")}, config.GroupSigners[0].Signers)
 }
 
 func TestValidate_Success(t *testing.T) {
