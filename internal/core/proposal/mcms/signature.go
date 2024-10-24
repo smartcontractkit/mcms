@@ -5,13 +5,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
 
 const SignatureBytesLength = 65
-const EthereumSignatureVOffset = 27
-const EthereumSignatureVThreshold = 2
+
 const EthereumSignatureComponentSize = 32
 
 type Signature struct {
@@ -30,18 +27,6 @@ func NewSignatureFromBytes(sig []byte) (Signature, error) {
 		S: common.BytesToHash(sig[EthereumSignatureComponentSize:(SignatureBytesLength - 1)]),
 		V: sig[SignatureBytesLength-1],
 	}, nil
-}
-
-func (s Signature) ToGethSignature() gethwrappers.ManyChainMultiSigSignature {
-	if s.V < EthereumSignatureVThreshold {
-		s.V += EthereumSignatureVOffset
-	}
-
-	return gethwrappers.ManyChainMultiSigSignature{
-		R: [32]byte(s.R.Bytes()),
-		S: [32]byte(s.S.Bytes()),
-		V: s.V,
-	}
 }
 
 func (s Signature) ToBytes() []byte {

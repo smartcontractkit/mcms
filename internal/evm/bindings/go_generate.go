@@ -1,5 +1,5 @@
 // Package gethwrappers keeps track of the golang wrappers of the solidity contracts
-package gethwrappers
+package bindings
 
 import (
 	"github.com/ethereum/go-ethereum/common"

@@ -1,4 +1,4 @@
-package gethwrappers
+package bindings
 
 import (
 	"bytes"
