@@ -12,7 +12,7 @@ import (
 
 const FilePermissionsUserOnly = 0600
 
-func transformHashes(hashes []common.Hash) [][32]byte {
+func TransformHashes(hashes []common.Hash) [][32]byte {
 	m := make([][32]byte, len(hashes))
 	for i, h := range hashes {
 		m[i] = [32]byte(h)
