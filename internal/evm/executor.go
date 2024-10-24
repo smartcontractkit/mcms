@@ -10,8 +10,8 @@ import (
 
 type EVMExecutor struct {
 	EVMEncoder
-	client ContractDeployBackend
-	auth   *bind.TransactOpts
+	EVMInspector
+	auth *bind.TransactOpts
 }
 
 func (e *EVMExecutor) ExecuteOperation(

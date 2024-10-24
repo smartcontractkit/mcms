@@ -1,7 +1,8 @@
-package mcms
+package evm
 
 import (
 	"crypto/ecdsa"
+	"encoding/json"
 	"errors"
 	"math/big"
 	"testing"
@@ -17,8 +18,14 @@ import (
 
 	owner_errors "github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/config"
+	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
+
+var TestAddress = "0x1234567890abcdef"
+var TestChain1 = mcms.ChainSelector(3379446385462418246)
+var TestChain2 = mcms.ChainSelector(16015286601757825753)
+var TestChain3 = mcms.ChainSelector(10344971235874465080)
 
 func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*bind.TransactOpts, *backends.SimulatedBackend, *bindings.ManyChainMultiSig, error) {
 	// Generate a private key
@@ -77,7 +84,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	}
 
 	// Set the quorum
-	quorum, err := SafeCastUint64ToUint8(numSigners)
+	quorum, err := owner_errors.SafeCastUint64ToUint8(numSigners)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -110,19 +117,19 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	t.Parallel()
 
-	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(1)
+	keys, auths, sim, mcmsObj, err := setupSimulatedBackendWithMCMS(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 
 	// Deploy a timelock contract for testing
 	addr, tx, timelock, err := bindings.DeployRBACTimelock(
 		auths[0],
 		sim,
 		big.NewInt(0),
-		mcms.Address(),
+		mcmsObj.Address(),
 		[]common.Address{},
 		[]common.Address{},
 		[]common.Address{},
@@ -139,35 +146,35 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
-	grantRoleData, err := timelockAbi.Pack("grantRole", role, mcms.Address())
+	grantRoleData, err := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 	require.NoError(t, err)
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := mcms.MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
+		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
-				MCMAddress:      mcms.Address(),
+				MCMAddress:      mcmsObj.Address().Hex(),
 			},
 		},
-		Transactions: []ChainOperation{
+		Transactions: []mcms.ChainOperation{
 			{
-				ChainIdentifier: TestChain1,
-				Operation: Operation{
-					To:    timelock.Address(),
-					Value: big.NewInt(0),
-					Data:  grantRoleData,
+				ChainSelector: TestChain1,
+				Operation: mcms.Operation{
+					To:               timelock.Address().Hex(),
+					AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
+					Data:             grantRoleData,
 				},
 			},
 		},
 	}
 
 	// Gen caller map for easy access
-	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -187,7 +194,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 
 	// Construct a signature
-	sigObj, err := NewSignatureFromBytes(sig)
+	sigObj, err := mcms.NewSignatureFromBytes(sig)
 	require.NoError(t, err)
 	proposal.Signatures = append(proposal.Signatures, sigObj)
 
@@ -203,7 +210,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -221,7 +228,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// // Check the state of the MCMS contract
-	newOpCount, err := mcms.GetOpCount(&bind.CallOpts{})
+	newOpCount, err := mcmsObj.GetOpCount(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.NotNil(t, newOpCount)
 	assert.Equal(t, uint64(1), newOpCount.Uint64())
@@ -232,16 +239,16 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	assert.Equal(t, big.NewInt(1), proposerCount)
 	proposer, err := timelock.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
 	require.NoError(t, err)
-	assert.Equal(t, mcms.Address(), proposer)
+	assert.Equal(t, mcmsObj.Address().Hex(), proposer)
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	t.Parallel()
 
-	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
+	keys, auths, sim, mcmsObj, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
@@ -252,7 +259,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		auths[0],
 		sim,
 		big.NewInt(0),
-		mcms.Address(),
+		mcmsObj.Address(),
 		[]common.Address{},
 		[]common.Address{},
 		[]common.Address{},
@@ -269,35 +276,35 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
-	grantRoleData, err := timelockAbi.Pack("grantRole", role, mcms.Address())
+	grantRoleData, err := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 	require.NoError(t, err)
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := mcms.MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
+		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
-				MCMAddress:      mcms.Address(),
+				MCMAddress:      mcmsObj.Address().Hex(),
 			},
 		},
-		Transactions: []ChainOperation{
+		Transactions: []mcms.ChainOperation{
 			{
-				ChainIdentifier: TestChain1,
-				Operation: Operation{
-					To:    timelock.Address(),
-					Value: big.NewInt(0),
-					Data:  grantRoleData,
+				ChainSelector: TestChain1,
+				Operation: mcms.Operation{
+					To:               timelock.Address().Hex(),
+					AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
+					Data:             grantRoleData,
 				},
 			},
 		},
 	}
 
 	// Gen caller map for easy access
-	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -314,7 +321,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		require.NoError(t, serr)
 
 		// Construct a signature
-		sigObj, serr := NewSignatureFromBytes(sig)
+		sigObj, serr := mcms.NewSignatureFromBytes(sig)
 		require.NoError(t, serr)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
@@ -331,7 +338,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -349,7 +356,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Check the state of the MCMS contract
-	newOpCount, err := mcms.GetOpCount(&bind.CallOpts{})
+	newOpCount, err := mcmsObj.GetOpCount(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.NotNil(t, newOpCount)
 	assert.Equal(t, uint64(1), newOpCount.Uint64())
@@ -360,25 +367,25 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	assert.Equal(t, big.NewInt(1), proposerCount)
 	proposer, err := timelock.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
 	require.NoError(t, err)
-	assert.Equal(t, mcms.Address(), proposer)
+	assert.Equal(t, mcmsObj.Address().Hex(), proposer)
 }
 
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	t.Parallel()
 
-	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(1)
+	keys, auths, sim, mcmsObj, err := setupSimulatedBackendWithMCMS(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
 	assert.NotNil(t, auths[0])
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 
 	// Deploy a timelock contract for testing
 	addr, tx, timelock, err := bindings.DeployRBACTimelock(
 		auths[0],
 		sim,
 		big.NewInt(0),
-		mcms.Address(),
+		mcmsObj.Address(),
 		[]common.Address{},
 		[]common.Address{},
 		[]common.Address{},
@@ -402,37 +409,37 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]ChainOperation, 4)
+	operations := make([]mcms.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
-		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
+		data, perr := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 		require.NoError(t, perr)
-		operations[i] = ChainOperation{
-			ChainIdentifier: TestChain1,
-			Operation: Operation{
-				To:    timelock.Address(),
-				Value: big.NewInt(0),
-				Data:  data,
+		operations[i] = mcms.ChainOperation{
+			ChainSelector: TestChain1,
+			Operation: mcms.Operation{
+				To:               timelock.Address().Hex(),
+				AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
+				Data:             data,
 			},
 		}
 	}
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := mcms.MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
+		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
-				MCMAddress:      mcms.Address(),
+				MCMAddress:      mcmsObj.Address().Hex(),
 			},
 		},
 		Transactions: operations,
 	}
 
 	// Gen caller map for easy access
-	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -448,7 +455,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Construct a signature
-	sigObj, err := NewSignatureFromBytes(sig)
+	sigObj, err := mcms.NewSignatureFromBytes(sig)
 	require.NoError(t, err)
 	proposal.Signatures = append(proposal.Signatures, sigObj)
 
@@ -464,7 +471,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -485,7 +492,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Check the state of the MCMS contract
-	newOpCount, err := mcms.GetOpCount(&bind.CallOpts{})
+	newOpCount, err := mcmsObj.GetOpCount(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.NotNil(t, newOpCount)
 	assert.Equal(t, uint64(4), newOpCount.Uint64())
@@ -497,17 +504,17 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		assert.Equal(t, big.NewInt(1), roleCount)
 		roleMember, err := timelock.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
 		require.NoError(t, err)
-		assert.Equal(t, mcms.Address(), roleMember)
+		assert.Equal(t, mcmsObj.Address().Hex(), roleMember)
 	}
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	t.Parallel()
 
-	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
+	keys, auths, sim, mcmsObj, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
@@ -518,7 +525,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		auths[0],
 		sim,
 		big.NewInt(0),
-		mcms.Address(),
+		mcmsObj.Address(),
 		[]common.Address{},
 		[]common.Address{},
 		[]common.Address{},
@@ -542,37 +549,37 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]ChainOperation, 4)
+	operations := make([]mcms.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
-		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
+		data, perr := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 		require.NoError(t, perr)
-		operations[i] = ChainOperation{
-			ChainIdentifier: TestChain1,
-			Operation: Operation{
-				To:    timelock.Address(),
-				Value: big.NewInt(0),
-				Data:  data,
+		operations[i] = mcms.ChainOperation{
+			ChainSelector: TestChain1,
+			Operation: mcms.Operation{
+				To:               timelock.Address().Hex(),
+				AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
+				Data:             data,
 			},
 		}
 	}
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := mcms.MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
+		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
-				MCMAddress:      mcms.Address(),
+				MCMAddress:      mcmsObj.Address().Hex(),
 			},
 		},
 		Transactions: operations,
 	}
 
 	// Gen caller map for easy access
-	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -589,7 +596,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		require.NoError(t, serr)
 
 		// Construct a signature
-		sigObj, serr := NewSignatureFromBytes(sig)
+		sigObj, serr := mcms.NewSignatureFromBytes(sig)
 		require.NoError(t, serr)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
@@ -606,7 +613,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	sim.Commit()
 
 	// Validate Contract State and verify root was set
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.Equal(t, root.Root, [32]byte(executor.Tree.Root.Bytes()))
 	assert.Equal(t, root.ValidUntil, proposal.ValidUntil)
@@ -627,7 +634,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Check the state of the MCMS contract
-	newOpCount, err := mcms.GetOpCount(&bind.CallOpts{})
+	newOpCount, err := mcmsObj.GetOpCount(&bind.CallOpts{})
 	require.NoError(t, err)
 	assert.NotNil(t, newOpCount)
 	assert.Equal(t, uint64(4), newOpCount.Uint64())
@@ -639,17 +646,17 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		assert.Equal(t, big.NewInt(1), roleCount)
 		roleMember, err := timelock.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
 		require.NoError(t, err)
-		assert.Equal(t, mcms.Address(), roleMember)
+		assert.Equal(t, mcmsObj.Address().Hex(), roleMember)
 	}
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *testing.T) {
 	t.Parallel()
 
-	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
+	keys, auths, sim, mcmsObj, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
@@ -660,7 +667,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 		auths[0],
 		sim,
 		big.NewInt(0),
-		mcms.Address(),
+		mcmsObj.Address(),
 		[]common.Address{},
 		[]common.Address{},
 		[]common.Address{},
@@ -684,37 +691,37 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]ChainOperation, 4)
+	operations := make([]mcms.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
-		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
+		data, perr := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 		require.NoError(t, perr)
-		operations[i] = ChainOperation{
-			ChainIdentifier: TestChain1,
-			Operation: Operation{
-				To:    timelock.Address(),
-				Value: big.NewInt(0),
-				Data:  data,
+		operations[i] = mcms.ChainOperation{
+			ChainSelector: TestChain1,
+			Operation: mcms.Operation{
+				To:               timelock.Address().Hex(),
+				AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
+				Data:             data,
 			},
 		}
 	}
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := mcms.MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
+		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
-				MCMAddress:      mcms.Address(),
+				MCMAddress:      mcmsObj.Address().Hex(),
 			},
 		},
 		Transactions: operations,
 	}
 
 	// Gen caller map for easy access
-	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -731,7 +738,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 		require.NoError(t, serr)
 
 		// Construct a signature
-		sigObj, serr := NewSignatureFromBytes(sig)
+		sigObj, serr := mcms.NewSignatureFromBytes(sig)
 		require.NoError(t, serr)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}
@@ -747,10 +754,10 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *testing.T) {
 	t.Parallel()
 
-	keys, auths, sim, mcms, err := setupSimulatedBackendWithMCMS(3)
+	keys, auths, sim, mcmsObj, err := setupSimulatedBackendWithMCMS(3)
 	require.NoError(t, err)
 	assert.NotNil(t, sim)
-	assert.NotNil(t, mcms)
+	assert.NotNil(t, mcmsObj)
 	for i := range 3 {
 		assert.NotNil(t, keys[i])
 		assert.NotNil(t, auths[i])
@@ -766,7 +773,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 		auths[0],
 		sim,
 		big.NewInt(0),
-		mcms.Address(),
+		mcmsObj.Address(),
 		[]common.Address{},
 		[]common.Address{},
 		[]common.Address{},
@@ -790,37 +797,37 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]ChainOperation, 4)
+	operations := make([]mcms.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
-		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
+		data, perr := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 		require.NoError(t, perr)
-		operations[i] = ChainOperation{
-			ChainIdentifier: TestChain1,
-			Operation: Operation{
-				To:    timelock.Address(),
-				Value: big.NewInt(0),
-				Data:  data,
+		operations[i] = mcms.ChainOperation{
+			ChainSelector: TestChain1,
+			Operation: mcms.Operation{
+				To:               timelock.Address().Hex(),
+				AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
+				Data:             data,
 			},
 		}
 	}
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := mcms.MCMSProposal{
 		Version:              "1.0",
 		ValidUntil:           2004259681,
-		Signatures:           []Signature{},
+		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
-				MCMAddress:      mcms.Address(),
+				MCMAddress:      mcmsObj.Address().Hex(),
 			},
 		},
 		Transactions: operations,
 	}
 
 	// Gen caller map for easy access
-	callers := map[ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcms.ChainSelector]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -837,7 +844,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 		require.NoError(t, serr)
 
 		// Construct a signature
-		sigObj, serr := NewSignatureFromBytes(sig)
+		sigObj, serr := mcms.NewSignatureFromBytes(sig)
 		require.NoError(t, serr)
 		proposal.Signatures = append(proposal.Signatures, sigObj)
 	}

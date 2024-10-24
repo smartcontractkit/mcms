@@ -1,6 +1,9 @@
 package config
 
 import (
+	"errors"
+	"slices"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/mcms/internal/core"
 )
@@ -120,4 +123,47 @@ func unorderedArrayEquals[T comparable](a, b []T) bool {
 	}
 
 	return true
+}
+
+func (c *Config) GetAllSigners() []common.Address {
+	signers := make([]common.Address, 0)
+	signers = append(signers, c.Signers...)
+
+	for _, groupSigner := range c.GroupSigners {
+		signers = append(signers, groupSigner.GetAllSigners()...)
+	}
+
+	return signers
+}
+
+func (c *Config) CanSetRoot(recoveredSigners []common.Address) (bool, error) {
+	allSigners := c.GetAllSigners()
+	for _, recoveredSigner := range recoveredSigners {
+		if !slices.Contains(allSigners, recoveredSigner) {
+			return false, errors.New("recovered signer " + recoveredSigner.String() + " not in config")
+		}
+	}
+
+	return c.isGroupAtConsensus(recoveredSigners), nil
+}
+
+func (c *Config) isGroupAtConsensus(recoveredSigners []common.Address) bool {
+	signerApprovalsInGroup := 0
+	for _, signer := range c.Signers {
+		for _, recoveredSigner := range recoveredSigners {
+			if signer == recoveredSigner {
+				signerApprovalsInGroup++
+				break
+			}
+		}
+	}
+
+	groupApprovals := 0
+	for _, groupSigner := range c.GroupSigners {
+		if groupSigner.isGroupAtConsensus(recoveredSigners) {
+			groupApprovals++
+		}
+	}
+
+	return (signerApprovalsInGroup + groupApprovals) >= int(c.Quorum)
 }
