@@ -6,58 +6,37 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/smartcontractkit/mcms/internal/core/config"
+	"github.com/smartcontractkit/mcms/pkgOld/errors"
+	"github.com/smartcontractkit/mcms/pkgOld/gethwrappers"
 	"github.com/spf13/cast"
-
-	"github.com/smartcontractkit/mcms/pkg/errors"
-	"github.com/smartcontractkit/mcms/pkg/gethwrappers"
 )
 
 const maxUint8Value = 255
 
-// Config is a struct that holds all the configuration for the owner contracts
-type Config struct {
-	Quorum uint8 `json:"quorum"`
+type EVMConfigurator struct{}
 
-	// TODO: how should this change as we expand to other non-EVM chains?
-	Signers      []common.Address `json:"signers"`
-	GroupSigners []Config         `json:"groupSigners"`
-}
-
-func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*Config, error) {
-	config := Config{
-		Quorum:       quorum,
-		Signers:      signers,
-		GroupSigners: groupSigners,
-	}
-
-	if err := config.Validate(); err != nil {
-		return nil, err
-	}
-
-	return &config, nil
-}
-
-func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) (*Config, error) {
-	groupToSigners := make([][]common.Address, len(rawConfig.GroupQuorums))
-	for _, signer := range rawConfig.Signers {
+func (e *EVMConfigurator) ToConfig(onchainConfig gethwrappers.ManyChainMultiSigConfig) (*config.Config, error) {
+	groupToSigners := make([][]common.Address, len(onchainConfig.GroupQuorums))
+	for _, signer := range onchainConfig.Signers {
 		groupToSigners[signer.Group] = append(groupToSigners[signer.Group], signer.Addr)
 	}
 
-	groups := make([]Config, len(rawConfig.GroupQuorums))
-	for i, quorum := range rawConfig.GroupQuorums {
+	groups := make([]config.Config, len(onchainConfig.GroupQuorums))
+	for i, quorum := range onchainConfig.GroupQuorums {
 		signers := groupToSigners[i]
 		if signers == nil {
 			signers = []common.Address{}
 		}
 
-		groups[i] = Config{
+		groups[i] = config.Config{
 			Signers:      signers,
-			GroupSigners: []Config{},
+			GroupSigners: []config.Config{},
 			Quorum:       quorum,
 		}
 	}
 
-	for i, parent := range rawConfig.GroupParents {
+	for i, parent := range onchainConfig.GroupParents {
 		if i > 0 && groups[i].Quorum > 0 {
 			groups[parent].GroupSigners = append(groups[parent].GroupSigners, groups[i])
 		}
@@ -70,36 +49,8 @@ func NewConfigFromRaw(rawConfig gethwrappers.ManyChainMultiSigConfig) (*Config, 
 	return &groups[0], nil
 }
 
-func (c *Config) Validate() error {
-	if c.Quorum == 0 {
-		return &errors.InvalidMCMSConfigError{
-			Reason: "Quorum must be greater than 0",
-		}
-	}
-
-	if len(c.Signers) == 0 && len(c.GroupSigners) == 0 {
-		return &errors.InvalidMCMSConfigError{
-			Reason: "Config must have at least one signer or group",
-		}
-	}
-
-	if (len(c.Signers) + len(c.GroupSigners)) < int(c.Quorum) {
-		return &errors.InvalidMCMSConfigError{
-			Reason: "Quorum must be less than or equal to the number of signers and groups",
-		}
-	}
-
-	for _, groupSigner := range c.GroupSigners {
-		if err := groupSigner.Validate(); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
-func (c *Config) ToRawConfig() (gethwrappers.ManyChainMultiSigConfig, error) {
-	groupQuorums, groupParents, signerAddresses, signerGroups, errSetConfig := c.ExtractSetConfigInputs()
+func (c *EVMConfigurator) SetConfigInputs(contract string, config config.Config) (gethwrappers.ManyChainMultiSigConfig, error) {
+	groupQuorums, groupParents, signerAddresses, signerGroups, errSetConfig := ExtractSetConfigInputs(&config)
 	if errSetConfig != nil {
 		return gethwrappers.ManyChainMultiSigConfig{}, errSetConfig
 	}
@@ -126,48 +77,11 @@ func (c *Config) ToRawConfig() (gethwrappers.ManyChainMultiSigConfig, error) {
 	}, nil
 }
 
-func (c *Config) Equals(other *Config) bool {
-	if c.Quorum != other.Quorum {
-		return false
-	}
-
-	if len(c.Signers) != len(other.Signers) {
-		return false
-	}
-
-	// Compare signers (order doesn't matter)
-	if !unorderedArrayEquals(c.Signers, other.Signers) {
-		return false
-	}
-
-	if len(c.GroupSigners) != len(other.GroupSigners) {
-		return false
-	}
-
-	// Compare all group signers in first exist in second (order doesn't matter)
-	// the reverse is not necessary because the lengths are already checked
-	for i := range c.GroupSigners {
-		found := false
-		for j := range other.GroupSigners {
-			if c.GroupSigners[i].Equals(&other.GroupSigners[j]) {
-				found = true
-				break
-			}
-		}
-
-		if !found {
-			return false
-		}
-	}
-
-	return true
-}
-
-func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Address, []uint8, error) {
+func ExtractSetConfigInputs(group *config.Config) ([32]uint8, [32]uint8, []common.Address, []uint8, error) {
 	var groupQuorums, groupParents, signerGroups = []uint8{}, []uint8{}, []uint8{}
 	var signers = []common.Address{}
 
-	errExtract := extractGroupsAndSigners(c, 0, &groupQuorums, &groupParents, &signers, &signerGroups)
+	errExtract := extractGroupsAndSigners(group, 0, &groupQuorums, &groupParents, &signers, &signerGroups)
 	if errExtract != nil {
 		return [32]uint8{}, [32]uint8{}, []common.Address{}, []uint8{}, errExtract
 	}
@@ -205,7 +119,7 @@ func (c *Config) ExtractSetConfigInputs() ([32]uint8, [32]uint8, []common.Addres
 	return [32]uint8(groupQuorums), [32]uint8(groupParents), orderedSignerAddresses, orderedSignerGroups, nil
 }
 
-func extractGroupsAndSigners(group *Config, parentIdx uint8, groupQuorums *[]uint8, groupParents *[]uint8, signers *[]common.Address, signerGroups *[]uint8) error {
+func extractGroupsAndSigners(group *config.Config, parentIdx uint8, groupQuorums *[]uint8, groupParents *[]uint8, signers *[]common.Address, signerGroups *[]uint8) error {
 	// Append the group's quorum and parent index to the respective slices
 	*groupQuorums = append(*groupQuorums, group.Quorum)
 	*groupParents = append(*groupParents, parentIdx)
@@ -235,35 +149,4 @@ func extractGroupsAndSigners(group *Config, parentIdx uint8, groupQuorums *[]uin
 	}
 
 	return nil
-}
-
-func unorderedArrayEquals[T comparable](a, b []T) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	aMap := make(map[T]struct{})
-	bMap := make(map[T]struct{})
-
-	for _, i := range a {
-		aMap[i] = struct{}{}
-	}
-
-	for _, i := range b {
-		bMap[i] = struct{}{}
-	}
-
-	for _, i := range a {
-		if _, ok := bMap[i]; !ok {
-			return false
-		}
-	}
-
-	for _, i := range b {
-		if _, ok := aMap[i]; !ok {
-			return false
-		}
-	}
-
-	return true
 }
