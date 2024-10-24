@@ -159,10 +159,11 @@ func (m *MCMSProposal) Validate() error {
 				Parameter:       "chain metadata",
 			}
 		}
+		// Chain specific validations.
+		if err := ValidateAdditionalFields(t.Operation.AdditionalFields, t.ChainIdentifier); err != nil {
+			return err
+		}
 	}
-
-	// TODO: Do chain specific validation fields here
-
 	return nil
 }
 

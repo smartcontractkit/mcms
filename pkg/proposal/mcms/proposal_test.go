@@ -2,7 +2,9 @@ package mcms
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/ethereum/go-ethereum/common"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -17,7 +19,12 @@ var TestChain3 = ChainIdentifier(10344971235874465080)
 
 func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 	t.Parallel()
-
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
@@ -34,11 +41,12 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 			{
 				ChainIdentifier: TestChain1,
 				Operation: Operation{
-					To:           TestAddress,
-					Value:        big.NewInt(0),
-					Data:         common.Hex2Bytes("0x"),
-					ContractType: "Sample contract",
-					Tags:         []string{"tag1", "tag2"},
+					To:               TestAddress,
+					Value:            big.NewInt(0),
+					AdditionalFields: additionalFields,
+					Data:             common.Hex2Bytes("0x"),
+					ContractType:     "Sample contract",
+					Tags:             []string{"tag1", "tag2"},
 				},
 			},
 		},
@@ -237,6 +245,12 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 }
 
 func TestMCMSProposal_MarshalJSON(t *testing.T) {
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	tests := []struct {
 		name        string
 		proposal    MCMSProposal
@@ -250,7 +264,7 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 				Signatures:           []Signature{},
 				OverridePreviousRoot: false,
 				ChainMetadata: map[ChainIdentifier]ChainMetadata{
-					ChainIdentifier(1): {
+					ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
 						StartingOpCount: 0,
 						MCMAddress:      common.HexToAddress("0x0000000000000000000000000000000000000000"),
 					},
@@ -258,8 +272,10 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 				Description: "Test Proposal",
 				Transactions: []ChainOperation{
 					{
-						Operation:       Operation{},
-						ChainIdentifier: ChainIdentifier(1),
+						Operation: Operation{
+							AdditionalFields: additionalFields,
+						},
+						ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 					},
 				},
 			},
@@ -299,10 +315,10 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 
 func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 	tests := []struct {
-		name            string
-		jsonData        string
-		expectError     bool
-		expectedErrType error
+		name        string
+		jsonData    string
+		expectError bool
+		expectedErr error
 	}{
 		{
 			name: "valid proposal",
@@ -312,7 +328,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"signatures": [],
 				"overridePreviousRoot": false,
 				"chainMetadata": {
-					"1": {
+					"16015286601757825753": {
 						"startingOpCount": 0,
 						"mcmAddress": "0x0000000000000000000000000000000000000000"
 					}
@@ -320,8 +336,8 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"description": "Test Proposal",
                 "transactions": [
                   {
-                     "chainIdentifier": 1,
-                     "additionalFields": null
+                     "chainIdentifier": 16015286601757825753,
+                     "additionalFields": {"value": 0}
                   }]
 			}`,
 			expectError: false,
@@ -334,7 +350,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"signatures": [],
 				"overridePreviousRoot": false,
 				"chainMetadata": {
-					"1": {
+					"16015286601757825753": {
 						"startingOpCount": 0,
 						"mcmAddress": "0x0000000000000000000000000000000000000000"
 					}
@@ -342,12 +358,12 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"description": "Test Proposal",
                 "transactions": [
                   {
-                     "chainIdentifier": 1,
+                     "chainIdentifier": 16015286601757825753,
                      "additionalFields": null
                   }]
 			}`,
-			expectError:     true,
-			expectedErrType: &errors.InvalidVersionError{},
+			expectError: true,
+			expectedErr: &errors.InvalidVersionError{},
 		},
 		{
 			name: "invalid proposal - missing chain metadata",
@@ -360,12 +376,12 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"description": "Test Proposal",
                 "transactions": [
                   {
-                     "chainIdentifier": 1,
+                     "chainIdentifier": 16015286601757825753,
                      "additionalFields": null
                   }]
 			}`,
-			expectError:     true,
-			expectedErrType: &errors.NoChainMetadataError{},
+			expectError: true,
+			expectedErr: &errors.NoChainMetadataError{},
 		},
 		{
 			name: "invalid proposal - null AdditionalFields",
@@ -375,7 +391,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"signatures": [],
 				"overridePreviousRoot": false,
 				"chainMetadata": {
-					"1": {
+					"16015286601757825753": {
 						"startingOpCount": 0,
 						"mcmAddress": "0x0000000000000000000000000000000000000000"
 					}
@@ -383,11 +399,12 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"description": "Test Proposal",
                 "transactions": [
                   {
-                     "chainIdentifier": 1,
+                     "chainIdentifier": 16015286601757825753,
                      "additionalFields": null
                   }]
 			}`,
-			expectError: false, // This should not throw an error, but set AdditionalFields to nil
+			expectError: true,
+			expectedErr: fmt.Errorf("failed to unmarshal EVM additional fields: unexpected end of JSON input"),
 		},
 	}
 
@@ -398,7 +415,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 
 			if tt.expectError {
 				require.Error(t, err)
-				require.IsType(t, tt.expectedErrType, err)
+				require.EqualError(t, tt.expectedErr, err.Error())
 			} else {
 				require.NoError(t, err)
 			}

@@ -1,4 +1,4 @@
-package sdk
+package mcms
 
 import (
 	"encoding/json"
@@ -11,7 +11,6 @@ import (
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/smartcontractkit/mcms/pkg/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 )
 
@@ -31,14 +30,14 @@ func TestValidateAdditionalFields(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		operation   mcms.ChainOperation
+		operation   ChainOperation
 		expectedErr error
 	}{
 		{
 			name: "valid EVM fields",
-			operation: mcms.ChainOperation{
-				ChainIdentifier: mcms.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: mcms.Operation{
+			operation: ChainOperation{
+				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: Operation{
 					AdditionalFields: validEVMFieldsJSON,
 				},
 			},
@@ -47,9 +46,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "invalid EVM fields",
-			operation: mcms.ChainOperation{
-				ChainIdentifier: mcms.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: mcms.Operation{
+			operation: ChainOperation{
+				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: Operation{
 					AdditionalFields: invalidEVMFieldsJSON,
 				},
 			},
@@ -57,9 +56,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "unknown chain family",
-			operation: mcms.ChainOperation{
+			operation: ChainOperation{
 				ChainIdentifier: 999,
-				Operation: mcms.Operation{
+				Operation: Operation{
 					AdditionalFields: nil,
 				},
 			},
@@ -67,9 +66,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "invalid JSON for EVM fields",
-			operation: mcms.ChainOperation{
-				ChainIdentifier: mcms.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: mcms.Operation{
+			operation: ChainOperation{
+				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: Operation{
 					AdditionalFields: []byte("invalid JSON"),
 				},
 			},
@@ -81,7 +80,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := ValidateAdditionalFields(tt.operation)
+			err := ValidateAdditionalFields(tt.operation.AdditionalFields, tt.operation.ChainIdentifier)
 
 			if tt.expectedErr != nil {
 				require.Error(t, err)

@@ -3,6 +3,7 @@ package mcms
 import (
 	"encoding/hex"
 	"encoding/json"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"math"
 	"math/big"
@@ -51,21 +52,28 @@ func TestFromFile(t *testing.T) {
 
 func TestProposalFromFile(t *testing.T) {
 	t.Parallel()
-
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	mcmsProposal := MCMSProposal{
 		Version:    "1",
 		ValidUntil: 4128029039,
 		Signatures: []Signature{},
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: 1,
-				Operation:       Operation{},
+				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: Operation{
+					AdditionalFields: additionalFields,
+				},
 			},
 		},
 		OverridePreviousRoot: false,
 		Description:          "Test Proposal",
 		ChainMetadata: map[ChainIdentifier]ChainMetadata{
-			ChainIdentifier(1): {
+			ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
 				StartingOpCount: 0,
 				MCMAddress:      common.HexToAddress("0x5b38da6a701c568545dcfcb03fcb875f56beddc4"),
 			},
@@ -87,7 +95,12 @@ func TestProposalFromFile(t *testing.T) {
 
 func TestWriteProposalToFile(t *testing.T) {
 	t.Parallel()
-
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	// Define a sample proposal struct
 	proposal := MCMSProposal{
 		Version:    "1",
@@ -95,14 +108,16 @@ func TestWriteProposalToFile(t *testing.T) {
 		Signatures: []Signature{},
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: 1,
-				Operation:       Operation{},
+				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: Operation{
+					AdditionalFields: additionalFields,
+				},
 			},
 		},
 		OverridePreviousRoot: false,
 		Description:          "Test Proposal",
 		ChainMetadata: map[ChainIdentifier]ChainMetadata{
-			ChainIdentifier(1): {
+			ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
 				StartingOpCount: 0,
 				MCMAddress:      common.HexToAddress("0x5b38da6a701c568545dcfcb03fcb875f56beddc4"),
 			},

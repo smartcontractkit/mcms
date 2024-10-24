@@ -127,6 +127,8 @@ func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
 	}
 
 	// Then, marshal the embedded MCMSProposal directly
+	// Exclude transactions from the embedded MCMSProposal, they are on the parent struct.
+	m.MCMSProposal.Transactions = nil
 	mcmsProposalBytes, err := json.Marshal(m.MCMSProposal)
 	if err != nil {
 		return nil, err
@@ -170,12 +172,25 @@ func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 	}
 	m.Transactions = transactionsFields.Transactions
 
-	// Then, unmarshal into the embedded MCMSProposal directly
-	if err := json.Unmarshal(data, &m.MCMSProposal); err != nil {
+	// Create a map to remove the "transactions" field from the data before unmarshalling into MCMSProposal
+	var jsonData map[string]interface{}
+	if err := json.Unmarshal(data, &jsonData); err != nil {
 		return err
 	}
-	// This field is overridden in MCMSWithTimelockProposal
-	m.MCMSProposal.Transactions = nil
+
+	// Remove the "transactions" field from the map
+	delete(jsonData, "transactions")
+
+	// Marshal the modified map back into JSON
+	modifiedData, err := json.Marshal(jsonData)
+	if err != nil {
+		return err
+	}
+
+	// Now unmarshal the modified data into MCMSProposal (without Transactions field)
+	if err := json.Unmarshal(modifiedData, &m.MCMSProposal); err != nil {
+		return err
+	}
 
 	// Unmarshal the remaining fields specific to MCMSWithTimelockProposal
 	mcmsWithTimelockFields := struct {
@@ -192,7 +207,6 @@ func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 	m.Operation = mcmsWithTimelockFields.Operation
 	m.MinDelay = mcmsWithTimelockFields.MinDelay
 	m.TimelockAddresses = mcmsWithTimelockFields.TimelockAddresses
-	m.Transactions = transactionsFields.Transactions
 
 	return nil
 }
@@ -210,6 +224,12 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 			return &errors.MissingChainDetailsError{
 				ChainIdentifier: uint64(t.ChainIdentifier),
 				Parameter:       "chain metadata",
+			}
+		}
+		for _, op := range t.Batch {
+			// Chain specific validations.
+			if err := mcms.ValidateAdditionalFields(op.AdditionalFields, t.ChainIdentifier); err != nil {
+				return err
 			}
 		}
 	}
