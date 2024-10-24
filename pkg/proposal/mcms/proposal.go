@@ -164,6 +164,7 @@ func (m *MCMSProposal) Validate() error {
 			return err
 		}
 	}
+
 	return nil
 }
 

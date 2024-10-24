@@ -173,7 +173,7 @@ func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 	m.Transactions = transactionsFields.Transactions
 
 	// Create a map to remove the "transactions" field from the data before unmarshalling into MCMSProposal
-	var jsonData map[string]interface{}
+	var jsonData map[string]any
 	if err := json.Unmarshal(data, &jsonData); err != nil {
 		return err
 	}

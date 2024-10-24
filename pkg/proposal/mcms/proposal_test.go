@@ -3,13 +3,15 @@ package mcms
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/ethereum/go-ethereum/common"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/mcms/pkg/errors"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"math/big"
 	"testing"
+
+	"github.com/ethereum/go-ethereum/common"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/pkg/errors"
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")
@@ -245,6 +247,8 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 }
 
 func TestMCMSProposal_MarshalJSON(t *testing.T) {
+	t.Parallel()
+
 	additionalFields, err := json.Marshal(struct {
 		Value *big.Int `json:"value"`
 	}{
@@ -303,6 +307,8 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			_, err := json.Marshal(tt.proposal)
 			if tt.expectError {
 				require.Error(t, err)
@@ -314,6 +320,8 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 }
 
 func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		jsonData    string
@@ -410,6 +418,8 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			var proposal MCMSProposal
 			err := json.Unmarshal([]byte(tt.jsonData), &proposal)
 

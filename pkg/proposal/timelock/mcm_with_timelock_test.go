@@ -4,11 +4,12 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"math/big"
 	"os"
 	"testing"
 	"time"
+
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
