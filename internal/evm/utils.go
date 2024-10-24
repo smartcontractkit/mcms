@@ -12,6 +12,9 @@ import (
 	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
 
+const EthereumSignatureVOffset = 27
+const EthereumSignatureVThreshold = 2
+
 func ToGethSignature(s mcms.Signature) bindings.ManyChainMultiSigSignature {
 	if s.V < EthereumSignatureVThreshold {
 		s.V += EthereumSignatureVOffset

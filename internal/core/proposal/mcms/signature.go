@@ -10,6 +10,7 @@ import (
 const SignatureBytesLength = 65
 
 const EthereumSignatureComponentSize = 32
+const EthereumSignatureVOffset = 27
 
 type Signature struct {
 	R common.Hash

@@ -75,8 +75,8 @@ func (e *EVMEncoder) ToGethRootMetadata(metadata mcms.ChainMetadata) bindings.Ma
 	return bindings.ManyChainMultiSigRootMetadata{
 		ChainId:              new(big.Int).SetUint64(e.ChainID),
 		MultiSig:             common.HexToAddress(metadata.MCMAddress),
-		PreOpCount:           new(big.Int).SetUint64(metadata.StartingOpCount + uint64(opCount)),
-		PostOpCount:          new(big.Int).SetUint64(metadata.StartingOpCount + uint64(opCount) + e.TxCount),
+		PreOpCount:           new(big.Int).SetUint64(metadata.StartingOpCount),
+		PostOpCount:          new(big.Int).SetUint64(metadata.StartingOpCount + e.TxCount),
 		OverridePreviousRoot: e.OverridePreviousRoot,
 	}
 }
