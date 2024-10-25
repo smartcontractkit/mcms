@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -431,4 +432,44 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestNewProposalFromReader(t *testing.T) {
+	// Define a sample JSON representing an MCMSProposal with a valid 40-character hex address
+	jsonData := `{
+				"version": "v1.0",
+				"validUntil": 4128029039,
+				"signatures": [],
+				"overridePreviousRoot": false,
+				"chainMetadata": {
+					"16015286601757825753": {
+						"startingOpCount": 0,
+						"mcmAddress": "0x000000000000000000000000000000000aBC1234"
+					}
+				},
+				"description": "Test Proposal",
+                "transactions": [
+                  {
+                     "chainIdentifier": 16015286601757825753,
+					 "to": "0x000000000000000000000000000000000aBC1234",
+					 "Data": "0x123456",
+                     "additionalFields": {"value": 0}
+                  }]
+			}`
+
+	// Use strings.NewReader to simulate an io.Reader with the JSON data
+	reader := strings.NewReader(jsonData)
+
+	// Call NewProposalFromReader
+	proposal, err := NewProposalFromReader(reader)
+
+	// Assert no error was returned
+	require.NoError(t, err)
+
+	// Assert the proposal was decoded correctly
+	require.NotNil(t, proposal)
+	require.Len(t, proposal.Transactions, 1)
+	require.Equal(t, "0x000000000000000000000000000000000aBC1234", proposal.Transactions[0].To.String())
+	require.Equal(t, []uint8([]byte{0xd3, 0x1d, 0x76, 0xdf, 0x8e, 0x7a}), proposal.Transactions[0].Data)
+	require.Equal(t, uint32(0xf60cb96f), proposal.ValidUntil)
 }

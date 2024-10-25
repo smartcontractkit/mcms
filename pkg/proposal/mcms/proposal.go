@@ -2,9 +2,10 @@ package mcms
 
 import (
 	"encoding/json"
-	"time"
-
 	"github.com/ethereum/go-ethereum/common"
+	"io"
+	"os"
+	"time"
 
 	"github.com/smartcontractkit/mcms/pkg/errors"
 )
@@ -95,14 +96,27 @@ func (m *MCMSProposal) UnmarshalJSON(data []byte) error {
 	// Run validation after unmarshalling
 	return m.Validate()
 }
-func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
+
+// NewProposalFromReader reads the proposal from an io.Reader (e.g., file, network response)
+func NewProposalFromReader(reader io.Reader) (*MCMSProposal, error) {
 	var out MCMSProposal
-	err := FromFile(filePath, &out)
+	err := json.NewDecoder(reader).Decode(&out)
 	if err != nil {
 		return nil, err
 	}
 
 	return &out, nil
+}
+
+// NewProposalFromFile reads the proposal from a file and uses NewProposalFromReader internally
+func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	return NewProposalFromReader(file)
 }
 
 // proposalValidateBasic basic validation for an MCMS proposal
