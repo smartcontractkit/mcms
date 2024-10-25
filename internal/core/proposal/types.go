@@ -21,7 +21,7 @@ var StringToProposalType = map[string]ProposalType{
 }
 
 type Proposal interface {
-	Signable(sim bool) (Signable, error)
+	Signable(sim bool, inspectors map[mcms.ChainSelector]mcms.Inspector) (Signable, error)
 	AddSignature(signature mcms.Signature)
 	Validate() error
 }
@@ -33,4 +33,9 @@ type Signable interface {
 	CheckQuorum(chain mcms.ChainSelector) (bool, error)
 	ValidateSignatures() (bool, error)
 	ValidateConfigs() error
+}
+
+type Executable interface {
+	SetRoot(chainSelector mcms.ChainSelector) (string, error)
+	Execute(index int) (string, error)
 }

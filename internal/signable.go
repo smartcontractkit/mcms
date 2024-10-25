@@ -18,12 +18,16 @@ type Signable struct {
 	*merkle.Tree
 
 	Encoders   map[mcms.ChainSelector]mcms.Encoder
-	Inspectors *map[mcms.ChainSelector]mcms.Inspector // optional, skip any inspections
-	Simulators *map[mcms.ChainSelector]mcms.Simulator // optional, skip simulations
-	Decoders   *map[mcms.ChainSelector]mcms.Decoder   // optional, skip decoding
+	Inspectors map[mcms.ChainSelector]mcms.Inspector // optional, skip any inspections
+	Simulators map[mcms.ChainSelector]mcms.Simulator // optional, skip simulations
+	Decoders   map[mcms.ChainSelector]mcms.Decoder   // optional, skip decoding
 }
 
-func NewSignable(proposal *MCMSProposal, encoders map[mcms.ChainSelector]mcms.Encoder) (*Signable, error) {
+func NewSignable(
+	proposal *MCMSProposal,
+	encoders map[mcms.ChainSelector]mcms.Encoder,
+	inspectors map[mcms.ChainSelector]mcms.Inspector,
+) (*Signable, error) {
 	hashLeaves := make([]common.Hash, 0)
 	chainIdx := make(map[mcms.ChainSelector]uint64, len(proposal.ChainMetadata))
 
@@ -72,6 +76,7 @@ func NewSignable(proposal *MCMSProposal, encoders map[mcms.ChainSelector]mcms.En
 		MCMSProposal: proposal,
 		Tree:         merkle.NewMerkleTree(hashLeaves),
 		Encoders:     encoders,
+		Inspectors:   inspectors,
 	}, nil
 }
 
@@ -105,7 +110,7 @@ func (e *Signable) GetCurrentOpCounts() (map[mcms.ChainSelector]uint64, error) {
 
 	opCounts := make(map[mcms.ChainSelector]uint64)
 	for chain, metadata := range e.ChainMetadata {
-		inspector, ok := (*e.Inspectors)[chain]
+		inspector, ok := e.Inspectors[chain]
 		if !ok {
 			return nil, errors.New("inspector not found for chain " + string(chain))
 		}
@@ -128,7 +133,7 @@ func (e *Signable) GetConfigs() (map[mcms.ChainSelector]*config.Config, error) {
 
 	configs := make(map[mcms.ChainSelector]*config.Config)
 	for chain, metadata := range e.ChainMetadata {
-		inspector, ok := (*e.Inspectors)[chain]
+		inspector, ok := e.Inspectors[chain]
 		if !ok {
 			return nil, errors.New("inspector not found for chain " + string(chain))
 		}
@@ -149,7 +154,7 @@ func (e *Signable) CheckQuorum(chain mcms.ChainSelector) (bool, error) {
 		return false, errors.New("inspectors not provided")
 	}
 
-	inspector, ok := (*e.Inspectors)[chain]
+	inspector, ok := e.Inspectors[chain]
 	if !ok {
 		return false, errors.New("inspector not found for chain " + string(chain))
 	}

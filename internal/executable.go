@@ -11,6 +11,16 @@ type Executable struct {
 	Executors map[mcms.ChainSelector]mcms.Executor
 }
 
+func NewExecutable(
+	signable *Signable,
+	executors map[mcms.ChainSelector]mcms.Executor,
+) *Executable {
+	return &Executable{
+		Signable:  signable,
+		Executors: executors,
+	}
+}
+
 func (e *Executable) SetRoot(chainSelector mcms.ChainSelector) (string, error) {
 	metadata := e.ChainMetadata[chainSelector]
 	metadataHash, err := e.Encoders[chainSelector].HashMetadata(metadata)
