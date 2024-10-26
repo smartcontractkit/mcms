@@ -160,12 +160,12 @@ func (s *Signable) GetConfigs() (map[mcms.ChainSelector]*config.Config, error) {
 			return nil, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 		}
 
-		config, err := inspector.GetConfig(metadata.MCMAddress)
+		configuration, err := inspector.GetConfig(metadata.MCMAddress)
 		if err != nil {
 			return nil, err
 		}
 
-		configs[chain] = config
+		configs[chain] = configuration
 	}
 
 	return configs, nil
@@ -196,12 +196,12 @@ func (s *Signable) CheckQuorum(chain mcms.ChainSelector) (bool, error) {
 		recoveredSigners[i] = recoveredAddr
 	}
 
-	config, err := inspector.GetConfig(s.ChainMetadata[chain].MCMAddress)
+	configuration, err := inspector.GetConfig(s.ChainMetadata[chain].MCMAddress)
 	if err != nil {
 		return false, err
 	}
 
-	return config.CanSetRoot(recoveredSigners)
+	return configuration.CanSetRoot(recoveredSigners)
 }
 
 func (s *Signable) ValidateSignatures() (bool, error) {
