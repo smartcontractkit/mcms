@@ -1,6 +1,8 @@
 package evm
 
 import (
+	"errors"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/mcms/internal/core"
@@ -22,12 +24,23 @@ func NewEVMExecutor(encoder *EVMEncoder, client ContractDeployBackend, auth *bin
 	}
 }
 
+func NewEVMExecutorWithoutEncoder(client ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
+	return &EVMExecutor{
+		EVMInspector: NewEVMInspector(client),
+		auth:         auth,
+	}
+}
+
 func (e *EVMExecutor) ExecuteOperation(
 	metadata mcms.ChainMetadata,
 	nonce uint32,
 	proof []common.Hash,
 	operation mcms.ChainOperation,
 ) (string, error) {
+	if e.EVMEncoder == nil {
+		return "", errors.New("EVMExecutor was created without an encoder")
+	}
+
 	mcms, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
 		return "", err
@@ -54,6 +67,10 @@ func (e *EVMExecutor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []mcms.Signature,
 ) (string, error) {
+	if e.EVMEncoder == nil {
+		return "", errors.New("EVMExecutor was created without an encoder")
+	}
+
 	mcms, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
 		return "", err

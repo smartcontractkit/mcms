@@ -61,7 +61,7 @@ func (e *Executable) Execute(index int) (string, error) {
 	chainSelector := transaction.ChainSelector
 	metadata := e.ChainMetadata[chainSelector]
 
-	operationHash, err := e.Encoders[chainSelector].HashOperation(0, metadata, transaction) // TODO: nonce
+	operationHash, err := e.Encoders[chainSelector].HashOperation(uint32(e.ChainNonce(index)), metadata, transaction) // TODO: nonce
 	if err != nil {
 		return "", err
 	}
@@ -72,7 +72,8 @@ func (e *Executable) Execute(index int) (string, error) {
 	}
 
 	return e.Executors[chainSelector].ExecuteOperation(
-		0, // TODO: nonce
+		metadata,
+		uint32(e.ChainNonce(index)),
 		proof,
 		transaction,
 	)

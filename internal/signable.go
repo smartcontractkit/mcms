@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"sort"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -16,6 +17,10 @@ import (
 type Signable struct {
 	*MCMSProposal
 	*merkle.Tree
+
+	// Map of operation to chain index where tx i is the ChainNonce[i]th
+	// operation of chain Transaction[i].ChainSelector
+	ChainNonces []uint64
 
 	Encoders   map[mcms.ChainSelector]mcms.Encoder
 	Inspectors map[mcms.ChainSelector]mcms.Inspector // optional, skip any inspections
@@ -34,12 +39,12 @@ func NewSignable(
 	for _, chain := range proposal.ChainIdentifiers() {
 		encoder, ok := encoders[chain]
 		if !ok {
-			return nil, errors.New("encoder not provided for chain " + string(chain))
+			return nil, errors.New("encoder not provided for chain " + strconv.FormatUint(uint64(chain), 10))
 		}
 
 		metadata, ok := proposal.ChainMetadata[chain]
 		if !ok {
-			return nil, errors.New("metadata not provided for chain " + string(chain))
+			return nil, errors.New("metadata not provided for chain " + strconv.FormatUint(uint64(chain), 10))
 		}
 
 		encodedRootMetadata, err := encoder.HashMetadata(metadata)
@@ -52,7 +57,8 @@ func NewSignable(
 		chainIdx[chain] = metadata.StartingOpCount
 	}
 
-	for _, op := range proposal.Transactions {
+	chainNonces := make([]uint64, len(proposal.Transactions))
+	for i, op := range proposal.Transactions {
 		encodedOp, err := encoders[op.ChainSelector].HashOperation(
 			uint32(chainIdx[op.ChainSelector]),
 			proposal.ChainMetadata[op.ChainSelector],
@@ -64,6 +70,7 @@ func NewSignable(
 		hashLeaves = append(hashLeaves, encodedOp)
 
 		// Increment chain idx
+		chainNonces[i] = chainIdx[op.ChainSelector]
 		chainIdx[op.ChainSelector]++
 	}
 
@@ -77,7 +84,16 @@ func NewSignable(
 		Tree:         merkle.NewMerkleTree(hashLeaves),
 		Encoders:     encoders,
 		Inspectors:   inspectors,
+		ChainNonces:  chainNonces,
 	}, nil
+}
+
+func (e *Signable) GetTree() *merkle.Tree {
+	return e.Tree
+}
+
+func (e *Signable) ChainNonce(index int) uint64 {
+	return e.ChainNonces[index]
 }
 
 func (e *Signable) SigningHash() (common.Hash, error) {
@@ -112,7 +128,7 @@ func (e *Signable) GetCurrentOpCounts() (map[mcms.ChainSelector]uint64, error) {
 	for chain, metadata := range e.ChainMetadata {
 		inspector, ok := e.Inspectors[chain]
 		if !ok {
-			return nil, errors.New("inspector not found for chain " + string(chain))
+			return nil, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 		}
 
 		opCount, err := inspector.GetOpCount(metadata.MCMAddress)
@@ -135,7 +151,7 @@ func (e *Signable) GetConfigs() (map[mcms.ChainSelector]*config.Config, error) {
 	for chain, metadata := range e.ChainMetadata {
 		inspector, ok := e.Inspectors[chain]
 		if !ok {
-			return nil, errors.New("inspector not found for chain " + string(chain))
+			return nil, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 		}
 
 		config, err := inspector.GetConfig(metadata.MCMAddress)
@@ -156,7 +172,7 @@ func (e *Signable) CheckQuorum(chain mcms.ChainSelector) (bool, error) {
 
 	inspector, ok := e.Inspectors[chain]
 	if !ok {
-		return false, errors.New("inspector not found for chain " + string(chain))
+		return false, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 	}
 
 	hash, err := e.SigningHash()

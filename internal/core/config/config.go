@@ -1,7 +1,6 @@
 package config
 
 import (
-	"errors"
 	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -140,7 +139,9 @@ func (c *Config) CanSetRoot(recoveredSigners []common.Address) (bool, error) {
 	allSigners := c.GetAllSigners()
 	for _, recoveredSigner := range recoveredSigners {
 		if !slices.Contains(allSigners, recoveredSigner) {
-			return false, errors.New("recovered signer " + recoveredSigner.String() + " not in config")
+			return false, &core.InvalidSignatureError{
+				RecoveredAddress: recoveredSigner,
+			}
 		}
 	}
 

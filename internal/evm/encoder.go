@@ -34,13 +34,9 @@ func (e *EVMEncoder) HashOperation(opCount uint32, metadata mcms.ChainMetadata, 
 		return common.Hash{}, err
 	}
 
-	op := bindings.ManyChainMultiSigOp{
-		ChainId:  new(big.Int).SetUint64(e.ChainID),
-		MultiSig: common.HexToAddress(metadata.MCMAddress),
-		Nonce:    new(big.Int).SetUint64(metadata.StartingOpCount + uint64(opCount)),
-		To:       common.HexToAddress(operation.To),
-		Data:     operation.Data,
-		Value:    additionalFields.Value,
+	op, err := e.ToGethOperation(opCount, metadata, operation)
+	if err != nil {
+		return common.Hash{}, err
 	}
 
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`

@@ -17,16 +17,12 @@ func NewEVMOperation(
 	value *big.Int,
 	contractType string,
 	tags []string,
-) (mcms.Operation, error) {
+) mcms.Operation {
 	additionalFields := EVMAdditionalFields{
 		Value: value,
 	}
 
-	marshalledAdditionalFields, err := json.Marshal(additionalFields)
-	if err != nil {
-		return mcms.Operation{}, err
-	}
-
+	marshalledAdditionalFields, _ := json.Marshal(additionalFields)
 	return mcms.Operation{
 		To:               to,
 		Data:             data,
@@ -35,5 +31,5 @@ func NewEVMOperation(
 			ContractType: contractType,
 			Tags:         tags,
 		},
-	}, nil
+	}
 }
