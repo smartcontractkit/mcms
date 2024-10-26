@@ -23,14 +23,14 @@ func TestNewConfigFromRaw(t *testing.T) {
 		},
 	}
 	configurator := EVMConfigurator{}
-	config, err := configurator.ToConfig(rawConfig)
+	configuration, err := configurator.ToConfig(rawConfig)
 
 	require.NoError(t, err)
-	assert.NotNil(t, config)
-	assert.Equal(t, uint8(1), config.Quorum)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x1")}, config.Signers)
-	assert.Equal(t, uint8(1), config.GroupSigners[0].Quorum)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x2")}, config.GroupSigners[0].Signers)
+	assert.NotNil(t, configuration)
+	assert.Equal(t, uint8(1), configuration.Quorum)
+	assert.Equal(t, []common.Address{common.HexToAddress("0x1")}, configuration.Signers)
+	assert.Equal(t, uint8(1), configuration.GroupSigners[0].Quorum)
+	assert.Equal(t, []common.Address{common.HexToAddress("0x2")}, configuration.GroupSigners[0].Signers)
 }
 
 func TestToRawConfig(t *testing.T) {
@@ -40,12 +40,12 @@ func TestToRawConfig(t *testing.T) {
 	groupSigners := []config.Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
-	config, err := config.NewConfig(1, signers, groupSigners)
-	assert.NotNil(t, config)
+	configuration, err := config.NewConfig(1, signers, groupSigners)
+	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
 	configurator := EVMConfigurator{}
-	rawConfig, err := configurator.SetConfigInputs(*config)
+	rawConfig, err := configurator.SetConfigInputs(*configuration)
 	require.NoError(t, err)
 
 	assert.Equal(t, [32]uint8{1, 1}, rawConfig.GroupQuorums)
@@ -63,7 +63,7 @@ func TestToRawConfig(t *testing.T) {
 func TestExtractSetConfigInputs_EmptyConfig(t *testing.T) {
 	t.Parallel()
 
-	config, err := config.NewConfig(0, []common.Address{}, []config.Config{})
+	configuration, err := config.NewConfig(0, []common.Address{}, []config.Config{})
 	assert.Nil(t, config)
 	require.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
@@ -86,8 +86,8 @@ func TestExtractSetConfigInputs(t *testing.T) {
 	groupSigners := []config.Config{
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
 	}
-	config, err := config.NewConfig(2, signers, groupSigners)
-	assert.NotNil(t, config)
+	configuration, err := config.NewConfig(2, signers, groupSigners)
+	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
 	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(config)
@@ -107,8 +107,8 @@ func TestExtractSetConfigInputs_OnlyRootSigners(t *testing.T) {
 	t.Parallel()
 
 	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	config, err := config.NewConfig(1, signers, []config.Config{})
-	assert.NotNil(t, config)
+	configuration, err := config.NewConfig(1, signers, []config.Config{})
+	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
 	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(config)
@@ -150,8 +150,8 @@ func TestExtractSetConfigInputs_OnlyGroups(t *testing.T) {
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x4")}},
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x5")}},
 	}
-	config, err := config.NewConfig(2, []common.Address{}, groupSigners)
-	assert.NotNil(t, config)
+	configuration, err := config.NewConfig(2, []common.Address{}, groupSigners)
+	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
 	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(config)
@@ -192,8 +192,8 @@ func TestExtractSetConfigInputs_NestedSignersAndGroups(t *testing.T) {
 		}},
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x5")}},
 	}
-	config, err := config.NewConfig(2, signers, groupSigners)
-	assert.NotNil(t, config)
+	configuration, err := config.NewConfig(2, signers, groupSigners)
+	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
 	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(config)
@@ -234,8 +234,8 @@ func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
 		}},
 		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x5")}},
 	}
-	config, err := config.NewConfig(2, signers, groupSigners)
-	assert.NotNil(t, config)
+	configuration, err := config.NewConfig(2, signers, groupSigners)
+	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
 	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(config)

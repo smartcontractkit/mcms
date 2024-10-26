@@ -22,12 +22,12 @@ func NewEVMInspector(client ContractDeployBackend) *EVMInspector {
 }
 
 func (e *EVMInspector) GetConfig(mcmAddress string) (*config.Config, error) {
-	mcms, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return nil, err
 	}
 
-	onchainConfig, err := mcms.GetConfig(&bind.CallOpts{})
+	onchainConfig, err := mcmsObj.GetConfig(&bind.CallOpts{})
 	if err != nil {
 		return nil, err
 	}
@@ -36,12 +36,12 @@ func (e *EVMInspector) GetConfig(mcmAddress string) (*config.Config, error) {
 }
 
 func (e *EVMInspector) GetOpCount(mcmAddress string) (uint64, error) {
-	mcms, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return 0, err
 	}
 
-	opCount, err := mcms.GetOpCount(&bind.CallOpts{})
+	opCount, err := mcmsObj.GetOpCount(&bind.CallOpts{})
 	if err != nil {
 		return 0, err
 	}
@@ -50,12 +50,12 @@ func (e *EVMInspector) GetOpCount(mcmAddress string) (uint64, error) {
 }
 
 func (e *EVMInspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
-	mcms, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return common.Hash{}, 0, err
 	}
 
-	root, err := mcms.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
 	if err != nil {
 		return common.Hash{}, 0, err
 	}

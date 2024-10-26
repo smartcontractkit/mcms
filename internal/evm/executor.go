@@ -42,7 +42,7 @@ func (e *EVMExecutor) ExecuteOperation(
 		return "", errors.New("EVMExecutor was created without an encoder")
 	}
 
-	mcms, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
 		return "", err
 	}
@@ -52,7 +52,7 @@ func (e *EVMExecutor) ExecuteOperation(
 		return "", err
 	}
 
-	tx, err := mcms.Execute(
+	tx, err := mcmsObj.Execute(
 		e.auth,
 		op,
 		core.TransformHashes(proof),
@@ -72,12 +72,12 @@ func (e *EVMExecutor) SetRoot(
 		return "", errors.New("EVMExecutor was created without an encoder")
 	}
 
-	mcms, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
 		return "", err
 	}
 
-	tx, err := mcms.SetRoot(
+	tx, err := mcmsObj.SetRoot(
 		e.auth,
 		root,
 		validUntil,
