@@ -60,8 +60,13 @@ func NewSignable(
 
 	chainNonces := make([]uint64, len(proposal.Transactions))
 	for i, op := range proposal.Transactions {
+		chainNonce, err := core.SafeCastUint64ToUint32(chainIdx[op.ChainSelector])
+		if err != nil {
+			return nil, err
+		}
+
 		encodedOp, err := encoders[op.ChainSelector].HashOperation(
-			uint32(chainIdx[op.ChainSelector]),
+			chainNonce,
 			proposal.ChainMetadata[op.ChainSelector],
 			op,
 		)
