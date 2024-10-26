@@ -89,26 +89,26 @@ func NewSignable(
 	}, nil
 }
 
-func (e *Signable) GetTree() *merkle.Tree {
-	return e.Tree
+func (s *Signable) GetTree() *merkle.Tree {
+	return s.Tree
 }
 
-func (e *Signable) ChainNonce(index int) uint64 {
-	return e.ChainNonces[index]
+func (s *Signable) ChainNonce(index int) uint64 {
+	return s.ChainNonces[index]
 }
 
-func (e *Signable) SigningHash() (common.Hash, error) {
+func (s *Signable) SigningHash() (common.Hash, error) {
 	// Convert validUntil to [32]byte
 	var validUntilBytes [32]byte
-	binary.BigEndian.PutUint32(validUntilBytes[28:], e.ValidUntil) // Place the uint32 in the last 4 bytes
+	binary.BigEndian.PutUint32(validUntilBytes[28:], s.ValidUntil) // Place the uint32 in the last 4 bytes
 
-	hashToSign := crypto.Keccak256Hash(e.Tree.Root.Bytes(), validUntilBytes[:])
+	hashToSign := crypto.Keccak256Hash(s.Tree.Root.Bytes(), validUntilBytes[:])
 
 	return toEthSignedMessageHash(hashToSign), nil
 }
 
 // func (e *Executor) SigningMessage() ([]byte, error) {
-// 	return ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, e.Tree.Root, e.Proposal.ValidUntil)
+// 	return ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, s.Tree.Root, s.Proposal.ValidUntil)
 // }
 
 func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
@@ -120,14 +120,14 @@ func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
 	return crypto.Keccak256Hash(data)
 }
 
-func (e *Signable) GetCurrentOpCounts() (map[mcms.ChainSelector]uint64, error) {
-	if e.Inspectors == nil {
+func (s *Signable) GetCurrentOpCounts() (map[mcms.ChainSelector]uint64, error) {
+	if s.Inspectors == nil {
 		return nil, errors.New("inspectors not provided")
 	}
 
 	opCounts := make(map[mcms.ChainSelector]uint64)
-	for chain, metadata := range e.ChainMetadata {
-		inspector, ok := e.Inspectors[chain]
+	for chain, metadata := range s.ChainMetadata {
+		inspector, ok := s.Inspectors[chain]
 		if !ok {
 			return nil, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 		}
@@ -143,14 +143,14 @@ func (e *Signable) GetCurrentOpCounts() (map[mcms.ChainSelector]uint64, error) {
 	return opCounts, nil
 }
 
-func (e *Signable) GetConfigs() (map[mcms.ChainSelector]*config.Config, error) {
-	if e.Inspectors == nil {
+func (s *Signable) GetConfigs() (map[mcms.ChainSelector]*config.Config, error) {
+	if s.Inspectors == nil {
 		return nil, errors.New("inspectors not provided")
 	}
 
 	configs := make(map[mcms.ChainSelector]*config.Config)
-	for chain, metadata := range e.ChainMetadata {
-		inspector, ok := e.Inspectors[chain]
+	for chain, metadata := range s.ChainMetadata {
+		inspector, ok := s.Inspectors[chain]
 		if !ok {
 			return nil, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 		}
@@ -166,23 +166,23 @@ func (e *Signable) GetConfigs() (map[mcms.ChainSelector]*config.Config, error) {
 	return configs, nil
 }
 
-func (e *Signable) CheckQuorum(chain mcms.ChainSelector) (bool, error) {
-	if e.Inspectors == nil {
+func (s *Signable) CheckQuorum(chain mcms.ChainSelector) (bool, error) {
+	if s.Inspectors == nil {
 		return false, errors.New("inspectors not provided")
 	}
 
-	inspector, ok := e.Inspectors[chain]
+	inspector, ok := s.Inspectors[chain]
 	if !ok {
 		return false, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 	}
 
-	hash, err := e.SigningHash()
+	hash, err := s.SigningHash()
 	if err != nil {
 		return false, err
 	}
 
-	recoveredSigners := make([]common.Address, len(e.Signatures))
-	for i, sig := range e.Signatures {
+	recoveredSigners := make([]common.Address, len(s.Signatures))
+	for i, sig := range s.Signatures {
 		recoveredAddr, rerr := sig.Recover(hash)
 		if rerr != nil {
 			return false, rerr
@@ -191,7 +191,7 @@ func (e *Signable) CheckQuorum(chain mcms.ChainSelector) (bool, error) {
 		recoveredSigners[i] = recoveredAddr
 	}
 
-	config, err := inspector.GetConfig(e.ChainMetadata[chain].MCMAddress)
+	config, err := inspector.GetConfig(s.ChainMetadata[chain].MCMAddress)
 	if err != nil {
 		return false, err
 	}
@@ -199,9 +199,9 @@ func (e *Signable) CheckQuorum(chain mcms.ChainSelector) (bool, error) {
 	return config.CanSetRoot(recoveredSigners)
 }
 
-func (e *Signable) ValidateSignatures() (bool, error) {
-	for chain := range e.ChainMetadata {
-		checkQuorum, err := e.CheckQuorum(chain)
+func (s *Signable) ValidateSignatures() (bool, error) {
+	for chain := range s.ChainMetadata {
+		checkQuorum, err := s.CheckQuorum(chain)
 		if err != nil {
 			return false, err
 		}
@@ -216,21 +216,21 @@ func (e *Signable) ValidateSignatures() (bool, error) {
 	return true, nil
 }
 
-func (e *Signable) ValidateConfigs() error {
-	configs, err := e.GetConfigs()
+func (s *Signable) ValidateConfigs() error {
+	configs, err := s.GetConfigs()
 	if err != nil {
 		return err
 	}
 
-	for i, chain := range e.ChainIdentifiers() {
+	for i, chain := range s.ChainIdentifiers() {
 		if i == 0 {
 			continue
 		}
 
-		if !configs[chain].Equals(configs[e.ChainIdentifiers()[i-1]]) {
+		if !configs[chain].Equals(configs[s.ChainIdentifiers()[i-1]]) {
 			return &core.InconsistentConfigsError{
 				ChainIdentifierA: uint64(chain),
-				ChainIdentifierB: uint64(e.ChainIdentifiers()[i-1]),
+				ChainIdentifierB: uint64(s.ChainIdentifiers()[i-1]),
 			}
 		}
 	}

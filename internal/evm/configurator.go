@@ -50,7 +50,7 @@ func (e *EVMConfigurator) ToConfig(onchainConfig bindings.ManyChainMultiSigConfi
 	return &groups[0], nil
 }
 
-func (c *EVMConfigurator) SetConfigInputs(config config.Config) (bindings.ManyChainMultiSigConfig, error) {
+func (e *EVMConfigurator) SetConfigInputs(config config.Config) (bindings.ManyChainMultiSigConfig, error) {
 	groupQuorums, groupParents, signerAddresses, signerGroups, errSetConfig := ExtractSetConfigInputs(&config)
 	if errSetConfig != nil {
 		return bindings.ManyChainMultiSigConfig{}, errSetConfig
