@@ -6,9 +6,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
@@ -33,14 +31,14 @@ type ContractDeployBackend interface {
 	bind.DeployBackend
 }
 
-func transformMCMAddresses(metadatas map[mcms.ChainSelector]mcms.ChainMetadata) map[mcms.ChainSelector]common.Address {
-	m := make(map[mcms.ChainSelector]common.Address)
-	for k, v := range metadatas {
-		m[k] = common.HexToAddress(v.MCMAddress)
-	}
+// func transformMCMAddresses(metadatas map[mcms.ChainSelector]mcms.ChainMetadata) map[mcms.ChainSelector]common.Address {
+// 	m := make(map[mcms.ChainSelector]common.Address)
+// 	for k, v := range metadatas {
+// 		m[k] = common.HexToAddress(v.MCMAddress)
+// 	}
 
-	return m
-}
+// 	return m
+// }
 
 func transformSignatures(signatures []mcms.Signature) []bindings.ManyChainMultiSigSignature {
 	sigs := make([]bindings.ManyChainMultiSigSignature, len(signatures))
@@ -51,19 +49,19 @@ func transformSignatures(signatures []mcms.Signature) []bindings.ManyChainMultiS
 	return sigs
 }
 
-func transformMCMSConfigs(configs map[mcms.ChainSelector]bindings.ManyChainMultiSigConfig) (map[mcms.ChainSelector]*config.Config, error) {
-	m := make(map[mcms.ChainSelector]*config.Config)
-	for k, v := range configs {
-		configurator := EVMConfigurator{}
-		cfg, err := configurator.ToConfig(v)
-		if err != nil {
-			return nil, err
-		}
-		m[k] = cfg
-	}
+// func transformMCMSConfigs(configs map[mcms.ChainSelector]bindings.ManyChainMultiSigConfig) (map[mcms.ChainSelector]*config.Config, error) {
+// 	m := make(map[mcms.ChainSelector]*config.Config)
+// 	for k, v := range configs {
+// 		configurator := EVMConfigurator{}
+// 		cfg, err := configurator.ToConfig(v)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		m[k] = cfg
+// 	}
 
-	return m, nil
-}
+// 	return m, nil
+// }
 
 // ABIEncode is the equivalent of abi.encode.
 // See a full set of examples https://github.com/ethereum/go-ethereum/blob/420b78659bef661a83c5c442121b13f13288c09f/accounts/abi/packing_test.go#L31
