@@ -64,7 +64,7 @@ func TestExtractSetConfigInputs_EmptyConfig(t *testing.T) {
 	t.Parallel()
 
 	configuration, err := config.NewConfig(0, []common.Address{}, []config.Config{})
-	assert.Nil(t, config)
+	assert.Nil(t, configuration)
 	require.Error(t, err)
 	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
 }
@@ -90,7 +90,7 @@ func TestExtractSetConfigInputs(t *testing.T) {
 	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(config)
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(configuration)
 	require.NoError(t, err)
 	assert.Equal(t, [32]uint8{2, 1}, groupQuorums)
 	assert.Equal(t, [32]uint8{0, 0}, groupParents)
@@ -111,7 +111,7 @@ func TestExtractSetConfigInputs_OnlyRootSigners(t *testing.T) {
 	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(config)
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(configuration)
 
 	require.NoError(t, err)
 	assert.Equal(t, [32]uint8{1, 0}, groupQuorums)
@@ -154,7 +154,7 @@ func TestExtractSetConfigInputs_OnlyGroups(t *testing.T) {
 	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(config)
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(configuration)
 
 	require.NoError(t, err)
 	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
@@ -196,7 +196,7 @@ func TestExtractSetConfigInputs_NestedSignersAndGroups(t *testing.T) {
 	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(config)
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(configuration)
 
 	require.NoError(t, err)
 	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
@@ -238,7 +238,7 @@ func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
 	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(config)
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(configuration)
 
 	require.NoError(t, err)
 	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
