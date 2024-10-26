@@ -66,7 +66,7 @@ func (e *EVMInspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
 func (e *EVMInspector) GetRootMetadata(mcmAddress string) (mcms.ChainMetadata, error) {
 	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
-		return mcms.ChainMetadata{}, nil
+		return mcms.ChainMetadata{}, err
 	}
 
 	metadata, err := mcmsObj.GetRootMetadata(&bind.CallOpts{})
