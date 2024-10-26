@@ -6,10 +6,11 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/spf13/cast"
+
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/evm/bindings"
-	"github.com/spf13/cast"
 )
 
 const maxUint8Value = 255

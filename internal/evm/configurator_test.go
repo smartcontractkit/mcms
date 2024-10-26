@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/mcms/internal/core/config"
-	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/internal/core/config"
+	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
 
 func TestNewConfigFromRaw(t *testing.T) {

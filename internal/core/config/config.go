@@ -4,6 +4,7 @@ import (
 	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/mcms/internal/core"
 )
 

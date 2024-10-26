@@ -6,9 +6,10 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 )
 
 var TestAddress = "0x1234567890abcdef"
