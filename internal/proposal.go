@@ -39,7 +39,7 @@ func NewProposal(
 	description string,
 	transactions []mcms.ChainOperation,
 ) (*MCMSProposal, error) {
-	proposal := MCMSProposal{
+	proposalObj := MCMSProposal{
 		Version:              version,
 		ValidUntil:           validUntil,
 		Signatures:           signatures,
@@ -49,12 +49,12 @@ func NewProposal(
 		Transactions:         transactions,
 	}
 
-	err := proposal.Validate()
+	err := proposalObj.Validate()
 	if err != nil {
 		return nil, err
 	}
 
-	return &proposal, nil
+	return &proposalObj, nil
 }
 
 func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
@@ -68,7 +68,7 @@ func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 }
 
 // proposalValidateBasic basic validation for an MCMS proposal
-func proposalValidateBasic(proposal MCMSProposal) error {
+func proposalValidateBasic(proposalObj MCMSProposal) error {
 	// Get the current Unix timestamp as an int64
 	currentTime := time.Now().Unix()
 
@@ -76,23 +76,23 @@ func proposalValidateBasic(proposal MCMSProposal) error {
 	if err != nil {
 		return err
 	}
-	if proposal.ValidUntil <= currentTimeCasted {
+	if proposalObj.ValidUntil <= currentTimeCasted {
 		// ValidUntil is a Unix timestamp, so it should be greater than the current time
 		return &core.InvalidValidUntilError{
-			ReceivedValidUntil: proposal.ValidUntil,
+			ReceivedValidUntil: proposalObj.ValidUntil,
 		}
 	}
-	if len(proposal.ChainMetadata) == 0 {
+	if len(proposalObj.ChainMetadata) == 0 {
 		return &core.NoChainMetadataError{}
 	}
 
-	if len(proposal.Transactions) == 0 {
+	if len(proposalObj.Transactions) == 0 {
 		return &core.NoTransactionsError{}
 	}
 
-	if proposal.Description == "" {
+	if proposalObj.Description == "" {
 		return &core.InvalidDescriptionError{
-			ReceivedDescription: proposal.Description,
+			ReceivedDescription: proposalObj.Description,
 		}
 	}
 

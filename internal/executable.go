@@ -3,6 +3,7 @@ package internal
 import (
 	"sort"
 
+	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 )
 
@@ -61,7 +62,12 @@ func (e *Executable) Execute(index int) (string, error) {
 	chainSelector := transaction.ChainSelector
 	metadata := e.ChainMetadata[chainSelector]
 
-	operationHash, err := e.Encoders[chainSelector].HashOperation(uint32(e.ChainNonce(index)), metadata, transaction) // TODO: nonce
+	chainNonce, err := core.SafeCastUint64ToUint32(e.ChainNonce(index))
+	if err != nil {
+		return "", err
+	}
+
+	operationHash, err := e.Encoders[chainSelector].HashOperation(chainNonce, metadata, transaction) // TODO: nonce
 	if err != nil {
 		return "", err
 	}
@@ -73,7 +79,7 @@ func (e *Executable) Execute(index int) (string, error) {
 
 	return e.Executors[chainSelector].ExecuteOperation(
 		metadata,
-		uint32(e.ChainNonce(index)),
+		chainNonce,
 		proof,
 		transaction,
 	)

@@ -86,3 +86,12 @@ func SafeCastUint64ToUint8(value uint64) (uint8, error) {
 
 	return cast.ToUint8E(value)
 }
+
+// SafeCastUint64ToUint32 safely converts an int to uint32 using cast and checks for overflow
+func SafeCastUint64ToUint32(value uint64) (uint32, error) {
+	if value > math.MaxUint32 {
+		return 0, fmt.Errorf("value %d exceeds uint32 range", value)
+	}
+
+	return cast.ToUint32E(value)
+}
