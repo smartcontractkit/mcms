@@ -22,7 +22,11 @@ func NewEVMOperation(
 		Value: value,
 	}
 
-	marshalledAdditionalFields, _ := json.Marshal(additionalFields)
+	marshalledAdditionalFields, err := json.Marshal(additionalFields)
+	if err != nil {
+		panic(err)
+	}
+
 	return mcms.Operation{
 		To:               to,
 		Data:             data,

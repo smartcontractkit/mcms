@@ -53,7 +53,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	sim := backends.NewSimulatedBackend(genesisAlloc, blockGasLimit)
 
 	// Deploy a ManyChainMultiSig contract with any of the signers
-	_, tx, mcms, err := bindings.DeployManyChainMultiSig(auths[0], sim)
+	_, tx, mcmsObj, err := bindings.DeployManyChainMultiSig(auths[0], sim)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -99,7 +99,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 		signerAddresses[i] = signer.Addr
 		signerGroups[i] = signer.Group
 	}
-	tx, err = mcms.SetConfig(auths[0], signerAddresses, signerGroups, evmConfig.GroupQuorums, evmConfig.GroupParents, false)
+	tx, err = mcmsObj.SetConfig(auths[0], signerAddresses, signerGroups, evmConfig.GroupQuorums, evmConfig.GroupParents, false)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -113,7 +113,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 		return nil, nil, nil, nil, err
 	}
 
-	return keys, auths, sim, mcms, nil
+	return keys, auths, sim, mcmsObj, nil
 }
 
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
