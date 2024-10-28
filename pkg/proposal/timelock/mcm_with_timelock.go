@@ -1,7 +1,9 @@
 package timelock
 
 import (
-	"math/big"
+	mcmsTypes "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+	"github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"time"
 
 	"encoding/json"
@@ -16,26 +18,18 @@ import (
 
 var ZERO_HASH = common.Hash{}
 
-type TimelockOperation string
-
-const (
-	Schedule TimelockOperation = "schedule"
-	Cancel   TimelockOperation = "cancel"
-	Bypass   TimelockOperation = "bypass"
-)
-
 type MCMSWithTimelockProposal struct {
 	mcms.MCMSProposal
 
-	Operation TimelockOperation `json:"operation"` // Always 'schedule', 'cancel', or 'bypass'
+	Operation types.TimelockOperationType `json:"operation"` // Always 'schedule', 'cancel', or 'bypass'
 
 	// i.e. 1d, 1w, 1m, 1y
 	MinDelay string `json:"minDelay"`
 
-	TimelockAddresses map[mcms.ChainIdentifier]common.Address `json:"timelockAddresses"`
+	TimelockAddresses map[mcmsTypes.ChainIdentifier]common.Address `json:"timelockAddresses"`
 
 	// Overridden: Operations to be executed after wrapping in a timelock
-	Transactions []BatchChainOperation `json:"transactions"`
+	Transactions []types.BatchChainOperation `json:"transactions"`
 }
 
 // timeLockProposalValidateBasic basic validation for an MCMS proposal
@@ -74,11 +68,11 @@ func NewMCMSWithTimelockProposal(
 	validUntil uint32,
 	signatures []mcms.Signature,
 	overridePreviousRoot bool,
-	chainMetadata map[mcms.ChainIdentifier]mcms.ChainMetadata,
-	timelockAddresses map[mcms.ChainIdentifier]common.Address,
+	chainMetadata map[mcmsTypes.ChainIdentifier]mcms.ChainMetadata,
+	timelockAddresses map[mcmsTypes.ChainIdentifier]common.Address,
 	description string,
-	transactions []BatchChainOperation,
-	operation TimelockOperation,
+	transactions []types.BatchChainOperation,
+	operation types.TimelockOperationType,
 	minDelay string,
 ) (*MCMSWithTimelockProposal, error) {
 	proposal := MCMSWithTimelockProposal{
@@ -118,7 +112,7 @@ func NewMCMSWithTimelockProposalFromFile(filePath string) (*MCMSWithTimelockProp
 func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
 	// First, marshal the Transactions field from MCMSWithTimelockProposal
 	transactionsBytes, err := json.Marshal(struct {
-		Transactions []BatchChainOperation `json:"transactions"`
+		Transactions []types.BatchChainOperation `json:"transactions"`
 	}{
 		Transactions: m.Transactions,
 	})
@@ -136,9 +130,9 @@ func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
 
 	// Finally, marshal the remaining fields specific to MCMSWithTimelockProposal
 	mcmsWithTimelockFieldsBytes, err := json.Marshal(struct {
-		Operation         TimelockOperation                       `json:"operation"`
-		MinDelay          string                                  `json:"minDelay"`
-		TimelockAddresses map[mcms.ChainIdentifier]common.Address `json:"timelockAddresses"`
+		Operation         types.TimelockOperationType                  `json:"operation"`
+		MinDelay          string                                       `json:"minDelay"`
+		TimelockAddresses map[mcmsTypes.ChainIdentifier]common.Address `json:"timelockAddresses"`
 	}{
 		Operation:         m.Operation,
 		MinDelay:          m.MinDelay,
@@ -164,7 +158,7 @@ func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
 func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 	// Unmarshal Transactions field from MCMSWithTimelockProposal
 	transactionsFields := struct {
-		Transactions []BatchChainOperation `json:"transactions"`
+		Transactions []types.BatchChainOperation `json:"transactions"`
 	}{}
 
 	if err := json.Unmarshal(data, &transactionsFields); err != nil {
@@ -194,9 +188,9 @@ func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 
 	// Unmarshal the remaining fields specific to MCMSWithTimelockProposal
 	mcmsWithTimelockFields := struct {
-		Operation         TimelockOperation                       `json:"operation"`
-		MinDelay          string                                  `json:"minDelay"`
-		TimelockAddresses map[mcms.ChainIdentifier]common.Address `json:"timelockAddresses"`
+		Operation         types.TimelockOperationType                  `json:"operation"`
+		MinDelay          string                                       `json:"minDelay"`
+		TimelockAddresses map[mcmsTypes.ChainIdentifier]common.Address `json:"timelockAddresses"`
 	}{}
 
 	if err := json.Unmarshal(data, &mcmsWithTimelockFields); err != nil {
@@ -239,7 +233,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	}
 
 	switch m.Operation {
-	case Schedule, Cancel, Bypass:
+	case types.Schedule, types.Cancel, types.Bypass:
 		// NOOP
 	default:
 		return &errors.InvalidTimelockOperationError{
@@ -249,7 +243,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 
 	// Validate the delay is a valid duration but is only required
 	// for Schedule operations
-	if m.Operation == Schedule {
+	if m.Operation == types.Schedule {
 		if _, err := time.ParseDuration(m.MinDelay); err != nil {
 			return err
 		}
@@ -268,84 +262,17 @@ func (m *MCMSWithTimelockProposal) ToExecutor(sim bool) (*mcms.Executor, error) 
 	return mcmOnly.ToExecutor(sim)
 }
 
-func convertBatchToChainOperation(
-	t BatchChainOperation,
-	timelockAddress common.Address,
-	minDelay string,
-	operation TimelockOperation,
-	predecessor common.Hash,
-) (mcms.ChainOperation, common.Hash, error) {
-
-	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
-	calls := make([]owner.RBACTimelockCall, 0)
-	tags := make([]string, 0)
-	for _, op := range t.Batch {
-		calls = append(calls, owner.RBACTimelockCall{
-			Target: op.To,
-			Data:   op.Data,
-			Value:  op.Value,
-		})
-		tags = append(tags, op.Tags...)
-	}
-
-	salt := ZERO_HASH
-	delay, _ := time.ParseDuration(minDelay)
-
-	abi, errAbi := owner.RBACTimelockMetaData.GetAbi()
-	if errAbi != nil {
-		return mcms.ChainOperation{}, common.Hash{}, errAbi
-	}
-
-	operationId, errHash := hashOperationBatch(calls, predecessor, salt)
-	if errHash != nil {
-		return mcms.ChainOperation{}, common.Hash{}, errHash
-	}
-
-	// Encode the data based on the operation
-	var data []byte
-	var err error
-	switch operation {
-	case Schedule:
-		data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
-	case Cancel:
-		data, err = abi.Pack("cancel", operationId)
-	case Bypass:
-		data, err = abi.Pack("bypasserExecuteBatch", calls)
-	default:
-		return mcms.ChainOperation{}, common.Hash{}, &errors.InvalidTimelockOperationError{
-			ReceivedTimelockOperation: string(operation),
-		}
-	}
-
-	if err != nil {
-		return mcms.ChainOperation{}, common.Hash{}, err
-	}
-
-	chainOperation := mcms.ChainOperation{
-		ChainIdentifier: t.ChainIdentifier,
-		Operation: mcms.Operation{
-			To:           timelockAddress,
-			Data:         data,
-			Value:        big.NewInt(0), // TODO: is this right?
-			ContractType: "RBACTimelock",
-			Tags:         tags,
-		},
-	}
-
-	return chainOperation, operationId, nil
-}
-
 func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, error) {
 	mcmOnly := m.MCMSProposal
 
 	// Start predecessor map with all chains pointing to the zero hash
-	predecessorMap := make(map[mcms.ChainIdentifier]common.Hash)
+	predecessorMap := make(map[mcmsTypes.ChainIdentifier]common.Hash)
 	for chain := range m.ChainMetadata {
 		predecessorMap[chain] = ZERO_HASH
 	}
 
 	// Convert chain metadata
-	mcmOnly.ChainMetadata = make(map[mcms.ChainIdentifier]mcms.ChainMetadata)
+	mcmOnly.ChainMetadata = make(map[mcmsTypes.ChainIdentifier]mcms.ChainMetadata)
 	for chain, metadata := range m.ChainMetadata {
 		mcmOnly.ChainMetadata[chain] = mcms.ChainMetadata{
 			StartingOpCount: metadata.StartingOpCount,
@@ -358,7 +285,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 		timelockAddress := m.TimelockAddresses[t.ChainIdentifier]
 		predecessor := predecessorMap[t.ChainIdentifier]
 
-		chainOp, operationId, err := convertBatchToChainOperation(t, timelockAddress, m.MinDelay, m.Operation, predecessor)
+		chainOp, operationId, err := ToChainOperation(t, timelockAddress, m.MinDelay, m.Operation, predecessor)
 		if err != nil {
 			return mcms.MCMSProposal{}, err
 		}
@@ -381,7 +308,7 @@ func (m *MCMSWithTimelockProposal) AddSignature(signature mcms.Signature) {
 // TODO: see if there's an easier way to do this using the gethwrappers
 func hashOperationBatch(calls []owner.RBACTimelockCall, predecessor, salt [32]byte) (common.Hash, error) {
 	const abi = `[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct Call[]","name":"calls","type":"tuple[]"},{"internalType":"bytes32","name":"predecessor","type":"bytes32"},{"internalType":"bytes32","name":"salt","type":"bytes32"}]`
-	encoded, err := mcms.ABIEncode(abi, calls, predecessor, salt)
+	encoded, err := evm.ABIEncode(abi, calls, predecessor, salt)
 	if err != nil {
 		return common.Hash{}, err
 	}

@@ -1,6 +1,8 @@
 package mcms
 
 import (
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"math/big"
 	"sort"
 
@@ -16,8 +18,8 @@ import (
 var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
 var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA"))
 
-func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifier]uint64 {
-	txCounts := make(map[ChainIdentifier]uint64)
+func calculateTransactionCounts(transactions []types.ChainOperation) map[types.ChainIdentifier]uint64 {
+	txCounts := make(map[types.ChainIdentifier]uint64)
 	for _, tx := range transactions {
 		txCounts[tx.ChainIdentifier]++
 	}
@@ -26,12 +28,12 @@ func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifi
 }
 
 func buildRootMetadatas(
-	chainMetadata map[ChainIdentifier]ChainMetadata,
-	txCounts map[ChainIdentifier]uint64,
+	chainMetadata map[types.ChainIdentifier]ChainMetadata,
+	txCounts map[types.ChainIdentifier]uint64,
 	overridePreviousRoot bool,
 	isSim bool,
-) (map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata, error) {
-	rootMetadatas := make(map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata)
+) (map[types.ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata, error) {
+	rootMetadatas := make(map[types.ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata)
 
 	for chainID, metadata := range chainMetadata {
 		chain, exists := chain_selectors.ChainBySelector(uint64(chainID))
@@ -72,13 +74,13 @@ func buildRootMetadatas(
 }
 
 func buildOperations(
-	transactions []ChainOperation,
-	rootMetadatas map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
-	txCounts map[ChainIdentifier]uint64,
-) (map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp, []gethwrappers.ManyChainMultiSigOp) {
-	ops := make(map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp)
+	transactions []types.ChainOperation,
+	rootMetadatas map[types.ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
+	txCounts map[types.ChainIdentifier]uint64,
+) (map[types.ChainIdentifier][]gethwrappers.ManyChainMultiSigOp, []gethwrappers.ManyChainMultiSigOp) {
+	ops := make(map[types.ChainIdentifier][]gethwrappers.ManyChainMultiSigOp)
 	chainAgnosticOps := make([]gethwrappers.ManyChainMultiSigOp, 0)
-	chainIdx := make(map[ChainIdentifier]uint32, len(rootMetadatas))
+	chainIdx := make(map[types.ChainIdentifier]uint32, len(rootMetadatas))
 
 	for _, tx := range transactions {
 		rootMetadata := rootMetadatas[tx.ChainIdentifier]
@@ -104,8 +106,8 @@ func buildOperations(
 	return ops, chainAgnosticOps
 }
 
-func sortedChainIdentifiers(chainMetadata map[ChainIdentifier]ChainMetadata) []ChainIdentifier {
-	chainIdentifiers := make([]ChainIdentifier, 0, len(chainMetadata))
+func sortedChainIdentifiers(chainMetadata map[types.ChainIdentifier]ChainMetadata) []types.ChainIdentifier {
+	chainIdentifiers := make([]types.ChainIdentifier, 0, len(chainMetadata))
 	for chainID := range chainMetadata {
 		chainIdentifiers = append(chainIdentifiers, chainID)
 	}
@@ -115,9 +117,9 @@ func sortedChainIdentifiers(chainMetadata map[ChainIdentifier]ChainMetadata) []C
 }
 
 func buildMerkleTree(
-	chainIdentifiers []ChainIdentifier,
-	rootMetadatas map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
-	ops map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp,
+	chainIdentifiers []types.ChainIdentifier,
+	rootMetadatas map[types.ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
+	ops map[types.ChainIdentifier][]gethwrappers.ManyChainMultiSigOp,
 ) (*merkle.MerkleTree, error) {
 	hashLeaves := make([]common.Hash, 0)
 
@@ -147,7 +149,7 @@ func buildMerkleTree(
 
 func metadataEncoder(rootMetadata gethwrappers.ManyChainMultiSigRootMetadata) (common.Hash, error) {
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
-	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA, rootMetadata)
+	encoded, err := evm.ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA, rootMetadata)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -157,7 +159,7 @@ func metadataEncoder(rootMetadata gethwrappers.ManyChainMultiSigRootMetadata) (c
 
 func txEncoder(op gethwrappers.ManyChainMultiSigOp) (common.Hash, error) {
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
-	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, op)
+	encoded, err := evm.ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, op)
 	if err != nil {
 		return common.Hash{}, err
 	}

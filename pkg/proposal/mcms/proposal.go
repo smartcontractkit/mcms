@@ -2,6 +2,7 @@ package mcms
 
 import (
 	"encoding/json"
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -24,7 +25,7 @@ type MCMSProposal struct {
 	OverridePreviousRoot bool        `json:"overridePreviousRoot"`
 
 	// Map of chain identifier to chain metadata
-	ChainMetadata map[ChainIdentifier]ChainMetadata `json:"chainMetadata"`
+	ChainMetadata map[types.ChainIdentifier]ChainMetadata `json:"chainMetadata"`
 
 	// This is intended to be displayed as-is to signers, to give them
 	// context for the change. File authors should templatize strings for
@@ -32,7 +33,7 @@ type MCMSProposal struct {
 	Description string `json:"description"`
 
 	// Operations to be executed
-	Transactions []ChainOperation `json:"transactions"`
+	Transactions []types.ChainOperation `json:"transactions"`
 }
 
 func NewProposal(
@@ -40,9 +41,9 @@ func NewProposal(
 	validUntil uint32,
 	signatures []Signature,
 	overridePreviousRoot bool,
-	chainMetadata map[ChainIdentifier]ChainMetadata,
+	chainMetadata map[types.ChainIdentifier]ChainMetadata,
 	description string,
-	transactions []ChainOperation,
+	transactions []types.ChainOperation,
 ) (*MCMSProposal, error) {
 	proposal := MCMSProposal{
 		Version:              version,

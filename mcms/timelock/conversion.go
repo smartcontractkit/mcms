@@ -2,16 +2,16 @@ package timelock
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/mcms/pkg/proposal/mcms"
-	"github.com/smartcontractkit/mcms/pkg/proposal/timelock"
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+	timelockTypes "github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
 )
 
 type TimelockConverter interface {
 	ConvertBatchToChainOperation(
-		t timelock.BatchChainOperation,
+		t timelockTypes.BatchChainOperation,
 		timelockAddress common.Address,
 		minDelay string,
-		operation timelock.TimelockOperation,
+		operation timelockTypes.TimelockOperationType,
 		predecessor common.Hash,
-	) (mcms.ChainOperation, common.Hash, error)
+	) (types.ChainOperation, common.Hash, error)
 }

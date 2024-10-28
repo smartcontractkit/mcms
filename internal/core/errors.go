@@ -1,4 +1,4 @@
-package mcms
+package core
 
 import (
 	"fmt"

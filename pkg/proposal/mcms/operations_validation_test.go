@@ -3,6 +3,7 @@ package mcms
 import (
 	"encoding/json"
 	"errors"
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"math/big"
 	"testing"
 
@@ -30,14 +31,14 @@ func TestValidateAdditionalFields(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		operation   ChainOperation
+		operation   types.ChainOperation
 		expectedErr error
 	}{
 		{
 			name: "valid EVM fields",
-			operation: ChainOperation{
-				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: Operation{
+			operation: types.ChainOperation{
+				ChainIdentifier: types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: types.Operation{
 					AdditionalFields: validEVMFieldsJSON,
 				},
 			},
@@ -46,9 +47,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "invalid EVM fields",
-			operation: ChainOperation{
-				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: Operation{
+			operation: types.ChainOperation{
+				ChainIdentifier: types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: types.Operation{
 					AdditionalFields: invalidEVMFieldsJSON,
 				},
 			},
@@ -56,9 +57,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "unknown chain family",
-			operation: ChainOperation{
+			operation: types.ChainOperation{
 				ChainIdentifier: 999,
-				Operation: Operation{
+				Operation: types.Operation{
 					AdditionalFields: nil,
 				},
 			},
@@ -66,9 +67,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "invalid JSON for EVM fields",
-			operation: ChainOperation{
-				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: Operation{
+			operation: types.ChainOperation{
+				ChainIdentifier: types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: types.Operation{
 					AdditionalFields: []byte("invalid JSON"),
 				},
 			},

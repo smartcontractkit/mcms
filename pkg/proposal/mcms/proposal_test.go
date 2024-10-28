@@ -3,6 +3,7 @@ package mcms
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"math/big"
 	"testing"
 
@@ -15,9 +16,9 @@ import (
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")
-var TestChain1 = ChainIdentifier(3379446385462418246)
-var TestChain2 = ChainIdentifier(16015286601757825753)
-var TestChain3 = ChainIdentifier(10344971235874465080)
+var TestChain1 = types.ChainIdentifier(3379446385462418246)
+var TestChain2 = types.ChainIdentifier(16015286601757825753)
+var TestChain3 = types.ChainIdentifier(10344971235874465080)
 
 func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 	t.Parallel()
@@ -32,17 +33,17 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[types.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
-		[]ChainOperation{
+		[]types.ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Operation: Operation{
+				Operation: types.Operation{
 					To:               TestAddress,
 					Value:            big.NewInt(0),
 					AdditionalFields: additionalFields,
@@ -66,17 +67,17 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[types.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
-		[]ChainOperation{
+		[]types.ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Operation: Operation{
+				Operation: types.Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
 					Data:         common.Hex2Bytes("0x"),
@@ -100,17 +101,17 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 		0,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[types.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
-		[]ChainOperation{
+		[]types.ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Operation: Operation{
+				Operation: types.Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
 					Data:         common.Hex2Bytes("0x"),
@@ -134,12 +135,12 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{},
+		map[types.ChainIdentifier]ChainMetadata{},
 		"Sample description",
-		[]ChainOperation{
+		[]types.ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Operation: Operation{
+				Operation: types.Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
 					Data:         common.Hex2Bytes("0x"),
@@ -163,17 +164,17 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[types.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"",
-		[]ChainOperation{
+		[]types.ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Operation: Operation{
+				Operation: types.Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
 					Data:         common.Hex2Bytes("0x"),
@@ -197,14 +198,14 @@ func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[types.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
-		[]ChainOperation{},
+		[]types.ChainOperation{},
 	)
 
 	require.Error(t, err)
@@ -220,17 +221,17 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[types.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
 			},
 		},
 		"Sample description",
-		[]ChainOperation{
+		[]types.ChainOperation{
 			{
 				ChainIdentifier: 3,
-				Operation: Operation{
+				Operation: types.Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
 					Data:         common.Hex2Bytes("0x"),
@@ -267,19 +268,19 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 				ValidUntil:           uint32(4128029039),
 				Signatures:           []Signature{},
 				OverridePreviousRoot: false,
-				ChainMetadata: map[ChainIdentifier]ChainMetadata{
-					ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
+				ChainMetadata: map[types.ChainIdentifier]ChainMetadata{
+					types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
 						StartingOpCount: 0,
 						MCMAddress:      common.HexToAddress("0x0000000000000000000000000000000000000000"),
 					},
 				},
 				Description: "Test Proposal",
-				Transactions: []ChainOperation{
+				Transactions: []types.ChainOperation{
 					{
-						Operation: Operation{
+						Operation: types.Operation{
 							AdditionalFields: additionalFields,
 						},
-						ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+						ChainIdentifier: types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 					},
 				},
 			},
@@ -292,14 +293,14 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 				ValidUntil:           uint32(4128029039),
 				Signatures:           []Signature{},
 				OverridePreviousRoot: false,
-				ChainMetadata: map[ChainIdentifier]ChainMetadata{
-					ChainIdentifier(1): {
+				ChainMetadata: map[types.ChainIdentifier]ChainMetadata{
+					types.ChainIdentifier(1): {
 						StartingOpCount: 0,
 						MCMAddress:      common.HexToAddress("0x0000000000000000000000000000000000000000"),
 					},
 				},
 				Description:  "Test Proposal",
-				Transactions: []ChainOperation{},
+				Transactions: []types.ChainOperation{},
 			},
 			expectError: true,
 		},

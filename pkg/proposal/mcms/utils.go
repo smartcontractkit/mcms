@@ -3,6 +3,7 @@ package mcms
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"math"
 	"os"
 	"strings"
@@ -24,8 +25,8 @@ type ContractDeployBackend interface {
 	bind.DeployBackend
 }
 
-func transformMCMAddresses(metadatas map[ChainIdentifier]ChainMetadata) map[ChainIdentifier]common.Address {
-	m := make(map[ChainIdentifier]common.Address)
+func transformMCMAddresses(metadatas map[types.ChainIdentifier]ChainMetadata) map[types.ChainIdentifier]common.Address {
+	m := make(map[types.ChainIdentifier]common.Address)
 	for k, v := range metadatas {
 		m[k] = v.MCMAddress
 	}
@@ -51,8 +52,8 @@ func transformHashes(hashes []common.Hash) [][32]byte {
 	return m
 }
 
-func transformMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig) (map[ChainIdentifier]*config.Config, error) {
-	m := make(map[ChainIdentifier]*config.Config)
+func transformMCMSConfigs(configs map[types.ChainIdentifier]gethwrappers.ManyChainMultiSigConfig) (map[types.ChainIdentifier]*config.Config, error) {
+	m := make(map[types.ChainIdentifier]*config.Config)
 	for k, v := range configs {
 		cfg, err := config.NewConfigFromRaw(v)
 		if err != nil {
@@ -62,23 +63,6 @@ func transformMCMSConfigs(configs map[ChainIdentifier]gethwrappers.ManyChainMult
 	}
 
 	return m, nil
-}
-
-// ABIEncode is the equivalent of abi.encode.
-// See a full set of examples https://github.com/ethereum/go-ethereum/blob/420b78659bef661a83c5c442121b13f13288c09f/accounts/abi/packing_test.go#L31
-func ABIEncode(abiStr string, values ...any) ([]byte, error) {
-	// Create a dummy method with arguments
-	inDef := fmt.Sprintf(`[{ "name" : "method", "type": "function", "inputs": %s}]`, abiStr)
-	inAbi, err := abi.JSON(strings.NewReader(inDef))
-	if err != nil {
-		return nil, err
-	}
-	res, err := inAbi.Pack("method", values...)
-	if err != nil {
-		return nil, err
-	}
-
-	return res[4:], nil
 }
 
 // ABIDecode is the equivalent of abi.decode.
