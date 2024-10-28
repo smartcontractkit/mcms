@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"testing"
 
-	types2 "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+	mcmsTypes "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
@@ -150,16 +150,16 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[types2.ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcmsTypes.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcms.Address(),
 			},
 		},
-		Transactions: []types2.ChainOperation{
+		Transactions: []mcmsTypes.ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Operation: types2.Operation{
+				Operation: mcmsTypes.Operation{
 					To:    timelock.Address(),
 					Value: big.NewInt(0),
 					Data:  grantRoleData,
@@ -169,7 +169,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	}
 
 	// Gen caller map for easy access
-	callers := map[types2.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcmsTypes.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -280,16 +280,16 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[types2.ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcmsTypes.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcms.Address(),
 			},
 		},
-		Transactions: []types2.ChainOperation{
+		Transactions: []mcmsTypes.ChainOperation{
 			{
 				ChainIdentifier: TestChain1,
-				Operation: types2.Operation{
+				Operation: mcmsTypes.Operation{
 					To:    timelock.Address(),
 					Value: big.NewInt(0),
 					Data:  grantRoleData,
@@ -299,7 +299,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Gen caller map for easy access
-	callers := map[types2.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcmsTypes.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -404,13 +404,13 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]types2.ChainOperation, 4)
+	operations := make([]mcmsTypes.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
 		require.NoError(t, perr)
-		operations[i] = types2.ChainOperation{
+		operations[i] = mcmsTypes.ChainOperation{
 			ChainIdentifier: TestChain1,
-			Operation: types2.Operation{
+			Operation: mcmsTypes.Operation{
 				To:    timelock.Address(),
 				Value: big.NewInt(0),
 				Data:  data,
@@ -424,7 +424,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[types2.ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcmsTypes.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcms.Address(),
@@ -434,7 +434,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Gen caller map for easy access
-	callers := map[types2.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcmsTypes.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -544,13 +544,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]types2.ChainOperation, 4)
+	operations := make([]mcmsTypes.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
 		require.NoError(t, perr)
-		operations[i] = types2.ChainOperation{
+		operations[i] = mcmsTypes.ChainOperation{
 			ChainIdentifier: TestChain1,
-			Operation: types2.Operation{
+			Operation: mcmsTypes.Operation{
 				To:    timelock.Address(),
 				Value: big.NewInt(0),
 				Data:  data,
@@ -564,7 +564,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[types2.ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcmsTypes.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcms.Address(),
@@ -574,7 +574,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Gen caller map for easy access
-	callers := map[types2.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcmsTypes.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -686,13 +686,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]types2.ChainOperation, 4)
+	operations := make([]mcmsTypes.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
 		require.NoError(t, perr)
-		operations[i] = types2.ChainOperation{
+		operations[i] = mcmsTypes.ChainOperation{
 			ChainIdentifier: TestChain1,
-			Operation: types2.Operation{
+			Operation: mcmsTypes.Operation{
 				To:    timelock.Address(),
 				Value: big.NewInt(0),
 				Data:  data,
@@ -706,7 +706,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[types2.ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcmsTypes.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcms.Address(),
@@ -716,7 +716,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	}
 
 	// Gen caller map for easy access
-	callers := map[types2.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcmsTypes.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
@@ -792,13 +792,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	timelockAbi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]types2.ChainOperation, 4)
+	operations := make([]mcmsTypes.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcms.Address())
 		require.NoError(t, perr)
-		operations[i] = types2.ChainOperation{
+		operations[i] = mcmsTypes.ChainOperation{
 			ChainIdentifier: TestChain1,
-			Operation: types2.Operation{
+			Operation: mcmsTypes.Operation{
 				To:    timelock.Address(),
 				Value: big.NewInt(0),
 				Data:  data,
@@ -812,7 +812,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 		ValidUntil:           2004259681,
 		Signatures:           []Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[types2.ChainIdentifier]ChainMetadata{
+		ChainMetadata: map[mcmsTypes.ChainIdentifier]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcms.Address(),
@@ -822,7 +822,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	}
 
 	// Gen caller map for easy access
-	callers := map[types2.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
+	callers := map[mcmsTypes.ChainIdentifier]ContractDeployBackend{TestChain1: sim}
 
 	// Construct executor
 	executor, err := proposal.ToExecutor(true)
