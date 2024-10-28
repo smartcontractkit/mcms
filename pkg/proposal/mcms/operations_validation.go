@@ -37,10 +37,7 @@ func ValidateAdditionalFields(operation json.RawMessage, identifier ChainIdentif
 		panic("not implemented")
 
 	default:
-		return &UnkownChainSelectorFamilyError{
-			ChainFamily:   chainFamily,
-			ChainSelector: uint64(identifier),
-		}
+		return NewUnknownChainSelectorFamilyError(uint64(identifier), chainFamily)
 	}
 
 	// Call Validate on the chain-specific struct
