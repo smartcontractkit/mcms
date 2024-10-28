@@ -1,10 +1,11 @@
 package mcms
 
 import (
-	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"math/big"
 	"sort"
+
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"

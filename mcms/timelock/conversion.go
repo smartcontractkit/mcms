@@ -2,6 +2,7 @@ package timelock
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	timelockTypes "github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
 )

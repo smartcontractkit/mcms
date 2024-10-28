@@ -3,10 +3,11 @@ package mcms
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"math"
 	"os"
 	"strings"
+
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 
 	"github.com/spf13/cast"
 

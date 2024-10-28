@@ -5,12 +5,13 @@ import (
 	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
-	types2 "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
-	types3 "github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
 	"math/big"
 	"os"
 	"testing"
 	"time"
+
+	types2 "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+	types3 "github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 

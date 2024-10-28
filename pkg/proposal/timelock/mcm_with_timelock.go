@@ -1,18 +1,16 @@
 package timelock
 
 import (
-	mcmsTypes "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
-	"github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"time"
 
 	"encoding/json"
 
+	mcmsTypes "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+	"github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
+
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/pkg/errors"
-	owner "github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms"
 )
 
@@ -302,19 +300,6 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 
 func (m *MCMSWithTimelockProposal) AddSignature(signature mcms.Signature) {
 	m.Signatures = append(m.Signatures, signature)
-}
-
-// hashOperationBatch replicates the hash calculation from Solidity
-// TODO: see if there's an easier way to do this using the gethwrappers
-func hashOperationBatch(calls []owner.RBACTimelockCall, predecessor, salt [32]byte) (common.Hash, error) {
-	const abi = `[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct Call[]","name":"calls","type":"tuple[]"},{"internalType":"bytes32","name":"predecessor","type":"bytes32"},{"internalType":"bytes32","name":"salt","type":"bytes32"}]`
-	encoded, err := evm.ABIEncode(abi, calls, predecessor, salt)
-	if err != nil {
-		return common.Hash{}, err
-	}
-
-	// Return the hash as a [32]byte array
-	return crypto.Keccak256Hash(encoded), nil
 }
 
 func mergeJSON(json1, json2 []byte) ([]byte, error) {

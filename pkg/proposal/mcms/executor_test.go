@@ -3,9 +3,10 @@ package mcms
 import (
 	"crypto/ecdsa"
 	"errors"
-	types2 "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"math/big"
 	"testing"
+
+	types2 "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"

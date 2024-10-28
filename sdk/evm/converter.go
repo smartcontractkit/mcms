@@ -1,14 +1,16 @@
 package evm
 
 import (
+	"math/big"
+	"time"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	owner "github.com/smartcontractkit/mcms/pkg/gethwrappers"
 	mcmsTypes "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	timelockTypes "github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
-	"math/big"
-	"time"
 )
 
 var ZERO_HASH = common.Hash{}
@@ -22,7 +24,6 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	operation timelockTypes.TimelockOperationType,
 	predecessor common.Hash,
 ) (mcmsTypes.ChainOperation, common.Hash, error) {
-
 	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
 	calls := make([]owner.RBACTimelockCall, 0)
 	tags := make([]string, 0)

@@ -3,9 +3,10 @@ package mcms
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"math/big"
 	"testing"
+
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"

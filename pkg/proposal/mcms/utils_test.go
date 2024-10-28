@@ -3,6 +3,7 @@ package mcms
 import (
 	"encoding/hex"
 	"encoding/json"
+
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"

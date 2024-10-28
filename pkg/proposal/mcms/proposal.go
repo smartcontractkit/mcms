@@ -2,8 +2,9 @@ package mcms
 
 import (
 	"encoding/json"
-	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"time"
+
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 
 	"github.com/ethereum/go-ethereum/common"
 

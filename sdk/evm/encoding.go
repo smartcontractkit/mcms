@@ -2,8 +2,9 @@ package evm
 
 import (
 	"fmt"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"strings"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 // ABIEncode is the equivalent of abi.encode.

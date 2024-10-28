@@ -1,9 +1,10 @@
 package mcms
 
 import (
-	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"math/big"
 	"testing"
+
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"

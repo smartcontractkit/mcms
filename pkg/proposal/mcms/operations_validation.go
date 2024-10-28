@@ -3,6 +3,7 @@ package mcms
 import (
 	"encoding/json"
 	"fmt"
+
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 

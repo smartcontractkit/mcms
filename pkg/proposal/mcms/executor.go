@@ -2,10 +2,11 @@ package mcms
 
 import (
 	"encoding/binary"
-	types2 "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"math/big"
 	"sort"
+
+	types2 "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
