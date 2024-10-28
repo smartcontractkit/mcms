@@ -268,6 +268,73 @@ func (m *MCMSWithTimelockProposal) ToExecutor(sim bool) (*mcms.Executor, error) 
 	return mcmOnly.ToExecutor(sim)
 }
 
+func convertBatchToChainOperation(
+	t BatchChainOperation,
+	timelockAddress common.Address,
+	minDelay string,
+	operation TimelockOperation,
+	predecessor common.Hash,
+) (mcms.ChainOperation, common.Hash, error) {
+
+	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
+	calls := make([]owner.RBACTimelockCall, 0)
+	tags := make([]string, 0)
+	for _, op := range t.Batch {
+		calls = append(calls, owner.RBACTimelockCall{
+			Target: op.To,
+			Data:   op.Data,
+			Value:  op.Value,
+		})
+		tags = append(tags, op.Tags...)
+	}
+
+	salt := ZERO_HASH
+	delay, _ := time.ParseDuration(minDelay)
+
+	abi, errAbi := owner.RBACTimelockMetaData.GetAbi()
+	if errAbi != nil {
+		return mcms.ChainOperation{}, common.Hash{}, errAbi
+	}
+
+	operationId, errHash := hashOperationBatch(calls, predecessor, salt)
+	if errHash != nil {
+		return mcms.ChainOperation{}, common.Hash{}, errHash
+	}
+
+	// Encode the data based on the operation
+	var data []byte
+	var err error
+	switch operation {
+	case Schedule:
+		data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
+	case Cancel:
+		data, err = abi.Pack("cancel", operationId)
+	case Bypass:
+		data, err = abi.Pack("bypasserExecuteBatch", calls)
+	default:
+		return mcms.ChainOperation{}, common.Hash{}, &errors.InvalidTimelockOperationError{
+			ReceivedTimelockOperation: string(operation),
+		}
+	}
+
+	if err != nil {
+		return mcms.ChainOperation{}, common.Hash{}, err
+	}
+
+	chainOperation := mcms.ChainOperation{
+		ChainIdentifier: t.ChainIdentifier,
+		Operation: mcms.Operation{
+			To:           timelockAddress,
+			Data:         data,
+			Value:        big.NewInt(0), // TODO: is this right?
+			ContractType: "RBACTimelock",
+			Tags:         tags,
+		},
+	}
+
+	return chainOperation, operationId, nil
+}
+
 func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, error) {
 	mcmOnly := m.MCMSProposal
 
@@ -286,68 +353,20 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 		}
 	}
 
-	// Convert transactions into timelock wrapped transactions
+	// Convert transactions into timelock wrapped transactions using the helper function
 	for _, t := range m.Transactions {
-		calls := make([]owner.RBACTimelockCall, 0)
-		tags := make([]string, 0)
-		for _, op := range t.Batch {
-			calls = append(calls, owner.RBACTimelockCall{
-				Target: op.To,
-				Data:   op.Data,
-				Value:  op.Value,
-			})
-			tags = append(tags, op.Tags...)
-		}
+		timelockAddress := m.TimelockAddresses[t.ChainIdentifier]
 		predecessor := predecessorMap[t.ChainIdentifier]
-		salt := ZERO_HASH
-		delay, _ := time.ParseDuration(m.MinDelay)
 
-		abi, errAbi := owner.RBACTimelockMetaData.GetAbi()
-		if errAbi != nil {
-			return mcms.MCMSProposal{}, errAbi
+		chainOp, operationId, err := convertBatchToChainOperation(t, timelockAddress, m.MinDelay, m.Operation, predecessor)
+		if err != nil {
+			return mcms.MCMSProposal{}, err
 		}
 
-		operationId, errHash := hashOperationBatch(calls, predecessor, salt)
-		if errHash != nil {
-			return mcms.MCMSProposal{}, errHash
-		}
+		// Append the converted operation to the MCMS only proposal
+		mcmOnly.Transactions = append(mcmOnly.Transactions, chainOp)
 
-		// Encode the data based on the operation
-		var data []byte
-		var err error
-		switch m.Operation {
-		case Schedule:
-			data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
-			if err != nil {
-				return mcms.MCMSProposal{}, err
-			}
-		case Cancel:
-			data, err = abi.Pack("cancel", operationId)
-			if err != nil {
-				return mcms.MCMSProposal{}, err
-			}
-		case Bypass:
-			data, err = abi.Pack("bypasserExecuteBatch", calls)
-			if err != nil {
-				return mcms.MCMSProposal{}, err
-			}
-		default:
-			return mcms.MCMSProposal{}, &errors.InvalidTimelockOperationError{
-				ReceivedTimelockOperation: string(m.Operation),
-			}
-		}
-
-		mcmOnly.Transactions = append(mcmOnly.Transactions, mcms.ChainOperation{
-			ChainIdentifier: t.ChainIdentifier,
-			Operation: mcms.Operation{
-				To:           m.TimelockAddresses[t.ChainIdentifier],
-				Data:         data,
-				Value:        big.NewInt(0), // TODO: is this right?
-				ContractType: "RBACTimelock",
-				Tags:         tags,
-			},
-		})
-
+		// Update predecessor for the chain
 		predecessorMap[t.ChainIdentifier] = operationId
 	}
 
