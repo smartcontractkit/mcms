@@ -5,6 +5,9 @@ import (
 	"math/big"
 	"sort"
 
+	mcmsTypes "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+	"github.com/smartcontractkit/mcms/sdk/evm"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -20,8 +23,8 @@ import (
 type Executor struct {
 	Proposal         *MCMSProposal
 	Tree             *merkle.MerkleTree
-	RootMetadatas    map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata
-	Operations       map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp
+	RootMetadatas    map[mcmsTypes.ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata
+	Operations       map[mcmsTypes.ChainIdentifier][]gethwrappers.ManyChainMultiSigOp
 	ChainAgnosticOps []gethwrappers.ManyChainMultiSigOp
 }
 
@@ -60,7 +63,7 @@ func (e *Executor) SigningHash() (common.Hash, error) {
 }
 
 func (e *Executor) SigningMessage() ([]byte, error) {
-	return ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, e.Tree.Root, e.Proposal.ValidUntil)
+	return evm.ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, e.Tree.Root, e.Proposal.ValidUntil)
 }
 
 func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
@@ -72,7 +75,7 @@ func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
 	return crypto.Keccak256Hash(data)
 }
 
-func (e *Executor) ValidateMCMSConfigs(clients map[ChainIdentifier]ContractDeployBackend) error {
+func (e *Executor) ValidateMCMSConfigs(clients map[mcmsTypes.ChainIdentifier]ContractDeployBackend) error {
 	configs, err := e.GetConfigs(clients)
 	if err != nil {
 		return err
@@ -101,8 +104,8 @@ func (e *Executor) ValidateMCMSConfigs(clients map[ChainIdentifier]ContractDeplo
 	return nil
 }
 
-func (e *Executor) GetCurrentOpCounts(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]big.Int, error) {
-	opCounts := make(map[ChainIdentifier]big.Int)
+func (e *Executor) GetCurrentOpCounts(clients map[mcmsTypes.ChainIdentifier]ContractDeployBackend) (map[mcmsTypes.ChainIdentifier]big.Int, error) {
+	opCounts := make(map[mcmsTypes.ChainIdentifier]big.Int)
 
 	callers, err := e.getMCMSCallers(clients)
 	if err != nil {
@@ -121,8 +124,8 @@ func (e *Executor) GetCurrentOpCounts(clients map[ChainIdentifier]ContractDeploy
 	return opCounts, nil
 }
 
-func (e *Executor) GetConfigs(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig, error) {
-	configs := make(map[ChainIdentifier]gethwrappers.ManyChainMultiSigConfig)
+func (e *Executor) GetConfigs(clients map[mcmsTypes.ChainIdentifier]ContractDeployBackend) (map[mcmsTypes.ChainIdentifier]gethwrappers.ManyChainMultiSigConfig, error) {
+	configs := make(map[mcmsTypes.ChainIdentifier]gethwrappers.ManyChainMultiSigConfig)
 
 	callers, err := e.getMCMSCallers(clients)
 	if err != nil {
@@ -141,9 +144,9 @@ func (e *Executor) GetConfigs(clients map[ChainIdentifier]ContractDeployBackend)
 	return configs, nil
 }
 
-func (e *Executor) getMCMSCallers(clients map[ChainIdentifier]ContractDeployBackend) (map[ChainIdentifier]*gethwrappers.ManyChainMultiSig, error) {
+func (e *Executor) getMCMSCallers(clients map[mcmsTypes.ChainIdentifier]ContractDeployBackend) (map[mcmsTypes.ChainIdentifier]*gethwrappers.ManyChainMultiSig, error) {
 	mcms := transformMCMAddresses(e.Proposal.ChainMetadata)
-	mcmsWrappers := make(map[ChainIdentifier]*gethwrappers.ManyChainMultiSig)
+	mcmsWrappers := make(map[mcmsTypes.ChainIdentifier]*gethwrappers.ManyChainMultiSig)
 	for chain, mcmAddress := range mcms {
 		client, ok := clients[chain]
 		if !ok {
@@ -163,7 +166,7 @@ func (e *Executor) getMCMSCallers(clients map[ChainIdentifier]ContractDeployBack
 	return mcmsWrappers, nil
 }
 
-func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifier) (bool, error) {
+func (e *Executor) CheckQuorum(client bind.ContractBackend, chain mcmsTypes.ChainIdentifier) (bool, error) {
 	hash, err := e.SigningHash()
 	if err != nil {
 		return false, err
@@ -222,7 +225,7 @@ func (e *Executor) CheckQuorum(client bind.ContractBackend, chain ChainIdentifie
 	return true, nil
 }
 
-func (e *Executor) ValidateSignatures(clients map[ChainIdentifier]ContractDeployBackend) (bool, error) {
+func (e *Executor) ValidateSignatures(clients map[mcmsTypes.ChainIdentifier]ContractDeployBackend) (bool, error) {
 	hash, err := e.SigningHash()
 	if err != nil {
 		return false, err
@@ -305,7 +308,7 @@ func isGroupAtConsensus(group c.Config, recoveredSigners []common.Address) bool 
 	return (signerApprovalsInGroup + groupApprovals) >= int(group.Quorum)
 }
 
-func (e *Executor) SetRootOnChain(client bind.ContractBackend, auth *bind.TransactOpts, chain ChainIdentifier) (*types.Transaction, error) {
+func (e *Executor) SetRootOnChain(client bind.ContractBackend, auth *bind.TransactOpts, chain mcmsTypes.ChainIdentifier) (*types.Transaction, error) {
 	metadata := e.RootMetadatas[chain]
 	mcms, err := gethwrappers.NewManyChainMultiSig(metadata.MultiSig, client)
 	if err != nil {

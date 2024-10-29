@@ -4,6 +4,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"math"
@@ -63,18 +65,18 @@ func TestProposalFromFile(t *testing.T) {
 		Version:    "1",
 		ValidUntil: 4128029039,
 		Signatures: []Signature{},
-		Transactions: []ChainOperation{
+		Transactions: []types.ChainOperation{
 			{
-				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: Operation{
+				ChainIdentifier: types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: types.Operation{
 					AdditionalFields: additionalFields,
 				},
 			},
 		},
 		OverridePreviousRoot: false,
 		Description:          "Test Proposal",
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
-			ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
+		ChainMetadata: map[types.ChainIdentifier]ChainMetadata{
+			types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
 				StartingOpCount: 0,
 				MCMAddress:      common.HexToAddress("0x5b38da6a701c568545dcfcb03fcb875f56beddc4"),
 			},
@@ -107,18 +109,18 @@ func TestWriteProposalToFile(t *testing.T) {
 		Version:    "1",
 		ValidUntil: 4128029039,
 		Signatures: []Signature{},
-		Transactions: []ChainOperation{
+		Transactions: []types.ChainOperation{
 			{
-				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: Operation{
+				ChainIdentifier: types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: types.Operation{
 					AdditionalFields: additionalFields,
 				},
 			},
 		},
 		OverridePreviousRoot: false,
 		Description:          "Test Proposal",
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
-			ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
+		ChainMetadata: map[types.ChainIdentifier]ChainMetadata{
+			types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
 				StartingOpCount: 0,
 				MCMAddress:      common.HexToAddress("0x5b38da6a701c568545dcfcb03fcb875f56beddc4"),
 			},
