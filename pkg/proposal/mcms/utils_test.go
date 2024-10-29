@@ -89,7 +89,7 @@ func TestProposalFromFile(t *testing.T) {
 	err = os.WriteFile(tempFile.Name(), proposalBytes, 0600)
 	require.NoError(t, err)
 
-	fileProposal, err := NewProposalFromFile(tempFile.Name())
+	fileProposal, err := NewProposalFromReader(tempFile)
 	require.NoError(t, err)
 	assert.EqualValues(t, mcmsProposal, *fileProposal)
 }

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"io"
-	"os"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -108,17 +107,6 @@ func NewProposalFromReader(reader io.Reader) (*MCMSProposal, error) {
 	}
 
 	return &out, nil
-}
-
-// NewProposalFromFile reads the proposal from a file and uses NewProposalFromReader internally
-func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close()
-
-	return NewProposalFromReader(file)
 }
 
 // proposalValidateBasic basic validation for an MCMS proposal
