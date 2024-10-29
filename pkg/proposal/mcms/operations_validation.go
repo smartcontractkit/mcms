@@ -15,7 +15,7 @@ import (
 // Validator interface used to validate the fields of a chain operation across different chains.
 type Validator interface {
 	Validate() error
-}
+}W
 
 func ValidateAdditionalFields(operation json.RawMessage, identifier types.ChainIdentifier) error {
 	chainFamily, err := chain_selectors.GetSelectorFamily(uint64(identifier))
