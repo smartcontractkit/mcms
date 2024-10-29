@@ -1,6 +1,7 @@
 package timelock
 
 import (
+	"bytes"
 	"crypto/ecdsa"
 	"encoding/json"
 	"errors"
@@ -8,6 +9,8 @@ import (
 	"os"
 	"testing"
 	"time"
+
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
@@ -32,6 +35,12 @@ var TestChain3 = mcms.ChainIdentifier(10344971235874465080)
 func TestValidate_ValidProposal(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -52,11 +61,12 @@ func TestValidate_ValidProposal(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:           TestAddress,
-						Value:        big.NewInt(0),
-						Data:         common.Hex2Bytes("0x"),
-						ContractType: "Sample contract",
-						Tags:         []string{"tag1", "tag2"},
+						To:               TestAddress,
+						AdditionalFields: additionalFields,
+						Value:            big.NewInt(0),
+						Data:             common.Hex2Bytes("0x"),
+						ContractType:     "Sample contract",
+						Tags:             []string{"tag1", "tag2"},
 					},
 				},
 			},
@@ -72,6 +82,12 @@ func TestValidate_ValidProposal(t *testing.T) {
 func TestValidate_InvalidOperation(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -92,11 +108,12 @@ func TestValidate_InvalidOperation(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:           TestAddress,
-						Value:        big.NewInt(0),
-						Data:         common.Hex2Bytes("0x"),
-						ContractType: "Sample contract",
-						Tags:         []string{"tag1", "tag2"},
+						To:               TestAddress,
+						Value:            big.NewInt(0),
+						AdditionalFields: additionalFields,
+						Data:             common.Hex2Bytes("0x"),
+						ContractType:     "Sample contract",
+						Tags:             []string{"tag1", "tag2"},
 					},
 				},
 			},
@@ -113,6 +130,12 @@ func TestValidate_InvalidOperation(t *testing.T) {
 func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -133,11 +156,12 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:           TestAddress,
-						Value:        big.NewInt(0),
-						Data:         common.Hex2Bytes("0x"),
-						ContractType: "Sample contract",
-						Tags:         []string{"tag1", "tag2"},
+						To:               TestAddress,
+						Value:            big.NewInt(0),
+						AdditionalFields: additionalFields,
+						Data:             common.Hex2Bytes("0x"),
+						ContractType:     "Sample contract",
+						Tags:             []string{"tag1", "tag2"},
 					},
 				},
 			},
@@ -154,6 +178,12 @@ func TestValidate_InvalidMinDelaySchedule(t *testing.T) {
 func TestValidate_InvalidUntilTimeError(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		1697398311, // Old date (2023-10-15)
@@ -174,11 +204,12 @@ func TestValidate_InvalidUntilTimeError(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:           TestAddress,
-						Value:        big.NewInt(0),
-						Data:         common.Hex2Bytes("0x"),
-						ContractType: "Sample contract",
-						Tags:         []string{"tag1", "tag2"},
+						To:               TestAddress,
+						Value:            big.NewInt(0),
+						AdditionalFields: additionalFields,
+						Data:             common.Hex2Bytes("0x"),
+						ContractType:     "Sample contract",
+						Tags:             []string{"tag1", "tag2"},
 					},
 				},
 			},
@@ -195,6 +226,12 @@ func TestValidate_InvalidUntilTimeError(t *testing.T) {
 func TestValidate_InvalidNoChainMetadata(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -210,11 +247,12 @@ func TestValidate_InvalidNoChainMetadata(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:           TestAddress,
-						Value:        big.NewInt(0),
-						Data:         common.Hex2Bytes("0x"),
-						ContractType: "Sample contract",
-						Tags:         []string{"tag1", "tag2"},
+						To:               TestAddress,
+						Value:            big.NewInt(0),
+						AdditionalFields: additionalFields,
+						Data:             common.Hex2Bytes("0x"),
+						ContractType:     "Sample contract",
+						Tags:             []string{"tag1", "tag2"},
 					},
 				},
 			},
@@ -259,6 +297,12 @@ func TestValidate_InvalidNoTransactions(t *testing.T) {
 func TestValidate_InvalidNoDescription(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -279,11 +323,12 @@ func TestValidate_InvalidNoDescription(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:           TestAddress,
-						Value:        big.NewInt(0),
-						Data:         common.Hex2Bytes("0x"),
-						ContractType: "Sample contract",
-						Tags:         []string{"tag1", "tag2"},
+						To:               TestAddress,
+						Value:            big.NewInt(0),
+						AdditionalFields: additionalFields,
+						Data:             common.Hex2Bytes("0x"),
+						ContractType:     "Sample contract",
+						Tags:             []string{"tag1", "tag2"},
 					},
 				},
 			},
@@ -300,6 +345,12 @@ func TestValidate_InvalidNoDescription(t *testing.T) {
 func TestValidate_InvalidVersion(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	proposal, err := NewMCMSWithTimelockProposal(
 		"",
 		2004259681,
@@ -320,11 +371,12 @@ func TestValidate_InvalidVersion(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:           TestAddress,
-						Value:        big.NewInt(0),
-						Data:         common.Hex2Bytes("0x"),
-						ContractType: "Sample contract",
-						Tags:         []string{"tag1", "tag2"},
+						To:               TestAddress,
+						Value:            big.NewInt(0),
+						AdditionalFields: additionalFields,
+						Data:             common.Hex2Bytes("0x"),
+						ContractType:     "Sample contract",
+						Tags:             []string{"tag1", "tag2"},
 					},
 				},
 			},
@@ -341,6 +393,12 @@ func TestValidate_InvalidVersion(t *testing.T) {
 func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	proposal, err := NewMCMSWithTimelockProposal(
 		"1.0",
 		2004259681,
@@ -361,11 +419,12 @@ func TestValidate_InvalidMinDelayBypassShouldBeValid(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:           TestAddress,
-						Value:        big.NewInt(0),
-						Data:         common.Hex2Bytes("0x"),
-						ContractType: "Sample contract",
-						Tags:         []string{"tag1", "tag2"},
+						To:               TestAddress,
+						Value:            big.NewInt(0),
+						AdditionalFields: additionalFields,
+						Data:             common.Hex2Bytes("0x"),
+						ContractType:     "Sample contract",
+						Tags:             []string{"tag1", "tag2"},
 					},
 				},
 			},
@@ -574,6 +633,12 @@ func setupSimulatedBackendWithMCMSAndTimelock(numSigners uint64) ([]*ecdsa.Priva
 func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -616,9 +681,10 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:    timelock.Address(),
-						Value: big.NewInt(0),
-						Data:  grantRoleData,
+						To:               timelock.Address(),
+						AdditionalFields: additionalFields,
+						Value:            big.NewInt(0),
+						Data:             grantRoleData,
 					},
 				},
 			},
@@ -747,6 +813,12 @@ func TestE2E_ValidScheduleAndExecuteProposalOneTx(t *testing.T) {
 func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -789,9 +861,10 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:    timelock.Address(),
-						Value: big.NewInt(0),
-						Data:  grantRoleData,
+						To:               timelock.Address(),
+						AdditionalFields: additionalFields,
+						Value:            big.NewInt(0),
+						Data:             grantRoleData,
 					},
 				},
 			},
@@ -948,6 +1021,12 @@ func TestE2E_ValidScheduleAndCancelProposalOneTx(t *testing.T) {
 func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -990,9 +1069,10 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 				ChainIdentifier: TestChain1,
 				Batch: []mcms.Operation{
 					{
-						To:    timelock.Address(),
-						Value: big.NewInt(0),
-						Data:  grantRoleData,
+						To:               timelock.Address(),
+						AdditionalFields: additionalFields,
+						Value:            big.NewInt(0),
+						Data:             grantRoleData,
 					},
 				},
 			},
@@ -1062,6 +1142,12 @@ func TestE2E_ValidBypassProposalOneTx(t *testing.T) {
 func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -1085,9 +1171,10 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 		data, perr := timelockAbi.Pack("grantRole", role, auths[0].From)
 		require.NoError(t, perr)
 		operations[i] = mcms.Operation{
-			To:    timelock.Address(),
-			Value: big.NewInt(0),
-			Data:  data,
+			To:               timelock.Address(),
+			AdditionalFields: additionalFields,
+			Value:            big.NewInt(0),
+			Data:             data,
 		}
 	}
 
@@ -1264,6 +1351,12 @@ func TestE2E_ValidScheduleAndExecuteProposalOneBatchTx(t *testing.T) {
 func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -1287,9 +1380,10 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 		data, perr := timelockAbi.Pack("grantRole", role, auths[0].From)
 		require.NoError(t, perr)
 		operations[i] = mcms.Operation{
-			To:    timelock.Address(),
-			Value: big.NewInt(0),
-			Data:  data,
+			To:               timelock.Address(),
+			AdditionalFields: additionalFields,
+			Value:            big.NewInt(0),
+			Data:             data,
 		}
 	}
 
@@ -1478,6 +1572,12 @@ func TestE2E_ValidScheduleAndCancelProposalOneBatchTx(t *testing.T) {
 func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	keys, auths, sim, mcmsObj, timelock, err := setupSimulatedBackendWithMCMSAndTimelock(1)
 	require.NoError(t, err)
 	assert.NotNil(t, keys[0])
@@ -1501,9 +1601,10 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 		data, perr := timelockAbi.Pack("grantRole", role, auths[0].From)
 		require.NoError(t, perr)
 		operations[i] = mcms.Operation{
-			To:    timelock.Address(),
-			Value: big.NewInt(0),
-			Data:  data,
+			To:               timelock.Address(),
+			AdditionalFields: additionalFields,
+			Value:            big.NewInt(0),
+			Data:             data,
 		}
 	}
 
@@ -1611,19 +1712,39 @@ func TestE2E_ValidBypassProposalOneBatchTx(t *testing.T) {
 func TestTimelockProposalFromFile(t *testing.T) {
 	t.Parallel()
 
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
 	mcmsProposal := MCMSWithTimelockProposal{
 		MCMSProposal: mcms.MCMSProposal{
-			Version:              "1",
-			ValidUntil:           100,
+			Version:              "MCMSWithTimelock",
+			ValidUntil:           4128029039,
 			Signatures:           []mcms.Signature{},
 			OverridePreviousRoot: false,
 			Description:          "Test Proposal",
-			ChainMetadata:        make(map[mcms.ChainIdentifier]mcms.ChainMetadata),
+			ChainMetadata: map[mcms.ChainIdentifier]mcms.ChainMetadata{
+				mcms.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
+					StartingOpCount: 0,
+					MCMAddress:      common.Address{},
+				},
+			},
 		},
 		TimelockAddresses: make(map[mcms.ChainIdentifier]common.Address),
-		Transactions:      make([]BatchChainOperation, 0),
-		Operation:         Schedule,
-		MinDelay:          "1h",
+		Transactions: []BatchChainOperation{
+			{
+				ChainIdentifier: mcms.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Batch: []mcms.Operation{
+					{
+						AdditionalFields: additionalFields,
+					},
+				},
+			},
+		},
+		Operation: Schedule,
+		MinDelay:  "1h",
 	}
 
 	tempFile, err := os.CreateTemp("", "timelock.json")
@@ -1636,5 +1757,206 @@ func TestTimelockProposalFromFile(t *testing.T) {
 
 	fileProposal, err := NewMCMSWithTimelockProposalFromFile(tempFile.Name())
 	require.NoError(t, err)
-	assert.Equal(t, mcmsProposal, *fileProposal)
+	assert.EqualValues(t, mcmsProposal, *fileProposal)
+}
+
+const validJsonProposal = `{
+  "chainMetadata": {
+    "16015286601757825753": {
+      "mcmAddress": "0x0000000000000000000000000000000000000000",
+      "startingOpCount": 0
+    }
+  },
+  "description": "Test proposal",
+  "minDelay": "1d",
+  "operation": "schedule",
+  "overridePreviousRoot": true,
+  "signatures": null,
+  "timelockAddresses": {},
+  "transactions": [
+    {
+      "batch": [
+        {
+          "AdditionalFields": {
+            "value": 0
+          },
+          "contractType": "",
+          "data": "ZGF0YQ==",
+          "tags": null,
+          "to": "0x0000000000000000000000000000000000000000",
+          "value": 0
+        }
+      ],
+      "chainIdentifier": 16015286601757825753
+    }
+  ],
+  "validUntil": 4128029039,
+  "version": "MCMSWithTimelock"
+}`
+
+func TestMCMSWithTimelockProposal_MarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
+	tests := []struct {
+		name       string
+		proposal   MCMSWithTimelockProposal
+		wantErr    bool
+		expectJSON string
+	}{
+		{
+			name: "successful marshalling",
+			proposal: MCMSWithTimelockProposal{
+				MCMSProposal: mcms.MCMSProposal{
+					Version:     "MCMSWithTimelock",
+					ValidUntil:  4128029039,
+					Description: "Test proposal",
+					ChainMetadata: map[mcms.ChainIdentifier]mcms.ChainMetadata{
+						mcms.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
+							StartingOpCount: 0,
+							MCMAddress:      common.Address{},
+						},
+					},
+					OverridePreviousRoot: true,
+				},
+				Operation:         Schedule,
+				MinDelay:          "1d",
+				TimelockAddresses: map[mcms.ChainIdentifier]common.Address{},
+				Transactions: []BatchChainOperation{
+					{
+						ChainIdentifier: mcms.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+						Batch: []mcms.Operation{
+							{
+								To:               common.HexToAddress("0x0"),
+								AdditionalFields: additionalFields,
+								Data:             []byte("data"),
+								Value:            big.NewInt(0),
+							},
+						},
+					},
+				},
+			},
+			wantErr:    false,
+			expectJSON: validJsonProposal,
+		},
+		{
+			name: "error during marshalling transactions",
+			proposal: MCMSWithTimelockProposal{
+				Transactions: []BatchChainOperation{
+					{
+						ChainIdentifier: mcms.ChainIdentifier(1),
+						Batch:           nil, // This will cause an error because Batch should not be nil
+					},
+				},
+			},
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := json.Marshal(&tt.proposal)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.JSONEq(t, tt.expectJSON, string(got))
+			}
+		})
+	}
+}
+
+func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
+	t.Parallel()
+
+	// Prepare the compact version of the validJsonProposal
+	var compactBuffer bytes.Buffer
+	err := json.Compact(&compactBuffer, []byte(validJsonProposal))
+	require.NoError(t, err)
+
+	// Use the compact JSON as the one-liner version
+	compactJsonProposal := compactBuffer.String()
+
+	// Preparing the additional fields
+	additionalFields, err := json.Marshal(struct {
+		Value *big.Int `json:"value"`
+	}{
+		Value: big.NewInt(0),
+	})
+	require.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		jsonData string
+		wantErr  bool
+		expected MCMSWithTimelockProposal
+	}{
+		{
+			name:     "successful unmarshalling",
+			jsonData: compactJsonProposal,
+			wantErr:  false,
+			expected: MCMSWithTimelockProposal{
+				MCMSProposal: mcms.MCMSProposal{
+					Version:     "MCMSWithTimelock",
+					ValidUntil:  4128029039,
+					Description: "Test proposal",
+					ChainMetadata: map[mcms.ChainIdentifier]mcms.ChainMetadata{
+						mcms.ChainIdentifier(16015286601757825753): {
+							StartingOpCount: 0,
+							MCMAddress:      common.Address{},
+						},
+					},
+					OverridePreviousRoot: true,
+				},
+				Operation:         Schedule,
+				MinDelay:          "1d",
+				TimelockAddresses: map[mcms.ChainIdentifier]common.Address{},
+				Transactions: []BatchChainOperation{
+					{
+						ChainIdentifier: mcms.ChainIdentifier(16015286601757825753),
+						Batch: []mcms.Operation{
+							{
+								To:               common.HexToAddress("0x0000000000000000000000000000000000000000"),
+								AdditionalFields: additionalFields,
+								Data:             []byte("data"),
+								Value:            big.NewInt(0),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "error during unmarshalling invalid JSON",
+			jsonData: `{
+				"version":"1.0",
+				"validUntil":123456789,
+				"description":"Test proposal",
+				"operation":"invalid_operation" 
+			}`, // invalid operation field
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var got MCMSWithTimelockProposal
+			err := json.Unmarshal([]byte(tt.jsonData), &got)
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.expected, got)
+			}
+		})
+	}
 }

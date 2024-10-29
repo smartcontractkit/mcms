@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -61,6 +62,39 @@ func NewProposal(
 	return &proposal, nil
 }
 
+// MarshalJSON implements the JSON marshaller for MCMSProposal
+func (m MCMSProposal) MarshalJSON() ([]byte, error) {
+	// Validate the proposal before marshalling
+	if err := m.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Use an alias type to avoid recursion
+	// We could exclude fields here in the future if necessary
+	type Alias MCMSProposal
+
+	return json.Marshal((*Alias)(&m))
+}
+
+// UnmarshalJSON implements the JSON unmarshaller for MCMSProposal
+func (m *MCMSProposal) UnmarshalJSON(data []byte) error {
+	// Use an alias type to avoid recursion
+	type Alias MCMSProposal
+
+	// Unmarshal the JSON data into the alias struct to avoid recursion
+	if err := json.Unmarshal(data, (*Alias)(m)); err != nil {
+		return err
+	}
+
+	// Check if AdditionalFields contains "null"
+	for i := range m.Transactions {
+		if string(m.Transactions[i].Operation.AdditionalFields) == "null" {
+			m.Transactions[i].Operation.AdditionalFields = nil
+		}
+	}
+	// Run validation after unmarshalling
+	return m.Validate()
+}
 func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	var out MCMSProposal
 	err := FromFile(filePath, &out)
@@ -90,7 +124,9 @@ func proposalValidateBasic(proposal MCMSProposal) error {
 		return &errors.NoChainMetadataError{}
 	}
 
-	if len(proposal.Transactions) == 0 {
+	// We skip validation on timelock proposals. For time lock proposals this transaction list
+	// will be empty as it is validated in the timelock proposal struct.
+	if len(proposal.Transactions) == 0 && proposal.Version != string(MCMSWithTimelock) {
 		return &errors.NoTransactionsError{}
 	}
 
@@ -102,6 +138,8 @@ func proposalValidateBasic(proposal MCMSProposal) error {
 
 	return nil
 }
+
+// Validate validates the MCMS proposal, including chain specific fields from the additionalFields field of the proposal
 func (m *MCMSProposal) Validate() error {
 	if m.Version == "" {
 		return &errors.InvalidVersionError{
@@ -120,6 +158,10 @@ func (m *MCMSProposal) Validate() error {
 				ChainIdentifier: uint64(t.ChainIdentifier),
 				Parameter:       "chain metadata",
 			}
+		}
+		// Chain specific validations.
+		if err := ValidateAdditionalFields(t.Operation.AdditionalFields, t.ChainIdentifier); err != nil {
+			return err
 		}
 	}
 
