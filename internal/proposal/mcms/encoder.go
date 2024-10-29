@@ -18,21 +18,21 @@ func NewEncoder(chainSelector mcms.ChainSelector, txCount uint64, overridePrevio
 		}
 	}
 
-	// Simulated chains always have block.chainid = 1337
-	// So for setRoot to execute (not throw WrongChainId) we must
-	// override the evmChainID to be 1337.
-	if isSim {
-		chain.EvmChainID = 1337
-	}
-
 	family, err := chain_selectors.GetSelectorFamily(uint64(chainSelector))
 	if err != nil {
-		return nil, errors.New("unknown chain family")
+		return nil, errors.New("unknown chain selector: " + err.Error())
 	}
 
 	var encoder mcms.Encoder
 	switch family {
 	case chain_selectors.FamilyEVM:
+		// Simulated chains always have block.chainid = 1337
+		// So for setRoot to execute (not throw WrongChainId) we must
+		// override the evmChainID to be 1337.
+		if isSim {
+			chain.EvmChainID = 1337
+		}
+
 		encoder = evm.NewEVMEncoder(
 			txCount,
 			chain.EvmChainID,
