@@ -40,8 +40,6 @@ func ToChainOperation(
 	switch chainFamily {
 	case chain_selectors.FamilyEVM:
 		converter = &evm.TimelockConverterEVM{}
-	case chain_selectors.FamilySolana:
-		panic("solana not implemented")
 	default:
 		return mcmsTypes.ChainOperation{}, common.Hash{}, core.NewUnknownChainSelectorFamilyError(uint64(t.ChainIdentifier), chainFamily)
 	}

@@ -33,12 +33,6 @@ func ValidateAdditionalFields(operation json.RawMessage, identifier types.ChainI
 			return fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
 		}
 		validator = fields
-
-	case chain_selectors.FamilySolana:
-		// Solana struct and validation
-		// Example: validator = solanaFields
-		panic("not implemented")
-
 	default:
 		return core.NewUnknownChainSelectorFamilyError(uint64(identifier), chainFamily)
 	}
