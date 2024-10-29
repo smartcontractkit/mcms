@@ -2,10 +2,12 @@ package mcms
 
 import (
 	"encoding/json"
-	"github.com/ethereum/go-ethereum/common"
+	"time"
+
 	"io"
 	"os"
-	"time"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/pkg/errors"
 )
