@@ -1,9 +1,10 @@
-package internal
+package proposal
 
 import (
 	"errors"
 
 	"github.com/smartcontractkit/mcms/internal/core/proposal"
+	"github.com/smartcontractkit/mcms/internal/proposal/mcms"
 )
 
 type ProposalType string
@@ -23,7 +24,7 @@ var StringToProposalType = map[string]ProposalType{
 func LoadProposal(proposalType ProposalType, filePath string) (proposal.Proposal, error) {
 	switch proposalType {
 	case MCMS:
-		return NewProposalFromFile(filePath)
+		return mcms.NewProposalFromFile(filePath)
 	// case MCMSWithTimelock:
 	// 	return timelock.NewMCMSWithTimelockProposalFromFile(filePath)
 	default:

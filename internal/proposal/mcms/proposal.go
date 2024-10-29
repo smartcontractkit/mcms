@@ -1,12 +1,13 @@
-package internal
+package mcms
 
 import (
 	"sort"
 	"time"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+
+	"github.com/smartcontractkit/mcms/internal/core/proposal"
 )
 
 // MCMSProposal is a struct where the target contract is an MCMS contract

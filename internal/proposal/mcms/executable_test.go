@@ -1,4 +1,4 @@
-package internal
+package mcms
 
 import (
 	"crypto/ecdsa"
