@@ -1723,7 +1723,7 @@ func TestTimelockProposalFromFile(t *testing.T) {
 	require.NoError(t, err)
 	mcmsProposal := MCMSWithTimelockProposal{
 		MCMSProposal: mcms.MCMSProposal{
-			Version:              "MCMSWithTimelock",
+			Version:              "v1",
 			ValidUntil:           4128029039,
 			Signatures:           []mcms.Signature{},
 			OverridePreviousRoot: false,
@@ -1794,7 +1794,7 @@ const validJsonProposal = `{
     }
   ],
   "validUntil": 4128029039,
-  "version": "MCMSWithTimelock"
+  "version": "v1"
 }`
 
 func TestMCMSWithTimelockProposal_MarshalJSON(t *testing.T) {
@@ -1816,7 +1816,7 @@ func TestMCMSWithTimelockProposal_MarshalJSON(t *testing.T) {
 			name: "successful marshalling",
 			proposal: MCMSWithTimelockProposal{
 				MCMSProposal: mcms.MCMSProposal{
-					Version:     "MCMSWithTimelock",
+					Version:     "v1",
 					ValidUntil:  4128029039,
 					Description: "Test proposal",
 					ChainMetadata: map[types2.ChainIdentifier]mcms.ChainMetadata{
@@ -1907,7 +1907,7 @@ func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
 			wantErr:  false,
 			expected: MCMSWithTimelockProposal{
 				MCMSProposal: mcms.MCMSProposal{
-					Version:     "MCMSWithTimelock",
+					Version:     "v1",
 					ValidUntil:  4128029039,
 					Description: "Test proposal",
 					ChainMetadata: map[types2.ChainIdentifier]mcms.ChainMetadata{
@@ -1942,7 +1942,7 @@ func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
 				"version":"1.0",
 				"validUntil":123456789,
 				"description":"Test proposal",
-				"operation":"invalid_operation" 
+				"operation":"invalid_operation"
 			}`, // invalid operation field
 			wantErr: true,
 		},

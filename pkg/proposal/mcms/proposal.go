@@ -1,7 +1,8 @@
 package mcms
 
 import (
-	"encoding/json"
+	"bytes"
+	"io"
 	"time"
 
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
@@ -21,6 +22,7 @@ type ChainMetadata struct {
 // call batching, as the MCMS contract natively doesn't support batching
 type MCMSProposal struct {
 	Version              string      `json:"version"`
+	Kind                 string      `json:"kind"`
 	ValidUntil           uint32      `json:"validUntil"`
 	Signatures           []Signature `json:"signatures"`
 	OverridePreviousRoot bool        `json:"overridePreviousRoot"`
@@ -71,20 +73,18 @@ func (m MCMSProposal) MarshalJSON() ([]byte, error) {
 		return nil, err
 	}
 
-	// Use an alias type to avoid recursion
-	// We could exclude fields here in the future if necessary
-	type Alias MCMSProposal
+	var buf bytes.Buffer
+	enc := newJSONEncoder(io.Writer(&buf))
+	if err := enc.Encode(&m); err != nil {
+		return nil, err
+	}
 
-	return json.Marshal((*Alias)(&m))
+	return buf.Bytes(), nil
 }
 
 // UnmarshalJSON implements the JSON unmarshaller for MCMSProposal
 func (m *MCMSProposal) UnmarshalJSON(data []byte) error {
-	// Use an alias type to avoid recursion
-	type Alias MCMSProposal
-
-	// Unmarshal the JSON data into the alias struct to avoid recursion
-	if err := json.Unmarshal(data, (*Alias)(m)); err != nil {
+	if err := newJSONDecoder(bytes.NewReader(data)).Decode(m); err != nil {
 		return err
 	}
 
@@ -94,9 +94,11 @@ func (m *MCMSProposal) UnmarshalJSON(data []byte) error {
 			m.Transactions[i].Operation.AdditionalFields = nil
 		}
 	}
+
 	// Run validation after unmarshalling
 	return m.Validate()
 }
+
 func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 	var out MCMSProposal
 	err := FromFile(filePath, &out)

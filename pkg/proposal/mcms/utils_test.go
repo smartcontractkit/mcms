@@ -62,7 +62,7 @@ func TestProposalFromFile(t *testing.T) {
 	})
 	require.NoError(t, err)
 	mcmsProposal := MCMSProposal{
-		Version:    "1",
+		Version:    "v1",
 		ValidUntil: 4128029039,
 		Signatures: []Signature{},
 		Transactions: []types.ChainOperation{
@@ -106,7 +106,7 @@ func TestWriteProposalToFile(t *testing.T) {
 	require.NoError(t, err)
 	// Define a sample proposal struct
 	proposal := MCMSProposal{
-		Version:    "1",
+		Version:    "v1",
 		ValidUntil: 4128029039,
 		Signatures: []Signature{},
 		Transactions: []types.ChainOperation{

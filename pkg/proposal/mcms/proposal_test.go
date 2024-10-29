@@ -265,7 +265,7 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 		{
 			name: "valid proposal",
 			proposal: MCMSProposal{
-				Version:              "v1.0",
+				Version:              "v1",
 				ValidUntil:           uint32(4128029039),
 				Signatures:           []Signature{},
 				OverridePreviousRoot: false,
@@ -333,7 +333,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 		{
 			name: "valid proposal",
 			jsonData: `{
-				"version": "v1.0",
+				"version": "v1",
 				"validUntil": 4128029039,
 				"signatures": [],
 				"overridePreviousRoot": false,
@@ -346,7 +346,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"description": "Test Proposal",
                 "transactions": [
                   {
-                     "chainIdentifier": 16015286601757825753,
+                     "chainSelector": 16015286601757825753,
                      "additionalFields": {"value": 0}
                   }]
 			}`,
@@ -366,11 +366,11 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 					}
 				},
 				"description": "Test Proposal",
-                "transactions": [
-                  {
-                     "chainIdentifier": 16015286601757825753,
-                     "additionalFields": null
-                  }]
+		        "transactions": [
+		          {
+		             "chainSelector": 16015286601757825753,
+		             "additionalFields": null
+		          }]
 			}`,
 			expectError: true,
 			expectedErr: &errors.InvalidVersionError{},
@@ -378,17 +378,17 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 		{
 			name: "invalid proposal - missing chain metadata",
 			jsonData: `{
-				"version": "v1.0",
+				"version": "v1",
 				"validUntil": 4128029039,
 				"signatures": [],
 				"overridePreviousRoot": false,
 				"chainMetadata": {},
 				"description": "Test Proposal",
-                "transactions": [
-                  {
-                     "chainIdentifier": 16015286601757825753,
-                     "additionalFields": null
-                  }]
+		        "transactions": [
+		          {
+		             "chainSelector": 16015286601757825753,
+		             "additionalFields": null
+		          }]
 			}`,
 			expectError: true,
 			expectedErr: &errors.NoChainMetadataError{},
@@ -396,7 +396,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 		{
 			name: "invalid proposal - null AdditionalFields",
 			jsonData: `{
-				"version": "v1.0",
+				"version": "v1",
 				"validUntil": 4128029039,
 				"signatures": [],
 				"overridePreviousRoot": false,
@@ -407,11 +407,11 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 					}
 				},
 				"description": "Test Proposal",
-                "transactions": [
-                  {
-                     "chainIdentifier": 16015286601757825753,
-                     "additionalFields": null
-                  }]
+		        "transactions": [
+		          {
+		             "chainSelector": 16015286601757825753,
+		             "additionalFields": null
+		          }]
 			}`,
 			expectError: true,
 			expectedErr: fmt.Errorf("failed to unmarshal EVM additional fields: unexpected end of JSON input"),
