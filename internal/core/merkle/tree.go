@@ -7,21 +7,23 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// HashPairSize Size of hash pairs when computing parent nodes
+// HashPairSize defines the size of hash pairs when computing parent nodes.
 const HashPairSize = 2
 
 // Tree represents a cryptographic Merkle tree used to verify data integrity.
 type Tree struct {
-	// Root is the final hash at the top of the Merkle tree, derived from the hashes of all the leaf nodes.
+	// Root is the final hash at the top of the Merkle tree, derived from the hashes of all the
+	// leaf nodes.
 	Root common.Hash
 
-	// Layers contains all tree layers, starting from the leaves. Each subsequent layer is derived by hashing pairs of nodes from the previous layer, ultimately leading to the root.
+	// Layers contains all tree layers, starting from the leaves. Each subsequent layer is derived
+	// by hashing pairs of nodes from the previous layer, ultimately leading to the root.
 	Layers [][]common.Hash
 }
 
-// NewMerkleTree constructs a Merkle tree from a list of leaf hashes.
+// NewTree constructs a Merkle tree from a list of leaf hashes.
 // It recursively hashes pairs of leaves until a single root hash is obtained.
-func NewMerkleTree(leaves []common.Hash) *Tree {
+func NewTree(leaves []common.Hash) *Tree {
 	layers := make([][]common.Hash, 0)
 	if len(leaves) == 0 {
 		return &Tree{
@@ -29,6 +31,7 @@ func NewMerkleTree(leaves []common.Hash) *Tree {
 			Layers: layers,
 		}
 	}
+
 	currHashes := leaves
 	for len(currHashes) > 1 {
 		// Duplicate the last hash if the number of current hashes is odd.
@@ -65,6 +68,7 @@ func (t *Tree) GetProof(hash common.Hash) ([]common.Hash, error) {
 	// Traverse each layer of the tree.
 	for i := range t.Layers {
 		found := false
+
 		for j, h := range t.Layers[i] {
 			if h != targetHash {
 				continue
@@ -85,9 +89,7 @@ func (t *Tree) GetProof(hash common.Hash) ([]common.Hash, error) {
 
 		// Return an error if the hash is not found in the current layer (shouldn't happen).
 		if !found {
-			return nil, &TreeNodeNotFoundError{
-				TargetHash: targetHash,
-			}
+			return nil, NewTreeNodeNotFoundError(targetHash)
 		}
 	}
 
@@ -101,12 +103,14 @@ func (t *Tree) GetProofs() (map[common.Hash][]common.Hash, error) {
 	if len(t.Layers) == 0 {
 		return nil, ErrNoLayers
 	}
+
 	// General case: iterate over all leaves in the first layer
 	for _, leaf := range t.Layers[0] {
 		proof, err := t.GetProof(leaf)
 		if err != nil {
 			return nil, err
 		}
+
 		proofs[leaf] = proof
 	}
 
@@ -119,11 +123,19 @@ type TreeNodeNotFoundError struct {
 	TargetHash common.Hash
 }
 
+// NewTreeNodeNotFoundError creates a new TreeNodeNotFoundError with the given target hash.
+func NewTreeNodeNotFoundError(targetHash common.Hash) *TreeNodeNotFoundError {
+	return &TreeNodeNotFoundError{
+		TargetHash: targetHash,
+	}
+}
+
 // Error implements the error interface for TreeNodeNotFoundError.
 func (e *TreeNodeNotFoundError) Error() string {
 	return "merkle tree does not contain hash: " + e.TargetHash.String()
 }
 
+// ErrNoLayers indicates that the Merkle tree has no layers.
 var ErrNoLayers = errors.New("no layers in the Merkle tree")
 
 // hashPair takes two hashes and returns their sorted combined hash.
