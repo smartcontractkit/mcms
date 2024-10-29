@@ -1,0 +1,70 @@
+package timelock
+
+import (
+	"github.com/ethereum/go-ethereum/common"
+)
+
+var ZERO_HASH = common.Hash{}
+
+type TimelockOperation string
+
+const (
+	Schedule TimelockOperation = "schedule"
+	Cancel   TimelockOperation = "cancel"
+	Bypass   TimelockOperation = "bypass"
+)
+
+// Chain agnostic configuration for a timelock proposal
+type TimelockConfig struct {
+	// What the Timelock will perform on the transactions specified
+	Operation TimelockOperation `json:"operation"` // Always 'schedule', 'cancel', or 'bypass'
+
+	// List of batches to be operated from the Timelock contract
+	Batches []BatchChainOperation
+
+	// MinDelay is the time duration for the timelock to wait before executing the transaction (only useful when scheduling)
+	// TODO: Format ? (1d, 1w, 1m, 1y, null)
+	// TODO: Why minDelay and not delay? MinDelay could be confused with the Timelock configured minimum delay
+	MinDelay string `json:"minDelay"`
+}
+
+// TimelockProposal is an interface that all chain timelock proposals must implement
+type TimelockProposal interface {
+	// Converts the proposal into the chain specific transaction data format the signer needs
+	Encode() ([]byte, error)
+}
+
+// A TimelockProposal targets a timelock contract per chain and has no context about the signer (EOA, MCMS, etc)
+func NewTimelockConfig(operation TimelockOperation, batches []BatchChainOperation, delay string) (*TimelockConfig, error) {
+	t := TimelockConfig{
+		Operation: operation,
+		Batches:   batches,
+		MinDelay:  delay,
+	}
+
+	if err := t.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &t, nil
+}
+
+func (t TimelockConfig) Validate() error {
+	if t.Operation == "" {
+		return &InvalidOperationError{}
+	}
+
+	if t.MinDelay == "" {
+		return &InvalidDelayError{}
+	}
+
+	if len(t.Batches) == 0 {
+		return &NoTransactionsError{}
+	}
+
+	if t.Operation != Schedule || t.Operation != Cancel || t.Operation != Bypass {
+		return &InvalidOperationError{}
+	}
+
+	return nil
+}
