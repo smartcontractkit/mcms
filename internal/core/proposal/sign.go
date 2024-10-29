@@ -12,14 +12,19 @@ import (
 )
 
 // Just run this locally to sign from the ledger.
-func SignPlainKey(privateKey *ecdsa.PrivateKey, proposal Proposal) error {
+func SignPlainKey(
+	privateKey *ecdsa.PrivateKey,
+	proposal Proposal,
+	isSim bool,
+	inspectors map[mcms.ChainSelector]mcms.Inspector,
+) error {
 	// Validate proposal
 	err := proposal.Validate()
 	if err != nil {
 		return err
 	}
 
-	signable, err := proposal.Signable(false, nil)
+	signable, err := proposal.Signable(isSim, inspectors)
 	if err != nil {
 		return err
 	}
@@ -48,7 +53,12 @@ func SignPlainKey(privateKey *ecdsa.PrivateKey, proposal Proposal) error {
 	return nil
 }
 
-func SignLedger(derivationPath []uint32, proposal Proposal) error {
+func SignLedger(
+	derivationPath []uint32,
+	proposal Proposal,
+	isSim bool,
+	inspectors map[mcms.ChainSelector]mcms.Inspector,
+) error {
 	// Validate proposal
 	if err := proposal.Validate(); err != nil {
 		return fmt.Errorf("failed to validate proposal: %w", err)
@@ -85,7 +95,7 @@ func SignLedger(derivationPath []uint32, proposal Proposal) error {
 	fmt.Println("Found account: ", account.Address.String())
 
 	// Create signable
-	signable, err := proposal.Signable(false, nil)
+	signable, err := proposal.Signable(isSim, inspectors)
 	if err != nil {
 		return err
 	}

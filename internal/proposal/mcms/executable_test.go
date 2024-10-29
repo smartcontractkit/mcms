@@ -15,8 +15,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	owner_errors "github.com/smartcontractkit/mcms/internal/core"
+	mcms_core "github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/config"
+	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/evm"
 	"github.com/smartcontractkit/mcms/internal/evm/bindings"
@@ -79,7 +80,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	}
 
 	// Set the quorum
-	quorum, err := owner_errors.SafeCastUint64ToUint8(numSigners)
+	quorum, err := mcms_core.SafeCastUint64ToUint8(numSigners)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
@@ -154,6 +155,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	// Construct a proposal
 	proposal := MCMSProposal{
 		Version:              "1.0",
+		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
@@ -170,8 +172,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 					timelock.Address().Hex(),
 					grantRoleData,
 					big.NewInt(0),
-					"Sample contract",
-					[]string{"tag1", "tag2"},
+					"RBACTimelock",
+					[]string{"RBACTimelock", "GrantRole"},
 				),
 			},
 		},
@@ -185,22 +187,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 	assert.NotNil(t, signable)
 
-	// Get the hash to sign
-	hash, err := signable.SigningHash()
+	err = proposal_core.SignPlainKey(keys[0], &proposal, true, inspectors)
 	require.NoError(t, err)
-
-	// Get the message to sign
-	// _, err = executor.SigningMessage()
-	// require.NoError(t, err)
-
-	// Sign the hash
-	sig, err := crypto.Sign(hash.Bytes(), keys[0])
-	require.NoError(t, err)
-
-	// Construct a signature
-	sigObj, err := mcms.NewSignatureFromBytes(sig)
-	require.NoError(t, err)
-	proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err := signable.ValidateSignatures()
@@ -299,6 +287,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	// Construct a proposal
 	proposal := MCMSProposal{
 		Version:              "1.0",
+		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
@@ -330,19 +319,10 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 	assert.NotNil(t, signable)
 
-	// Get the hash to sign
-	hash, err := signable.SigningHash()
-	require.NoError(t, err)
-
 	// Sign the hash
 	for i := range 3 {
-		sig, serr := crypto.Sign(hash.Bytes(), keys[i])
-		require.NoError(t, serr)
-
-		// Construct a signature
-		sigObj, serr := mcms.NewSignatureFromBytes(sig)
-		require.NoError(t, serr)
-		proposal.Signatures = append(proposal.Signatures, sigObj)
+		err = proposal_core.SignPlainKey(keys[i], &proposal, true, inspectors)
+		require.NoError(t, err)
 	}
 
 	// Validate the signatures
@@ -460,6 +440,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	// Construct a proposal
 	proposal := MCMSProposal{
 		Version:              "1.0",
+		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
@@ -480,18 +461,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 	assert.NotNil(t, signable)
 
-	// Get the hash to sign
-	hash, err := signable.SigningHash()
+	err = proposal_core.SignPlainKey(keys[0], &proposal, true, inspectors)
 	require.NoError(t, err)
-
-	// Sign the hash
-	sig, err := crypto.Sign(hash.Bytes(), keys[0])
-	require.NoError(t, err)
-
-	// Construct a signature
-	sigObj, err := mcms.NewSignatureFromBytes(sig)
-	require.NoError(t, err)
-	proposal.Signatures = append(proposal.Signatures, sigObj)
 
 	// Validate the signatures
 	quorumMet, err := signable.ValidateSignatures()
@@ -772,6 +743,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	// Construct a proposal
 	proposal := MCMSProposal{
 		Version:              "1.0",
+		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
@@ -792,19 +764,10 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	require.NoError(t, err)
 	assert.NotNil(t, signable)
 
-	// Get the hash to sign
-	hash, err := signable.SigningHash()
-	require.NoError(t, err)
-
 	// Sign the hash
 	for i := range 2 {
-		sig, serr := crypto.Sign(hash.Bytes(), keys[i])
-		require.NoError(t, serr)
-
-		// Construct a signature
-		sigObj, serr := mcms.NewSignatureFromBytes(sig)
-		require.NoError(t, serr)
-		proposal.Signatures = append(proposal.Signatures, sigObj)
+		err = proposal_core.SignPlainKey(keys[i], &proposal, true, inspectors)
+		require.NoError(t, err)
 	}
 
 	// Validate the signatures
@@ -812,7 +775,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureMissingQ
 	assert.False(t, quorumMet)
 	require.Error(t, err)
 	// assert error is of type QuorumNotMetError
-	assert.IsType(t, &owner_errors.QuorumNotMetError{}, err)
+	assert.IsType(t, &mcms_core.QuorumNotMetError{}, err)
 }
 
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *testing.T) {
@@ -880,6 +843,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	// Construct a proposal
 	proposal := MCMSProposal{
 		Version:              "1.0",
+		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
@@ -900,19 +864,10 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	require.NoError(t, err)
 	assert.NotNil(t, signable)
 
-	// Get the hash to sign
-	hash, err := signable.SigningHash()
-	require.NoError(t, err)
-
 	// Sign the hash
 	for i := range 3 {
-		sig, serr := crypto.Sign(hash.Bytes(), keys[i])
-		require.NoError(t, serr)
-
-		// Construct a signature
-		sigObj, serr := mcms.NewSignatureFromBytes(sig)
-		require.NoError(t, serr)
-		proposal.Signatures = append(proposal.Signatures, sigObj)
+		err = proposal_core.SignPlainKey(keys[i], &proposal, true, inspectors)
+		require.NoError(t, err)
 	}
 
 	// Validate the signatures
@@ -920,5 +875,5 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_FailureInvalidS
 	assert.False(t, quorumMet)
 	require.Error(t, err)
 	// assert error is of type QuorumNotMetError
-	assert.IsType(t, &owner_errors.InvalidSignatureError{}, err)
+	assert.IsType(t, &mcms_core.InvalidSignatureError{}, err)
 }
