@@ -65,7 +65,7 @@ func TestProposalFromFile(t *testing.T) {
 		Signatures: []Signature{},
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 				Operation: Operation{
 					AdditionalFields: additionalFields,
 				},
@@ -73,8 +73,8 @@ func TestProposalFromFile(t *testing.T) {
 		},
 		OverridePreviousRoot: false,
 		Description:          "Test Proposal",
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
-			ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
+		ChainMetadata: map[ChainSelector]ChainMetadata{
+			ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
 				StartingOpCount: 0,
 				MCMAddress:      common.HexToAddress("0x5b38da6a701c568545dcfcb03fcb875f56beddc4"),
 			},
@@ -109,7 +109,7 @@ func TestWriteProposalToFile(t *testing.T) {
 		Signatures: []Signature{},
 		Transactions: []ChainOperation{
 			{
-				ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 				Operation: Operation{
 					AdditionalFields: additionalFields,
 				},
@@ -117,8 +117,8 @@ func TestWriteProposalToFile(t *testing.T) {
 		},
 		OverridePreviousRoot: false,
 		Description:          "Test Proposal",
-		ChainMetadata: map[ChainIdentifier]ChainMetadata{
-			ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
+		ChainMetadata: map[ChainSelector]ChainMetadata{
+			ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
 				StartingOpCount: 0,
 				MCMAddress:      common.HexToAddress("0x5b38da6a701c568545dcfcb03fcb875f56beddc4"),
 			},

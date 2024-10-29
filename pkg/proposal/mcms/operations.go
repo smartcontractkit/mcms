@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type ChainIdentifier uint64
+type ChainSelector uint64
 
 type Operation struct {
 	To               common.Address `json:"to"`
@@ -19,6 +19,6 @@ type Operation struct {
 }
 
 type ChainOperation struct {
-	ChainIdentifier `json:"chainIdentifier"`
+	ChainSelector `json:"chainSelector"`
 	Operation
 }

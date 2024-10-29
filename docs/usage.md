@@ -20,7 +20,7 @@ The configuration is a nested tree structure where a given group is considered a
 Signatures and `GroupSigners` that individually are at `quorum` are greater than or equal to the top-level `quorum`
 
 For example, given the following [`Config`](./config/config.go#L13):
- 
+
 ```
 Config{
     Quorum:       3,
@@ -119,7 +119,7 @@ function can be used to revalidate.
 The library provides two functions to help with the execution of an MCMS Proposal:
 
 1. [`SetRootOnChain`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/proposal/mcms/executor.go#L308):
-   Given auth and a ChainIdentifer, calls `setRoot` on the target MCMS for that given chainIdentifier.
+   Given auth and a ChainSelector, calls `setRoot` on the target MCMS for that given chain selector.
 2. [`ExecuteOnChain`](https://github.com/smartcontractkit/mcms/blob/70ec727caf84a3fac4fa280ce5fbda3b07df7ee5/pkg/proposal/mcms/executor.go#L348):
    Given auth and an index, calls `execute` on the target MCMS for that given operation.
 
@@ -132,7 +132,7 @@ is an extension of the `MCMSProposal` and has the following additional fields:
    wrapping calls in `scheduleBatch`,`cancel`, and `bypasserExecuteBatch` calls, respectively
 2. `MinDelay` is a string representation of a Go `time.Duration` ("1s", "1h", "1d", etc.). This field is only required
    when `Operation == Schedule` and sets the delay for each transaction to be the provided value in seconds
-3. `TimelockAddresses` is a map of `ChainIdentifier` to the target `RBACTimelock` address for each chain.
+3. `TimelockAddresses` is a map of `ChainSelector` to the target `RBACTimelock` address for each chain.
 4. Each element in `Transactions` is now an array of operations that are all to be wrapped in a single `scheduleBatch`
    or `bypasserExecuteBatch` call and executed atomically. There is no concept of batching natively available in the
    MCMS contract which is why this is only available in the RBACTimelock flavor.

@@ -43,7 +43,7 @@ coordinated manner across different chains.
   },
   "transactions": [
     {
-      "chain": "<CHAIN_SELECTOR>",
+      "chainSelector": "<CHAIN_SELECTOR>",
       "to": "<TARGET_CONTRACT>",
       "payload": "<HEX_PAYLOAD>",
       "additionalFields": "<object>",
@@ -53,7 +53,7 @@ coordinated manner across different chains.
       ]
     },
     {
-      "chain": "<CHAIN_SELECTOR>",
+      "chainSelector": "<CHAIN_SELECTOR>",
       "to": "<TARGET_CONTRACT>",
       "payload": "<HEX_PAYLOAD>",
       "additionalFields": "<object>",
@@ -89,7 +89,7 @@ coordinated manner across different chains.
     - **mcmAddress**: The MCM contract address that will process this proposal on the respective chain.
 
 - **transactions**: A list of transactions to be executed across chains:
-    - **chain**: The blockchain identifier for the specific transaction.
+    - **chainSelector**: The blockchain identifier for the specific transaction.
     - **to**: The target contract address.
     - **payload**: The encoded payload (hexadecimal) to be sent with the transaction.
     - **additionalFields**: A chain-specific object with data relevant for the execution of operations on each chain.

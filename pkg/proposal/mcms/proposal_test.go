@@ -15,9 +15,9 @@ import (
 )
 
 var TestAddress = common.HexToAddress("0x1234567890abcdef")
-var TestChain1 = ChainIdentifier(3379446385462418246)
-var TestChain2 = ChainIdentifier(16015286601757825753)
-var TestChain3 = ChainIdentifier(10344971235874465080)
+var TestChain1 = ChainSelector(3379446385462418246)
+var TestChain2 = ChainSelector(16015286601757825753)
+var TestChain3 = ChainSelector(10344971235874465080)
 
 func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 	t.Parallel()
@@ -32,7 +32,7 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[ChainSelector]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
@@ -41,7 +41,7 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 		"Sample description",
 		[]ChainOperation{
 			{
-				ChainIdentifier: TestChain1,
+				ChainSelector: TestChain1,
 				Operation: Operation{
 					To:               TestAddress,
 					Value:            big.NewInt(0),
@@ -66,7 +66,7 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[ChainSelector]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
@@ -75,7 +75,7 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 		"Sample description",
 		[]ChainOperation{
 			{
-				ChainIdentifier: TestChain1,
+				ChainSelector: TestChain1,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -100,7 +100,7 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 		0,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[ChainSelector]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
@@ -109,7 +109,7 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 		"Sample description",
 		[]ChainOperation{
 			{
-				ChainIdentifier: TestChain1,
+				ChainSelector: TestChain1,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -134,11 +134,11 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{},
+		map[ChainSelector]ChainMetadata{},
 		"Sample description",
 		[]ChainOperation{
 			{
-				ChainIdentifier: TestChain1,
+				ChainSelector: TestChain1,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -163,7 +163,7 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[ChainSelector]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
@@ -172,7 +172,7 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 		"",
 		[]ChainOperation{
 			{
-				ChainIdentifier: TestChain1,
+				ChainSelector: TestChain1,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -197,7 +197,7 @@ func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[ChainSelector]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
@@ -220,7 +220,7 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 		2004259681,
 		[]Signature{},
 		false,
-		map[ChainIdentifier]ChainMetadata{
+		map[ChainSelector]ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 1,
 				MCMAddress:      TestAddress,
@@ -229,7 +229,7 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 		"Sample description",
 		[]ChainOperation{
 			{
-				ChainIdentifier: 3,
+				ChainSelector: 3,
 				Operation: Operation{
 					To:           TestAddress,
 					Value:        big.NewInt(0),
@@ -267,8 +267,8 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 				ValidUntil:           uint32(4128029039),
 				Signatures:           []Signature{},
 				OverridePreviousRoot: false,
-				ChainMetadata: map[ChainIdentifier]ChainMetadata{
-					ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
+				ChainMetadata: map[ChainSelector]ChainMetadata{
+					ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
 						StartingOpCount: 0,
 						MCMAddress:      common.HexToAddress("0x0000000000000000000000000000000000000000"),
 					},
@@ -279,7 +279,7 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 						Operation: Operation{
 							AdditionalFields: additionalFields,
 						},
-						ChainIdentifier: ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+						ChainSelector: ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 					},
 				},
 			},
@@ -292,8 +292,8 @@ func TestMCMSProposal_MarshalJSON(t *testing.T) {
 				ValidUntil:           uint32(4128029039),
 				Signatures:           []Signature{},
 				OverridePreviousRoot: false,
-				ChainMetadata: map[ChainIdentifier]ChainMetadata{
-					ChainIdentifier(1): {
+				ChainMetadata: map[ChainSelector]ChainMetadata{
+					ChainSelector(1): {
 						StartingOpCount: 0,
 						MCMAddress:      common.HexToAddress("0x0000000000000000000000000000000000000000"),
 					},
@@ -344,7 +344,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"description": "Test Proposal",
                 "transactions": [
                   {
-                     "chainIdentifier": 16015286601757825753,
+                     "chainSelector": 16015286601757825753,
                      "additionalFields": {"value": 0}
                   }]
 			}`,
@@ -366,7 +366,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"description": "Test Proposal",
                 "transactions": [
                   {
-                     "chainIdentifier": 16015286601757825753,
+                     "chainSelector": 16015286601757825753,
                      "additionalFields": null
                   }]
 			}`,
@@ -384,7 +384,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"description": "Test Proposal",
                 "transactions": [
                   {
-                     "chainIdentifier": 16015286601757825753,
+                     "chainSelector": 16015286601757825753,
                      "additionalFields": null
                   }]
 			}`,
@@ -407,7 +407,7 @@ func TestMCMSProposal_UnmarshalJSON(t *testing.T) {
 				"description": "Test Proposal",
                 "transactions": [
                   {
-                     "chainIdentifier": 16015286601757825753,
+                     "chainSelector": 16015286601757825753,
                      "additionalFields": null
                   }]
 			}`,

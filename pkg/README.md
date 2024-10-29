@@ -89,7 +89,7 @@ Proposal types all contain a relevant `Validate()` function that can be used to 
 
 The library provides two functions to help with the execution of an MCMS Proposal:
 
-1. [`SetRootOnChain`](./proposal/mcms/executor.go#L234): Given auth and a ChainIdentifer, calls `setRoot` on the target MCMS for that given chainIdentifier.
+1. [`SetRootOnChain`](./proposal/mcms/executor.go#L234): Given auth and a ChainSelector, calls `setRoot` on the target MCMS for that given chainSelector.
 2. [`ExecuteOnChain`](./proposal/mcms/executor.go#L269): Given auth and an index, calls `execute` on the target MCMS for that given operation.
 
 ### Nuances of MCMSWithTimelockProposals
@@ -98,7 +98,7 @@ The [`MCMSWithTimelockProposal`](./proposal/timelock/mcm_with_timelock.go#L24) i
 
 1. `Operation`: One of <`Schedule` | `Cancel` | `Bypass`> which determines how to wrap each call in `Transactions`, wrapping calls in `scheduleBatch`,`cancel`, and `bypasserExecuteBatch` calls, respectively
 2. `MinDelay` is a string representation of a Go `time.Duration` ("1s", "1h", "1d", etc.). This field is only required when `Operation == Schedule` and sets the delay for each transaction to be the provided value in seconds
-3. `TimelockAddresses` is a map of `ChainIdentifier` to the target `RBACTimelock` address for each chain.
+3. `TimelockAddresses` is a map of `ChainSelector` to the target `RBACTimelock` address for each chain.
 4. Each element in `Transactions` is now an array of operations that are all to be wrapped in a single `scheduleBatch` or `bypasserExecuteBatch` call and executed atomically. There is no concept of batching natively available in the MCMS contract which is why this is only available in the RBACTimelock flavor.
 
 ## Development

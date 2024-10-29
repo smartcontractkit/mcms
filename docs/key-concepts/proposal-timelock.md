@@ -103,7 +103,7 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
     - **timelockAddress**: The address of the timelock contract on the respective chain.
 
 - **transactions**: Contains the list of transactions or batches to be executed:
-    - **chain**: The chain identifier where the transaction will be executed.
+    - **chainSelector**: The chain selector referencing the chain where the transaction will be executed.
     - **to**: The target contract address.
     - **payload**: The hexadecimal payload to send to the contract.
     - **additionalFields**: A chain-specific object with data relevant for the execution of operations on each chain.

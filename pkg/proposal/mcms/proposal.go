@@ -23,8 +23,8 @@ type MCMSProposal struct {
 	Signatures           []Signature `json:"signatures"`
 	OverridePreviousRoot bool        `json:"overridePreviousRoot"`
 
-	// Map of chain identifier to chain metadata
-	ChainMetadata map[ChainIdentifier]ChainMetadata `json:"chainMetadata"`
+	// Map of chain selector to chain metadata
+	ChainMetadata map[ChainSelector]ChainMetadata `json:"chainMetadata"`
 
 	// This is intended to be displayed as-is to signers, to give them
 	// context for the change. File authors should templatize strings for
@@ -40,7 +40,7 @@ func NewProposal(
 	validUntil uint32,
 	signatures []Signature,
 	overridePreviousRoot bool,
-	chainMetadata map[ChainIdentifier]ChainMetadata,
+	chainMetadata map[ChainSelector]ChainMetadata,
 	description string,
 	transactions []ChainOperation,
 ) (*MCMSProposal, error) {
@@ -153,14 +153,14 @@ func (m *MCMSProposal) Validate() error {
 
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
-		if _, ok := m.ChainMetadata[t.ChainIdentifier]; !ok {
+		if _, ok := m.ChainMetadata[t.ChainSelector]; !ok {
 			return &errors.MissingChainDetailsError{
-				ChainIdentifier: uint64(t.ChainIdentifier),
-				Parameter:       "chain metadata",
+				ChainSelector: uint64(t.ChainSelector),
+				Parameter:     "chain metadata",
 			}
 		}
 		// Chain specific validations.
-		if err := ValidateAdditionalFields(t.Operation.AdditionalFields, t.ChainIdentifier); err != nil {
+		if err := ValidateAdditionalFields(t.Operation.AdditionalFields, t.ChainSelector); err != nil {
 			return err
 		}
 	}

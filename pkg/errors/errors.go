@@ -71,23 +71,23 @@ func (e *InvalidVersionError) Error() string {
 
 // MissingChainDetailsError is the error for missing chain metadata.
 type MissingChainDetailsError struct {
-	Parameter       string
-	ChainIdentifier uint64
+	Parameter     string
+	ChainSelector uint64
 }
 
 // Error returns the error message.
 func (e *MissingChainDetailsError) Error() string {
-	return fmt.Sprintf("missing %s for chain %v", e.Parameter, e.ChainIdentifier)
+	return fmt.Sprintf("missing %s for chain %v", e.Parameter, e.ChainSelector)
 }
 
 // MissingChainClientError is the error for missing chain client.
 type MissingChainClientError struct {
-	ChainIdentifier uint64
+	ChainSelector uint64
 }
 
 // Error returns the error message.
 func (e *MissingChainClientError) Error() string {
-	return fmt.Sprintf("missing chain client for chain %v", e.ChainIdentifier)
+	return fmt.Sprintf("missing chain client for chain %v", e.ChainSelector)
 }
 
 type NoChainMetadataError struct {
@@ -105,13 +105,13 @@ func (e *NoTransactionsError) Error() string {
 }
 
 type InvalidSignatureError struct {
-	ChainIdentifier  uint64
+	ChainSelector    uint64
 	MCMSAddress      common.Address
 	RecoveredAddress common.Address
 }
 
 func (e *InvalidSignatureError) Error() string {
-	return fmt.Sprintf("invalid signature: received signature for address %s is not a signer on MCMS %s on chain %v", e.RecoveredAddress, e.MCMSAddress, e.ChainIdentifier)
+	return fmt.Sprintf("invalid signature: received signature for address %s is not a signer on MCMS %s on chain %v", e.RecoveredAddress, e.MCMSAddress, e.ChainSelector)
 }
 
 type InvalidMCMSConfigError struct {
@@ -123,20 +123,20 @@ func (e *InvalidMCMSConfigError) Error() string {
 }
 
 type QuorumNotMetError struct {
-	ChainIdentifier uint64
+	ChainSelector uint64
 }
 
 func (e *QuorumNotMetError) Error() string {
-	return fmt.Sprintf("quorum not met for chain %v", e.ChainIdentifier)
+	return fmt.Sprintf("quorum not met for chain %v", e.ChainSelector)
 }
 
 type InconsistentConfigsError struct {
-	ChainIdentifierA uint64
-	ChainIdentifierB uint64
+	ChainSelectorA uint64
+	ChainSelectorB uint64
 }
 
 func (e *InconsistentConfigsError) Error() string {
-	return fmt.Sprintf("inconsistent configs for chains %v and %v", e.ChainIdentifierA, e.ChainIdentifierB)
+	return fmt.Sprintf("inconsistent configs for chains %v and %v", e.ChainSelectorA, e.ChainSelectorB)
 }
 
 type TooManySignersError struct {

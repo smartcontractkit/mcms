@@ -16,22 +16,22 @@ import (
 var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
 var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA"))
 
-func calculateTransactionCounts(transactions []ChainOperation) map[ChainIdentifier]uint64 {
-	txCounts := make(map[ChainIdentifier]uint64)
+func calculateTransactionCounts(transactions []ChainOperation) map[ChainSelector]uint64 {
+	txCounts := make(map[ChainSelector]uint64)
 	for _, tx := range transactions {
-		txCounts[tx.ChainIdentifier]++
+		txCounts[tx.ChainSelector]++
 	}
 
 	return txCounts
 }
 
 func buildRootMetadatas(
-	chainMetadata map[ChainIdentifier]ChainMetadata,
-	txCounts map[ChainIdentifier]uint64,
+	chainMetadata map[ChainSelector]ChainMetadata,
+	txCounts map[ChainSelector]uint64,
 	overridePreviousRoot bool,
 	isSim bool,
-) (map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata, error) {
-	rootMetadatas := make(map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata)
+) (map[ChainSelector]gethwrappers.ManyChainMultiSigRootMetadata, error) {
+	rootMetadatas := make(map[ChainSelector]gethwrappers.ManyChainMultiSigRootMetadata)
 
 	for chainID, metadata := range chainMetadata {
 		chain, exists := chain_selectors.ChainBySelector(uint64(chainID))
@@ -44,8 +44,8 @@ func buildRootMetadatas(
 		currentTxCount, ok := txCounts[chainID]
 		if !ok {
 			return nil, &errors.MissingChainDetailsError{
-				ChainIdentifier: uint64(chainID),
-				Parameter:       "transaction count",
+				ChainSelector: uint64(chainID),
+				Parameter:     "transaction count",
 			}
 		}
 
@@ -73,55 +73,55 @@ func buildRootMetadatas(
 
 func buildOperations(
 	transactions []ChainOperation,
-	rootMetadatas map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
-	txCounts map[ChainIdentifier]uint64,
-) (map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp, []gethwrappers.ManyChainMultiSigOp) {
-	ops := make(map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp)
+	rootMetadatas map[ChainSelector]gethwrappers.ManyChainMultiSigRootMetadata,
+	txCounts map[ChainSelector]uint64,
+) (map[ChainSelector][]gethwrappers.ManyChainMultiSigOp, []gethwrappers.ManyChainMultiSigOp) {
+	ops := make(map[ChainSelector][]gethwrappers.ManyChainMultiSigOp)
 	chainAgnosticOps := make([]gethwrappers.ManyChainMultiSigOp, 0)
-	chainIdx := make(map[ChainIdentifier]uint32, len(rootMetadatas))
+	chainIdx := make(map[ChainSelector]uint32, len(rootMetadatas))
 
 	for _, tx := range transactions {
-		rootMetadata := rootMetadatas[tx.ChainIdentifier]
-		if _, ok := ops[tx.ChainIdentifier]; !ok {
-			ops[tx.ChainIdentifier] = make([]gethwrappers.ManyChainMultiSigOp, txCounts[tx.ChainIdentifier])
-			chainIdx[tx.ChainIdentifier] = 0
+		rootMetadata := rootMetadatas[tx.ChainSelector]
+		if _, ok := ops[tx.ChainSelector]; !ok {
+			ops[tx.ChainSelector] = make([]gethwrappers.ManyChainMultiSigOp, txCounts[tx.ChainSelector])
+			chainIdx[tx.ChainSelector] = 0
 		}
 
 		op := gethwrappers.ManyChainMultiSigOp{
 			ChainId:  rootMetadata.ChainId,
 			MultiSig: rootMetadata.MultiSig,
-			Nonce:    big.NewInt(rootMetadata.PreOpCount.Int64() + int64(chainIdx[tx.ChainIdentifier])),
+			Nonce:    big.NewInt(rootMetadata.PreOpCount.Int64() + int64(chainIdx[tx.ChainSelector])),
 			To:       tx.To,
 			Data:     tx.Data,
 			Value:    tx.Value,
 		}
 
 		chainAgnosticOps = append(chainAgnosticOps, op)
-		ops[tx.ChainIdentifier][chainIdx[tx.ChainIdentifier]] = op
-		chainIdx[tx.ChainIdentifier]++
+		ops[tx.ChainSelector][chainIdx[tx.ChainSelector]] = op
+		chainIdx[tx.ChainSelector]++
 	}
 
 	return ops, chainAgnosticOps
 }
 
-func sortedChainIdentifiers(chainMetadata map[ChainIdentifier]ChainMetadata) []ChainIdentifier {
-	chainIdentifiers := make([]ChainIdentifier, 0, len(chainMetadata))
+func sortedChainSelectors(chainMetadata map[ChainSelector]ChainMetadata) []ChainSelector {
+	selectors := make([]ChainSelector, 0, len(chainMetadata))
 	for chainID := range chainMetadata {
-		chainIdentifiers = append(chainIdentifiers, chainID)
+		selectors = append(selectors, chainID)
 	}
-	sort.Slice(chainIdentifiers, func(i, j int) bool { return chainIdentifiers[i] < chainIdentifiers[j] })
+	sort.Slice(selectors, func(i, j int) bool { return selectors[i] < selectors[j] })
 
-	return chainIdentifiers
+	return selectors
 }
 
 func buildMerkleTree(
-	chainIdentifiers []ChainIdentifier,
-	rootMetadatas map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata,
-	ops map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp,
+	selectors []ChainSelector,
+	rootMetadatas map[ChainSelector]gethwrappers.ManyChainMultiSigRootMetadata,
+	ops map[ChainSelector][]gethwrappers.ManyChainMultiSigOp,
 ) (*merkle.MerkleTree, error) {
 	hashLeaves := make([]common.Hash, 0)
 
-	for _, chainID := range chainIdentifiers {
+	for _, chainID := range selectors {
 		encodedRootMetadata, err := metadataEncoder(rootMetadatas[chainID])
 		if err != nil {
 			return nil, err

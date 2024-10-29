@@ -14,8 +14,8 @@ type Validator interface {
 	Validate() error
 }
 
-func ValidateAdditionalFields(operation json.RawMessage, identifier ChainIdentifier) error {
-	chainFamily, err := chain_selectors.GetSelectorFamily(uint64(identifier))
+func ValidateAdditionalFields(operation json.RawMessage, selector ChainSelector) error {
+	chainFamily, err := chain_selectors.GetSelectorFamily(uint64(selector))
 	if err != nil {
 		return err
 	}
@@ -37,7 +37,7 @@ func ValidateAdditionalFields(operation json.RawMessage, identifier ChainIdentif
 		panic("not implemented")
 
 	default:
-		return NewUnknownChainSelectorFamilyError(uint64(identifier), chainFamily)
+		return NewUnknownChainSelectorFamilyError(uint64(selector), chainFamily)
 	}
 
 	// Call Validate on the chain-specific struct
