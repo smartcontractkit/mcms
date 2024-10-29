@@ -3,17 +3,21 @@ package evm
 import (
 	"github.com/ethereum/go-ethereum/common"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	timelockTypes "github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
+	t.Parallel()
+
 	timelockAddress := common.HexToAddress("0x1234567890123456789012345678901234567890")
 	zeroHash := common.Hash{}
 
@@ -87,11 +91,13 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			converter := &TimelockConverterEVM{}
 			chainOperation, operationId, err := converter.ConvertBatchToChainOperation(tc.txn, timelockAddress, tc.minDelay, tc.operation, tc.predecessor)
 
 			if tc.expectedError != nil {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.IsType(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)

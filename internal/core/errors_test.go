@@ -7,6 +7,8 @@ import (
 )
 
 func TestUnknownChainSelectorFamilyError(t *testing.T) {
+	t.Parallel()
+
 	// Input values
 	selector := uint64(12345)
 	family := "UnknownFamily"
