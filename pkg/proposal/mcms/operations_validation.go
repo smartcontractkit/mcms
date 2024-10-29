@@ -4,6 +4,9 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/smartcontractkit/mcms/internal/core"
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -14,7 +17,7 @@ type Validator interface {
 	Validate() error
 }
 
-func ValidateAdditionalFields(operation json.RawMessage, identifier ChainIdentifier) error {
+func ValidateAdditionalFields(operation json.RawMessage, identifier types.ChainIdentifier) error {
 	chainFamily, err := chain_selectors.GetSelectorFamily(uint64(identifier))
 	if err != nil {
 		return err
@@ -30,14 +33,8 @@ func ValidateAdditionalFields(operation json.RawMessage, identifier ChainIdentif
 			return fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
 		}
 		validator = fields
-
-	case chain_selectors.FamilySolana:
-		// Solana struct and validation
-		// Example: validator = solanaFields
-		panic("not implemented")
-
 	default:
-		return NewUnknownChainSelectorFamilyError(uint64(identifier), chainFamily)
+		return core.NewUnknownChainSelectorFamilyError(uint64(identifier), chainFamily)
 	}
 
 	// Call Validate on the chain-specific struct

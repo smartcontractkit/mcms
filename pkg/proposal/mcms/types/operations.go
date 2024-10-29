@@ -1,4 +1,4 @@
-package mcms
+package types
 
 import (
 	"encoding/json"

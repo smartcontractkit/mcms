@@ -4,6 +4,8 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -15,13 +17,13 @@ import (
 func TestCalculateTransactionCounts(t *testing.T) {
 	t.Parallel()
 
-	transactions := []ChainOperation{
+	transactions := []types.ChainOperation{
 		{ChainIdentifier: TestChain1},
 		{ChainIdentifier: TestChain1},
 		{ChainIdentifier: TestChain2},
 	}
 
-	expected := map[ChainIdentifier]uint64{
+	expected := map[types.ChainIdentifier]uint64{
 		TestChain1: 2,
 		TestChain2: 1,
 	}
@@ -33,16 +35,16 @@ func TestCalculateTransactionCounts(t *testing.T) {
 func TestBuildRootMetadatas_Success(t *testing.T) {
 	t.Parallel()
 
-	chainMetadata := map[ChainIdentifier]ChainMetadata{
+	chainMetadata := map[types.ChainIdentifier]ChainMetadata{
 		TestChain1: {MCMAddress: common.HexToAddress("0x1"), StartingOpCount: 0},
 		TestChain2: {MCMAddress: common.HexToAddress("0x2"), StartingOpCount: 3},
 	}
-	txCounts := map[ChainIdentifier]uint64{
+	txCounts := map[types.ChainIdentifier]uint64{
 		TestChain1: 2,
 		TestChain2: 1,
 	}
 
-	expected := map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata{
+	expected := map[types.ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata{
 		TestChain1: {
 			ChainId:              new(big.Int).SetUint64(uint64(1337)),
 			MultiSig:             common.HexToAddress("0x1"),
@@ -67,10 +69,10 @@ func TestBuildRootMetadatas_Success(t *testing.T) {
 func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
 	t.Parallel()
 
-	chainMetadata := map[ChainIdentifier]ChainMetadata{
+	chainMetadata := map[types.ChainIdentifier]ChainMetadata{
 		0: {MCMAddress: common.HexToAddress("0x1"), StartingOpCount: 0},
 	}
-	txCounts := map[ChainIdentifier]uint64{
+	txCounts := map[types.ChainIdentifier]uint64{
 		0: 1,
 	}
 
@@ -83,24 +85,24 @@ func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
 func TestBuildOperations(t *testing.T) {
 	t.Parallel()
 
-	transactions := []ChainOperation{
+	transactions := []types.ChainOperation{
 		{ChainIdentifier: TestChain1,
-			Operation: Operation{
+			Operation: types.Operation{
 				To: common.HexToAddress("0x1"), Data: common.Hex2Bytes("0x"), Value: big.NewInt(1),
 			},
 		},
 		{ChainIdentifier: TestChain1,
-			Operation: Operation{
+			Operation: types.Operation{
 				To: common.HexToAddress("0x2"), Data: common.Hex2Bytes("0x"), Value: big.NewInt(2),
 			},
 		},
 		{ChainIdentifier: TestChain2,
-			Operation: Operation{
+			Operation: types.Operation{
 				To: common.HexToAddress("0x3"), Data: common.Hex2Bytes("0x"), Value: big.NewInt(3),
 			},
 		},
 	}
-	rootMetadatas := map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata{
+	rootMetadatas := map[types.ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata{
 		TestChain1: {
 			ChainId:    new(big.Int).SetUint64(uint64(1337)),
 			MultiSig:   common.HexToAddress("0x1"),
@@ -112,12 +114,12 @@ func TestBuildOperations(t *testing.T) {
 			PreOpCount: big.NewInt(0),
 		},
 	}
-	txCounts := map[ChainIdentifier]uint64{
+	txCounts := map[types.ChainIdentifier]uint64{
 		TestChain1: 2,
 		TestChain2: 1,
 	}
 
-	expected := map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp{
+	expected := map[types.ChainIdentifier][]gethwrappers.ManyChainMultiSigOp{
 		TestChain1: {
 			{
 				ChainId:  new(big.Int).SetUint64(uint64(1337)),
@@ -155,13 +157,13 @@ func TestBuildOperations(t *testing.T) {
 func TestSortedChainIdentifiers(t *testing.T) {
 	t.Parallel()
 
-	chainMetadata := map[ChainIdentifier]ChainMetadata{
+	chainMetadata := map[types.ChainIdentifier]ChainMetadata{
 		TestChain2: {},
 		TestChain1: {},
 		TestChain3: {},
 	}
 
-	expected := []ChainIdentifier{TestChain1, TestChain3, TestChain2}
+	expected := []types.ChainIdentifier{TestChain1, TestChain3, TestChain2}
 
 	result := sortedChainIdentifiers(chainMetadata)
 	assert.Equal(t, expected, result)
@@ -170,8 +172,8 @@ func TestSortedChainIdentifiers(t *testing.T) {
 func TestBuildMerkleTree(t *testing.T) {
 	t.Parallel()
 
-	chainIdentifiers := []ChainIdentifier{TestChain1, TestChain2}
-	ops := map[ChainIdentifier][]gethwrappers.ManyChainMultiSigOp{
+	chainIdentifiers := []types.ChainIdentifier{TestChain1, TestChain2}
+	ops := map[types.ChainIdentifier][]gethwrappers.ManyChainMultiSigOp{
 		TestChain1: {
 			{
 				ChainId:  new(big.Int).SetUint64(uint64(1337)),
@@ -193,7 +195,7 @@ func TestBuildMerkleTree(t *testing.T) {
 			},
 		},
 	}
-	rootMetadatas := map[ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata{
+	rootMetadatas := map[types.ChainIdentifier]gethwrappers.ManyChainMultiSigRootMetadata{
 		TestChain1: {
 			ChainId:              big.NewInt(1),
 			MultiSig:             common.HexToAddress("0x1"),
