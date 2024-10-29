@@ -2,7 +2,10 @@ package proposal
 
 import (
 	"crypto/ecdsa"
+	"errors"
+	"fmt"
 
+	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
@@ -16,19 +19,84 @@ func SignPlainKey(privateKey *ecdsa.PrivateKey, proposal Proposal) error {
 		return err
 	}
 
-	executor, err := proposal.Signable(false, nil)
+	signable, err := proposal.Signable(false, nil)
 	if err != nil {
 		return err
 	}
 
 	// Get the signing hash
-	payload, err := executor.SigningHash()
+	payload, err := signable.SigningHash()
 	if err != nil {
 		return err
 	}
 
 	// Sign the payload
 	sig, err := crypto.Sign(payload.Bytes(), privateKey)
+	if err != nil {
+		return err
+	}
+
+	// Unmarshal signature
+	sigObj, err := mcms.NewSignatureFromBytes(sig)
+	if err != nil {
+		return err
+	}
+
+	// Add signature to proposal
+	proposal.AddSignature(sigObj)
+
+	return nil
+}
+
+func SignLedger(derivationPath []uint32, proposal Proposal) error {
+	// Validate proposal
+	if err := proposal.Validate(); err != nil {
+		return fmt.Errorf("failed to validate proposal: %w", err)
+	}
+
+	// Load ledger
+	ledgerhub, err := usbwallet.NewLedgerHub()
+	if err != nil {
+		return fmt.Errorf("failed to open ledger hub: %w", err)
+	}
+
+	// Get the first wallet
+	wallets := ledgerhub.Wallets()
+	if len(wallets) == 0 {
+		return errors.New("no wallets found")
+	}
+	wallet := wallets[0]
+
+	fmt.Printf("Found %d wallets, using first one\n", len(wallets))
+
+	// Open the ledger.
+	if err := wallet.Open(""); err != nil {
+		return fmt.Errorf("failed to open wallet: %w", err)
+	}
+	defer wallet.Close()
+
+	fmt.Printf("Opened wallet, have accounts %v\n", wallet.Accounts())
+
+	// Load account.
+	account, err := wallet.Derive(derivationPath, true)
+	if err != nil {
+		return fmt.Errorf("is your ledger ethereum app open? Failed to derive account: %w derivation path %v", err, derivationPath)
+	}
+	fmt.Println("Found account: ", account.Address.String())
+
+	// Create signable
+	signable, err := proposal.Signable(false, nil)
+	if err != nil {
+		return err
+	}
+
+	payload, err := signable.SigningHash()
+	if err != nil {
+		return err
+	}
+
+	// Sign the payload with EIP 191.
+	sig, err := wallet.SignText(account, payload.Bytes())
 	if err != nil {
 		return err
 	}
