@@ -90,12 +90,27 @@ func TestExtractSetConfigInputs(t *testing.T) {
 	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(configuration)
+	configurator := EVMConfigurator{}
+	setConfigInput, err := configurator.SetConfigInputs(*configuration)
 	require.NoError(t, err)
-	assert.Equal(t, [32]uint8{2, 1}, groupQuorums)
-	assert.Equal(t, [32]uint8{0, 0}, groupParents)
+
+	signerAddresses, signerGroups := extractSignerAddressesAndGroups(setConfigInput)
+
+	assert.Equal(t, [32]uint8{2, 1}, setConfigInput.GroupQuorums)
+	assert.Equal(t, [32]uint8{0, 0}, setConfigInput.GroupParents)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3")}, signerAddresses)
 	assert.Equal(t, []uint8{0, 0, 1}, signerGroups)
+}
+
+func extractSignerAddressesAndGroups(setConfigInput bindings.ManyChainMultiSigConfig) ([]common.Address, []uint8) {
+	signerAddresses := make([]common.Address, len(setConfigInput.Signers))
+	signerGroups := make([]uint8, len(setConfigInput.Signers))
+	for i, signer := range setConfigInput.Signers {
+		signerAddresses[i] = signer.Addr
+		signerGroups[i] = signer.Group
+	}
+
+	return signerAddresses, signerGroups
 }
 
 // Test case 2: Valid configuration with only root signers
@@ -111,11 +126,15 @@ func TestExtractSetConfigInputs_OnlyRootSigners(t *testing.T) {
 	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(configuration)
+	configurator := EVMConfigurator{}
+	setConfigInput, err := configurator.SetConfigInputs(*configuration)
+	require.NoError(t, err)
+
+	signerAddresses, signerGroups := extractSignerAddressesAndGroups(setConfigInput)
 
 	require.NoError(t, err)
-	assert.Equal(t, [32]uint8{1, 0}, groupQuorums)
-	assert.Equal(t, [32]uint8{0, 0}, groupParents)
+	assert.Equal(t, [32]uint8{1, 0}, setConfigInput.GroupQuorums)
+	assert.Equal(t, [32]uint8{0, 0}, setConfigInput.GroupParents)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, signerAddresses)
 	assert.Equal(t, []uint8{0, 0}, signerGroups)
 }
@@ -154,11 +173,15 @@ func TestExtractSetConfigInputs_OnlyGroups(t *testing.T) {
 	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(configuration)
+	configurator := EVMConfigurator{}
+	setConfigInput, err := configurator.SetConfigInputs(*configuration)
+	require.NoError(t, err)
+
+	signerAddresses, signerGroups := extractSignerAddressesAndGroups(setConfigInput)
 
 	require.NoError(t, err)
-	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
-	assert.Equal(t, [32]uint8{0, 0, 0, 0}, groupParents)
+	assert.Equal(t, [32]uint8{2, 1, 1, 1}, setConfigInput.GroupQuorums)
+	assert.Equal(t, [32]uint8{0, 0, 0, 0}, setConfigInput.GroupParents)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
 	assert.Equal(t, []uint8{1, 2, 3}, signerGroups)
 }
@@ -196,11 +219,15 @@ func TestExtractSetConfigInputs_NestedSignersAndGroups(t *testing.T) {
 	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(configuration)
+	configurator := EVMConfigurator{}
+	setConfigInput, err := configurator.SetConfigInputs(*configuration)
+	require.NoError(t, err)
+
+	signerAddresses, signerGroups := extractSignerAddressesAndGroups(setConfigInput)
 
 	require.NoError(t, err)
-	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
-	assert.Equal(t, [32]uint8{0, 0, 1, 0}, groupParents)
+	assert.Equal(t, [32]uint8{2, 1, 1, 1}, setConfigInput.GroupQuorums)
+	assert.Equal(t, [32]uint8{0, 0, 1, 0}, setConfigInput.GroupParents)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
 	assert.Equal(t, []uint8{0, 0, 1, 2, 3}, signerGroups)
 }
@@ -238,11 +265,15 @@ func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
 	assert.NotNil(t, configuration)
 	require.NoError(t, err)
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := ExtractSetConfigInputs(configuration)
+	configurator := EVMConfigurator{}
+	setConfigInput, err := configurator.SetConfigInputs(*configuration)
+	require.NoError(t, err)
+
+	signerAddresses, signerGroups := extractSignerAddressesAndGroups(setConfigInput)
 
 	require.NoError(t, err)
-	assert.Equal(t, [32]uint8{2, 1, 1, 1}, groupQuorums)
-	assert.Equal(t, [32]uint8{0, 0, 1, 0}, groupParents)
+	assert.Equal(t, [32]uint8{2, 1, 1, 1}, setConfigInput.GroupQuorums)
+	assert.Equal(t, [32]uint8{0, 0, 1, 0}, setConfigInput.GroupParents)
 	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
 	assert.Equal(t, []uint8{0, 0, 1, 2, 3}, signerGroups)
 }
