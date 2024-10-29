@@ -5,8 +5,6 @@ import (
 
 	"encoding/json"
 
-	"encoding/json"
-
 	mcmsTypes "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
 
@@ -112,7 +110,7 @@ func NewMCMSWithTimelockProposalFromFile(filePath string) (*MCMSWithTimelockProp
 func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
 	// First, marshal the Transactions field from MCMSWithTimelockProposal
 	transactionsBytes, err := json.Marshal(struct {
-		Transactions []BatchChainOperation `json:"transactions"`
+		Transactions []types.BatchChainOperation `json:"transactions"`
 	}{
 		Transactions: m.Transactions,
 	})
@@ -130,9 +128,9 @@ func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
 
 	// Finally, marshal the remaining fields specific to MCMSWithTimelockProposal
 	mcmsWithTimelockFieldsBytes, err := json.Marshal(struct {
-		Operation         TimelockOperation                       `json:"operation"`
-		MinDelay          string                                  `json:"minDelay"`
-		TimelockAddresses map[mcms.ChainIdentifier]common.Address `json:"timelockAddresses"`
+		Operation         types.TimelockOperationType                  `json:"operation"`
+		MinDelay          string                                       `json:"minDelay"`
+		TimelockAddresses map[mcmsTypes.ChainIdentifier]common.Address `json:"timelockAddresses"`
 	}{
 		Operation:         m.Operation,
 		MinDelay:          m.MinDelay,
@@ -158,7 +156,7 @@ func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
 func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 	// Unmarshal Transactions field from MCMSWithTimelockProposal
 	transactionsFields := struct {
-		Transactions []BatchChainOperation `json:"transactions"`
+		Transactions []types.BatchChainOperation `json:"transactions"`
 	}{}
 
 	if err := json.Unmarshal(data, &transactionsFields); err != nil {
@@ -188,9 +186,9 @@ func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 
 	// Unmarshal the remaining fields specific to MCMSWithTimelockProposal
 	mcmsWithTimelockFields := struct {
-		Operation         TimelockOperation                       `json:"operation"`
-		MinDelay          string                                  `json:"minDelay"`
-		TimelockAddresses map[mcms.ChainIdentifier]common.Address `json:"timelockAddresses"`
+		Operation         types.TimelockOperationType                  `json:"operation"`
+		MinDelay          string                                       `json:"minDelay"`
+		TimelockAddresses map[mcmsTypes.ChainIdentifier]common.Address `json:"timelockAddresses"`
 	}{}
 
 	if err := json.Unmarshal(data, &mcmsWithTimelockFields); err != nil {
