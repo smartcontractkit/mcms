@@ -2,6 +2,7 @@ package evm
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -37,4 +38,13 @@ func NewEVMOperation(
 			Tags:         tags,
 		},
 	}
+}
+
+// Validate ensures the EVM-specific fields are correct
+func (o EVMAdditionalFields) Validate() error {
+	if o.Value == nil || o.Value.Sign() < 0 {
+		return fmt.Errorf("invalid EVM value: %v", o.Value)
+	}
+
+	return nil
 }

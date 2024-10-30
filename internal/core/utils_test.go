@@ -48,7 +48,12 @@ func TestFromFile(t *testing.T) {
 
 func TestWriteProposalToFile(t *testing.T) {
 	t.Parallel()
-
+	// additionalFields, err := json.Marshal(struct {
+	// 	Value *big.Int `json:"value"`
+	// }{
+	// 	Value: big.NewInt(0),
+	// })
+	// require.NoError(t, err)
 	// Define a sample proposal struct
 	proposal := SampleStruct{
 		Name:  "John Doe",

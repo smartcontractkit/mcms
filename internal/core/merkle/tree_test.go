@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestNewMerkleTree tests the creation of a new Merkle tree
-func TestNewMerkleTree(t *testing.T) {
+// TestNewTree tests the creation of a new Merkle tree
+func TestNewTree(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -64,7 +64,7 @@ func TestNewMerkleTree(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tree := NewMerkleTree(tt.leaves)
+			tree := NewTree(tt.leaves)
 
 			assert.NotNil(t, tree)
 			assert.Len(t, tree.Layers, tt.expectedLayers)
@@ -132,7 +132,7 @@ func TestGetProof(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tree := NewMerkleTree(tt.leaves)
+			tree := NewTree(tt.leaves)
 
 			// Test valid proofs if expectedProofLen is greater than 0
 			if tt.expectedProofLen > 0 {
@@ -244,7 +244,7 @@ func TestGetProofs(t *testing.T) {
 			t.Parallel()
 
 			// Create Merkle tree with given leaves
-			tree := NewMerkleTree(tt.leaves)
+			tree := NewTree(tt.leaves)
 
 			// Call GetProofs to get proofs for all leaves
 			proofs, err := tree.GetProofs()

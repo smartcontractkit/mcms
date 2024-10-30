@@ -87,7 +87,7 @@ func NewSignable(
 
 	return &Signable{
 		MCMSProposal: proposal,
-		Tree:         merkle.NewMerkleTree(hashLeaves),
+		Tree:         merkle.NewTree(hashLeaves),
 		Encoders:     encoders,
 		Inspectors:   inspectors,
 		ChainNonces:  chainNonces,
