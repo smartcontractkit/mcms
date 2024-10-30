@@ -13,6 +13,8 @@ import (
 )
 
 func TestEVMEncoder_HashOperation(t *testing.T) {
+	t.Parallel()
+
 	encoder := NewEVMEncoder(5, 1, false)
 
 	metadata := mcms.ChainMetadata{
@@ -32,6 +34,8 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 }
 
 func TestEVMEncoder_HashMetadata(t *testing.T) {
+	t.Parallel()
+
 	encoder := NewEVMEncoder(5, 1, false)
 
 	metadata := mcms.ChainMetadata{
@@ -46,6 +50,8 @@ func TestEVMEncoder_HashMetadata(t *testing.T) {
 }
 
 func TestEVMEncoder_ToGethOperation(t *testing.T) {
+	t.Parallel()
+
 	encoder := NewEVMEncoder(5, 1, false)
 
 	metadata := mcms.ChainMetadata{
@@ -74,6 +80,8 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 }
 
 func TestEVMEncoder_ToGethRootMetadata(t *testing.T) {
+	t.Parallel()
+
 	encoder := NewEVMEncoder(5, 1, false)
 
 	metadata := mcms.ChainMetadata{
