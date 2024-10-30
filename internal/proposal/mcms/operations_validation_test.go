@@ -82,7 +82,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := ValidateAdditionalFields(tt.operation.AdditionalFields, mcms.ChainSelector(tt.operation.ChainSelector))
+			err := ValidateAdditionalFields(tt.operation.AdditionalFields, tt.operation.ChainSelector)
 
 			if tt.expectedErr != nil {
 				require.Error(t, err)
