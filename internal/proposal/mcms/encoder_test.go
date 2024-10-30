@@ -11,6 +11,8 @@ import (
 )
 
 func TestEncoder_EVM_NoSim(t *testing.T) {
+	t.Parallel()
+
 	chainSelector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 	encoder, err := NewEncoder(
 		mcms.ChainSelector(chainSelector),
@@ -29,6 +31,8 @@ func TestEncoder_EVM_NoSim(t *testing.T) {
 }
 
 func TestEncoder_EVM_Sim(t *testing.T) {
+	t.Parallel()
+
 	chainSelector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 	encoder, err := NewEncoder(
 		mcms.ChainSelector(chainSelector),
@@ -47,6 +51,8 @@ func TestEncoder_EVM_Sim(t *testing.T) {
 }
 
 func TestEncoder_UnknownSelector(t *testing.T) {
+	t.Parallel()
+
 	chainSelector := 0
 	_, err := NewEncoder(
 		mcms.ChainSelector(chainSelector),
