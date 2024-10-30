@@ -54,9 +54,8 @@ func TestEncoder_EVM_Sim(t *testing.T) {
 func TestEncoder_UnknownSelector(t *testing.T) {
 	t.Parallel()
 
-	chainSelector := 0
 	_, err := NewEncoder(
-		mcms.ChainSelector(chainSelector),
+		0,
 		5,
 		false,
 		true,
