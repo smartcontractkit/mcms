@@ -6,17 +6,19 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/internal/evm"
 	"github.com/smartcontractkit/mcms/internal/evm/bindings"
+	evm_config "github.com/smartcontractkit/mcms/internal/evm/config"
 )
 
 type EVMInspector struct {
-	EVMConfigurator
-	client ContractDeployBackend
+	evm_config.EVMConfigurator
+	client evm.ContractDeployBackend
 }
 
-func NewEVMInspector(client ContractDeployBackend) *EVMInspector {
+func NewEVMInspector(client evm.ContractDeployBackend) *EVMInspector {
 	return &EVMInspector{
-		EVMConfigurator: EVMConfigurator{},
+		EVMConfigurator: evm_config.EVMConfigurator{},
 		client:          client,
 	}
 }

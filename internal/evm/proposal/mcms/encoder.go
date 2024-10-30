@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/internal/evm"
 	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
 
@@ -41,7 +42,7 @@ func (e *EVMEncoder) HashOperation(opCount uint32, metadata mcms.ChainMetadata, 
 	}
 
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
-	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, op)
+	encoded, err := evm.ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, op)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -51,7 +52,7 @@ func (e *EVMEncoder) HashOperation(opCount uint32, metadata mcms.ChainMetadata, 
 
 func (e *EVMEncoder) HashMetadata(metadata mcms.ChainMetadata) (common.Hash, error) {
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
-	encoded, err := ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA, e.ToGethRootMetadata(metadata))
+	encoded, err := evm.ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA, e.ToGethRootMetadata(metadata))
 	if err != nil {
 		return common.Hash{}, err
 	}

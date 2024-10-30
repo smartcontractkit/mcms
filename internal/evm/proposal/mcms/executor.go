@@ -8,6 +8,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/internal/evm"
 	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
 
@@ -17,7 +18,7 @@ type EVMExecutor struct {
 	auth *bind.TransactOpts
 }
 
-func NewEVMExecutor(encoder *EVMEncoder, client ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
+func NewEVMExecutor(encoder *EVMEncoder, client evm.ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
 	return &EVMExecutor{
 		EVMEncoder:   encoder,
 		EVMInspector: NewEVMInspector(client),
@@ -76,7 +77,7 @@ func (e *EVMExecutor) SetRoot(
 		validUntil,
 		e.ToGethRootMetadata(metadata),
 		core.TransformHashes(proof),
-		transformSignatures(sortedSignatures),
+		evm.TransformSignatures(sortedSignatures),
 	)
 
 	return tx.Hash().Hex(), err

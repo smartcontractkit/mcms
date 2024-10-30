@@ -6,7 +6,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
-	"github.com/smartcontractkit/mcms/internal/evm"
+	evm_mcms "github.com/smartcontractkit/mcms/internal/evm/proposal/mcms"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 )
@@ -22,7 +22,7 @@ func ValidateAdditionalFields(operation json.RawMessage, identifier mcms.ChainSe
 	switch chainFamily {
 	case chain_selectors.FamilyEVM:
 		// Unmarshal and validate for EVM
-		var fields evm.EVMAdditionalFields
+		var fields evm_mcms.EVMAdditionalFields
 		if err := json.Unmarshal(operation, &fields); err != nil {
 			return fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
 		}

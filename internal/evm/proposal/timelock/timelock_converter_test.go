@@ -6,6 +6,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
+	evm_mcms "github.com/smartcontractkit/mcms/internal/evm/proposal/mcms"
 
 	"math/big"
 	"testing"
@@ -33,7 +34,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Schedule operation",
 			txn: timelock.BatchChainOperation{
 				Batch: []mcms.Operation{
-					NewEVMOperation(
+					evm_mcms.NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -53,7 +54,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Cancel operation",
 			txn: timelock.BatchChainOperation{
 				Batch: []mcms.Operation{
-					NewEVMOperation(
+					evm_mcms.NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -73,7 +74,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Invalid operation",
 			txn: timelock.BatchChainOperation{
 				Batch: []mcms.Operation{
-					NewEVMOperation(
+					evm_mcms.NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),

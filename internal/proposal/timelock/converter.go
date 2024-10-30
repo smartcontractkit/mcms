@@ -6,7 +6,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
-	"github.com/smartcontractkit/mcms/internal/evm"
+	evm_timelock "github.com/smartcontractkit/mcms/internal/evm/proposal/timelock"
 )
 
 // ToChainOperation converts a batch of chain operations to a single types.ChainOperation
@@ -26,7 +26,7 @@ func ToChainOperation(
 
 	switch chainFamily {
 	case chain_selectors.FamilyEVM:
-		converter = &evm.TimelockConverterEVM{}
+		converter = &evm_timelock.TimelockConverterEVM{}
 	default:
 		return mcms.ChainOperation{}, common.Hash{}, core.NewUnknownChainSelectorFamilyError(uint64(t.ChainSelector), chainFamily)
 	}
