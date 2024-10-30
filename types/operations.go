@@ -22,3 +22,14 @@ type ChainOperation struct {
 	ChainIdentifier `json:"chainIdentifier"`
 	Operation
 }
+
+type BatchChainOperation struct {
+	// Chain identifier is used to map this batch to the correct Chain Encoder
+	ChainIdentifier ChainIdentifier `json:"chainIdentifier"`
+
+	// Operations to be executed, cancelled or bypassed
+	Batch []Operation `json:"batch"`
+
+	// Address of the targeted timelock contract
+	TimelockAddress string `json:"timelockAddress"`
+}

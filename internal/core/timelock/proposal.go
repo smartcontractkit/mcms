@@ -1,5 +1,7 @@
 package timelock
 
+import "github.com/smartcontractkit/mcms/types"
+
 // TimelockEncoder is an interface that all chain timelock proposals must implement
 type TimelockEncoder interface {
 	// Converts the proposal into the chain specific transaction data format the signer needs
@@ -20,7 +22,7 @@ type TimelockProposal struct {
 	Operation TimelockOperation `json:"operation"` // Always 'schedule', 'cancel', or 'bypass'
 
 	// List of batches to be operated from the Timelock contract
-	Batches []BatchChainOperation
+	Batches []types.BatchChainOperation
 
 	// MinDelay is the time duration for the timelock to wait before executing the transaction (only useful when scheduling)
 	// Q: Format ? (1d, 1w, 1m, 1y, null)
@@ -28,7 +30,7 @@ type TimelockProposal struct {
 	MinDelay string `json:"minDelay"`
 }
 
-func NewTimelockProposal(operation TimelockOperation, batches []BatchChainOperation, delay string) (*TimelockProposal, error) {
+func NewTimelockProposal(operation TimelockOperation, batches []types.BatchChainOperation, delay string) (*TimelockProposal, error) {
 	t := TimelockProposal{
 		Operation: operation,
 		Batches:   batches,
@@ -53,10 +55,6 @@ func (t TimelockProposal) Validate() error {
 
 	if len(t.Batches) == 0 {
 		return &NoTransactionsError{}
-	}
-
-	if t.Operation != Schedule || t.Operation != Cancel || t.Operation != Bypass {
-		return &InvalidOperationError{}
 	}
 
 	return nil
