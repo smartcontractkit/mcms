@@ -4,8 +4,8 @@ import (
 	"math/big"
 	"sort"
 
-	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"

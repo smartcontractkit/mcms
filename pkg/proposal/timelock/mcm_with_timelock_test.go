@@ -1,3 +1,4 @@
+// TODO: migrate and remove
 package timelock
 
 import (
@@ -10,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	types2 "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	types3 "github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
+	types2 "github.com/smartcontractkit/mcms/types"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 

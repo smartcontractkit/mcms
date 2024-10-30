@@ -9,8 +9,8 @@ import (
 
 	"github.com/smartcontractkit/mcms/pkg/errors"
 	owner "github.com/smartcontractkit/mcms/pkg/gethwrappers"
-	mcmsTypes "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	timelockTypes "github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
+	mcmsTypes "github.com/smartcontractkit/mcms/types"
 )
 
 var ZERO_HASH = common.Hash{}

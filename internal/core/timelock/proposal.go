@@ -23,8 +23,8 @@ type TimelockProposal struct {
 	Batches []BatchChainOperation
 
 	// MinDelay is the time duration for the timelock to wait before executing the transaction (only useful when scheduling)
-	// TODO: Format ? (1d, 1w, 1m, 1y, null)
-	// TODO: Why minDelay and not delay? MinDelay could be confused with the Timelock configured minimum delay
+	// Q: Format ? (1d, 1w, 1m, 1y, null)
+	// Q: Why minDelay and not delay? MinDelay could be confused with the Timelock configured minimum delay
 	MinDelay string `json:"minDelay"`
 }
 

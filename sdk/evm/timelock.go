@@ -15,6 +15,7 @@ func NewEVMTimelockProposal(proposal timelock.TimelockProposal) *EVMTimelockProp
 // Ensures EVMTimelockProposal follows TimelockEncoder interface
 var _ timelock.TimelockEncoder = (*EVMTimelockProposal)(nil)
 
+// Q: When is predecessor retrieved?
 func (p *EVMTimelockProposal) Encode() ([]byte, error) {
 	// TODO: Implement the EVM specific encoding logic
 	return nil, nil

@@ -5,8 +5,8 @@ import (
 
 	"encoding/json"
 
-	mcmsTypes "github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
 	"github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
+	mcmsTypes "github.com/smartcontractkit/mcms/types"
 
 	"github.com/ethereum/go-ethereum/common"
 
