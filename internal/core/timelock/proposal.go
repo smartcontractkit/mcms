@@ -1,10 +1,10 @@
 package timelock
 
-import (
-	"github.com/ethereum/go-ethereum/common"
-)
-
-var ZERO_HASH = common.Hash{}
+// TimelockEncoder is an interface that all chain timelock proposals must implement
+type TimelockEncoder interface {
+	// Converts the proposal into the chain specific transaction data format the signer needs
+	Encode() ([]byte, error)
+}
 
 type TimelockOperation string
 
@@ -14,8 +14,8 @@ const (
 	Bypass   TimelockOperation = "bypass"
 )
 
-// Chain agnostic configuration for a timelock proposal
-type TimelockConfig struct {
+// Chain agnostic configuration for a timelock proposal. These proposals target a timelock contract per chain and has no context about the signer (EOA, MCMS, etc)
+type TimelockProposal struct {
 	// What the Timelock will perform on the transactions specified
 	Operation TimelockOperation `json:"operation"` // Always 'schedule', 'cancel', or 'bypass'
 
@@ -28,15 +28,8 @@ type TimelockConfig struct {
 	MinDelay string `json:"minDelay"`
 }
 
-// TimelockProposal is an interface that all chain timelock proposals must implement
-type TimelockProposal interface {
-	// Converts the proposal into the chain specific transaction data format the signer needs
-	Encode() ([]byte, error)
-}
-
-// A TimelockProposal targets a timelock contract per chain and has no context about the signer (EOA, MCMS, etc)
-func NewTimelockConfig(operation TimelockOperation, batches []BatchChainOperation, delay string) (*TimelockConfig, error) {
-	t := TimelockConfig{
+func NewTimelockProposal(operation TimelockOperation, batches []BatchChainOperation, delay string) (*TimelockProposal, error) {
+	t := TimelockProposal{
 		Operation: operation,
 		Batches:   batches,
 		MinDelay:  delay,
@@ -49,7 +42,7 @@ func NewTimelockConfig(operation TimelockOperation, batches []BatchChainOperatio
 	return &t, nil
 }
 
-func (t TimelockConfig) Validate() error {
+func (t TimelockProposal) Validate() error {
 	if t.Operation == "" {
 		return &InvalidOperationError{}
 	}

@@ -3,7 +3,7 @@ package timelock
 import "github.com/smartcontractkit/mcms/pkg/proposal/mcms"
 
 type BatchChainOperation struct {
-	// TODO: Why is chainIDentifier needed?
+	// Chain identifier is used to map this batch to the correct Chain Encoder
 	ChainIdentifier mcms.ChainIdentifier `json:"chainIdentifier"`
 
 	// Operations to be executed, cancelled or bypassed
