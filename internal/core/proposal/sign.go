@@ -78,7 +78,7 @@ func SignLedger(
 	wallet := wallets[0]
 
 	// Open the ledger.
-	if err := wallet.Open(""); err != nil {
+	if err = wallet.Open(""); err != nil {
 		return fmt.Errorf("failed to open wallet: %w", err)
 	}
 	defer wallet.Close()
