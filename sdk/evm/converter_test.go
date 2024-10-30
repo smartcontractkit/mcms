@@ -4,9 +4,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/smartcontractkit/mcms/pkg/errors"
-	"github.com/smartcontractkit/mcms/pkg/proposal/mcms/types"
-	timelockTypes "github.com/smartcontractkit/mcms/pkg/proposal/timelock/types"
+	core "github.com/smartcontractkit/mcms/internal/core"
+	"github.com/smartcontractkit/mcms/types"
 
 	"math/big"
 	"testing"
@@ -23,16 +22,16 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		txn            timelockTypes.BatchChainOperation
+		txn            types.BatchChainOperation
 		minDelay       string
-		operation      timelockTypes.TimelockOperationType
+		operation      types.TimelockOperationType
 		predecessor    common.Hash
 		expectedError  error
 		expectedOpType string
 	}{
 		{
 			name: "Schedule operation",
-			txn: timelockTypes.BatchChainOperation{
+			txn: types.BatchChainOperation{
 				Batch: []types.Operation{
 					{
 						To:    common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
@@ -44,14 +43,14 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 				ChainIdentifier: types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
-			operation:      timelockTypes.Schedule,
+			operation:      types.Schedule,
 			predecessor:    zeroHash,
 			expectedError:  nil,
 			expectedOpType: "RBACTimelock",
 		},
 		{
 			name: "Cancel operation",
-			txn: timelockTypes.BatchChainOperation{
+			txn: types.BatchChainOperation{
 				Batch: []types.Operation{
 					{
 						To:    common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
@@ -63,14 +62,14 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 				ChainIdentifier: types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
-			operation:      timelockTypes.Cancel,
+			operation:      types.Cancel,
 			predecessor:    zeroHash,
 			expectedError:  nil,
 			expectedOpType: "RBACTimelock",
 		},
 		{
 			name: "Invalid operation",
-			txn: timelockTypes.BatchChainOperation{
+			txn: types.BatchChainOperation{
 				Batch: []types.Operation{
 					{
 						To:    common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
@@ -82,9 +81,9 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 				ChainIdentifier: types.ChainIdentifier(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
-			operation:      timelockTypes.TimelockOperationType("invalid"),
+			operation:      types.TimelockOperationType("invalid"),
 			predecessor:    zeroHash,
-			expectedError:  &errors.InvalidTimelockOperationError{ReceivedTimelockOperation: "invalid"},
+			expectedError:  &core.InvalidTimelockOperationError{ReceivedTimelockOperation: "invalid"},
 			expectedOpType: "",
 		},
 	}
