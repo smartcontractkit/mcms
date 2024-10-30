@@ -169,7 +169,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 			{
 				ChainSelector: TestChain1,
 				Operation: evm.NewEVMOperation(
-					timelock.Address().Hex(),
+					timelock.Address(),
 					grantRoleData,
 					big.NewInt(0),
 					"RBACTimelock",
@@ -301,7 +301,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 			{
 				ChainSelector: TestChain1,
 				Operation: evm.NewEVMOperation(
-					timelock.Address().Hex(),
+					timelock.Address(),
 					grantRoleData,
 					big.NewInt(0),
 					"Sample contract",
@@ -428,7 +428,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		operations[i] = mcms.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm.NewEVMOperation(
-				timelock.Address().Hex(),
+				timelock.Address(),
 				data,
 				big.NewInt(0),
 				"Sample contract",
@@ -574,7 +574,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		operations[i] = mcms.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm.NewEVMOperation(
-				timelock.Address().Hex(),
+				timelock.Address(),
 				data,
 				big.NewInt(0),
 				"Sample contract",

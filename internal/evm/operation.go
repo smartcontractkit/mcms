@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 )
 
@@ -12,7 +13,7 @@ type EVMAdditionalFields struct {
 }
 
 func NewEVMOperation(
-	to string,
+	to common.Address,
 	data []byte,
 	value *big.Int,
 	contractType string,
@@ -28,7 +29,7 @@ func NewEVMOperation(
 	}
 
 	return mcms.Operation{
-		To:               to,
+		To:               to.Hex(),
 		Data:             data,
 		AdditionalFields: marshalledAdditionalFields,
 		OperationMetadata: mcms.OperationMetadata{

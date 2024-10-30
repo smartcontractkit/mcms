@@ -1,205 +1,95 @@
 package evm
 
-// func TestBuildRootMetadatas_Success(t *testing.T) {
-// 	t.Parallel()
+import (
+	"math/big"
+	"testing"
 
-// 	chainMetadata := map[ChainIdentifier]ChainMetadata{
-// 		TestChain1: {MCMAddress: common.HexToAddress("0x1"), StartingOpCount: 0},
-// 		TestChain2: {MCMAddress: common.HexToAddress("0x2"), StartingOpCount: 3},
-// 	}
-// 	txCounts := map[ChainIdentifier]uint64{
-// 		TestChain1: 2,
-// 		TestChain2: 1,
-// 	}
+	"github.com/ethereum/go-ethereum/common"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/internal/evm/bindings"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+)
 
-// 	expected := map[ChainIdentifier]bindings.ManyChainMultiSigRootMetadata{
-// 		TestChain1: {
-// 			ChainId:              new(big.Int).SetUint64(uint64(1337)),
-// 			MultiSig:             common.HexToAddress("0x1"),
-// 			PreOpCount:           big.NewInt(0),
-// 			PostOpCount:          big.NewInt(2),
-// 			OverridePreviousRoot: true,
-// 		},
-// 		TestChain2: {
-// 			ChainId:              new(big.Int).SetUint64(11155111),
-// 			MultiSig:             common.HexToAddress("0x2"),
-// 			PreOpCount:           big.NewInt(3),
-// 			PostOpCount:          big.NewInt(4),
-// 			OverridePreviousRoot: true,
-// 		},
-// 	}
+func TestEVMEncoder_HashOperation(t *testing.T) {
+	encoder := NewEVMEncoder(5, 1, false)
 
-// 	result, err := buildRootMetadatas(chainMetadata, txCounts, true, false)
-// 	require.NoError(t, err)
-// 	assert.Equal(t, expected, result)
-// }
+	metadata := mcms.ChainMetadata{
+		StartingOpCount: 0,
+		MCMAddress:      "0x1",
+	}
 
-// func TestBuildRootMetadatas_InvalidChainID(t *testing.T) {
-// 	t.Parallel()
+	operation := NewEVMOperation(common.HexToAddress("0x2"), []byte("data"), new(big.Int).SetUint64(1000000000000000000), "", []string{})
 
-// 	chainMetadata := map[ChainIdentifier]ChainMetadata{
-// 		0: {MCMAddress: common.HexToAddress("0x1"), StartingOpCount: 0},
-// 	}
-// 	txCounts := map[ChainIdentifier]uint64{
-// 		0: 1,
-// 	}
+	hash, err := encoder.HashOperation(0, metadata, mcms.ChainOperation{
+		ChainSelector: mcms.ChainSelector(chain_selectors.EvmChainIdToChainSelector()[1]),
+		Operation:     operation,
+	})
+	require.NoError(t, err)
+	expectedHash := "0x4bd3162db447382fc6e5b2a8eb24e19e901feecb90c5071bac5deee3cb58cb97" // Replace with actual expected hash value
+	assert.Equal(t, expectedHash, hash.Hex())
+}
 
-// 	result, err := buildRootMetadatas(chainMetadata, txCounts, true, false)
-// 	require.Error(t, err)
-// 	assert.Nil(t, result)
-// 	assert.IsType(t, &errors.InvalidChainIDError{}, err)
-// }
+func TestEVMEncoder_HashMetadata(t *testing.T) {
+	encoder := NewEVMEncoder(5, 1, false)
 
-// func TestBuildOperations(t *testing.T) {
-// 	t.Parallel()
+	metadata := mcms.ChainMetadata{
+		StartingOpCount: 0,
+		MCMAddress:      "0x1",
+	}
 
-// 	transactions := []ChainOperation{
-// 		{ChainIdentifier: TestChain1,
-// 			Operation: Operation{
-// 				To: common.HexToAddress("0x1"), Data: common.Hex2Bytes("0x"), Value: big.NewInt(1),
-// 			},
-// 		},
-// 		{ChainIdentifier: TestChain1,
-// 			Operation: Operation{
-// 				To: common.HexToAddress("0x2"), Data: common.Hex2Bytes("0x"), Value: big.NewInt(2),
-// 			},
-// 		},
-// 		{ChainIdentifier: TestChain2,
-// 			Operation: Operation{
-// 				To: common.HexToAddress("0x3"), Data: common.Hex2Bytes("0x"), Value: big.NewInt(3),
-// 			},
-// 		},
-// 	}
-// 	rootMetadatas := map[ChainIdentifier]bindings.ManyChainMultiSigRootMetadata{
-// 		TestChain1: {
-// 			ChainId:    new(big.Int).SetUint64(uint64(1337)),
-// 			MultiSig:   common.HexToAddress("0x1"),
-// 			PreOpCount: big.NewInt(0),
-// 		},
-// 		TestChain2: {
-// 			ChainId:    new(big.Int).SetUint64(uint64(11155111)),
-// 			MultiSig:   common.HexToAddress("0x2"),
-// 			PreOpCount: big.NewInt(0),
-// 		},
-// 	}
-// 	txCounts := map[ChainIdentifier]uint64{
-// 		TestChain1: 2,
-// 		TestChain2: 1,
-// 	}
+	hash, err := encoder.HashMetadata(metadata)
+	require.NoError(t, err)
+	expectedHash := "0x3d030bfa3fcbbfa780ab87e0368f9487a271df7654cc2d1ba82f3be9d4933366" // Replace with actual expected hash value
+	assert.Equal(t, expectedHash, hash.Hex())
+}
 
-// 	expected := map[ChainIdentifier][]bindings.ManyChainMultiSigOp{
-// 		TestChain1: {
-// 			{
-// 				ChainId:  new(big.Int).SetUint64(uint64(1337)),
-// 				MultiSig: common.HexToAddress("0x1"),
-// 				Nonce:    big.NewInt(0),
-// 				To:       common.HexToAddress("0x1"),
-// 				Data:     common.FromHex("0x"),
-// 				Value:    big.NewInt(1),
-// 			},
-// 			{
-// 				ChainId:  new(big.Int).SetUint64(uint64(1337)),
-// 				MultiSig: common.HexToAddress("0x1"),
-// 				Nonce:    big.NewInt(1),
-// 				To:       common.HexToAddress("0x2"),
-// 				Data:     common.FromHex("0x"),
-// 				Value:    big.NewInt(2),
-// 			},
-// 		},
-// 		TestChain2: {
-// 			{
-// 				ChainId:  new(big.Int).SetUint64(uint64(11155111)),
-// 				MultiSig: common.HexToAddress("0x2"),
-// 				Nonce:    big.NewInt(0),
-// 				To:       common.HexToAddress("0x3"),
-// 				Data:     common.FromHex("0x"),
-// 				Value:    big.NewInt(3),
-// 			},
-// 		},
-// 	}
+func TestEVMEncoder_ToGethOperation(t *testing.T) {
+	encoder := NewEVMEncoder(5, 1, false)
 
-// 	result, _ := buildOperations(transactions, rootMetadatas, txCounts)
-// 	assert.Equal(t, expected, result)
-// }
+	metadata := mcms.ChainMetadata{
+		StartingOpCount: 0,
+		MCMAddress:      "0x1",
+	}
 
-// func TestBuildMerkleTree(t *testing.T) {
-// 	t.Parallel()
+	operation := NewEVMOperation(common.HexToAddress("0x2"), []byte("data"), new(big.Int).SetUint64(1000000000000000000), "", []string{})
 
-// 	chainIdentifiers := []ChainIdentifier{TestChain1, TestChain2}
-// 	ops := map[ChainIdentifier][]bindings.ManyChainMultiSigOp{
-// 		TestChain1: {
-// 			{
-// 				ChainId:  new(big.Int).SetUint64(uint64(1337)),
-// 				MultiSig: common.HexToAddress("0x1"),
-// 				Nonce:    big.NewInt(0),
-// 				To:       common.HexToAddress("0x1"),
-// 				Data:     common.FromHex("0x"),
-// 				Value:    big.NewInt(1),
-// 			},
-// 		},
-// 		TestChain2: {
-// 			{
-// 				ChainId:  new(big.Int).SetUint64(uint64(11155111)),
-// 				MultiSig: common.HexToAddress("0x2"),
-// 				Nonce:    big.NewInt(0),
-// 				To:       common.HexToAddress("0x2"),
-// 				Data:     common.FromHex("0x"),
-// 				Value:    big.NewInt(2),
-// 			},
-// 		},
-// 	}
-// 	rootMetadatas := map[ChainIdentifier]bindings.ManyChainMultiSigRootMetadata{
-// 		TestChain1: {
-// 			ChainId:              big.NewInt(1),
-// 			MultiSig:             common.HexToAddress("0x1"),
-// 			PreOpCount:           big.NewInt(0),
-// 			PostOpCount:          big.NewInt(1),
-// 			OverridePreviousRoot: false,
-// 		},
-// 		TestChain2: {
-// 			ChainId:              big.NewInt(2),
-// 			MultiSig:             common.HexToAddress("0x2"),
-// 			PreOpCount:           big.NewInt(0),
-// 			PostOpCount:          big.NewInt(1),
-// 			OverridePreviousRoot: false,
-// 		},
-// 	}
+	op, err := encoder.ToGethOperation(0, metadata, mcms.ChainOperation{
+		ChainSelector: mcms.ChainSelector(chain_selectors.EvmChainIdToChainSelector()[1]),
+		Operation:     operation,
+	})
+	require.NoError(t, err)
 
-// 	tree, err := buildMerkleTree(chainIdentifiers, rootMetadatas, ops)
-// 	require.NoError(t, err)
-// 	assert.NotNil(t, tree)
-// 	assert.NotEmpty(t, tree.Root)
-// }
+	expectedOp := bindings.ManyChainMultiSigOp{
+		ChainId:  new(big.Int).SetUint64(1),
+		MultiSig: common.HexToAddress("0x1"),
+		Nonce:    new(big.Int).SetUint64(0),
+		To:       common.HexToAddress("0x2"),
+		Data:     []byte("data"),
+		Value:    new(big.Int).SetUint64(1000000000000000000),
+	}
 
-// func TestMetadataEncoder(t *testing.T) {
-// 	t.Parallel()
+	assert.Equal(t, expectedOp, op)
+}
 
-// 	rootMetadata := bindings.ManyChainMultiSigRootMetadata{
-// 		ChainId:              new(big.Int).SetUint64(uint64(1337)),
-// 		MultiSig:             common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
-// 		PreOpCount:           big.NewInt(0),
-// 		PostOpCount:          big.NewInt(1),
-// 		OverridePreviousRoot: true,
-// 	}
+func TestEVMEncoder_ToGethRootMetadata(t *testing.T) {
+	encoder := NewEVMEncoder(5, 1, false)
 
-// 	hash, err := metadataEncoder(rootMetadata)
-// 	require.NoError(t, err)
-// 	assert.Equal(t, common.HexToHash("0xc38c406774af2c0a887d4793f40712670e8833c6d71251fdb4f8251b6e0c96e5"), hash)
-// }
+	metadata := mcms.ChainMetadata{
+		StartingOpCount: 0,
+		MCMAddress:      "0x1",
+	}
 
-// func TestTxEncoder(t *testing.T) {
-// 	t.Parallel()
+	rootMetadata := encoder.ToGethRootMetadata(metadata)
 
-// 	op := bindings.ManyChainMultiSigOp{
-// 		ChainId:  new(big.Int).SetUint64(uint64(1337)),
-// 		MultiSig: common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
-// 		Nonce:    big.NewInt(1),
-// 		To:       common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef"),
-// 		Value:    big.NewInt(1000),
-// 		Data:     []byte("data"),
-// 	}
+	expectedRootMetadata := bindings.ManyChainMultiSigRootMetadata{
+		ChainId:              new(big.Int).SetUint64(1),
+		MultiSig:             common.HexToAddress("0x1"),
+		PreOpCount:           new(big.Int).SetUint64(0),
+		PostOpCount:          new(big.Int).SetUint64(5),
+		OverridePreviousRoot: false,
+	}
 
-// 	hash, err := txEncoder(op)
-// 	require.NoError(t, err)
-// 	assert.Equal(t, common.HexToHash("0xea87ccae6f56402661aca3f9119809f710068ad47a8b6bf5376fbe25b989d28a"), hash)
-// }
+	assert.Equal(t, expectedRootMetadata, rootMetadata)
+}

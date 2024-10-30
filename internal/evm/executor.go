@@ -25,13 +25,6 @@ func NewEVMExecutor(encoder *EVMEncoder, client ContractDeployBackend, auth *bin
 	}
 }
 
-func NewEVMExecutorWithoutEncoder(client ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
-	return &EVMExecutor{
-		EVMInspector: NewEVMInspector(client),
-		auth:         auth,
-	}
-}
-
 func (e *EVMExecutor) ExecuteOperation(
 	metadata mcms.ChainMetadata,
 	nonce uint32,

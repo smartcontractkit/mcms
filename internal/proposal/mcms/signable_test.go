@@ -68,7 +68,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 			{
 				ChainSelector: TestChain1,
 				Operation: evm.NewEVMOperation(
-					timelock.Address().Hex(),
+					timelock.Address(),
 					grantRoleData,
 					big.NewInt(0),
 					"RBACTimelock",
@@ -149,7 +149,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 			{
 				ChainSelector: TestChain1,
 				Operation: evm.NewEVMOperation(
-					timelock.Address().Hex(),
+					timelock.Address(),
 					grantRoleData,
 					big.NewInt(0),
 					"Sample contract",
@@ -225,7 +225,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 		operations[i] = mcms.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm.NewEVMOperation(
-				timelock.Address().Hex(),
+				timelock.Address(),
 				data,
 				big.NewInt(0),
 				"Sample contract",
@@ -315,7 +315,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 		operations[i] = mcms.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm.NewEVMOperation(
-				timelock.Address().Hex(),
+				timelock.Address(),
 				data,
 				big.NewInt(0),
 				"Sample contract",
@@ -408,7 +408,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 		operations[i] = mcms.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm.NewEVMOperation(
-				timelock.Address().Hex(),
+				timelock.Address(),
 				data,
 				big.NewInt(0),
 				"Sample contract",
@@ -508,7 +508,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 		operations[i] = mcms.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm.NewEVMOperation(
-				timelock.Address().Hex(),
+				timelock.Address(),
 				data,
 				big.NewInt(0),
 				"Sample contract",
