@@ -77,22 +77,17 @@ func SignLedger(
 	}
 	wallet := wallets[0]
 
-	fmt.Printf("Found %d wallets, using first one\n", len(wallets))
-
 	// Open the ledger.
 	if err := wallet.Open(""); err != nil {
 		return fmt.Errorf("failed to open wallet: %w", err)
 	}
 	defer wallet.Close()
 
-	fmt.Printf("Opened wallet, have accounts %v\n", wallet.Accounts())
-
 	// Load account.
 	account, err := wallet.Derive(derivationPath, true)
 	if err != nil {
 		return fmt.Errorf("is your ledger ethereum app open? Failed to derive account: %w derivation path %v", err, derivationPath)
 	}
-	fmt.Println("Found account: ", account.Address.String())
 
 	// Create signable
 	signable, err := proposal.Signable(isSim, inspectors)
