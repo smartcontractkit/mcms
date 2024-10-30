@@ -14,11 +14,11 @@ mockname: "{{.InterfaceName}}"
 inpackage: false
 outpkg: mocks
 packages:
-  github.com/smartcontractkit/mcms/mcms/timelock:
+  github.com/smartcontractkit/mcms/internal/core/proposal/timelock:
     config:
       # Override the directory to place mocks inside `mocks` directory of the interface package.
       dir: "{{.InterfaceDir}}/mocks"
       # Ensure each mock struct name remains as the interface name.
       mockname: "{{.InterfaceName}}"
     interfaces:
-      JobBuilder:
+      TimelockConverter:
