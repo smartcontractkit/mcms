@@ -5,9 +5,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 )
 
 func TestEncoder_EVM_NoSim(t *testing.T) {

@@ -6,10 +6,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
-	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 )
 
 func TestEVMEncoder_HashOperation(t *testing.T) {

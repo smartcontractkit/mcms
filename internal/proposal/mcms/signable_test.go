@@ -7,13 +7,14 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	mcms_core "github.com/smartcontractkit/mcms/internal/core"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/evm/bindings"
 	evm_mcms "github.com/smartcontractkit/mcms/internal/evm/proposal/mcms"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 )
 
 func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
