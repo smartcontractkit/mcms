@@ -5,7 +5,7 @@ import "github.com/smartcontractkit/mcms/types"
 // TimelockEncoder is an interface that all chain timelock proposals must implement
 type TimelockEncoder interface {
 	// Converts the proposal into the chain specific transaction data format the signer needs
-	Encode() ([]byte, error)
+	Encode() ([]types.Operation, error)
 }
 
 type TimelockOperation string
