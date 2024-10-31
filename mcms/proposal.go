@@ -1,12 +1,13 @@
 package mcms
 
 import (
-	"sort"
-	"time"
-
+	"encoding/json"
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"io"
+	"sort"
+	"time"
 )
 
 // MCMSProposal is a struct where the target contract is an MCMS contract
@@ -59,9 +60,9 @@ func NewProposal(
 	return &proposalObj, nil
 }
 
-func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
+func NewProposalFromReader(reader io.Reader) (*MCMSProposal, error) {
 	var out MCMSProposal
-	err := core.FromFile(filePath, &out)
+	err := json.NewDecoder(reader).Decode(&out)
 	if err != nil {
 		return nil, err
 	}
