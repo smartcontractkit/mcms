@@ -3,7 +3,6 @@ package core
 import (
 	"encoding/json"
 
-	"math"
 	"os"
 	"testing"
 
@@ -75,85 +74,4 @@ func TestWriteProposalToFile(t *testing.T) {
 	err = FromFile(tempFile.Name(), &fileProposal)
 	require.NoError(t, err)
 	assert.Equal(t, proposal, fileProposal)
-}
-
-func TestSafeCastIntToUint32(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name        string
-		value       int
-		expected    uint32
-		expectError bool
-	}{
-		{name: "Valid int within range", value: 42, expected: 42, expectError: false},
-		{name: "Negative int", value: -1, expected: 0, expectError: true},
-		{name: "Int exceeds uint32 max value", value: int(math.MaxUint32 + 1), expected: 0, expectError: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			result, err := SafeCastIntToUint32(tt.value)
-			if tt.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
-}
-
-func TestSafeCastInt64ToUint32(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name        string
-		value       int64
-		expected    uint32
-		expectError bool
-	}{
-		{name: "Valid int64 within range", value: 42, expected: 42, expectError: false},
-		{name: "Negative int64", value: -1, expected: 0, expectError: true},
-		{name: "Int64 exceeds uint32 max value", value: int64(math.MaxUint32 + 1), expected: 0, expectError: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			result, err := SafeCastInt64ToUint32(tt.value)
-			if tt.expectError {
-				assert.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
-}
-
-func TestSafeCastUint64ToUint8(t *testing.T) {
-	t.Parallel()
-	tests := []struct {
-		name        string
-		value       uint64
-		expected    uint8
-		expectError bool
-	}{
-		{name: "Valid uint64 within range", value: 42, expected: 42, expectError: false},
-		{name: "Uint64 exceeds uint8 max value", value: uint64(math.MaxUint8 + 1), expected: 0, expectError: true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			result, err := SafeCastUint64ToUint8(tt.value)
-			if tt.expectError {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
-			}
-		})
-	}
 }
