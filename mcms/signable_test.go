@@ -15,6 +15,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 // TODO: Should go to EVM SDK
@@ -60,13 +61,13 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address().Hex(),
 			},
 		},
-		Transactions: []mcms.ChainOperation{
+		Transactions: []types.ChainOperation{
 			{
 				ChainSelector: TestChain1,
 				Operation: evm_mcms.NewEVMOperation(
@@ -81,7 +82,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[mcms.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -141,13 +142,13 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address().Hex(),
 			},
 		},
-		Transactions: []mcms.ChainOperation{
+		Transactions: []types.ChainOperation{
 			{
 				ChainSelector: TestChain1,
 				Operation: evm_mcms.NewEVMOperation(
@@ -162,7 +163,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[mcms.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -220,11 +221,11 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]mcms.ChainOperation, 4)
+	operations := make([]types.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 		require.NoError(t, perr)
-		operations[i] = mcms.ChainOperation{
+		operations[i] = types.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm_mcms.NewEVMOperation(
 				timelock.Address(),
@@ -243,7 +244,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address().Hex(),
@@ -253,7 +254,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[mcms.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -310,11 +311,11 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]mcms.ChainOperation, 4)
+	operations := make([]types.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 		require.NoError(t, perr)
-		operations[i] = mcms.ChainOperation{
+		operations[i] = types.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm_mcms.NewEVMOperation(
 				timelock.Address(),
@@ -333,7 +334,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address().Hex(),
@@ -343,7 +344,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[mcms.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -403,11 +404,11 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]mcms.ChainOperation, 4)
+	operations := make([]types.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 		require.NoError(t, perr)
-		operations[i] = mcms.ChainOperation{
+		operations[i] = types.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm_mcms.NewEVMOperation(
 				timelock.Address(),
@@ -426,7 +427,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address().Hex(),
@@ -436,7 +437,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[mcms.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -503,11 +504,11 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]mcms.ChainOperation, 4)
+	operations := make([]types.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 		require.NoError(t, perr)
-		operations[i] = mcms.ChainOperation{
+		operations[i] = types.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm_mcms.NewEVMOperation(
 				timelock.Address(),
@@ -526,7 +527,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address().Hex(),
@@ -536,7 +537,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[mcms.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)

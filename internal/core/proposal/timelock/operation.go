@@ -1,8 +1,10 @@
 package timelock
 
-import "github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+import (
+	"github.com/smartcontractkit/mcms/types"
+)
 
 type BatchChainOperation struct {
-	ChainSelector mcms.ChainSelector `json:"chainIdentifier"`
-	Batch         []mcms.Operation   `json:"batch"`
+	ChainSelector types.ChainSelector `json:"chainIdentifier"`
+	Batch         []types.Operation   `json:"batch"`
 }

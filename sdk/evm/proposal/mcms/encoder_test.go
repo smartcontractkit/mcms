@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestEVMEncoder_HashOperation(t *testing.T) {
@@ -18,11 +18,11 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 
 	var (
 		evmChainID    = uint64(1)
-		chainSelector = mcms.ChainSelector(cselectors.EvmChainIdToChainSelector()[evmChainID])
+		chainSelector = types.ChainSelector(cselectors.EvmChainIdToChainSelector()[evmChainID])
 
 		// Static argument values to HashOperation since they don't affect the test
 		giveOpCount  = uint32(0)
-		giveMetadata = mcms.ChainMetadata{
+		giveMetadata = types.ChainMetadata{
 			StartingOpCount: 0,
 			MCMAddress:      "0x1",
 		}
@@ -30,13 +30,13 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		giveOp  mcms.ChainOperation
+		giveOp  types.ChainOperation
 		want    string
 		wantErr string
 	}{
 		{
 			name: "success: hash operation",
-			giveOp: mcms.ChainOperation{
+			giveOp: types.ChainOperation{
 				ChainSelector: chainSelector,
 				Operation: NewEVMOperation(
 					common.HexToAddress("0x2"),
@@ -50,9 +50,9 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 		},
 		{
 			name: "failure: cannot unmarshal additional fields",
-			giveOp: mcms.ChainOperation{
+			giveOp: types.ChainOperation{
 				ChainSelector: chainSelector,
-				Operation: mcms.Operation{
+				Operation: types.Operation{
 					AdditionalFields: []byte("invalid"),
 				},
 			},
@@ -81,7 +81,7 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 func TestEVMEncoder_HashMetadata(t *testing.T) {
 	t.Parallel()
 
-	metadata := mcms.ChainMetadata{
+	metadata := types.ChainMetadata{
 		StartingOpCount: 0,
 		MCMAddress:      "0x1",
 	}
@@ -99,11 +99,11 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 
 	var (
 		evmChainID    = uint64(1)
-		chainSelector = mcms.ChainSelector(cselectors.EvmChainIdToChainSelector()[evmChainID])
+		chainSelector = types.ChainSelector(cselectors.EvmChainIdToChainSelector()[evmChainID])
 
 		// Static argument values to ToGethOperation since they don't affect the test
 		giveOpCount  = uint32(0)
-		giveMetadata = mcms.ChainMetadata{
+		giveMetadata = types.ChainMetadata{
 			StartingOpCount: 0,
 			MCMAddress:      "0x1",
 		}
@@ -111,13 +111,13 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		giveOp  mcms.ChainOperation
+		giveOp  types.ChainOperation
 		want    bindings.ManyChainMultiSigOp
 		wantErr string
 	}{
 		{
 			name: "success: converts to a geth operations",
-			giveOp: mcms.ChainOperation{
+			giveOp: types.ChainOperation{
 				ChainSelector: chainSelector,
 				Operation: NewEVMOperation(
 					common.HexToAddress("0x2"),
@@ -138,9 +138,9 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 		},
 		{
 			name: "failure: cannot unmarshal additional fields",
-			giveOp: mcms.ChainOperation{
+			giveOp: types.ChainOperation{
 				ChainSelector: chainSelector,
-				Operation: mcms.Operation{
+				Operation: types.Operation{
 					AdditionalFields: []byte("invalid"),
 				},
 			},
@@ -169,7 +169,7 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 func TestEVMEncoder_ToGethRootMetadata(t *testing.T) {
 	t.Parallel()
 
-	metadata := mcms.ChainMetadata{
+	metadata := types.ChainMetadata{
 		StartingOpCount: 0,
 		MCMAddress:      "0x1",
 	}

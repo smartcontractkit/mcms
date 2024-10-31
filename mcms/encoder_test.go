@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 // TODO: Should go to EVM SDK
@@ -17,14 +17,14 @@ func TestEncoder_EVM_NoSim(t *testing.T) {
 
 	chainSelector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 	encoder, err := NewEncoder(
-		mcms.ChainSelector(chainSelector),
+		types.ChainSelector(chainSelector),
 		5,
 		false,
 		false,
 	)
 	require.NoError(t, err)
 
-	hash, err := encoder.HashMetadata(mcms.ChainMetadata{
+	hash, err := encoder.HashMetadata(types.ChainMetadata{
 		StartingOpCount: 0,
 		MCMAddress:      common.HexToAddress("0x1").Hex(),
 	})
@@ -37,14 +37,14 @@ func TestEncoder_EVM_Sim(t *testing.T) {
 
 	chainSelector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 	encoder, err := NewEncoder(
-		mcms.ChainSelector(chainSelector),
+		types.ChainSelector(chainSelector),
 		5,
 		false,
 		true,
 	)
 	require.NoError(t, err)
 
-	hash, err := encoder.HashMetadata(mcms.ChainMetadata{
+	hash, err := encoder.HashMetadata(types.ChainMetadata{
 		StartingOpCount: 0,
 		MCMAddress:      common.HexToAddress("0x1").Hex(),
 	})

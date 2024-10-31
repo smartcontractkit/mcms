@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type EVMAdditionalFields struct {
@@ -20,7 +20,7 @@ func NewEVMOperation(
 	value *big.Int,
 	contractType string,
 	tags []string,
-) mcms.Operation {
+) types.Operation {
 	additionalFields := EVMAdditionalFields{
 		Value: value,
 	}
@@ -30,11 +30,11 @@ func NewEVMOperation(
 		panic(err)
 	}
 
-	return mcms.Operation{
+	return types.Operation{
 		To:               to.Hex(),
 		Data:             data,
 		AdditionalFields: marshalledAdditionalFields,
-		OperationMetadata: mcms.OperationMetadata{
+		OperationMetadata: types.OperationMetadata{
 			ContractType: contractType,
 			Tags:         tags,
 		},

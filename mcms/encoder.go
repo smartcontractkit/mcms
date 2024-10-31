@@ -8,9 +8,10 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
-func NewEncoder(chainSelector mcms.ChainSelector, txCount uint64, overridePreviousRoot bool, isSim bool) (mcms.Encoder, error) {
+func NewEncoder(chainSelector types.ChainSelector, txCount uint64, overridePreviousRoot bool, isSim bool) (mcms.Encoder, error) {
 	chain, exists := chain_selectors.ChainBySelector(uint64(chainSelector))
 	if !exists {
 		return nil, &core.InvalidChainIDError{

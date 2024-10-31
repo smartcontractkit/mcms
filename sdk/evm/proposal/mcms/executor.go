@@ -10,6 +10,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type EVMExecutor struct {
@@ -27,10 +28,10 @@ func NewEVMExecutor(encoder *EVMEncoder, client evm.ContractDeployBackend, auth 
 }
 
 func (e *EVMExecutor) ExecuteOperation(
-	metadata mcms.ChainMetadata,
+	metadata types.ChainMetadata,
 	nonce uint32,
 	proof []common.Hash,
-	operation mcms.ChainOperation,
+	operation types.ChainOperation,
 ) (string, error) {
 	if e.EVMEncoder == nil {
 		return "", errors.New("EVMExecutor was created without an encoder")
@@ -56,7 +57,7 @@ func (e *EVMExecutor) ExecuteOperation(
 }
 
 func (e *EVMExecutor) SetRoot(
-	metadata mcms.ChainMetadata,
+	metadata types.ChainMetadata,
 	proof []common.Hash,
 	root [32]byte,
 	validUntil uint32,

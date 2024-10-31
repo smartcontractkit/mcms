@@ -6,6 +6,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type ProposalType string
@@ -23,22 +24,22 @@ var StringToProposalType = map[string]ProposalType{
 }
 
 type Proposal interface {
-	Signable(sim bool, inspectors map[mcms.ChainSelector]mcms.Inspector) (Signable, error)
+	Signable(sim bool, inspectors map[types.ChainSelector]mcms.Inspector) (Signable, error)
 	AddSignature(signature mcms.Signature)
 	Validate() error
 }
 
 type Signable interface {
 	SigningHash() (common.Hash, error)
-	GetCurrentOpCounts() (map[mcms.ChainSelector]uint64, error)
-	GetConfigs() (map[mcms.ChainSelector]*config.Config, error)
-	CheckQuorum(chain mcms.ChainSelector) (bool, error)
+	GetCurrentOpCounts() (map[types.ChainSelector]uint64, error)
+	GetConfigs() (map[types.ChainSelector]*config.Config, error)
+	CheckQuorum(chain types.ChainSelector) (bool, error)
 	ValidateSignatures() (bool, error)
 	ValidateConfigs() error
 	GetTree() *merkle.Tree
 }
 
 type Executable interface {
-	SetRoot(chainSelector mcms.ChainSelector) (string, error)
+	SetRoot(chainSelector types.ChainSelector) (string, error)
 	Execute(index int) (string, error)
 }

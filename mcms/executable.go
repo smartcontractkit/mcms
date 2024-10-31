@@ -5,16 +5,17 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type Executable struct {
 	*Signable
-	Executors map[mcms.ChainSelector]mcms.Executor
+	Executors map[types.ChainSelector]mcms.Executor
 }
 
 func NewExecutable(
 	signable *Signable,
-	executors map[mcms.ChainSelector]mcms.Executor,
+	executors map[types.ChainSelector]mcms.Executor,
 ) *Executable {
 	return &Executable{
 		Signable:  signable,
@@ -22,7 +23,7 @@ func NewExecutable(
 	}
 }
 
-func (e *Executable) SetRoot(chainSelector mcms.ChainSelector) (string, error) {
+func (e *Executable) SetRoot(chainSelector types.ChainSelector) (string, error) {
 	metadata := e.ChainMetadata[chainSelector]
 	metadataHash, err := e.Encoders[chainSelector].HashMetadata(metadata)
 	if err != nil {

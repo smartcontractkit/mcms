@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 // Just run this locally to sign from the ledger.
@@ -16,7 +17,7 @@ func SignPlainKey(
 	privateKey *ecdsa.PrivateKey,
 	proposal Proposal,
 	isSim bool,
-	inspectors map[mcms.ChainSelector]mcms.Inspector,
+	inspectors map[types.ChainSelector]mcms.Inspector,
 ) error {
 	// Validate proposal
 	err := proposal.Validate()
@@ -57,7 +58,7 @@ func SignLedger(
 	derivationPath []uint32,
 	proposal Proposal,
 	isSim bool,
-	inspectors map[mcms.ChainSelector]mcms.Inspector,
+	inspectors map[types.ChainSelector]mcms.Inspector,
 ) error {
 	// Validate proposal
 	if err := proposal.Validate(); err != nil {
