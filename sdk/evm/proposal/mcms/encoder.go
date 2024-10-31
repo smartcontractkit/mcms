@@ -2,12 +2,12 @@ package evm
 
 import (
 	"encoding/json"
+	"github.com/smartcontractkit/mcms/sdk"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
@@ -27,10 +27,10 @@ var (
 	mcmDomainSeparatorMetadata = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA"))
 )
 
-var _ mcms.Encoder = &EVMEncoder{}
+var _ sdk.Encoder = &EVMEncoder{}
 
 // EVMEncoder is a struct that encodes ChainOperations and ChainMetadata into the format expected
-// by the EVM ManyChainMultiSig contract.
+// by the EVM ManyChainMultiSig contract.Q
 type EVMEncoder struct {
 	TxCount              uint64
 	ChainID              uint64

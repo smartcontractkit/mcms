@@ -3,6 +3,7 @@ package mcms
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/smartcontractkit/mcms/sdk"
 	"sort"
 	"strconv"
 
@@ -26,8 +27,8 @@ type Signable struct {
 	// operation of chain Transaction[i].ChainSelector
 	ChainNonces []uint64
 
-	Encoders   map[types.ChainSelector]mcms.Encoder
-	Inspectors map[types.ChainSelector]mcms.Inspector // optional, skip any inspections
+	Encoders   map[types.ChainSelector]sdk.Encoder
+	Inspectors map[types.ChainSelector]sdk.Inspector  // optional, skip any inspections
 	Simulators map[types.ChainSelector]mcms.Simulator // optional, skip simulations
 	Decoders   map[types.ChainSelector]mcms.Decoder   // optional, skip decoding
 }
@@ -36,8 +37,8 @@ var _ coreProposal.Signable = (*Signable)(nil)
 
 func NewSignable(
 	proposal *MCMSProposal,
-	encoders map[types.ChainSelector]mcms.Encoder,
-	inspectors map[types.ChainSelector]mcms.Inspector,
+	encoders map[types.ChainSelector]sdk.Encoder,
+	inspectors map[types.ChainSelector]sdk.Inspector,
 ) (*Signable, error) {
 	hashLeaves := make([]common.Hash, 0)
 	chainIdx := make(map[types.ChainSelector]uint64, len(proposal.ChainMetadata))

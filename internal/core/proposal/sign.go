@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+	"github.com/smartcontractkit/mcms/sdk"
 
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -17,7 +18,7 @@ func SignPlainKey(
 	privateKey *ecdsa.PrivateKey,
 	proposal Proposal,
 	isSim bool,
-	inspectors map[types.ChainSelector]mcms.Inspector,
+	inspectors map[types.ChainSelector]sdk.Inspector,
 ) error {
 	// Validate proposal
 	err := proposal.Validate()
@@ -58,7 +59,7 @@ func SignLedger(
 	derivationPath []uint32,
 	proposal Proposal,
 	isSim bool,
-	inspectors map[types.ChainSelector]mcms.Inspector,
+	inspectors map[types.ChainSelector]sdk.Inspector,
 ) error {
 	// Validate proposal
 	if err := proposal.Validate(); err != nil {
