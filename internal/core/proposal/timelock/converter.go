@@ -3,7 +3,7 @@ package timelock
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 // TimelockConverter converts a batch of chain operations to an types.ChainOperation
@@ -14,5 +14,5 @@ type TimelockConverter interface {
 		minDelay string,
 		operation TimelockOperationType,
 		predecessor common.Hash,
-	) (mcms.ChainOperation, common.Hash, error)
+	) (types.ChainOperation, common.Hash, error)
 }

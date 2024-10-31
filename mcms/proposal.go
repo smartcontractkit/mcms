@@ -7,6 +7,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 // MCMSProposal is a struct where the target contract is an MCMS contract
@@ -19,7 +20,7 @@ type MCMSProposal struct {
 	OverridePreviousRoot bool             `json:"overridePreviousRoot"`
 
 	// Map of chain identifier to chain metadata
-	ChainMetadata map[mcms.ChainSelector]mcms.ChainMetadata `json:"chainMetadata"`
+	ChainMetadata map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata"`
 
 	// This is intended to be displayed as-is to signers, to give them
 	// context for the change. File authors should templatize strings for
@@ -27,7 +28,7 @@ type MCMSProposal struct {
 	Description string `json:"description"`
 
 	// Operations to be executed
-	Transactions []mcms.ChainOperation `json:"transactions"`
+	Transactions []types.ChainOperation `json:"transactions"`
 }
 
 var _ proposal.Proposal = (*MCMSProposal)(nil)
@@ -37,9 +38,9 @@ func NewProposal(
 	validUntil uint32,
 	signatures []mcms.Signature,
 	overridePreviousRoot bool,
-	chainMetadata map[mcms.ChainSelector]mcms.ChainMetadata,
+	chainMetadata map[types.ChainSelector]types.ChainMetadata,
 	description string,
-	transactions []mcms.ChainOperation,
+	transactions []types.ChainOperation,
 ) (*MCMSProposal, error) {
 	proposalObj := MCMSProposal{
 		Version:              version,
@@ -120,8 +121,8 @@ func (m *MCMSProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSProposal) ChainIdentifiers() []mcms.ChainSelector {
-	chainIdentifiers := make([]mcms.ChainSelector, 0, len(m.ChainMetadata))
+func (m *MCMSProposal) ChainIdentifiers() []types.ChainSelector {
+	chainIdentifiers := make([]types.ChainSelector, 0, len(m.ChainMetadata))
 	for chainID := range m.ChainMetadata {
 		chainIdentifiers = append(chainIdentifiers, chainID)
 	}
@@ -130,8 +131,8 @@ func (m *MCMSProposal) ChainIdentifiers() []mcms.ChainSelector {
 	return chainIdentifiers
 }
 
-func (m *MCMSProposal) TransactionCounts() map[mcms.ChainSelector]uint64 {
-	txCounts := make(map[mcms.ChainSelector]uint64)
+func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
+	txCounts := make(map[types.ChainSelector]uint64)
 	for _, tx := range m.Transactions {
 		txCounts[tx.ChainSelector]++
 	}
@@ -143,9 +144,9 @@ func (m *MCMSProposal) AddSignature(signature mcms.Signature) {
 	m.Signatures = append(m.Signatures, signature)
 }
 
-func (m *MCMSProposal) GetEncoders(isSim bool) (map[mcms.ChainSelector]mcms.Encoder, error) {
+func (m *MCMSProposal) GetEncoders(isSim bool) (map[types.ChainSelector]mcms.Encoder, error) {
 	txCounts := m.TransactionCounts()
-	encoders := make(map[mcms.ChainSelector]mcms.Encoder)
+	encoders := make(map[types.ChainSelector]mcms.Encoder)
 	for chainID := range m.ChainMetadata {
 		encoder, err := NewEncoder(chainID, txCounts[chainID], m.OverridePreviousRoot, isSim)
 		if err != nil {
@@ -159,7 +160,7 @@ func (m *MCMSProposal) GetEncoders(isSim bool) (map[mcms.ChainSelector]mcms.Enco
 }
 
 // TODO: isSim is very EVM and test Specific. Should be removed
-func (m *MCMSProposal) Signable(isSim bool, inspectors map[mcms.ChainSelector]mcms.Inspector) (proposal.Signable, error) {
+func (m *MCMSProposal) Signable(isSim bool, inspectors map[types.ChainSelector]mcms.Inspector) (proposal.Signable, error) {
 	encoders, err := m.GetEncoders(isSim)
 	if err != nil {
 		return nil, err
@@ -168,13 +169,13 @@ func (m *MCMSProposal) Signable(isSim bool, inspectors map[mcms.ChainSelector]mc
 	return NewSignable(m, encoders, inspectors)
 }
 
-func (m *MCMSProposal) Executable(isSim bool, executors map[mcms.ChainSelector]mcms.Executor) (*Executable, error) {
+func (m *MCMSProposal) Executable(isSim bool, executors map[types.ChainSelector]mcms.Executor) (*Executable, error) {
 	encoders, err := m.GetEncoders(isSim)
 	if err != nil {
 		return nil, err
 	}
 
-	inspectors := make(map[mcms.ChainSelector]mcms.Inspector)
+	inspectors := make(map[types.ChainSelector]mcms.Inspector)
 	for key, executor := range executors {
 		inspectors[key] = executor // since Executor implements Inspector, this works
 	}

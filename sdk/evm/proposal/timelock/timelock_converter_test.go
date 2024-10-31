@@ -1,19 +1,18 @@
 package evm
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
-
-	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
-	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
-
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/internal/core"
+	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
+	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
@@ -34,7 +33,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 		{
 			name: "Schedule operation",
 			txn: timelock.BatchChainOperation{
-				Batch: []mcms.Operation{
+				Batch: []types.Operation{
 					evm_mcms.NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
@@ -43,7 +42,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 						[]string{"tag1", "tag2"},
 					),
 				},
-				ChainSelector: mcms.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
 			operation:      timelock.Schedule,
@@ -54,7 +53,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 		{
 			name: "Cancel operation",
 			txn: timelock.BatchChainOperation{
-				Batch: []mcms.Operation{
+				Batch: []types.Operation{
 					evm_mcms.NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
@@ -63,7 +62,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 						[]string{"tag1", "tag2"},
 					),
 				},
-				ChainSelector: mcms.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
 			operation:      timelock.Cancel,
@@ -74,7 +73,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 		{
 			name: "Invalid operation",
 			txn: timelock.BatchChainOperation{
-				Batch: []mcms.Operation{
+				Batch: []types.Operation{
 					evm_mcms.NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
@@ -83,7 +82,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 						[]string{"tag1", "tag2"},
 					),
 				},
-				ChainSelector: mcms.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
 			operation:      timelock.TimelockOperationType("invalid"),

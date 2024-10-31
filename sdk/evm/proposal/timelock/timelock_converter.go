@@ -9,11 +9,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 var ZERO_HASH = common.Hash{}
@@ -26,7 +26,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	minDelay string,
 	operation timelock.TimelockOperationType,
 	predecessor common.Hash,
-) (mcms.ChainOperation, common.Hash, error) {
+) (types.ChainOperation, common.Hash, error) {
 	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
 	calls := make([]bindings.RBACTimelockCall, 0)
 	tags := make([]string, 0)
@@ -34,7 +34,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 		// Unmarshal the additional fields
 		var additionalFields evm_mcms.EVMAdditionalFields
 		if err := json.Unmarshal(op.AdditionalFields, &additionalFields); err != nil {
-			return mcms.ChainOperation{}, common.Hash{}, err
+			return types.ChainOperation{}, common.Hash{}, err
 		}
 
 		calls = append(calls, bindings.RBACTimelockCall{
@@ -50,12 +50,12 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 
 	abi, errAbi := bindings.RBACTimelockMetaData.GetAbi()
 	if errAbi != nil {
-		return mcms.ChainOperation{}, common.Hash{}, errAbi
+		return types.ChainOperation{}, common.Hash{}, errAbi
 	}
 
 	operationId, errHash := hashOperationBatch(calls, predecessor, salt)
 	if errHash != nil {
-		return mcms.ChainOperation{}, common.Hash{}, errHash
+		return types.ChainOperation{}, common.Hash{}, errHash
 	}
 
 	// Encode the data based on the operation
@@ -69,16 +69,16 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	case timelock.Bypass:
 		data, err = abi.Pack("bypasserExecuteBatch", calls)
 	default:
-		return mcms.ChainOperation{}, common.Hash{}, &core.InvalidTimelockOperationError{
+		return types.ChainOperation{}, common.Hash{}, &core.InvalidTimelockOperationError{
 			ReceivedTimelockOperation: string(operation),
 		}
 	}
 
 	if err != nil {
-		return mcms.ChainOperation{}, common.Hash{}, err
+		return types.ChainOperation{}, common.Hash{}, err
 	}
 
-	chainOperation := mcms.ChainOperation{
+	chainOperation := types.ChainOperation{
 		ChainSelector: txn.ChainSelector,
 		Operation: evm_mcms.NewEVMOperation(
 			timelockAddress,

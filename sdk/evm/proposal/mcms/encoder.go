@@ -10,6 +10,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 var (
@@ -49,8 +50,8 @@ func NewEVMEncoder(txCount uint64, chainID uint64, overridePreviousRoot bool) *E
 // ManyChainMultiSig contract, and hashes it.
 func (e *EVMEncoder) HashOperation(
 	opCount uint32,
-	metadata mcms.ChainMetadata,
-	op mcms.ChainOperation,
+	metadata types.ChainMetadata,
+	op types.ChainOperation,
 ) (common.Hash, error) {
 	bindOp, err := e.ToGethOperation(opCount, metadata, op)
 	if err != nil {
@@ -68,7 +69,7 @@ func (e *EVMEncoder) HashOperation(
 
 // HashMetadata converts the MCMS ChainMetadata into the format expected by the EVM
 // ManyChainMultiSig contract, and hashes it.
-func (e *EVMEncoder) HashMetadata(metadata mcms.ChainMetadata) (common.Hash, error) {
+func (e *EVMEncoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
 	encoded, err := evm.ABIEncode(abi, mcmDomainSeparatorMetadata, e.ToGethRootMetadata(metadata))
 	if err != nil {
@@ -82,8 +83,8 @@ func (e *EVMEncoder) HashMetadata(metadata mcms.ChainMetadata) (common.Hash, err
 // ManyChainMultiSig contract.
 func (e *EVMEncoder) ToGethOperation(
 	opCount uint32,
-	metadata mcms.ChainMetadata,
-	op mcms.ChainOperation,
+	metadata types.ChainMetadata,
+	op types.ChainOperation,
 ) (bindings.ManyChainMultiSigOp, error) {
 	// Unmarshal the AdditionalFields from the operation
 	var additionalFields EVMAdditionalFields
@@ -103,7 +104,7 @@ func (e *EVMEncoder) ToGethOperation(
 
 // ToGethRootMetadata converts the MCMS ChainMetadata into the format expected by the EVM
 // ManyChainMultiSig contract.
-func (e *EVMEncoder) ToGethRootMetadata(metadata mcms.ChainMetadata) bindings.ManyChainMultiSigRootMetadata {
+func (e *EVMEncoder) ToGethRootMetadata(metadata types.ChainMetadata) bindings.ManyChainMultiSigRootMetadata {
 	return bindings.ManyChainMultiSigRootMetadata{
 		ChainId:              new(big.Int).SetUint64(e.ChainID),
 		MultiSig:             common.HexToAddress(metadata.MCMAddress),

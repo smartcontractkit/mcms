@@ -10,19 +10,19 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core"
-	"github.com/ethereum/go-ethereum/core/types"
+	gethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
-	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
+	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 // TODO: This should go to the EVM SDK
@@ -72,7 +72,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	}
 
 	// Check the receipt status
-	if receipt.Status != types.ReceiptStatusSuccessful {
+	if receipt.Status != gethTypes.ReceiptStatusSuccessful {
 		return nil, nil, nil, nil, errors.New("contract deployment failed")
 	}
 
@@ -162,13 +162,13 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address().Hex(),
 			},
 		},
-		Transactions: []mcms.ChainOperation{
+		Transactions: []types.ChainOperation{
 			{
 				ChainSelector: TestChain1,
 				Operation: evm_mcms.NewEVMOperation(
@@ -183,7 +183,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[mcms.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -203,7 +203,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[mcms.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]mcms.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 
@@ -233,7 +233,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
 	require.NoError(t, err)
 	assert.NotNil(t, receipt)
-	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
+	assert.Equal(t, gethTypes.ReceiptStatusSuccessful, receipt.Status)
 
 	// // Check the state of the MCMS contract
 	newOpCount, err := mcmsObj.GetOpCount(&bind.CallOpts{})
@@ -294,13 +294,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address().Hex(),
 			},
 		},
-		Transactions: []mcms.ChainOperation{
+		Transactions: []types.ChainOperation{
 			{
 				ChainSelector: TestChain1,
 				Operation: evm_mcms.NewEVMOperation(
@@ -315,7 +315,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[mcms.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -338,7 +338,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[mcms.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]mcms.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 
@@ -368,7 +368,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	receipt, err := bind.WaitMined(auths[0].Context, sim, tx)
 	require.NoError(t, err)
 	assert.NotNil(t, receipt)
-	assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
+	assert.Equal(t, gethTypes.ReceiptStatusSuccessful, receipt.Status)
 
 	// Check the state of the MCMS contract
 	newOpCount, err := mcmsObj.GetOpCount(&bind.CallOpts{})
@@ -424,11 +424,11 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]mcms.ChainOperation, 4)
+	operations := make([]types.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 		require.NoError(t, perr)
-		operations[i] = mcms.ChainOperation{
+		operations[i] = types.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm_mcms.NewEVMOperation(
 				timelock.Address(),
@@ -447,7 +447,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address().Hex(),
@@ -457,7 +457,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[mcms.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -477,7 +477,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[mcms.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]mcms.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 
@@ -509,7 +509,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		receipt, merr := bind.WaitMined(auths[0].Context, sim, tx)
 		require.NoError(t, merr)
 		assert.NotNil(t, receipt)
-		assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
+		assert.Equal(t, gethTypes.ReceiptStatusSuccessful, receipt.Status)
 	}
 
 	// Check the state of the MCMS contract
@@ -570,11 +570,11 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]mcms.ChainOperation, 4)
+	operations := make([]types.ChainOperation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmsObj.Address())
 		require.NoError(t, perr)
-		operations[i] = mcms.ChainOperation{
+		operations[i] = types.ChainOperation{
 			ChainSelector: TestChain1,
 			Operation: evm_mcms.NewEVMOperation(
 				timelock.Address(),
@@ -593,7 +593,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		ValidUntil:           2004259681,
 		Signatures:           []mcms.Signature{},
 		OverridePreviousRoot: false,
-		ChainMetadata: map[mcms.ChainSelector]mcms.ChainMetadata{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
 				StartingOpCount: 0,
 				MCMAddress:      mcmsObj.Address().Hex(),
@@ -603,7 +603,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[mcms.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -626,7 +626,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[mcms.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]mcms.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 
@@ -658,7 +658,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		receipt, merr := bind.WaitMined(auths[0].Context, sim, tx)
 		require.NoError(t, merr)
 		assert.NotNil(t, receipt)
-		assert.Equal(t, types.ReceiptStatusSuccessful, receipt.Status)
+		assert.Equal(t, gethTypes.ReceiptStatusSuccessful, receipt.Status)
 	}
 
 	// Check the state of the MCMS contract

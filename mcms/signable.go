@@ -15,6 +15,7 @@ import (
 	coreProposal "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type Signable struct {
@@ -25,21 +26,21 @@ type Signable struct {
 	// operation of chain Transaction[i].ChainSelector
 	ChainNonces []uint64
 
-	Encoders   map[mcms.ChainSelector]mcms.Encoder
-	Inspectors map[mcms.ChainSelector]mcms.Inspector // optional, skip any inspections
-	Simulators map[mcms.ChainSelector]mcms.Simulator // optional, skip simulations
-	Decoders   map[mcms.ChainSelector]mcms.Decoder   // optional, skip decoding
+	Encoders   map[types.ChainSelector]mcms.Encoder
+	Inspectors map[types.ChainSelector]mcms.Inspector // optional, skip any inspections
+	Simulators map[types.ChainSelector]mcms.Simulator // optional, skip simulations
+	Decoders   map[types.ChainSelector]mcms.Decoder   // optional, skip decoding
 }
 
 var _ coreProposal.Signable = (*Signable)(nil)
 
 func NewSignable(
 	proposal *MCMSProposal,
-	encoders map[mcms.ChainSelector]mcms.Encoder,
-	inspectors map[mcms.ChainSelector]mcms.Inspector,
+	encoders map[types.ChainSelector]mcms.Encoder,
+	inspectors map[types.ChainSelector]mcms.Inspector,
 ) (*Signable, error) {
 	hashLeaves := make([]common.Hash, 0)
-	chainIdx := make(map[mcms.ChainSelector]uint64, len(proposal.ChainMetadata))
+	chainIdx := make(map[types.ChainSelector]uint64, len(proposal.ChainMetadata))
 
 	for _, chain := range proposal.ChainIdentifiers() {
 		encoder, ok := encoders[chain]
@@ -129,12 +130,12 @@ func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
 	return crypto.Keccak256Hash(data)
 }
 
-func (s *Signable) GetCurrentOpCounts() (map[mcms.ChainSelector]uint64, error) {
+func (s *Signable) GetCurrentOpCounts() (map[types.ChainSelector]uint64, error) {
 	if s.Inspectors == nil {
 		return nil, errors.New("inspectors not provided")
 	}
 
-	opCounts := make(map[mcms.ChainSelector]uint64)
+	opCounts := make(map[types.ChainSelector]uint64)
 	for chain, metadata := range s.ChainMetadata {
 		inspector, ok := s.Inspectors[chain]
 		if !ok {
@@ -152,12 +153,12 @@ func (s *Signable) GetCurrentOpCounts() (map[mcms.ChainSelector]uint64, error) {
 	return opCounts, nil
 }
 
-func (s *Signable) GetConfigs() (map[mcms.ChainSelector]*config.Config, error) {
+func (s *Signable) GetConfigs() (map[types.ChainSelector]*config.Config, error) {
 	if s.Inspectors == nil {
 		return nil, errors.New("inspectors not provided")
 	}
 
-	configs := make(map[mcms.ChainSelector]*config.Config)
+	configs := make(map[types.ChainSelector]*config.Config)
 	for chain, metadata := range s.ChainMetadata {
 		inspector, ok := s.Inspectors[chain]
 		if !ok {
@@ -175,7 +176,7 @@ func (s *Signable) GetConfigs() (map[mcms.ChainSelector]*config.Config, error) {
 	return configs, nil
 }
 
-func (s *Signable) CheckQuorum(chain mcms.ChainSelector) (bool, error) {
+func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 	if s.Inspectors == nil {
 		return false, errors.New("inspectors not provided")
 	}

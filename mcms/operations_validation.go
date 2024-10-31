@@ -7,11 +7,12 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
+	"github.com/smartcontractkit/mcms/types"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 )
 
-func ValidateAdditionalFields(operation json.RawMessage, identifier mcms.ChainSelector) error {
+func ValidateAdditionalFields(operation json.RawMessage, identifier types.ChainSelector) error {
 	chainFamily, err := chain_selectors.GetSelectorFamily(uint64(identifier))
 	if err != nil {
 		return err

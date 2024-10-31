@@ -6,14 +6,12 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
-
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
-
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/stretchr/testify/assert"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 // TODO: Should go to EVM SDK. This should just tests the router function actuallty routes to the correct chain
@@ -33,14 +31,14 @@ func TestValidateAdditionalFields(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		operation   mcms.ChainOperation
+		operation   types.ChainOperation
 		expectedErr error
 	}{
 		{
 			name: "valid EVM fields",
-			operation: mcms.ChainOperation{
-				ChainSelector: mcms.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: mcms.Operation{
+			operation: types.ChainOperation{
+				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: types.Operation{
 					AdditionalFields: validEVMFieldsJSON,
 				},
 			},
@@ -49,9 +47,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "invalid EVM fields",
-			operation: mcms.ChainOperation{
-				ChainSelector: mcms.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: mcms.Operation{
+			operation: types.ChainOperation{
+				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: types.Operation{
 					AdditionalFields: invalidEVMFieldsJSON,
 				},
 			},
@@ -59,9 +57,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "unknown chain family",
-			operation: mcms.ChainOperation{
+			operation: types.ChainOperation{
 				ChainSelector: 999,
-				Operation: mcms.Operation{
+				Operation: types.Operation{
 					AdditionalFields: nil,
 				},
 			},
@@ -69,9 +67,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "invalid JSON for EVM fields",
-			operation: mcms.ChainOperation{
-				ChainSelector: mcms.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: mcms.Operation{
+			operation: types.ChainOperation{
+				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Operation: types.Operation{
 					AdditionalFields: []byte("invalid JSON"),
 				},
 			},

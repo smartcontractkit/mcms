@@ -5,10 +5,10 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type EVMInspector struct {
@@ -65,18 +65,18 @@ func (e *EVMInspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
 	return root.Root, root.ValidUntil, nil
 }
 
-func (e *EVMInspector) GetRootMetadata(mcmAddress string) (mcms.ChainMetadata, error) {
+func (e *EVMInspector) GetRootMetadata(mcmAddress string) (types.ChainMetadata, error) {
 	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
-		return mcms.ChainMetadata{}, err
+		return types.ChainMetadata{}, err
 	}
 
 	metadata, err := mcmsObj.GetRootMetadata(&bind.CallOpts{})
 	if err != nil {
-		return mcms.ChainMetadata{}, err
+		return types.ChainMetadata{}, err
 	}
 
-	return mcms.ChainMetadata{
+	return types.ChainMetadata{
 		StartingOpCount: metadata.PreOpCount.Uint64(),
 		MCMAddress:      mcmAddress,
 	}, nil

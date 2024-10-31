@@ -1,8 +1,12 @@
 package mcms
 
-import "github.com/ethereum/go-ethereum/common"
+import (
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/smartcontractkit/mcms/types"
+)
 
 type Encoder interface {
-	HashOperation(opCount uint32, metadata ChainMetadata, operation ChainOperation) (common.Hash, error)
-	HashMetadata(metadata ChainMetadata) (common.Hash, error)
+	HashOperation(opCount uint32, metadata types.ChainMetadata, operation types.ChainOperation) (common.Hash, error)
+	HashMetadata(metadata types.ChainMetadata) (common.Hash, error)
 }
