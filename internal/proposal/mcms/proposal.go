@@ -70,19 +70,14 @@ func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
 
 // proposalValidateBasic basic validation for an MCMS proposal
 func proposalValidateBasic(proposalObj MCMSProposal) error {
-	// Get the current Unix timestamp as an int64
-	currentTime := time.Now().Unix()
+	validUntil := time.Unix(int64(proposalObj.ValidUntil), 0)
 
-	currentTimeCasted, err := core.SafeCastIntToUint32(int(currentTime))
-	if err != nil {
-		return err
-	}
-	if proposalObj.ValidUntil <= currentTimeCasted {
-		// ValidUntil is a Unix timestamp, so it should be greater than the current time
+	if time.Now().After(validUntil) {
 		return &core.InvalidValidUntilError{
 			ReceivedValidUntil: proposalObj.ValidUntil,
 		}
 	}
+
 	if len(proposalObj.ChainMetadata) == 0 {
 		return &core.NoChainMetadataError{}
 	}

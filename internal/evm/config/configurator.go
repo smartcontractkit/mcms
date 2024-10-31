@@ -6,11 +6,11 @@ import (
 	"sort"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/spf13/cast"
 
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/evm/bindings"
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 )
 
 const maxUint8Value = 255
@@ -128,13 +128,11 @@ func extractGroupsAndSigners(group *config.Config, parentIdx uint8, groupQuorums
 	// Assign the current group index
 	currentGroupIdx := len(*groupQuorums) - 1
 
-	// Check if currentGroupIdx is within the uint8 range
-	if currentGroupIdx > int(maxUint8Value) {
+	// Safe to cast currentGroupIdx to uint8
+	currentGroupIdxUint8, err := safecast.IntToUint8(currentGroupIdx)
+	if err != nil {
 		return fmt.Errorf("group index %d exceeds uint8 range", currentGroupIdx)
 	}
-
-	// Safe to cast currentGroupIdx to uint8
-	currentGroupIdxUint8 := cast.ToUint8(currentGroupIdx)
 
 	// For each string signer, append the signer and its group index
 	for _, signer := range group.Signers {

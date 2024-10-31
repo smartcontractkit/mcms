@@ -3,8 +3,8 @@ package mcms
 import (
 	"sort"
 
-	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 )
 
 type Executable struct {
@@ -62,7 +62,7 @@ func (e *Executable) Execute(index int) (string, error) {
 	chainSelector := transaction.ChainSelector
 	metadata := e.ChainMetadata[chainSelector]
 
-	chainNonce, err := core.SafeCastUint64ToUint32(e.ChainNonce(index))
+	chainNonce, err := safecast.Uint64ToUint32(e.ChainNonce(index))
 	if err != nil {
 		return "", err
 	}
