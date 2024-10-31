@@ -17,8 +17,8 @@ import (
 
 	evm_config "github.com/smartcontractkit/mcms/internal/evm/config"
 	evm_mcms "github.com/smartcontractkit/mcms/internal/evm/proposal/mcms"
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 
-	mcms_core "github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
@@ -82,7 +82,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	}
 
 	// Set the quorum
-	quorum, err := mcms_core.SafeCastUint64ToUint8(numSigners)
+	quorum, err := safecast.Uint64ToUint8(numSigners)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

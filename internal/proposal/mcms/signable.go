@@ -13,6 +13,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 )
 
 type Signable struct {
@@ -60,7 +61,7 @@ func NewSignable(
 
 	chainNonces := make([]uint64, len(proposal.Transactions))
 	for i, op := range proposal.Transactions {
-		chainNonce, err := core.SafeCastUint64ToUint32(chainIdx[op.ChainSelector])
+		chainNonce, err := safecast.Uint64ToUint32(chainIdx[op.ChainSelector])
 		if err != nil {
 			return nil, err
 		}
