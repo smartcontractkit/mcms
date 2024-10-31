@@ -16,10 +16,10 @@ import (
 // with no forwarder contracts. This type does not support any type of atomic contract
 // call batching, as the MCMS contract natively doesn't support batching
 type MCMSProposal struct {
-	Version              string           `json:"version"`
-	ValidUntil           uint32           `json:"validUntil"`
-	Signatures           []mcms.Signature `json:"signatures"`
-	OverridePreviousRoot bool             `json:"overridePreviousRoot"`
+	Version              string            `json:"version"`
+	ValidUntil           uint32            `json:"validUntil"`
+	Signatures           []types.Signature `json:"signatures"`
+	OverridePreviousRoot bool              `json:"overridePreviousRoot"`
 
 	// Map of chain identifier to chain metadata
 	ChainMetadata map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata"`
@@ -38,7 +38,7 @@ var _ proposal.Proposal = (*MCMSProposal)(nil)
 func NewProposal(
 	version string,
 	validUntil uint32,
-	signatures []mcms.Signature,
+	signatures []types.Signature,
 	overridePreviousRoot bool,
 	chainMetadata map[types.ChainSelector]types.ChainMetadata,
 	description string,
@@ -142,7 +142,7 @@ func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
 	return txCounts
 }
 
-func (m *MCMSProposal) AddSignature(signature mcms.Signature) {
+func (m *MCMSProposal) AddSignature(signature types.Signature) {
 	m.Signatures = append(m.Signatures, signature)
 }
 

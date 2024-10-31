@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
@@ -61,7 +60,7 @@ func (e *EVMExecutor) SetRoot(
 	proof []common.Hash,
 	root [32]byte,
 	validUntil uint32,
-	sortedSignatures []mcms.Signature,
+	sortedSignatures []types.Signature,
 ) (string, error) {
 	if e.EVMEncoder == nil {
 		return "", errors.New("EVMExecutor was created without an encoder")

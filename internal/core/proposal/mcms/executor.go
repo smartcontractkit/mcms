@@ -17,6 +17,6 @@ type Executor interface {
 		proof []common.Hash,
 		root [32]byte,
 		validUntil uint32,
-		sortedSignatures []Signature,
+		sortedSignatures []types.Signature,
 	) (string, error)
 }

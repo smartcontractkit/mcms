@@ -25,7 +25,7 @@ var StringToProposalType = map[string]ProposalType{
 
 type Proposal interface {
 	Signable(sim bool, inspectors map[types.ChainSelector]mcms.Inspector) (Signable, error)
-	AddSignature(signature mcms.Signature)
+	AddSignature(signature types.Signature)
 	Validate() error
 }
 

@@ -9,14 +9,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestToGethSignature(t *testing.T) {
 	t.Parallel()
 
-	sig := mcms.Signature{
+	sig := types.Signature{
 		R: common.HexToHash("0x1234567890abcdef"),
 		S: common.HexToHash("0xfedcba0987654321"),
 		V: 27,

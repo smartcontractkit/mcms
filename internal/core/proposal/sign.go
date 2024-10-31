@@ -43,7 +43,7 @@ func SignPlainKey(
 	}
 
 	// Unmarshal signature
-	sigObj, err := mcms.NewSignatureFromBytes(sig)
+	sigObj, err := types.NewSignatureFromBytes(sig)
 	if err != nil {
 		return err
 	}
@@ -108,7 +108,7 @@ func SignLedger(
 	}
 
 	// Unmarshal signature
-	sigObj, err := mcms.NewSignatureFromBytes(sig)
+	sigObj, err := types.NewSignatureFromBytes(sig)
 	if err != nil {
 		return err
 	}
