@@ -17,22 +17,6 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func encodeConfig(cfg bindings.ManyChainMultiSigConfig) ([]byte, error) {
-	parsedABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()
-	if err != nil {
-		return nil, err
-	}
-
-	// Locate the `getConfig` method's output argument definitions
-	method, exists := parsedABI.Methods["getConfig"]
-	if !exists {
-		return nil, errors.New("method getConfig not found in ABI")
-	}
-
-	// Use method.Outputs to pack the return values
-	return method.Outputs.Pack(cfg)
-}
-
 func TestEVMInspector_GetConfig(t *testing.T) {
 	t.Parallel()
 
@@ -109,7 +93,15 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 			var encodedConfig []byte
 			if tt.mockResult.Signers != nil {
 				var err error
-				encodedConfig, err = encodeConfig(tt.mockResult)
+				parsedABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()
+				require.NoError(t, err)
+
+				// Locate the `getConfig` method's output argument definitions
+				method, exists := parsedABI.Methods["getConfig"]
+				assert.True(t, exists, "getConfig method should exist in ABI")
+
+				// Use method.Outputs to pack the return values
+				encodedConfig, err = method.Outputs.Pack(tt.mockResult)
 				require.NoError(t, err)
 			}
 
