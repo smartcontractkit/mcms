@@ -8,144 +8,342 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestNewConfig(t *testing.T) {
+// Define signers for use all tests
+var (
+	signer1 = common.HexToAddress("0x1")
+	signer2 = common.HexToAddress("0x2")
+	signer3 = common.HexToAddress("0x3")
+	signer4 = common.HexToAddress("0x4")
+)
+
+func Test_NewConfig(t *testing.T) {
 	t.Parallel()
 
-	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	groupSigners := []Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
-	}
-	config, err := NewConfig(1, signers, groupSigners)
+	var (
+		signers      = []common.Address{signer1, signer2}
+		groupSigners = []Config{
+			{Quorum: 1, Signers: []common.Address{signer3}},
+		}
+	)
 
+	// Valid configuration
+	got, err := NewConfig(1, signers, groupSigners)
 	require.NoError(t, err)
-	assert.NotNil(t, config)
-	assert.Equal(t, uint8(1), config.Quorum)
-	assert.Equal(t, signers, config.Signers)
-	assert.Equal(t, groupSigners, config.GroupSigners)
-}
 
-func TestValidate_Success(t *testing.T) {
-	t.Parallel()
+	assert.NotNil(t, got)
+	assert.Equal(t, uint8(1), got.Quorum)
+	assert.Equal(t, signers, got.Signers)
+	assert.Equal(t, groupSigners, got.GroupSigners)
 
-	// Test case 1: Valid configuration
-	config, err := NewConfig(2, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
-	assert.NotNil(t, config)
-	require.NoError(t, err)
-}
-
-func TestValidate_InvalidQuorum(t *testing.T) {
-	t.Parallel()
-
-	// Test case 2: Quorum is 0
-	config, err := NewConfig(0, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
-	assert.Nil(t, config)
+	// Invalid configuration
+	got, err = NewConfig(0, signers, groupSigners)
 	require.Error(t, err)
-	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
+	assert.Nil(t, got)
 }
 
-func TestValidate_InvalidSigners(t *testing.T) {
+func Test_Config_Validate(t *testing.T) {
 	t.Parallel()
 
-	// Test case 3: No signers or groups
-	config, err := NewConfig(2, []common.Address{}, []Config{})
-	assert.Nil(t, config)
-	require.Error(t, err)
-	assert.Equal(t, "invalid MCMS config: Config must have at least one signer or group", err.Error())
-}
-
-func TestValidate_InvalidQuorumCount(t *testing.T) {
-	t.Parallel()
-
-	// Test case 4: Quorum is greater than the number of signers and groups
-	config, err := NewConfig(3, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{})
-	assert.Nil(t, config)
-	require.Error(t, err)
-	assert.Equal(t, "invalid MCMS config: Quorum must be less than or equal to the number of signers and groups", err.Error())
-}
-
-func TestValidate_InvalidGroupSigner(t *testing.T) {
-	t.Parallel()
-
-	// Test case 5: Invalid group signer
-	config, err := NewConfig(2, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, []Config{
-		{Quorum: 0, Signers: []common.Address{}},
-	})
-	assert.Nil(t, config)
-	require.Error(t, err)
-	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
-}
-
-func TestConfigEquals_Success(t *testing.T) {
-	t.Parallel()
-
-	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	groupSigners := []Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
+	tests := []struct {
+		name    string
+		give    Config
+		wantErr string
+	}{
+		{
+			name: "success: valid configuration",
+			give: Config{
+				Quorum:       2,
+				Signers:      []common.Address{signer1, signer2},
+				GroupSigners: []Config{},
+			},
+		},
+		{
+			name: "failure: invalid quorum of 0",
+			give: Config{
+				Quorum: 0,
+			},
+			wantErr: "invalid MCMS config: Quorum must be greater than 0",
+		},
+		{
+			name: "failure: no signers or groups",
+			give: Config{
+				Quorum:       2,
+				Signers:      []common.Address{},
+				GroupSigners: []Config{},
+			},
+			wantErr: "invalid MCMS config: Config must have at least one signer or group",
+		},
+		{
+			name: "failure: quorum greater than the sum of number of signers and groups",
+			give: Config{
+				Quorum:  3,
+				Signers: []common.Address{signer1},
+				GroupSigners: []Config{
+					{
+						Quorum:       1,
+						Signers:      []common.Address{signer2},
+						GroupSigners: []Config{},
+					},
+				},
+			},
+			wantErr: "invalid MCMS config: Quorum must be less than or equal to the number of signers and groups",
+		},
+		{
+			name: "failure: invalid group signer",
+			give: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1, signer2},
+				GroupSigners: []Config{
+					{Quorum: 0},
+				},
+			},
+			wantErr: "invalid MCMS config: Quorum must be greater than 0",
+		},
 	}
-	config1, err := NewConfig(2, signers, groupSigners)
-	require.NoError(t, err)
-	assert.NotNil(t, config1)
 
-	config2, err := NewConfig(2, signers, groupSigners)
-	require.NoError(t, err)
-	assert.NotNil(t, config2)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	assert.True(t, config1.Equals(config2))
-}
-func TestConfigEquals_Failure_MismatchingQuorum(t *testing.T) {
-	t.Parallel()
+			err := tt.give.Validate()
 
-	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	groupSigners := []Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+		})
 	}
-	config1, err := NewConfig(2, signers, groupSigners)
-	require.NoError(t, err)
-	assert.NotNil(t, config1)
-
-	config2, err := NewConfig(1, signers, groupSigners)
-	require.NoError(t, err)
-	assert.NotNil(t, config2)
-
-	assert.False(t, config1.Equals(config2))
 }
 
-func TestConfigEquals_Failure_MismatchingSigners(t *testing.T) {
+func Test_Config_Equals(t *testing.T) {
 	t.Parallel()
 
-	signers1 := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	signers2 := []common.Address{common.HexToAddress("0x1")}
-	groupSigners := []Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
+	// The config that is being matched against. This is compared against the give field in
+	// every test case.
+	var config = Config{
+		Quorum:  1,
+		Signers: []common.Address{signer1, signer2},
+		GroupSigners: []Config{
+			{
+				Quorum:  1,
+				Signers: []common.Address{signer3},
+			},
+		},
 	}
-	config1, err := NewConfig(2, signers1, groupSigners)
-	assert.NotNil(t, config1)
-	require.NoError(t, err)
 
-	config2, err := NewConfig(2, signers2, groupSigners)
-	assert.NotNil(t, config2)
-	require.NoError(t, err)
+	tests := []struct {
+		name string
+		give Config
+		want bool
+	}{
+		{
+			name: "success: equal configurations",
+			give: config,
+			want: true,
+		},
+		{
+			name: "failure: mismatching quorum",
+			give: Config{
+				Quorum: 1,
+			},
+			want: false,
+		},
+		{
+			name: "failure: mismatching signers length",
+			give: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1},
+			},
+			want: false,
+		},
+		{
+			name: "failure: mismatching signers",
+			give: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1, signer3}, // Signer 3 instead of 2
+			},
+			want: false,
+		},
+		{
+			name: "failure: mismatching group signers length",
+			give: Config{
+				Quorum:       1,
+				Signers:      []common.Address{signer1, signer2},
+				GroupSigners: []Config{}, // No group signers but there should be 1
+			},
+			want: false,
+		},
+		{
+			name: "failure: mismatching group signers",
+			give: Config{
+				Quorum:  1,
+				Signers: []common.Address{signer1, signer2},
+				GroupSigners: []Config{
+					{
+						Quorum:  1,
+						Signers: []common.Address{signer3, signer4}, // Additional signer4
+					},
+				},
+			},
+			want: false,
+		},
+	}
 
-	assert.False(t, config1.Equals(config2))
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			assert.Equal(t, tt.want, config.Equals(&tt.give))
+		})
+	}
+}
+func Test_Config_GetAllSigners(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		give Config
+		want []common.Address
+	}{
+		{
+			name: "success: single level signers",
+			give: Config{
+				Quorum:  1,
+				Signers: []common.Address{signer1, signer2},
+			},
+			want: []common.Address{signer1, signer2},
+		},
+		{
+			name: "success: nested group signers",
+			give: Config{
+				Quorum:  1,
+				Signers: []common.Address{signer1},
+				GroupSigners: []Config{
+					{
+						Quorum:  1,
+						Signers: []common.Address{signer2},
+						GroupSigners: []Config{
+							{
+								Quorum:  1,
+								Signers: []common.Address{signer3, signer4},
+							},
+						},
+					},
+				},
+			},
+			want: []common.Address{signer1, signer2, signer3, signer4},
+		},
+		{
+			name: "success: no signers",
+			give: Config{
+				Quorum:       1,
+				Signers:      []common.Address{},
+				GroupSigners: []Config{},
+			},
+			want: []common.Address{},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := tt.give.GetAllSigners()
+			assert.ElementsMatch(t, tt.want, got)
+		})
+	}
 }
 
-func TestConfigEquals_Failure_MismatchingGroupSigners(t *testing.T) {
+func Test_Config_CanSetRoot(t *testing.T) {
 	t.Parallel()
 
-	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	groupSigners1 := []Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
+	tests := []struct {
+		name             string
+		config           Config
+		recoveredSigners []common.Address
+		want             bool
+		wantErr          string
+	}{
+		{
+			name: "success: single level signers reach consensus",
+			config: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1, signer2},
+			},
+			recoveredSigners: []common.Address{signer1, signer2},
+			want:             true,
+		},
+		{
+			name: "success: nested group signers reach consensus",
+			config: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1},
+				GroupSigners: []Config{
+					{
+						Quorum:  2,
+						Signers: []common.Address{signer2, signer3},
+					},
+				},
+			},
+			recoveredSigners: []common.Address{signer1, signer2, signer3},
+			want:             true,
+		},
+		{
+			name: "failure: single level signers do not reach consensus",
+			config: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1, signer2},
+			},
+			recoveredSigners: []common.Address{signer1},
+			want:             false,
+		},
+		{
+			name: "failure: nested group signers do not reach consensus",
+			config: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1},
+				GroupSigners: []Config{
+					{
+						Quorum:  2,
+						Signers: []common.Address{signer2},
+						GroupSigners: []Config{
+							{
+								Quorum:  2,
+								Signers: []common.Address{signer3, signer4},
+							},
+						},
+					},
+				},
+			},
+			recoveredSigners: []common.Address{signer1, signer2, signer3},
+			want:             false,
+		},
+		{
+			name: "failure: invalid recovered signer",
+			config: Config{
+				Quorum:  1,
+				Signers: []common.Address{signer1},
+			},
+			recoveredSigners: []common.Address{signer4},
+			want:             false,
+			wantErr:          "invalid signature: received signature for address 0x0000000000000000000000000000000000000004 is not a signer on MCMS 0x0000000000000000000000000000000000000000 on chain 0",
+		},
 	}
-	groupSigners2 := []Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x4")}},
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := tt.config.CanSetRoot(tt.recoveredSigners)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.want, got)
+		})
 	}
-	config1, err := NewConfig(2, signers, groupSigners1)
-	assert.NotNil(t, config1)
-	require.NoError(t, err)
-
-	config2, err := NewConfig(2, signers, groupSigners2)
-	assert.NotNil(t, config2)
-	require.NoError(t, err)
-
-	assert.False(t, config1.Equals(config2))
 }

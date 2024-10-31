@@ -10,11 +10,21 @@ import (
 
 // Config is a struct that holds all the configuration for the owner contracts
 type Config struct {
-	Quorum       uint8            `json:"quorum"`
-	Signers      []common.Address `json:"signers"`
-	GroupSigners []Config         `json:"groupSigners"`
+	// Quorum is the minimum number of signers required to reach consensus. Quorum can be reached
+	// by a ensuring that the sum of signers and group signers that have signed is greater than or
+	// equal to the quorum.
+	Quorum uint8 `json:"quorum"`
+
+	// Signers is a list of all single signers in the config
+	Signers []common.Address `json:"signers"`
+
+	// GroupSigners is a list of all group signers. This is a recursive structure where each group
+	// signer can have its own signers and group signers.
+	GroupSigners []Config `json:"groupSigners"`
 }
 
+// NewConfig returns a new config with the given quorum, signers and group signers and ensures it
+// is valid.
 func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*Config, error) {
 	config := Config{
 		Quorum:       quorum,
@@ -29,6 +39,7 @@ func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*
 	return &config, nil
 }
 
+// Validate checks if the config is valid, recursively checking all group signers configs.
 func (c *Config) Validate() error {
 	if c.Quorum == 0 {
 		return &core.InvalidMCMSConfigError{
@@ -57,6 +68,7 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+// Equals checks if two configs are equal, recursively checking all group signers configs.
 func (c *Config) Equals(other *Config) bool {
 	if c.Quorum != other.Quorum {
 		return false
@@ -94,6 +106,55 @@ func (c *Config) Equals(other *Config) bool {
 	return true
 }
 
+// GetAllSigners returns all signers in the config and all group signers.
+func (c *Config) GetAllSigners() []common.Address {
+	signers := make([]common.Address, 0)
+	signers = append(signers, c.Signers...)
+
+	for _, groupSigner := range c.GroupSigners {
+		signers = append(signers, groupSigner.GetAllSigners()...)
+	}
+
+	return signers
+}
+
+// CanSetRoot checks if the recovered signers have reached consensus to set the root.
+func (c *Config) CanSetRoot(recoveredSigners []common.Address) (bool, error) {
+	allSigners := c.GetAllSigners()
+	for _, recoveredSigner := range recoveredSigners {
+		if !slices.Contains(allSigners, recoveredSigner) {
+			return false, &core.InvalidSignatureError{
+				RecoveredAddress: recoveredSigner,
+			}
+		}
+	}
+
+	return c.isGroupAtConsensus(recoveredSigners), nil
+}
+
+// isGroupAtConsensus checks if the recovered signers are at consensus for the group.
+func (c *Config) isGroupAtConsensus(recoveredSigners []common.Address) bool {
+	signerApprovalsInGroup := 0
+	for _, signer := range c.Signers {
+		for _, recoveredSigner := range recoveredSigners {
+			if signer == recoveredSigner {
+				signerApprovalsInGroup++
+				break
+			}
+		}
+	}
+
+	groupApprovals := 0
+	for _, groupSigner := range c.GroupSigners {
+		if groupSigner.isGroupAtConsensus(recoveredSigners) {
+			groupApprovals++
+		}
+	}
+
+	return (signerApprovalsInGroup + groupApprovals) >= int(c.Quorum)
+}
+
+// unorderedArrayEquals checks if two arrays are equal regardless of order.
 func unorderedArrayEquals[T comparable](a, b []T) bool {
 	if len(a) != len(b) {
 		return false
@@ -123,49 +184,4 @@ func unorderedArrayEquals[T comparable](a, b []T) bool {
 	}
 
 	return true
-}
-
-func (c *Config) GetAllSigners() []common.Address {
-	signers := make([]common.Address, 0)
-	signers = append(signers, c.Signers...)
-
-	for _, groupSigner := range c.GroupSigners {
-		signers = append(signers, groupSigner.GetAllSigners()...)
-	}
-
-	return signers
-}
-
-func (c *Config) CanSetRoot(recoveredSigners []common.Address) (bool, error) {
-	allSigners := c.GetAllSigners()
-	for _, recoveredSigner := range recoveredSigners {
-		if !slices.Contains(allSigners, recoveredSigner) {
-			return false, &core.InvalidSignatureError{
-				RecoveredAddress: recoveredSigner,
-			}
-		}
-	}
-
-	return c.isGroupAtConsensus(recoveredSigners), nil
-}
-
-func (c *Config) isGroupAtConsensus(recoveredSigners []common.Address) bool {
-	signerApprovalsInGroup := 0
-	for _, signer := range c.Signers {
-		for _, recoveredSigner := range recoveredSigners {
-			if signer == recoveredSigner {
-				signerApprovalsInGroup++
-				break
-			}
-		}
-	}
-
-	groupApprovals := 0
-	for _, groupSigner := range c.GroupSigners {
-		if groupSigner.isGroupAtConsensus(recoveredSigners) {
-			groupApprovals++
-		}
-	}
-
-	return (signerApprovalsInGroup + groupApprovals) >= int(c.Quorum)
 }
