@@ -12,7 +12,7 @@ type TimelockConverter interface {
 		t BatchChainOperation,
 		timelockAddress common.Address,
 		minDelay string,
-		operation TimelockOperationType,
+		operation types.TimelockAction,
 		predecessor common.Hash,
 	) (types.ChainOperation, common.Hash, error)
 }
