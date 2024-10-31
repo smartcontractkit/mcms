@@ -11,9 +11,9 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
-	"github.com/smartcontractkit/mcms/internal/evm"
-	"github.com/smartcontractkit/mcms/internal/evm/bindings"
-	evm_mcms "github.com/smartcontractkit/mcms/internal/evm/proposal/mcms"
+	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 )
 
 var ZERO_HASH = common.Hash{}

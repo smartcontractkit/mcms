@@ -10,12 +10,13 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	evm_mcms "github.com/smartcontractkit/mcms/internal/evm/proposal/mcms"
+	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 )
 
+// TODO: Should go to EVM SDK. This should just tests the router function actuallty routes to the correct chain
 func TestValidateAdditionalFields(t *testing.T) {
 	t.Parallel()
 

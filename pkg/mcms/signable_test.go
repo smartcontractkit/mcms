@@ -13,10 +13,11 @@ import (
 	mcms_core "github.com/smartcontractkit/mcms/internal/core"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
-	"github.com/smartcontractkit/mcms/internal/evm/bindings"
-	evm_mcms "github.com/smartcontractkit/mcms/internal/evm/proposal/mcms"
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 )
 
+// TODO: Should go to EVM SDK
 func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	t.Parallel()
 

@@ -7,7 +7,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
-	evm_timelock "github.com/smartcontractkit/mcms/internal/evm/proposal/timelock"
+	evm_timelock "github.com/smartcontractkit/mcms/sdk/evm/proposal/timelock"
 )
 
 // ToChainOperation converts a batch of chain operations to a single types.ChainOperation

@@ -15,16 +15,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	evm_config "github.com/smartcontractkit/mcms/internal/evm/config"
-	evm_mcms "github.com/smartcontractkit/mcms/internal/evm/proposal/mcms"
-	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
+	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
-	"github.com/smartcontractkit/mcms/internal/evm/bindings"
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
+// TODO: This should go to the EVM SDK
 func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*bind.TransactOpts, *backends.SimulatedBackend, *bindings.ManyChainMultiSig, error) {
 	// Generate a private key
 	keys := make([]*ecdsa.PrivateKey, numSigners)

@@ -6,7 +6,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
-	evm_mcms "github.com/smartcontractkit/mcms/internal/evm/proposal/mcms"
+	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 )

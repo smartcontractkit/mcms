@@ -9,8 +9,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/config"
-	"github.com/smartcontractkit/mcms/internal/evm/bindings"
-	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
 const maxUint8Value = 255

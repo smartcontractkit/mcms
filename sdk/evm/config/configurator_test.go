@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
-	"github.com/smartcontractkit/mcms/internal/evm/bindings"
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
 func TestNewConfigFromRaw(t *testing.T) {

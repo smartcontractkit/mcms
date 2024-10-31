@@ -11,6 +11,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 )
 
+// TODO: Should go to EVM SDK
 func TestEncoder_EVM_NoSim(t *testing.T) {
 	t.Parallel()
 

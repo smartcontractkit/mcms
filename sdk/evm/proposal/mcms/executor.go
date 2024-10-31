@@ -8,8 +8,8 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
-	"github.com/smartcontractkit/mcms/internal/evm"
-	"github.com/smartcontractkit/mcms/internal/evm/bindings"
+	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
 type EVMExecutor struct {

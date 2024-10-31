@@ -6,9 +6,9 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
-	"github.com/smartcontractkit/mcms/internal/evm"
-	"github.com/smartcontractkit/mcms/internal/evm/bindings"
-	evm_config "github.com/smartcontractkit/mcms/internal/evm/config"
+	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
 )
 
 type EVMInspector struct {

@@ -7,7 +7,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
-	evm_mcms "github.com/smartcontractkit/mcms/internal/evm/proposal/mcms"
+	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 )
 
 func NewEncoder(chainSelector mcms.ChainSelector, txCount uint64, overridePreviousRoot bool, isSim bool) (mcms.Encoder, error) {
