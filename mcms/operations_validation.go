@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/sdk"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
 
@@ -18,7 +18,7 @@ func ValidateAdditionalFields(operation json.RawMessage, identifier types.ChainS
 		return err
 	}
 
-	var validator mcms.Validator
+	var validator sdk.Validator
 
 	switch chainFamily {
 	case chain_selectors.FamilyEVM:

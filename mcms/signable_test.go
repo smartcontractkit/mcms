@@ -12,7 +12,7 @@ import (
 
 	mcms_core "github.com/smartcontractkit/mcms/internal/core"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
@@ -82,7 +82,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -163,7 +163,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -254,7 +254,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -344,7 +344,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -437,7 +437,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -537,7 +537,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)

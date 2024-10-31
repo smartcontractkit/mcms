@@ -1,4 +1,4 @@
-package mcms
+package sdk
 
 import (
 	"github.com/ethereum/go-ethereum/common"
@@ -7,6 +7,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// Inspector is an interface for inspecting on chain state of MCMS contracts.
 type Inspector interface {
 	GetConfig(mcmAddress string) (*config.Config, error)
 	GetOpCount(mcmAddress string) (uint64, error)
