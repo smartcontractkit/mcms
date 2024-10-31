@@ -160,7 +160,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -292,7 +292,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -445,7 +445,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -591,7 +591,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {

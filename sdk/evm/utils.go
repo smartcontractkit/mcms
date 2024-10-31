@@ -7,14 +7,14 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 const EthereumSignatureVOffset = 27
 const EthereumSignatureVThreshold = 2
 
-func ToGethSignature(s mcms.Signature) bindings.ManyChainMultiSigSignature {
+func ToGethSignature(s types.Signature) bindings.ManyChainMultiSigSignature {
 	if s.V < EthereumSignatureVThreshold {
 		s.V += EthereumSignatureVOffset
 	}
@@ -31,7 +31,7 @@ type ContractDeployBackend interface {
 	bind.DeployBackend
 }
 
-func TransformSignatures(signatures []mcms.Signature) []bindings.ManyChainMultiSigSignature {
+func TransformSignatures(signatures []types.Signature) []bindings.ManyChainMultiSigSignature {
 	sigs := make([]bindings.ManyChainMultiSigSignature, len(signatures))
 	for i, sig := range signatures {
 		sigs[i] = ToGethSignature(sig)

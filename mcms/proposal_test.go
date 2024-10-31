@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -57,7 +56,7 @@ func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
-		[]mcms.Signature{},
+		[]types.Signature{},
 		false,
 		map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -92,7 +91,7 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 	proposal, err := NewProposal(
 		"",
 		2004259681,
-		[]mcms.Signature{},
+		[]types.Signature{},
 		false,
 		map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -128,7 +127,7 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 	proposal, err := NewProposal(
 		"1.0",
 		0,
-		[]mcms.Signature{},
+		[]types.Signature{},
 		false,
 		map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -164,7 +163,7 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
-		[]mcms.Signature{},
+		[]types.Signature{},
 		false,
 		map[types.ChainSelector]types.ChainMetadata{},
 		"Sample description",
@@ -195,7 +194,7 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
-		[]mcms.Signature{},
+		[]types.Signature{},
 		false,
 		map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -231,7 +230,7 @@ func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
-		[]mcms.Signature{},
+		[]types.Signature{},
 		false,
 		map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -254,7 +253,7 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 	proposal, err := NewProposal(
 		"1.0",
 		2004259681,
-		[]mcms.Signature{},
+		[]types.Signature{},
 		false,
 		map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -290,7 +289,7 @@ func TestProposalFromFile(t *testing.T) {
 	mcmsProposal := MCMSProposal{
 		Version:              "1",
 		ValidUntil:           100,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		Transactions:         []types.ChainOperation{},
 		OverridePreviousRoot: false,
 		Description:          "Test Proposal",
