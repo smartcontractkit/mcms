@@ -12,15 +12,31 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
-var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
-var MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA"))
+var (
+	// mcmDomainSeparatorOp is used for domain separation of the different op values stored in the
+	// Merkle tree. This is defined in the ManyChainMultiSig contract.
+	//
+	// https://github.com/smartcontractkit/ccip-owner-contracts/blob/main/src/ManyChainMultiSig.sol#L11
+	mcmDomainSeparatorOp = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP"))
 
+	// mcmDomainSeparatorMetadata is used for domain separation of the different metadata values
+	// stored in the Merkle tree. This is defined in the ManyChainMultiSig contract.
+	//
+	// https://github.com/smartcontractkit/ccip-owner-contracts/blob/main/src/ManyChainMultiSig.sol#L17
+	mcmDomainSeparatorMetadata = crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA"))
+)
+
+var _ mcms.Encoder = &EVMEncoder{}
+
+// EVMEncoder is a struct that encodes ChainOperations and ChainMetadata into the format expected
+// by the EVM ManyChainMultiSig contract.
 type EVMEncoder struct {
 	TxCount              uint64
 	ChainID              uint64
 	OverridePreviousRoot bool
 }
 
+// NewEVMEncoder returns a new EVMEncoder.
 func NewEVMEncoder(txCount uint64, chainID uint64, overridePreviousRoot bool) *EVMEncoder {
 	return &EVMEncoder{
 		TxCount:              txCount,
@@ -29,20 +45,20 @@ func NewEVMEncoder(txCount uint64, chainID uint64, overridePreviousRoot bool) *E
 	}
 }
 
-func (e *EVMEncoder) HashOperation(opCount uint32, metadata mcms.ChainMetadata, operation mcms.ChainOperation) (common.Hash, error) {
-	// Unmarshall the AdditionalFields from the operation
-	additionalFields := EVMAdditionalFields{}
-	if err := json.Unmarshal(operation.AdditionalFields, &additionalFields); err != nil {
-		return common.Hash{}, err
-	}
-
-	op, err := e.ToGethOperation(opCount, metadata, operation)
+// HashOperation converts the MCMS ChainOperation into the format expected by the EVM
+// ManyChainMultiSig contract, and hashes it.
+func (e *EVMEncoder) HashOperation(
+	opCount uint32,
+	metadata mcms.ChainMetadata,
+	op mcms.ChainOperation,
+) (common.Hash, error) {
+	bindOp, err := e.ToGethOperation(opCount, metadata, op)
 	if err != nil {
 		return common.Hash{}, err
 	}
 
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
-	encoded, err := evm.ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP, op)
+	encoded, err := evm.ABIEncode(abi, mcmDomainSeparatorOp, bindOp)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -50,9 +66,11 @@ func (e *EVMEncoder) HashOperation(opCount uint32, metadata mcms.ChainMetadata, 
 	return crypto.Keccak256Hash(encoded), nil
 }
 
+// HashMetadata converts the MCMS ChainMetadata into the format expected by the EVM
+// ManyChainMultiSig contract, and hashes it.
 func (e *EVMEncoder) HashMetadata(metadata mcms.ChainMetadata) (common.Hash, error) {
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
-	encoded, err := evm.ABIEncode(abi, MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA, e.ToGethRootMetadata(metadata))
+	encoded, err := evm.ABIEncode(abi, mcmDomainSeparatorMetadata, e.ToGethRootMetadata(metadata))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -60,10 +78,16 @@ func (e *EVMEncoder) HashMetadata(metadata mcms.ChainMetadata) (common.Hash, err
 	return crypto.Keccak256Hash(encoded), nil
 }
 
-func (e *EVMEncoder) ToGethOperation(opCount uint32, metadata mcms.ChainMetadata, operation mcms.ChainOperation) (bindings.ManyChainMultiSigOp, error) {
-	// Unmarshall the AdditionalFields from the operation
-	additionalFields := EVMAdditionalFields{}
-	if err := json.Unmarshal(operation.AdditionalFields, &additionalFields); err != nil {
+// ToGethOperation converts the MCMS ChainOperation into the format expected by the EVM
+// ManyChainMultiSig contract.
+func (e *EVMEncoder) ToGethOperation(
+	opCount uint32,
+	metadata mcms.ChainMetadata,
+	op mcms.ChainOperation,
+) (bindings.ManyChainMultiSigOp, error) {
+	// Unmarshal the AdditionalFields from the operation
+	var additionalFields EVMAdditionalFields
+	if err := json.Unmarshal(op.AdditionalFields, &additionalFields); err != nil {
 		return bindings.ManyChainMultiSigOp{}, err
 	}
 
@@ -71,12 +95,14 @@ func (e *EVMEncoder) ToGethOperation(opCount uint32, metadata mcms.ChainMetadata
 		ChainId:  new(big.Int).SetUint64(e.ChainID),
 		MultiSig: common.HexToAddress(metadata.MCMAddress),
 		Nonce:    new(big.Int).SetUint64(metadata.StartingOpCount + uint64(opCount)),
-		To:       common.HexToAddress(operation.To),
-		Data:     operation.Data,
+		To:       common.HexToAddress(op.To),
+		Data:     op.Data,
 		Value:    additionalFields.Value,
 	}, nil
 }
 
+// ToGethRootMetadata converts the MCMS ChainMetadata into the format expected by the EVM
+// ManyChainMultiSig contract.
 func (e *EVMEncoder) ToGethRootMetadata(metadata mcms.ChainMetadata) bindings.ManyChainMultiSigRootMetadata {
 	return bindings.ManyChainMultiSigRootMetadata{
 		ChainId:              new(big.Int).SetUint64(e.ChainID),
