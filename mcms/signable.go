@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
-	"github.com/smartcontractkit/mcms/internal/core/proposal"
+	coreProposal "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 )
@@ -31,7 +31,7 @@ type Signable struct {
 	Decoders   map[mcms.ChainSelector]mcms.Decoder   // optional, skip decoding
 }
 
-var _ proposal.Signable = (*Signable)(nil)
+var _ coreProposal.Signable = (*Signable)(nil)
 
 func NewSignable(
 	proposal *MCMSProposal,
