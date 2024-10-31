@@ -12,7 +12,7 @@ func main() {
 	binPath := os.Args[2]
 	className := os.Args[3]
 	pkgName := os.Args[4]
-	fmt.Println("Generating", className, "contract wrapper")
+	fmt.Println("Generating", className, "contract wrapper") //nolint
 	out := fmt.Sprintf("%s.go", className)
 
 	bindings.Abigen(bindings.AbigenArgs{
