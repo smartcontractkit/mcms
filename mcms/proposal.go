@@ -1,6 +1,8 @@
 package mcms
 
 import (
+	"encoding/json"
+	"io"
 	"sort"
 	"time"
 
@@ -59,9 +61,9 @@ func NewProposal(
 	return &proposalObj, nil
 }
 
-func NewProposalFromFile(filePath string) (*MCMSProposal, error) {
+func NewProposalFromReader(reader io.Reader) (*MCMSProposal, error) {
 	var out MCMSProposal
-	err := core.FromFile(filePath, &out)
+	err := json.NewDecoder(reader).Decode(&out)
 	if err != nil {
 		return nil, err
 	}
