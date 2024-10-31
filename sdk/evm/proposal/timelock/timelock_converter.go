@@ -24,7 +24,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	txn timelock.BatchChainOperation,
 	timelockAddress common.Address,
 	minDelay string,
-	operation timelock.TimelockOperationType,
+	operation types.TimelockAction,
 	predecessor common.Hash,
 ) (types.ChainOperation, common.Hash, error) {
 	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
@@ -62,11 +62,11 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	var data []byte
 	var err error
 	switch operation {
-	case timelock.Schedule:
+	case types.TimelockActionSchedule:
 		data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
-	case timelock.Cancel:
+	case types.TimelockActionCancel:
 		data, err = abi.Pack("cancel", operationId)
-	case timelock.Bypass:
+	case types.TimelockActionBypass:
 		data, err = abi.Pack("bypasserExecuteBatch", calls)
 	default:
 		return types.ChainOperation{}, common.Hash{}, &core.InvalidTimelockOperationError{

@@ -15,7 +15,7 @@ func ToChainOperation(
 	t timelock.BatchChainOperation,
 	timelockAddress common.Address,
 	minDelay string,
-	operation timelock.TimelockOperationType,
+	operation types.TimelockAction,
 	predecessor common.Hash,
 ) (types.ChainOperation, common.Hash, error) {
 	chainFamily, err := chain_selectors.GetSelectorFamily(uint64(t.ChainSelector))

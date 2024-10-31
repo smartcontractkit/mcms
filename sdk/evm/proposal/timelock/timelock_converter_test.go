@@ -25,7 +25,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 		name           string
 		txn            timelock.BatchChainOperation
 		minDelay       string
-		operation      timelock.TimelockOperationType
+		operation      types.TimelockAction
 		predecessor    common.Hash
 		expectedError  error
 		expectedOpType string
@@ -45,7 +45,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
-			operation:      timelock.Schedule,
+			operation:      types.TimelockActionSchedule,
 			predecessor:    zeroHash,
 			expectedError:  nil,
 			expectedOpType: "RBACTimelock",
@@ -65,7 +65,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
-			operation:      timelock.Cancel,
+			operation:      types.TimelockActionCancel,
 			predecessor:    zeroHash,
 			expectedError:  nil,
 			expectedOpType: "RBACTimelock",
@@ -85,7 +85,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
-			operation:      timelock.TimelockOperationType("invalid"),
+			operation:      types.TimelockAction("invalid"),
 			predecessor:    zeroHash,
 			expectedError:  &core.InvalidTimelockOperationError{ReceivedTimelockOperation: "invalid"},
 			expectedOpType: "",
