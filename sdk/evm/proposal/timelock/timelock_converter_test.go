@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -23,7 +22,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		txn            timelock.BatchChainOperation
+		txn            types.BatchChainOperation
 		minDelay       string
 		operation      types.TimelockAction
 		predecessor    common.Hash
@@ -32,7 +31,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 	}{
 		{
 			name: "Schedule operation",
-			txn: timelock.BatchChainOperation{
+			txn: types.BatchChainOperation{
 				Batch: []types.Operation{
 					evm_mcms.NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
@@ -52,7 +51,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 		},
 		{
 			name: "Cancel operation",
-			txn: timelock.BatchChainOperation{
+			txn: types.BatchChainOperation{
 				Batch: []types.Operation{
 					evm_mcms.NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
@@ -72,7 +71,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 		},
 		{
 			name: "Invalid operation",
-			txn: timelock.BatchChainOperation{
+			txn: types.BatchChainOperation{
 				Batch: []types.Operation{
 					evm_mcms.NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),

@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
@@ -21,7 +20,7 @@ var ZERO_HASH = common.Hash{}
 type TimelockConverterEVM struct{}
 
 func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
-	txn timelock.BatchChainOperation,
+	txn types.BatchChainOperation,
 	timelockAddress common.Address,
 	minDelay string,
 	operation types.TimelockAction,
