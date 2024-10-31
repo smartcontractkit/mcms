@@ -18,3 +18,6 @@ includes:
   test:
     taskfile: ./taskfiles/test/Taskfile.yml
 
+  generate:
+    taskfile: ./taskfiles/generate/Taskfile.yml
+
