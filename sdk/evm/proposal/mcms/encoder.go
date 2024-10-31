@@ -2,8 +2,9 @@ package evm
 
 import (
 	"encoding/json"
-	"github.com/smartcontractkit/mcms/sdk"
 	"math/big"
+
+	"github.com/smartcontractkit/mcms/sdk"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"

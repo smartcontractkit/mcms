@@ -4,6 +4,7 @@ import (
 	"crypto/ecdsa"
 	"errors"
 	"fmt"
+
 	"github.com/smartcontractkit/mcms/sdk"
 
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"

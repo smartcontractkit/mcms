@@ -2,6 +2,7 @@ package mcms
 
 import (
 	"errors"
+
 	"github.com/smartcontractkit/mcms/sdk"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"

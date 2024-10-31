@@ -2,15 +2,19 @@ package evm
 
 import (
 	"errors"
+	"math/big"
+	"testing"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_mocks "github.com/smartcontractkit/mcms/sdk/evm/mocks"
 	"github.com/smartcontractkit/mcms/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"math/big"
-	"testing"
 )
 
 func encodeConfig(cfg bindings.ManyChainMultiSigConfig) ([]byte, error) {
@@ -106,7 +110,7 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 			if tt.mockResult.Signers != nil {
 				var err error
 				encodedConfig, err = encodeConfig(tt.mockResult)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			// Mock CallContract to return either encodedConfig or mockError
@@ -121,12 +125,12 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 
 			// Assertions for expected error or successful result
 			if tt.expectErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				if err != nil {
 					assert.Contains(t, err.Error(), tt.expectedErr)
 				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expected, result)
 			}
 
@@ -175,14 +179,14 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 			var encodedOpCount []byte
 			if tt.mockResult != nil {
 				parsedABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				// Retrieve the method's output type and pack the mock result as output
 				method, exists := parsedABI.Methods["getOpCount"]
 				assert.True(t, exists, "getOpCount method should exist in ABI")
 
 				encodedOpCount, err = method.Outputs.Pack(tt.mockResult)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			// Mock CallContract to return either the encoded OpCount or an error
@@ -197,12 +201,12 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 
 			// Assertions for expected error or successful result
 			if tt.expectErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				if err != nil {
 					assert.Contains(t, err.Error(), tt.expectedErr)
 				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expected, result)
 			}
 
@@ -252,14 +256,14 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 			var encodedRoot []byte
 			if tt.mockError == nil {
 				parsedABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				// Retrieve the method's output type and pack the mock result as output
 				method, exists := parsedABI.Methods["getRoot"]
 				assert.True(t, exists, "getRoot method should exist in ABI")
 
 				encodedRoot, err = method.Outputs.Pack(tt.mockResult.Root, tt.mockResult.ValidUntil)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			// Mock CallContract to return the encoded root or an error
@@ -274,12 +278,12 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 
 			// Assertions for expected error or successful result
 			if tt.expectErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				if err != nil {
 					assert.Contains(t, err.Error(), tt.expectedErr)
 				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expectedRoot, root)
 				assert.Equal(t, tt.expectedValidUntil, validUntil)
 			}
@@ -337,14 +341,14 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 			var encodedMetadata []byte
 			if tt.mockError == nil {
 				parsedABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()
-				assert.NoError(t, err)
+				require.NoError(t, err)
 
 				// Retrieve the method's output type and pack the mock result as output
 				method, exists := parsedABI.Methods["getRootMetadata"]
 				assert.True(t, exists, "getRootMetadata method should exist in ABI")
 
 				encodedMetadata, err = method.Outputs.Pack(tt.mockResult)
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			// Mock CallContract to return either the encoded metadata or an error
@@ -359,12 +363,12 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 
 			// Assertions for expected error or successful result
 			if tt.expectErr {
-				assert.Error(t, err)
+				require.Error(t, err)
 				if err != nil {
 					assert.Contains(t, err.Error(), tt.expectedErr)
 				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.expectedResult, result)
 			}
 
