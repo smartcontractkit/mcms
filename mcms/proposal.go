@@ -2,12 +2,13 @@ package mcms
 
 import (
 	"encoding/json"
-	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"io"
 	"sort"
 	"time"
+
+	"github.com/smartcontractkit/mcms/internal/core"
+	"github.com/smartcontractkit/mcms/internal/core/proposal"
+	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 )
 
 // MCMSProposal is a struct where the target contract is an MCMS contract
