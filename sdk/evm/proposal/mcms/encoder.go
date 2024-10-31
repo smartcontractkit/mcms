@@ -30,7 +30,7 @@ var (
 var _ sdk.Encoder = &EVMEncoder{}
 
 // EVMEncoder is a struct that encodes ChainOperations and ChainMetadata into the format expected
-// by the EVM ManyChainMultiSig contract.Q
+// by the EVM ManyChainMultiSig contract.
 type EVMEncoder struct {
 	TxCount              uint64
 	ChainID              uint64

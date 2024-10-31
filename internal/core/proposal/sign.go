@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -44,7 +43,7 @@ func SignPlainKey(
 	}
 
 	// Unmarshal signature
-	sigObj, err := mcms.NewSignatureFromBytes(sig)
+	sigObj, err := types.NewSignatureFromBytes(sig)
 	if err != nil {
 		return err
 	}
@@ -109,7 +108,7 @@ func SignLedger(
 	}
 
 	// Unmarshal signature
-	sigObj, err := mcms.NewSignatureFromBytes(sig)
+	sigObj, err := types.NewSignatureFromBytes(sig)
 	if err != nil {
 		return err
 	}

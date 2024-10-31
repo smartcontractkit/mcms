@@ -1,7 +1,6 @@
 package mcms
 
 import (
-	"github.com/smartcontractkit/mcms/sdk"
 	"math/big"
 	"testing"
 
@@ -13,7 +12,7 @@ import (
 
 	mcms_core "github.com/smartcontractkit/mcms/internal/core"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
@@ -60,7 +59,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -141,7 +140,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -243,7 +242,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -333,7 +332,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -426,7 +425,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -526,7 +525,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {

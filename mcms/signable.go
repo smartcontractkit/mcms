@@ -3,7 +3,6 @@ package mcms
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/smartcontractkit/mcms/sdk"
 	"sort"
 	"strconv"
 
@@ -14,8 +13,8 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	coreProposal "github.com/smartcontractkit/mcms/internal/core/proposal"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -28,9 +27,9 @@ type Signable struct {
 	ChainNonces []uint64
 
 	Encoders   map[types.ChainSelector]sdk.Encoder
-	Inspectors map[types.ChainSelector]sdk.Inspector  // optional, skip any inspections
-	Simulators map[types.ChainSelector]mcms.Simulator // optional, skip simulations
-	Decoders   map[types.ChainSelector]mcms.Decoder   // optional, skip decoding
+	Inspectors map[types.ChainSelector]sdk.Inspector // optional, skip any inspections
+	Simulators map[types.ChainSelector]sdk.Simulator // optional, skip simulations
+	Decoders   map[types.ChainSelector]sdk.Decoder   // optional, skip decoding
 }
 
 var _ coreProposal.Signable = (*Signable)(nil)

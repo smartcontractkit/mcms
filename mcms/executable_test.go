@@ -18,8 +18,8 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
@@ -161,7 +161,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -204,7 +204,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[types.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 
@@ -293,7 +293,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -339,7 +339,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[types.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 
@@ -446,7 +446,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -478,7 +478,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[types.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 
@@ -592,7 +592,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		Version:              "1.0",
 		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 		ValidUntil:           2004259681,
-		Signatures:           []mcms.Signature{},
+		Signatures:           []types.Signature{},
 		OverridePreviousRoot: false,
 		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 			TestChain1: {
@@ -627,7 +627,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[types.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 

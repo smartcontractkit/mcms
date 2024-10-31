@@ -7,11 +7,23 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
+var _ sdk.Validator = EVMAdditionalFields{}
+
 type EVMAdditionalFields struct {
 	Value *big.Int `json:"value"`
+}
+
+// Validate ensures the EVM-specific fields are correct
+func (f EVMAdditionalFields) Validate() error {
+	if f.Value == nil || f.Value.Sign() < 0 {
+		return fmt.Errorf("invalid EVM value: %v", f.Value)
+	}
+
+	return nil
 }
 
 func NewEVMOperation(
@@ -39,13 +51,4 @@ func NewEVMOperation(
 			Tags:         tags,
 		},
 	}
-}
-
-// Validate ensures the EVM-specific fields are correct
-func (o EVMAdditionalFields) Validate() error {
-	if o.Value == nil || o.Value.Sign() < 0 {
-		return fmt.Errorf("invalid EVM value: %v", o.Value)
-	}
-
-	return nil
 }

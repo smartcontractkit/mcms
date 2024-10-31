@@ -6,6 +6,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk"
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
+
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
