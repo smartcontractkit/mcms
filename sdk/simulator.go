@@ -1,4 +1,4 @@
-package mcms
+package sdk
 
 import (
 	"github.com/ethereum/go-ethereum/common"
@@ -6,6 +6,9 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// Simulator simulates mcms actions on a chain
+//
+// This is only required if the chain supports simulation.
 type Simulator interface {
 	SimulateSetRoot(
 		metadata types.ChainMetadata,
@@ -14,5 +17,10 @@ type Simulator interface {
 		validUntil uint32,
 		sortedSignatures []types.Signature,
 	) (bool, error)
-	SimulateOperation(nonce uint32, proof []common.Hash, operation types.ChainOperation) (bool, error)
+
+	SimulateOperation(
+		nonce uint32,
+		proof []common.Hash,
+		op types.ChainOperation,
+	) (bool, error)
 }

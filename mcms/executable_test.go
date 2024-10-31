@@ -17,8 +17,8 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
@@ -183,7 +183,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -203,7 +203,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[types.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 
@@ -315,7 +315,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -338,7 +338,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[types.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 
@@ -457,7 +457,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -477,7 +477,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[types.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 
@@ -603,7 +603,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]mcms.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -626,7 +626,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.NoError(t, err)
 
 	// Construct executors
-	executors := map[types.ChainSelector]mcms.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		TestChain1: evm_mcms.NewEVMExecutor(encoders[TestChain1].(*evm_mcms.EVMEncoder), sim, auths[0]),
 	}
 

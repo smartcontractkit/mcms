@@ -13,8 +13,8 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	coreProposal "github.com/smartcontractkit/mcms/internal/core/proposal"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -26,18 +26,18 @@ type Signable struct {
 	// operation of chain Transaction[i].ChainSelector
 	ChainNonces []uint64
 
-	Encoders   map[types.ChainSelector]mcms.Encoder
-	Inspectors map[types.ChainSelector]mcms.Inspector // optional, skip any inspections
-	Simulators map[types.ChainSelector]mcms.Simulator // optional, skip simulations
-	Decoders   map[types.ChainSelector]mcms.Decoder   // optional, skip decoding
+	Encoders   map[types.ChainSelector]sdk.Encoder
+	Inspectors map[types.ChainSelector]sdk.Inspector // optional, skip any inspections
+	Simulators map[types.ChainSelector]sdk.Simulator // optional, skip simulations
+	Decoders   map[types.ChainSelector]sdk.Decoder   // optional, skip decoding
 }
 
 var _ coreProposal.Signable = (*Signable)(nil)
 
 func NewSignable(
 	proposal *MCMSProposal,
-	encoders map[types.ChainSelector]mcms.Encoder,
-	inspectors map[types.ChainSelector]mcms.Inspector,
+	encoders map[types.ChainSelector]sdk.Encoder,
+	inspectors map[types.ChainSelector]sdk.Inspector,
 ) (*Signable, error) {
 	hashLeaves := make([]common.Hash, 0)
 	chainIdx := make(map[types.ChainSelector]uint64, len(proposal.ChainMetadata))

@@ -8,7 +8,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -146,9 +146,9 @@ func (m *MCMSProposal) AddSignature(signature types.Signature) {
 	m.Signatures = append(m.Signatures, signature)
 }
 
-func (m *MCMSProposal) GetEncoders(isSim bool) (map[types.ChainSelector]mcms.Encoder, error) {
+func (m *MCMSProposal) GetEncoders(isSim bool) (map[types.ChainSelector]sdk.Encoder, error) {
 	txCounts := m.TransactionCounts()
-	encoders := make(map[types.ChainSelector]mcms.Encoder)
+	encoders := make(map[types.ChainSelector]sdk.Encoder)
 	for chainID := range m.ChainMetadata {
 		encoder, err := NewEncoder(chainID, txCounts[chainID], m.OverridePreviousRoot, isSim)
 		if err != nil {
@@ -162,7 +162,7 @@ func (m *MCMSProposal) GetEncoders(isSim bool) (map[types.ChainSelector]mcms.Enc
 }
 
 // TODO: isSim is very EVM and test Specific. Should be removed
-func (m *MCMSProposal) Signable(isSim bool, inspectors map[types.ChainSelector]mcms.Inspector) (proposal.Signable, error) {
+func (m *MCMSProposal) Signable(isSim bool, inspectors map[types.ChainSelector]sdk.Inspector) (proposal.Signable, error) {
 	encoders, err := m.GetEncoders(isSim)
 	if err != nil {
 		return nil, err
@@ -171,13 +171,13 @@ func (m *MCMSProposal) Signable(isSim bool, inspectors map[types.ChainSelector]m
 	return NewSignable(m, encoders, inspectors)
 }
 
-func (m *MCMSProposal) Executable(isSim bool, executors map[types.ChainSelector]mcms.Executor) (*Executable, error) {
+func (m *MCMSProposal) Executable(isSim bool, executors map[types.ChainSelector]sdk.Executor) (*Executable, error) {
 	encoders, err := m.GetEncoders(isSim)
 	if err != nil {
 		return nil, err
 	}
 
-	inspectors := make(map[types.ChainSelector]mcms.Inspector)
+	inspectors := make(map[types.ChainSelector]sdk.Inspector)
 	for key, executor := range executors {
 		inspectors[key] = executor // since Executor implements Inspector, this works
 	}

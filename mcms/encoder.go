@@ -6,12 +6,12 @@ import (
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/sdk"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func NewEncoder(chainSelector types.ChainSelector, txCount uint64, overridePreviousRoot bool, isSim bool) (mcms.Encoder, error) {
+func NewEncoder(chainSelector types.ChainSelector, txCount uint64, overridePreviousRoot bool, isSim bool) (sdk.Encoder, error) {
 	chain, exists := chain_selectors.ChainBySelector(uint64(chainSelector))
 	if !exists {
 		return nil, &core.InvalidChainIDError{
@@ -24,7 +24,7 @@ func NewEncoder(chainSelector types.ChainSelector, txCount uint64, overridePrevi
 		return nil, errors.New("unknown chain selector: " + err.Error())
 	}
 
-	var encoder mcms.Encoder
+	var encoder sdk.Encoder
 	switch family {
 	case chain_selectors.FamilyEVM:
 		// Simulated chains always have block.chainid = 1337

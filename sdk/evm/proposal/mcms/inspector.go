@@ -5,6 +5,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
@@ -15,6 +16,8 @@ type EVMInspector struct {
 	evm_config.EVMConfigurator
 	client evm.ContractDeployBackend
 }
+
+var _ sdk.Inspector = &EVMInspector{}
 
 func NewEVMInspector(client evm.ContractDeployBackend) *EVMInspector {
 	return &EVMInspector{

@@ -5,7 +5,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -24,7 +24,7 @@ var StringToProposalType = map[string]ProposalType{
 }
 
 type Proposal interface {
-	Signable(sim bool, inspectors map[types.ChainSelector]mcms.Inspector) (Signable, error)
+	Signable(sim bool, inspectors map[types.ChainSelector]sdk.Inspector) (Signable, error)
 	AddSignature(signature types.Signature)
 	Validate() error
 }

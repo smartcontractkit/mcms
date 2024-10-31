@@ -3,19 +3,19 @@ package mcms
 import (
 	"sort"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/mcms"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 type Executable struct {
 	*Signable
-	Executors map[types.ChainSelector]mcms.Executor
+	Executors map[types.ChainSelector]sdk.Executor
 }
 
 func NewExecutable(
 	signable *Signable,
-	executors map[types.ChainSelector]mcms.Executor,
+	executors map[types.ChainSelector]sdk.Executor,
 ) *Executable {
 	return &Executable{
 		Signable:  signable,
