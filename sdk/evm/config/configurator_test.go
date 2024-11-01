@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"math"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -11,269 +12,252 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
-func TestNewConfigFromRaw(t *testing.T) {
+func Test_EVMConfigurator_ToConfig(t *testing.T) {
 	t.Parallel()
 
-	rawConfig := bindings.ManyChainMultiSigConfig{
-		GroupQuorums: [32]uint8{1, 1},
-		GroupParents: [32]uint8{0, 0},
-		Signers: []bindings.ManyChainMultiSigSigner{
-			{Addr: common.HexToAddress("0x1"), Group: 0},
-			{Addr: common.HexToAddress("0x2"), Group: 1},
+	var (
+		signer1 = common.HexToAddress("0x1")
+		signer2 = common.HexToAddress("0x2")
+	)
+
+	tests := []struct {
+		name    string
+		give    bindings.ManyChainMultiSigConfig
+		want    *config.Config
+		wantErr string
+	}{
+		{
+			name: "success: converts binding config to config",
+			give: bindings.ManyChainMultiSigConfig{
+				GroupQuorums: [32]uint8{1, 1},
+				GroupParents: [32]uint8{0, 0},
+				Signers: []bindings.ManyChainMultiSigSigner{
+					{Addr: signer1, Group: 0, Index: 0},
+					{Addr: signer2, Group: 1, Index: 1},
+				},
+			},
+			want: &config.Config{
+				Quorum:  1,
+				Signers: []common.Address{signer1},
+				GroupSigners: []config.Config{
+					{
+						Quorum:       1,
+						Signers:      []common.Address{signer2},
+						GroupSigners: []config.Config{},
+					},
+				},
+			},
+		},
+		{
+			name: "failure: validation error on resulting config",
+			give: bindings.ManyChainMultiSigConfig{
+				GroupQuorums: [32]uint8{0, 1}, // A zero quorum makes this invalid
+				GroupParents: [32]uint8{0, 0},
+				Signers: []bindings.ManyChainMultiSigSigner{
+					{Addr: signer1, Group: 0, Index: 0},
+					{Addr: signer2, Group: 1, Index: 1},
+				},
+			},
+			wantErr: "invalid MCMS config: Quorum must be greater than 0",
 		},
 	}
-	configurator := EVMConfigurator{}
-	configuration, err := configurator.ToConfig(rawConfig)
 
-	require.NoError(t, err)
-	assert.NotNil(t, configuration)
-	assert.Equal(t, uint8(1), configuration.Quorum)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x1")}, configuration.Signers)
-	assert.Equal(t, uint8(1), configuration.GroupSigners[0].Quorum)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x2")}, configuration.GroupSigners[0].Signers)
-}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-func TestToRawConfig(t *testing.T) {
-	t.Parallel()
+			configurator := EVMConfigurator{}
+			got, err := configurator.ToConfig(tt.give)
 
-	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	groupSigners := []config.Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
 	}
-	configuration, err := config.NewConfig(1, signers, groupSigners)
-	assert.NotNil(t, configuration)
-	require.NoError(t, err)
-
-	configurator := EVMConfigurator{}
-	rawConfig, err := configurator.SetConfigInputs(*configuration)
-	require.NoError(t, err)
-
-	assert.Equal(t, [32]uint8{1, 1}, rawConfig.GroupQuorums)
-	assert.Equal(t, [32]uint8{0, 0}, rawConfig.GroupParents)
-	assert.Equal(t, common.HexToAddress("0x1"), rawConfig.Signers[0].Addr)
-	assert.Equal(t, common.HexToAddress("0x2"), rawConfig.Signers[1].Addr)
-	assert.Equal(t, common.HexToAddress("0x3"), rawConfig.Signers[2].Addr)
 }
 
-// Test case 0: Valid configuration with no signers or groups
-// Configuration:
-// Quorum: 0
-// Signers: []
-// Group signers: []
-func TestExtractSetConfigInputs_EmptyConfig(t *testing.T) {
+func Test_SetConfigInputs(t *testing.T) {
 	t.Parallel()
 
-	configuration, err := config.NewConfig(0, []common.Address{}, []config.Config{})
-	assert.Nil(t, configuration)
-	require.Error(t, err)
-	assert.Equal(t, "invalid MCMS config: Quorum must be greater than 0", err.Error())
-}
+	var (
+		signer1 = common.HexToAddress("0x1")
+		signer2 = common.HexToAddress("0x2")
+		signer3 = common.HexToAddress("0x3")
+		signer4 = common.HexToAddress("0x4")
+		signer5 = common.HexToAddress("0x5")
+	)
 
-// Test case 1: Valid configuration with some root signers and some groups
-// Configuration:
-// Quorum: 2
-// Signers: [0x1, 0x2]
-//
-//	Group signers: [{
-//		Quorum: 1
-//		Signers: [0x3]
-//		Group signers: []
-//	}]
-func TestExtractSetConfigInputs(t *testing.T) {
-	t.Parallel()
-
-	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	groupSigners := []config.Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
+	tests := []struct {
+		name       string
+		giveConfig config.Config
+		want       bindings.ManyChainMultiSigConfig
+		wantErr    string
+	}{
+		{
+			name: "success: root signers with some groups",
+			giveConfig: config.Config{
+				Quorum:  1,
+				Signers: []common.Address{signer1, signer2},
+				GroupSigners: []config.Config{
+					{Quorum: 1, Signers: []common.Address{signer3}},
+				},
+			},
+			want: bindings.ManyChainMultiSigConfig{
+				GroupQuorums: [32]uint8{1, 1},
+				GroupParents: [32]uint8{0, 0},
+				Signers: []bindings.ManyChainMultiSigSigner{
+					{Addr: signer1, Index: 0, Group: 0},
+					{Addr: signer2, Index: 1, Group: 0},
+					{Addr: signer3, Index: 2, Group: 1},
+				},
+			},
+		},
+		{
+			name: "success: root signers with some groups and increased quorum",
+			giveConfig: config.Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1, signer2},
+				GroupSigners: []config.Config{
+					{Quorum: 1, Signers: []common.Address{signer3}},
+				},
+			},
+			want: bindings.ManyChainMultiSigConfig{
+				GroupQuorums: [32]uint8{2, 1},
+				GroupParents: [32]uint8{0, 0},
+				Signers: []bindings.ManyChainMultiSigSigner{
+					{Addr: signer1, Index: 0, Group: 0},
+					{Addr: signer2, Index: 1, Group: 0},
+					{Addr: signer3, Index: 2, Group: 1},
+				},
+			},
+		},
+		{
+			name: "success: only root signers",
+			giveConfig: config.Config{
+				Quorum:       1,
+				Signers:      []common.Address{signer1, signer2},
+				GroupSigners: []config.Config{},
+			},
+			want: bindings.ManyChainMultiSigConfig{
+				GroupQuorums: [32]uint8{1, 0},
+				GroupParents: [32]uint8{0, 0},
+				Signers: []bindings.ManyChainMultiSigSigner{
+					{Addr: signer1, Index: 0, Group: 0},
+					{Addr: signer2, Index: 1, Group: 0},
+				},
+			},
+		},
+		{
+			name: "success: only groups",
+			giveConfig: config.Config{
+				Quorum:  2,
+				Signers: []common.Address{},
+				GroupSigners: []config.Config{
+					{Quorum: 1, Signers: []common.Address{signer1}},
+					{Quorum: 1, Signers: []common.Address{signer2}},
+					{Quorum: 1, Signers: []common.Address{signer3}},
+				},
+			},
+			want: bindings.ManyChainMultiSigConfig{
+				GroupQuorums: [32]uint8{2, 1, 1, 1},
+				GroupParents: [32]uint8{0, 0, 0, 0},
+				Signers: []bindings.ManyChainMultiSigSigner{
+					{Addr: signer1, Index: 0, Group: 1},
+					{Addr: signer2, Index: 1, Group: 2},
+					{Addr: signer3, Index: 2, Group: 3},
+				},
+			},
+		},
+		{
+			name: "success: nested signers and groups",
+			giveConfig: config.Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1, signer2},
+				GroupSigners: []config.Config{
+					{
+						Quorum:  1,
+						Signers: []common.Address{signer3},
+						GroupSigners: []config.Config{
+							{Quorum: 1, Signers: []common.Address{signer4}},
+						},
+					},
+					{
+						Quorum:  1,
+						Signers: []common.Address{signer5},
+					},
+				},
+			},
+			want: bindings.ManyChainMultiSigConfig{
+				GroupQuorums: [32]uint8{2, 1, 1, 1},
+				GroupParents: [32]uint8{0, 0, 1, 0},
+				Signers: []bindings.ManyChainMultiSigSigner{
+					{Addr: signer1, Index: 0, Group: 0},
+					{Addr: signer2, Index: 1, Group: 0},
+					{Addr: signer3, Index: 2, Group: 1},
+					{Addr: signer4, Index: 3, Group: 2},
+					{Addr: signer5, Index: 4, Group: 3},
+				},
+			},
+		},
+		{
+			name: "success: unsorted signers and groups",
+			giveConfig: config.Config{
+				Quorum: 2,
+				// Root signers are out of order (signer2 is before signer1)
+				Signers: []common.Address{signer2, signer1},
+				// Group signers are out of order (signer5 is before the signer4 group)
+				GroupSigners: []config.Config{
+					{
+						Quorum:  1,
+						Signers: []common.Address{signer3},
+						GroupSigners: []config.Config{
+							{Quorum: 1, Signers: []common.Address{signer5}},
+						},
+					},
+					{
+						Quorum:  1,
+						Signers: []common.Address{signer4},
+					},
+				},
+			},
+			want: bindings.ManyChainMultiSigConfig{
+				GroupQuorums: [32]uint8{2, 1, 1, 1},
+				GroupParents: [32]uint8{0, 0, 1, 0},
+				Signers: []bindings.ManyChainMultiSigSigner{
+					{Addr: signer1, Index: 0, Group: 0},
+					{Addr: signer2, Index: 1, Group: 0},
+					{Addr: signer3, Index: 2, Group: 1},
+					{Addr: signer4, Index: 3, Group: 3},
+					{Addr: signer5, Index: 4, Group: 2},
+				},
+			},
+		},
+		{
+			name: "failure: signer count cannot exceed 255",
+			giveConfig: config.Config{
+				Quorum:  1,
+				Signers: make([]common.Address, math.MaxUint8+1),
+			},
+			wantErr: "too many signers: 256 max number is 255",
+		},
 	}
-	configuration, err := config.NewConfig(2, signers, groupSigners)
-	assert.NotNil(t, configuration)
-	require.NoError(t, err)
 
-	configurator := EVMConfigurator{}
-	setConfigInput, err := configurator.SetConfigInputs(*configuration)
-	require.NoError(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	signerAddresses, signerGroups := extractSignerAddressesAndGroups(setConfigInput)
+			configurator := EVMConfigurator{}
+			got, err := configurator.SetConfigInputs(tt.giveConfig)
 
-	assert.Equal(t, [32]uint8{2, 1}, setConfigInput.GroupQuorums)
-	assert.Equal(t, [32]uint8{0, 0}, setConfigInput.GroupParents)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3")}, signerAddresses)
-	assert.Equal(t, []uint8{0, 0, 1}, signerGroups)
-}
-
-func extractSignerAddressesAndGroups(setConfigInput bindings.ManyChainMultiSigConfig) ([]common.Address, []uint8) {
-	signerAddresses := make([]common.Address, len(setConfigInput.Signers))
-	signerGroups := make([]uint8, len(setConfigInput.Signers))
-	for i, signer := range setConfigInput.Signers {
-		signerAddresses[i] = signer.Addr
-		signerGroups[i] = signer.Group
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
 	}
-
-	return signerAddresses, signerGroups
-}
-
-// Test case 2: Valid configuration with only root signers
-// Configuration:
-// Quorum: 1
-// Signers: [0x1, 0x2]
-// Group signers: []
-func TestExtractSetConfigInputs_OnlyRootSigners(t *testing.T) {
-	t.Parallel()
-
-	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	configuration, err := config.NewConfig(1, signers, []config.Config{})
-	assert.NotNil(t, configuration)
-	require.NoError(t, err)
-
-	configurator := EVMConfigurator{}
-	setConfigInput, err := configurator.SetConfigInputs(*configuration)
-	require.NoError(t, err)
-
-	signerAddresses, signerGroups := extractSignerAddressesAndGroups(setConfigInput)
-
-	require.NoError(t, err)
-	assert.Equal(t, [32]uint8{1, 0}, setConfigInput.GroupQuorums)
-	assert.Equal(t, [32]uint8{0, 0}, setConfigInput.GroupParents)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}, signerAddresses)
-	assert.Equal(t, []uint8{0, 0}, signerGroups)
-}
-
-// Test case 3: Valid configuration with only groups
-// Configuration:
-// Quorum: 1
-// Signers: []
-//
-//	Group signers: [{
-//		 Quorum: 1
-//		 Signers: [0x3]
-//		 Group signers: []
-//	},
-//
-//	{
-//	  Quorum: 1
-//	  Signers: [0x4]
-//	  Group signers: []
-//	},
-//
-//	{
-//		 Quorum: 1
-//		 Signers: [0x5]
-//		 Group signers: []
-//	}]
-func TestExtractSetConfigInputs_OnlyGroups(t *testing.T) {
-	t.Parallel()
-
-	groupSigners := []config.Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}},
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x4")}},
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x5")}},
-	}
-	configuration, err := config.NewConfig(2, []common.Address{}, groupSigners)
-	assert.NotNil(t, configuration)
-	require.NoError(t, err)
-
-	configurator := EVMConfigurator{}
-	setConfigInput, err := configurator.SetConfigInputs(*configuration)
-	require.NoError(t, err)
-
-	signerAddresses, signerGroups := extractSignerAddressesAndGroups(setConfigInput)
-
-	require.NoError(t, err)
-	assert.Equal(t, [32]uint8{2, 1, 1, 1}, setConfigInput.GroupQuorums)
-	assert.Equal(t, [32]uint8{0, 0, 0, 0}, setConfigInput.GroupParents)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
-	assert.Equal(t, []uint8{1, 2, 3}, signerGroups)
-}
-
-// Test case 4: Valid configuration with nested signers and groups
-// Configuration:
-// Quorum: 2
-// Signers: [0x1, 0x2]
-//
-//		Group signers: [{
-//			Quorum: 1
-//			Signers: [0x3]
-//			Group signers: [{
-//				Quorum: 1
-//				Signers: [0x4]
-//				Group signers: []
-//			}]
-//		},
-//	 {
-//			Quorum: 1
-//			Signers: [0x5]
-//			Group signers: []
-//		}]
-func TestExtractSetConfigInputs_NestedSignersAndGroups(t *testing.T) {
-	t.Parallel()
-
-	signers := []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2")}
-	groupSigners := []config.Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}, GroupSigners: []config.Config{
-			{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x4")}},
-		}},
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x5")}},
-	}
-	configuration, err := config.NewConfig(2, signers, groupSigners)
-	assert.NotNil(t, configuration)
-	require.NoError(t, err)
-
-	configurator := EVMConfigurator{}
-	setConfigInput, err := configurator.SetConfigInputs(*configuration)
-	require.NoError(t, err)
-
-	signerAddresses, signerGroups := extractSignerAddressesAndGroups(setConfigInput)
-
-	require.NoError(t, err)
-	assert.Equal(t, [32]uint8{2, 1, 1, 1}, setConfigInput.GroupQuorums)
-	assert.Equal(t, [32]uint8{0, 0, 1, 0}, setConfigInput.GroupParents)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
-	assert.Equal(t, []uint8{0, 0, 1, 2, 3}, signerGroups)
-}
-
-// Test case 5: Valid configuration with unsorted signers and groups
-// Configuration:
-// Quorum: 2
-// Signers: [0x2, 0x1]
-//
-//		Group signers: [{
-//			Quorum: 1
-//			Signers: [0x3]
-//			Group signers: [{
-//				Quorum: 1
-//				Signers: [0x4]
-//				Group signers: []
-//			}]
-//		},
-//	 	{
-//			Quorum: 1
-//			Signers: [0x5]
-//			Group signers: []
-//		}]
-func TestExtractSetConfigInputs_UnsortedSignersAndGroups(t *testing.T) {
-	t.Parallel()
-
-	signers := []common.Address{common.HexToAddress("0x2"), common.HexToAddress("0x1")}
-	groupSigners := []config.Config{
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x3")}, GroupSigners: []config.Config{
-			{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x4")}},
-		}},
-		{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x5")}},
-	}
-	configuration, err := config.NewConfig(2, signers, groupSigners)
-	assert.NotNil(t, configuration)
-	require.NoError(t, err)
-
-	configurator := EVMConfigurator{}
-	setConfigInput, err := configurator.SetConfigInputs(*configuration)
-	require.NoError(t, err)
-
-	signerAddresses, signerGroups := extractSignerAddressesAndGroups(setConfigInput)
-
-	require.NoError(t, err)
-	assert.Equal(t, [32]uint8{2, 1, 1, 1}, setConfigInput.GroupQuorums)
-	assert.Equal(t, [32]uint8{0, 0, 1, 0}, setConfigInput.GroupParents)
-	assert.Equal(t, []common.Address{common.HexToAddress("0x1"), common.HexToAddress("0x2"), common.HexToAddress("0x3"), common.HexToAddress("0x4"), common.HexToAddress("0x5")}, signerAddresses)
-	assert.Equal(t, []uint8{0, 0, 1, 2, 3}, signerGroups)
 }
