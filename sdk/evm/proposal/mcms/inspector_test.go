@@ -21,13 +21,13 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		address     string
-		mockResult  bindings.ManyChainMultiSigConfig
-		mockError   error
-		expected    *config.Config
-		expectErr   bool
-		expectedErr string
+		name       string
+		address    string
+		mockResult bindings.ManyChainMultiSigConfig
+		mockError  error
+		want       *config.Config
+		hasErr     bool
+		wantErr    string
 	}{
 		{
 			name:    "getConfig call success",
@@ -44,7 +44,7 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 				GroupQuorums: [32]uint8{3, 2}, // Valid configuration
 				GroupParents: [32]uint8{0, 0},
 			},
-			expected: &config.Config{
+			want: &config.Config{
 				Quorum: 3,
 				Signers: []common.Address{
 					common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdef"),
@@ -63,23 +63,23 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 					},
 				},
 			},
-			expectErr: false,
+			hasErr: false,
 		},
 		{
-			name:        "CallContract error",
-			address:     "0x1234567890abcdef1234567890abcdef12345678",
-			mockError:   errors.New("CallContract failed"),
-			expected:    nil,
-			expectErr:   true,
-			expectedErr: "CallContract failed",
+			name:      "CallContract error",
+			address:   "0x1234567890abcdef1234567890abcdef12345678",
+			mockError: errors.New("CallContract failed"),
+			want:      nil,
+			hasErr:    true,
+			wantErr:   "CallContract failed",
 		},
 		{
-			name:        "Empty Signers list",
-			address:     "0x1234567890abcdef1234567890abcdef12345678",
-			mockResult:  bindings.ManyChainMultiSigConfig{Signers: []bindings.ManyChainMultiSigSigner{}, GroupQuorums: [32]uint8{3, 2}, GroupParents: [32]uint8{0, 0}},
-			expected:    nil,
-			expectErr:   true,
-			expectedErr: "invalid MCMS config: Quorum must be less than or equal to the number of signers and groups",
+			name:       "Empty Signers list",
+			address:    "0x1234567890abcdef1234567890abcdef12345678",
+			mockResult: bindings.ManyChainMultiSigConfig{Signers: []bindings.ManyChainMultiSigSigner{}, GroupQuorums: [32]uint8{3, 2}, GroupParents: [32]uint8{0, 0}},
+			want:       nil,
+			hasErr:     true,
+			wantErr:    "invalid MCMS config: Quorum must be less than or equal to the number of signers and groups",
 		},
 	}
 
@@ -115,18 +115,18 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 			// Call GetConfig and capture the result
 			result, err := inspector.GetConfig(tt.address)
 
-			// Assertions for expected error or successful result
-			if tt.expectErr {
+			// Assertions for want error or successful result
+			if tt.hasErr {
 				require.Error(t, err)
 				if err != nil {
-					assert.Contains(t, err.Error(), tt.expectedErr)
+					assert.Contains(t, err.Error(), tt.wantErr)
 				}
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
+				assert.Equal(t, tt.want, result)
 			}
 
-			// Verify CallContract was called as expected
+			// Verify CallContract was called as want
 			mockClient.AssertExpectations(t)
 		})
 	}
@@ -136,28 +136,28 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name        string
-		address     string
-		mockResult  *big.Int
-		mockError   error
-		expected    uint64
-		expectErr   bool
-		expectedErr string
+		name       string
+		address    string
+		mockResult *big.Int
+		mockError  error
+		want       uint64
+		hasErr     bool
+		wantErr    string
 	}{
 		{
 			name:       "GetOpCount success",
 			address:    "0x1234567890abcdef1234567890abcdef12345678",
 			mockResult: big.NewInt(42), // Arbitrary successful op count
-			expected:   42,
-			expectErr:  false,
+			want:       42,
+			hasErr:     false,
 		},
 		{
-			name:        "CallContract error",
-			address:     "0x1234567890abcdef1234567890abcdef12345678",
-			mockError:   errors.New("CallContract failed"),
-			expected:    0,
-			expectErr:   true,
-			expectedErr: "CallContract failed",
+			name:      "CallContract error",
+			address:   "0x1234567890abcdef1234567890abcdef12345678",
+			mockError: errors.New("CallContract failed"),
+			want:      0,
+			hasErr:    true,
+			wantErr:   "CallContract failed",
 		},
 	}
 
@@ -191,18 +191,18 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 			// Call GetOpCount and capture the result
 			result, err := inspector.GetOpCount(tt.address)
 
-			// Assertions for expected error or successful result
-			if tt.expectErr {
+			// Assertions for want error or successful result
+			if tt.hasErr {
 				require.Error(t, err)
 				if err != nil {
-					assert.Contains(t, err.Error(), tt.expectedErr)
+					assert.Contains(t, err.Error(), tt.wantErr)
 				}
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expected, result)
+				assert.Equal(t, tt.want, result)
 			}
 
-			// Verify CallContract was called as expected
+			// Verify CallContract was called as want
 			mockClient.AssertExpectations(t)
 		})
 	}
@@ -212,29 +212,29 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name               string
-		address            string
-		mockResult         bindings.GetRoot
-		mockError          error
-		expectedRoot       common.Hash
-		expectedValidUntil uint32
-		expectErr          bool
-		expectedErr        string
+		name           string
+		address        string
+		mockResult     bindings.GetRoot
+		mockError      error
+		wantRoot       common.Hash
+		wantValidUntil uint32
+		hasErr         bool
+		wantErr        string
 	}{
 		{
-			name:               "GetRoot success",
-			address:            "0x1234567890abcdef1234567890abcdef12345678",
-			mockResult:         bindings.GetRoot{Root: common.HexToHash("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef"), ValidUntil: 1234567890},
-			expectedRoot:       common.HexToHash("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef"),
-			expectedValidUntil: 1234567890,
-			expectErr:          false,
+			name:           "GetRoot success",
+			address:        "0x1234567890abcdef1234567890abcdef12345678",
+			mockResult:     bindings.GetRoot{Root: common.HexToHash("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef"), ValidUntil: 1234567890},
+			wantRoot:       common.HexToHash("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef"),
+			wantValidUntil: 1234567890,
+			hasErr:         false,
 		},
 		{
-			name:        "CallContract error",
-			address:     "0x1234567890abcdef1234567890abcdef12345678",
-			mockError:   errors.New("CallContract failed"),
-			expectErr:   true,
-			expectedErr: "CallContract failed",
+			name:      "CallContract error",
+			address:   "0x1234567890abcdef1234567890abcdef12345678",
+			mockError: errors.New("CallContract failed"),
+			hasErr:    true,
+			wantErr:   "CallContract failed",
 		},
 	}
 
@@ -268,19 +268,19 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 			// Call GetRoot and capture the result
 			root, validUntil, err := inspector.GetRoot(tt.address)
 
-			// Assertions for expected error or successful result
-			if tt.expectErr {
+			// Assertions for want error or successful result
+			if tt.hasErr {
 				require.Error(t, err)
 				if err != nil {
-					assert.Contains(t, err.Error(), tt.expectedErr)
+					assert.Contains(t, err.Error(), tt.wantErr)
 				}
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectedRoot, root)
-				assert.Equal(t, tt.expectedValidUntil, validUntil)
+				assert.Equal(t, tt.wantRoot, root)
+				assert.Equal(t, tt.wantValidUntil, validUntil)
 			}
 
-			// Verify CallContract was called as expected
+			// Verify CallContract was called as want
 			mockClient.AssertExpectations(t)
 		})
 	}
@@ -290,13 +290,13 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name           string
-		address        string
-		mockResult     bindings.ManyChainMultiSigRootMetadata
-		mockError      error
-		expectedResult types.ChainMetadata
-		expectErr      bool
-		expectedErr    string
+		name       string
+		address    string
+		mockResult bindings.ManyChainMultiSigRootMetadata
+		mockError  error
+		want       types.ChainMetadata
+		hasErr     bool
+		wantErr    string
 	}{
 		{
 			name:    "GetRootMetadata success",
@@ -308,18 +308,18 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 				PostOpCount:          big.NewInt(456),
 				OverridePreviousRoot: false,
 			},
-			expectedResult: types.ChainMetadata{
+			want: types.ChainMetadata{
 				StartingOpCount: 123,
 				MCMAddress:      "0x1234567890abcdef1234567890abcdef12345678",
 			},
-			expectErr: false,
+			hasErr: false,
 		},
 		{
-			name:        "CallContract error",
-			address:     "0x1234567890abcdef1234567890abcdef12345678",
-			mockError:   errors.New("CallContract failed"),
-			expectErr:   true,
-			expectedErr: "CallContract failed",
+			name:      "CallContract error",
+			address:   "0x1234567890abcdef1234567890abcdef12345678",
+			mockError: errors.New("CallContract failed"),
+			hasErr:    true,
+			wantErr:   "CallContract failed",
 		},
 	}
 
@@ -353,18 +353,18 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 			// Call GetRootMetadata and capture the result
 			result, err := inspector.GetRootMetadata(tt.address)
 
-			// Assertions for expected error or successful result
-			if tt.expectErr {
+			// Assertions for want error or successful result
+			if tt.hasErr {
 				require.Error(t, err)
 				if err != nil {
-					assert.Contains(t, err.Error(), tt.expectedErr)
+					assert.Contains(t, err.Error(), tt.wantErr)
 				}
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.expectedResult, result)
+				assert.Equal(t, tt.want, result)
 			}
 
-			// Verify CallContract was called as expected
+			// Verify CallContract was called as want
 			mockClient.AssertExpectations(t)
 		})
 	}
