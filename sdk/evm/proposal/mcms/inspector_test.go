@@ -107,7 +107,7 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 			}
 
 			// Mock CallContract to return either encodedConfig or mockError
-			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.Anything).
+			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 				Return(encodedConfig, tt.mockError)
 
 			// Instantiate EVMInspector with the mock client
@@ -183,7 +183,7 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 			}
 
 			// Mock CallContract to return either the encoded OpCount or an error
-			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.Anything).
+			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 				Return(encodedOpCount, tt.mockError)
 
 			// Instantiate EVMInspector with the mock client
@@ -260,7 +260,7 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 			}
 
 			// Mock CallContract to return the encoded root or an error
-			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.Anything).
+			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 				Return(encodedRoot, tt.mockError)
 
 			// Instantiate EVMInspector with the mock client
@@ -345,7 +345,7 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 			}
 
 			// Mock CallContract to return either the encoded metadata or an error
-			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.Anything).
+			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 				Return(encodedMetadata, tt.mockError)
 
 			// Instantiate EVMInspector with the mock client
