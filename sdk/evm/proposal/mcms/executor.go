@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
@@ -52,7 +51,7 @@ func (e *EVMExecutor) ExecuteOperation(
 	tx, err := mcmsObj.Execute(
 		e.auth,
 		op,
-		core.TransformHashes(proof),
+		evm.TransformHashes(proof),
 	)
 
 	return tx.Hash().Hex(), err
@@ -79,7 +78,7 @@ func (e *EVMExecutor) SetRoot(
 		root,
 		validUntil,
 		e.ToGethRootMetadata(metadata),
-		core.TransformHashes(proof),
+		evm.TransformHashes(proof),
 		evm.TransformSignatures(sortedSignatures),
 	)
 
