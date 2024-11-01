@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/smartcontractkit/mcms/sdk"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	"github.com/ethereum/go-ethereum/common"
@@ -18,7 +20,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core/config"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
-	"github.com/smartcontractkit/mcms/sdk"
+
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"

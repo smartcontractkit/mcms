@@ -22,3 +22,6 @@ packages:
       mockname: "{{.InterfaceName}}"
     interfaces:
       TimelockConverter:
+
+  github.com/smartcontractkit/mcms/sdk:
+  github.com/smartcontractkit/mcms/sdk/evm:
