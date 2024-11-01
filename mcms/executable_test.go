@@ -17,10 +17,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/internal/core/config"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
-
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
@@ -89,10 +87,10 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}
-	cfg := &config.Config{
+	cfg := &types.Config{
 		Quorum:       quorum,
 		Signers:      signers,
-		GroupSigners: []config.Config{},
+		GroupSigners: []types.Config{},
 	}
 	configurator := evm_config.EVMConfigurator{}
 	evmConfig, err := configurator.SetConfigInputs(*cfg)

@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 func Test_EVMConfigurator_ToConfig(t *testing.T) {
@@ -23,7 +23,7 @@ func Test_EVMConfigurator_ToConfig(t *testing.T) {
 	tests := []struct {
 		name    string
 		give    bindings.ManyChainMultiSigConfig
-		want    *config.Config
+		want    *types.Config
 		wantErr string
 	}{
 		{
@@ -36,14 +36,14 @@ func Test_EVMConfigurator_ToConfig(t *testing.T) {
 					{Addr: signer2, Group: 1, Index: 1},
 				},
 			},
-			want: &config.Config{
+			want: &types.Config{
 				Quorum:  1,
 				Signers: []common.Address{signer1},
-				GroupSigners: []config.Config{
+				GroupSigners: []types.Config{
 					{
 						Quorum:       1,
 						Signers:      []common.Address{signer2},
-						GroupSigners: []config.Config{},
+						GroupSigners: []types.Config{},
 					},
 				},
 			},
@@ -92,16 +92,16 @@ func Test_SetConfigInputs(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		giveConfig config.Config
+		giveConfig types.Config
 		want       bindings.ManyChainMultiSigConfig
 		wantErr    string
 	}{
 		{
 			name: "success: root signers with some groups",
-			giveConfig: config.Config{
+			giveConfig: types.Config{
 				Quorum:  1,
 				Signers: []common.Address{signer1, signer2},
-				GroupSigners: []config.Config{
+				GroupSigners: []types.Config{
 					{Quorum: 1, Signers: []common.Address{signer3}},
 				},
 			},
@@ -117,10 +117,10 @@ func Test_SetConfigInputs(t *testing.T) {
 		},
 		{
 			name: "success: root signers with some groups and increased quorum",
-			giveConfig: config.Config{
+			giveConfig: types.Config{
 				Quorum:  2,
 				Signers: []common.Address{signer1, signer2},
-				GroupSigners: []config.Config{
+				GroupSigners: []types.Config{
 					{Quorum: 1, Signers: []common.Address{signer3}},
 				},
 			},
@@ -136,10 +136,10 @@ func Test_SetConfigInputs(t *testing.T) {
 		},
 		{
 			name: "success: only root signers",
-			giveConfig: config.Config{
+			giveConfig: types.Config{
 				Quorum:       1,
 				Signers:      []common.Address{signer1, signer2},
-				GroupSigners: []config.Config{},
+				GroupSigners: []types.Config{},
 			},
 			want: bindings.ManyChainMultiSigConfig{
 				GroupQuorums: [32]uint8{1, 0},
@@ -152,10 +152,10 @@ func Test_SetConfigInputs(t *testing.T) {
 		},
 		{
 			name: "success: only groups",
-			giveConfig: config.Config{
+			giveConfig: types.Config{
 				Quorum:  2,
 				Signers: []common.Address{},
-				GroupSigners: []config.Config{
+				GroupSigners: []types.Config{
 					{Quorum: 1, Signers: []common.Address{signer1}},
 					{Quorum: 1, Signers: []common.Address{signer2}},
 					{Quorum: 1, Signers: []common.Address{signer3}},
@@ -173,14 +173,14 @@ func Test_SetConfigInputs(t *testing.T) {
 		},
 		{
 			name: "success: nested signers and groups",
-			giveConfig: config.Config{
+			giveConfig: types.Config{
 				Quorum:  2,
 				Signers: []common.Address{signer1, signer2},
-				GroupSigners: []config.Config{
+				GroupSigners: []types.Config{
 					{
 						Quorum:  1,
 						Signers: []common.Address{signer3},
-						GroupSigners: []config.Config{
+						GroupSigners: []types.Config{
 							{Quorum: 1, Signers: []common.Address{signer4}},
 						},
 					},
@@ -204,16 +204,16 @@ func Test_SetConfigInputs(t *testing.T) {
 		},
 		{
 			name: "success: unsorted signers and groups",
-			giveConfig: config.Config{
+			giveConfig: types.Config{
 				Quorum: 2,
 				// Root signers are out of order (signer2 is before signer1)
 				Signers: []common.Address{signer2, signer1},
 				// Group signers are out of order (signer5 is before the signer4 group)
-				GroupSigners: []config.Config{
+				GroupSigners: []types.Config{
 					{
 						Quorum:  1,
 						Signers: []common.Address{signer3},
-						GroupSigners: []config.Config{
+						GroupSigners: []types.Config{
 							{Quorum: 1, Signers: []common.Address{signer5}},
 						},
 					},
@@ -237,7 +237,7 @@ func Test_SetConfigInputs(t *testing.T) {
 		},
 		{
 			name: "failure: signer count cannot exceed 255",
-			giveConfig: config.Config{
+			giveConfig: types.Config{
 				Quorum:  1,
 				Signers: make([]common.Address, math.MaxUint8+1),
 			},
