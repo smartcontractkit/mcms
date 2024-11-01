@@ -36,14 +36,14 @@ func Test_TransformHashes(t *testing.T) {
 		},
 	}
 
-	got := TransformHashes(hashes)
+	got := transformHashes(hashes)
 	assert.Equal(t, want, got)
 }
 
 func Test_TransformSignatures(t *testing.T) {
 	t.Parallel()
 
-	got := TransformSignatures([]types.Signature{
+	got := transformSignatures([]types.Signature{
 		{
 			R: common.HexToHash("0x1234567890abcdef"),
 			S: common.HexToHash("0xfedcba0987654321"),
@@ -176,10 +176,7 @@ func Test_ABIEncode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			// data, err := hex.DecodeString(tt.giveData)
-			// require.NoError(t, err)
-
-			got, err := ABIEncode(tt.giveABI, tt.giveValues...)
+			got, err := abiEncode(tt.giveABI, tt.giveValues...)
 
 			if tt.wantError {
 				require.Error(t, err)
@@ -248,7 +245,7 @@ func Test_ABIDecode(t *testing.T) {
 			data, err := hex.DecodeString(tt.giveData)
 			require.NoError(t, err)
 
-			got, err := ABIDecode(tt.giveABI, data)
+			got, err := abiDecode(tt.giveABI, data)
 
 			if tt.wantError {
 				require.Error(t, err)

@@ -2,11 +2,11 @@ package mcms
 
 import (
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -33,7 +33,7 @@ func NewEncoder(chainSelector types.ChainSelector, txCount uint64, overridePrevi
 			chain.EvmChainID = 1337
 		}
 
-		encoder = evm_mcms.NewEVMEncoder(
+		encoder = evm.NewEVMEncoder(
 			txCount,
 			chain.EvmChainID,
 			overridePreviousRoot,
