@@ -1,4 +1,4 @@
-package timelock
+package sdk
 
 import (
 	"github.com/ethereum/go-ethereum/common"
