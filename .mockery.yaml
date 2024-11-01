@@ -24,19 +24,4 @@ packages:
       TimelockConverter:
 
   github.com/smartcontractkit/mcms/sdk:
-    config:
-      # Override the directory to place mocks inside `mocks` directory of the interface package.
-      dir: "{{.InterfaceDir}}/mocks"
-      # Ensure each mock struct name remains as the interface name.
-      mockname: "{{.InterfaceName}}"
-    interfaces:
-      Inspector:
-
   github.com/smartcontractkit/mcms/sdk/evm:
-    config:
-      # Override the directory to place mocks inside `mocks` directory of the interface package.
-      dir: "{{.InterfaceDir}}/mocks"
-      # Ensure each mock struct name remains as the interface name.
-      mockname: "{{.InterfaceName}}"
-    interfaces:
-        ContractDeployBackend:
