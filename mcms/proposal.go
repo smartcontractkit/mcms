@@ -150,7 +150,7 @@ func (m *MCMSProposal) GetEncoders(isSim bool) (map[types.ChainSelector]sdk.Enco
 	txCounts := m.TransactionCounts()
 	encoders := make(map[types.ChainSelector]sdk.Encoder)
 	for chainID := range m.ChainMetadata {
-		encoder, err := NewEncoder(chainID, txCounts[chainID], m.OverridePreviousRoot, isSim)
+		encoder, err := sdk.NewEncoder(chainID, txCounts[chainID], m.OverridePreviousRoot, isSim)
 		if err != nil {
 			return nil, err
 		}

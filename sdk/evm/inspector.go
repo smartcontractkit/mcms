@@ -4,7 +4,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -14,8 +13,6 @@ type EVMInspector struct {
 	EVMConfigurator
 	client ContractDeployBackend
 }
-
-var _ sdk.Inspector = &EVMInspector{}
 
 func NewEVMInspector(client ContractDeployBackend) *EVMInspector {
 	return &EVMInspector{
