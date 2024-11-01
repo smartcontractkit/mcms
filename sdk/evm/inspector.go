@@ -5,22 +5,21 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 // EVMInspector is an Inspector implementation for EVM chains, giving access to the state of the MCMS contract
 type EVMInspector struct {
-	evm.EVMConfigurator
-	client evm.ContractDeployBackend
+	EVMConfigurator
+	client ContractDeployBackend
 }
 
 var _ sdk.Inspector = &EVMInspector{}
 
-func NewEVMInspector(client evm.ContractDeployBackend) *EVMInspector {
+func NewEVMInspector(client ContractDeployBackend) *EVMInspector {
 	return &EVMInspector{
-		EVMConfigurator: evm.EVMConfigurator{},
+		EVMConfigurator: EVMConfigurator{},
 		client:          client,
 	}
 }

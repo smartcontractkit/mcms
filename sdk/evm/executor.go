@@ -7,7 +7,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -20,7 +19,7 @@ type EVMExecutor struct {
 
 var _ sdk.Executor = &EVMExecutor{}
 
-func NewEVMExecutor(encoder *EVMEncoder, client evm.ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
+func NewEVMExecutor(encoder *EVMEncoder, client ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
 	return &EVMExecutor{
 		EVMEncoder:   encoder,
 		EVMInspector: NewEVMInspector(client),
@@ -51,7 +50,7 @@ func (e *EVMExecutor) ExecuteOperation(
 	tx, err := mcmsObj.Execute(
 		e.auth,
 		op,
-		evm.TransformHashes(proof),
+		transformHashes(proof),
 	)
 
 	return tx.Hash().Hex(), err
@@ -78,8 +77,8 @@ func (e *EVMExecutor) SetRoot(
 		root,
 		validUntil,
 		e.ToGethRootMetadata(metadata),
-		evm.TransformHashes(proof),
-		evm.TransformSignatures(sortedSignatures),
+		transformHashes(proof),
+		transformSignatures(sortedSignatures),
 	)
 
 	return tx.Hash().Hex(), err

@@ -13,8 +13,8 @@ import (
 	mcms_core "github.com/smartcontractkit/mcms/internal/core"
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -70,7 +70,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 		Transactions: []types.ChainOperation{
 			{
 				ChainSelector: TestChain1,
-				Operation: evm_mcms.NewEVMOperation(
+				Operation: evm.NewEVMOperation(
 					timelock.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -82,7 +82,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -151,7 +151,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 		Transactions: []types.ChainOperation{
 			{
 				ChainSelector: TestChain1,
-				Operation: evm_mcms.NewEVMOperation(
+				Operation: evm.NewEVMOperation(
 					timelock.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -163,7 +163,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -227,7 +227,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 		require.NoError(t, perr)
 		operations[i] = types.ChainOperation{
 			ChainSelector: TestChain1,
-			Operation: evm_mcms.NewEVMOperation(
+			Operation: evm.NewEVMOperation(
 				timelock.Address(),
 				data,
 				big.NewInt(0),
@@ -254,7 +254,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -317,7 +317,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 		require.NoError(t, perr)
 		operations[i] = types.ChainOperation{
 			ChainSelector: TestChain1,
-			Operation: evm_mcms.NewEVMOperation(
+			Operation: evm.NewEVMOperation(
 				timelock.Address(),
 				data,
 				big.NewInt(0),
@@ -344,7 +344,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -410,7 +410,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 		require.NoError(t, perr)
 		operations[i] = types.ChainOperation{
 			ChainSelector: TestChain1,
-			Operation: evm_mcms.NewEVMOperation(
+			Operation: evm.NewEVMOperation(
 				timelock.Address(),
 				data,
 				big.NewInt(0),
@@ -437,7 +437,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)
@@ -510,7 +510,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 		require.NoError(t, perr)
 		operations[i] = types.ChainOperation{
 			ChainSelector: TestChain1,
-			Operation: evm_mcms.NewEVMOperation(
+			Operation: evm.NewEVMOperation(
 				timelock.Address(),
 				data,
 				big.NewInt(0),
@@ -537,7 +537,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	}
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm_mcms.NewEVMInspector(sim)}
+	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim)}
 
 	// Construct executor
 	signable, err := proposal.Signable(true, inspectors)

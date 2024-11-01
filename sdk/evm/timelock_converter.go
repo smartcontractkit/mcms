@@ -9,9 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -31,7 +29,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	tags := make([]string, 0)
 	for _, op := range txn.Batch {
 		// Unmarshal the additional fields
-		var additionalFields evm_mcms.EVMAdditionalFields
+		var additionalFields EVMAdditionalFields
 		if err := json.Unmarshal(op.AdditionalFields, &additionalFields); err != nil {
 			return types.ChainOperation{}, common.Hash{}, err
 		}
@@ -79,7 +77,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 
 	chainOperation := types.ChainOperation{
 		ChainSelector: txn.ChainSelector,
-		Operation: evm_mcms.NewEVMOperation(
+		Operation: NewEVMOperation(
 			timelockAddress,
 			data,
 			big.NewInt(0),
@@ -95,7 +93,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 // TODO: see if there's an easier way to do this using the gethwrappers
 func hashOperationBatch(calls []bindings.RBACTimelockCall, predecessor, salt [32]byte) (common.Hash, error) {
 	const abi = `[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct Call[]","name":"calls","type":"tuple[]"},{"internalType":"bytes32","name":"predecessor","type":"bytes32"},{"internalType":"bytes32","name":"salt","type":"bytes32"}]`
-	encoded, err := evm.ABIEncode(abi, calls, predecessor, salt)
+	encoded, err := abiEncode(abi, calls, predecessor, salt)
 	if err != nil {
 		return common.Hash{}, err
 	}

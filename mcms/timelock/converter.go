@@ -5,7 +5,7 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
-	evm_timelock "github.com/smartcontractkit/mcms/sdk/evm/proposal/timelock"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -26,7 +26,7 @@ func ToChainOperation(
 
 	switch chainFamily {
 	case cselectors.FamilyEVM:
-		converter = &evm_timelock.TimelockConverterEVM{}
+		converter = &evm.TimelockConverterEVM{}
 	}
 
 	return converter.ConvertBatchToChainOperation(t, timelockAddress, minDelay, operation, predecessor)

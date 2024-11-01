@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -33,7 +32,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Schedule operation",
 			txn: types.BatchChainOperation{
 				Batch: []types.Operation{
-					evm_mcms.NewEVMOperation(
+					NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -53,7 +52,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Cancel operation",
 			txn: types.BatchChainOperation{
 				Batch: []types.Operation{
-					evm_mcms.NewEVMOperation(
+					NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -73,7 +72,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Invalid operation",
 			txn: types.BatchChainOperation{
 				Batch: []types.Operation{
-					evm_mcms.NewEVMOperation(
+					NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),

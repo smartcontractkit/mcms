@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -18,12 +18,12 @@ import (
 func TestValidateAdditionalFields(t *testing.T) {
 	t.Parallel()
 
-	validEVMFields := evm_mcms.EVMAdditionalFields{
+	validEVMFields := evm.EVMAdditionalFields{
 		Value: big.NewInt(100),
 	}
 	validEVMFieldsJSON, err := json.Marshal(validEVMFields)
 	require.NoError(t, err)
-	invalidEVMFields := evm_mcms.EVMAdditionalFields{
+	invalidEVMFields := evm.EVMAdditionalFields{
 		Value: big.NewInt(-100),
 	}
 	invalidEVMFieldsJSON, err := json.Marshal(invalidEVMFields)
