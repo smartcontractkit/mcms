@@ -6,15 +6,45 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-const EthereumSignatureVOffset = 27
-const EthereumSignatureVThreshold = 2
+const (
+	EthereumSignatureVOffset    = 27
+	EthereumSignatureVThreshold = 2
+)
 
-func ToGethSignature(s types.Signature) bindings.ManyChainMultiSigSignature {
+type ContractDeployBackend interface {
+	bind.ContractBackend
+	bind.DeployBackend
+}
+
+// TransformHashes transforms a slice of common.Hash to a slice of [32]byte.
+func TransformHashes(hashes []common.Hash) [][32]byte {
+	bs := make([][32]byte, 0, len(hashes))
+	for _, h := range hashes {
+		bs = append(bs, [32]byte(h))
+	}
+
+	return bs
+}
+
+// TransformSignatures transforms a slice of types.Signature to a slice of
+// bindings.ManyChainMultiSigSignature.
+func TransformSignatures(signatures []types.Signature) []bindings.ManyChainMultiSigSignature {
+	sigs := make([]bindings.ManyChainMultiSigSignature, 0, len(signatures))
+	for _, sig := range signatures {
+		sigs = append(sigs, toGethSignature(sig))
+	}
+
+	return sigs
+}
+
+// toGethSignature converts a types.Signature to a bindings.ManyChainMultiSigSignature.
+func toGethSignature(s types.Signature) bindings.ManyChainMultiSigSignature {
 	if s.V < EthereumSignatureVThreshold {
 		s.V += EthereumSignatureVOffset
 	}
@@ -26,20 +56,6 @@ func ToGethSignature(s types.Signature) bindings.ManyChainMultiSigSignature {
 	}
 }
 
-type ContractDeployBackend interface {
-	bind.ContractBackend
-	bind.DeployBackend
-}
-
-func TransformSignatures(signatures []types.Signature) []bindings.ManyChainMultiSigSignature {
-	sigs := make([]bindings.ManyChainMultiSigSignature, len(signatures))
-	for i, sig := range signatures {
-		sigs[i] = ToGethSignature(sig)
-	}
-
-	return sigs
-}
-
 // ABIEncode is the equivalent of abi.encode.
 // See a full set of examples https://github.com/ethereum/go-ethereum/blob/420b78659bef661a83c5c442121b13f13288c09f/accounts/abi/packing_test.go#L31
 func ABIEncode(abiStr string, values ...any) ([]byte, error) {
@@ -49,6 +65,7 @@ func ABIEncode(abiStr string, values ...any) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	res, err := inAbi.Pack("method", values...)
 	if err != nil {
 		return nil, err
