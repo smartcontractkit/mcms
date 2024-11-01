@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -15,7 +15,7 @@ import (
 func TestEncoder_EVM_NoSim(t *testing.T) {
 	t.Parallel()
 
-	chainSelector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
+	chainSelector := cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 	encoder, err := NewEncoder(
 		types.ChainSelector(chainSelector),
 		5,
@@ -35,7 +35,7 @@ func TestEncoder_EVM_NoSim(t *testing.T) {
 func TestEncoder_EVM_Sim(t *testing.T) {
 	t.Parallel()
 
-	chainSelector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
+	chainSelector := cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 	encoder, err := NewEncoder(
 		types.ChainSelector(chainSelector),
 		5,

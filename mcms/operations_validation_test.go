@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"testing"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -37,7 +37,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		{
 			name: "valid EVM fields",
 			operation: types.ChainOperation{
-				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 				Operation: types.Operation{
 					AdditionalFields: validEVMFieldsJSON,
 				},
@@ -48,7 +48,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		{
 			name: "invalid EVM fields",
 			operation: types.ChainOperation{
-				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 				Operation: types.Operation{
 					AdditionalFields: invalidEVMFieldsJSON,
 				},
@@ -68,7 +68,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		{
 			name: "invalid JSON for EVM fields",
 			operation: types.ChainOperation{
-				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 				Operation: types.Operation{
 					AdditionalFields: []byte("invalid JSON"),
 				},
