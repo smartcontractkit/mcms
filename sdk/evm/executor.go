@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -16,8 +15,6 @@ type EVMExecutor struct {
 	*EVMInspector
 	auth *bind.TransactOpts
 }
-
-var _ sdk.Executor = &EVMExecutor{}
 
 func NewEVMExecutor(encoder *EVMEncoder, client ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
 	return &EVMExecutor{

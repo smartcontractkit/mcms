@@ -7,11 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
-
-var _ sdk.Validator = EVMAdditionalFields{}
 
 type EVMAdditionalFields struct {
 	Value *big.Int `json:"value"`
