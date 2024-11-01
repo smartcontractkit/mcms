@@ -87,7 +87,7 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 
 			mockClient := evm_mocks.NewContractDeployBackend(t)
 
-			// Encode mock result if there's no CallContract error
+			// Encode mock got if there's no CallContract error
 			var encodedConfig []byte
 			if tt.mockResult.Signers != nil {
 				var err error
@@ -110,16 +110,16 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 			// Instantiate EVMInspector with the mock client
 			inspector := NewEVMInspector(mockClient)
 
-			// Call GetConfig and capture the result
-			result, err := inspector.GetConfig(tt.address)
+			// Call GetConfig and capture the got
+			got, err := inspector.GetConfig(tt.address)
 
-			// Assertions for want error or successful result
+			// Assertions for want error or successful got
 			if tt.wantErr != nil {
 				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.want, result)
+				assert.Equal(t, tt.want, got)
 			}
 
 			// Verify CallContract was called as want
@@ -160,13 +160,13 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 
 			mockClient := evm_mocks.NewContractDeployBackend(t)
 
-			// Encode the mock result for CallContract if no error is specified
+			// Encode the mock got for CallContract if no error is specified
 			var encodedOpCount []byte
 			if tt.mockResult != nil {
 				parsedABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()
 				require.NoError(t, err)
 
-				// Retrieve the method's output type and pack the mock result as output
+				// Retrieve the method's output type and pack the mock got as output
 				method, exists := parsedABI.Methods["getOpCount"]
 				assert.True(t, exists, "getOpCount method should exist in ABI")
 
@@ -181,16 +181,16 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 			// Instantiate EVMInspector with the mock client
 			inspector := NewEVMInspector(mockClient)
 
-			// Call GetOpCount and capture the result
-			result, err := inspector.GetOpCount(tt.address)
+			// Call GetOpCount and capture the got
+			got, err := inspector.GetOpCount(tt.address)
 
-			// Assertions for want error or successful result
+			// Assertions for want error or successful got
 			if tt.wantErr != nil {
 				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.want, result)
+				assert.Equal(t, tt.want, got)
 			}
 
 			// Verify CallContract was called as want
@@ -246,7 +246,7 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			// Mock CallContract to return the encoded root or an error
+			// Mock CallContract to return the encoded got or an error
 			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 				Return(encodedRoot, tt.mockError)
 
@@ -254,7 +254,7 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 			inspector := NewEVMInspector(mockClient)
 
 			// Call GetRoot and capture the result
-			root, validUntil, err := inspector.GetRoot(tt.address)
+			got, validUntil, err := inspector.GetRoot(tt.address)
 
 			// Assertions for want error or successful result
 			if tt.wantErr != nil {
@@ -263,7 +263,7 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.wantRoot, root)
+				assert.Equal(t, tt.wantRoot, got)
 				assert.Equal(t, tt.wantValidUntil, validUntil)
 			}
 
@@ -313,13 +313,13 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 
 			mockClient := evm_mocks.NewContractDeployBackend(t)
 
-			// Encode the mock result for CallContract if no error is specified
+			// Encode the mock got for CallContract if no error is specified
 			var encodedMetadata []byte
 			if tt.mockError == nil {
 				parsedABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()
 				require.NoError(t, err)
 
-				// Retrieve the method's output type and pack the mock result as output
+				// Retrieve the method's output type and pack the mock got as output
 				method, exists := parsedABI.Methods["getRootMetadata"]
 				assert.True(t, exists, "getRootMetadata method should exist in ABI")
 
@@ -334,16 +334,16 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 			// Instantiate EVMInspector with the mock client
 			inspector := NewEVMInspector(mockClient)
 
-			// Call GetRootMetadata and capture the result
-			result, err := inspector.GetRootMetadata(tt.address)
+			// Call GetRootMetadata and capture the got
+			got, err := inspector.GetRootMetadata(tt.address)
 
-			// Assertions for want error or successful result
+			// Assertions for want error or successful got
 			if tt.wantErr != nil {
 				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.want, result)
+				assert.Equal(t, tt.want, got)
 			}
 
 			// Verify CallContract was called as want
