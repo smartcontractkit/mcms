@@ -116,7 +116,7 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 			// Assertions for want error or successful got
 			if tt.wantErr != nil {
 				require.Error(t, err)
-				assert.EqualError(t, err, tt.wantErr.Error())
+				require.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
@@ -187,7 +187,7 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 			// Assertions for want error or successful got
 			if tt.wantErr != nil {
 				require.Error(t, err)
-				assert.EqualError(t, err, tt.wantErr.Error())
+				require.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
@@ -259,8 +259,7 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 			// Assertions for want error or successful result
 			if tt.wantErr != nil {
 				require.Error(t, err)
-				assert.EqualError(t, err, tt.wantErr.Error())
-
+				require.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.wantRoot, got)
@@ -340,7 +339,7 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 			// Assertions for want error or successful got
 			if tt.wantErr != nil {
 				require.Error(t, err)
-				assert.EqualError(t, err, tt.wantErr.Error())
+				require.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
