@@ -85,7 +85,7 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := new(evm_mocks.ContractDeployBackend)
+			mockClient := evm_mocks.NewContractDeployBackend(t)
 
 			// Encode mock result if there's no CallContract error
 			var encodedConfig []byte
@@ -158,7 +158,7 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := new(evm_mocks.ContractDeployBackend)
+			mockClient := evm_mocks.NewContractDeployBackend(t)
 
 			// Encode the mock result for CallContract if no error is specified
 			var encodedOpCount []byte
@@ -230,7 +230,7 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := new(evm_mocks.ContractDeployBackend)
+			mockClient := evm_mocks.NewContractDeployBackend(t)
 
 			// Encode mock result for CallContract if no error is specified
 			var encodedRoot []byte
@@ -311,7 +311,7 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := new(evm_mocks.ContractDeployBackend)
+			mockClient := evm_mocks.NewContractDeployBackend(t)
 
 			// Encode the mock result for CallContract if no error is specified
 			var encodedMetadata []byte
