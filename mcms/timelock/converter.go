@@ -4,7 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -22,7 +22,7 @@ func ToChainOperation(
 		return types.ChainOperation{}, common.Hash{}, err
 	}
 
-	var converter timelock.TimelockConverter
+	var converter sdk.TimelockConverter
 
 	switch chainFamily {
 	case cselectors.FamilyEVM:
