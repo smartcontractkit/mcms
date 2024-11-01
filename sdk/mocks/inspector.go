@@ -4,7 +4,6 @@ package mocks
 
 import (
 	common "github.com/ethereum/go-ethereum/common"
-	config "github.com/smartcontractkit/mcms/internal/core/config"
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/smartcontractkit/mcms/types"
@@ -24,23 +23,23 @@ func (_m *Inspector) EXPECT() *Inspector_Expecter {
 }
 
 // GetConfig provides a mock function with given fields: mcmAddress
-func (_m *Inspector) GetConfig(mcmAddress string) (*config.Config, error) {
+func (_m *Inspector) GetConfig(mcmAddress string) (*types.Config, error) {
 	ret := _m.Called(mcmAddress)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetConfig")
 	}
 
-	var r0 *config.Config
+	var r0 *types.Config
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*config.Config, error)); ok {
+	if rf, ok := ret.Get(0).(func(string) (*types.Config, error)); ok {
 		return rf(mcmAddress)
 	}
-	if rf, ok := ret.Get(0).(func(string) *config.Config); ok {
+	if rf, ok := ret.Get(0).(func(string) *types.Config); ok {
 		r0 = rf(mcmAddress)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*config.Config)
+			r0 = ret.Get(0).(*types.Config)
 		}
 	}
 
@@ -71,12 +70,12 @@ func (_c *Inspector_GetConfig_Call) Run(run func(mcmAddress string)) *Inspector_
 	return _c
 }
 
-func (_c *Inspector_GetConfig_Call) Return(_a0 *config.Config, _a1 error) *Inspector_GetConfig_Call {
+func (_c *Inspector_GetConfig_Call) Return(_a0 *types.Config, _a1 error) *Inspector_GetConfig_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Inspector_GetConfig_Call) RunAndReturn(run func(string) (*config.Config, error)) *Inspector_GetConfig_Call {
+func (_c *Inspector_GetConfig_Call) RunAndReturn(run func(string) (*types.Config, error)) *Inspector_GetConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

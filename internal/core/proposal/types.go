@@ -3,7 +3,6 @@ package proposal
 import (
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -32,7 +31,7 @@ type Proposal interface {
 type Signable interface {
 	SigningHash() (common.Hash, error)
 	GetCurrentOpCounts() (map[types.ChainSelector]uint64, error)
-	GetConfigs() (map[types.ChainSelector]*config.Config, error)
+	GetConfigs() (map[types.ChainSelector]*types.Config, error)
 	CheckQuorum(chain types.ChainSelector) (bool, error)
 	ValidateSignatures() (bool, error)
 	ValidateConfigs() error

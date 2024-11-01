@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	coreProposal "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
@@ -153,12 +152,12 @@ func (s *Signable) GetCurrentOpCounts() (map[types.ChainSelector]uint64, error) 
 	return opCounts, nil
 }
 
-func (s *Signable) GetConfigs() (map[types.ChainSelector]*config.Config, error) {
+func (s *Signable) GetConfigs() (map[types.ChainSelector]*types.Config, error) {
 	if s.Inspectors == nil {
 		return nil, errors.New("inspectors not provided")
 	}
 
-	configs := make(map[types.ChainSelector]*config.Config)
+	configs := make(map[types.ChainSelector]*types.Config)
 	for chain, metadata := range s.ChainMetadata {
 		inspector, ok := s.Inspectors[chain]
 		if !ok {

@@ -8,9 +8,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 const maxUint8Value = 255
@@ -19,22 +19,22 @@ type EVMConfigurator struct{}
 
 func (e *EVMConfigurator) ToConfig(
 	bindConfig bindings.ManyChainMultiSigConfig,
-) (*config.Config, error) {
+) (*types.Config, error) {
 	groupToSigners := make([][]common.Address, len(bindConfig.GroupQuorums))
 	for _, signer := range bindConfig.Signers {
 		groupToSigners[signer.Group] = append(groupToSigners[signer.Group], signer.Addr)
 	}
 
-	groups := make([]config.Config, len(bindConfig.GroupQuorums))
+	groups := make([]types.Config, len(bindConfig.GroupQuorums))
 	for i, quorum := range bindConfig.GroupQuorums {
 		signers := groupToSigners[i]
 		if signers == nil {
 			signers = []common.Address{}
 		}
 
-		groups[i] = config.Config{
+		groups[i] = types.Config{
 			Signers:      signers,
-			GroupSigners: []config.Config{},
+			GroupSigners: []types.Config{},
 			Quorum:       quorum,
 		}
 	}
@@ -53,7 +53,7 @@ func (e *EVMConfigurator) ToConfig(
 }
 
 func (e *EVMConfigurator) SetConfigInputs(
-	cfg config.Config,
+	cfg types.Config,
 ) (bindings.ManyChainMultiSigConfig, error) {
 	var bindConfig bindings.ManyChainMultiSigConfig
 
@@ -87,7 +87,7 @@ func (e *EVMConfigurator) SetConfigInputs(
 }
 
 func ExtractSetConfigInputs(
-	group *config.Config,
+	group *types.Config,
 ) ([32]uint8, [32]uint8, []common.Address, []uint8, error) {
 	var groupQuorums, groupParents, signerGroups = []uint8{}, []uint8{}, []uint8{}
 	var signerAddrs = []common.Address{}
@@ -132,7 +132,7 @@ func ExtractSetConfigInputs(
 }
 
 func extractGroupsAndSigners(
-	group *config.Config,
+	group *types.Config,
 	parentIdx uint8,
 	groupQuorums *[]uint8,
 	groupParents *[]uint8,

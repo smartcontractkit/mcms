@@ -6,8 +6,6 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 
-	"github.com/smartcontractkit/mcms/internal/core/config"
-
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
@@ -29,7 +27,7 @@ func NewEVMInspector(client evm.ContractDeployBackend) *EVMInspector {
 	}
 }
 
-func (e *EVMInspector) GetConfig(mcmAddress string) (*config.Config, error) {
+func (e *EVMInspector) GetConfig(mcmAddress string) (*types.Config, error) {
 	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return nil, err

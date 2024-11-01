@@ -7,13 +7,11 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum"
-	"github.com/stretchr/testify/require"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/internal/core/config"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_mocks "github.com/smartcontractkit/mcms/sdk/evm/mocks"
 	"github.com/smartcontractkit/mcms/types"
@@ -27,7 +25,7 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 		address    string
 		mockResult bindings.ManyChainMultiSigConfig
 		mockError  error
-		want       *config.Config
+		want       *types.Config
 		wantErr    error
 	}{
 		{
@@ -45,14 +43,14 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 				GroupQuorums: [32]uint8{3, 2}, // Valid configuration
 				GroupParents: [32]uint8{0, 0},
 			},
-			want: &config.Config{
+			want: &types.Config{
 				Quorum: 3,
 				Signers: []common.Address{
 					common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdef"),
 					common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
 					common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
 				},
-				GroupSigners: []config.Config{
+				GroupSigners: []types.Config{
 					{
 						Quorum: 2,
 						Signers: []common.Address{
@@ -60,7 +58,7 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 							common.HexToAddress("0x2222222222222222222222222222222222222222"),
 							common.HexToAddress("0x3333333333333333333333333333333333333333"),
 						},
-						GroupSigners: []config.Config{},
+						GroupSigners: []types.Config{},
 					},
 				},
 			},
