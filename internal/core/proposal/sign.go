@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/smartcontractkit/mcms/sdk"
-
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 

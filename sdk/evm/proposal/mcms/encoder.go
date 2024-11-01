@@ -4,10 +4,10 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/smartcontractkit/mcms/sdk"
-
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/smartcontractkit/mcms/sdk"
 
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
