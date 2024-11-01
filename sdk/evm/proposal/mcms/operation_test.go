@@ -48,9 +48,9 @@ func TestOperationFieldsEVM_Validate(t *testing.T) {
 			err := op.Validate()
 
 			if tt.expectedErr {
-				assert.Error(t, err, "want an error but got none")
+				assert.Error(t, err, "expected an error but got none")
 			} else {
-				assert.NoError(t, err, "want no error but got one")
+				assert.NoError(t, err, "expected no error but got one")
 			}
 		})
 	}

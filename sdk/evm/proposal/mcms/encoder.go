@@ -30,7 +30,7 @@ var (
 
 var _ sdk.Encoder = &EVMEncoder{}
 
-// EVMEncoder is a struct that encodes ChainOperations and ChainMetadata into the format want
+// EVMEncoder is a struct that encodes ChainOperations and ChainMetadata into the format expected
 // by the EVM ManyChainMultiSig contract.
 type EVMEncoder struct {
 	TxCount              uint64
@@ -47,7 +47,7 @@ func NewEVMEncoder(txCount uint64, chainID uint64, overridePreviousRoot bool) *E
 	}
 }
 
-// HashOperation converts the MCMS ChainOperation into the format want by the EVM
+// HashOperation converts the MCMS ChainOperation into the format expected by the EVM
 // ManyChainMultiSig contract, and hashes it.
 func (e *EVMEncoder) HashOperation(
 	opCount uint32,
@@ -68,7 +68,7 @@ func (e *EVMEncoder) HashOperation(
 	return crypto.Keccak256Hash(encoded), nil
 }
 
-// HashMetadata converts the MCMS ChainMetadata into the format want by the EVM
+// HashMetadata converts the MCMS ChainMetadata into the format expected by the EVM
 // ManyChainMultiSig contract, and hashes it.
 func (e *EVMEncoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
@@ -80,7 +80,7 @@ func (e *EVMEncoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, er
 	return crypto.Keccak256Hash(encoded), nil
 }
 
-// ToGethOperation converts the MCMS ChainOperation into the format want by the EVM
+// ToGethOperation converts the MCMS ChainOperation into the format expected by the EVM
 // ManyChainMultiSig contract.
 func (e *EVMEncoder) ToGethOperation(
 	opCount uint32,
@@ -103,7 +103,7 @@ func (e *EVMEncoder) ToGethOperation(
 	}, nil
 }
 
-// ToGethRootMetadata converts the MCMS ChainMetadata into the format want by the EVM
+// ToGethRootMetadata converts the MCMS ChainMetadata into the format expected by the EVM
 // ManyChainMultiSig contract.
 func (e *EVMEncoder) ToGethRootMetadata(metadata types.ChainMetadata) bindings.ManyChainMultiSigRootMetadata {
 	return bindings.ManyChainMultiSigRootMetadata{
