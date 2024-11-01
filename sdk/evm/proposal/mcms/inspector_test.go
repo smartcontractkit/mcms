@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -106,7 +107,7 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 			}
 
 			// Mock CallContract to return either encodedConfig or mockError
-			mockClient.On("CallContract", mock.Anything, mock.AnythingOfType("ethereum.CallMsg"), mock.AnythingOfType("*big.Int")).
+			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.Anything).
 				Return(encodedConfig, tt.mockError)
 
 			// Instantiate EVMInspector with the mock client
@@ -182,7 +183,7 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 			}
 
 			// Mock CallContract to return either the encoded OpCount or an error
-			mockClient.On("CallContract", mock.Anything, mock.AnythingOfType("ethereum.CallMsg"), mock.AnythingOfType("*big.Int")).
+			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.Anything).
 				Return(encodedOpCount, tt.mockError)
 
 			// Instantiate EVMInspector with the mock client
@@ -259,7 +260,7 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 			}
 
 			// Mock CallContract to return the encoded root or an error
-			mockClient.On("CallContract", mock.Anything, mock.AnythingOfType("ethereum.CallMsg"), mock.AnythingOfType("*big.Int")).
+			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.Anything).
 				Return(encodedRoot, tt.mockError)
 
 			// Instantiate EVMInspector with the mock client
@@ -344,7 +345,7 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 			}
 
 			// Mock CallContract to return either the encoded metadata or an error
-			mockClient.On("CallContract", mock.Anything, mock.AnythingOfType("ethereum.CallMsg"), mock.AnythingOfType("*big.Int")).
+			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.Anything).
 				Return(encodedMetadata, tt.mockError)
 
 			// Instantiate EVMInspector with the mock client
