@@ -2,9 +2,8 @@ package timelock
 
 import (
 	"github.com/ethereum/go-ethereum/common"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal/timelock"
 	evm_timelock "github.com/smartcontractkit/mcms/sdk/evm/proposal/timelock"
 	"github.com/smartcontractkit/mcms/types"
@@ -18,7 +17,7 @@ func ToChainOperation(
 	operation types.TimelockAction,
 	predecessor common.Hash,
 ) (types.ChainOperation, common.Hash, error) {
-	chainFamily, err := chain_selectors.GetSelectorFamily(uint64(t.ChainSelector))
+	chainFamily, err := types.GetChainSelectorFamily(t.ChainSelector)
 	if err != nil {
 		return types.ChainOperation{}, common.Hash{}, err
 	}
@@ -26,10 +25,8 @@ func ToChainOperation(
 	var converter timelock.TimelockConverter
 
 	switch chainFamily {
-	case chain_selectors.FamilyEVM:
+	case cselectors.FamilyEVM:
 		converter = &evm_timelock.TimelockConverterEVM{}
-	default:
-		return types.ChainOperation{}, common.Hash{}, core.NewUnknownChainSelectorFamilyError(uint64(t.ChainSelector), chainFamily)
 	}
 
 	return converter.ConvertBatchToChainOperation(t, timelockAddress, minDelay, operation, predecessor)

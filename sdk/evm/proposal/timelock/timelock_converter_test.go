@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -41,7 +41,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 						[]string{"tag1", "tag2"},
 					),
 				},
-				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
 			operation:      types.TimelockActionSchedule,
@@ -61,7 +61,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 						[]string{"tag1", "tag2"},
 					),
 				},
-				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
 			operation:      types.TimelockActionCancel,
@@ -81,7 +81,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 						[]string{"tag1", "tag2"},
 					),
 				},
-				ChainSelector: types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			minDelay:       "1h",
 			operation:      types.TimelockAction("invalid"),
