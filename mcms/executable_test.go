@@ -19,8 +19,8 @@ import (
 
 	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	evm_config "github.com/smartcontractkit/mcms/sdk/evm/config"
 	evm_mcms "github.com/smartcontractkit/mcms/sdk/evm/proposal/mcms"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -92,7 +92,7 @@ func setupSimulatedBackendWithMCMS(numSigners uint64) ([]*ecdsa.PrivateKey, []*b
 		Signers:      signers,
 		GroupSigners: []types.Config{},
 	}
-	configurator := evm_config.EVMConfigurator{}
+	configurator := evm.EVMConfigurator{}
 	evmConfig, err := configurator.SetConfigInputs(*cfg)
 	if err != nil {
 		return nil, nil, nil, nil, err
