@@ -19,7 +19,7 @@ type TimelockConverterEVM struct{}
 
 func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	txn types.BatchChainOperation,
-	timelockAddress common.Address,
+	timelockAddress string,
 	minDelay string,
 	operation types.TimelockAction,
 	predecessor common.Hash,
@@ -78,7 +78,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	chainOperation := types.ChainOperation{
 		ChainSelector: txn.ChainSelector,
 		Operation: NewEVMOperation(
-			timelockAddress,
+			common.HexToAddress(timelockAddress),
 			data,
 			big.NewInt(0),
 			"RBACTimelock",
