@@ -8,19 +8,63 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// Executable is a struct that represents a proposal that can be executed. It contains all the
+// information required to call SetRoot and Execute on the various chains that the proposal
+// targets.
 type Executable struct {
 	*Signable
+
 	Executors map[types.ChainSelector]sdk.Executor
 }
 
+// ExecutableOpts contain options for configuring how an Executable runs.
+type ExecutableOpts struct {
+	WithSimulatedBackend bool
+}
+
+// WithSimulatedBackend is an option for configuring an Executable to use a simulated backend.
+func WithSimulatedBackend() func(*ExecutableOpts) {
+	return func(opts *ExecutableOpts) {
+		opts.WithSimulatedBackend = true
+	}
+}
+
+// NewExecutable creates a new Executable from a proposal and a map of executors.
 func NewExecutable(
-	signable *Signable,
+	proposal *MCMSProposal,
 	executors map[types.ChainSelector]sdk.Executor,
-) *Executable {
+	optFuncs ...func(*ExecutableOpts),
+) (*Executable, error) {
+	opts := ExecutableOpts{
+		WithSimulatedBackend: false,
+	}
+
+	for _, optFunc := range optFuncs {
+		optFunc(&opts)
+	}
+
+	// Get encoders for the proposal
+	encoders, err := proposal.GetEncoders(opts.WithSimulatedBackend)
+	if err != nil {
+		return nil, err
+	}
+
+	// Executor implements Inspector, so we can create a map of Inspectors from Executors
+	inspectors := make(map[types.ChainSelector]sdk.Inspector)
+	for key, executor := range executors {
+		inspectors[key] = executor
+	}
+
+	// Create a signable from the proposal
+	signable, err := NewSignable(proposal, encoders, inspectors)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Executable{
 		Signable:  signable,
 		Executors: executors,
-	}
+	}, nil
 }
 
 func (e *Executable) SetRoot(chainSelector types.ChainSelector) (string, error) {

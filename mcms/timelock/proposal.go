@@ -32,8 +32,6 @@ type MCMSWithTimelockProposal struct {
 	Transactions []types.BatchChainOperation `json:"transactions"`
 }
 
-var _ proposal.Proposal = (*MCMSWithTimelockProposal)(nil)
-
 // TODO: Could the input params be simplified here?
 func NewProposalWithTimeLock(
 	version string,
@@ -225,19 +223,9 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSWithTimelockProposal) Executable(sim bool, executors map[types.ChainSelector]sdk.Executor) (*mcms.Executable, error) {
-	// Convert the proposal to an MCMS only proposal
-	mcmOnly, errToMcms := m.toMCMSOnlyProposal()
-	if errToMcms != nil {
-		return nil, errToMcms
-	}
-
-	return mcmOnly.Executable(sim, executors)
-}
-
 func (m *MCMSWithTimelockProposal) Signable(isSim bool, inspectors map[types.ChainSelector]sdk.Inspector) (proposal.Signable, error) {
 	// Convert the proposal to an MCMS only proposal
-	mcmOnly, errToMcms := m.toMCMSOnlyProposal()
+	mcmOnly, errToMcms := m.ToMCMSOnlyProposal()
 	if errToMcms != nil {
 		return nil, errToMcms
 	}
@@ -245,7 +233,7 @@ func (m *MCMSWithTimelockProposal) Signable(isSim bool, inspectors map[types.Cha
 	return mcmOnly.Signable(isSim, inspectors)
 }
 
-func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, error) {
+func (m *MCMSWithTimelockProposal) ToMCMSOnlyProposal() (mcms.MCMSProposal, error) {
 	mcmOnly := m.MCMSProposal
 
 	// Start predecessor map with all chains pointing to the zero hash

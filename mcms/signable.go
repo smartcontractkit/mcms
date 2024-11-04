@@ -68,7 +68,12 @@ func NewSignable(
 			return nil, err
 		}
 
-		encodedOp, err := encoders[op.ChainSelector].HashOperation(
+		encoder, ok := encoders[op.ChainSelector]
+		if !ok {
+			return nil, errors.New("encoder not provided for chain " + strconv.FormatUint(uint64(op.ChainSelector), 10))
+		}
+
+		encodedOp, err := encoder.HashOperation(
 			chainNonce,
 			proposal.ChainMetadata[op.ChainSelector],
 			op,

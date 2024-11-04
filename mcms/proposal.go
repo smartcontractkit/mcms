@@ -157,22 +157,3 @@ func (m *MCMSProposal) Signable(isSim bool, inspectors map[types.ChainSelector]s
 
 	return NewSignable(m, encoders, inspectors)
 }
-
-func (m *MCMSProposal) Executable(isSim bool, executors map[types.ChainSelector]sdk.Executor) (*Executable, error) {
-	encoders, err := m.GetEncoders(isSim)
-	if err != nil {
-		return nil, err
-	}
-
-	inspectors := make(map[types.ChainSelector]sdk.Inspector)
-	for key, executor := range executors {
-		inspectors[key] = executor // since Executor implements Inspector, this works
-	}
-
-	signable, err := NewSignable(m, encoders, inspectors) // TODO: we should be able to pass executors here?
-	if err != nil {
-		return nil, err
-	}
-
-	return NewExecutable(signable, executors), nil
-}
