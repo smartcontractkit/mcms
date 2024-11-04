@@ -93,3 +93,35 @@ func (tm TimelockEVMInspector) GetCancellers(address string) ([]common.Address, 
 	}
 	return tm.getAddressesWithRole(timelock, proposerRole)
 }
+
+func (tm TimelockEVMInspector) isOperation(address string, opId [32]byte) (bool, error) {
+	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
+	if err != nil {
+		return false, err
+	}
+	return timelock.IsOperation(&bind.CallOpts{}, opId)
+}
+
+func (tm TimelockEVMInspector) isOperationPending(address string, opId [32]byte) (bool, error) {
+	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
+	if err != nil {
+		return false, err
+	}
+	return timelock.IsOperationPending(&bind.CallOpts{}, opId)
+}
+
+func (tm TimelockEVMInspector) isOperationReady(address string, opId [32]byte) (bool, error) {
+	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
+	if err != nil {
+		return false, err
+	}
+	return timelock.IsOperationReady(&bind.CallOpts{}, opId)
+}
+
+func (tm TimelockEVMInspector) isOperationDone(address string, opId [32]byte) (bool, error) {
+	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
+	if err != nil {
+		return false, err
+	}
+	return timelock.IsOperationDone(&bind.CallOpts{}, opId)
+}

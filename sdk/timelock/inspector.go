@@ -3,12 +3,12 @@ package timelock
 import "github.com/ethereum/go-ethereum/common"
 
 type Inspector interface {
-	GetProposers(timelockAddress string) ([]common.Address, error)
-	GetExecutors(timelockAddress string) ([]common.Address, error)
-	GetBypassers(timelockAddress string) ([]common.Address, error)
-	GetCancellers(timelockAddress string) ([]common.Address, error)
-	isOperation(timelockAddress string)
-	isOperationPending(timelockAddress string)
-	isOperationReady(timelockAddress string)
-	isOperationDone(timelockAddress string)
+	GetProposers(address string) ([]common.Address, error)
+	GetExecutors(address string) ([]common.Address, error)
+	GetBypassers(address string) ([]common.Address, error)
+	GetCancellers(address string) ([]common.Address, error)
+	isOperation(address string, opId [32]byte) (bool, error)
+	isOperationPending(address string, opId [32]byte) (bool, error)
+	isOperationReady(address string, opId [32]byte) (bool, error)
+	isOperationDone(address string, opId [32]byte) (bool, error)
 }

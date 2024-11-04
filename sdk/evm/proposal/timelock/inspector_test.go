@@ -230,3 +230,240 @@ func TestTimelockEVMInspector_GetRolesTests(t *testing.T) {
 		})
 	}
 }
+
+func TestTimelockEVMInspector_IsOperation(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		address   string
+		opId      [32]byte
+		mockError error
+		want      bool
+		wantErr   error
+	}{
+		{
+			name:    "IsOperation success",
+			address: "0x1234567890abcdef1234567890abcdef12345678",
+			opId:    [32]byte{0x01},
+			want:    true,
+		},
+		{
+			name:      "IsOperation call contract failure error",
+			address:   "0x1234567890abcdef1234567890abcdef12345678",
+			opId:      [32]byte{0x02},
+			mockError: errors.New("call to contract failed"),
+			want:      false,
+			wantErr:   errors.New("call to contract failed"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Create a new mock client and inspector for each test case
+			mockClient := evm_mocks.NewContractDeployBackend(t)
+			inspector := NewTimelockEVMInspector(mockClient)
+
+			// Load the ABI for encoding
+			parsedABI, err := bindings.RBACTimelockMetaData.GetAbi()
+			require.NoError(t, err)
+
+			// Mock the contract call based on the test case
+			if tt.mockError == nil {
+				// Encode the expected `IsOperation` return value for a successful call
+				encodedResult, err := parsedABI.Methods["isOperation"].Outputs.Pack(tt.want)
+				require.NoError(t, err)
+
+				mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
+					Return(encodedResult, nil).Once()
+			} else {
+				// Mock a failure for the `IsOperation` call
+				mockClient.EXPECT().CallContract(mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, tt.mockError).Once()
+			}
+
+			// Call the `isOperation` method
+			got, err := inspector.isOperation(tt.address, tt.opId)
+
+			// Assertions for expected error or successful result
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				assert.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+
+			// Verify expectations
+			mockClient.AssertExpectations(t)
+		})
+	}
+}
+
+// Helper function to test the various "isOperation" states
+func testIsOperationState(
+	t *testing.T,
+	methodName string,
+	address string,
+	opId [32]byte,
+	want bool,
+	mockError error,
+	wantErr error,
+) {
+	t.Helper()
+
+	// Create a new mock client and inspector for each test case
+	mockClient := evm_mocks.NewContractDeployBackend(t)
+	inspector := NewTimelockEVMInspector(mockClient)
+
+	// Load the ABI for encoding
+	parsedABI, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err)
+
+	// Mock the contract call based on the test case
+	if mockError == nil {
+		// Encode the expected return value for a successful call
+		encodedResult, err := parsedABI.Methods[methodName].Outputs.Pack(want)
+		require.NoError(t, err)
+
+		mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
+			Return(encodedResult, nil).Once()
+	} else {
+		// Mock a failure for the contract call
+		mockClient.EXPECT().CallContract(mock.Anything, mock.Anything, mock.Anything).
+			Return(nil, mockError).Once()
+	}
+
+	// Call the respective method based on methodName
+	var got bool
+	switch methodName {
+	case "isOperationPending":
+		got, err = inspector.isOperationPending(address, opId)
+	case "isOperationReady":
+		got, err = inspector.isOperationReady(address, opId)
+	case "isOperationDone":
+		got, err = inspector.isOperationDone(address, opId)
+	default:
+		t.Fatalf("unsupported methodName: %s", methodName)
+	}
+
+	// Assertions for expected error or successful result
+	if wantErr != nil {
+		require.Error(t, err)
+		assert.EqualError(t, err, wantErr.Error())
+	} else {
+		require.NoError(t, err)
+		assert.Equal(t, want, got)
+	}
+
+	// Verify expectations
+	mockClient.AssertExpectations(t)
+}
+
+// Individual test functions calling the helper function with specific method names
+func TestTimelockEVMInspector_IsOperationPending(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		address   string
+		opId      [32]byte
+		want      bool
+		mockError error
+		wantErr   error
+	}{
+		{
+			name:    "IsOperationPending success",
+			address: "0x1234567890abcdef1234567890abcdef12345678",
+			opId:    [32]byte{0x01},
+			want:    true,
+		},
+		{
+			name:      "IsOperationPending call contract failure error",
+			address:   "0x1234567890abcdef1234567890abcdef12345678",
+			opId:      [32]byte{0x02},
+			mockError: errors.New("call to contract failed"),
+			want:      false,
+			wantErr:   errors.New("call to contract failed"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			testIsOperationState(t, "isOperationPending", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+		})
+	}
+}
+
+func TestTimelockEVMInspector_IsOperationReady(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		address   string
+		opId      [32]byte
+		want      bool
+		mockError error
+		wantErr   error
+	}{
+		{
+			name:    "IsOperationReady success",
+			address: "0x1234567890abcdef1234567890abcdef12345678",
+			opId:    [32]byte{0x01},
+			want:    true,
+		},
+		{
+			name:      "IsOperationReady call contract failure error",
+			address:   "0x1234567890abcdef1234567890abcdef12345678",
+			opId:      [32]byte{0x02},
+			mockError: errors.New("call to contract failed"),
+			want:      false,
+			wantErr:   errors.New("call to contract failed"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			testIsOperationState(t, "isOperationReady", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+		})
+	}
+}
+
+func TestTimelockEVMInspector_IsOperationDone(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		address   string
+		opId      [32]byte
+		want      bool
+		mockError error
+		wantErr   error
+	}{
+		{
+			name:    "IsOperationDone success",
+			address: "0x1234567890abcdef1234567890abcdef12345678",
+			opId:    [32]byte{0x01},
+			want:    true,
+		},
+		{
+			name:      "IsOperationDone call contract failure error",
+			address:   "0x1234567890abcdef1234567890abcdef12345678",
+			opId:      [32]byte{0x02},
+			mockError: errors.New("call to contract failed"),
+			want:      false,
+			wantErr:   errors.New("call to contract failed"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			testIsOperationState(t, "isOperationDone", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+		})
+	}
+}
