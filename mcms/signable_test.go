@@ -10,7 +10,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	mcms_core "github.com/smartcontractkit/mcms/internal/core"
-	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/testutils/evmsim"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -72,7 +71,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
-	err = proposal_core.SignPlainKey(sim.Signers[0].PrivateKey, &proposal, true, inspectors)
+	err = Sign(signable, NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -135,8 +134,8 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	require.NotNil(t, signable)
 
 	// Sign the hash
-	for i := range 3 {
-		err = proposal_core.SignPlainKey(sim.Signers[i].PrivateKey, &proposal, true, inspectors)
+	for _, s := range sim.Signers {
+		err = Sign(signable, NewPrivateKeySigner(s.PrivateKey))
 		require.NoError(t, err)
 	}
 
@@ -208,7 +207,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
-	err = proposal_core.SignPlainKey(sim.Signers[0].PrivateKey, &proposal, true, inspectors)
+	err = Sign(signable, NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -281,7 +280,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 
 	// Sign the hash
 	for i := range 3 {
-		err = proposal_core.SignPlainKey(sim.Signers[i].PrivateKey, &proposal, true, inspectors)
+		err = Sign(signable, NewPrivateKeySigner(sim.Signers[i].PrivateKey))
 		require.NoError(t, err)
 	}
 
@@ -355,7 +354,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 
 	// Sign the hash
 	for _, s := range sim.Signers[:2] { // Only sign with 2 out of 3 signers
-		err = proposal_core.SignPlainKey(s.PrivateKey, &proposal, true, inspectors)
+		err = Sign(signable, NewPrivateKeySigner(s.PrivateKey))
 		require.NoError(t, err)
 	}
 
@@ -435,12 +434,12 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 
 	// Sign the hash with all signers
 	for _, s := range sim.Signers {
-		err = proposal_core.SignPlainKey(s.PrivateKey, &proposal, true, inspectors)
+		err = Sign(signable, NewPrivateKeySigner(s.PrivateKey))
 		require.NoError(t, err)
 	}
 
 	// Sign with the invalid signer
-	err = proposal_core.SignPlainKey(invalidKey, &proposal, true, inspectors)
+	err = Sign(signable, NewPrivateKeySigner(invalidKey))
 	require.NoError(t, err)
 
 	// Validate the signatures

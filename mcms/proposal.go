@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -33,8 +32,6 @@ type MCMSProposal struct {
 	// Operations to be executed
 	Transactions []types.ChainOperation `json:"transactions"`
 }
-
-var _ proposal.Proposal = (*MCMSProposal)(nil)
 
 func NewProposal(
 	version string,
@@ -149,7 +146,7 @@ func (m *MCMSProposal) GetEncoders(isSim bool) (map[types.ChainSelector]sdk.Enco
 }
 
 // TODO: isSim is very EVM and test Specific. Should be removed
-func (m *MCMSProposal) Signable(isSim bool, inspectors map[types.ChainSelector]sdk.Inspector) (proposal.Signable, error) {
+func (m *MCMSProposal) Signable(isSim bool, inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error) {
 	encoders, err := m.GetEncoders(isSim)
 	if err != nil {
 		return nil, err
