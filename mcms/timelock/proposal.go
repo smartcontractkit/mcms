@@ -32,8 +32,6 @@ type MCMSWithTimelockProposal struct {
 	Transactions []types.BatchChainOperation `json:"transactions"`
 }
 
-var _ proposal.Proposal = (*MCMSWithTimelockProposal)(nil)
-
 // TODO: Could the input params be simplified here?
 func NewProposalWithTimeLock(
 	version string,
