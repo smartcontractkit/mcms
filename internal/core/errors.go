@@ -1,10 +1,16 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 )
+
+var ErrEmptyDescription = errors.New("invalid empty description")
+var ErrNoChainMetadata = errors.New("no chain metadata")
+var ErrNoTransactions = errors.New("no transactions")
+var ErrNoTransactionsInBatch = errors.New("no transactions in batch")
 
 // InvalidChainIDError is the error for an invalid chain ID.
 type InvalidChainIDError struct {
@@ -16,22 +22,14 @@ func (e *InvalidChainIDError) Error() string {
 	return fmt.Sprintf("invalid chain ID: %v", e.ReceivedChainID)
 }
 
-type InvalidDescriptionError struct {
-	ReceivedDescription string
-}
-
-func (e *InvalidDescriptionError) Error() string {
-	return fmt.Sprint("invalid description: ", e.ReceivedDescription)
-}
-
-// InvalidMinDelayError is the error for when the received min delay is invalid.
-type InvalidMinDelayError struct {
-	ReceivedMinDelay string
+// InvalidDelayError is the error for when the received min delay is invalid.
+type InvalidDelayError struct {
+	ReceivedDelay string
 }
 
 // Error returns the error message.
-func (e *InvalidMinDelayError) Error() string {
-	return fmt.Sprintf("invalid min delay: %s", e.ReceivedMinDelay)
+func (e *InvalidDelayError) Error() string {
+	return fmt.Sprintf("invalid delay: %s", e.ReceivedDelay)
 }
 
 // InvalidProposalTypeError is used when an invalid proposal type is received.
@@ -69,18 +67,15 @@ func (e *InvalidVersionError) Error() string {
 	return fmt.Sprintf("invalid version: %s", e.ReceivedVersion)
 }
 
-type NoChainMetadataError struct {
+// MissingChainDetailsError is the error for missing chain metadata.
+type MissingChainDetailsError struct {
+	Parameter       string
+	ChainIdentifier uint64
 }
 
-func (e *NoChainMetadataError) Error() string {
-	return "no chain metadata"
-}
-
-type NoTransactionsError struct {
-}
-
-func (e *NoTransactionsError) Error() string {
-	return "no transactions"
+// Error returns the error message.
+func (e *MissingChainDetailsError) Error() string {
+	return fmt.Sprintf("missing %s for chain %v", e.Parameter, e.ChainIdentifier)
 }
 
 type InvalidSignatureError struct {

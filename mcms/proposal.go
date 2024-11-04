@@ -84,17 +84,11 @@ func proposalValidateBasic(proposalObj MCMSProposal) error {
 	}
 
 	if len(proposalObj.ChainMetadata) == 0 {
-		return &core.NoChainMetadataError{}
+		return core.ErrNoChainMetadata
 	}
 
 	if len(proposalObj.Transactions) == 0 {
-		return &core.NoTransactionsError{}
-	}
-
-	if proposalObj.Description == "" {
-		return &core.InvalidDescriptionError{
-			ReceivedDescription: proposalObj.Description,
-		}
+		return core.ErrNoTransactions
 	}
 
 	return nil
