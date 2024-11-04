@@ -95,3 +95,32 @@ func Test_UInt64ToUint32(t *testing.T) {
 		})
 	}
 }
+
+func Test_Int64ToUint32(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		give    int64
+		want    uint32
+		wantErr bool
+	}{
+		{name: "Valid int64 within range", give: 42, want: 42},
+		{name: "Int64 exceeds uint32 max value", give: math.MaxUint32 + 1, wantErr: true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := Int64ToUint32(tt.give)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}

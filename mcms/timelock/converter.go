@@ -12,7 +12,7 @@ import (
 // ToChainOperation converts a batch of chain operations to a single types.ChainOperation
 func ToChainOperation(
 	t types.BatchChainOperation,
-	timelockAddress common.Address,
+	timelockAddress string,
 	minDelay string,
 	operation types.TimelockAction,
 	predecessor common.Hash,
