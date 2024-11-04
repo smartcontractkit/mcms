@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -30,6 +29,8 @@ type roleFetchTest struct {
 
 // Helper to mock contract calls for each role test case
 func mockRoleContractCalls(t *testing.T, mockClient *evm_mocks.ContractDeployBackend, parsedABI *abi.ABI, tt roleFetchTest) {
+	t.Helper()
+
 	// Mock response for getting the proposer role
 	mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 		Return(tt.proposerRole[:], nil).Once()
@@ -219,10 +220,10 @@ func TestTimelockEVMInspector_GetRolesTests(t *testing.T) {
 			// Assertions for expected error or successful result
 			if tt.wantErr != nil {
 				require.Error(t, err)
-				assert.EqualError(t, err, tt.wantErr.Error())
+				require.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.want, got)
+				require.Equal(t, tt.want, got)
 			}
 
 			// Verify expectations
@@ -273,8 +274,8 @@ func TestTimelockEVMInspector_IsOperation(t *testing.T) {
 			// Mock the contract call based on the test case
 			if tt.mockError == nil {
 				// Encode the expected `IsOperation` return value for a successful call
-				encodedResult, err := parsedABI.Methods["isOperation"].Outputs.Pack(tt.want)
-				require.NoError(t, err)
+				encodedResult, packErr := parsedABI.Methods["IsOperation"].Outputs.Pack(tt.want)
+				require.NoError(t, packErr)
 
 				mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 					Return(encodedResult, nil).Once()
@@ -284,16 +285,16 @@ func TestTimelockEVMInspector_IsOperation(t *testing.T) {
 					Return(nil, tt.mockError).Once()
 			}
 
-			// Call the `isOperation` method
-			got, err := inspector.isOperation(tt.address, tt.opId)
+			// Call the `IsOperation` method
+			got, err := inspector.IsOperation(tt.address, tt.opId)
 
 			// Assertions for expected error or successful result
 			if tt.wantErr != nil {
 				require.Error(t, err)
-				assert.EqualError(t, err, tt.wantErr.Error())
+				require.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.want, got)
+				require.Equal(t, tt.want, got)
 			}
 
 			// Verify expectations
@@ -302,7 +303,7 @@ func TestTimelockEVMInspector_IsOperation(t *testing.T) {
 	}
 }
 
-// Helper function to test the various "isOperation" states
+// Helper function to test the various "IsOperation" states
 func testIsOperationState(
 	t *testing.T,
 	methodName string,
@@ -325,8 +326,8 @@ func testIsOperationState(
 	// Mock the contract call based on the test case
 	if mockError == nil {
 		// Encode the expected return value for a successful call
-		encodedResult, err := parsedABI.Methods[methodName].Outputs.Pack(want)
-		require.NoError(t, err)
+		encodedResult, packErr := parsedABI.Methods[methodName].Outputs.Pack(want)
+		require.NoError(t, packErr)
 
 		mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 			Return(encodedResult, nil).Once()
@@ -339,12 +340,12 @@ func testIsOperationState(
 	// Call the respective method based on methodName
 	var got bool
 	switch methodName {
-	case "isOperationPending":
-		got, err = inspector.isOperationPending(address, opId)
-	case "isOperationReady":
-		got, err = inspector.isOperationReady(address, opId)
-	case "isOperationDone":
-		got, err = inspector.isOperationDone(address, opId)
+	case "IsOperationPending":
+		got, err = inspector.IsOperationPending(address, opId)
+	case "IsOperationReady":
+		got, err = inspector.IsOperationReady(address, opId)
+	case "IsOperationDone":
+		got, err = inspector.IsOperationDone(address, opId)
 	default:
 		t.Fatalf("unsupported methodName: %s", methodName)
 	}
@@ -352,10 +353,10 @@ func testIsOperationState(
 	// Assertions for expected error or successful result
 	if wantErr != nil {
 		require.Error(t, err)
-		assert.EqualError(t, err, wantErr.Error())
+		require.EqualError(t, err, wantErr.Error())
 	} else {
 		require.NoError(t, err)
-		assert.Equal(t, want, got)
+		require.Equal(t, want, got)
 	}
 
 	// Verify expectations
@@ -393,7 +394,7 @@ func TestTimelockEVMInspector_IsOperationPending(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testIsOperationState(t, "isOperationPending", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+			testIsOperationState(t, "IsOperationPending", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
 		})
 	}
 }
@@ -428,7 +429,7 @@ func TestTimelockEVMInspector_IsOperationReady(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testIsOperationState(t, "isOperationReady", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+			testIsOperationState(t, "IsOperationReady", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
 		})
 	}
 }
@@ -463,7 +464,7 @@ func TestTimelockEVMInspector_IsOperationDone(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testIsOperationState(t, "isOperationDone", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+			testIsOperationState(t, "IsOperationDone", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
 		})
 	}
 }
