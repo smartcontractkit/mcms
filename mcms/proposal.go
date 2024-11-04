@@ -3,7 +3,8 @@ package mcms
 import (
 	"encoding/json"
 	"io"
-	"sort"
+	"maps"
+	"slices"
 	"time"
 
 	"github.com/smartcontractkit/mcms/internal/core"
@@ -113,24 +114,16 @@ func (m *MCMSProposal) Validate() error {
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.ChainSelector]; !ok {
-			return &core.MissingChainDetailsError{
-				ChainIdentifier: uint64(t.ChainSelector),
-				Parameter:       "chain metadata",
-			}
+			return NewChainMetadataNotFoundError(t.ChainSelector)
 		}
 	}
 
 	return nil
 }
 
-func (m *MCMSProposal) ChainIdentifiers() []types.ChainSelector {
-	chainIdentifiers := make([]types.ChainSelector, 0, len(m.ChainMetadata))
-	for chainID := range m.ChainMetadata {
-		chainIdentifiers = append(chainIdentifiers, chainID)
-	}
-	sort.Slice(chainIdentifiers, func(i, j int) bool { return chainIdentifiers[i] < chainIdentifiers[j] })
-
-	return chainIdentifiers
+// ChainSelectors returns a sorted list of chain selectors from the chains' metadata
+func (m *MCMSProposal) ChainSelectors() []types.ChainSelector {
+	return slices.Sorted(maps.Keys(m.ChainMetadata))
 }
 
 func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
