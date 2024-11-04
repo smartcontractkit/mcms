@@ -1,10 +1,16 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 )
+
+var ErrEmptyDescription = errors.New("invalid empty description")
+var ErrNoChainMetadata = errors.New("no chain metadata")
+var ErrNoTransactions = errors.New("no transactions")
+var ErrNoTransactionsInBatch = errors.New("no transactions in batch")
 
 // InvalidChainIDError is the error for an invalid chain ID.
 type InvalidChainIDError struct {
@@ -14,12 +20,6 @@ type InvalidChainIDError struct {
 // Error returns the error message.
 func (e *InvalidChainIDError) Error() string {
 	return fmt.Sprintf("invalid chain ID: %v", e.ReceivedChainID)
-}
-
-type EmptyDescriptionError struct{}
-
-func (e *EmptyDescriptionError) Error() string {
-	return "invalid empty description"
 }
 
 // InvalidMinDelayError is the error for when the received min delay is invalid.
@@ -67,25 +67,15 @@ func (e *InvalidVersionError) Error() string {
 	return fmt.Sprintf("invalid version: %s", e.ReceivedVersion)
 }
 
-type NoChainMetadataError struct {
+// MissingChainDetailsError is the error for missing chain metadata.
+type MissingChainDetailsError struct {
+	Parameter       string
+	ChainIdentifier uint64
 }
 
-func (e *NoChainMetadataError) Error() string {
-	return "no chain metadata"
-}
-
-type NoTransactionsError struct {
-}
-
-func (e *NoTransactionsError) Error() string {
-	return "no transactions"
-}
-
-type NoTransactionsInBatchError struct {
-}
-
-func (e *NoTransactionsInBatchError) Error() string {
-	return "no transactions in batch"
+// Error returns the error message.
+func (e *MissingChainDetailsError) Error() string {
+	return fmt.Sprintf("missing %s for chain %v", e.Parameter, e.ChainIdentifier)
 }
 
 type InvalidSignatureError struct {

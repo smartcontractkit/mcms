@@ -313,19 +313,19 @@ func timeLockProposalValidateBasic(timelockProposal MCMSWithTimelockProposal) er
 		}
 	}
 	if len(timelockProposal.ChainMetadata) == 0 {
-		return &core.NoChainMetadataError{}
+		return core.ErrNoChainMetadata
 	}
 
 	if len(timelockProposal.Transactions) == 0 {
-		return &core.NoTransactionsError{}
+		return core.ErrNoTransactions
 	}
 
 	if len(timelockProposal.Transactions) > 0 && len(timelockProposal.Transactions[0].Batch) == 0 {
-		return &core.NoTransactionsInBatchError{}
+		return core.ErrNoTransactionsInBatch
 	}
 
 	if timelockProposal.Description == "" {
-		return &core.EmptyDescriptionError{}
+		return core.ErrEmptyDescription
 	}
 
 	return nil
