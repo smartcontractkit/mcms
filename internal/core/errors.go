@@ -69,27 +69,6 @@ func (e *InvalidVersionError) Error() string {
 	return fmt.Sprintf("invalid version: %s", e.ReceivedVersion)
 }
 
-// MissingChainDetailsError is the error for missing chain metadata.
-type MissingChainDetailsError struct {
-	Parameter       string
-	ChainIdentifier uint64
-}
-
-// Error returns the error message.
-func (e *MissingChainDetailsError) Error() string {
-	return fmt.Sprintf("missing %s for chain %v", e.Parameter, e.ChainIdentifier)
-}
-
-// MissingChainClientError is the error for missing chain client.
-type MissingChainClientError struct {
-	ChainIdentifier uint64
-}
-
-// Error returns the error message.
-func (e *MissingChainClientError) Error() string {
-	return fmt.Sprintf("missing chain client for chain %v", e.ChainIdentifier)
-}
-
 type NoChainMetadataError struct {
 }
 
@@ -105,13 +84,11 @@ func (e *NoTransactionsError) Error() string {
 }
 
 type InvalidSignatureError struct {
-	ChainIdentifier  uint64
-	MCMSAddress      common.Address
 	RecoveredAddress common.Address
 }
 
 func (e *InvalidSignatureError) Error() string {
-	return fmt.Sprintf("invalid signature: received signature for address %s is not a signer on MCMS %s on chain %v", e.RecoveredAddress, e.MCMSAddress, e.ChainIdentifier)
+	return fmt.Sprintf("invalid signature: received signature for address %s is not a signer on the MCMS contract", e.RecoveredAddress)
 }
 
 type InvalidMCMSConfigError struct {
@@ -120,23 +97,6 @@ type InvalidMCMSConfigError struct {
 
 func (e *InvalidMCMSConfigError) Error() string {
 	return fmt.Sprintf("invalid MCMS config: %s", e.Reason)
-}
-
-type QuorumNotMetError struct {
-	ChainIdentifier uint64
-}
-
-func (e *QuorumNotMetError) Error() string {
-	return fmt.Sprintf("quorum not met for chain %v", e.ChainIdentifier)
-}
-
-type InconsistentConfigsError struct {
-	ChainIdentifierA uint64
-	ChainIdentifierB uint64
-}
-
-func (e *InconsistentConfigsError) Error() string {
-	return fmt.Sprintf("inconsistent configs for chains %v and %v", e.ChainIdentifierA, e.ChainIdentifierB)
 }
 
 type TooManySignersError struct {
