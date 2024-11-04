@@ -8,6 +8,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal"
+	utilsJson "github.com/smartcontractkit/mcms/internal/utils/json"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -109,11 +110,11 @@ func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
 	}
 
 	// Merge the JSON objects
-	finalJSON, err := mergeJSON(mcmsProposalBytes, transactionsBytes)
+	finalJSON, err := utilsJson.Merge(mcmsProposalBytes, transactionsBytes)
 	if err != nil {
 		return nil, err
 	}
-	finalJSON, err = mergeJSON(finalJSON, mcmsWithTimelockFieldsBytes)
+	finalJSON, err = utilsJson.Merge(finalJSON, mcmsWithTimelockFieldsBytes)
 	if err != nil {
 		return nil, err
 	}
@@ -275,26 +276,6 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 
 func (m *MCMSWithTimelockProposal) AddSignature(signature types.Signature) {
 	m.Signatures = append(m.Signatures, signature)
-}
-
-func mergeJSON(json1, json2 []byte) ([]byte, error) {
-	var map1, map2 map[string]any
-
-	// Unmarshal both JSON objects into maps
-	if err := json.Unmarshal(json1, &map1); err != nil {
-		return nil, err
-	}
-	if err := json.Unmarshal(json2, &map2); err != nil {
-		return nil, err
-	}
-
-	// Merge map2 into map1
-	for key, value := range map2 {
-		map1[key] = value
-	}
-
-	// Marshal the merged result back into JSON
-	return json.Marshal(map1)
 }
 
 // timeLockProposalValidateBasic basic validation for an MCMS proposal
