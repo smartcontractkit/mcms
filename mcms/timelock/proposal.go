@@ -304,9 +304,5 @@ func timeLockProposalValidateBasic(timelockProposal MCMSWithTimelockProposal) er
 		return core.ErrNoTransactionsInBatch
 	}
 
-	if timelockProposal.Description == "" {
-		return core.ErrEmptyDescription
-	}
-
 	return nil
 }

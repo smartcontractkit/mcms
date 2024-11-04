@@ -173,42 +173,6 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 	assert.Nil(t, proposal)
 }
 
-func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
-	t.Parallel()
-
-	proposal, err := NewProposal(
-		"1.0",
-		2004259681,
-		[]types.Signature{},
-		false,
-		map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {
-				StartingOpCount: 1,
-				MCMAddress:      TestAddress,
-			},
-		},
-		"",
-		[]types.ChainOperation{
-			{
-				ChainSelector: TestChain1,
-				Operation: types.Operation{
-					To:               TestAddress,
-					AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
-					Data:             common.Hex2Bytes("0x"),
-					OperationMetadata: types.OperationMetadata{
-						ContractType: "Sample contract",
-						Tags:         []string{"tag1", "tag2"},
-					},
-				},
-			},
-		},
-	)
-
-	require.Error(t, err)
-	require.EqualError(t, err, "invalid empty description")
-	assert.Nil(t, proposal)
-}
-
 func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
 	t.Parallel()
 

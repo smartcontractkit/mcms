@@ -91,10 +91,6 @@ func proposalValidateBasic(proposalObj MCMSProposal) error {
 		return core.ErrNoTransactions
 	}
 
-	if proposalObj.Description == "" {
-		return core.ErrEmptyDescription
-	}
-
 	return nil
 }
 
