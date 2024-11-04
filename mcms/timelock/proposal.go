@@ -123,7 +123,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 
 func (m *MCMSWithTimelockProposal) Signable(isSim bool, inspectors map[types.ChainSelector]sdk.Inspector) (proposal.Signable, error) {
 	// Convert the proposal to an MCMS only proposal
-	mcmOnly, errToMcms := m.ToMCMSOnlyProposal()
+	mcmOnly, errToMcms := m.toMCMSOnlyProposal()
 	if errToMcms != nil {
 		return nil, errToMcms
 	}

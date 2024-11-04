@@ -25,15 +25,17 @@ func Test_Sign(t *testing.T) {
 
 	// Construct a proposal
 	proposal := MCMSProposal{
-		Version:              "1.0",
-		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-		ValidUntil:           2004259681,
-		Signatures:           []types.Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {
-				StartingOpCount: 0,
-				MCMAddress:      "0x01",
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      "0x01",
+				},
 			},
 		},
 		Transactions: []types.ChainOperation{
@@ -68,7 +70,7 @@ func Test_Sign(t *testing.T) {
 		{
 			name:    "failure: invalid proposal",
 			give:    MCMSProposal{},
-			wantErr: "invalid version: ",
+			wantErr: "Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.Description' Error:Field validation for 'Description' failed on the 'required' tag\nKey: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
 		},
 	}
 
