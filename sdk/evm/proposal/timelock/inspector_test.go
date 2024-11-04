@@ -274,7 +274,7 @@ func TestTimelockEVMInspector_IsOperation(t *testing.T) {
 			// Mock the contract call based on the test case
 			if tt.mockError == nil {
 				// Encode the expected `IsOperation` return value for a successful call
-				encodedResult, packErr := parsedABI.Methods["IsOperation"].Outputs.Pack(tt.want)
+				encodedResult, packErr := parsedABI.Methods["isOperation"].Outputs.Pack(tt.want)
 				require.NoError(t, packErr)
 
 				mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
@@ -340,11 +340,11 @@ func testIsOperationState(
 	// Call the respective method based on methodName
 	var got bool
 	switch methodName {
-	case "IsOperationPending":
+	case "isOperationPending":
 		got, err = inspector.IsOperationPending(address, opId)
-	case "IsOperationReady":
+	case "isOperationReady":
 		got, err = inspector.IsOperationReady(address, opId)
-	case "IsOperationDone":
+	case "isOperationDone":
 		got, err = inspector.IsOperationDone(address, opId)
 	default:
 		t.Fatalf("unsupported methodName: %s", methodName)
@@ -394,7 +394,7 @@ func TestTimelockEVMInspector_IsOperationPending(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testIsOperationState(t, "IsOperationPending", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+			testIsOperationState(t, "isOperationPending", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
 		})
 	}
 }
@@ -429,7 +429,7 @@ func TestTimelockEVMInspector_IsOperationReady(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testIsOperationState(t, "IsOperationReady", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+			testIsOperationState(t, "isOperationReady", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
 		})
 	}
 }
@@ -464,7 +464,7 @@ func TestTimelockEVMInspector_IsOperationDone(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testIsOperationState(t, "IsOperationDone", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+			testIsOperationState(t, "isOperationDone", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
 		})
 	}
 }

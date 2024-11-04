@@ -20,9 +20,9 @@ func (_m *Inspector) EXPECT() *Inspector_Expecter {
 	return &Inspector_Expecter{mock: &_m.Mock}
 }
 
-// GetBypassers provides a mock function with given fields: timelockAddress
-func (_m *Inspector) GetBypassers(timelockAddress string) ([]common.Address, error) {
-	ret := _m.Called(timelockAddress)
+// GetBypassers provides a mock function with given fields: address
+func (_m *Inspector) GetBypassers(address string) ([]common.Address, error) {
+	ret := _m.Called(address)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBypassers")
@@ -31,10 +31,10 @@ func (_m *Inspector) GetBypassers(timelockAddress string) ([]common.Address, err
 	var r0 []common.Address
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) ([]common.Address, error)); ok {
-		return rf(timelockAddress)
+		return rf(address)
 	}
 	if rf, ok := ret.Get(0).(func(string) []common.Address); ok {
-		r0 = rf(timelockAddress)
+		r0 = rf(address)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]common.Address)
@@ -42,7 +42,7 @@ func (_m *Inspector) GetBypassers(timelockAddress string) ([]common.Address, err
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(timelockAddress)
+		r1 = rf(address)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,12 +56,12 @@ type Inspector_GetBypassers_Call struct {
 }
 
 // GetBypassers is a helper method to define mock.On call
-//   - timelockAddress string
-func (_e *Inspector_Expecter) GetBypassers(timelockAddress interface{}) *Inspector_GetBypassers_Call {
-	return &Inspector_GetBypassers_Call{Call: _e.mock.On("GetBypassers", timelockAddress)}
+//   - address string
+func (_e *Inspector_Expecter) GetBypassers(address interface{}) *Inspector_GetBypassers_Call {
+	return &Inspector_GetBypassers_Call{Call: _e.mock.On("GetBypassers", address)}
 }
 
-func (_c *Inspector_GetBypassers_Call) Run(run func(timelockAddress string)) *Inspector_GetBypassers_Call {
+func (_c *Inspector_GetBypassers_Call) Run(run func(address string)) *Inspector_GetBypassers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})
@@ -78,9 +78,9 @@ func (_c *Inspector_GetBypassers_Call) RunAndReturn(run func(string) ([]common.A
 	return _c
 }
 
-// GetCancellers provides a mock function with given fields: timelockAddress
-func (_m *Inspector) GetCancellers(timelockAddress string) ([]common.Address, error) {
-	ret := _m.Called(timelockAddress)
+// GetCancellers provides a mock function with given fields: address
+func (_m *Inspector) GetCancellers(address string) ([]common.Address, error) {
+	ret := _m.Called(address)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCancellers")
@@ -89,10 +89,10 @@ func (_m *Inspector) GetCancellers(timelockAddress string) ([]common.Address, er
 	var r0 []common.Address
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) ([]common.Address, error)); ok {
-		return rf(timelockAddress)
+		return rf(address)
 	}
 	if rf, ok := ret.Get(0).(func(string) []common.Address); ok {
-		r0 = rf(timelockAddress)
+		r0 = rf(address)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]common.Address)
@@ -100,7 +100,7 @@ func (_m *Inspector) GetCancellers(timelockAddress string) ([]common.Address, er
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(timelockAddress)
+		r1 = rf(address)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -114,12 +114,12 @@ type Inspector_GetCancellers_Call struct {
 }
 
 // GetCancellers is a helper method to define mock.On call
-//   - timelockAddress string
-func (_e *Inspector_Expecter) GetCancellers(timelockAddress interface{}) *Inspector_GetCancellers_Call {
-	return &Inspector_GetCancellers_Call{Call: _e.mock.On("GetCancellers", timelockAddress)}
+//   - address string
+func (_e *Inspector_Expecter) GetCancellers(address interface{}) *Inspector_GetCancellers_Call {
+	return &Inspector_GetCancellers_Call{Call: _e.mock.On("GetCancellers", address)}
 }
 
-func (_c *Inspector_GetCancellers_Call) Run(run func(timelockAddress string)) *Inspector_GetCancellers_Call {
+func (_c *Inspector_GetCancellers_Call) Run(run func(address string)) *Inspector_GetCancellers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})
@@ -136,9 +136,9 @@ func (_c *Inspector_GetCancellers_Call) RunAndReturn(run func(string) ([]common.
 	return _c
 }
 
-// GetExecutors provides a mock function with given fields: timelockAddress
-func (_m *Inspector) GetExecutors(timelockAddress string) ([]common.Address, error) {
-	ret := _m.Called(timelockAddress)
+// GetExecutors provides a mock function with given fields: address
+func (_m *Inspector) GetExecutors(address string) ([]common.Address, error) {
+	ret := _m.Called(address)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetExecutors")
@@ -147,10 +147,10 @@ func (_m *Inspector) GetExecutors(timelockAddress string) ([]common.Address, err
 	var r0 []common.Address
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) ([]common.Address, error)); ok {
-		return rf(timelockAddress)
+		return rf(address)
 	}
 	if rf, ok := ret.Get(0).(func(string) []common.Address); ok {
-		r0 = rf(timelockAddress)
+		r0 = rf(address)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]common.Address)
@@ -158,7 +158,7 @@ func (_m *Inspector) GetExecutors(timelockAddress string) ([]common.Address, err
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(timelockAddress)
+		r1 = rf(address)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -172,12 +172,12 @@ type Inspector_GetExecutors_Call struct {
 }
 
 // GetExecutors is a helper method to define mock.On call
-//   - timelockAddress string
-func (_e *Inspector_Expecter) GetExecutors(timelockAddress interface{}) *Inspector_GetExecutors_Call {
-	return &Inspector_GetExecutors_Call{Call: _e.mock.On("GetExecutors", timelockAddress)}
+//   - address string
+func (_e *Inspector_Expecter) GetExecutors(address interface{}) *Inspector_GetExecutors_Call {
+	return &Inspector_GetExecutors_Call{Call: _e.mock.On("GetExecutors", address)}
 }
 
-func (_c *Inspector_GetExecutors_Call) Run(run func(timelockAddress string)) *Inspector_GetExecutors_Call {
+func (_c *Inspector_GetExecutors_Call) Run(run func(address string)) *Inspector_GetExecutors_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})
@@ -194,9 +194,9 @@ func (_c *Inspector_GetExecutors_Call) RunAndReturn(run func(string) ([]common.A
 	return _c
 }
 
-// GetProposers provides a mock function with given fields: timelockAddress
-func (_m *Inspector) GetProposers(timelockAddress string) ([]common.Address, error) {
-	ret := _m.Called(timelockAddress)
+// GetProposers provides a mock function with given fields: address
+func (_m *Inspector) GetProposers(address string) ([]common.Address, error) {
+	ret := _m.Called(address)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProposers")
@@ -205,10 +205,10 @@ func (_m *Inspector) GetProposers(timelockAddress string) ([]common.Address, err
 	var r0 []common.Address
 	var r1 error
 	if rf, ok := ret.Get(0).(func(string) ([]common.Address, error)); ok {
-		return rf(timelockAddress)
+		return rf(address)
 	}
 	if rf, ok := ret.Get(0).(func(string) []common.Address); ok {
-		r0 = rf(timelockAddress)
+		r0 = rf(address)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]common.Address)
@@ -216,7 +216,7 @@ func (_m *Inspector) GetProposers(timelockAddress string) ([]common.Address, err
 	}
 
 	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(timelockAddress)
+		r1 = rf(address)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -230,12 +230,12 @@ type Inspector_GetProposers_Call struct {
 }
 
 // GetProposers is a helper method to define mock.On call
-//   - timelockAddress string
-func (_e *Inspector_Expecter) GetProposers(timelockAddress interface{}) *Inspector_GetProposers_Call {
-	return &Inspector_GetProposers_Call{Call: _e.mock.On("GetProposers", timelockAddress)}
+//   - address string
+func (_e *Inspector_Expecter) GetProposers(address interface{}) *Inspector_GetProposers_Call {
+	return &Inspector_GetProposers_Call{Call: _e.mock.On("GetProposers", address)}
 }
 
-func (_c *Inspector_GetProposers_Call) Run(run func(timelockAddress string)) *Inspector_GetProposers_Call {
+func (_c *Inspector_GetProposers_Call) Run(run func(address string)) *Inspector_GetProposers_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(string))
 	})
@@ -252,134 +252,230 @@ func (_c *Inspector_GetProposers_Call) RunAndReturn(run func(string) ([]common.A
 	return _c
 }
 
-// isOperation provides a mock function with given fields: timelockAddress
-func (_m *Inspector) isOperation(timelockAddress string) {
-	_m.Called(timelockAddress)
+// IsOperation provides a mock function with given fields: address, opId
+func (_m *Inspector) IsOperation(address string, opId [32]byte) (bool, error) {
+	ret := _m.Called(address, opId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsOperation")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, [32]byte) (bool, error)); ok {
+		return rf(address, opId)
+	}
+	if rf, ok := ret.Get(0).(func(string, [32]byte) bool); ok {
+		r0 = rf(address, opId)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, [32]byte) error); ok {
+		r1 = rf(address, opId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// Inspector_isOperation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'isOperation'
-type Inspector_isOperation_Call struct {
+// Inspector_IsOperation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsOperation'
+type Inspector_IsOperation_Call struct {
 	*mock.Call
 }
 
-// isOperation is a helper method to define mock.On call
-//   - timelockAddress string
-func (_e *Inspector_Expecter) isOperation(timelockAddress interface{}) *Inspector_isOperation_Call {
-	return &Inspector_isOperation_Call{Call: _e.mock.On("isOperation", timelockAddress)}
+// IsOperation is a helper method to define mock.On call
+//   - address string
+//   - opId [32]byte
+func (_e *Inspector_Expecter) IsOperation(address interface{}, opId interface{}) *Inspector_IsOperation_Call {
+	return &Inspector_IsOperation_Call{Call: _e.mock.On("IsOperation", address, opId)}
 }
 
-func (_c *Inspector_isOperation_Call) Run(run func(timelockAddress string)) *Inspector_isOperation_Call {
+func (_c *Inspector_IsOperation_Call) Run(run func(address string, opId [32]byte)) *Inspector_IsOperation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(string), args[1].([32]byte))
 	})
 	return _c
 }
 
-func (_c *Inspector_isOperation_Call) Return() *Inspector_isOperation_Call {
-	_c.Call.Return()
+func (_c *Inspector_IsOperation_Call) Return(_a0 bool, _a1 error) *Inspector_IsOperation_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Inspector_isOperation_Call) RunAndReturn(run func(string)) *Inspector_isOperation_Call {
+func (_c *Inspector_IsOperation_Call) RunAndReturn(run func(string, [32]byte) (bool, error)) *Inspector_IsOperation_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// isOperationDone provides a mock function with given fields: timelockAddress
-func (_m *Inspector) isOperationDone(timelockAddress string) {
-	_m.Called(timelockAddress)
+// IsOperationDone provides a mock function with given fields: address, opId
+func (_m *Inspector) IsOperationDone(address string, opId [32]byte) (bool, error) {
+	ret := _m.Called(address, opId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsOperationDone")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, [32]byte) (bool, error)); ok {
+		return rf(address, opId)
+	}
+	if rf, ok := ret.Get(0).(func(string, [32]byte) bool); ok {
+		r0 = rf(address, opId)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, [32]byte) error); ok {
+		r1 = rf(address, opId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// Inspector_isOperationDone_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'isOperationDone'
-type Inspector_isOperationDone_Call struct {
+// Inspector_IsOperationDone_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsOperationDone'
+type Inspector_IsOperationDone_Call struct {
 	*mock.Call
 }
 
-// isOperationDone is a helper method to define mock.On call
-//   - timelockAddress string
-func (_e *Inspector_Expecter) isOperationDone(timelockAddress interface{}) *Inspector_isOperationDone_Call {
-	return &Inspector_isOperationDone_Call{Call: _e.mock.On("isOperationDone", timelockAddress)}
+// IsOperationDone is a helper method to define mock.On call
+//   - address string
+//   - opId [32]byte
+func (_e *Inspector_Expecter) IsOperationDone(address interface{}, opId interface{}) *Inspector_IsOperationDone_Call {
+	return &Inspector_IsOperationDone_Call{Call: _e.mock.On("IsOperationDone", address, opId)}
 }
 
-func (_c *Inspector_isOperationDone_Call) Run(run func(timelockAddress string)) *Inspector_isOperationDone_Call {
+func (_c *Inspector_IsOperationDone_Call) Run(run func(address string, opId [32]byte)) *Inspector_IsOperationDone_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(string), args[1].([32]byte))
 	})
 	return _c
 }
 
-func (_c *Inspector_isOperationDone_Call) Return() *Inspector_isOperationDone_Call {
-	_c.Call.Return()
+func (_c *Inspector_IsOperationDone_Call) Return(_a0 bool, _a1 error) *Inspector_IsOperationDone_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Inspector_isOperationDone_Call) RunAndReturn(run func(string)) *Inspector_isOperationDone_Call {
+func (_c *Inspector_IsOperationDone_Call) RunAndReturn(run func(string, [32]byte) (bool, error)) *Inspector_IsOperationDone_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// isOperationPending provides a mock function with given fields: timelockAddress
-func (_m *Inspector) isOperationPending(timelockAddress string) {
-	_m.Called(timelockAddress)
+// IsOperationPending provides a mock function with given fields: address, opId
+func (_m *Inspector) IsOperationPending(address string, opId [32]byte) (bool, error) {
+	ret := _m.Called(address, opId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsOperationPending")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, [32]byte) (bool, error)); ok {
+		return rf(address, opId)
+	}
+	if rf, ok := ret.Get(0).(func(string, [32]byte) bool); ok {
+		r0 = rf(address, opId)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, [32]byte) error); ok {
+		r1 = rf(address, opId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// Inspector_isOperationPending_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'isOperationPending'
-type Inspector_isOperationPending_Call struct {
+// Inspector_IsOperationPending_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsOperationPending'
+type Inspector_IsOperationPending_Call struct {
 	*mock.Call
 }
 
-// isOperationPending is a helper method to define mock.On call
-//   - timelockAddress string
-func (_e *Inspector_Expecter) isOperationPending(timelockAddress interface{}) *Inspector_isOperationPending_Call {
-	return &Inspector_isOperationPending_Call{Call: _e.mock.On("isOperationPending", timelockAddress)}
+// IsOperationPending is a helper method to define mock.On call
+//   - address string
+//   - opId [32]byte
+func (_e *Inspector_Expecter) IsOperationPending(address interface{}, opId interface{}) *Inspector_IsOperationPending_Call {
+	return &Inspector_IsOperationPending_Call{Call: _e.mock.On("IsOperationPending", address, opId)}
 }
 
-func (_c *Inspector_isOperationPending_Call) Run(run func(timelockAddress string)) *Inspector_isOperationPending_Call {
+func (_c *Inspector_IsOperationPending_Call) Run(run func(address string, opId [32]byte)) *Inspector_IsOperationPending_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(string), args[1].([32]byte))
 	})
 	return _c
 }
 
-func (_c *Inspector_isOperationPending_Call) Return() *Inspector_isOperationPending_Call {
-	_c.Call.Return()
+func (_c *Inspector_IsOperationPending_Call) Return(_a0 bool, _a1 error) *Inspector_IsOperationPending_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Inspector_isOperationPending_Call) RunAndReturn(run func(string)) *Inspector_isOperationPending_Call {
+func (_c *Inspector_IsOperationPending_Call) RunAndReturn(run func(string, [32]byte) (bool, error)) *Inspector_IsOperationPending_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// isOperationReady provides a mock function with given fields: timelockAddress
-func (_m *Inspector) isOperationReady(timelockAddress string) {
-	_m.Called(timelockAddress)
+// IsOperationReady provides a mock function with given fields: address, opId
+func (_m *Inspector) IsOperationReady(address string, opId [32]byte) (bool, error) {
+	ret := _m.Called(address, opId)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsOperationReady")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(string, [32]byte) (bool, error)); ok {
+		return rf(address, opId)
+	}
+	if rf, ok := ret.Get(0).(func(string, [32]byte) bool); ok {
+		r0 = rf(address, opId)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, [32]byte) error); ok {
+		r1 = rf(address, opId)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
-// Inspector_isOperationReady_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'isOperationReady'
-type Inspector_isOperationReady_Call struct {
+// Inspector_IsOperationReady_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsOperationReady'
+type Inspector_IsOperationReady_Call struct {
 	*mock.Call
 }
 
-// isOperationReady is a helper method to define mock.On call
-//   - timelockAddress string
-func (_e *Inspector_Expecter) isOperationReady(timelockAddress interface{}) *Inspector_isOperationReady_Call {
-	return &Inspector_isOperationReady_Call{Call: _e.mock.On("isOperationReady", timelockAddress)}
+// IsOperationReady is a helper method to define mock.On call
+//   - address string
+//   - opId [32]byte
+func (_e *Inspector_Expecter) IsOperationReady(address interface{}, opId interface{}) *Inspector_IsOperationReady_Call {
+	return &Inspector_IsOperationReady_Call{Call: _e.mock.On("IsOperationReady", address, opId)}
 }
 
-func (_c *Inspector_isOperationReady_Call) Run(run func(timelockAddress string)) *Inspector_isOperationReady_Call {
+func (_c *Inspector_IsOperationReady_Call) Run(run func(address string, opId [32]byte)) *Inspector_IsOperationReady_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(string), args[1].([32]byte))
 	})
 	return _c
 }
 
-func (_c *Inspector_isOperationReady_Call) Return() *Inspector_isOperationReady_Call {
-	_c.Call.Return()
+func (_c *Inspector_IsOperationReady_Call) Return(_a0 bool, _a1 error) *Inspector_IsOperationReady_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Inspector_isOperationReady_Call) RunAndReturn(run func(string)) *Inspector_isOperationReady_Call {
+func (_c *Inspector_IsOperationReady_Call) RunAndReturn(run func(string, [32]byte) (bool, error)) *Inspector_IsOperationReady_Call {
 	_c.Call.Return(run)
 	return _c
 }
