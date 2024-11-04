@@ -35,21 +35,6 @@ var TestChain3 = types.ChainSelector(10344971235874465080)
 // 	assert.Equal(t, expected, result)
 // }
 
-// func TestSortedChainIdentifiers(t *testing.T) {
-// 	t.Parallel()
-
-// 	chainMetadata := map[ChainIdentifier]ChainMetadata{
-// 		TestChain2: {},
-// 		TestChain1: {},
-// 		TestChain3: {},
-// 	}
-
-// 	expected := []ChainIdentifier{TestChain1, TestChain3, TestChain2}
-
-// 	result := sortedChainIdentifiers(chainMetadata)
-// 	assert.Equal(t, expected, result)
-// }
-
 func TestMCMSOnlyProposal_Validate_Success(t *testing.T) {
 	t.Parallel()
 
@@ -279,7 +264,7 @@ func TestMCMSOnlyProposal_Validate_MissingChainMetadataForTransaction(t *testing
 	)
 
 	require.Error(t, err)
-	require.EqualError(t, err, "missing chain metadata for chain 3")
+	require.EqualError(t, err, "missing metadata for chain 3")
 	assert.Nil(t, proposal)
 }
 
@@ -307,4 +292,19 @@ func TestProposalFromFile(t *testing.T) {
 	fileProposal, err := NewProposalFromReader(tempFile)
 	require.NoError(t, err)
 	assert.Equal(t, mcmsProposal, *fileProposal)
+}
+
+func Test_Proposal_ChainSelectors(t *testing.T) {
+	t.Parallel()
+
+	proposal := MCMSProposal{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+			TestChain1: {},
+			TestChain2: {},
+			TestChain3: {},
+		},
+	}
+
+	want := []types.ChainSelector{TestChain1, TestChain3, TestChain2} // Sorted in ascending order
+	assert.Equal(t, want, proposal.ChainSelectors())
 }

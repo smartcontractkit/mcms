@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	coreProposal "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
@@ -41,7 +40,7 @@ func NewSignable(
 	hashLeaves := make([]common.Hash, 0)
 	chainIdx := make(map[types.ChainSelector]uint64, len(proposal.ChainMetadata))
 
-	for _, chain := range proposal.ChainIdentifiers() {
+	for _, chain := range proposal.ChainSelectors() {
 		encoder, ok := encoders[chain]
 		if !ok {
 			return nil, errors.New("encoder not provided for chain " + strconv.FormatUint(uint64(chain), 10))
@@ -216,9 +215,7 @@ func (s *Signable) ValidateSignatures() (bool, error) {
 		}
 
 		if !checkQuorum {
-			return false, &core.QuorumNotMetError{
-				ChainIdentifier: uint64(chain),
-			}
+			return false, NewQuorumNotReachedError(chain)
 		}
 	}
 
@@ -231,15 +228,15 @@ func (s *Signable) ValidateConfigs() error {
 		return err
 	}
 
-	for i, chain := range s.ChainIdentifiers() {
+	for i, chain := range s.ChainSelectors() {
 		if i == 0 {
 			continue
 		}
 
-		if !configs[chain].Equals(configs[s.ChainIdentifiers()[i-1]]) {
-			return &core.InconsistentConfigsError{
-				ChainIdentifierA: uint64(chain),
-				ChainIdentifierB: uint64(s.ChainIdentifiers()[i-1]),
+		if !configs[chain].Equals(configs[s.ChainSelectors()[i-1]]) {
+			return &InconsistentConfigsError{
+				ChainSelectorA: chain,
+				ChainSelectorB: s.ChainSelectors()[i-1],
 			}
 		}
 	}
