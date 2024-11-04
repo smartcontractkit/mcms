@@ -10,7 +10,7 @@ import (
 type TimelockConverter interface {
 	ConvertBatchToChainOperation(
 		t types.BatchChainOperation,
-		timelockAddress common.Address,
+		timelockAddress string,
 		minDelay string,
 		operation types.TimelockAction,
 		predecessor common.Hash,

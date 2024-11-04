@@ -327,7 +327,7 @@ func Test_Config_CanSetRoot(t *testing.T) {
 			},
 			recoveredSigners: []common.Address{signer4},
 			want:             false,
-			wantErr:          "invalid signature: received signature for address 0x0000000000000000000000000000000000000004 is not a signer on MCMS 0x0000000000000000000000000000000000000000 on chain 0",
+			wantErr:          "invalid signature: received signature for address 0x0000000000000000000000000000000000000004 is not a signer on the MCMS contract",
 		},
 	}
 

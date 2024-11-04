@@ -1,10 +1,16 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 )
+
+var ErrEmptyDescription = errors.New("invalid empty description")
+var ErrNoChainMetadata = errors.New("no chain metadata")
+var ErrNoTransactions = errors.New("no transactions")
+var ErrNoTransactionsInBatch = errors.New("no transactions in batch")
 
 // InvalidChainIDError is the error for an invalid chain ID.
 type InvalidChainIDError struct {
@@ -16,22 +22,14 @@ func (e *InvalidChainIDError) Error() string {
 	return fmt.Sprintf("invalid chain ID: %v", e.ReceivedChainID)
 }
 
-type InvalidDescriptionError struct {
-	ReceivedDescription string
-}
-
-func (e *InvalidDescriptionError) Error() string {
-	return fmt.Sprint("invalid description: ", e.ReceivedDescription)
-}
-
-// InvalidMinDelayError is the error for when the received min delay is invalid.
-type InvalidMinDelayError struct {
-	ReceivedMinDelay string
+// InvalidDelayError is the error for when the received min delay is invalid.
+type InvalidDelayError struct {
+	ReceivedDelay string
 }
 
 // Error returns the error message.
-func (e *InvalidMinDelayError) Error() string {
-	return fmt.Sprintf("invalid min delay: %s", e.ReceivedMinDelay)
+func (e *InvalidDelayError) Error() string {
+	return fmt.Sprintf("invalid delay: %s", e.ReceivedDelay)
 }
 
 // InvalidProposalTypeError is used when an invalid proposal type is received.
@@ -80,38 +78,12 @@ func (e *MissingChainDetailsError) Error() string {
 	return fmt.Sprintf("missing %s for chain %v", e.Parameter, e.ChainIdentifier)
 }
 
-// MissingChainClientError is the error for missing chain client.
-type MissingChainClientError struct {
-	ChainIdentifier uint64
-}
-
-// Error returns the error message.
-func (e *MissingChainClientError) Error() string {
-	return fmt.Sprintf("missing chain client for chain %v", e.ChainIdentifier)
-}
-
-type NoChainMetadataError struct {
-}
-
-func (e *NoChainMetadataError) Error() string {
-	return "no chain metadata"
-}
-
-type NoTransactionsError struct {
-}
-
-func (e *NoTransactionsError) Error() string {
-	return "no transactions"
-}
-
 type InvalidSignatureError struct {
-	ChainIdentifier  uint64
-	MCMSAddress      common.Address
 	RecoveredAddress common.Address
 }
 
 func (e *InvalidSignatureError) Error() string {
-	return fmt.Sprintf("invalid signature: received signature for address %s is not a signer on MCMS %s on chain %v", e.RecoveredAddress, e.MCMSAddress, e.ChainIdentifier)
+	return fmt.Sprintf("invalid signature: received signature for address %s is not a signer on the MCMS contract", e.RecoveredAddress)
 }
 
 type InvalidMCMSConfigError struct {
@@ -120,23 +92,6 @@ type InvalidMCMSConfigError struct {
 
 func (e *InvalidMCMSConfigError) Error() string {
 	return fmt.Sprintf("invalid MCMS config: %s", e.Reason)
-}
-
-type QuorumNotMetError struct {
-	ChainIdentifier uint64
-}
-
-func (e *QuorumNotMetError) Error() string {
-	return fmt.Sprintf("quorum not met for chain %v", e.ChainIdentifier)
-}
-
-type InconsistentConfigsError struct {
-	ChainIdentifierA uint64
-	ChainIdentifierB uint64
-}
-
-func (e *InconsistentConfigsError) Error() string {
-	return fmt.Sprintf("inconsistent configs for chains %v and %v", e.ChainIdentifierA, e.ChainIdentifierB)
 }
 
 type TooManySignersError struct {

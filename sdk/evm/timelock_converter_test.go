@@ -16,7 +16,7 @@ import (
 func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 	t.Parallel()
 
-	timelockAddress := common.HexToAddress("0x1234567890123456789012345678901234567890")
+	timelockAddress := "0x1234567890123456789012345678901234567890"
 	zeroHash := common.Hash{}
 
 	testCases := []struct {
@@ -104,7 +104,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 				require.NoError(t, err)
 				assert.NotEqual(t, common.Hash{}, operationId)
 				assert.Equal(t, tc.expectedOpType, chainOperation.Operation.ContractType)
-				assert.Equal(t, timelockAddress.Hex(), chainOperation.Operation.To)
+				assert.Equal(t, timelockAddress, chainOperation.Operation.To)
 				assert.Equal(t, tc.txn.ChainSelector, chainOperation.ChainSelector)
 			}
 		})
