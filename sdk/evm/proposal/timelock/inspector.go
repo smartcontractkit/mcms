@@ -105,38 +105,38 @@ func (tm TimelockEVMInspector) GetCancellers(address string) ([]common.Address, 
 	return tm.getAddressesWithRole(timelock, proposerRole)
 }
 
-func (tm TimelockEVMInspector) IsOperation(address string, opId [32]byte) (bool, error) {
+func (tm TimelockEVMInspector) IsOperation(address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
 	}
 
-	return timelock.IsOperation(&bind.CallOpts{}, opId)
+	return timelock.IsOperation(&bind.CallOpts{}, opID)
 }
 
-func (tm TimelockEVMInspector) IsOperationPending(address string, opId [32]byte) (bool, error) {
+func (tm TimelockEVMInspector) IsOperationPending(address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
 	}
 
-	return timelock.IsOperationPending(&bind.CallOpts{}, opId)
+	return timelock.IsOperationPending(&bind.CallOpts{}, opID)
 }
 
-func (tm TimelockEVMInspector) IsOperationReady(address string, opId [32]byte) (bool, error) {
+func (tm TimelockEVMInspector) IsOperationReady(address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
 	}
 
-	return timelock.IsOperationReady(&bind.CallOpts{}, opId)
+	return timelock.IsOperationReady(&bind.CallOpts{}, opID)
 }
 
-func (tm TimelockEVMInspector) IsOperationDone(address string, opId [32]byte) (bool, error) {
+func (tm TimelockEVMInspector) IsOperationDone(address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
 	}
 
-	return timelock.IsOperationDone(&bind.CallOpts{}, opId)
+	return timelock.IsOperationDone(&bind.CallOpts{}, opID)
 }
