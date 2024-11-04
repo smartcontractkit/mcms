@@ -22,9 +22,8 @@ type MCMSWithTimelockProposal struct {
 
 	Operation types.TimelockAction `json:"operation"` // Always 'schedule', 'cancel', or 'bypass'
 
-	// Q: Format ? (1d, 1w, 1m, 1y, null)
-	// Q: Why minDelay and not delay? MinDelay could be confused with the Timelock configured minimum delay
-	MinDelay string `json:"minDelay"`
+	// (1d, 1w, 1m, 1y, null)
+	Delay string `json:"delay"`
 
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses"`
 
@@ -58,7 +57,7 @@ func NewProposalWithTimeLock(
 			ChainMetadata:        chainMetadata,
 		},
 		Operation:         timelockAction,
-		MinDelay:          timelockDelay,
+		Delay:             timelockDelay,
 		TimelockAddresses: timelockAddresses,
 		Transactions:      batches,
 	}
@@ -98,11 +97,11 @@ func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
 	// Finally, marshal the remaining fields specific to MCMSWithTimelockProposal
 	mcmsWithTimelockFieldsBytes, err := json.Marshal(struct {
 		Operation         types.TimelockAction           `json:"operation"`
-		MinDelay          string                         `json:"minDelay"`
+		Delay             string                         `json:"delay"`
 		TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses"`
 	}{
 		Operation:         m.Operation,
-		MinDelay:          m.MinDelay,
+		Delay:             m.Delay,
 		TimelockAddresses: m.TimelockAddresses,
 	})
 	if err != nil {
@@ -156,7 +155,7 @@ func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 	// Unmarshal the remaining fields specific to MCMSWithTimelockProposal
 	mcmsWithTimelockFields := struct {
 		Operation         types.TimelockAction           `json:"operation"`
-		MinDelay          string                         `json:"minDelay"`
+		Delay             string                         `json:"delay"`
 		TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses"`
 	}{}
 
@@ -166,7 +165,7 @@ func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 
 	// Assign the remaining fields to MCMSWithTimelockProposal
 	m.Operation = mcmsWithTimelockFields.Operation
-	m.MinDelay = mcmsWithTimelockFields.MinDelay
+	m.Delay = mcmsWithTimelockFields.Delay
 	m.TimelockAddresses = mcmsWithTimelockFields.TimelockAddresses
 
 	// finally validate the proposal
@@ -216,9 +215,9 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	// Validate the delay is a valid duration but is only required
 	// for Schedule operations
 	if m.Operation == types.TimelockActionSchedule {
-		if _, err := time.ParseDuration(m.MinDelay); err != nil {
-			return &core.InvalidMinDelayError{
-				ReceivedMinDelay: m.MinDelay,
+		if _, err := time.ParseDuration(m.Delay); err != nil {
+			return &core.InvalidDelayError{
+				ReceivedDelay: m.Delay,
 			}
 		}
 	}
@@ -259,7 +258,7 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 		timelockAddress := m.TimelockAddresses[t.ChainSelector]
 		predecessor := predecessorMap[t.ChainSelector]
 
-		chainOp, operationId, err := ToChainOperation(t, timelockAddress, m.MinDelay, m.Operation, predecessor)
+		chainOp, operationId, err := ToChainOperation(t, timelockAddress, m.Delay, m.Operation, predecessor)
 		if err != nil {
 			return mcms.MCMSProposal{}, err
 		}

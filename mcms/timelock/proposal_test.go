@@ -190,7 +190,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			batches:        validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1nm",
-			expectedError:  errors.New("invalid min delay: 1nm"),
+			expectedError:  errors.New("invalid delay: 1nm"),
 		},
 	}
 
@@ -229,7 +229,7 @@ const validJsonProposal = `{
     }
   },
   "description": "Test proposal",
-  "minDelay": "1h",
+  "delay": "1h",
   "operation": "schedule",
   "overridePreviousRoot": true,
   "signatures": null,
@@ -285,7 +285,7 @@ func TestMCMSWithTimelockProposal_MarshalJSON(t *testing.T) {
 					OverridePreviousRoot: true,
 				},
 				Operation:         types.TimelockActionSchedule,
-				MinDelay:          "1h",
+				Delay:             "1h",
 				TimelockAddresses: map[types.ChainSelector]string{},
 				Transactions: []types.BatchChainOperation{
 					{
@@ -375,7 +375,7 @@ func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
 					OverridePreviousRoot: true,
 				},
 				Operation:         types.TimelockActionSchedule,
-				MinDelay:          "1h",
+				Delay:             "1h",
 				TimelockAddresses: map[types.ChainSelector]string{},
 				Transactions: []types.BatchChainOperation{
 					{
@@ -401,7 +401,7 @@ func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
     }
   },
   "description": "Test proposal",
-  "minDelay": "1h",
+  "delay": "1h",
   "operation": "INVALID",
   "overridePreviousRoot": true,
   "signatures": null,

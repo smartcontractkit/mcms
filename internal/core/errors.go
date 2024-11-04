@@ -22,14 +22,14 @@ func (e *InvalidChainIDError) Error() string {
 	return fmt.Sprintf("invalid chain ID: %v", e.ReceivedChainID)
 }
 
-// InvalidMinDelayError is the error for when the received min delay is invalid.
-type InvalidMinDelayError struct {
-	ReceivedMinDelay string
+// InvalidDelayError is the error for when the received min delay is invalid.
+type InvalidDelayError struct {
+	ReceivedDelay string
 }
 
 // Error returns the error message.
-func (e *InvalidMinDelayError) Error() string {
-	return fmt.Sprintf("invalid min delay: %s", e.ReceivedMinDelay)
+func (e *InvalidDelayError) Error() string {
+	return fmt.Sprintf("invalid delay: %s", e.ReceivedDelay)
 }
 
 // InvalidProposalTypeError is used when an invalid proposal type is received.
