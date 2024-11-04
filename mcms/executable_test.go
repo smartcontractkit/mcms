@@ -155,15 +155,17 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 
 	// Construct a proposal
 	proposal := MCMSProposal{
-		Version:              "1.0",
-		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-		ValidUntil:           2004259681,
-		Signatures:           []types.Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {
-				StartingOpCount: 0,
-				MCMAddress:      mcmsObj.Address().Hex(),
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      mcmsObj.Address().Hex(),
+				},
 			},
 		},
 		Transactions: []types.ChainOperation{
@@ -287,15 +289,17 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 
 	// Construct a proposal
 	proposal := MCMSProposal{
-		Version:              "1.0",
-		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-		ValidUntil:           2004259681,
-		Signatures:           []types.Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {
-				StartingOpCount: 0,
-				MCMAddress:      mcmsObj.Address().Hex(),
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      mcmsObj.Address().Hex(),
+				},
 			},
 		},
 		Transactions: []types.ChainOperation{
@@ -440,15 +444,17 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 
 	// Construct a proposal
 	proposal := MCMSProposal{
-		Version:              "1.0",
-		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
-		ValidUntil:           2004259681,
-		Signatures:           []types.Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {
-				StartingOpCount: 0,
-				MCMAddress:      mcmsObj.Address().Hex(),
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      mcmsObj.Address().Hex(),
+				},
 			},
 		},
 		Transactions: operations,
@@ -586,15 +592,17 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	// Construct a proposal
 	proposal := MCMSProposal{
-		Version:              "1.0",
-		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
-		ValidUntil:           2004259681,
-		Signatures:           []types.Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {
-				StartingOpCount: 0,
-				MCMAddress:      mcmsObj.Address().Hex(),
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      mcmsObj.Address().Hex(),
+				},
 			},
 		},
 		Transactions: operations,

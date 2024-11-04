@@ -287,13 +287,15 @@ func TestProposalFromFile(t *testing.T) {
 	t.Parallel()
 
 	mcmsProposal := MCMSProposal{
-		Version:              "1",
-		ValidUntil:           100,
-		Signatures:           []types.Signature{},
-		Transactions:         []types.ChainOperation{},
-		OverridePreviousRoot: false,
-		Description:          "Test Proposal",
-		ChainMetadata:        make(map[types.ChainSelector]types.ChainMetadata),
+		BaseProposal: BaseProposal{
+			Version:              "1",
+			ValidUntil:           100,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			Description:          "Test Proposal",
+			ChainMetadata:        make(map[types.ChainSelector]types.ChainMetadata),
+		},
+		Transactions: []types.ChainOperation{},
 	}
 
 	tempFile, err := os.CreateTemp("", "mcms.json")
