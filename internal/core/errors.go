@@ -7,9 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-var ErrEmptyDescription = errors.New("invalid empty description")
 var ErrNoChainMetadata = errors.New("no chain metadata")
-var ErrNoTransactions = errors.New("no transactions")
 var ErrNoTransactionsInBatch = errors.New("no transactions in batch")
 
 // InvalidChainIDError is the error for an invalid chain ID.
@@ -57,14 +55,6 @@ type InvalidValidUntilError struct {
 
 func (e *InvalidValidUntilError) Error() string {
 	return fmt.Sprintf("invalid valid until: %v", e.ReceivedValidUntil)
-}
-
-type InvalidVersionError struct {
-	ReceivedVersion string
-}
-
-func (e *InvalidVersionError) Error() string {
-	return fmt.Sprintf("invalid version: %s", e.ReceivedVersion)
 }
 
 // MissingChainDetailsError is the error for missing chain metadata.

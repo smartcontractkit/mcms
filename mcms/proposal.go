@@ -7,35 +7,62 @@ import (
 	"slices"
 	"time"
 
+	"github.com/go-playground/validator/v10"
+
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// BaseProposal is the base struct for all MCMS proposals, contains shared fields for all proposal types.
+type BaseProposal struct {
+	Version              string                                      `json:"version" validate:"required"`
+	ValidUntil           uint32                                      `json:"validUntil" validate:"required"`
+	Signatures           []types.Signature                           `json:"signatures" validate:"omitempty,dive,required"`
+	OverridePreviousRoot bool                                        `json:"overridePreviousRoot"`
+	ChainMetadata        map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata" validate:"required,min=1,dive,keys,required,endkeys"`
+	Description          string                                      `json:"description" validate:"required"`
+}
+
 // MCMSProposal is a struct where the target contract is an MCMS contract
 // with no forwarder contracts. This type does not support any type of atomic contract
 // call batching, as the MCMS contract natively doesn't support batching
 type MCMSProposal struct {
-	Version              string            `json:"version"`
-	ValidUntil           uint32            `json:"validUntil"`
-	Signatures           []types.Signature `json:"signatures"`
-	OverridePreviousRoot bool              `json:"overridePreviousRoot"`
-
-	// Map of chain identifier to chain metadata
-	ChainMetadata map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata"`
-
-	// This is intended to be displayed as-is to signers, to give them
-	// context for the change. File authors should templatize strings for
-	// this purpose in their pipelines.
-	Description string `json:"description"`
-
-	// Operations to be executed
-	Transactions []types.ChainOperation `json:"transactions"`
+	BaseProposal
+	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1,dive,required"`
 }
 
 var _ proposal.Proposal = (*MCMSProposal)(nil)
 
+// MarshalJSON marshals the proposal to JSON
+func (m *MCMSProposal) MarshalJSON() ([]byte, error) {
+	// First, check the proposal is valid
+	if err := m.Validate(); err != nil {
+		return nil, err
+	}
+
+	// Let the default JSON marshaller handle everything
+	type Alias MCMSProposal
+
+	return json.Marshal((*Alias)(m))
+}
+
+// UnmarshalJSON unmarshals the JSON to a proposal
+func (m *MCMSProposal) UnmarshalJSON(data []byte) error {
+	// Unmarshal all fields using the default unmarshaller
+	type Alias MCMSProposal
+	if err := json.Unmarshal(data, (*Alias)(m)); err != nil {
+		return err
+	}
+
+	// Validate the proposal after unmarshalling
+	if err := m.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
 func NewProposal(
 	version string,
 	validUntil uint32,
@@ -46,13 +73,15 @@ func NewProposal(
 	transactions []types.ChainOperation,
 ) (*MCMSProposal, error) {
 	proposalObj := MCMSProposal{
-		Version:              version,
-		ValidUntil:           validUntil,
-		Signatures:           signatures,
-		OverridePreviousRoot: overridePreviousRoot,
-		ChainMetadata:        chainMetadata,
-		Description:          description,
-		Transactions:         transactions,
+		BaseProposal: BaseProposal{
+			Version:              version,
+			ValidUntil:           validUntil,
+			Signatures:           signatures,
+			OverridePreviousRoot: overridePreviousRoot,
+			ChainMetadata:        chainMetadata,
+			Description:          description,
+		},
+		Transactions: transactions,
 	}
 
 	err := proposalObj.Validate()
@@ -83,22 +112,14 @@ func proposalValidateBasic(proposalObj MCMSProposal) error {
 		}
 	}
 
-	if len(proposalObj.ChainMetadata) == 0 {
-		return core.ErrNoChainMetadata
-	}
-
-	if len(proposalObj.Transactions) == 0 {
-		return core.ErrNoTransactions
-	}
-
 	return nil
 }
 
 func (m *MCMSProposal) Validate() error {
-	if m.Version == "" {
-		return &core.InvalidVersionError{
-			ReceivedVersion: m.Version,
-		}
+	// Run tag-based validation
+	var validate = validator.New()
+	if err := validate.Struct(m); err != nil {
+		return err
 	}
 
 	if err := proposalValidateBasic(*m); err != nil {
