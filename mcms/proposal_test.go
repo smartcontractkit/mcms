@@ -205,7 +205,7 @@ func TestMCMSOnlyProposal_Validate_InvalidDescription(t *testing.T) {
 	)
 
 	require.Error(t, err)
-	require.EqualError(t, err, "invalid description: ")
+	require.EqualError(t, err, "invalid empty description")
 	assert.Nil(t, proposal)
 }
 

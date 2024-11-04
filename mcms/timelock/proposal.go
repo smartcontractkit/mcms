@@ -5,7 +5,9 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/mcms/internal/core"
+	"github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -30,6 +32,8 @@ type MCMSWithTimelockProposal struct {
 	Transactions []types.BatchChainOperation `json:"transactions"`
 }
 
+var _ proposal.Proposal = (*MCMSWithTimelockProposal)(nil)
+
 // TODO: Could the input params be simplified here?
 func NewProposalWithTimeLock(
 	version string,
@@ -43,7 +47,7 @@ func NewProposalWithTimeLock(
 	timelockAction types.TimelockAction,
 	timelockDelay string,
 ) (*MCMSWithTimelockProposal, error) {
-	proposal := MCMSWithTimelockProposal{
+	p := MCMSWithTimelockProposal{
 		MCMSProposal: mcms.MCMSProposal{
 			Version:              version,
 			ValidUntil:           validUntil,
@@ -58,17 +62,21 @@ func NewProposalWithTimeLock(
 		Transactions:      batches,
 	}
 
-	errValidate := proposal.Validate()
+	errValidate := p.Validate()
 	if errValidate != nil {
 		return nil, errValidate
 	}
 
-	return &proposal, nil
+	return &p, nil
 }
 
 // MarshalJSON due to the struct embedding we need to separate the marshalling in 3 phases.
 func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
-	// First, marshal the Transactions field from MCMSWithTimelockProposal
+	// First, check the proposal is valid
+	if err := m.Validate(); err != nil {
+		return nil, err
+	}
+	// Marshal the Transactions field from MCMSWithTimelockProposal
 	transactionsBytes, err := json.Marshal(struct {
 		Transactions []types.BatchChainOperation `json:"transactions"`
 	}{
@@ -160,6 +168,11 @@ func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 	m.MinDelay = mcmsWithTimelockFields.MinDelay
 	m.TimelockAddresses = mcmsWithTimelockFields.TimelockAddresses
 
+	// finally validate the proposal
+	if err := m.Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -203,7 +216,9 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	// for Schedule operations
 	if m.Operation == types.TimelockActionSchedule {
 		if _, err := time.ParseDuration(m.MinDelay); err != nil {
-			return err
+			return &core.InvalidMinDelayError{
+				ReceivedMinDelay: m.MinDelay,
+			}
 		}
 	}
 
@@ -287,7 +302,7 @@ func timeLockProposalValidateBasic(timelockProposal MCMSWithTimelockProposal) er
 	// Get the current Unix timestamp as an int64
 	currentTime := time.Now().Unix()
 
-	currentTimeCasted, err := safecast.Uint64ToUint32(uint64(currentTime))
+	currentTimeCasted, err := safecast.Int64ToUint32(currentTime)
 	if err != nil {
 		return err
 	}
@@ -305,10 +320,12 @@ func timeLockProposalValidateBasic(timelockProposal MCMSWithTimelockProposal) er
 		return &core.NoTransactionsError{}
 	}
 
+	if len(timelockProposal.Transactions) > 0 && len(timelockProposal.Transactions[0].Batch) == 0 {
+		return &core.NoTransactionsInBatchError{}
+	}
+
 	if timelockProposal.Description == "" {
-		return &core.InvalidDescriptionError{
-			ReceivedDescription: timelockProposal.Description,
-		}
+		return &core.EmptyDescriptionError{}
 	}
 
 	return nil

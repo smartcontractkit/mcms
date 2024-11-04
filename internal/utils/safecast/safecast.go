@@ -35,3 +35,12 @@ func Uint64ToUint32(value uint64) (uint32, error) {
 
 	return cast.ToUint32E(value)
 }
+
+// Int64ToUint32 safely converts an Int64 to uint32 using cast and checks for overflow
+func Int64ToUint32(value int64) (uint32, error) {
+	if value > math.MaxUint32 {
+		return 0, fmt.Errorf("value %d exceeds uint32 range", value)
+	}
+
+	return cast.ToUint32E(value)
+}

@@ -16,12 +16,10 @@ func (e *InvalidChainIDError) Error() string {
 	return fmt.Sprintf("invalid chain ID: %v", e.ReceivedChainID)
 }
 
-type InvalidDescriptionError struct {
-	ReceivedDescription string
-}
+type EmptyDescriptionError struct{}
 
-func (e *InvalidDescriptionError) Error() string {
-	return fmt.Sprint("invalid description: ", e.ReceivedDescription)
+func (e *EmptyDescriptionError) Error() string {
+	return "invalid empty description"
 }
 
 // InvalidMinDelayError is the error for when the received min delay is invalid.
@@ -81,6 +79,13 @@ type NoTransactionsError struct {
 
 func (e *NoTransactionsError) Error() string {
 	return "no transactions"
+}
+
+type NoTransactionsInBatchError struct {
+}
+
+func (e *NoTransactionsInBatchError) Error() string {
+	return "no transactions in batch"
 }
 
 type InvalidSignatureError struct {

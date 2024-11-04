@@ -92,9 +92,7 @@ func proposalValidateBasic(proposalObj MCMSProposal) error {
 	}
 
 	if proposalObj.Description == "" {
-		return &core.InvalidDescriptionError{
-			ReceivedDescription: proposalObj.Description,
-		}
+		return &core.EmptyDescriptionError{}
 	}
 
 	return nil
