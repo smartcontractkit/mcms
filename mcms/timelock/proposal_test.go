@@ -224,7 +224,7 @@ func TestTimelockProposal_ToMCMSProposal(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	mcmsProposal, err := proposal.toMCMSOnlyProposal()
+	mcmsProposal, err := proposal.ToMCMSOnlyProposal()
 	require.NoError(t, err)
 
 	assert.Equal(t, "1.0", mcmsProposal.Version)

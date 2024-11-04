@@ -6,15 +6,68 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	proposal_core "github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/testutils/evmsim"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/sdk/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+func Test_NewExecutable(t *testing.T) {
+	t.Parallel()
+
+	var (
+		executor = mocks.NewExecutor(t) // We only need this to fulfill the interface argument requirements
+	)
+
+	tests := []struct {
+		name          string
+		giveProposal  *MCMSProposal
+		giveExecutors map[types.ChainSelector]sdk.Executor
+		wantErr       string
+	}{
+		{
+			name: "failure: could not get encoders from proposal (invalid chain selector)",
+			giveProposal: &MCMSProposal{
+				ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+					types.ChainSelector(1): {},
+				},
+			},
+			giveExecutors: map[types.ChainSelector]sdk.Executor{
+				types.ChainSelector(1): executor,
+			},
+			wantErr: "invalid chain ID: 1",
+		},
+		{
+			name: "failure: could not create a signable from the proposal",
+			giveProposal: &MCMSProposal{
+				ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+					TestChain1: {},
+				},
+				Transactions: []types.ChainOperation{
+					// transaction does not match any encoder for the chain
+					{ChainSelector: types.ChainSelector(1)},
+				},
+			},
+			giveExecutors: map[types.ChainSelector]sdk.Executor{},
+			wantErr:       "encoder not provided for chain 1",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_, err := NewExecutable(tt.giveProposal, tt.giveExecutors)
+			require.Error(t, err)
+			assert.EqualError(t, err, tt.wantErr)
+		})
+	}
+}
 
 // TODO: This should go to the EVM SDK
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
@@ -72,7 +125,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
-	err = proposal_core.SignPlainKey(sim.Signers[0].PrivateKey, &proposal, true, inspectors)
+	err = Sign(signable, NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -90,7 +143,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	}
 
 	// Construct executable
-	executable, err := proposal.Executable(true, executors)
+	executable, err := NewExecutable(&proposal, executors, WithSimulatedBackend())
 	require.NoError(t, err)
 
 	// SetRoot on the contract
@@ -183,7 +236,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 
 	// Sign the hash
 	for i := range 3 {
-		err = proposal_core.SignPlainKey(sim.Signers[i].PrivateKey, &proposal, true, inspectors)
+		err = Sign(signable, NewPrivateKeySigner(sim.Signers[i].PrivateKey))
 		require.NoError(t, err)
 	}
 
@@ -202,7 +255,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Construct executable
-	executable, err := proposal.Executable(true, executors)
+	executable, err := NewExecutable(&proposal, executors, WithSimulatedBackend())
 	require.NoError(t, err)
 
 	// SetRoot on the contract
@@ -303,7 +356,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
-	err = proposal_core.SignPlainKey(sim.Signers[0].PrivateKey, &proposal, true, inspectors)
+	err = Sign(signable, NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -321,7 +374,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Construct executable
-	executable, err := proposal.Executable(true, executors)
+	executable, err := NewExecutable(&proposal, executors, WithSimulatedBackend())
 	require.NoError(t, err)
 
 	// SetRoot on the contract
@@ -430,7 +483,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	// Sign the hash
 	for i := range 3 {
-		err = proposal_core.SignPlainKey(sim.Signers[i].PrivateKey, &proposal, true, inspectors)
+		err = Sign(signable, NewPrivateKeySigner(sim.Signers[i].PrivateKey))
 		require.NoError(t, err)
 	}
 
@@ -449,7 +502,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Construct executable
-	executable, err := proposal.Executable(true, executors)
+	executable, err := NewExecutable(&proposal, executors, WithSimulatedBackend())
 	require.NoError(t, err)
 
 	// SetRoot on the contract

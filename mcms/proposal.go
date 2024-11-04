@@ -10,7 +10,6 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -32,8 +31,6 @@ type MCMSProposal struct {
 	BaseProposal
 	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1,dive,required"`
 }
-
-var _ proposal.Proposal = (*MCMSProposal)(nil)
 
 // MarshalJSON marshals the proposal to JSON
 func (m *MCMSProposal) MarshalJSON() ([]byte, error) {
@@ -170,30 +167,11 @@ func (m *MCMSProposal) GetEncoders(isSim bool) (map[types.ChainSelector]sdk.Enco
 }
 
 // TODO: isSim is very EVM and test Specific. Should be removed
-func (m *MCMSProposal) Signable(isSim bool, inspectors map[types.ChainSelector]sdk.Inspector) (proposal.Signable, error) {
+func (m *MCMSProposal) Signable(isSim bool, inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error) {
 	encoders, err := m.GetEncoders(isSim)
 	if err != nil {
 		return nil, err
 	}
 
 	return NewSignable(m, encoders, inspectors)
-}
-
-func (m *MCMSProposal) Executable(isSim bool, executors map[types.ChainSelector]sdk.Executor) (*Executable, error) {
-	encoders, err := m.GetEncoders(isSim)
-	if err != nil {
-		return nil, err
-	}
-
-	inspectors := make(map[types.ChainSelector]sdk.Inspector)
-	for key, executor := range executors {
-		inspectors[key] = executor // since Executor implements Inspector, this works
-	}
-
-	signable, err := NewSignable(m, encoders, inspectors) // TODO: we should be able to pass executors here?
-	if err != nil {
-		return nil, err
-	}
-
-	return NewExecutable(signable, executors), nil
 }

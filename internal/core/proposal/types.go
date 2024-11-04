@@ -4,7 +4,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
-	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -20,12 +19,6 @@ const (
 var StringToProposalType = map[string]ProposalType{
 	"MCMS":             MCMS,
 	"MCMSWithTimelock": MCMSWithTimelock,
-}
-
-type Proposal interface {
-	Signable(sim bool, inspectors map[types.ChainSelector]sdk.Inspector) (Signable, error)
-	AddSignature(signature types.Signature)
-	Validate() error
 }
 
 type Signable interface {
