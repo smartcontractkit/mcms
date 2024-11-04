@@ -207,6 +207,35 @@ func TestTimelockProposal_Validation(t *testing.T) {
 	}
 }
 
+func TestTimelockProposal_ToMCMSProposal(t *testing.T) {
+	t.Parallel()
+
+	proposal, err := NewProposalWithTimeLock(
+		"1.0",
+		2004259681,
+		[]types.Signature{},
+		false,
+		validChainMetadata,
+		"description",
+		validTimelockAddresses,
+		validBatches,
+		types.TimelockActionSchedule,
+		"1h",
+	)
+	require.NoError(t, err)
+
+	mcmsProposal, err := proposal.toMCMSOnlyProposal()
+	require.NoError(t, err)
+
+	assert.Equal(t, "1.0", mcmsProposal.Version)
+	assert.Equal(t, uint32(2004259681), mcmsProposal.ValidUntil)
+	assert.Equal(t, []types.Signature{}, mcmsProposal.Signatures)
+	assert.False(t, mcmsProposal.OverridePreviousRoot)
+	assert.Equal(t, validChainMetadata, mcmsProposal.ChainMetadata)
+	assert.Equal(t, "description", mcmsProposal.Description)
+	assert.Len(t, mcmsProposal.Transactions, 1)
+}
+
 const validJsonProposal = `{
   "chainMetadata": {
     "16015286601757825753": {
