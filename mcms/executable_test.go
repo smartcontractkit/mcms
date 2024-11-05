@@ -66,6 +66,8 @@ func Test_NewExecutable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
+			tt.giveProposal.UseSimulatedBackend(true)
+
 			_, err := NewExecutable(tt.giveProposal, tt.giveExecutors)
 			require.Error(t, err)
 			assert.EqualError(t, err, tt.wantErr)
@@ -120,12 +122,13 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 			},
 		},
 	}
+	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(true, inspectors)
+	signable, err := proposal.Signable(inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -138,7 +141,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.True(t, quorumMet)
 
 	// Construct encoders
-	encoders, err := proposal.GetEncoders(true)
+	encoders, err := proposal.GetEncoders()
 	require.NoError(t, err)
 
 	// Construct executors
@@ -147,7 +150,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	}
 
 	// Construct executable
-	executable, err := NewExecutable(&proposal, executors, WithSimulatedBackend())
+	executable, err := NewExecutable(&proposal, executors)
 	require.NoError(t, err)
 
 	// SetRoot on the contract
@@ -229,12 +232,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 			},
 		},
 	}
+	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(true, inspectors)
+	signable, err := proposal.Signable(inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -250,7 +254,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.True(t, quorumMet)
 
 	// Construct encoders
-	encoders, err := proposal.GetEncoders(true)
+	encoders, err := proposal.GetEncoders()
 	require.NoError(t, err)
 
 	// Construct executors
@@ -259,7 +263,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Construct executable
-	executable, err := NewExecutable(&proposal, executors, WithSimulatedBackend())
+	executable, err := NewExecutable(&proposal, executors)
 	require.NoError(t, err)
 
 	// SetRoot on the contract
@@ -351,12 +355,13 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		},
 		Transactions: operations,
 	}
+	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(true, inspectors)
+	signable, err := proposal.Signable(inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -369,7 +374,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.True(t, quorumMet)
 
 	// Construct encoders
-	encoders, err := proposal.GetEncoders(true)
+	encoders, err := proposal.GetEncoders()
 	require.NoError(t, err)
 
 	// Construct executors
@@ -378,7 +383,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Construct executable
-	executable, err := NewExecutable(&proposal, executors, WithSimulatedBackend())
+	executable, err := NewExecutable(&proposal, executors)
 	require.NoError(t, err)
 
 	// SetRoot on the contract
@@ -476,12 +481,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		},
 		Transactions: operations,
 	}
+	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(true, inspectors)
+	signable, err := proposal.Signable(inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -497,7 +503,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.True(t, quorumMet)
 
 	// Construct encoders
-	encoders, err := proposal.GetEncoders(true)
+	encoders, err := proposal.GetEncoders()
 	require.NoError(t, err)
 
 	// Construct executors
@@ -506,7 +512,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Construct executable
-	executable, err := NewExecutable(&proposal, executors, WithSimulatedBackend())
+	executable, err := NewExecutable(&proposal, executors)
 	require.NoError(t, err)
 
 	// SetRoot on the contract

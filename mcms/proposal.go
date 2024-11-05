@@ -22,6 +22,10 @@ type BaseProposal struct {
 	OverridePreviousRoot bool                                        `json:"overridePreviousRoot"`
 	ChainMetadata        map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata" validate:"required,min=1,dive,keys,required,endkeys"`
 	Description          string                                      `json:"description" validate:"required"`
+
+	// This field is passed to SDK implementations to indicate whether the proposal is being run
+	// against a simulated environment. This is only used for testing purposes.
+	useSimulatedBackend bool `json:"-"`
 }
 
 // MCMSProposal is a struct where the target contract is an MCMS contract
@@ -32,34 +36,6 @@ type MCMSProposal struct {
 	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1,dive,required"`
 }
 
-// MarshalJSON marshals the proposal to JSON
-func (m *MCMSProposal) MarshalJSON() ([]byte, error) {
-	// First, check the proposal is valid
-	if err := m.Validate(); err != nil {
-		return nil, err
-	}
-
-	// Let the default JSON marshaller handle everything
-	type Alias MCMSProposal
-
-	return json.Marshal((*Alias)(m))
-}
-
-// UnmarshalJSON unmarshals the JSON to a proposal
-func (m *MCMSProposal) UnmarshalJSON(data []byte) error {
-	// Unmarshal all fields using the default unmarshaller
-	type Alias MCMSProposal
-	if err := json.Unmarshal(data, (*Alias)(m)); err != nil {
-		return err
-	}
-
-	// Validate the proposal after unmarshalling
-	if err := m.Validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
 func NewProposal(
 	version string,
 	validUntil uint32,
@@ -99,14 +75,30 @@ func NewProposalFromReader(reader io.Reader) (*MCMSProposal, error) {
 	return &out, nil
 }
 
-// proposalValidateBasic basic validation for an MCMS proposal
-func proposalValidateBasic(proposalObj MCMSProposal) error {
-	validUntil := time.Unix(int64(proposalObj.ValidUntil), 0)
+// MarshalJSON marshals the proposal to JSON
+func (m *MCMSProposal) MarshalJSON() ([]byte, error) {
+	// First, check the proposal is valid
+	if err := m.Validate(); err != nil {
+		return nil, err
+	}
 
-	if time.Now().After(validUntil) {
-		return &core.InvalidValidUntilError{
-			ReceivedValidUntil: proposalObj.ValidUntil,
-		}
+	// Let the default JSON marshaller handle everything
+	type Alias MCMSProposal
+
+	return json.Marshal((*Alias)(m))
+}
+
+// UnmarshalJSON unmarshals the JSON to a proposal
+func (m *MCMSProposal) UnmarshalJSON(data []byte) error {
+	// Unmarshal all fields using the default unmarshaller
+	type Alias MCMSProposal
+	if err := json.Unmarshal(data, (*Alias)(m)); err != nil {
+		return err
+	}
+
+	// Validate the proposal after unmarshalling
+	if err := m.Validate(); err != nil {
+		return err
 	}
 
 	return nil
@@ -133,6 +125,17 @@ func (m *MCMSProposal) Validate() error {
 	return nil
 }
 
+// UseSimulatedBackend indicates whether the proposal should be run against a simulated backend.
+//
+// Simulated backends are used to test the proposal without actually sending transactions to the
+// chain. The functionality toggled by this flag is implemented in the SDKs.
+//
+// Note that not all chain families may support this feature, so ensure your tests are only running
+// against chains that support it.
+func (m *MCMSProposal) UseSimulatedBackend(b bool) {
+	m.useSimulatedBackend = b
+}
+
 // ChainSelectors returns a sorted list of chain selectors from the chains' metadata
 func (m *MCMSProposal) ChainSelectors() []types.ChainSelector {
 	return slices.Sorted(maps.Keys(m.ChainMetadata))
@@ -151,11 +154,11 @@ func (m *MCMSProposal) AddSignature(signature types.Signature) {
 	m.Signatures = append(m.Signatures, signature)
 }
 
-func (m *MCMSProposal) GetEncoders(isSim bool) (map[types.ChainSelector]sdk.Encoder, error) {
+func (m *MCMSProposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
 	txCounts := m.TransactionCounts()
 	encoders := make(map[types.ChainSelector]sdk.Encoder)
 	for chainID := range m.ChainMetadata {
-		encoder, err := sdk.NewEncoder(chainID, txCounts[chainID], m.OverridePreviousRoot, isSim)
+		encoder, err := sdk.NewEncoder(chainID, txCounts[chainID], m.OverridePreviousRoot, m.useSimulatedBackend)
 		if err != nil {
 			return nil, err
 		}
@@ -167,11 +170,24 @@ func (m *MCMSProposal) GetEncoders(isSim bool) (map[types.ChainSelector]sdk.Enco
 }
 
 // TODO: isSim is very EVM and test Specific. Should be removed
-func (m *MCMSProposal) Signable(isSim bool, inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error) {
-	encoders, err := m.GetEncoders(isSim)
+func (m *MCMSProposal) Signable(inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error) {
+	encoders, err := m.GetEncoders()
 	if err != nil {
 		return nil, err
 	}
 
 	return NewSignable(m, encoders, inspectors)
+}
+
+// proposalValidateBasic basic validation for an MCMS proposal
+func proposalValidateBasic(proposalObj MCMSProposal) error {
+	validUntil := time.Unix(int64(proposalObj.ValidUntil), 0)
+
+	if time.Now().After(validUntil) {
+		return &core.InvalidValidUntilError{
+			ReceivedValidUntil: proposalObj.ValidUntil,
+		}
+	}
+
+	return nil
 }

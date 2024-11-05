@@ -17,34 +17,13 @@ type Executable struct {
 	Executors map[types.ChainSelector]sdk.Executor
 }
 
-// ExecutableOpts contain options for configuring how an Executable runs.
-type ExecutableOpts struct {
-	WithSimulatedBackend bool
-}
-
-// WithSimulatedBackend is an option for configuring an Executable to use a simulated backend.
-func WithSimulatedBackend() func(*ExecutableOpts) {
-	return func(opts *ExecutableOpts) {
-		opts.WithSimulatedBackend = true
-	}
-}
-
 // NewExecutable creates a new Executable from a proposal and a map of executors.
 func NewExecutable(
 	proposal *MCMSProposal,
 	executors map[types.ChainSelector]sdk.Executor,
-	optFuncs ...func(*ExecutableOpts),
 ) (*Executable, error) {
-	opts := ExecutableOpts{
-		WithSimulatedBackend: false,
-	}
-
-	for _, optFunc := range optFuncs {
-		optFunc(&opts)
-	}
-
 	// Get encoders for the proposal
-	encoders, err := proposal.GetEncoders(opts.WithSimulatedBackend)
+	encoders, err := proposal.GetEncoders()
 	if err != nil {
 		return nil, err
 	}
