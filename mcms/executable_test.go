@@ -33,8 +33,10 @@ func Test_NewExecutable(t *testing.T) {
 		{
 			name: "failure: could not get encoders from proposal (invalid chain selector)",
 			giveProposal: &MCMSProposal{
-				ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-					types.ChainSelector(1): {},
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						types.ChainSelector(1): {},
+					},
 				},
 			},
 			giveExecutors: map[types.ChainSelector]sdk.Executor{
@@ -45,8 +47,10 @@ func Test_NewExecutable(t *testing.T) {
 		{
 			name: "failure: could not create a signable from the proposal",
 			giveProposal: &MCMSProposal{
-				ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-					TestChain1: {},
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {},
+					},
 				},
 				Transactions: []types.ChainOperation{
 					// transaction does not match any encoder for the chain
@@ -90,15 +94,17 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 
 	// Construct a proposal
 	proposal := MCMSProposal{
-		Version:              "1.0",
-		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-		ValidUntil:           2004259681,
-		Signatures:           []types.Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {
-				StartingOpCount: 0,
-				MCMAddress:      mcmC.Address().Hex(),
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      mcmC.Address().Hex(),
+				},
 			},
 		},
 		Transactions: []types.ChainOperation{
@@ -197,15 +203,17 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 
 	// Construct a proposal
 	proposal := MCMSProposal{
-		Version:              "1.0",
-		Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-		ValidUntil:           2004259681,
-		Signatures:           []types.Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {
-				StartingOpCount: 0,
-				MCMAddress:      mcmC.Address().Hex(),
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      mcmC.Address().Hex(),
+				},
 			},
 		},
 		Transactions: []types.ChainOperation{
@@ -328,15 +336,17 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 
 	// Construct a proposal
 	proposal := MCMSProposal{
-		Version:              "1.0",
-		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
-		ValidUntil:           2004259681,
-		Signatures:           []types.Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {
-				StartingOpCount: 0,
-				MCMAddress:      mcmC.Address().Hex(),
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      mcmC.Address().Hex(),
+				},
 			},
 		},
 		Transactions: operations,
@@ -451,15 +461,17 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	// Construct a proposal
 	proposal := MCMSProposal{
-		Version:              "1.0",
-		Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
-		ValidUntil:           2004259681,
-		Signatures:           []types.Signature{},
-		OverridePreviousRoot: false,
-		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {
-				StartingOpCount: 0,
-				MCMAddress:      mcmC.Address().Hex(),
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      mcmC.Address().Hex(),
+				},
 			},
 		},
 		Transactions: operations,

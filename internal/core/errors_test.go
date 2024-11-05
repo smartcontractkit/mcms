@@ -16,16 +16,13 @@ func TestErrorMessages(t *testing.T) {
 	}{
 		{&InvalidChainIDError{ReceivedChainID: 1}, "invalid chain ID: 1"},
 		{&InvalidChainIDError{ReceivedChainID: 0}, "invalid chain ID: 0"},
-		{ErrEmptyDescription, "invalid empty description"},
 		{&InvalidDelayError{ReceivedDelay: "1"}, "invalid delay: 1"},
 		{&InvalidProposalTypeError{ReceivedProposalType: "type"}, "invalid proposal type: type"},
 		{&InvalidTimelockOperationError{ReceivedTimelockOperation: "operation"}, "invalid timelock operation: operation"},
 		{&InvalidValidUntilError{ReceivedValidUntil: 1}, "invalid valid until: 1"},
 		{&InvalidValidUntilError{ReceivedValidUntil: 0}, "invalid valid until: 0"},
-		{&InvalidVersionError{ReceivedVersion: "version"}, "invalid version: version"},
 		{&MissingChainDetailsError{ChainIdentifier: 1, Parameter: "parameter"}, "missing parameter for chain 1"},
 		{ErrNoChainMetadata, "no chain metadata"},
-		{ErrNoTransactions, "no transactions"},
 		{ErrNoTransactionsInBatch, "no transactions in batch"},
 		{&InvalidSignatureError{
 			RecoveredAddress: common.HexToAddress("0x2"),

@@ -102,7 +102,7 @@ func TestMCMSOnlyProposal_Validate_InvalidVersion(t *testing.T) {
 	)
 
 	require.Error(t, err)
-	require.EqualError(t, err, "invalid version: ")
+	require.EqualError(t, err, "Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag")
 	assert.Nil(t, proposal)
 }
 
@@ -138,7 +138,7 @@ func TestMCMSOnlyProposal_Validate_InvalidValidUntil(t *testing.T) {
 	)
 
 	require.Error(t, err)
-	require.EqualError(t, err, "invalid valid until: 0")
+	require.EqualError(t, err, "Key: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag")
 	assert.Nil(t, proposal)
 }
 
@@ -169,7 +169,7 @@ func TestMCMSOnlyProposal_Validate_InvalidChainMetadata(t *testing.T) {
 	)
 
 	require.Error(t, err)
-	require.EqualError(t, err, "no chain metadata")
+	require.EqualError(t, err, "Key: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag")
 	assert.Nil(t, proposal)
 }
 
@@ -192,7 +192,7 @@ func TestMCMSOnlyProposal_Validate_NoTransactions(t *testing.T) {
 	)
 
 	require.Error(t, err)
-	require.EqualError(t, err, "no transactions")
+	require.EqualError(t, err, "Key: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag")
 	assert.Nil(t, proposal)
 }
 
@@ -236,13 +236,29 @@ func TestProposalFromFile(t *testing.T) {
 	t.Parallel()
 
 	mcmsProposal := MCMSProposal{
-		Version:              "1",
-		ValidUntil:           100,
-		Signatures:           []types.Signature{},
-		Transactions:         []types.ChainOperation{},
-		OverridePreviousRoot: false,
-		Description:          "Test Proposal",
-		ChainMetadata:        make(map[types.ChainSelector]types.ChainMetadata),
+		BaseProposal: BaseProposal{
+			Version:              "1",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			Description:          "Test Proposal",
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      TestAddress,
+				},
+			},
+		},
+		Transactions: []types.ChainOperation{
+			{
+				ChainSelector: TestChain1,
+				Operation: types.Operation{
+					To:               TestAddress,
+					AdditionalFields: json.RawMessage([]byte(`{}`)),
+					Data:             common.Hex2Bytes("0x"),
+				},
+			},
+		},
 	}
 
 	tempFile, err := os.CreateTemp("", "mcms.json")
@@ -262,10 +278,12 @@ func Test_Proposal_ChainSelectors(t *testing.T) {
 	t.Parallel()
 
 	proposal := MCMSProposal{
-		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-			TestChain1: {},
-			TestChain2: {},
-			TestChain3: {},
+		BaseProposal: BaseProposal{
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {},
+				TestChain2: {},
+				TestChain3: {},
+			},
 		},
 	}
 
