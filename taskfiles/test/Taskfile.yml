@@ -4,7 +4,7 @@ tasks:
   default:
     desc: "Run the entire test suite"
     cmds:
-      - go test -v ./...
+      - go test {{.CLI_ARGS}} ./...
 
   coverage:
     desc: "Run the entire test suite with coverage"
