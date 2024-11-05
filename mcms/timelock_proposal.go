@@ -1,4 +1,4 @@
-package timelock
+package mcms
 
 import (
 	"encoding/json"
@@ -10,7 +10,6 @@ import (
 	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
-	"github.com/smartcontractkit/mcms/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -18,7 +17,7 @@ import (
 var ZERO_HASH = common.Hash{}
 
 type MCMSWithTimelockProposal struct {
-	mcms.BaseProposal
+	BaseProposal
 
 	Operation         types.TimelockAction           `json:"operation" validate:"required,oneof=schedule cancel bypass"`
 	Delay             string                         `json:"delay"` // Will validate conditionally in Validate method
@@ -40,7 +39,7 @@ func NewProposalWithTimeLock(
 	timelockDelay string,
 ) (*MCMSWithTimelockProposal, error) {
 	p := MCMSWithTimelockProposal{
-		BaseProposal: mcms.BaseProposal{
+		BaseProposal: BaseProposal{
 			Version:              version,
 			ValidUntil:           validUntil,
 			Signatures:           signatures,
@@ -108,7 +107,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 		}
 		for _, op := range t.Batch {
 			// Chain specific validations.
-			if err := mcms.ValidateAdditionalFields(op.AdditionalFields, t.ChainSelector); err != nil {
+			if err := ValidateAdditionalFields(op.AdditionalFields, t.ChainSelector); err != nil {
 				return err
 			}
 		}
@@ -121,17 +120,17 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	return nil
 }
 
-func (m *MCMSWithTimelockProposal) Signable(isSim bool, inspectors map[types.ChainSelector]sdk.Inspector) (proposal.Signable, error) {
+func (m *MCMSWithTimelockProposal) Signable(inspectors map[types.ChainSelector]sdk.Inspector) (proposal.Signable, error) {
 	// Convert the proposal to an MCMS only proposal
 	mcmOnly, errToMcms := m.toMCMSOnlyProposal()
 	if errToMcms != nil {
 		return nil, errToMcms
 	}
 
-	return mcmOnly.Signable(isSim, inspectors)
+	return mcmOnly.Signable(inspectors)
 }
 
-func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, error) {
+func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (MCMSProposal, error) {
 	baseProposal := m.BaseProposal
 
 	// Start predecessor map with all chains pointing to the zero hash
@@ -150,16 +149,18 @@ func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (mcms.MCMSProposal, erro
 	}
 
 	// Convert transactions into timelock wrapped transactions using the helper function
-	result := mcms.MCMSProposal{
+	result := MCMSProposal{
 		BaseProposal: baseProposal,
 	}
 	for _, t := range m.Transactions {
 		timelockAddress := m.TimelockAddresses[t.ChainSelector]
 		predecessor := predecessorMap[t.ChainSelector]
 
-		chainOp, operationId, err := ToChainOperation(t, timelockAddress, m.Delay, m.Operation, predecessor)
+		chainOp, operationId, err := BatchToChainOperation(
+			t, timelockAddress, m.Delay, m.Operation, predecessor,
+		)
 		if err != nil {
-			return mcms.MCMSProposal{}, err
+			return MCMSProposal{}, err
 		}
 
 		// Append the converted operation to the MCMS only proposal

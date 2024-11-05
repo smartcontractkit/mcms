@@ -86,7 +86,7 @@ func Test_Sign(t *testing.T) {
 			// Ensure that there are no signatures to being with
 			require.Empty(t, tt.give.Signatures)
 
-			signable, err := tt.give.Signable(true, inspectors)
+			signable, err := tt.give.Signable(inspectors)
 			require.NoError(t, err)
 			require.NotNil(t, signable)
 

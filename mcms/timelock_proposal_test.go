@@ -1,4 +1,4 @@
-package timelock
+package mcms
 
 import (
 	"bytes"
@@ -8,17 +8,12 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	cselectors "github.com/smartcontractkit/chain-selectors"
-
-	"github.com/smartcontractkit/mcms/mcms"
-	"github.com/smartcontractkit/mcms/types"
-
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-)
 
-var TestChain1 = types.ChainSelector(3379446385462418246)
+	"github.com/smartcontractkit/mcms/types"
+)
 
 var validChainMetadata = map[types.ChainSelector]types.ChainMetadata{
 	TestChain1: {
@@ -287,7 +282,7 @@ func TestMCMSWithTimelockProposal_MarshalJSON(t *testing.T) {
 		{
 			name: "successful marshalling",
 			proposal: MCMSWithTimelockProposal{
-				BaseProposal: mcms.BaseProposal{
+				BaseProposal: BaseProposal{
 					Version:     "MCMSWithTimelock",
 					ValidUntil:  4128029039,
 					Description: "Test proposal",
@@ -377,7 +372,7 @@ func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
 			jsonData:    compactJsonProposal,
 			expectedErr: nil,
 			expected: MCMSWithTimelockProposal{
-				BaseProposal: mcms.BaseProposal{
+				BaseProposal: BaseProposal{
 					Version:     "MCMSWithTimelock",
 					ValidUntil:  4128029039,
 					Description: "Test proposal",

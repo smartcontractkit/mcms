@@ -1,10 +1,10 @@
-package timelock
+package sdk
 
 import (
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type Inspector interface {
+type TimelockInspector interface {
 	GetProposers(address string) ([]common.Address, error)
 	GetExecutors(address string) ([]common.Address, error)
 	GetBypassers(address string) ([]common.Address, error)

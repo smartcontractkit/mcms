@@ -64,12 +64,13 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 			},
 		},
 	}
+	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(true, inspectors)
+	signable, err := proposal.Signable(inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -128,12 +129,13 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 			},
 		},
 	}
+	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(true, inspectors)
+	signable, err := proposal.Signable(inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -204,12 +206,13 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 		},
 		Transactions: operations,
 	}
+	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(true, inspectors)
+	signable, err := proposal.Signable(inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -277,12 +280,13 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 		},
 		Transactions: operations,
 	}
+	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(true, inspectors)
+	signable, err := proposal.Signable(inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -353,12 +357,13 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 		},
 		Transactions: operations,
 	}
+	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(true, inspectors)
+	signable, err := proposal.Signable(inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -435,12 +440,13 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 		},
 		Transactions: operations,
 	}
+	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(true, inspectors)
+	signable, err := proposal.Signable(inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
