@@ -23,7 +23,7 @@ func (_m *TimelockConverter) EXPECT() *TimelockConverter_Expecter {
 }
 
 // ConvertBatchToChainOperation provides a mock function with given fields: t, timelockAddress, minDelay, operation, predecessor
-func (_m *TimelockConverter) ConvertBatchToChainOperation(t types.BatchChainOperation, timelockAddress common.Address, minDelay string, operation types.TimelockAction, predecessor common.Hash) (types.ChainOperation, common.Hash, error) {
+func (_m *TimelockConverter) ConvertBatchToChainOperation(t types.BatchChainOperation, timelockAddress string, minDelay string, operation types.TimelockAction, predecessor common.Hash) (types.ChainOperation, common.Hash, error) {
 	ret := _m.Called(t, timelockAddress, minDelay, operation, predecessor)
 
 	if len(ret) == 0 {
@@ -33,16 +33,16 @@ func (_m *TimelockConverter) ConvertBatchToChainOperation(t types.BatchChainOper
 	var r0 types.ChainOperation
 	var r1 common.Hash
 	var r2 error
-	if rf, ok := ret.Get(0).(func(types.BatchChainOperation, common.Address, string, types.TimelockAction, common.Hash) (types.ChainOperation, common.Hash, error)); ok {
+	if rf, ok := ret.Get(0).(func(types.BatchChainOperation, string, string, types.TimelockAction, common.Hash) (types.ChainOperation, common.Hash, error)); ok {
 		return rf(t, timelockAddress, minDelay, operation, predecessor)
 	}
-	if rf, ok := ret.Get(0).(func(types.BatchChainOperation, common.Address, string, types.TimelockAction, common.Hash) types.ChainOperation); ok {
+	if rf, ok := ret.Get(0).(func(types.BatchChainOperation, string, string, types.TimelockAction, common.Hash) types.ChainOperation); ok {
 		r0 = rf(t, timelockAddress, minDelay, operation, predecessor)
 	} else {
 		r0 = ret.Get(0).(types.ChainOperation)
 	}
 
-	if rf, ok := ret.Get(1).(func(types.BatchChainOperation, common.Address, string, types.TimelockAction, common.Hash) common.Hash); ok {
+	if rf, ok := ret.Get(1).(func(types.BatchChainOperation, string, string, types.TimelockAction, common.Hash) common.Hash); ok {
 		r1 = rf(t, timelockAddress, minDelay, operation, predecessor)
 	} else {
 		if ret.Get(1) != nil {
@@ -50,7 +50,7 @@ func (_m *TimelockConverter) ConvertBatchToChainOperation(t types.BatchChainOper
 		}
 	}
 
-	if rf, ok := ret.Get(2).(func(types.BatchChainOperation, common.Address, string, types.TimelockAction, common.Hash) error); ok {
+	if rf, ok := ret.Get(2).(func(types.BatchChainOperation, string, string, types.TimelockAction, common.Hash) error); ok {
 		r2 = rf(t, timelockAddress, minDelay, operation, predecessor)
 	} else {
 		r2 = ret.Error(2)
@@ -66,7 +66,7 @@ type TimelockConverter_ConvertBatchToChainOperation_Call struct {
 
 // ConvertBatchToChainOperation is a helper method to define mock.On call
 //   - t types.BatchChainOperation
-//   - timelockAddress common.Address
+//   - timelockAddress string
 //   - minDelay string
 //   - operation types.TimelockAction
 //   - predecessor common.Hash
@@ -74,9 +74,9 @@ func (_e *TimelockConverter_Expecter) ConvertBatchToChainOperation(t interface{}
 	return &TimelockConverter_ConvertBatchToChainOperation_Call{Call: _e.mock.On("ConvertBatchToChainOperation", t, timelockAddress, minDelay, operation, predecessor)}
 }
 
-func (_c *TimelockConverter_ConvertBatchToChainOperation_Call) Run(run func(t types.BatchChainOperation, timelockAddress common.Address, minDelay string, operation types.TimelockAction, predecessor common.Hash)) *TimelockConverter_ConvertBatchToChainOperation_Call {
+func (_c *TimelockConverter_ConvertBatchToChainOperation_Call) Run(run func(t types.BatchChainOperation, timelockAddress string, minDelay string, operation types.TimelockAction, predecessor common.Hash)) *TimelockConverter_ConvertBatchToChainOperation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(types.BatchChainOperation), args[1].(common.Address), args[2].(string), args[3].(types.TimelockAction), args[4].(common.Hash))
+		run(args[0].(types.BatchChainOperation), args[1].(string), args[2].(string), args[3].(types.TimelockAction), args[4].(common.Hash))
 	})
 	return _c
 }
@@ -86,7 +86,7 @@ func (_c *TimelockConverter_ConvertBatchToChainOperation_Call) Return(_a0 types.
 	return _c
 }
 
-func (_c *TimelockConverter_ConvertBatchToChainOperation_Call) RunAndReturn(run func(types.BatchChainOperation, common.Address, string, types.TimelockAction, common.Hash) (types.ChainOperation, common.Hash, error)) *TimelockConverter_ConvertBatchToChainOperation_Call {
+func (_c *TimelockConverter_ConvertBatchToChainOperation_Call) RunAndReturn(run func(types.BatchChainOperation, string, string, types.TimelockAction, common.Hash) (types.ChainOperation, common.Hash, error)) *TimelockConverter_ConvertBatchToChainOperation_Call {
 	_c.Call.Return(run)
 	return _c
 }

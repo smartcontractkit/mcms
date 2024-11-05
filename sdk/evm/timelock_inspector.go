@@ -7,20 +7,16 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	sdk_timelock "github.com/smartcontractkit/mcms/sdk/timelock"
 )
 
 // TimelockEVMInspector is an Inspector implementation for EVM chains for accessing the RBACTimelock contract
 type TimelockEVMInspector struct {
-	client evm.ContractDeployBackend
+	client ContractDeployBackend
 }
 
-var _ sdk_timelock.Inspector = &TimelockEVMInspector{}
-
 // NewTimelockEVMInspector creates a new TimelockEVMInspector
-func NewTimelockEVMInspector(client evm.ContractDeployBackend) *TimelockEVMInspector {
+func NewTimelockEVMInspector(client ContractDeployBackend) *TimelockEVMInspector {
 	return &TimelockEVMInspector{
 		client: client,
 	}
