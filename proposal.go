@@ -20,8 +20,8 @@ type BaseProposal struct {
 	ValidUntil           uint32                                      `json:"validUntil" validate:"required"`
 	Signatures           []types.Signature                           `json:"signatures" validate:"omitempty,dive,required"`
 	OverridePreviousRoot bool                                        `json:"overridePreviousRoot"`
-	ChainMetadata        map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata" validate:"required,min=1,dive,keys,required,endkeys"`
-	Description          string                                      `json:"description" validate:"required"`
+	ChainMetadata        map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata" validate:"required,min=1"`
+	Description          string                                      `json:"description"`
 
 	// This field is passed to SDK implementations to indicate whether the proposal is being run
 	// against a simulated environment. This is only used for testing purposes.
@@ -33,42 +33,18 @@ type BaseProposal struct {
 // call batching, as the MCMS contract natively doesn't support batching
 type MCMSProposal struct {
 	BaseProposal
+
 	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1,dive,required"`
 }
 
-func NewProposal(
-	version string,
-	validUntil uint32,
-	signatures []types.Signature,
-	overridePreviousRoot bool,
-	chainMetadata map[types.ChainSelector]types.ChainMetadata,
-	description string,
-	transactions []types.ChainOperation,
-) (*MCMSProposal, error) {
-	proposalObj := MCMSProposal{
-		BaseProposal: BaseProposal{
-			Version:              version,
-			ValidUntil:           validUntil,
-			Signatures:           signatures,
-			OverridePreviousRoot: overridePreviousRoot,
-			ChainMetadata:        chainMetadata,
-			Description:          description,
-		},
-		Transactions: transactions,
-	}
-
-	err := proposalObj.Validate()
+func NewProposal(reader io.Reader) (*MCMSProposal, error) {
+	var out MCMSProposal
+	err := json.NewDecoder(reader).Decode(&out)
 	if err != nil {
 		return nil, err
 	}
 
-	return &proposalObj, nil
-}
-
-func NewProposalFromReader(reader io.Reader) (*MCMSProposal, error) {
-	var out MCMSProposal
-	err := json.NewDecoder(reader).Decode(&out)
-	if err != nil {
+	if err := out.Validate(); err != nil {
 		return nil, err
 	}
 
