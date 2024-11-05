@@ -274,6 +274,19 @@ func TestProposalFromFile(t *testing.T) {
 	assert.Equal(t, mcmsProposal, *fileProposal)
 }
 
+func Test_Proposal_UseSimulatedBackend(t *testing.T) {
+	t.Parallel()
+
+	proposal := MCMSProposal{
+		BaseProposal: BaseProposal{},
+	}
+
+	assert.False(t, proposal.useSimulatedBackend)
+
+	proposal.UseSimulatedBackend(true)
+	assert.True(t, proposal.useSimulatedBackend)
+}
+
 func Test_Proposal_ChainSelectors(t *testing.T) {
 	t.Parallel()
 
