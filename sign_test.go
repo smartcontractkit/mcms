@@ -70,7 +70,7 @@ func Test_Sign(t *testing.T) {
 		{
 			name:    "failure: invalid proposal",
 			give:    MCMSProposal{},
-			wantErr: "Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.Description' Error:Field validation for 'Description' failed on the 'required' tag\nKey: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+			wantErr: "Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
 		},
 	}
 
