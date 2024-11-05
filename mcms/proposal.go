@@ -141,6 +141,7 @@ func (m *MCMSProposal) ChainSelectors() []types.ChainSelector {
 	return slices.Sorted(maps.Keys(m.ChainMetadata))
 }
 
+// TransactionCounts returns a map of chain selectors to the number of transactions for that chain
 func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
 	txCounts := make(map[types.ChainSelector]uint64)
 	for _, tx := range m.Transactions {
@@ -150,20 +151,22 @@ func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
 	return txCounts
 }
 
+// AddSignature adds a signature to the proposal
 func (m *MCMSProposal) AddSignature(signature types.Signature) {
 	m.Signatures = append(m.Signatures, signature)
 }
 
+// GetEncoders generates encoders for each chain in the proposal's chain metadata.
 func (m *MCMSProposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
 	txCounts := m.TransactionCounts()
 	encoders := make(map[types.ChainSelector]sdk.Encoder)
-	for chainID := range m.ChainMetadata {
-		encoder, err := sdk.NewEncoder(chainID, txCounts[chainID], m.OverridePreviousRoot, m.useSimulatedBackend)
+	for chainSelector := range m.ChainMetadata {
+		encoder, err := sdk.NewEncoder(chainSelector, txCounts[chainSelector], m.OverridePreviousRoot, m.useSimulatedBackend)
 		if err != nil {
 			return nil, err
 		}
 
-		encoders[chainID] = encoder
+		encoders[chainSelector] = encoder
 	}
 
 	return encoders, nil
