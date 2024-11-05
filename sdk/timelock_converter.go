@@ -9,10 +9,10 @@ import (
 // TimelockConverter converts a batch of chain operations to an types.ChainOperation
 type TimelockConverter interface {
 	ConvertBatchToChainOperation(
-		t types.BatchChainOperation,
+		batchOps types.BatchChainOperation,
 		timelockAddress string,
-		minDelay string,
-		operation types.TimelockAction,
+		delay string,
+		action types.TimelockAction,
 		predecessor common.Hash,
 	) (types.ChainOperation, common.Hash, error)
 }
