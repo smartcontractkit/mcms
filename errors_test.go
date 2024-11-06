@@ -6,6 +6,14 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+func Test_EncoderNotFoundError_Error(t *testing.T) {
+	t.Parallel()
+
+	err := NewEncoderNotFoundError(1)
+
+	assert.EqualError(t, err, "encoder not provided for chain selector 1")
+}
+
 func Test_ChainMetadataNotFoundError_Error(t *testing.T) {
 	t.Parallel()
 

@@ -2,14 +2,19 @@ package mcms
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"maps"
 	"slices"
+	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/internal/core"
+	"github.com/smartcontractkit/mcms/internal/core/merkle"
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -117,6 +122,66 @@ func (m *MCMSProposal) ChainSelectors() []types.ChainSelector {
 	return slices.Sorted(maps.Keys(m.ChainMetadata))
 }
 
+// MerkleTree generates a merkle tree from the proposal's chain metadata and transactions.
+func (m *MCMSProposal) MerkleTree() (*merkle.Tree, error) {
+	encoders, err := m.GetEncoders()
+	if err != nil {
+		return nil, wrapTreeGenErr(err)
+	}
+
+	hashLeaves := make([]common.Hash, 0)
+	for _, sel := range m.ChainSelectors() {
+		// Since we create encoders from the list of chain selectors provided in the ChainMetadata,
+		// we can be sure the encoder exists, and don't need to check for existence.
+		encoder := encoders[sel]
+
+		// Similarly, we can be sure the metadata exists, as we iterate over the chain selectors,
+		// since the chain selectors are keys in the ChainMetadata map.
+		metadata := m.ChainMetadata[sel]
+
+		encodedRootMetadata, encerr := encoder.HashMetadata(metadata)
+		if encerr != nil {
+			return nil, wrapTreeGenErr(encerr)
+		}
+
+		hashLeaves = append(hashLeaves, encodedRootMetadata)
+	}
+
+	for i, tx := range m.Transactions {
+		txNonces, txerr := m.TransactionNonces()
+		if txerr != nil {
+			return nil, wrapTreeGenErr(txerr)
+		}
+
+		txNonce, txerr := safecast.Uint64ToUint32(txNonces[i])
+		if txerr != nil {
+			return nil, wrapTreeGenErr(txerr)
+		}
+
+		// This will always exist since encoders are created from the chain selectors in the
+		// metadata, and TransactionNonces has validated that the metadata exists for each chain
+		// selector defined in the transactions.
+		encoder := encoders[tx.ChainSelector]
+
+		encodedOp, txerr := encoder.HashOperation(
+			txNonce,
+			m.ChainMetadata[tx.ChainSelector],
+			tx,
+		)
+		if txerr != nil {
+			return nil, wrapTreeGenErr(txerr)
+		}
+		hashLeaves = append(hashLeaves, encodedOp)
+	}
+
+	// sort the hashes and sort the pairs
+	slices.SortFunc(hashLeaves, func(a, b common.Hash) int {
+		return strings.Compare(a.String(), b.String())
+	})
+
+	return merkle.NewTree(hashLeaves), nil
+}
+
 // TransactionCounts returns a map of chain selectors to the number of transactions for that chain
 func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
 	txCounts := make(map[types.ChainSelector]uint64)
@@ -125,6 +190,37 @@ func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
 	}
 
 	return txCounts
+}
+
+// TransactionNonces calculates and returns a slice of nonces for each transaction based on their
+// respective chain selectors and associated metadata.
+//
+// It returns a slice of nonces, where each nonce corresponds to a transaction in the same order
+// as the transactions slice. The nonce is calculated as the local index of the transaction with
+// respect to it's chain  selector, plus the starting op count for that chain selector.
+func (m *MCMSProposal) TransactionNonces() ([]uint64, error) {
+	// Map to keep track of local index counts for each ChainSelector
+	chainIndexMap := make(map[types.ChainSelector]uint64, len(m.ChainMetadata))
+
+	txNonces := make([]uint64, len(m.Transactions))
+	for i, tx := range m.Transactions {
+		// Get the current local index for this ChainSelector
+		localIndex := chainIndexMap[tx.ChainSelector]
+
+		// Lookup the StartingOpCount for this ChainSelector from cmMap
+		md, ok := m.ChainMetadata[tx.ChainSelector]
+		if !ok {
+			return nil, NewChainMetadataNotFoundError(tx.ChainSelector)
+		}
+
+		// Add the local index to the StartingOpCount to get the final nonce
+		txNonces[i] = localIndex + md.StartingOpCount
+
+		// Increment the local index for the current ChainSelector
+		chainIndexMap[tx.ChainSelector]++
+	}
+
+	return txNonces, nil
 }
 
 // AddSignature adds a signature to the proposal
@@ -169,4 +265,10 @@ func proposalValidateBasic(proposalObj MCMSProposal) error {
 	}
 
 	return nil
+}
+
+// wrapTreeGenErr wraps an error with a message indicating that it occurred during
+// merkle tree generation.
+func wrapTreeGenErr(err error) error {
+	return fmt.Errorf("merkle tree generation error: %w", err)
 }

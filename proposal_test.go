@@ -3,6 +3,7 @@ package mcms
 import (
 	"encoding/json"
 	"errors"
+	"math"
 	"strings"
 	"testing"
 
@@ -318,7 +319,131 @@ func Test_Proposal_ChainSelectors(t *testing.T) {
 	assert.Equal(t, want, proposal.ChainSelectors())
 }
 
-func Test_Proposal_CalculateTransactionCounts(t *testing.T) {
+func Test_Proposal_MerkleTree(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name     string
+		give     MCMSProposal
+		wantRoot common.Hash
+		wantErr  string
+	}{
+		{
+			name: "success: generates a merkle tree",
+			give: MCMSProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {StartingOpCount: 5},
+						TestChain2: {StartingOpCount: 10},
+					},
+				},
+				Transactions: []types.ChainOperation{
+					{
+						ChainSelector: TestChain1,
+						Operation: types.Operation{
+							To:               TestAddress,
+							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+							Data:             common.Hex2Bytes("0x"),
+							OperationMetadata: types.OperationMetadata{
+								ContractType: "Sample contract",
+								Tags:         []string{"tag1", "tag2"},
+							},
+						},
+					},
+					{
+						ChainSelector: TestChain2,
+						Operation: types.Operation{
+							To:               TestAddress,
+							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+							Data:             common.Hex2Bytes("0x"),
+							OperationMetadata: types.OperationMetadata{
+								ContractType: "Sample contract",
+								Tags:         []string{"tag1", "tag2"},
+							},
+						},
+					},
+				},
+			},
+			wantRoot: common.HexToHash("0x4e899fcdb81dc7f0c1d6609366246807fd897c2afb531ca8f907472fd6e1ed02"),
+		},
+		{
+			name: "failure: could not get encoders",
+			give: MCMSProposal{
+				BaseProposal: BaseProposal{
+					OverridePreviousRoot: false,
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						types.ChainSelector(1): {},
+					},
+				},
+			},
+			wantErr: "merkle tree generation error: invalid chain ID: 1",
+		},
+		{
+			name: "failure: missing metadata when fetching nonces",
+			give: MCMSProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {StartingOpCount: 5},
+					},
+				},
+				Transactions: []types.ChainOperation{
+					{ChainSelector: TestChain2},
+				},
+			},
+			wantErr: "merkle tree generation error: missing metadata for chain 16015286601757825753",
+		},
+		{
+			name: "failure: nonce must be in the range of a uint32",
+			give: MCMSProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {StartingOpCount: uint64(math.MaxUint32 + 1)},
+					},
+				},
+				Transactions: []types.ChainOperation{
+					{ChainSelector: TestChain1},
+				},
+			},
+			wantErr: "merkle tree generation error: value 4294967296 exceeds uint32 range",
+		},
+		{
+			name: "failure: could not hash operation due to invalid additional values",
+			give: MCMSProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {StartingOpCount: 5},
+					},
+				},
+				Transactions: []types.ChainOperation{
+					{
+						ChainSelector: TestChain1,
+						Operation: types.Operation{
+							AdditionalFields: json.RawMessage([]byte(``)),
+						},
+					},
+				},
+			},
+			wantErr: "merkle tree generation error: unexpected end of JSON input",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := tt.give.MerkleTree()
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.wantRoot, got.Root)
+			}
+		})
+	}
+}
+
+func Test_Proposal_TransactionCounts(t *testing.T) {
 	t.Parallel()
 
 	transactions := []types.ChainOperation{
@@ -337,4 +462,63 @@ func Test_Proposal_CalculateTransactionCounts(t *testing.T) {
 		TestChain1: 2,
 		TestChain2: 1,
 	}, got)
+}
+
+func Test_Proposal_TransactionNonces(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		give    MCMSProposal
+		want    []uint64
+		wantErr string
+	}{
+		{
+			name: "success: returns the nonces for each transaction",
+			give: MCMSProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {StartingOpCount: 5},
+						TestChain2: {StartingOpCount: 10},
+						TestChain3: {StartingOpCount: 15},
+					},
+				},
+				Transactions: []types.ChainOperation{
+					{ChainSelector: TestChain1},
+					{ChainSelector: TestChain2},
+					{ChainSelector: TestChain1},
+					{ChainSelector: TestChain2},
+					{ChainSelector: TestChain3},
+				},
+			},
+			want: []uint64{5, 10, 6, 11, 15},
+		},
+		{
+			name: "failure: chain metadata not found for transaction",
+			give: MCMSProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
+				},
+				Transactions: []types.ChainOperation{
+					{ChainSelector: TestChain1},
+				},
+			},
+			wantErr: "missing metadata for chain 3379446385462418246",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := tt.give.TransactionNonces()
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
 }
