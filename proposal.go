@@ -266,16 +266,6 @@ func (m *MCMSProposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error
 	return encoders, nil
 }
 
-// TODO: isSim is very EVM and test Specific. Should be removed
-func (m *MCMSProposal) Signable(inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error) {
-	encoders, err := m.GetEncoders()
-	if err != nil {
-		return nil, err
-	}
-
-	return NewSignable(m, encoders, inspectors)
-}
-
 func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
 	// Add the Ethereum signed message prefix
 	prefix := []byte("\x19Ethereum Signed Message:\n32")

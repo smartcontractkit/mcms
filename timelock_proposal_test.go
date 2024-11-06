@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -230,27 +229,6 @@ func TestTimelockProposal_Convert(t *testing.T) {
 	assert.Equal(t, validChainMetadata, mcmsProposal.ChainMetadata)
 	assert.Equal(t, "description", mcmsProposal.Description)
 	assert.Len(t, mcmsProposal.Transactions, 1)
-}
-
-func TestTimelockProposal_Signable(t *testing.T) {
-	t.Parallel()
-
-	proposal, err := NewProposalWithTimeLock(
-		"1.0",
-		2004259681,
-		[]types.Signature{},
-		false,
-		validChainMetadata,
-		"description",
-		validTimelockAddresses,
-		validBatches,
-		types.TimelockActionSchedule,
-		"1h",
-	)
-	require.NoError(t, err)
-
-	_, err = proposal.Signable(map[types.ChainSelector]sdk.Inspector{})
-	require.NoError(t, err)
 }
 
 const validJsonProposal = `{

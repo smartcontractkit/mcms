@@ -8,9 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/internal/core"
-	"github.com/smartcontractkit/mcms/internal/core/proposal"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
-	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -118,16 +116,6 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 	}
 
 	return nil
-}
-
-func (m *MCMSWithTimelockProposal) Signable(inspectors map[types.ChainSelector]sdk.Inspector) (proposal.Signable, error) {
-	// Convert the proposal to an MCMS only proposal
-	mcmOnly, errToMcms := m.Convert()
-	if errToMcms != nil {
-		return nil, errToMcms
-	}
-
-	return mcmOnly.Signable(inspectors)
 }
 
 // Convert the proposal to an MCMS only proposal.

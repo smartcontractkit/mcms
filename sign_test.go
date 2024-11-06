@@ -23,44 +23,41 @@ func Test_Sign(t *testing.T) {
 	privKey, err := crypto.HexToECDSA(testPrivateKeyHex)
 	require.NoError(t, err)
 
-	// Construct a proposal
-	proposal := MCMSProposal{
-		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-			ValidUntil:           2004259681,
-			Signatures:           []types.Signature{},
-			OverridePreviousRoot: false,
-			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
-					StartingOpCount: 0,
-					MCMAddress:      "0x01",
-				},
-			},
-		},
-		Transactions: []types.ChainOperation{
-			{
-				ChainSelector: TestChain1,
-				Operation: evm.NewEVMOperation(
-					common.HexToAddress("0x02"),
-					[]byte("0x0000000"), // Use some random data since it doesn't matter
-					big.NewInt(0),
-					"RBACTimelock",
-					[]string{"RBACTimelock", "GrantRole"},
-				),
-			},
-		},
-	}
-
 	tests := []struct {
 		name    string
-		give    MCMSProposal
+		give    *MCMSProposal
 		want    types.Signature
 		wantErr string
 	}{
 		{
 			name: "success: signs the proposal",
-			give: proposal,
+			give: &MCMSProposal{
+				BaseProposal: BaseProposal{
+					Version:              "1.0",
+					Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+					ValidUntil:           2004259681,
+					Signatures:           []types.Signature{},
+					OverridePreviousRoot: false,
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {
+							StartingOpCount: 0,
+							MCMAddress:      "0x01",
+						},
+					},
+				},
+				Transactions: []types.ChainOperation{
+					{
+						ChainSelector: TestChain1,
+						Operation: evm.NewEVMOperation(
+							common.HexToAddress("0x02"),
+							[]byte("0x0000000"), // Use some random data since it doesn't matter
+							big.NewInt(0),
+							"RBACTimelock",
+							[]string{"RBACTimelock", "GrantRole"},
+						),
+					},
+				},
+			},
 			want: types.Signature{
 				R: common.HexToHash("0x859c780e5df453945171c96f271c16b5baeeb6eadfa790d4e4d32ee72607334b"),
 				S: common.HexToHash("0x3fd6128a489e81ecce6192804ea26ceaf542ae11f20caae65e6b65662f882eb4"),
@@ -69,7 +66,7 @@ func Test_Sign(t *testing.T) {
 		},
 		{
 			name:    "failure: invalid proposal",
-			give:    MCMSProposal{},
+			give:    &MCMSProposal{},
 			wantErr: "Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
 		},
 	}
@@ -86,7 +83,7 @@ func Test_Sign(t *testing.T) {
 			// Ensure that there are no signatures to being with
 			require.Empty(t, tt.give.Signatures)
 
-			signable, err := tt.give.Signable(inspectors)
+			signable, err := NewSignable(tt.give, inspectors)
 			require.NoError(t, err)
 			require.NotNil(t, signable)
 
