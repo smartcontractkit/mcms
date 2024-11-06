@@ -1,8 +1,9 @@
 package mcms
 
 import (
-	"sort"
+	"slices"
 
+	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -12,9 +13,11 @@ import (
 // information required to call SetRoot and Execute on the various chains that the proposal
 // targets.
 type Executable struct {
-	*Signable
-
-	Executors map[types.ChainSelector]sdk.Executor
+	proposal  *MCMSProposal
+	executors map[types.ChainSelector]sdk.Executor
+	encoders  map[types.ChainSelector]sdk.Encoder
+	tree      *merkle.Tree
+	txNonces  []uint64
 }
 
 // NewExecutable creates a new Executable from a proposal and a map of executors.
@@ -22,88 +25,92 @@ func NewExecutable(
 	proposal *MCMSProposal,
 	executors map[types.ChainSelector]sdk.Executor,
 ) (*Executable, error) {
-	// Get encoders for the proposal
+	// Generate the encoders from the proposal
 	encoders, err := proposal.GetEncoders()
 	if err != nil {
 		return nil, err
 	}
 
-	// Executor implements Inspector, so we can create a map of Inspectors from Executors
-	inspectors := make(map[types.ChainSelector]sdk.Inspector)
-	for key, executor := range executors {
-		inspectors[key] = executor
+	// Generate the tx nonces from the proposal
+	txNonces, err := proposal.TransactionNonces()
+	if err != nil {
+		return nil, err
 	}
 
-	// Create a signable from the proposal
-	signable, err := NewSignable(proposal, encoders, inspectors)
+	// Generate the tree from the proposal
+	tree, err := proposal.MerkleTree()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Executable{
-		Signable:  signable,
-		Executors: executors,
+		proposal:  proposal,
+		executors: executors,
+		encoders:  encoders,
+		tree:      tree,
+		txNonces:  txNonces,
 	}, nil
 }
 
 func (e *Executable) SetRoot(chainSelector types.ChainSelector) (string, error) {
-	metadata := e.ChainMetadata[chainSelector]
-	metadataHash, err := e.Encoders[chainSelector].HashMetadata(metadata)
+	metadata := e.proposal.ChainMetadata[chainSelector]
+
+	metadataHash, err := e.encoders[chainSelector].HashMetadata(metadata)
 	if err != nil {
 		return "", err
 	}
 
-	proof, err := e.Tree.GetProof(metadataHash)
+	proof, err := e.tree.GetProof(metadataHash)
 	if err != nil {
 		return "", err
 	}
 
-	hash, err := e.SigningHash()
+	hash, err := e.proposal.SigningHash()
 	if err != nil {
 		return "", err
 	}
 
 	// Sort signatures by recovered address
-	sortedSignatures := e.Signatures
-	sort.Slice(sortedSignatures, func(i, j int) bool {
-		recoveredSignerA, _ := sortedSignatures[i].Recover(hash)
-		recoveredSignerB, _ := sortedSignatures[j].Recover(hash)
+	sortedSignatures := slices.Clone(e.proposal.Signatures) // Clone so we don't modify the original
+	slices.SortFunc(sortedSignatures, func(a, b types.Signature) int {
+		recoveredSignerA, _ := a.Recover(hash)
+		recoveredSignerB, _ := b.Recover(hash)
 
-		return recoveredSignerA.Cmp(recoveredSignerB) < 0
+		return recoveredSignerA.Cmp(recoveredSignerB)
 	})
 
-	return e.Executors[chainSelector].SetRoot(
+	return e.executors[chainSelector].SetRoot(
 		metadata,
 		proof,
-		[32]byte(e.Tree.Root.Bytes()),
-		e.ValidUntil,
+		[32]byte(e.tree.Root.Bytes()),
+		e.proposal.ValidUntil,
 		sortedSignatures,
 	)
 }
 
 func (e *Executable) Execute(index int) (string, error) {
-	transaction := e.Transactions[index]
+	transaction := e.proposal.Transactions[index]
 	chainSelector := transaction.ChainSelector
-	metadata := e.ChainMetadata[chainSelector]
+	metadata := e.proposal.ChainMetadata[chainSelector]
 
-	chainNonce, err := safecast.Uint64ToUint32(e.ChainNonce(index))
+	txNonce, err := safecast.Uint64ToUint32(e.txNonces[index])
 	if err != nil {
 		return "", err
 	}
 
-	operationHash, err := e.Encoders[chainSelector].HashOperation(chainNonce, metadata, transaction) // TODO: nonce
+	operationHash, err := e.encoders[chainSelector].HashOperation(txNonce, metadata, transaction)
 	if err != nil {
 		return "", err
 	}
 
-	proof, err := e.Tree.GetProof(operationHash)
+	proof, err := e.tree.GetProof(operationHash)
 	if err != nil {
 		return "", err
 	}
 
-	return e.Executors[chainSelector].ExecuteOperation(
+	return e.executors[chainSelector].ExecuteOperation(
 		metadata,
-		chainNonce,
+		txNonce,
 		proof,
 		transaction,
 	)

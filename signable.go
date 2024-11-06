@@ -1,13 +1,11 @@
 package mcms
 
 import (
-	"encoding/binary"
 	"errors"
 	"sort"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	coreProposal "github.com/smartcontractkit/mcms/internal/core/proposal"
@@ -108,29 +106,6 @@ func (s *Signable) GetTree() *merkle.Tree {
 
 func (s *Signable) ChainNonce(index int) uint64 {
 	return s.ChainNonces[index]
-}
-
-func (s *Signable) SigningHash() (common.Hash, error) {
-	// Convert validUntil to [32]byte
-	var validUntilBytes [32]byte
-	binary.BigEndian.PutUint32(validUntilBytes[28:], s.ValidUntil) // Place the uint32 in the last 4 bytes
-
-	hashToSign := crypto.Keccak256Hash(s.Tree.Root.Bytes(), validUntilBytes[:])
-
-	return toEthSignedMessageHash(hashToSign), nil
-}
-
-// func (e *Executor) SigningMessage() ([]byte, error) {
-// 	return ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, s.Tree.Root, s.Proposal.ValidUntil)
-// }
-
-func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
-	// Add the Ethereum signed message prefix
-	prefix := []byte("\x19Ethereum Signed Message:\n32")
-	data := append(prefix, messageHash.Bytes()...)
-
-	// Hash the prefixed message
-	return crypto.Keccak256Hash(data)
 }
 
 func (s *Signable) GetCurrentOpCounts() (map[types.ChainSelector]uint64, error) {
