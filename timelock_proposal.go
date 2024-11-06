@@ -122,7 +122,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 
 func (m *MCMSWithTimelockProposal) Signable(inspectors map[types.ChainSelector]sdk.Inspector) (proposal.Signable, error) {
 	// Convert the proposal to an MCMS only proposal
-	mcmOnly, errToMcms := m.toMCMSOnlyProposal()
+	mcmOnly, errToMcms := m.Convert()
 	if errToMcms != nil {
 		return nil, errToMcms
 	}
@@ -130,7 +130,7 @@ func (m *MCMSWithTimelockProposal) Signable(inspectors map[types.ChainSelector]s
 	return mcmOnly.Signable(inspectors)
 }
 
-func (m *MCMSWithTimelockProposal) toMCMSOnlyProposal() (MCMSProposal, error) {
+func (m *MCMSWithTimelockProposal) Convert() (MCMSProposal, error) {
 	baseProposal := m.BaseProposal
 
 	// Start predecessor map with all chains pointing to the zero hash
