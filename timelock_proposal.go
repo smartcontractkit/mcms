@@ -130,6 +130,8 @@ func (m *MCMSWithTimelockProposal) Signable(inspectors map[types.ChainSelector]s
 	return mcmOnly.Signable(inspectors)
 }
 
+// Convert the proposal to an MCMS only proposal.
+// Every transaction to be sent from the Timelock is encoded with the corresponding timelock method.
 func (m *MCMSWithTimelockProposal) Convert() (MCMSProposal, error) {
 	baseProposal := m.BaseProposal
 
