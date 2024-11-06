@@ -40,18 +40,6 @@ type MCMSProposal struct {
 	BaseProposal
 
 	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1,dive,required"`
-
-	// txNonceCache stores the nonces for each transaction in the proposal. This is calculated the
-	// first time TransactionNonces is called and the cache value is retrieved for all subsequent
-	// calls.
-	//
-	// Note that this cache does not expire, so if the proposal is modified, the cache will
-	// be invalid.
-	txNonceCache []uint64 `json:"-"`
-
-	// treeCache stores the merkle tree for the proposal. This is calculated the first time
-	// MerkleTree is called and the cache value is retrieved for all subsequent calls.
-	treeCache *merkle.Tree `json:"-"`
 }
 
 func NewProposal(reader io.Reader) (*MCMSProposal, error) {
@@ -136,10 +124,6 @@ func (m *MCMSProposal) ChainSelectors() []types.ChainSelector {
 
 // MerkleTree generates a merkle tree from the proposal's chain metadata and transactions.
 func (m *MCMSProposal) MerkleTree() (*merkle.Tree, error) {
-	if m.treeCache != nil {
-		return m.treeCache, nil
-	}
-
 	encoders, err := m.GetEncoders()
 	if err != nil {
 		return nil, wrapTreeGenErr(err)
@@ -195,10 +179,7 @@ func (m *MCMSProposal) MerkleTree() (*merkle.Tree, error) {
 		return strings.Compare(a.String(), b.String())
 	})
 
-	// Set the tree cache to the new tree
-	m.treeCache = merkle.NewTree(hashLeaves)
-
-	return m.treeCache, nil
+	return merkle.NewTree(hashLeaves), nil
 }
 
 // TransactionCounts returns a map of chain selectors to the number of transactions for that chain
@@ -217,14 +198,7 @@ func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
 // It returns a slice of nonces, where each nonce corresponds to a transaction in the same order
 // as the transactions slice. The nonce is calculated as the local index of the transaction with
 // respect to it's chain  selector, plus the starting op count for that chain selector.
-//
-// The result is cached after the first call to this function, and the cached value is returned for
-// all subsequent calls.
 func (m *MCMSProposal) TransactionNonces() ([]uint64, error) {
-	if m.txNonceCache != nil {
-		return m.txNonceCache, nil
-	}
-
 	// Map to keep track of local index counts for each ChainSelector
 	chainIndexMap := make(map[types.ChainSelector]uint64, len(m.ChainMetadata))
 
@@ -245,8 +219,6 @@ func (m *MCMSProposal) TransactionNonces() ([]uint64, error) {
 		// Increment the local index for the current ChainSelector
 		chainIndexMap[tx.ChainSelector]++
 	}
-
-	m.txNonceCache = txNonces
 
 	return txNonces, nil
 }

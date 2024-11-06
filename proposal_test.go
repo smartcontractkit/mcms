@@ -438,11 +438,6 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.wantRoot, got.Root)
-
-				// Test the cache works by calling the function a second time
-				got, err = tt.give.MerkleTree()
-				require.NoError(t, err)
-				assert.Equal(t, tt.wantRoot, got.Root)
 			}
 		})
 	}
@@ -523,11 +518,6 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.want, got)
-
-				// Test the cache works by calling the function a second time
-				got, err = tt.give.TransactionNonces()
-				require.NoError(t, err)
-				assert.Equal(t, tt.want, got)
 			}
 		})
 	}
