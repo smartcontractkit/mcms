@@ -6,6 +6,21 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// EncoderNotFoundError is returned when an encoder is not found for a chain in a proposal.
+type EncoderNotFoundError struct {
+	ChainSelector types.ChainSelector
+}
+
+// NewEncoderNotFoundError creates a new EncoderNotFoundError.
+func NewEncoderNotFoundError(sel types.ChainSelector) *EncoderNotFoundError {
+	return &EncoderNotFoundError{ChainSelector: sel}
+}
+
+// Error implements the error interface.
+func (e *EncoderNotFoundError) Error() string {
+	return fmt.Sprintf("encoder not provided for chain selector %d", e.ChainSelector)
+}
+
 // ChainMetadataNotFoundError is returned when the chain metadata for a chain is not found in a
 // proposal.
 type ChainMetadataNotFoundError struct {
