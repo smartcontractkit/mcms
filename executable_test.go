@@ -1,12 +1,12 @@
 package mcms
 
 import (
+	"encoding/json"
 	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/evmsim"
@@ -34,6 +34,7 @@ func Test_NewExecutable(t *testing.T) {
 			name: "failure: could not get encoders from proposal (invalid chain selector)",
 			giveProposal: &MCMSProposal{
 				BaseProposal: BaseProposal{
+					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						types.ChainSelector(1): {},
 					},
@@ -42,23 +43,46 @@ func Test_NewExecutable(t *testing.T) {
 			giveExecutors: map[types.ChainSelector]sdk.Executor{
 				types.ChainSelector(1): executor,
 			},
-			wantErr: "invalid chain ID: 1",
+			wantErr: "unable to create encoder: invalid chain ID: 1",
 		},
 		{
-			name: "failure: could not create a signable from the proposal",
+			name: "failure: could not generate tx nonces from proposal (tx does not have matching chain metadata)",
 			giveProposal: &MCMSProposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {},
+						TestChain1: {StartingOpCount: 5},
 					},
 				},
 				Transactions: []types.ChainOperation{
-					// transaction does not match any encoder for the chain
-					{ChainSelector: types.ChainSelector(1)},
+					{ChainSelector: TestChain2},
 				},
 			},
-			giveExecutors: map[types.ChainSelector]sdk.Executor{},
-			wantErr:       "encoder not provided for chain 1",
+			giveExecutors: map[types.ChainSelector]sdk.Executor{
+				types.ChainSelector(1): executor,
+			},
+			wantErr: "missing metadata for chain 16015286601757825753",
+		},
+		{
+			name: "failure: could not generate tree from proposal (invalid additional values)",
+			giveProposal: &MCMSProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {StartingOpCount: 5},
+					},
+				},
+				Transactions: []types.ChainOperation{
+					{
+						ChainSelector: TestChain1,
+						Operation: types.Operation{
+							AdditionalFields: json.RawMessage([]byte(``)),
+						},
+					},
+				},
+			},
+			giveExecutors: map[types.ChainSelector]sdk.Executor{
+				types.ChainSelector(1): executor,
+			},
+			wantErr: "merkle tree generation error: unexpected end of JSON input",
 		},
 	}
 
@@ -66,11 +90,9 @@ func Test_NewExecutable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tt.giveProposal.UseSimulatedBackend(true)
-
 			_, err := NewExecutable(tt.giveProposal, tt.giveExecutors)
-			require.Error(t, err)
-			assert.EqualError(t, err, tt.wantErr)
+
+			require.EqualError(t, err, tt.wantErr)
 		})
 	}
 }
