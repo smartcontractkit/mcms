@@ -157,10 +157,6 @@ func (m *TimelockProposal) Convert() (Proposal, error) {
 	return result, nil
 }
 
-func (m *TimelockProposal) AddSignature(signature types.Signature) {
-	m.Signatures = append(m.Signatures, signature)
-}
-
 // timeLockProposalValidateBasic basic validation for an MCMS proposal
 func timeLockProposalValidateBasic(timelockProposal TimelockProposal) error {
 	// Get the current Unix timestamp as an int64

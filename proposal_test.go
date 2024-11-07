@@ -26,6 +26,20 @@ var (
 	TestChain3  = types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA_BASE_1.Selector) // 10344971235874465080
 )
 
+func Test_BaseProposal_AppendSignature(t *testing.T) {
+	t.Parallel()
+
+	signature := types.Signature{}
+
+	proposal := BaseProposal{}
+
+	assert.Empty(t, proposal.Signatures)
+
+	proposal.AppendSignature(signature)
+
+	assert.Equal(t, []types.Signature{signature}, proposal.Signatures)
+}
+
 func Test_NewProposal(t *testing.T) {
 	t.Parallel()
 
@@ -309,20 +323,6 @@ func Test_Proposal_Validate(t *testing.T) {
 			}
 		})
 	}
-}
-
-func Test_Proposal_AddSignature(t *testing.T) {
-	t.Parallel()
-
-	signature := types.Signature{}
-
-	proposal := Proposal{}
-
-	assert.Empty(t, proposal.Signatures)
-
-	proposal.AppendSignature(signature)
-
-	assert.Equal(t, []types.Signature{signature}, proposal.Signatures)
 }
 
 func Test_Proposal_GetEncoders(t *testing.T) {
