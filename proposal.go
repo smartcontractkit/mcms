@@ -41,7 +41,7 @@ type BaseProposal struct {
 type Proposal struct {
 	BaseProposal
 
-	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1,dive,required"`
+	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1"`
 }
 
 // NewProposal unmarshal data from the reader to JSON and returns a new Proposal.
