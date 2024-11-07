@@ -3,37 +3,31 @@ package mcms
 import (
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 )
 
-func Test_EncoderNotFoundError_Error(t *testing.T) {
+func TestErrorMessages(t *testing.T) {
 	t.Parallel()
 
-	err := NewEncoderNotFoundError(1)
+	tests := []struct {
+		err      error
+		expected string
+	}{
+		{NewEncoderNotFoundError(1), "encoder not provided for chain selector 1"},
+		{NewChainMetadataNotFoundError(1), "missing metadata for chain 1"},
+		{NewInconsistentConfigsError(1, 2), "inconsistent configs for chains 1 and 2"},
+		{NewQuorumNotReachedError(1), "quorum not reached for chain 1"},
+		{NewInvalidDelayError("1h"), "invalid delay: 1h"},
+		{NewInvalidValidUntilError(1), "invalid valid until: 1"},
+		{NewInvalidSignatureError(common.HexToAddress("0x1")), "invalid signature: received signature for address 0x0000000000000000000000000000000000000001 is not a valid signer in the MCMS proposal"},
+		{NewQuorumNotReachedError(1), "quorum not reached for chain 1"},
+	}
 
-	assert.EqualError(t, err, "encoder not provided for chain selector 1")
-}
-
-func Test_ChainMetadataNotFoundError_Error(t *testing.T) {
-	t.Parallel()
-
-	err := NewChainMetadataNotFoundError(1)
-
-	assert.EqualError(t, err, "missing metadata for chain 1")
-}
-
-func Test_InconsistentConfigsError_Error(t *testing.T) {
-	t.Parallel()
-
-	err := NewInconsistentConfigsError(1, 2)
-
-	assert.EqualError(t, err, "inconsistent configs for chains 1 and 2")
-}
-
-func Test_QuorumNotReachedError_Error(t *testing.T) {
-	t.Parallel()
-
-	err := NewQuorumNotReachedError(1)
-
-	assert.EqualError(t, err, "quorum not reached for chain 1")
+	for _, test := range tests {
+		got := test.err.Error()
+		if got != test.expected {
+			assert.Equal(t, test.expected, test.err.Error())
+		}
+	}
 }

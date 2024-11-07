@@ -7,8 +7,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -64,7 +64,7 @@ func (e *EVMConfigurator) SetConfigInputs(
 
 	// Check the length of signerAddresses up-front
 	if len(signerAddrs) > maxUint8Value {
-		return bindConfig, &core.TooManySignersError{NumSigners: uint64(len(signerAddrs))}
+		return bindConfig, sdkerrors.NewTooManySignersError((uint64(len(signerAddrs))))
 	}
 
 	// Convert to the binding config

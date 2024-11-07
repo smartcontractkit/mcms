@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/internal/core"
+	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -85,7 +85,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			minDelay:       "1h",
 			operation:      types.TimelockAction("invalid"),
 			predecessor:    zeroHash,
-			expectedError:  &core.InvalidTimelockOperationError{ReceivedTimelockOperation: "invalid"},
+			expectedError:  sdkerrors.NewInvalidTimelockOperationError("invalid"),
 			expectedOpType: "",
 		},
 	}

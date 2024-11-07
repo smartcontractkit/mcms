@@ -1,12 +1,23 @@
 package types
 
 import (
+	"fmt"
 	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/smartcontractkit/mcms/internal/core"
 )
+
+type InvalidMCMSConfigError struct {
+	Reason string
+}
+
+func (e *InvalidMCMSConfigError) Error() string {
+	return fmt.Sprintf("invalid MCMS config: %s", e.Reason)
+}
+
+func NewInvalidMCMSConfigError(reason string) *InvalidMCMSConfigError {
+	return &InvalidMCMSConfigError{Reason: reason}
+}
 
 // Config is a struct that holds all the configuration for the owner contracts
 type Config struct {
@@ -42,21 +53,15 @@ func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*
 // Validate checks if the config is valid, recursively checking all group signers configs.
 func (c *Config) Validate() error {
 	if c.Quorum == 0 {
-		return &core.InvalidMCMSConfigError{
-			Reason: "Quorum must be greater than 0",
-		}
+		return NewInvalidMCMSConfigError("Quorum must be greater than 0")
 	}
 
 	if len(c.Signers) == 0 && len(c.GroupSigners) == 0 {
-		return &core.InvalidMCMSConfigError{
-			Reason: "Config must have at least one signer or group",
-		}
+		return NewInvalidMCMSConfigError("Config must have at least one signer or group")
 	}
 
 	if (len(c.Signers) + len(c.GroupSigners)) < int(c.Quorum) {
-		return &core.InvalidMCMSConfigError{
-			Reason: "Quorum must be less than or equal to the number of signers and groups",
-		}
+		return NewInvalidMCMSConfigError("Quorum must be less than or equal to the number of signers and groups")
 	}
 
 	for _, groupSigner := range c.GroupSigners {
@@ -123,9 +128,8 @@ func (c *Config) CanSetRoot(recoveredSigners []common.Address) (bool, error) {
 	allSigners := c.GetAllSigners()
 	for _, recoveredSigner := range recoveredSigners {
 		if !slices.Contains(allSigners, recoveredSigner) {
-			return false, &core.InvalidSignatureError{
-				RecoveredAddress: recoveredSigner,
-			}
+			// Q: We can't import tha mcms main package here. Should we move every implementation out of types package?
+			return false, fmt.Errorf("recovered signer %s is not a valid signer in the MCMS proposal", recoveredSigner)
 		}
 	}
 
