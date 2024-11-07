@@ -44,47 +44,26 @@ type Proposal struct {
 	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1"`
 }
 
+// NewProposal unmarshal data from the reader to JSON and returns a new Proposal.
 func NewProposal(reader io.Reader) (*Proposal, error) {
-	var out Proposal
-	err := json.NewDecoder(reader).Decode(&out)
-	if err != nil {
+	var p Proposal
+	if err := json.NewDecoder(reader).Decode(&p); err != nil {
 		return nil, err
 	}
 
-	if err := out.Validate(); err != nil {
+	if err := p.Validate(); err != nil {
 		return nil, err
 	}
 
-	return &out, nil
+	return &p, nil
 }
 
-// MarshalJSON marshals the proposal to JSON
-func (m *Proposal) MarshalJSON() ([]byte, error) {
-	// First, check the proposal is valid
-	if err := m.Validate(); err != nil {
-		return nil, err
-	}
+// WriteProposal marshals the proposal to JSON and writes it to the provided writer.
+func WriteProposal(w io.Writer, proposal *Proposal) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
 
-	// Let the default JSON marshaller handle everything
-	type Alias Proposal
-
-	return json.Marshal((*Alias)(m))
-}
-
-// UnmarshalJSON unmarshals the JSON to a proposal
-func (m *Proposal) UnmarshalJSON(data []byte) error {
-	// Unmarshal all fields using the default unmarshaller
-	type Alias Proposal
-	if err := json.Unmarshal(data, (*Alias)(m)); err != nil {
-		return err
-	}
-
-	// Validate the proposal after unmarshalling
-	if err := m.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	return enc.Encode(proposal)
 }
 
 func (m *Proposal) Validate() error {

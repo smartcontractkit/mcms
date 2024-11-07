@@ -1040,19 +1040,3 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 		})
 	}
 }
-
-// fakeSigner implements the signer interface for testing purposes
-type fakeSigner struct {
-	sigB []byte
-	err  error
-}
-
-// newFakeSigner creates a new fakeSigner. The args provided will be returned when Sign is called.
-func newFakeSigner(sigB []byte, err error) signer {
-	return &fakeSigner{sigB: sigB, err: err}
-}
-
-// Sign implemnts the signer interface.
-func (f *fakeSigner) Sign(payload []byte) ([]byte, error) {
-	return f.sigB, f.err
-}
