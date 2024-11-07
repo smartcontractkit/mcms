@@ -7,8 +7,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
+
+var _ sdk.TimelockInspector = (*TimelockEVMInspector)(nil)
 
 // TimelockEVMInspector is an Inspector implementation for EVM chains for accessing the RBACTimelock contract
 type TimelockEVMInspector struct {

@@ -4,9 +4,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+var _ sdk.Inspector = (*EVMInspector)(nil)
 
 // EVMInspector is an Inspector implementation for EVM chains, giving access to the state of the MCMS contract
 type EVMInspector struct {

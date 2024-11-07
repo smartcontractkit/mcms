@@ -1,4 +1,4 @@
-package sdk
+package mcms
 
 import (
 	"testing"
@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -24,7 +25,7 @@ func Test_NewEncoder(t *testing.T) {
 		name         string
 		giveSelector types.ChainSelector
 		giveIsSim    bool
-		want         Encoder
+		want         sdk.Encoder
 		wantErr      string
 	}{
 		{
@@ -59,7 +60,7 @@ func Test_NewEncoder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := NewEncoder(
+			got, err := newEncoder(
 				tt.giveSelector,
 				giveTxCount,
 				giveOverridePreviousRoot,
