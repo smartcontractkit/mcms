@@ -194,7 +194,7 @@ func (p *Proposal) SigningMessage() ([32]byte, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
-	msg, err := evm.ABIEncode(SignMsgABI, tree, p.ValidUntil)
+	msg, err := evm.ABIEncode(SignMsgABI, tree.Root, p.ValidUntil)
 	if err != nil {
 		return [32]byte{}, err
 	}
