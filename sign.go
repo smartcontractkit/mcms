@@ -14,7 +14,7 @@ import (
 // Sign signs the proposal using the provided signer.
 func Sign(signable *Signable, signer Signer) error {
 	// Validate proposal
-	if err := signable.MCMSProposal.Validate(); err != nil {
+	if err := signable.Validate(); err != nil {
 		return err
 	}
 

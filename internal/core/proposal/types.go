@@ -1,9 +1,6 @@
 package proposal
 
 import (
-	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -19,16 +16,6 @@ const (
 var StringToProposalType = map[string]ProposalType{
 	"MCMS":             MCMS,
 	"MCMSWithTimelock": MCMSWithTimelock,
-}
-
-type Signable interface {
-	SigningHash() (common.Hash, error)
-	GetCurrentOpCounts() (map[types.ChainSelector]uint64, error)
-	GetConfigs() (map[types.ChainSelector]*types.Config, error)
-	CheckQuorum(chain types.ChainSelector) (bool, error)
-	ValidateSignatures() (bool, error)
-	ValidateConfigs() error
-	GetTree() *merkle.Tree
 }
 
 type Executable interface {

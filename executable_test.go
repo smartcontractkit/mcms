@@ -146,11 +146,14 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	}
 	proposal.UseSimulatedBackend(true)
 
+	tree, err := proposal.MerkleTree()
+	require.NoError(t, err)
+
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(inspectors)
+	signable, err := NewSignable(&proposal, inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -184,7 +187,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	// Validate Contract State and verify root was set
 	root, err := mcmC.GetRoot(&bind.CallOpts{})
 	require.NoError(t, err)
-	require.Equal(t, root.Root, [32]byte(signable.GetTree().Root.Bytes()))
+	require.Equal(t, root.Root, [32]byte(tree.Root.Bytes()))
 	require.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
@@ -256,11 +259,14 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 	proposal.UseSimulatedBackend(true)
 
+	tree, err := proposal.MerkleTree()
+	require.NoError(t, err)
+
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(inspectors)
+	signable, err := NewSignable(&proposal, inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -297,7 +303,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	// Validate Contract State and verify root was set
 	root, err := mcmC.GetRoot(&bind.CallOpts{})
 	require.NoError(t, err)
-	require.Equal(t, root.Root, [32]byte(signable.GetTree().Root.Bytes()))
+	require.Equal(t, root.Root, [32]byte(tree.Root.Bytes()))
 	require.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
@@ -379,11 +385,14 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 	proposal.UseSimulatedBackend(true)
 
+	tree, err := proposal.MerkleTree()
+	require.NoError(t, err)
+
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(inspectors)
+	signable, err := NewSignable(&proposal, inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -417,7 +426,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	// Validate Contract State and verify root was set
 	root, err := mcmC.GetRoot(&bind.CallOpts{})
 	require.NoError(t, err)
-	require.Equal(t, root.Root, [32]byte(signable.GetTree().Root.Bytes()))
+	require.Equal(t, root.Root, [32]byte(tree.Root.Bytes()))
 	require.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
@@ -505,11 +514,14 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 	proposal.UseSimulatedBackend(true)
 
+	tree, err := proposal.MerkleTree()
+	require.NoError(t, err)
+
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
-	signable, err := proposal.Signable(inspectors)
+	signable, err := NewSignable(&proposal, inspectors)
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
@@ -547,7 +559,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	// Validate Contract State and verify root was set
 	root, err := mcmC.GetRoot(&bind.CallOpts{})
 	require.NoError(t, err)
-	require.Equal(t, root.Root, [32]byte(signable.GetTree().Root.Bytes()))
+	require.Equal(t, root.Root, [32]byte(tree.Root.Bytes()))
 	require.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
