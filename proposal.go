@@ -75,6 +75,11 @@ func WriteProposal(w io.Writer, proposal *Proposal) error {
 func (m *Proposal) Validate() error {
 	// Run tag-based validation
 	var validate = validator.New()
+
+	if m.Kind != string(types.KindProposal) {
+		return NewInvalidProposalKindError(m.Kind, string(types.KindProposal))
+	}
+
 	if err := validate.Struct(m); err != nil {
 		return err
 	}

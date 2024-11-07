@@ -6,6 +6,19 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// InvalidProposalKindError is returned when an invalid proposal kind is provided.
+type InvalidProposalKindError struct {
+	ProvidedKind string
+	AcceptedKind string
+}
+
+func (e *InvalidProposalKindError) Error() string {
+	return fmt.Sprintf("invalid proposal kind: %s, value accepted is %s", e.ProvidedKind, e.AcceptedKind)
+}
+func NewInvalidProposalKindError(provided, accepted string) *InvalidProposalKindError {
+	return &InvalidProposalKindError{ProvidedKind: provided, AcceptedKind: accepted}
+}
+
 // EncoderNotFoundError is returned when an encoder is not found for a chain in a proposal.
 type EncoderNotFoundError struct {
 	ChainSelector types.ChainSelector

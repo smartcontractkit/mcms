@@ -89,6 +89,10 @@ func (m *TimelockProposal) Validate() error {
 		return err
 	}
 
+	if m.Kind != string(types.KindTimelockProposal) {
+		return NewInvalidProposalKindError(m.Kind, string(types.KindTimelockProposal))
+	}
+
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.ChainSelector]; !ok {
