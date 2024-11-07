@@ -176,7 +176,7 @@ func Test_ABIEncode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := abiEncode(tt.giveABI, tt.giveValues...)
+			got, err := ABIEncode(tt.giveABI, tt.giveValues...)
 
 			if tt.wantError {
 				require.Error(t, err)

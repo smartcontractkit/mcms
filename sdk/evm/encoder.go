@@ -58,7 +58,7 @@ func (e *EVMEncoder) HashOperation(
 	}
 
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
-	encoded, err := abiEncode(abi, mcmDomainSeparatorOp, bindOp)
+	encoded, err := ABIEncode(abi, mcmDomainSeparatorOp, bindOp)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -70,7 +70,7 @@ func (e *EVMEncoder) HashOperation(
 // ManyChainMultiSig contract, and hashes it.
 func (e *EVMEncoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
 	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
-	encoded, err := abiEncode(abi, mcmDomainSeparatorMetadata, e.ToGethRootMetadata(metadata))
+	encoded, err := ABIEncode(abi, mcmDomainSeparatorMetadata, e.ToGethRootMetadata(metadata))
 	if err != nil {
 		return common.Hash{}, err
 	}
