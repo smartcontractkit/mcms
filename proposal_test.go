@@ -152,18 +152,7 @@ func Test_WriteProposal(t *testing.T) {
 			giveWriter: func() io.Writer {
 				return newFakeWriter(0, errors.New("write error"))
 			},
-			give: &Proposal{
-				BaseProposal: BaseProposal{
-					Version:    "1",
-					ValidUntil: 2004259681,
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {},
-					},
-				},
-				Transactions: []types.ChainOperation{
-					{ChainSelector: TestChain1},
-				},
-			},
+			give:    &Proposal{},
 			wantErr: "write error",
 		},
 	}

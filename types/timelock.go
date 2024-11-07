@@ -17,6 +17,6 @@ const (
 
 // BatchChainOperation is a struct that represents a batch of operations to be executed on a chain.
 type BatchChainOperation struct {
-	ChainSelector ChainSelector `json:"chainIdentifier"`
+	ChainSelector ChainSelector `json:"chainSelector"`
 	Batch         []Operation   `json:"batch"`
 }
