@@ -31,15 +31,15 @@ func TestProposalBuilder(t *testing.T) {
 	tests := []struct {
 		name     string
 		setup    func(*mcms.ProposalBuilder)
-		want     *mcms.MCMSProposal
+		want     *mcms.Proposal
 		wantErrs []string
 	}{
 		{
-			name: "valid MCMSProposal",
+			name: "valid Proposal",
 			setup: func(b *mcms.ProposalBuilder) {
 				b.SetVersion("1.0").
 					SetValidUntil(fixedValidUntilCasted).
-					SetDescription("Valid MCMSProposal").
+					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					AddTransaction(types.ChainOperation{
@@ -47,11 +47,11 @@ func TestProposalBuilder(t *testing.T) {
 						Operation:     types.Operation{Data: []byte{0x01}},
 					})
 			},
-			want: &mcms.MCMSProposal{
+			want: &mcms.Proposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
 					ValidUntil:           fixedValidUntilCasted,
-					Description:          "Valid MCMSProposal",
+					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
@@ -67,11 +67,11 @@ func TestProposalBuilder(t *testing.T) {
 			wantErrs: nil,
 		},
 		{
-			name: "valid MCMSProposal using SetTransactions",
+			name: "valid Proposal using SetTransactions",
 			setup: func(b *mcms.ProposalBuilder) {
 				b.SetVersion("1.0").
 					SetValidUntil(fixedValidUntilCasted).
-					SetDescription("Valid MCMSProposal").
+					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTransactions([]types.ChainOperation{
@@ -85,11 +85,11 @@ func TestProposalBuilder(t *testing.T) {
 						},
 					})
 			},
-			want: &mcms.MCMSProposal{
+			want: &mcms.Proposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
 					ValidUntil:           fixedValidUntilCasted,
-					Description:          "Valid MCMSProposal",
+					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
@@ -109,11 +109,11 @@ func TestProposalBuilder(t *testing.T) {
 			wantErrs: nil,
 		},
 		{
-			name: "valid MCMSProposal with signature and set chain metadata",
+			name: "valid Proposal with signature and set chain metadata",
 			setup: func(b *mcms.ProposalBuilder) {
 				b.SetVersion("1.0").
 					SetValidUntil(fixedValidUntilCasted).
-					SetDescription("Valid MCMSProposal").
+					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
 					SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
 						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
@@ -134,11 +134,11 @@ func TestProposalBuilder(t *testing.T) {
 						V: 28,
 					})
 			},
-			want: &mcms.MCMSProposal{
+			want: &mcms.Proposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
 					ValidUntil:           fixedValidUntilCasted,
-					Description:          "Valid MCMSProposal",
+					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
 					Signatures: []types.Signature{{
 						R: common.Hash{0x01},
@@ -176,7 +176,7 @@ func TestProposalBuilder(t *testing.T) {
 			},
 			want: nil,
 			wantErrs: []string{
-				"Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag",
+				"Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag",
 			},
 		},
 		{
@@ -209,7 +209,7 @@ func TestProposalBuilder(t *testing.T) {
 			},
 			want: nil,
 			wantErrs: []string{
-				"Key: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
+				"Key: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
 			},
 		},
 		{
@@ -227,7 +227,7 @@ func TestProposalBuilder(t *testing.T) {
 			},
 			want: nil,
 			wantErrs: []string{
-				"Key: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
+				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
 			},
 		},
 	}

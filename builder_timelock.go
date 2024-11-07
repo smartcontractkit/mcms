@@ -5,13 +5,13 @@ import "github.com/smartcontractkit/mcms/types"
 // TimelockProposalBuilder builder for timelock proposals types.
 type TimelockProposalBuilder struct {
 	BaseProposalBuilder[*TimelockProposalBuilder]
-	proposal MCMSWithTimelockProposal
+	proposal TimelockProposal
 }
 
 // NewTimelockProposalBuilder creates a new TimelockProposalBuilder.
 func NewTimelockProposalBuilder() *TimelockProposalBuilder {
 	builder := &TimelockProposalBuilder{
-		proposal: MCMSWithTimelockProposal{
+		proposal: TimelockProposal{
 			BaseProposal: BaseProposal{
 				ChainMetadata: make(map[types.ChainSelector]types.ChainMetadata),
 			},
@@ -59,8 +59,8 @@ func (b *TimelockProposalBuilder) SetTransactions(transactions []types.BatchChai
 	return b
 }
 
-// Build validates and returns the constructed MCMSWithTimelockProposal.
-func (b *TimelockProposalBuilder) Build() (*MCMSWithTimelockProposal, error) {
+// Build validates and returns the constructed TimelockProposal.
+func (b *TimelockProposalBuilder) Build() (*TimelockProposal, error) {
 	// Validate the proposal
 	if err := b.proposal.Validate(); err != nil {
 		return nil, err

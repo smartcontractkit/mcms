@@ -33,7 +33,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 	tests := []struct {
 		name     string
 		setup    func(*mcms.TimelockProposalBuilder)
-		want     *mcms.MCMSWithTimelockProposal
+		want     *mcms.TimelockProposal
 		wantErrs []string
 	}{
 		{
@@ -58,7 +58,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 						},
 					})
 			},
-			want: &mcms.MCMSWithTimelockProposal{
+			want: &mcms.TimelockProposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
 					ValidUntil:           fixedValidUntilCasted,
@@ -111,7 +111,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					},
 					})
 			},
-			want: &mcms.MCMSWithTimelockProposal{
+			want: &mcms.TimelockProposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
 					ValidUntil:           fixedValidUntilCasted,
@@ -219,7 +219,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			},
 			want: nil,
 			wantErrs: []string{
-				"Key: 'MCMSWithTimelockProposal.TimelockAddresses' Error:Field validation for 'TimelockAddresses' failed on the 'min' tag",
+				"Key: 'TimelockProposal.TimelockAddresses' Error:Field validation for 'TimelockAddresses' failed on the 'min' tag",
 			},
 		},
 		{
@@ -237,7 +237,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			},
 			want: nil,
 			wantErrs: []string{
-				"Key: 'MCMSWithTimelockProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
+				"Key: 'TimelockProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
 			},
 		},
 		{
@@ -290,7 +290,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			},
 			want: nil,
 			wantErrs: []string{
-				"Key: 'MCMSWithTimelockProposal.Operation' Error:Field validation for 'Operation' failed on the 'oneof' tag",
+				"Key: 'TimelockProposal.Operation' Error:Field validation for 'Operation' failed on the 'oneof' tag",
 			},
 		},
 	}

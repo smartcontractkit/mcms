@@ -59,16 +59,16 @@ func (b *BaseProposalBuilder[T]) UseSimulatedBackend(useSim bool) T {
 	return b.builder
 }
 
-// ProposalBuilder is a builder for the MCMS MCMSProposal.
+// ProposalBuilder is a builder for the MCMS Proposal.
 type ProposalBuilder struct {
 	BaseProposalBuilder[*ProposalBuilder]
-	proposal MCMSProposal
+	proposal Proposal
 }
 
 // NewProposalBuilder creates a new ProposalBuilder.
 func NewProposalBuilder() *ProposalBuilder {
 	builder := &ProposalBuilder{
-		proposal: MCMSProposal{
+		proposal: Proposal{
 			BaseProposal: BaseProposal{
 				ChainMetadata: make(map[types.ChainSelector]types.ChainMetadata),
 			},
@@ -84,22 +84,22 @@ func NewProposalBuilder() *ProposalBuilder {
 	return builder
 }
 
-// AddTransaction adds a transaction to the MCMSProposal.
+// AddTransaction adds a transaction to the Proposal.
 func (b *ProposalBuilder) AddTransaction(transaction types.ChainOperation) *ProposalBuilder {
 	b.proposal.Transactions = append(b.proposal.Transactions, transaction)
 
 	return b
 }
 
-// SetTransactions sets all the transactions of the MCMSProposal.
+// SetTransactions sets all the transactions of the Proposal.
 func (b *ProposalBuilder) SetTransactions(transaction []types.ChainOperation) *ProposalBuilder {
 	b.proposal.Transactions = transaction
 
 	return b
 }
 
-// Build validates and returns the constructed MCMSProposal.
-func (b *ProposalBuilder) Build() (*MCMSProposal, error) {
+// Build validates and returns the constructed Proposal.
+func (b *ProposalBuilder) Build() (*Proposal, error) {
 	// Validate the proposal
 	if err := b.proposal.Validate(); err != nil {
 		return nil, err
