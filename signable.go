@@ -16,11 +16,14 @@ var (
 	ErrInspectorsNotProvided = errors.New("inspectors not provided")
 )
 
+// Signable provides signing functionality for an Proposal. It contains all the necessary
+// information required to validate, sign, and check the quorum of a proposal.
+
 // Signable contains the proposal itself, a Merkle tree representation of the proposal, encoders for
 // different chains to perform the signing, while the inspectors are used for retrieving contract
 // configurations and operational counts on chain.
 type Signable struct {
-	proposal   *MCMSProposal
+	proposal   *Proposal
 	tree       *merkle.Tree
 	encoders   map[types.ChainSelector]sdk.Encoder
 	inspectors map[types.ChainSelector]sdk.Inspector
@@ -29,7 +32,7 @@ type Signable struct {
 // NewSignable creates a new Signable from a proposal and inspectors, and initializes the encoders
 // and merkle tree.
 func NewSignable(
-	proposal *MCMSProposal,
+	proposal *Proposal,
 	inspectors map[types.ChainSelector]sdk.Inspector,
 ) (*Signable, error) {
 	encoders, err := proposal.GetEncoders()
@@ -50,25 +53,44 @@ func NewSignable(
 	}, nil
 }
 
-// Validate checks the proposal is valid and signable.
-//
-// This can be removed once the Sign method is implemented on this struct.
-func (s *Signable) Validate() error {
-	return s.proposal.Validate()
+// Sign signs the root of the proposal's Merkle tree with the provided signer.
+func (s *Signable) Sign(signer signer) (sig types.Signature, err error) {
+	// Validate proposal
+	if err = s.proposal.Validate(); err != nil {
+		return sig, err
+	}
+
+	// Get the signing hash
+	payload, err := s.proposal.SigningHash()
+	if err != nil {
+		return sig, err
+	}
+
+	// Sign the payload
+	sigB, err := signer.Sign(payload.Bytes())
+	if err != nil {
+		return sig, err
+	}
+
+	return types.NewSignatureFromBytes(sigB)
 }
 
-// SigningHash returns the hash of the proposal that should be signed. This is a delegate method to
-// the underlying proposal.
+// SignAndAppend signs the proposal using the provided signer and appends the resulting signature
+// to the proposal's list of signatures.
 //
-// This can be removed once the Sign method is implemented on this struct.
-func (s *Signable) SigningHash() (common.Hash, error) {
-	return s.proposal.SigningHash()
-}
+// This function modifies the proposal in place by adding the new signature to its Signatures
+// slice.
+func (s *Signable) SignAndAppend(signer signer) (types.Signature, error) {
+	// Sign the proposal
+	sig, err := s.Sign(signer)
+	if err != nil {
+		return types.Signature{}, err
+	}
 
-// AddSignature adds a signature to the underlying proposal. This is a delegate method to the
-// underlying proposal.
-func (s *Signable) AddSignature(signature types.Signature) {
-	s.proposal.AddSignature(signature)
+	// Add the signature to the proposal
+	s.proposal.AppendSignature(sig)
+
+	return sig, nil
 }
 
 // GetConfigs retrieves the MCMS contract configurations for each chain in the proposal.
@@ -131,6 +153,8 @@ func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 	return configuration.CanSetRoot(recoveredSigners)
 }
 
+// ValidateSignatures checks if the quorum for the proposal has been reached on the MCM contracts
+// across all chains in the proposal.
 func (s *Signable) ValidateSignatures() (bool, error) {
 	for chain := range s.proposal.ChainMetadata {
 		checkQuorum, err := s.CheckQuorum(chain)

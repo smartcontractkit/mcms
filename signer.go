@@ -7,46 +7,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/crypto"
-
-	"github.com/smartcontractkit/mcms/types"
 )
 
-// Sign signs the proposal using the provided signer.
-func Sign(signable *Signable, signer Signer) error {
-	// Validate proposal
-	if err := signable.Validate(); err != nil {
-		return err
-	}
-
-	// Get the signing hash
-	payload, err := signable.SigningHash()
-	if err != nil {
-		return err
-	}
-
-	// Sign the payload
-	sigB, err := signer.Sign(payload.Bytes())
-	if err != nil {
-		return err
-	}
-
-	sig, err := types.NewSignatureFromBytes(sigB)
-	if err != nil {
-		return err
-	}
-
-	// Add signature to proposal
-	signable.AddSignature(sig)
-
-	return nil
-}
-
-// Signer is an interface for different strategies for signing payloads.
-type Signer interface {
+// signer is an interface for different strategies for signing payloads.
+type signer interface {
 	Sign(payload []byte) ([]byte, error)
 }
 
-var _ Signer = &PrivateKeySigner{}
+var _ signer = &PrivateKeySigner{}
 
 // PrivateKeySigner signs payloads using a private key.
 type PrivateKeySigner struct {
@@ -63,7 +31,7 @@ func (s *PrivateKeySigner) Sign(payload []byte) ([]byte, error) {
 	return crypto.Sign(payload, s.pk)
 }
 
-var _ Signer = &LedgerSigner{}
+var _ signer = &LedgerSigner{}
 
 // LedgerSigner signs payloads using a Ledger.
 type LedgerSigner struct {

@@ -26,13 +26,13 @@ func Test_NewExecutable(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		giveProposal  *MCMSProposal
+		giveProposal  *Proposal
 		giveExecutors map[types.ChainSelector]sdk.Executor
 		wantErr       string
 	}{
 		{
 			name: "failure: could not get encoders from proposal (invalid chain selector)",
-			giveProposal: &MCMSProposal{
+			giveProposal: &Proposal{
 				BaseProposal: BaseProposal{
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -47,7 +47,7 @@ func Test_NewExecutable(t *testing.T) {
 		},
 		{
 			name: "failure: could not generate tx nonces from proposal (tx does not have matching chain metadata)",
-			giveProposal: &MCMSProposal{
+			giveProposal: &Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {StartingOpCount: 5},
@@ -64,7 +64,7 @@ func Test_NewExecutable(t *testing.T) {
 		},
 		{
 			name: "failure: could not generate tree from proposal (invalid additional values)",
-			giveProposal: &MCMSProposal{
+			giveProposal: &Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {StartingOpCount: 5},
@@ -117,7 +117,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
@@ -157,7 +157,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
-	err = Sign(signable, NewPrivateKeySigner(sim.Signers[0].PrivateKey))
+	_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -230,7 +230,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
@@ -272,7 +272,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 
 	// Sign the hash
 	for i := range 3 {
-		err = Sign(signable, NewPrivateKeySigner(sim.Signers[i].PrivateKey))
+		_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[i].PrivateKey))
 		require.NoError(t, err)
 	}
 
@@ -367,7 +367,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	}
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
@@ -396,7 +396,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
-	err = Sign(signable, NewPrivateKeySigner(sim.Signers[0].PrivateKey))
+	_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -496,7 +496,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
@@ -527,7 +527,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	// Sign the hash
 	for i := range 3 {
-		err = Sign(signable, NewPrivateKeySigner(sim.Signers[i].PrivateKey))
+		_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[i].PrivateKey))
 		require.NoError(t, err)
 	}
 
