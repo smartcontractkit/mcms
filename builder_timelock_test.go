@@ -39,7 +39,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 		{
 			name: "valid timelock proposal",
 			setup: func(b *mcms.TimelockProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Valid Timelock Proposal").
 					SetOverridePreviousRoot(false).
@@ -60,8 +60,8 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			},
 			want: &mcms.TimelockProposal{
 				BaseProposal: mcms.BaseProposal{
-					Version:              "1.0",
-					Kind:                 string(types.TimelockProposal),
+					Version:              "v1",
+					Kind:                 string(types.KindTimelockProposal),
 					ValidUntil:           fixedValidUntilCasted,
 					Description:          "Valid Timelock Proposal",
 					OverridePreviousRoot: false,
@@ -92,7 +92,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 		{
 			name: "valid timelock proposal with SetTransactions",
 			setup: func(b *mcms.TimelockProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Valid Timelock Proposal").
 					SetOverridePreviousRoot(false).
@@ -114,8 +114,8 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			},
 			want: &mcms.TimelockProposal{
 				BaseProposal: mcms.BaseProposal{
-					Version:              "1.0",
-					Kind:                 string(types.TimelockProposal),
+					Version:              "v1",
+					Kind:                 string(types.KindTimelockProposal),
 					ValidUntil:           fixedValidUntilCasted,
 					Description:          "Valid Timelock Proposal",
 					OverridePreviousRoot: false,
@@ -146,7 +146,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 		{
 			name: "missing delay on schedule operation",
 			setup: func(b *mcms.TimelockProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(futureValidUntilCasted).
 					SetDescription("Missing Delay").
 					SetOverridePreviousRoot(false).
@@ -173,7 +173,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 		{
 			name: "invalid delay format",
 			setup: func(b *mcms.TimelockProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Invalid Delay Format").
 					SetOverridePreviousRoot(false).
@@ -200,7 +200,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 		{
 			name: "missing timelock address",
 			setup: func(b *mcms.TimelockProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(futureValidUntilCasted).
 					SetDescription("Missing Timelock Address").
 					SetOverridePreviousRoot(false).
@@ -227,7 +227,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 		{
 			name: "missing transactions",
 			setup: func(b *mcms.TimelockProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(futureValidUntilCasted).
 					SetDescription("Missing Transactions").
 					SetOverridePreviousRoot(false).
@@ -245,7 +245,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 		{
 			name: "validUntil in past",
 			setup: func(b *mcms.TimelockProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(postValidUntilCasted).
 					SetDescription("ValidUntil in Past").
 					SetOverridePreviousRoot(false).
@@ -272,7 +272,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 		{
 			name: "invalid operation",
 			setup: func(b *mcms.TimelockProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Invalid Operation").
 					SetOverridePreviousRoot(false).

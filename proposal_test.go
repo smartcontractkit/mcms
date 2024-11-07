@@ -38,7 +38,7 @@ func Test_NewProposal(t *testing.T) {
 		{
 			name: "success: initializes a proposal from an io.Reader",
 			give: `{
-				"version": "1.0",
+				"version": "v1",
 				"kind": "Proposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {
@@ -52,8 +52,8 @@ func Test_NewProposal(t *testing.T) {
 			}`,
 			want: Proposal{
 				BaseProposal: BaseProposal{
-					Version:    "1.0",
-					Kind:       string(types.Proposal),
+					Version:    "v1",
+					Kind:       string(types.KindProposal),
 					ValidUntil: 2004259681,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {},
@@ -72,7 +72,7 @@ func Test_NewProposal(t *testing.T) {
 		{
 			name: "failure: invalid proposal",
 			give: `{
-				"version": "1.0",
+				"version": "v1",
 				"kind": "Proposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {},
@@ -117,7 +117,7 @@ func Test_WriteProposal(t *testing.T) {
 			give: &Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "1",
-					Kind:       string(types.Proposal),
+					Kind:       string(types.KindProposal),
 					ValidUntil: 2004259681,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {},
@@ -199,8 +199,8 @@ func Test_Proposal_Validate(t *testing.T) {
 			name: "valid",
 			give: Proposal{
 				BaseProposal: BaseProposal{
-					Version:    "1.0",
-					Kind:       string(types.Proposal),
+					Version:    "v1",
+					Kind:       string(types.KindProposal),
 					ValidUntil: 2004259681,
 					Signatures: []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -244,7 +244,7 @@ func Test_Proposal_Validate(t *testing.T) {
 			name: "min validation",
 			give: Proposal{
 				BaseProposal: BaseProposal{
-					Version:       "1.0",
+					Version:       "v1",
 					ValidUntil:    2004259681,
 					Signatures:    []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
@@ -261,8 +261,8 @@ func Test_Proposal_Validate(t *testing.T) {
 			name: "invalid chain metadata",
 			give: Proposal{
 				BaseProposal: BaseProposal{
-					Version:    "1.0",
-					Kind:       string(types.Proposal),
+					Version:    "v1",
+					Kind:       string(types.KindProposal),
 					ValidUntil: 2004259681,
 					Signatures: []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{

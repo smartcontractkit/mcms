@@ -110,8 +110,8 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -175,8 +175,8 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -264,8 +264,8 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -339,8 +339,8 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -417,8 +417,8 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -501,8 +501,8 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -551,8 +551,8 @@ func Test_Signable_Sign(t *testing.T) {
 
 	proposal := &Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -645,8 +645,8 @@ func Test_SignAndAppend(t *testing.T) {
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},

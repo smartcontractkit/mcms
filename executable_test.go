@@ -35,7 +35,7 @@ func Test_NewExecutable(t *testing.T) {
 			giveProposal: &Proposal{
 				BaseProposal: BaseProposal{
 					OverridePreviousRoot: false,
-					Kind:                 string(types.Proposal),
+					Kind:                 string(types.KindProposal),
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						types.ChainSelector(1): {},
 					},
@@ -120,9 +120,9 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
+			Version:              "v1",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-			Kind:                 string(types.Proposal),
+			Kind:                 string(types.KindProposal),
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
@@ -234,8 +234,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -372,8 +372,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -502,8 +502,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	// Construct a proposal
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
-			Version:              "1.0",
-			Kind:                 string(types.Proposal),
+			Version:              "v1",
+			Kind:                 string(types.KindProposal),
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},

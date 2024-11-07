@@ -23,7 +23,7 @@ import (
 
 // BaseProposal is the base struct for all MCMS proposals, contains shared fields for all proposal types.
 type BaseProposal struct {
-	Version              string                                      `json:"version" validate:"required,oneof=1.0"`
+	Version              string                                      `json:"version" validate:"required,oneof=v1"`
 	Kind                 string                                      `json:"kind" validate:"required,oneof=Proposal TimelockProposal"`
 	ValidUntil           uint32                                      `json:"validUntil" validate:"required"`
 	Signatures           []types.Signature                           `json:"signatures" validate:"omitempty,dive,required"`

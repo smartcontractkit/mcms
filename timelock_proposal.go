@@ -61,7 +61,7 @@ func NewProposalWithTimeLock(
 	p := TimelockProposal{
 		BaseProposal: BaseProposal{
 			Version:              version,
-			Kind:                 string(types.TimelockProposal),
+			Kind:                 string(types.KindTimelockProposal),
 			ValidUntil:           validUntil,
 			Signatures:           signatures,
 			OverridePreviousRoot: overridePreviousRoot,
