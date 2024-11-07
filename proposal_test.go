@@ -3,12 +3,14 @@ package mcms
 import (
 	"encoding/json"
 	"errors"
+	"io"
 	"math"
 	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -17,10 +19,179 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var TestAddress = "0x1234567890abcdef"
-var TestChain1 = types.ChainSelector(3379446385462418246)
-var TestChain2 = types.ChainSelector(16015286601757825753)
-var TestChain3 = types.ChainSelector(10344971235874465080)
+var (
+	TestAddress = "0x1234567890abcdef"
+	TestChain1  = types.ChainSelector(cselectors.GETH_TESTNET.Selector)                    // 3379446385462418246
+	TestChain2  = types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector)        // 16015286601757825753
+	TestChain3  = types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA_BASE_1.Selector) // 10344971235874465080
+)
+
+func Test_NewProposal(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		give    string
+		want    Proposal
+		wantErr string
+	}{
+		{
+			name: "success: initializes a proposal from an io.Reader",
+			give: `{
+				"version": "1",
+				"validUntil": 2004259681,
+				"chainMetadata": {
+					"3379446385462418246": {}
+				},
+				"transactions": [
+					{
+						"chainSelector": 3379446385462418246
+					}
+				]
+			}`,
+			want: Proposal{
+				BaseProposal: BaseProposal{
+					Version:    "1",
+					ValidUntil: 2004259681,
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {},
+					},
+				},
+				Transactions: []types.ChainOperation{
+					{ChainSelector: TestChain1},
+				},
+			},
+		},
+		{
+			name:    "failure: could not unmarshal JSON",
+			give:    `invalid`,
+			wantErr: "invalid character 'i' looking for beginning of value",
+		},
+		{
+			name: "failure: invalid proposal",
+			give: `{
+				"version": "1",
+				"validUntil": 2004259681,
+				"chainMetadata": {},
+				"transactions": [
+					{}
+				]
+			}`,
+			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			give := strings.NewReader(tt.give)
+
+			fileProposal, err := NewProposal(give)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, *fileProposal)
+			}
+		})
+	}
+}
+
+func Test_WriteProposal(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		give       *Proposal
+		giveWriter func() io.Writer // Use this to overwrite the default writer
+		want       string
+		wantErr    string
+	}{
+		{
+			name: "success: writes a proposal to an io.Writer",
+			give: &Proposal{
+				BaseProposal: BaseProposal{
+					Version:    "1",
+					ValidUntil: 2004259681,
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {},
+					},
+				},
+				Transactions: []types.ChainOperation{
+					{ChainSelector: TestChain1},
+				},
+			},
+			want: `{
+				"version": "1",
+				"description": "",
+				"validUntil": 2004259681,
+				"overridePreviousRoot": false,
+				"signatures": null,
+				"chainMetadata": {
+					"3379446385462418246": {
+						"mcmAddress": "",
+						"startingOpCount": 0
+					}
+				},
+				"transactions": [
+					{
+						"chainSelector": 3379446385462418246,
+						"to": "",
+						"additionalFields": null,
+						"data": null,
+						"tags": null,
+						"contractType": ""
+					}
+				]
+			}`,
+		},
+		{
+			name: "success: writes a proposal to an io.Writer",
+			giveWriter: func() io.Writer {
+				return newFakeWriter(0, errors.New("write error"))
+			},
+			give: &Proposal{
+				BaseProposal: BaseProposal{
+					Version:    "1",
+					ValidUntil: 2004259681,
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain1: {},
+					},
+				},
+				Transactions: []types.ChainOperation{
+					{ChainSelector: TestChain1},
+				},
+			},
+			wantErr: "write error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var w io.Writer
+			b := new(strings.Builder)
+
+			if tt.giveWriter != nil {
+				w = tt.giveWriter()
+			} else {
+				w = b
+			}
+
+			err := WriteProposal(w, tt.give)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.JSONEq(t, tt.want, b.String())
+			}
+		})
+	}
+}
 
 func Test_Proposal_Validate(t *testing.T) {
 	t.Parallel()
@@ -137,79 +308,6 @@ func Test_Proposal_Validate(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
-			}
-		})
-	}
-}
-
-func Test_NewProposal(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name    string
-		give    string
-		want    Proposal
-		wantErr string
-	}{
-		{
-			name: "success: initializes a proposal from an io.Reader",
-			give: `{
-				"version": "1",
-				"validUntil": 2004259681,
-				"chainMetadata": {
-					"3379446385462418246": {}
-				},
-				"transactions": [
-					{
-						"chainSelector": 3379446385462418246
-					}
-				]
-			}`,
-			want: Proposal{
-				BaseProposal: BaseProposal{
-					Version:    "1",
-					ValidUntil: 2004259681,
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {},
-					},
-				},
-				Transactions: []types.ChainOperation{
-					{ChainSelector: TestChain1},
-				},
-			},
-		},
-		{
-			name:    "failure: could not unmarshal JSON",
-			give:    `invalid`,
-			wantErr: "invalid character 'i' looking for beginning of value",
-		},
-		{
-			name: "failure: invalid proposal",
-			give: `{
-				"version": "1",
-				"validUntil": 2004259681,
-				"chainMetadata": {},
-				"transactions": [
-					{}
-				]
-			}`,
-			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			give := strings.NewReader(tt.give)
-
-			fileProposal, err := NewProposal(give)
-
-			if tt.wantErr != "" {
-				require.EqualError(t, err, tt.wantErr)
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.want, *fileProposal)
 			}
 		})
 	}
