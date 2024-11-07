@@ -150,6 +150,40 @@ func Test_NewTimelockProposal(t *testing.T) {
 			}`,
 			wantErr: "Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
 		},
+		{
+			name: "failure: invalid proposal kind",
+			give: `{
+				"version": "v1",
+				"kind": "Proposal",
+				"validUntil": 2004259681,
+				"chainMetadata": {
+					"16015286601757825753": {
+						"mcmAddress": "0x0000000000000000000000000000000000000000",
+						"startingOpCount": 0
+					}
+				},
+				"description": "Test proposal",
+				"overridePreviousRoot": false,
+				"operation": "schedule",
+				"delay": "1h",
+				"timelockAddresses": {
+					"16015286601757825753": "0x01"
+				},
+				"transactions": [
+					{
+						"chainSelector": 16015286601757825753,
+						"batch": [
+							{
+								"to": "0x0000000000000000000000000000000000000000",
+								"additionalFields": {"value": 0},
+								"data": "ZGF0YQ=="
+							}
+						]
+					}
+				]
+			}`,
+			wantErr: "invalid proposal kind: Proposal, value accepted is TimelockProposal",
+		},
 	}
 
 	for _, tt := range tests {

@@ -96,6 +96,23 @@ func Test_NewProposal(t *testing.T) {
 			}`,
 			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
 		},
+		{
+			name: "failure: invalid proposal kind",
+			give: `{
+				"version": "v1",
+				"kind": "TimelockProposal",
+				"validUntil": 2004259681,
+				"chainMetadata": {
+					"3379446385462418246": {}
+				},
+				"transactions": [
+					{
+						"chainSelector": 3379446385462418246
+					}
+				]
+			}`,
+			wantErr: "invalid proposal kind: TimelockProposal, value accepted is Proposal",
+		},
 	}
 
 	for _, tt := range tests {
