@@ -8,14 +8,14 @@ import (
 
 // InvalidProposalKindError is returned when an invalid proposal kind is provided.
 type InvalidProposalKindError struct {
-	ProvidedKind string
-	AcceptedKind string
+	ProvidedKind types.ProposalKind
+	AcceptedKind types.ProposalKind
 }
 
 func (e *InvalidProposalKindError) Error() string {
 	return fmt.Sprintf("invalid proposal kind: %s, value accepted is %s", e.ProvidedKind, e.AcceptedKind)
 }
-func NewInvalidProposalKindError(provided, accepted string) *InvalidProposalKindError {
+func NewInvalidProposalKindError(provided, accepted types.ProposalKind) *InvalidProposalKindError {
 	return &InvalidProposalKindError{ProvidedKind: provided, AcceptedKind: accepted}
 }
 

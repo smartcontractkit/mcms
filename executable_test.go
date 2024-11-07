@@ -35,7 +35,7 @@ func Test_NewExecutable(t *testing.T) {
 			giveProposal: &Proposal{
 				BaseProposal: BaseProposal{
 					OverridePreviousRoot: false,
-					Kind:                 string(types.KindProposal),
+					Kind:                 types.KindProposal,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						types.ChainSelector(1): {},
 					},
@@ -122,7 +122,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		BaseProposal: BaseProposal{
 			Version:              "v1",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-			Kind:                 string(types.KindProposal),
+			Kind:                 types.KindProposal,
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
@@ -235,7 +235,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "v1",
-			Kind:                 string(types.KindProposal),
+			Kind:                 types.KindProposal,
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -373,7 +373,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "v1",
-			Kind:                 string(types.KindProposal),
+			Kind:                 types.KindProposal,
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -503,7 +503,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "v1",
-			Kind:                 string(types.KindProposal),
+			Kind:                 types.KindProposal,
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},

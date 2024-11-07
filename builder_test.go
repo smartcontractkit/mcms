@@ -50,7 +50,7 @@ func TestProposalBuilder(t *testing.T) {
 			want: &mcms.Proposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "v1",
-					Kind:                 string(types.KindProposal),
+					Kind:                 types.KindProposal,
 					ValidUntil:           fixedValidUntilCasted,
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
@@ -89,7 +89,7 @@ func TestProposalBuilder(t *testing.T) {
 			want: &mcms.Proposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "v1",
-					Kind:                 string(types.KindProposal),
+					Kind:                 types.KindProposal,
 					ValidUntil:           fixedValidUntilCasted,
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
@@ -139,7 +139,7 @@ func TestProposalBuilder(t *testing.T) {
 			want: &mcms.Proposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "v1",
-					Kind:                 string(types.KindProposal),
+					Kind:                 types.KindProposal,
 					ValidUntil:           fixedValidUntilCasted,
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,

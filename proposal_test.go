@@ -67,7 +67,7 @@ func Test_NewProposal(t *testing.T) {
 			want: Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "v1",
-					Kind:       string(types.KindProposal),
+					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {},
@@ -131,7 +131,7 @@ func Test_WriteProposal(t *testing.T) {
 			give: &Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "1",
-					Kind:       string(types.KindProposal),
+					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {},
@@ -214,7 +214,7 @@ func Test_Proposal_Validate(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "v1",
-					Kind:       string(types.KindProposal),
+					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					Signatures: []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -276,7 +276,7 @@ func Test_Proposal_Validate(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "v1",
-					Kind:       string(types.KindProposal),
+					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					Signatures: []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{

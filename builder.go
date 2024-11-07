@@ -70,7 +70,7 @@ func NewProposalBuilder() *ProposalBuilder {
 	builder := &ProposalBuilder{
 		proposal: Proposal{
 			BaseProposal: BaseProposal{
-				Kind:          string(types.KindProposal),
+				Kind:          types.KindProposal,
 				ChainMetadata: make(map[types.ChainSelector]types.ChainMetadata),
 			},
 			Transactions: []types.ChainOperation{},

@@ -86,7 +86,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 			want: TimelockProposal{
 				BaseProposal: BaseProposal{
 					Version:     "v1",
-					Kind:        string(types.KindTimelockProposal),
+					Kind:        types.KindTimelockProposal,
 					ValidUntil:  2004259681,
 					Description: "Test proposal",
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -185,7 +185,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 			give: &TimelockProposal{
 				BaseProposal: BaseProposal{
 					Version:     "v1",
-					Kind:        string(types.KindTimelockProposal),
+					Kind:        types.KindTimelockProposal,
 					ValidUntil:  2004259681,
 					Description: "Test proposal",
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
