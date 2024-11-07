@@ -41,7 +41,7 @@ type BaseProposal struct {
 type Proposal struct {
 	BaseProposal
 
-	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1,dive,required"`
+	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1"`
 }
 
 func NewProposal(reader io.Reader) (*Proposal, error) {
