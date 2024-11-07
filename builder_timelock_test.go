@@ -30,7 +30,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 	futureValidUntilCasted, err := safecast.Int64ToUint32(futureValidUntil)
 	require.NoError(t, err)
 
-	testCases := []struct {
+	tests := []struct {
 		name             string
 		setup            func(*mcms.TimelockProposalBuilder)
 		expectError      bool
@@ -304,37 +304,37 @@ func TestTimelockProposalBuilder(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
 			builder := mcms.NewTimelockProposalBuilder()
-			tc.setup(builder)
+			tt.setup(builder)
 
 			proposal, err := builder.Build()
-			if tc.expectError {
+			if tt.expectError {
 				require.Error(t, err)
 				assert.Nil(t, proposal)
 
 				var errs validator.ValidationErrors
 				if errors.As(err, &errs) {
-					assert.Len(t, errs, len(tc.wantErrs))
+					assert.Len(t, errs, len(tt.wantErrs))
 
 					got := []string{}
 					for _, e := range errs {
 						got = append(got, e.Error())
 					}
 
-					assert.ElementsMatch(t, tc.wantErrs, got)
+					assert.ElementsMatch(t, tt.wantErrs, got)
 				} else {
-					assert.ElementsMatch(t, tc.wantErrs, []string{err.Error()})
+					assert.ElementsMatch(t, tt.wantErrs, []string{err.Error()})
 				}
 			} else {
 				require.NoError(t, err)
 				assert.NotNil(t, proposal)
 
 				// Compare the built proposal to the expected proposal
-				assert.Equal(t, tc.expectedProposal, proposal)
+				assert.Equal(t, tt.expectedProposal, proposal)
 			}
 		})
 	}

@@ -28,12 +28,11 @@ func TestProposalBuilder(t *testing.T) {
 	require.NoError(t, err)
 	pastValidUntilCast, err := safecast.Int64ToUint32(time.Now().Add(-24 * time.Hour).Unix())
 	require.NoError(t, err)
-	testCases := []struct {
-		name             string
-		setup            func(*mcms.ProposalBuilder)
-		expectError      bool
-		expectedProposal *mcms.MCMSProposal
-		wantErrs         []string
+	tests := []struct {
+		name     string
+		setup    func(*mcms.ProposalBuilder)
+		want     *mcms.MCMSProposal
+		wantErrs []string
 	}{
 		{
 			name: "valid MCMSProposal",
@@ -48,7 +47,7 @@ func TestProposalBuilder(t *testing.T) {
 						Operation:     types.Operation{Data: []byte{0x01}},
 					})
 			},
-			expectedProposal: &mcms.MCMSProposal{
+			want: &mcms.MCMSProposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
 					ValidUntil:           fixedValidUntilCasted,
@@ -65,8 +64,7 @@ func TestProposalBuilder(t *testing.T) {
 					},
 				},
 			},
-			expectError: false,
-			wantErrs:    nil,
+			wantErrs: nil,
 		},
 		{
 			name: "valid MCMSProposal using SetTransactions",
@@ -87,7 +85,7 @@ func TestProposalBuilder(t *testing.T) {
 						},
 					})
 			},
-			expectedProposal: &mcms.MCMSProposal{
+			want: &mcms.MCMSProposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
 					ValidUntil:           fixedValidUntilCasted,
@@ -108,8 +106,7 @@ func TestProposalBuilder(t *testing.T) {
 					},
 				},
 			},
-			expectError: false,
-			wantErrs:    nil,
+			wantErrs: nil,
 		},
 		{
 			name: "valid MCMSProposal with signature and set chain metadata",
@@ -137,7 +134,7 @@ func TestProposalBuilder(t *testing.T) {
 						V: 28,
 					})
 			},
-			expectedProposal: &mcms.MCMSProposal{
+			want: &mcms.MCMSProposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
 					ValidUntil:           fixedValidUntilCasted,
@@ -163,8 +160,7 @@ func TestProposalBuilder(t *testing.T) {
 					},
 				},
 			},
-			expectError: false,
-			wantErrs:    nil,
+			wantErrs: nil,
 		},
 		{
 			name: "Missing Version",
@@ -178,8 +174,7 @@ func TestProposalBuilder(t *testing.T) {
 						Operation:     types.Operation{Data: []byte{0x01}},
 					})
 			},
-			expectError:      true,
-			expectedProposal: nil,
+			want: nil,
 			wantErrs: []string{
 				"Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag",
 			},
@@ -197,8 +192,7 @@ func TestProposalBuilder(t *testing.T) {
 						Operation:     types.Operation{Data: []byte{0x01}},
 					})
 			},
-			expectError:      true,
-			expectedProposal: nil,
+			want: nil,
 			wantErrs: []string{
 				fmt.Sprintf("invalid valid until: %d", pastValidUntilCast),
 			},
@@ -213,8 +207,7 @@ func TestProposalBuilder(t *testing.T) {
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0})
 				// No transactions added
 			},
-			expectError:      true,
-			expectedProposal: nil,
+			want: nil,
 			wantErrs: []string{
 				"Key: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
 			},
@@ -232,45 +225,44 @@ func TestProposalBuilder(t *testing.T) {
 						Operation:     types.Operation{Data: []byte{0x01}},
 					})
 			},
-			expectError:      true,
-			expectedProposal: nil,
+			want: nil,
 			wantErrs: []string{
 				"Key: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
 			},
 		},
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
 			builder := mcms.NewProposalBuilder()
-			tc.setup(builder)
+			tt.setup(builder)
 
 			proposal, err := builder.Build()
-			if tc.expectError {
+			if tt.wantErrs != nil {
 				require.Error(t, err)
 				assert.Nil(t, proposal)
 
 				var errs validator.ValidationErrors
 				if errors.As(err, &errs) {
-					assert.Len(t, errs, len(tc.wantErrs))
+					assert.Len(t, errs, len(tt.wantErrs))
 
 					got := []string{}
 					for _, e := range errs {
 						got = append(got, e.Error())
 					}
 
-					assert.ElementsMatch(t, tc.wantErrs, got)
+					assert.ElementsMatch(t, tt.wantErrs, got)
 				} else {
-					assert.ElementsMatch(t, tc.wantErrs, []string{err.Error()})
+					assert.ElementsMatch(t, tt.wantErrs, []string{err.Error()})
 				}
 			} else {
 				require.NoError(t, err)
 				assert.NotNil(t, proposal)
 
 				// Compare the built proposal to the expected proposal
-				assert.Equal(t, tc.expectedProposal, proposal)
+				assert.Equal(t, tt.want, proposal)
 			}
 		})
 	}
