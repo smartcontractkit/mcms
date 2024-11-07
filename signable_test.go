@@ -35,13 +35,13 @@ func Test_NewSignable(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		giveProposal   *MCMSProposal
+		giveProposal   *Proposal
 		giveInspectors map[types.ChainSelector]sdk.Inspector
 		wantErr        string
 	}{
 		{
 			name: "failure: could not get encoders from proposal (invalid chain selector)",
-			giveProposal: &MCMSProposal{
+			giveProposal: &Proposal{
 				BaseProposal: BaseProposal{
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -56,7 +56,7 @@ func Test_NewSignable(t *testing.T) {
 		},
 		{
 			name: "failure: could not generate tree from proposal (invalid additional values)",
-			giveProposal: &MCMSProposal{
+			giveProposal: &Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {StartingOpCount: 5},
@@ -108,7 +108,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
@@ -172,7 +172,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
@@ -260,7 +260,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	}
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
@@ -334,7 +334,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	}
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
@@ -411,7 +411,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	}
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
@@ -494,7 +494,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	}
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
@@ -543,7 +543,7 @@ func Test_Signable_Sign(t *testing.T) {
 	privKey, err := crypto.HexToECDSA(testPrivateKeyHex)
 	require.NoError(t, err)
 
-	proposal := &MCMSProposal{
+	proposal := &Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
@@ -573,7 +573,7 @@ func Test_Signable_Sign(t *testing.T) {
 
 	tests := []struct {
 		name         string
-		giveProposal *MCMSProposal
+		giveProposal *Proposal
 		giveSigner   signer
 		want         types.Signature
 		wantErr      string
@@ -590,9 +590,9 @@ func Test_Signable_Sign(t *testing.T) {
 		},
 		{
 			name:         "failure: invalid proposal",
-			giveProposal: &MCMSProposal{},
+			giveProposal: &Proposal{},
 			giveSigner:   NewPrivateKeySigner(privKey),
-			wantErr:      "Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+			wantErr:      "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
 		},
 		{
 			name:         "failure: could not sign",
@@ -636,7 +636,7 @@ func Test_SignAndAppend(t *testing.T) {
 	require.NoError(t, err)
 
 	// Construct a proposal
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
@@ -666,7 +666,7 @@ func Test_SignAndAppend(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		give    MCMSProposal
+		give    Proposal
 		want    []types.Signature
 		wantErr string
 	}{
@@ -683,8 +683,8 @@ func Test_SignAndAppend(t *testing.T) {
 		},
 		{
 			name:    "failure: invalid proposal",
-			give:    MCMSProposal{},
-			wantErr: "Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+			give:    Proposal{},
+			wantErr: "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
 		},
 	}
 
@@ -700,7 +700,7 @@ func Test_SignAndAppend(t *testing.T) {
 			// Ensure that there are no signatures to being with
 			require.Empty(t, tt.give.Signatures)
 
-			signable, err := NewSignable(&tt.give, (inspectors))
+			signable, err := NewSignable(&tt.give, inspectors)
 			require.NoError(t, err)
 			require.NotNil(t, signable)
 
@@ -730,14 +730,14 @@ func Test_Signable_GetConfigs(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		give           MCMSProposal
+		give           Proposal
 		giveInspectors func(*inspectorMocks) map[types.ChainSelector]sdk.Inspector
 		want           map[types.ChainSelector]*types.Config
 		wantErr        string
 	}{
 		{
 			name: "success",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {MCMAddress: "0x01"},
@@ -761,7 +761,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 		},
 		{
 			name: "failure: no inspectors",
-			give: MCMSProposal{},
+			give: Proposal{},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
 				return nil
 			},
@@ -769,7 +769,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 		},
 		{
 			name: "failure: inspector not found",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {MCMAddress: "0x01"},
@@ -783,7 +783,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 		},
 		{
 			name: "failure: on chain get config failure",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {MCMAddress: "0x01"},
@@ -853,13 +853,13 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		give           MCMSProposal
+		give           Proposal
 		giveInspectors func(*inspectorMocks) map[types.ChainSelector]sdk.Inspector
 		wantErr        string
 	}{
 		{
 			name: "success",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {MCMAddress: "0x01"},
@@ -879,7 +879,7 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 		},
 		{
 			name: "failure: could not get configs",
-			give: MCMSProposal{},
+			give: Proposal{},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
 				return nil
 			},
@@ -887,7 +887,7 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 		},
 		{
 			name: "failure: not equal",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {MCMAddress: "0x01"},
@@ -941,14 +941,14 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 
 	tests := []struct {
 		name           string
-		give           MCMSProposal
+		give           Proposal
 		giveInspectors func(*inspectorMocks) map[types.ChainSelector]sdk.Inspector
 		want           map[types.ChainSelector]uint64
 		wantErr        string
 	}{
 		{
 			name: "success",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {MCMAddress: "0x01"},
@@ -972,7 +972,7 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 		},
 		{
 			name: "failure: could not get configs",
-			give: MCMSProposal{},
+			give: Proposal{},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
 				return nil
 			},
@@ -980,7 +980,7 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 		},
 		{
 			name: "failure: inspector not found",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {MCMAddress: "0x01"},
@@ -994,7 +994,7 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 		},
 		{
 			name: "failure: on chain GetOpCount failure",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {MCMAddress: "0x01"},
