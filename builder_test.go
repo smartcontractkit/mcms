@@ -37,7 +37,7 @@ func TestProposalBuilder(t *testing.T) {
 		{
 			name: "valid Proposal",
 			setup: func(b *mcms.ProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
@@ -49,7 +49,8 @@ func TestProposalBuilder(t *testing.T) {
 			},
 			want: &mcms.Proposal{
 				BaseProposal: mcms.BaseProposal{
-					Version:              "1.0",
+					Version:              "v1",
+					Kind:                 types.KindProposal,
 					ValidUntil:           fixedValidUntilCasted,
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
@@ -69,7 +70,7 @@ func TestProposalBuilder(t *testing.T) {
 		{
 			name: "valid Proposal using SetTransactions",
 			setup: func(b *mcms.ProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
@@ -87,7 +88,8 @@ func TestProposalBuilder(t *testing.T) {
 			},
 			want: &mcms.Proposal{
 				BaseProposal: mcms.BaseProposal{
-					Version:              "1.0",
+					Version:              "v1",
+					Kind:                 types.KindProposal,
 					ValidUntil:           fixedValidUntilCasted,
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
@@ -111,7 +113,7 @@ func TestProposalBuilder(t *testing.T) {
 		{
 			name: "valid Proposal with signature and set chain metadata",
 			setup: func(b *mcms.ProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
@@ -136,7 +138,8 @@ func TestProposalBuilder(t *testing.T) {
 			},
 			want: &mcms.Proposal{
 				BaseProposal: mcms.BaseProposal{
-					Version:              "1.0",
+					Version:              "v1",
+					Kind:                 types.KindProposal,
 					ValidUntil:           fixedValidUntilCasted,
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
@@ -182,7 +185,7 @@ func TestProposalBuilder(t *testing.T) {
 		{
 			name: "ValidUntil in Past",
 			setup: func(b *mcms.ProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(pastValidUntilCast).
 					SetDescription("ValidUntil in Past").
 					SetOverridePreviousRoot(false).
@@ -200,7 +203,7 @@ func TestProposalBuilder(t *testing.T) {
 		{
 			name: "No Transactions",
 			setup: func(b *mcms.ProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("No Transactions").
 					SetOverridePreviousRoot(false).
@@ -215,7 +218,7 @@ func TestProposalBuilder(t *testing.T) {
 		{
 			name: "Missing ChainMetadata",
 			setup: func(b *mcms.ProposalBuilder) {
-				b.SetVersion("1.0").
+				b.SetVersion("v1").
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Missing ChainMetadata").
 					SetOverridePreviousRoot(false).

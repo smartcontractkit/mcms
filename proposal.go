@@ -23,7 +23,8 @@ import (
 
 // BaseProposal is the base struct for all MCMS proposals, contains shared fields for all proposal types.
 type BaseProposal struct {
-	Version              string                                      `json:"version" validate:"required"`
+	Version              string                                      `json:"version" validate:"required,oneof=v1"`
+	Kind                 types.ProposalKind                          `json:"kind" validate:"required,oneof=Proposal TimelockProposal"`
 	ValidUntil           uint32                                      `json:"validUntil" validate:"required"`
 	Signatures           []types.Signature                           `json:"signatures" validate:"omitempty,dive,required"`
 	OverridePreviousRoot bool                                        `json:"overridePreviousRoot"`
@@ -74,8 +75,13 @@ func WriteProposal(w io.Writer, proposal *Proposal) error {
 func (m *Proposal) Validate() error {
 	// Run tag-based validation
 	var validate = validator.New()
+
 	if err := validate.Struct(m); err != nil {
 		return err
+	}
+
+	if m.Kind != types.KindProposal {
+		return NewInvalidProposalKindError(m.Kind, types.KindProposal)
 	}
 
 	if err := proposalValidateBasic(*m); err != nil {

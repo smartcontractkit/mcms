@@ -13,6 +13,7 @@ func NewTimelockProposalBuilder() *TimelockProposalBuilder {
 	builder := &TimelockProposalBuilder{
 		proposal: TimelockProposal{
 			BaseProposal: BaseProposal{
+				Kind:          types.KindTimelockProposal,
 				ChainMetadata: make(map[types.ChainSelector]types.ChainMetadata),
 			},
 			TimelockAddresses: make(map[types.ChainSelector]string),

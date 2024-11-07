@@ -55,6 +55,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 			name: "success: initializes a proposal from an io.Reader",
 			give: `{
 				"version": "v1",
+				"kind": "TimelockProposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {
 					"16015286601757825753": {
@@ -85,6 +86,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 			want: TimelockProposal{
 				BaseProposal: BaseProposal{
 					Version:     "v1",
+					Kind:        types.KindTimelockProposal,
 					ValidUntil:  2004259681,
 					Description: "Test proposal",
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -122,7 +124,8 @@ func Test_NewTimelockProposal(t *testing.T) {
 		{
 			name: "failure: invalid proposal",
 			give: `{
-				"version": "1",
+				"version": "v1",
+				"kind": "TimelockProposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {},
 				"description": "Test proposal",
@@ -146,6 +149,40 @@ func Test_NewTimelockProposal(t *testing.T) {
 				]
 			}`,
 			wantErr: "Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
+		},
+		{
+			name: "failure: invalid proposal kind",
+			give: `{
+				"version": "v1",
+				"kind": "Proposal",
+				"validUntil": 2004259681,
+				"chainMetadata": {
+					"16015286601757825753": {
+						"mcmAddress": "0x0000000000000000000000000000000000000000",
+						"startingOpCount": 0
+					}
+				},
+				"description": "Test proposal",
+				"overridePreviousRoot": false,
+				"operation": "schedule",
+				"delay": "1h",
+				"timelockAddresses": {
+					"16015286601757825753": "0x01"
+				},
+				"transactions": [
+					{
+						"chainSelector": 16015286601757825753,
+						"batch": [
+							{
+								"to": "0x0000000000000000000000000000000000000000",
+								"additionalFields": {"value": 0},
+								"data": "ZGF0YQ=="
+							}
+						]
+					}
+				]
+			}`,
+			wantErr: "invalid proposal kind: Proposal, value accepted is TimelockProposal",
 		},
 	}
 
@@ -182,6 +219,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 			give: &TimelockProposal{
 				BaseProposal: BaseProposal{
 					Version:     "v1",
+					Kind:        types.KindTimelockProposal,
 					ValidUntil:  2004259681,
 					Description: "Test proposal",
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -210,6 +248,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 			},
 			want: `{
 				"version": "v1",
+				"kind": "TimelockProposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {
 					"16015286601757825753": {
@@ -294,7 +333,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 	}{
 		{
 			name:           "Valid proposal",
-			version:        "1.0",
+			version:        "v1",
 			validUntil:     2004259681,
 			signatures:     []types.Signature{},
 			overridePrev:   false,
@@ -322,7 +361,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 		},
 		{
 			name:           "Invalid validUntil",
-			version:        "1.0",
+			version:        "v1",
 			validUntil:     0,
 			signatures:     []types.Signature{},
 			overridePrev:   false,
@@ -336,7 +375,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 		},
 		{
 			name:           "Invalid chainMetadata",
-			version:        "1.0",
+			version:        "v1",
 			validUntil:     2004259681,
 			signatures:     []types.Signature{},
 			overridePrev:   false,
@@ -350,7 +389,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 		},
 		{
 			name:           "Invalid timelockAddresses",
-			version:        "1.0",
+			version:        "v1",
 			validUntil:     2004259681,
 			signatures:     []types.Signature{},
 			overridePrev:   false,
@@ -364,7 +403,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 		},
 		{
 			name:           "Invalid batches",
-			version:        "1.0",
+			version:        "v1",
 			validUntil:     2004259681,
 			signatures:     []types.Signature{},
 			overridePrev:   false,
@@ -378,7 +417,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 		},
 		{
 			name:           "Invalid timelockAction",
-			version:        "1.0",
+			version:        "v1",
 			validUntil:     2004259681,
 			signatures:     []types.Signature{},
 			overridePrev:   false,
@@ -392,7 +431,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 		},
 		{
 			name:           "Invalid timelockDelay",
-			version:        "1.0",
+			version:        "v1",
 			validUntil:     2004259681,
 			signatures:     []types.Signature{},
 			overridePrev:   false,
@@ -437,7 +476,7 @@ func TestTimelockProposal_Convert(t *testing.T) {
 	t.Parallel()
 
 	proposal, err := NewProposalWithTimeLock(
-		"1.0",
+		"v1",
 		2004259681,
 		[]types.Signature{},
 		false,
@@ -453,7 +492,7 @@ func TestTimelockProposal_Convert(t *testing.T) {
 	mcmsProposal, err := proposal.Convert()
 	require.NoError(t, err)
 
-	assert.Equal(t, "1.0", mcmsProposal.Version)
+	assert.Equal(t, "v1", mcmsProposal.Version)
 	assert.Equal(t, uint32(2004259681), mcmsProposal.ValidUntil)
 	assert.Equal(t, []types.Signature{}, mcmsProposal.Signatures)
 	assert.False(t, mcmsProposal.OverridePreviousRoot)
