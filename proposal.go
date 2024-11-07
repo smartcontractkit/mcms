@@ -39,7 +39,7 @@ type BaseProposal struct {
 type MCMSProposal struct {
 	BaseProposal
 
-	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1,dive,required"`
+	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1"`
 }
 
 func NewProposal(reader io.Reader) (*MCMSProposal, error) {

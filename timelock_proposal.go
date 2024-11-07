@@ -21,8 +21,8 @@ type MCMSWithTimelockProposal struct {
 
 	Operation         types.TimelockAction           `json:"operation" validate:"required,oneof=schedule cancel bypass"`
 	Delay             string                         `json:"delay"` // Will validate conditionally in Validate method
-	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required"`
-	Transactions      []types.BatchChainOperation    `json:"transactions" validate:"required,dive,required"`
+	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
+	Transactions      []types.BatchChainOperation    `json:"transactions" validate:"required,min=1"`
 }
 
 // TODO: Could the input params be simplified here?

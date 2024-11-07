@@ -121,7 +121,7 @@ func (s *Signable) SigningHash() (common.Hash, error) {
 }
 
 // func (e *Executor) SigningMessage() ([]byte, error) {
-// 	return ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, s.Tree.Root, s.Proposal.ValidUntil)
+// 	return ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, s.Tree.Root, s.MCMSProposal.ValidUntil)
 // }
 
 func toEthSignedMessageHash(messageHash common.Hash) common.Hash {

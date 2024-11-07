@@ -265,7 +265,7 @@ const validJsonProposal = `{
   "operation": "schedule",
   "overridePreviousRoot": true,
   "signatures": null,
-  "timelockAddresses": {},
+  "timelockAddresses": {"16015286601757825753": "someaddress"},
   "transactions": [
     {
       "batch": [
@@ -316,9 +316,11 @@ func TestMCMSWithTimelockProposal_MarshalJSON(t *testing.T) {
 					},
 					OverridePreviousRoot: true,
 				},
-				Operation:         types.TimelockActionSchedule,
-				Delay:             "1h",
-				TimelockAddresses: map[types.ChainSelector]string{},
+				Operation: types.TimelockActionSchedule,
+				Delay:     "1h",
+				TimelockAddresses: map[types.ChainSelector]string{
+					types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector): "someaddress",
+				},
 				Transactions: []types.BatchChainOperation{
 					{
 						ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
@@ -406,9 +408,11 @@ func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
 					},
 					OverridePreviousRoot: true,
 				},
-				Operation:         types.TimelockActionSchedule,
-				Delay:             "1h",
-				TimelockAddresses: map[types.ChainSelector]string{},
+				Operation: types.TimelockActionSchedule,
+				Delay:     "1h",
+				TimelockAddresses: map[types.ChainSelector]string{
+					types.ChainSelector(16015286601757825753): "someaddress",
+				},
 				Transactions: []types.BatchChainOperation{
 					{
 						ChainSelector: types.ChainSelector(16015286601757825753),
@@ -437,7 +441,9 @@ func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
   "operation": "INVALID",
   "overridePreviousRoot": true,
   "signatures": null,
-  "timelockAddresses": {},
+  "timelockAddresses": {
+   	"16015286601757825753": "someaddress"
+   },
   "transactions": [
     {
       "batch": [
