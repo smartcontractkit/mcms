@@ -61,6 +61,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			want: &mcms.TimelockProposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
+					Kind:                 string(types.TimelockProposal),
 					ValidUntil:           fixedValidUntilCasted,
 					Description:          "Valid Timelock Proposal",
 					OverridePreviousRoot: false,
@@ -114,6 +115,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			want: &mcms.TimelockProposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
+					Kind:                 string(types.TimelockProposal),
 					ValidUntil:           fixedValidUntilCasted,
 					Description:          "Valid Timelock Proposal",
 					OverridePreviousRoot: false,

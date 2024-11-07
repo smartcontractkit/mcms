@@ -54,7 +54,8 @@ func Test_NewTimelockProposal(t *testing.T) {
 		{
 			name: "success: initializes a proposal from an io.Reader",
 			give: `{
-				"version": "v1",
+				"version": "1.0",
+				"kind": "TimelockProposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {
 					"16015286601757825753": {
@@ -84,7 +85,8 @@ func Test_NewTimelockProposal(t *testing.T) {
 			}`,
 			want: TimelockProposal{
 				BaseProposal: BaseProposal{
-					Version:     "v1",
+					Version:     "1.0",
+					Kind:        string(types.TimelockProposal),
 					ValidUntil:  2004259681,
 					Description: "Test proposal",
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -122,7 +124,8 @@ func Test_NewTimelockProposal(t *testing.T) {
 		{
 			name: "failure: invalid proposal",
 			give: `{
-				"version": "1",
+				"version": "1.0",
+				"kind": "TimelockProposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {},
 				"description": "Test proposal",
@@ -182,6 +185,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 			give: &TimelockProposal{
 				BaseProposal: BaseProposal{
 					Version:     "v1",
+					Kind:        string(types.TimelockProposal),
 					ValidUntil:  2004259681,
 					Description: "Test proposal",
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -210,6 +214,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 			},
 			want: `{
 				"version": "v1",
+				"kind": "TimelockProposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {
 					"16015286601757825753": {

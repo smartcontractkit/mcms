@@ -111,6 +111,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
+			Kind:                 string(types.Proposal),
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -175,6 +176,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
+			Kind:                 string(types.Proposal),
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -263,6 +265,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
+			Kind:                 string(types.Proposal),
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -337,6 +340,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
+			Kind:                 string(types.Proposal),
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -414,6 +418,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
+			Kind:                 string(types.Proposal),
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -497,6 +502,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
+			Kind:                 string(types.Proposal),
 			Description:          "Grants RBACTimelock 'Proposer','Canceller','Executor', and 'Bypasser' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -546,6 +552,7 @@ func Test_Signable_Sign(t *testing.T) {
 	proposal := &Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
+			Kind:                 string(types.Proposal),
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -592,7 +599,7 @@ func Test_Signable_Sign(t *testing.T) {
 			name:         "failure: invalid proposal",
 			giveProposal: &Proposal{},
 			giveSigner:   NewPrivateKeySigner(privKey),
-			wantErr:      "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+			wantErr:      "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
 		},
 		{
 			name:         "failure: could not sign",
@@ -639,6 +646,7 @@ func Test_SignAndAppend(t *testing.T) {
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "1.0",
+			Kind:                 string(types.Proposal),
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			ValidUntil:           2004259681,
 			Signatures:           []types.Signature{},
@@ -684,7 +692,7 @@ func Test_SignAndAppend(t *testing.T) {
 		{
 			name:    "failure: invalid proposal",
 			give:    Proposal{},
-			wantErr: "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+			wantErr: "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
 		},
 	}
 
