@@ -61,6 +61,7 @@ func NewProposalWithTimeLock(
 	p := TimelockProposal{
 		BaseProposal: BaseProposal{
 			Version:              version,
+			Kind:                 types.KindTimelockProposal,
 			ValidUntil:           validUntil,
 			Signatures:           signatures,
 			OverridePreviousRoot: overridePreviousRoot,
@@ -86,6 +87,10 @@ func (m *TimelockProposal) Validate() error {
 	var validate = validator.New()
 	if err := validate.Struct(m); err != nil {
 		return err
+	}
+
+	if m.Kind != types.KindTimelockProposal {
+		return NewInvalidProposalKindError(m.Kind, types.KindTimelockProposal)
 	}
 
 	// Validate all chains in transactions have an entry in chain metadata

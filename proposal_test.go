@@ -52,7 +52,8 @@ func Test_NewProposal(t *testing.T) {
 		{
 			name: "success: initializes a proposal from an io.Reader",
 			give: `{
-				"version": "1",
+				"version": "v1",
+				"kind": "Proposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {
 					"3379446385462418246": {}
@@ -65,7 +66,8 @@ func Test_NewProposal(t *testing.T) {
 			}`,
 			want: Proposal{
 				BaseProposal: BaseProposal{
-					Version:    "1",
+					Version:    "v1",
+					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {},
@@ -84,7 +86,8 @@ func Test_NewProposal(t *testing.T) {
 		{
 			name: "failure: invalid proposal",
 			give: `{
-				"version": "1",
+				"version": "v1",
+				"kind": "Proposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {},
 				"transactions": [
@@ -92,6 +95,23 @@ func Test_NewProposal(t *testing.T) {
 				]
 			}`,
 			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
+		},
+		{
+			name: "failure: invalid proposal kind",
+			give: `{
+				"version": "v1",
+				"kind": "TimelockProposal",
+				"validUntil": 2004259681,
+				"chainMetadata": {
+					"3379446385462418246": {}
+				},
+				"transactions": [
+					{
+						"chainSelector": 3379446385462418246
+					}
+				]
+			}`,
+			wantErr: "invalid proposal kind: TimelockProposal, value accepted is Proposal",
 		},
 	}
 
@@ -128,6 +148,7 @@ func Test_WriteProposal(t *testing.T) {
 			give: &Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "1",
+					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {},
@@ -139,6 +160,7 @@ func Test_WriteProposal(t *testing.T) {
 			},
 			want: `{
 				"version": "1",
+				"kind": "Proposal",
 				"description": "",
 				"validUntil": 2004259681,
 				"overridePreviousRoot": false,
@@ -208,7 +230,8 @@ func Test_Proposal_Validate(t *testing.T) {
 			name: "valid",
 			give: Proposal{
 				BaseProposal: BaseProposal{
-					Version:    "1",
+					Version:    "v1",
+					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					Signatures: []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -245,13 +268,14 @@ func Test_Proposal_Validate(t *testing.T) {
 				"Key: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag",
 				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag",
 				"Key: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+				"Key: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag",
 			},
 		},
 		{
 			name: "min validation",
 			give: Proposal{
 				BaseProposal: BaseProposal{
-					Version:       "1",
+					Version:       "v1",
 					ValidUntil:    2004259681,
 					Signatures:    []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
@@ -261,13 +285,15 @@ func Test_Proposal_Validate(t *testing.T) {
 			wantErrs: []string{
 				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
 				"Key: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
+				"Key: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag",
 			},
 		},
 		{
 			name: "invalid chain metadata",
 			give: Proposal{
 				BaseProposal: BaseProposal{
-					Version:    "1",
+					Version:    "v1",
+					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					Signatures: []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
