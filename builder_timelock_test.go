@@ -31,11 +31,10 @@ func TestTimelockProposalBuilder(t *testing.T) {
 	require.NoError(t, err)
 
 	tests := []struct {
-		name             string
-		setup            func(*mcms.TimelockProposalBuilder)
-		expectError      bool
-		expectedProposal *mcms.MCMSWithTimelockProposal
-		wantErrs         []string
+		name     string
+		setup    func(*mcms.TimelockProposalBuilder)
+		want     *mcms.MCMSWithTimelockProposal
+		wantErrs []string
 	}{
 		{
 			name: "valid timelock proposal",
@@ -59,7 +58,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 						},
 					})
 			},
-			expectedProposal: &mcms.MCMSWithTimelockProposal{
+			want: &mcms.MCMSWithTimelockProposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
 					ValidUntil:           fixedValidUntilCasted,
@@ -87,8 +86,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					},
 				},
 			},
-			expectError: false,
-			wantErrs:    nil,
+			wantErrs: nil,
 		},
 		{
 			name: "valid timelock proposal with SetTransactions",
@@ -113,7 +111,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					},
 					})
 			},
-			expectedProposal: &mcms.MCMSWithTimelockProposal{
+			want: &mcms.MCMSWithTimelockProposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "1.0",
 					ValidUntil:           fixedValidUntilCasted,
@@ -141,8 +139,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					},
 				},
 			},
-			expectError: false,
-			wantErrs:    nil,
+			wantErrs: nil,
 		},
 		{
 			name: "missing delay on schedule operation",
@@ -166,8 +163,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 						},
 					})
 			},
-			expectError:      true,
-			expectedProposal: nil,
+			want: nil,
 			wantErrs: []string{
 				"invalid delay: ",
 			},
@@ -194,8 +190,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 						},
 					})
 			},
-			expectError:      true,
-			expectedProposal: nil,
+			want: nil,
 			wantErrs: []string{
 				"invalid delay: invalid_duration",
 			},
@@ -222,8 +217,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 						},
 					})
 			},
-			expectError:      true,
-			expectedProposal: nil,
+			want: nil,
 			wantErrs: []string{
 				"Key: 'MCMSWithTimelockProposal.TimelockAddresses' Error:Field validation for 'TimelockAddresses' failed on the 'min' tag",
 			},
@@ -241,8 +235,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress")
 				// No transactions added
 			},
-			expectError:      true,
-			expectedProposal: nil,
+			want: nil,
 			wantErrs: []string{
 				"Key: 'MCMSWithTimelockProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
 			},
@@ -269,8 +262,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 						},
 					})
 			},
-			expectError:      true,
-			expectedProposal: nil,
+			want: nil,
 			wantErrs: []string{
 				fmt.Sprintf("invalid valid until: %d", pastValidUntil),
 			},
@@ -296,8 +288,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 						},
 					})
 			},
-			expectError:      true,
-			expectedProposal: nil,
+			want: nil,
 			wantErrs: []string{
 				"Key: 'MCMSWithTimelockProposal.Operation' Error:Field validation for 'Operation' failed on the 'oneof' tag",
 			},
@@ -312,7 +303,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			tt.setup(builder)
 
 			proposal, err := builder.Build()
-			if tt.expectError {
+			if tt.wantErrs != nil {
 				require.Error(t, err)
 				assert.Nil(t, proposal)
 
@@ -334,7 +325,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 				assert.NotNil(t, proposal)
 
 				// Compare the built proposal to the expected proposal
-				assert.Equal(t, tt.expectedProposal, proposal)
+				assert.Equal(t, tt.want, proposal)
 			}
 		})
 	}
