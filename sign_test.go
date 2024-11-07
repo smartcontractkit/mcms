@@ -25,13 +25,13 @@ func Test_Sign(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		give    *MCMSProposal
+		give    *Proposal
 		want    types.Signature
 		wantErr string
 	}{
 		{
 			name: "success: signs the proposal",
-			give: &MCMSProposal{
+			give: &Proposal{
 				BaseProposal: BaseProposal{
 					Version:              "1.0",
 					Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
@@ -66,8 +66,8 @@ func Test_Sign(t *testing.T) {
 		},
 		{
 			name:    "failure: invalid proposal",
-			give:    &MCMSProposal{},
-			wantErr: "Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+			give:    &Proposal{},
+			wantErr: "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
 		},
 	}
 

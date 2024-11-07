@@ -27,12 +27,12 @@ func Test_Proposal_Validate(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		give     MCMSProposal
+		give     Proposal
 		wantErrs []string
 	}{
 		{
 			name: "valid",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "1",
 					ValidUntil: 2004259681,
@@ -63,19 +63,19 @@ func Test_Proposal_Validate(t *testing.T) {
 		},
 		{
 			name: "required fields validation",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{},
 			},
 			wantErrs: []string{
-				"Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag",
-				"Key: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag",
-				"Key: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag",
-				"Key: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+				"Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag",
+				"Key: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag",
+				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag",
+				"Key: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
 			},
 		},
 		{
 			name: "min validation",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					Version:       "1",
 					ValidUntil:    2004259681,
@@ -85,13 +85,13 @@ func Test_Proposal_Validate(t *testing.T) {
 				Transactions: []types.ChainOperation{},
 			},
 			wantErrs: []string{
-				"Key: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
-				"Key: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
+				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
+				"Key: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
 			},
 		},
 		{
 			name: "invalid chain metadata",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "1",
 					ValidUntil: 2004259681,
@@ -148,7 +148,7 @@ func Test_NewProposal(t *testing.T) {
 	tests := []struct {
 		name    string
 		give    string
-		want    MCMSProposal
+		want    Proposal
 		wantErr string
 	}{
 		{
@@ -165,7 +165,7 @@ func Test_NewProposal(t *testing.T) {
 					}
 				]
 			}`,
-			want: MCMSProposal{
+			want: Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "1",
 					ValidUntil: 2004259681,
@@ -193,7 +193,7 @@ func Test_NewProposal(t *testing.T) {
 					{}
 				]
 			}`,
-			wantErr: "Key: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
+			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
 		},
 	}
 
@@ -220,7 +220,7 @@ func Test_Proposal_AddSignature(t *testing.T) {
 
 	signature := types.Signature{}
 
-	proposal := MCMSProposal{}
+	proposal := Proposal{}
 
 	assert.Empty(t, proposal.Signatures)
 
@@ -234,13 +234,13 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		give    MCMSProposal
+		give    Proposal
 		want    map[types.ChainSelector]sdk.Encoder
 		wantErr string
 	}{
 		{
 			name: "success",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -261,7 +261,7 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 		},
 		{
 			name: "failure: could not create encoder",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -292,7 +292,7 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 func Test_Proposal_UseSimulatedBackend(t *testing.T) {
 	t.Parallel()
 
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{},
 	}
 
@@ -305,7 +305,7 @@ func Test_Proposal_UseSimulatedBackend(t *testing.T) {
 func Test_Proposal_ChainSelectors(t *testing.T) {
 	t.Parallel()
 
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 				TestChain1: {},
@@ -324,13 +324,13 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		give     MCMSProposal
+		give     Proposal
 		wantRoot common.Hash
 		wantErr  string
 	}{
 		{
 			name: "success: generates a merkle tree",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {StartingOpCount: 5},
@@ -368,7 +368,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 		},
 		{
 			name: "failure: could not get encoders",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -380,7 +380,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 		},
 		{
 			name: "failure: missing metadata when fetching nonces",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {StartingOpCount: 5},
@@ -394,7 +394,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 		},
 		{
 			name: "failure: nonce must be in the range of a uint32",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {StartingOpCount: uint64(math.MaxUint32 + 1)},
@@ -408,7 +408,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 		},
 		{
 			name: "failure: could not hash operation due to invalid additional values",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {StartingOpCount: 5},
@@ -452,7 +452,7 @@ func Test_Proposal_TransactionCounts(t *testing.T) {
 		{ChainSelector: TestChain2},
 	}
 
-	proposal := MCMSProposal{
+	proposal := Proposal{
 		Transactions: transactions,
 	}
 
@@ -469,13 +469,13 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		give    MCMSProposal
+		give    Proposal
 		want    []uint64
 		wantErr string
 	}{
 		{
 			name: "success: returns the nonces for each transaction",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						TestChain1: {StartingOpCount: 5},
@@ -495,7 +495,7 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 		},
 		{
 			name: "failure: chain metadata not found for transaction",
-			give: MCMSProposal{
+			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
 				},

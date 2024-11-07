@@ -35,17 +35,17 @@ type BaseProposal struct {
 	useSimulatedBackend bool `json:"-"`
 }
 
-// MCMSProposal is a struct where the target contract is an MCMS contract
+// Proposal is a struct where the target contract is an MCMS contract
 // with no forwarder contracts. This type does not support any type of atomic contract
 // call batching, as the MCMS contract natively doesn't support batching
-type MCMSProposal struct {
+type Proposal struct {
 	BaseProposal
 
 	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1,dive,required"`
 }
 
-func NewProposal(reader io.Reader) (*MCMSProposal, error) {
-	var out MCMSProposal
+func NewProposal(reader io.Reader) (*Proposal, error) {
+	var out Proposal
 	err := json.NewDecoder(reader).Decode(&out)
 	if err != nil {
 		return nil, err
@@ -59,22 +59,22 @@ func NewProposal(reader io.Reader) (*MCMSProposal, error) {
 }
 
 // MarshalJSON marshals the proposal to JSON
-func (m *MCMSProposal) MarshalJSON() ([]byte, error) {
+func (m *Proposal) MarshalJSON() ([]byte, error) {
 	// First, check the proposal is valid
 	if err := m.Validate(); err != nil {
 		return nil, err
 	}
 
 	// Let the default JSON marshaller handle everything
-	type Alias MCMSProposal
+	type Alias Proposal
 
 	return json.Marshal((*Alias)(m))
 }
 
 // UnmarshalJSON unmarshals the JSON to a proposal
-func (m *MCMSProposal) UnmarshalJSON(data []byte) error {
+func (m *Proposal) UnmarshalJSON(data []byte) error {
 	// Unmarshal all fields using the default unmarshaller
-	type Alias MCMSProposal
+	type Alias Proposal
 	if err := json.Unmarshal(data, (*Alias)(m)); err != nil {
 		return err
 	}
@@ -87,7 +87,7 @@ func (m *MCMSProposal) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (m *MCMSProposal) Validate() error {
+func (m *Proposal) Validate() error {
 	// Run tag-based validation
 	var validate = validator.New()
 	if err := validate.Struct(m); err != nil {
@@ -115,17 +115,17 @@ func (m *MCMSProposal) Validate() error {
 //
 // Note that not all chain families may support this feature, so ensure your tests are only running
 // against chains that support it.
-func (m *MCMSProposal) UseSimulatedBackend(b bool) {
+func (m *Proposal) UseSimulatedBackend(b bool) {
 	m.useSimulatedBackend = b
 }
 
 // ChainSelectors returns a sorted list of chain selectors from the chains' metadata
-func (m *MCMSProposal) ChainSelectors() []types.ChainSelector {
+func (m *Proposal) ChainSelectors() []types.ChainSelector {
 	return slices.Sorted(maps.Keys(m.ChainMetadata))
 }
 
 // MerkleTree generates a merkle tree from the proposal's chain metadata and transactions.
-func (m *MCMSProposal) MerkleTree() (*merkle.Tree, error) {
+func (m *Proposal) MerkleTree() (*merkle.Tree, error) {
 	encoders, err := m.GetEncoders()
 	if err != nil {
 		return nil, wrapTreeGenErr(err)
@@ -184,7 +184,7 @@ func (m *MCMSProposal) MerkleTree() (*merkle.Tree, error) {
 	return merkle.NewTree(hashLeaves), nil
 }
 
-func (m *MCMSProposal) SigningHash() (common.Hash, error) {
+func (m *Proposal) SigningHash() (common.Hash, error) {
 	tree, err := m.MerkleTree()
 	if err != nil {
 		return common.Hash{}, err
@@ -205,7 +205,7 @@ func (m *MCMSProposal) SigningHash() (common.Hash, error) {
 // }
 
 // TransactionCounts returns a map of chain selectors to the number of transactions for that chain
-func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
+func (m *Proposal) TransactionCounts() map[types.ChainSelector]uint64 {
 	txCounts := make(map[types.ChainSelector]uint64)
 	for _, tx := range m.Transactions {
 		txCounts[tx.ChainSelector]++
@@ -220,7 +220,7 @@ func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
 // It returns a slice of nonces, where each nonce corresponds to a transaction in the same order
 // as the transactions slice. The nonce is calculated as the local index of the transaction with
 // respect to it's chain  selector, plus the starting op count for that chain selector.
-func (m *MCMSProposal) TransactionNonces() ([]uint64, error) {
+func (m *Proposal) TransactionNonces() ([]uint64, error) {
 	// Map to keep track of local index counts for each ChainSelector
 	chainIndexMap := make(map[types.ChainSelector]uint64, len(m.ChainMetadata))
 
@@ -246,12 +246,12 @@ func (m *MCMSProposal) TransactionNonces() ([]uint64, error) {
 }
 
 // AddSignature adds a signature to the proposal
-func (m *MCMSProposal) AddSignature(signature types.Signature) {
+func (m *Proposal) AddSignature(signature types.Signature) {
 	m.Signatures = append(m.Signatures, signature)
 }
 
 // GetEncoders generates encoders for each chain in the proposal's chain metadata.
-func (m *MCMSProposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
+func (m *Proposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
 	txCounts := m.TransactionCounts()
 	encoders := make(map[types.ChainSelector]sdk.Encoder)
 	for chainSelector := range m.ChainMetadata {
@@ -276,7 +276,7 @@ func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
 }
 
 // proposalValidateBasic basic validation for an MCMS proposal
-func proposalValidateBasic(proposalObj MCMSProposal) error {
+func proposalValidateBasic(proposalObj Proposal) error {
 	validUntil := time.Unix(int64(proposalObj.ValidUntil), 0)
 
 	if time.Now().After(validUntil) {

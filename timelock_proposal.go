@@ -14,7 +14,7 @@ import (
 
 var ZERO_HASH = common.Hash{}
 
-type MCMSWithTimelockProposal struct {
+type TimelockProposal struct {
 	BaseProposal
 
 	Operation         types.TimelockAction           `json:"operation" validate:"required,oneof=schedule cancel bypass"`
@@ -35,8 +35,8 @@ func NewProposalWithTimeLock(
 	batches []types.BatchChainOperation,
 	timelockAction types.TimelockAction,
 	timelockDelay string,
-) (*MCMSWithTimelockProposal, error) {
-	p := MCMSWithTimelockProposal{
+) (*TimelockProposal, error) {
+	p := TimelockProposal{
 		BaseProposal: BaseProposal{
 			Version:              version,
 			ValidUntil:           validUntil,
@@ -60,22 +60,22 @@ func NewProposalWithTimeLock(
 }
 
 // MarshalJSON convert the proposal to JSON
-func (m *MCMSWithTimelockProposal) MarshalJSON() ([]byte, error) {
+func (m *TimelockProposal) MarshalJSON() ([]byte, error) {
 	// First, check the proposal is valid
 	if err := m.Validate(); err != nil {
 		return nil, err
 	}
 
 	// Let the default JSON marshaller handle everything
-	type Alias MCMSWithTimelockProposal
+	type Alias TimelockProposal
 
 	return json.Marshal((*Alias)(m))
 }
 
 // UnmarshalJSON convert the JSON to a proposal
-func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
+func (m *TimelockProposal) UnmarshalJSON(data []byte) error {
 	// Unmarshal all fields using the default unmarshaller
-	type Alias MCMSWithTimelockProposal
+	type Alias TimelockProposal
 	if err := json.Unmarshal(data, (*Alias)(m)); err != nil {
 		return err
 	}
@@ -88,7 +88,7 @@ func (m *MCMSWithTimelockProposal) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (m *MCMSWithTimelockProposal) Validate() error {
+func (m *TimelockProposal) Validate() error {
 	// Run tag-based validation
 	var validate = validator.New()
 	if err := validate.Struct(m); err != nil {
@@ -120,7 +120,7 @@ func (m *MCMSWithTimelockProposal) Validate() error {
 
 // Convert the proposal to an MCMS only proposal.
 // Every transaction to be sent from the Timelock is encoded with the corresponding timelock method.
-func (m *MCMSWithTimelockProposal) Convert() (MCMSProposal, error) {
+func (m *TimelockProposal) Convert() (Proposal, error) {
 	baseProposal := m.BaseProposal
 
 	// Start predecessor map with all chains pointing to the zero hash
@@ -139,7 +139,7 @@ func (m *MCMSWithTimelockProposal) Convert() (MCMSProposal, error) {
 	}
 
 	// Convert transactions into timelock wrapped transactions using the helper function
-	result := MCMSProposal{
+	result := Proposal{
 		BaseProposal: baseProposal,
 	}
 	for _, t := range m.Transactions {
@@ -150,7 +150,7 @@ func (m *MCMSWithTimelockProposal) Convert() (MCMSProposal, error) {
 			t, timelockAddress, m.Delay, m.Operation, predecessor,
 		)
 		if err != nil {
-			return MCMSProposal{}, err
+			return Proposal{}, err
 		}
 
 		// Append the converted operation to the MCMS only proposal
@@ -163,12 +163,12 @@ func (m *MCMSWithTimelockProposal) Convert() (MCMSProposal, error) {
 	return result, nil
 }
 
-func (m *MCMSWithTimelockProposal) AddSignature(signature types.Signature) {
+func (m *TimelockProposal) AddSignature(signature types.Signature) {
 	m.Signatures = append(m.Signatures, signature)
 }
 
 // timeLockProposalValidateBasic basic validation for an MCMS proposal
-func timeLockProposalValidateBasic(timelockProposal MCMSWithTimelockProposal) error {
+func timeLockProposalValidateBasic(timelockProposal TimelockProposal) error {
 	// Get the current Unix timestamp as an int64
 	currentTime := time.Now().Unix()
 

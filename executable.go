@@ -13,7 +13,7 @@ import (
 // information required to call SetRoot and Execute on the various chains that the proposal
 // targets.
 type Executable struct {
-	proposal  *MCMSProposal
+	proposal  *Proposal
 	executors map[types.ChainSelector]sdk.Executor
 	encoders  map[types.ChainSelector]sdk.Encoder
 	tree      *merkle.Tree
@@ -22,7 +22,7 @@ type Executable struct {
 
 // NewExecutable creates a new Executable from a proposal and a map of executors.
 func NewExecutable(
-	proposal *MCMSProposal,
+	proposal *Proposal,
 	executors map[types.ChainSelector]sdk.Executor,
 ) (*Executable, error) {
 	// Generate the encoders from the proposal
