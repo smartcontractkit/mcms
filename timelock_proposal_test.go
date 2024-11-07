@@ -87,7 +87,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			batches:        validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
-			expectedError:  errors.New("Key: 'MCMSWithTimelockProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag"),
+			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag"),
 		},
 		{
 			name:           "Invalid validUntil",
@@ -101,7 +101,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			batches:        validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
-			expectedError:  errors.New("Key: 'MCMSWithTimelockProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag"),
+			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag"),
 		},
 		{
 			name:           "Invalid chainMetadata",
@@ -115,7 +115,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			batches:        validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
-			expectedError:  errors.New("Key: 'MCMSWithTimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag"),
+			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag"),
 		},
 		{
 			name:           "Invalid timelockAddresses",
@@ -129,7 +129,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			batches:        validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
-			expectedError:  errors.New("Key: 'MCMSWithTimelockProposal.TimelockAddresses' Error:Field validation for 'TimelockAddresses' failed on the 'required' tag"),
+			expectedError:  errors.New("Key: 'TimelockProposal.TimelockAddresses' Error:Field validation for 'TimelockAddresses' failed on the 'required' tag"),
 		},
 		{
 			name:           "Invalid batches",
@@ -143,7 +143,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			batches:        nil,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
-			expectedError:  errors.New("Key: 'MCMSWithTimelockProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag"),
+			expectedError:  errors.New("Key: 'TimelockProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag"),
 		},
 		{
 			name:           "Invalid timelockAction",
@@ -157,7 +157,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			batches:        validBatches,
 			timelockAction: types.TimelockAction("invalid"),
 			timelockDelay:  "1h",
-			expectedError:  errors.New("Key: 'MCMSWithTimelockProposal.Operation' Error:Field validation for 'Operation' failed on the 'oneof' tag"),
+			expectedError:  errors.New("Key: 'TimelockProposal.Operation' Error:Field validation for 'Operation' failed on the 'oneof' tag"),
 		},
 		{
 			name:           "Invalid timelockDelay",
@@ -275,13 +275,13 @@ func TestMCMSWithTimelockProposal_MarshalJSON(t *testing.T) {
 	require.NoError(t, err)
 	tests := []struct {
 		name       string
-		proposal   MCMSWithTimelockProposal
+		proposal   TimelockProposal
 		wantErr    bool
 		expectJSON string
 	}{
 		{
 			name: "successful marshalling",
-			proposal: MCMSWithTimelockProposal{
+			proposal: TimelockProposal{
 				BaseProposal: BaseProposal{
 					Version:     "MCMSWithTimelock",
 					ValidUntil:  4128029039,
@@ -315,7 +315,7 @@ func TestMCMSWithTimelockProposal_MarshalJSON(t *testing.T) {
 		},
 		{
 			name: "error during marshalling transactions",
-			proposal: MCMSWithTimelockProposal{
+			proposal: TimelockProposal{
 				Transactions: []types.BatchChainOperation{
 					{
 						ChainSelector: types.ChainSelector(1),
@@ -365,13 +365,13 @@ func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
 		name        string
 		jsonData    string
 		expectedErr error
-		expected    MCMSWithTimelockProposal
+		expected    TimelockProposal
 	}{
 		{
 			name:        "successful unmarshalling",
 			jsonData:    compactJsonProposal,
 			expectedErr: nil,
-			expected: MCMSWithTimelockProposal{
+			expected: TimelockProposal{
 				BaseProposal: BaseProposal{
 					Version:     "MCMSWithTimelock",
 					ValidUntil:  4128029039,
@@ -435,7 +435,7 @@ func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
   "validUntil": 4128029039,
   "version": "MCMSWithTimelock"
 }`, // invalid operation field
-			expectedErr: errors.New("Key: 'MCMSWithTimelockProposal.Operation' Error:Field validation for 'Operation' failed on the 'oneof' tag"),
+			expectedErr: errors.New("Key: 'TimelockProposal.Operation' Error:Field validation for 'Operation' failed on the 'oneof' tag"),
 		},
 	}
 
@@ -443,7 +443,7 @@ func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			var got MCMSWithTimelockProposal
+			var got TimelockProposal
 			err := json.Unmarshal([]byte(tt.jsonData), &got)
 			if tt.expectedErr != nil {
 				assert.Equal(t, tt.expectedErr.Error(), err.Error())

@@ -16,14 +16,14 @@ var (
 	ErrInspectorsNotProvided = errors.New("inspectors not provided")
 )
 
-// Signable provides signing functionality for an MCMSProposal. It contains all the necessary
+// Signable provides signing functionality for an Proposal. It contains all the necessary
 // information required to validate, sign, and check the quorum of a proposal.
 
 // Signable contains the proposal itself, a Merkle tree representation of the proposal, encoders for
 // different chains to perform the signing, while the inspectors are used for retrieving contract
 // configurations and operational counts on chain.
 type Signable struct {
-	proposal   *MCMSProposal
+	proposal   *Proposal
 	tree       *merkle.Tree
 	encoders   map[types.ChainSelector]sdk.Encoder
 	inspectors map[types.ChainSelector]sdk.Inspector
@@ -32,7 +32,7 @@ type Signable struct {
 // NewSignable creates a new Signable from a proposal and inspectors, and initializes the encoders
 // and merkle tree.
 func NewSignable(
-	proposal *MCMSProposal,
+	proposal *Proposal,
 	inspectors map[types.ChainSelector]sdk.Inspector,
 ) (*Signable, error) {
 	encoders, err := proposal.GetEncoders()
