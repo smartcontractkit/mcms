@@ -157,7 +157,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
-	err = Sign(signable, NewPrivateKeySigner(sim.Signers[0].PrivateKey))
+	_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -272,7 +272,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 
 	// Sign the hash
 	for i := range 3 {
-		err = Sign(signable, NewPrivateKeySigner(sim.Signers[i].PrivateKey))
+		_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[i].PrivateKey))
 		require.NoError(t, err)
 	}
 
@@ -396,7 +396,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
-	err = Sign(signable, NewPrivateKeySigner(sim.Signers[0].PrivateKey))
+	_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -527,7 +527,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	// Sign the hash
 	for i := range 3 {
-		err = Sign(signable, NewPrivateKeySigner(sim.Signers[i].PrivateKey))
+		_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[i].PrivateKey))
 		require.NoError(t, err)
 	}
 

@@ -245,8 +245,8 @@ func (m *Proposal) TransactionNonces() ([]uint64, error) {
 	return txNonces, nil
 }
 
-// AddSignature adds a signature to the proposal
-func (m *Proposal) AddSignature(signature types.Signature) {
+// AppendSignature appends a signature to the proposal's signature list.
+func (m *Proposal) AppendSignature(signature types.Signature) {
 	m.Signatures = append(m.Signatures, signature)
 }
 
