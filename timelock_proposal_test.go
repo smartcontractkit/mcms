@@ -1,14 +1,13 @@
 package mcms
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
-	"math/big"
+	"io"
+	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -41,6 +40,238 @@ var validBatches = []types.BatchChainOperation{
 			validOp,
 		},
 	},
+}
+
+func Test_NewTimelockProposal(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		give    string
+		want    TimelockProposal
+		wantErr string
+	}{
+		{
+			name: "success: initializes a proposal from an io.Reader",
+			give: `{
+				"version": "v1",
+				"validUntil": 2004259681,
+				"chainMetadata": {
+					"16015286601757825753": {
+						"mcmAddress": "0x0000000000000000000000000000000000000000",
+						"startingOpCount": 0
+					}
+				},
+				"description": "Test proposal",
+				"overridePreviousRoot": false,
+				"operation": "schedule",
+				"delay": "1h",
+				"timelockAddresses": {
+					"16015286601757825753": "0x01"
+				},
+				"transactions": [
+					{
+						"chainSelector": 16015286601757825753,
+						"batch": [
+							{
+								"to": "0x0000000000000000000000000000000000000000",
+								"additionalFields": {"value": 0},
+								"data": "ZGF0YQ=="
+							}
+						]
+					}
+				]
+			}`,
+			want: TimelockProposal{
+				BaseProposal: BaseProposal{
+					Version:     "v1",
+					ValidUntil:  2004259681,
+					Description: "Test proposal",
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain2: {
+							StartingOpCount: 0,
+							MCMAddress:      "0x0000000000000000000000000000000000000000",
+						},
+					},
+					OverridePreviousRoot: false,
+				},
+				Operation: types.TimelockActionSchedule,
+				Delay:     "1h",
+				TimelockAddresses: map[types.ChainSelector]string{
+					TestChain2: "0x01",
+				},
+				Transactions: []types.BatchChainOperation{
+					{
+						ChainSelector: TestChain2,
+						Batch: []types.Operation{
+							{
+								To:               "0x0000000000000000000000000000000000000000",
+								AdditionalFields: []byte(`{"value": 0}`),
+								Data:             []byte("data"),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name:    "failure: could not unmarshal JSON",
+			give:    `invalid`,
+			wantErr: "invalid character 'i' looking for beginning of value",
+		},
+		{
+			name: "failure: invalid proposal",
+			give: `{
+				"version": "1",
+				"validUntil": 2004259681,
+				"chainMetadata": {},
+				"description": "Test proposal",
+				"overridePreviousRoot": false,
+				"operation": "schedule",
+				"delay": "1h",
+				"timelockAddresses": {
+					"16015286601757825753": "0x01"
+				},
+				"transactions": [
+					{
+						"chainSelector": 16015286601757825753,
+						"batch": [
+							{
+								"to": "0x0000000000000000000000000000000000000000",
+								"additionalFields": {"value": 0},
+								"data": "ZGF0YQ=="
+							}
+						]
+					}
+				]
+			}`,
+			wantErr: "Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			give := strings.NewReader(tt.give)
+
+			got, err := NewTimelockProposal(give)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, *got)
+			}
+		})
+	}
+}
+
+func Test_WriteTimelockProposal(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		give       *TimelockProposal
+		giveWriter func() io.Writer // Use this to overwrite the default writer
+		want       string
+		wantErr    string
+	}{
+		{
+			name: "success: writes a proposal to an io.Writer",
+			give: &TimelockProposal{
+				BaseProposal: BaseProposal{
+					Version:     "v1",
+					ValidUntil:  2004259681,
+					Description: "Test proposal",
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						TestChain2: {
+							StartingOpCount: 0,
+							MCMAddress:      "0x0000000000000000000000000000000000000000",
+						},
+					},
+					OverridePreviousRoot: false,
+				},
+				Operation:         types.TimelockActionSchedule,
+				Delay:             "1h",
+				TimelockAddresses: map[types.ChainSelector]string{},
+				Transactions: []types.BatchChainOperation{
+					{
+						ChainSelector: TestChain2,
+						Batch: []types.Operation{
+							{
+								To:               "0x0000000000000000000000000000000000000000",
+								AdditionalFields: []byte(`{"value": 0}`),
+								Data:             []byte("data"),
+							},
+						},
+					},
+				},
+			},
+			want: `{
+				"version": "v1",
+				"validUntil": 2004259681,
+				"chainMetadata": {
+					"16015286601757825753": {
+						"mcmAddress": "0x0000000000000000000000000000000000000000",
+						"startingOpCount": 0
+					}
+				},
+				"description": "Test proposal",
+				"overridePreviousRoot": false,
+				"operation": "schedule",
+				"delay": "1h",
+				"signatures": null,
+				"timelockAddresses": {},
+				"transactions": [
+					{
+						"chainSelector": 16015286601757825753,
+						"batch": [
+							{
+								"to": "0x0000000000000000000000000000000000000000",
+								"additionalFields": {"value": 0},
+								"data": "ZGF0YQ==",
+								"contractType": "",
+								"tags": null
+							}
+						]
+					}
+				]
+			}`,
+		},
+		{
+			name: "success: writes a proposal to an io.Writer",
+			giveWriter: func() io.Writer {
+				return newFakeWriter(0, errors.New("write error"))
+			},
+			give:    &TimelockProposal{},
+			wantErr: "write error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var w io.Writer
+			b := new(strings.Builder)
+
+			if tt.giveWriter != nil {
+				w = tt.giveWriter()
+			} else {
+				w = b
+			}
+
+			err := WriteTimelockProposal(w, tt.give)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.JSONEq(t, tt.want, b.String())
+			}
+		})
+	}
 }
 
 func TestTimelockProposal_Validation(t *testing.T) {
@@ -229,234 +460,4 @@ func TestTimelockProposal_Convert(t *testing.T) {
 	assert.Equal(t, validChainMetadata, mcmsProposal.ChainMetadata)
 	assert.Equal(t, "description", mcmsProposal.Description)
 	assert.Len(t, mcmsProposal.Transactions, 1)
-}
-
-const validJsonProposal = `{
-  "chainMetadata": {
-    "16015286601757825753": {
-      "mcmAddress": "0x0000000000000000000000000000000000000000",
-      "startingOpCount": 0
-    }
-  },
-  "description": "Test proposal",
-  "delay": "1h",
-  "operation": "schedule",
-  "overridePreviousRoot": true,
-  "signatures": null,
-  "timelockAddresses": {"16015286601757825753": "someaddress"},
-  "transactions": [
-    {
-      "batch": [
-        {
-          "additionalFields": {
-            "value": 0
-          },
-          "contractType": "",
-          "data": "ZGF0YQ==",
-          "tags": null,
-          "to": "0x0000000000000000000000000000000000000000"
-        }
-      ],
-      "chainIdentifier": 16015286601757825753
-    }
-  ],
-  "validUntil": 4128029039,
-  "version": "MCMSWithTimelock"
-}`
-
-func TestMCMSWithTimelockProposal_MarshalJSON(t *testing.T) {
-	t.Parallel()
-
-	additionalFields, err := json.Marshal(struct {
-		Value *big.Int `json:"value"`
-	}{
-		Value: big.NewInt(0),
-	})
-	require.NoError(t, err)
-	tests := []struct {
-		name       string
-		proposal   TimelockProposal
-		wantErr    bool
-		expectJSON string
-	}{
-		{
-			name: "successful marshalling",
-			proposal: TimelockProposal{
-				BaseProposal: BaseProposal{
-					Version:     "MCMSWithTimelock",
-					ValidUntil:  4128029039,
-					Description: "Test proposal",
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector): {
-							StartingOpCount: 0,
-							MCMAddress:      "0x0000000000000000000000000000000000000000",
-						},
-					},
-					OverridePreviousRoot: true,
-				},
-				Operation: types.TimelockActionSchedule,
-				Delay:     "1h",
-				TimelockAddresses: map[types.ChainSelector]string{
-					types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector): "someaddress",
-				},
-				Transactions: []types.BatchChainOperation{
-					{
-						ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-						Batch: []types.Operation{
-							{
-								To:               "0x0000000000000000000000000000000000000000",
-								AdditionalFields: additionalFields,
-								Data:             []byte("data"),
-							},
-						},
-					},
-				},
-			},
-			wantErr:    false,
-			expectJSON: validJsonProposal,
-		},
-		{
-			name: "error during marshalling transactions",
-			proposal: TimelockProposal{
-				Transactions: []types.BatchChainOperation{
-					{
-						ChainSelector: types.ChainSelector(1),
-						Batch:         nil, // This will cause an error because Batch should not be nil
-					},
-				},
-			},
-			wantErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got, err := json.Marshal(&tt.proposal)
-			if tt.wantErr {
-				require.Error(t, err)
-			} else {
-				require.NoError(t, err)
-				assert.JSONEq(t, tt.expectJSON, string(got))
-			}
-		})
-	}
-}
-
-func TestMCMSWithTimelockProposal_UnmarshalJSON(t *testing.T) {
-	t.Parallel()
-
-	// Prepare the compact version of the validJsonProposal
-	var compactBuffer bytes.Buffer
-	err := json.Compact(&compactBuffer, []byte(validJsonProposal))
-	require.NoError(t, err)
-
-	// Use the compact JSON as the one-liner version
-	compactJsonProposal := compactBuffer.String()
-
-	// Preparing the additional fields
-	additionalFields, err := json.Marshal(struct {
-		Value *big.Int `json:"value"`
-	}{
-		Value: big.NewInt(0),
-	})
-	require.NoError(t, err)
-
-	tests := []struct {
-		name        string
-		jsonData    string
-		expectedErr error
-		expected    TimelockProposal
-	}{
-		{
-			name:        "successful unmarshalling",
-			jsonData:    compactJsonProposal,
-			expectedErr: nil,
-			expected: TimelockProposal{
-				BaseProposal: BaseProposal{
-					Version:     "MCMSWithTimelock",
-					ValidUntil:  4128029039,
-					Description: "Test proposal",
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						types.ChainSelector(16015286601757825753): {
-							StartingOpCount: 0,
-							MCMAddress:      "0x0000000000000000000000000000000000000000",
-						},
-					},
-					OverridePreviousRoot: true,
-				},
-				Operation: types.TimelockActionSchedule,
-				Delay:     "1h",
-				TimelockAddresses: map[types.ChainSelector]string{
-					types.ChainSelector(16015286601757825753): "someaddress",
-				},
-				Transactions: []types.BatchChainOperation{
-					{
-						ChainSelector: types.ChainSelector(16015286601757825753),
-						Batch: []types.Operation{
-							{
-								To:               "0x0000000000000000000000000000000000000000",
-								AdditionalFields: additionalFields,
-								Data:             []byte("data"),
-							},
-						},
-					},
-				},
-			},
-		},
-		{
-			name: "error during unmarshalling invalid JSON",
-			jsonData: `{
-  "chainMetadata": {
-    "16015286601757825753": {
-      "mcmAddress": "0x0000000000000000000000000000000000000000",
-      "startingOpCount": 0
-    }
-  },
-  "description": "Test proposal",
-  "delay": "1h",
-  "operation": "INVALID",
-  "overridePreviousRoot": true,
-  "signatures": null,
-  "timelockAddresses": {
-   	"16015286601757825753": "someaddress"
-   },
-  "transactions": [
-    {
-      "batch": [
-        {
-          "additionalFields": {
-            "value": 0
-          },
-          "contractType": "",
-          "data": "ZGF0YQ==",
-          "tags": null,
-          "to": "0x0000000000000000000000000000000000000000"
-        }
-      ],
-      "chainIdentifier": 16015286601757825753
-    }
-  ],
-  "validUntil": 4128029039,
-  "version": "MCMSWithTimelock"
-}`, // invalid operation field
-			expectedErr: errors.New("Key: 'TimelockProposal.Operation' Error:Field validation for 'Operation' failed on the 'oneof' tag"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			var got TimelockProposal
-			err := json.Unmarshal([]byte(tt.jsonData), &got)
-			if tt.expectedErr != nil {
-				assert.Equal(t, tt.expectedErr.Error(), err.Error())
-			} else {
-				require.NoError(t, err)
-				assert.Equal(t, tt.expected, got)
-			}
-		})
-	}
 }

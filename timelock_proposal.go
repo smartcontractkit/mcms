@@ -2,6 +2,7 @@ package mcms
 
 import (
 	"encoding/json"
+	"io"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -21,6 +22,27 @@ type TimelockProposal struct {
 	Delay             string                         `json:"delay"` // Will validate conditionally in Validate method
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
 	Transactions      []types.BatchChainOperation    `json:"transactions" validate:"required,min=1"`
+}
+
+// NewTimelockProposal unmarshal data from the reader to JSON and returns a new TimelockProposal.
+func NewTimelockProposal(r io.Reader) (*TimelockProposal, error) {
+	var p TimelockProposal
+	if err := json.NewDecoder(r).Decode(&p); err != nil {
+		return nil, err
+	}
+
+	if err := p.Validate(); err != nil {
+		return nil, err
+	}
+
+	return &p, nil
+}
+
+func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
+	enc := json.NewEncoder(w)
+	enc.SetIndent("", "  ")
+
+	return enc.Encode(p)
 }
 
 // TODO: Could the input params be simplified here?
@@ -57,35 +79,6 @@ func NewProposalWithTimeLock(
 	}
 
 	return &p, nil
-}
-
-// MarshalJSON convert the proposal to JSON
-func (m *TimelockProposal) MarshalJSON() ([]byte, error) {
-	// First, check the proposal is valid
-	if err := m.Validate(); err != nil {
-		return nil, err
-	}
-
-	// Let the default JSON marshaller handle everything
-	type Alias TimelockProposal
-
-	return json.Marshal((*Alias)(m))
-}
-
-// UnmarshalJSON convert the JSON to a proposal
-func (m *TimelockProposal) UnmarshalJSON(data []byte) error {
-	// Unmarshal all fields using the default unmarshaller
-	type Alias TimelockProposal
-	if err := json.Unmarshal(data, (*Alias)(m)); err != nil {
-		return err
-	}
-
-	// Validate the proposal after unmarshalling
-	if err := m.Validate(); err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (m *TimelockProposal) Validate() error {
