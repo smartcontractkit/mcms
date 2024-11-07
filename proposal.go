@@ -35,6 +35,11 @@ type BaseProposal struct {
 	useSimulatedBackend bool `json:"-"`
 }
 
+// AppendSignature appends a signature to the proposal's signature list.
+func (p *BaseProposal) AppendSignature(signature types.Signature) {
+	p.Signatures = append(p.Signatures, signature)
+}
+
 // Proposal is a struct where the target contract is an MCMS contract
 // with no forwarder contracts. This type does not support any type of atomic contract
 // call batching, as the MCMS contract natively doesn't support batching
@@ -222,11 +227,6 @@ func (m *Proposal) TransactionNonces() ([]uint64, error) {
 	}
 
 	return txNonces, nil
-}
-
-// AppendSignature appends a signature to the proposal's signature list.
-func (m *Proposal) AppendSignature(signature types.Signature) {
-	m.Signatures = append(m.Signatures, signature)
 }
 
 // GetEncoders generates encoders for each chain in the proposal's chain metadata.
