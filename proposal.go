@@ -255,7 +255,7 @@ func (m *MCMSProposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error
 	txCounts := m.TransactionCounts()
 	encoders := make(map[types.ChainSelector]sdk.Encoder)
 	for chainSelector := range m.ChainMetadata {
-		encoder, err := sdk.NewEncoder(chainSelector, txCounts[chainSelector], m.OverridePreviousRoot, m.useSimulatedBackend)
+		encoder, err := newEncoder(chainSelector, txCounts[chainSelector], m.OverridePreviousRoot, m.useSimulatedBackend)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create encoder: %w", err)
 		}

@@ -9,11 +9,14 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/internal/core"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 var ZERO_HASH = common.Hash{}
+
+var _ sdk.TimelockConverter = (*TimelockConverterEVM)(nil)
 
 type TimelockConverterEVM struct{}
 
