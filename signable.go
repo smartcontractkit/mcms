@@ -1,171 +1,87 @@
 package mcms
 
 import (
-	"encoding/binary"
 	"errors"
-	"sort"
+	"fmt"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
-	coreProposal "github.com/smartcontractkit/mcms/internal/core/proposal"
-	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
+var (
+	ErrInspectorsNotProvided = errors.New("inspectors not provided")
+)
+
+// Signable contains the proposal itself, a Merkle tree representation of the proposal, encoders for
+// different chains to perform the signing, while the inspectors are used for retrieving contract
+// configurations and operational counts on chain.
 type Signable struct {
-	*MCMSProposal
-	*merkle.Tree
-
-	// Map of operation to chain index where tx i is the ChainNonce[i]th
-	// operation of chain Transaction[i].ChainSelector
-	ChainNonces []uint64
-
-	Encoders   map[types.ChainSelector]sdk.Encoder
-	Inspectors map[types.ChainSelector]sdk.Inspector // optional, skip any inspections
-	Simulators map[types.ChainSelector]sdk.Simulator // optional, skip simulations
-	Decoders   map[types.ChainSelector]sdk.Decoder   // optional, skip decoding
+	proposal   *MCMSProposal
+	tree       *merkle.Tree
+	encoders   map[types.ChainSelector]sdk.Encoder
+	inspectors map[types.ChainSelector]sdk.Inspector
 }
 
-var _ coreProposal.Signable = (*Signable)(nil)
-
+// NewSignable creates a new Signable from a proposal and inspectors, and initializes the encoders
+// and merkle tree.
 func NewSignable(
 	proposal *MCMSProposal,
-	encoders map[types.ChainSelector]sdk.Encoder,
 	inspectors map[types.ChainSelector]sdk.Inspector,
 ) (*Signable, error) {
-	hashLeaves := make([]common.Hash, 0)
-	chainIdx := make(map[types.ChainSelector]uint64, len(proposal.ChainMetadata))
-
-	for _, chain := range proposal.ChainSelectors() {
-		encoder, ok := encoders[chain]
-		if !ok {
-			return nil, errors.New("encoder not provided for chain " + strconv.FormatUint(uint64(chain), 10))
-		}
-
-		metadata, ok := proposal.ChainMetadata[chain]
-		if !ok {
-			return nil, errors.New("metadata not provided for chain " + strconv.FormatUint(uint64(chain), 10))
-		}
-
-		encodedRootMetadata, err := encoder.HashMetadata(metadata)
-		if err != nil {
-			return nil, err
-		}
-		hashLeaves = append(hashLeaves, encodedRootMetadata)
-
-		// Set the initial chainIdx to the starting nonce in the metadata
-		chainIdx[chain] = metadata.StartingOpCount
+	encoders, err := proposal.GetEncoders()
+	if err != nil {
+		return nil, err
 	}
 
-	chainNonces := make([]uint64, len(proposal.Transactions))
-	for i, op := range proposal.Transactions {
-		chainNonce, err := safecast.Uint64ToUint32(chainIdx[op.ChainSelector])
-		if err != nil {
-			return nil, err
-		}
-
-		encoder, ok := encoders[op.ChainSelector]
-		if !ok {
-			return nil, errors.New("encoder not provided for chain " + strconv.FormatUint(uint64(op.ChainSelector), 10))
-		}
-
-		encodedOp, err := encoder.HashOperation(
-			chainNonce,
-			proposal.ChainMetadata[op.ChainSelector],
-			op,
-		)
-		if err != nil {
-			return nil, err
-		}
-		hashLeaves = append(hashLeaves, encodedOp)
-
-		// Increment chain idx
-		chainNonces[i] = chainIdx[op.ChainSelector]
-		chainIdx[op.ChainSelector]++
+	tree, err := proposal.MerkleTree()
+	if err != nil {
+		return nil, err
 	}
-
-	// sort the hashes and sort the pairs
-	sort.Slice(hashLeaves, func(i, j int) bool {
-		return hashLeaves[i].String() < hashLeaves[j].String()
-	})
 
 	return &Signable{
-		MCMSProposal: proposal,
-		Tree:         merkle.NewTree(hashLeaves),
-		Encoders:     encoders,
-		Inspectors:   inspectors,
-		ChainNonces:  chainNonces,
+		proposal:   proposal,
+		tree:       tree,
+		encoders:   encoders,
+		inspectors: inspectors,
 	}, nil
 }
 
-func (s *Signable) GetTree() *merkle.Tree {
-	return s.Tree
+// Validate checks the proposal is valid and signable.
+//
+// This can be removed once the Sign method is implemented on this struct.
+func (s *Signable) Validate() error {
+	return s.proposal.Validate()
 }
 
-func (s *Signable) ChainNonce(index int) uint64 {
-	return s.ChainNonces[index]
-}
-
+// SigningHash returns the hash of the proposal that should be signed. This is a delegate method to
+// the underlying proposal.
+//
+// This can be removed once the Sign method is implemented on this struct.
 func (s *Signable) SigningHash() (common.Hash, error) {
-	// Convert validUntil to [32]byte
-	var validUntilBytes [32]byte
-	binary.BigEndian.PutUint32(validUntilBytes[28:], s.ValidUntil) // Place the uint32 in the last 4 bytes
-
-	hashToSign := crypto.Keccak256Hash(s.Tree.Root.Bytes(), validUntilBytes[:])
-
-	return toEthSignedMessageHash(hashToSign), nil
+	return s.proposal.SigningHash()
 }
 
-// func (e *Executor) SigningMessage() ([]byte, error) {
-// 	return ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, s.Tree.Root, s.MCMSProposal.ValidUntil)
-// }
-
-func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
-	// Add the Ethereum signed message prefix
-	prefix := []byte("\x19Ethereum Signed Message:\n32")
-	data := append(prefix, messageHash.Bytes()...)
-
-	// Hash the prefixed message
-	return crypto.Keccak256Hash(data)
+// AddSignature adds a signature to the underlying proposal. This is a delegate method to the
+// underlying proposal.
+func (s *Signable) AddSignature(signature types.Signature) {
+	s.proposal.AddSignature(signature)
 }
 
-func (s *Signable) GetCurrentOpCounts() (map[types.ChainSelector]uint64, error) {
-	if s.Inspectors == nil {
-		return nil, errors.New("inspectors not provided")
-	}
-
-	opCounts := make(map[types.ChainSelector]uint64)
-	for chain, metadata := range s.ChainMetadata {
-		inspector, ok := s.Inspectors[chain]
-		if !ok {
-			return nil, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
-		}
-
-		opCount, err := inspector.GetOpCount(metadata.MCMAddress)
-		if err != nil {
-			return nil, err
-		}
-
-		opCounts[chain] = opCount
-	}
-
-	return opCounts, nil
-}
-
+// GetConfigs retrieves the MCMS contract configurations for each chain in the proposal.
 func (s *Signable) GetConfigs() (map[types.ChainSelector]*types.Config, error) {
-	if s.Inspectors == nil {
-		return nil, errors.New("inspectors not provided")
+	if s.inspectors == nil {
+		return nil, ErrInspectorsNotProvided
 	}
 
 	configs := make(map[types.ChainSelector]*types.Config)
-	for chain, metadata := range s.ChainMetadata {
-		inspector, ok := s.Inspectors[chain]
+	for chain, metadata := range s.proposal.ChainMetadata {
+		inspector, ok := s.inspectors[chain]
 		if !ok {
-			return nil, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
+			return nil, fmt.Errorf("inspector not found for chain %d", chain)
 		}
 
 		configuration, err := inspector.GetConfig(metadata.MCMAddress)
@@ -179,23 +95,26 @@ func (s *Signable) GetConfigs() (map[types.ChainSelector]*types.Config, error) {
 	return configs, nil
 }
 
+// CheckQuorum checks if the quorum for the proposal on the given chain has been reached. This will
+// fetch the current configuration for the chain and check if the recovered signers from the
+// proposal's signatures can set the root.
 func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
-	if s.Inspectors == nil {
-		return false, errors.New("inspectors not provided")
+	if s.inspectors == nil {
+		return false, ErrInspectorsNotProvided
 	}
 
-	inspector, ok := s.Inspectors[chain]
+	inspector, ok := s.inspectors[chain]
 	if !ok {
 		return false, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 	}
 
-	hash, err := s.SigningHash()
+	hash, err := s.proposal.SigningHash()
 	if err != nil {
 		return false, err
 	}
 
-	recoveredSigners := make([]common.Address, len(s.Signatures))
-	for i, sig := range s.Signatures {
+	recoveredSigners := make([]common.Address, len(s.proposal.Signatures))
+	for i, sig := range s.proposal.Signatures {
 		recoveredAddr, rerr := sig.Recover(hash)
 		if rerr != nil {
 			return false, rerr
@@ -204,7 +123,7 @@ func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 		recoveredSigners[i] = recoveredAddr
 	}
 
-	configuration, err := inspector.GetConfig(s.ChainMetadata[chain].MCMAddress)
+	configuration, err := inspector.GetConfig(s.proposal.ChainMetadata[chain].MCMAddress)
 	if err != nil {
 		return false, err
 	}
@@ -213,7 +132,7 @@ func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 }
 
 func (s *Signable) ValidateSignatures() (bool, error) {
-	for chain := range s.ChainMetadata {
+	for chain := range s.proposal.ChainMetadata {
 		checkQuorum, err := s.CheckQuorum(chain)
 		if err != nil {
 			return false, err
@@ -227,24 +146,56 @@ func (s *Signable) ValidateSignatures() (bool, error) {
 	return true, nil
 }
 
+// ValidateConfigs checks the MCMS contract configurations for each chain in the proposal for
+// consistency.
+//
+// We expect that the configurations for each chain are the same so that the same quorum can be
+// reached across all chains in the proposal.
 func (s *Signable) ValidateConfigs() error {
 	configs, err := s.GetConfigs()
 	if err != nil {
 		return err
 	}
 
-	for i, chain := range s.ChainSelectors() {
+	for i, sel := range s.proposal.ChainSelectors() {
 		if i == 0 {
 			continue
 		}
 
-		if !configs[chain].Equals(configs[s.ChainSelectors()[i-1]]) {
+		if !configs[sel].Equals(configs[s.proposal.ChainSelectors()[i-1]]) {
 			return &InconsistentConfigsError{
-				ChainSelectorA: chain,
-				ChainSelectorB: s.ChainSelectors()[i-1],
+				ChainSelectorA: sel,
+				ChainSelectorB: s.proposal.ChainSelectors()[i-1],
 			}
 		}
 	}
 
 	return nil
+}
+
+// getCurrentOpCounts returns the current op counts for the MCM contract on each chain in the
+// proposal. This data is fetched from the contract on the chain using the provided inspectors.
+//
+// Note: This function is currently not used but left for potential future use.
+func (s *Signable) getCurrentOpCounts() (map[types.ChainSelector]uint64, error) {
+	if s.inspectors == nil {
+		return nil, ErrInspectorsNotProvided
+	}
+
+	opCounts := make(map[types.ChainSelector]uint64)
+	for sel, metadata := range s.proposal.ChainMetadata {
+		inspector, ok := s.inspectors[sel]
+		if !ok {
+			return nil, fmt.Errorf("inspector not found for chain %d", sel)
+		}
+
+		opCount, err := inspector.GetOpCount(metadata.MCMAddress)
+		if err != nil {
+			return nil, err
+		}
+
+		opCounts[sel] = opCount
+	}
+
+	return opCounts, nil
 }

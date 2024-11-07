@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/internal/core"
@@ -182,6 +184,26 @@ func (m *MCMSProposal) MerkleTree() (*merkle.Tree, error) {
 	return merkle.NewTree(hashLeaves), nil
 }
 
+func (m *MCMSProposal) SigningHash() (common.Hash, error) {
+	tree, err := m.MerkleTree()
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	// Convert validUntil to [32]byte
+	var validUntilBytes [32]byte
+	binary.BigEndian.PutUint32(validUntilBytes[28:], m.ValidUntil) // Place the uint32 in the last 4 bytes
+
+	hashToSign := crypto.Keccak256Hash(tree.Root.Bytes(), validUntilBytes[:])
+
+	return toEthSignedMessageHash(hashToSign), nil
+}
+
+// We may need to put this back in
+// func (e *Executor) SigningMessage() ([]byte, error) {
+// 	return ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, s.Tree.Root, s.Proposal.ValidUntil)
+// }
+
 // TransactionCounts returns a map of chain selectors to the number of transactions for that chain
 func (m *MCMSProposal) TransactionCounts() map[types.ChainSelector]uint64 {
 	txCounts := make(map[types.ChainSelector]uint64)
@@ -235,7 +257,7 @@ func (m *MCMSProposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error
 	for chainSelector := range m.ChainMetadata {
 		encoder, err := sdk.NewEncoder(chainSelector, txCounts[chainSelector], m.OverridePreviousRoot, m.useSimulatedBackend)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to create encoder: %w", err)
 		}
 
 		encoders[chainSelector] = encoder
@@ -244,14 +266,13 @@ func (m *MCMSProposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error
 	return encoders, nil
 }
 
-// TODO: isSim is very EVM and test Specific. Should be removed
-func (m *MCMSProposal) Signable(inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error) {
-	encoders, err := m.GetEncoders()
-	if err != nil {
-		return nil, err
-	}
+func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
+	// Add the Ethereum signed message prefix
+	prefix := []byte("\x19Ethereum Signed Message:\n32")
+	data := append(prefix, messageHash.Bytes()...)
 
-	return NewSignable(m, encoders, inspectors)
+	// Hash the prefixed message
+	return crypto.Keccak256Hash(data)
 }
 
 // proposalValidateBasic basic validation for an MCMS proposal

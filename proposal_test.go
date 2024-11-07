@@ -49,7 +49,7 @@ func Test_Proposal_Validate(t *testing.T) {
 						ChainSelector: TestChain1,
 						Operation: types.Operation{
 							To:               TestAddress,
-							AdditionalFields: json.RawMessage([]byte(`{"value": "0"}`)),
+							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 							Data:             common.Hex2Bytes("0x"),
 							OperationMetadata: types.OperationMetadata{
 								ContractType: "Sample contract",
@@ -269,7 +269,7 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "invalid chain ID: 1",
+			wantErr: "unable to create encoder: invalid chain ID: 1",
 		},
 	}
 
@@ -376,7 +376,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "merkle tree generation error: invalid chain ID: 1",
+			wantErr: "merkle tree generation error: unable to create encoder: invalid chain ID: 1",
 		},
 		{
 			name: "failure: missing metadata when fetching nonces",
