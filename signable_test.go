@@ -143,9 +143,8 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
 	require.NoError(t, err)
-	require.NotNil(t, signable)
 
-	err = Sign(signable, NewPrivateKeySigner(sim.Signers[0].PrivateKey))
+	_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -212,7 +211,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 
 	// Sign the hash
 	for _, s := range sim.Signers {
-		err = Sign(signable, NewPrivateKeySigner(s.PrivateKey))
+		_, err = signable.SignAndAppend(NewPrivateKeySigner(s.PrivateKey))
 		require.NoError(t, err)
 	}
 
@@ -287,7 +286,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, signable)
 
-	err = Sign(signable, NewPrivateKeySigner(sim.Signers[0].PrivateKey))
+	_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -363,7 +362,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 
 	// Sign the hash
 	for i := range 3 {
-		err = Sign(signable, NewPrivateKeySigner(sim.Signers[i].PrivateKey))
+		_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[i].PrivateKey))
 		require.NoError(t, err)
 	}
 
@@ -440,7 +439,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 
 	// Sign the hash
 	for _, s := range sim.Signers[:2] { // Only sign with 2 out of 3 signers
-		err = Sign(signable, NewPrivateKeySigner(s.PrivateKey))
+		_, err = signable.SignAndAppend(NewPrivateKeySigner(s.PrivateKey))
 		require.NoError(t, err)
 	}
 
@@ -523,12 +522,12 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 
 	// Sign the hash with all signers
 	for _, s := range sim.Signers {
-		err = Sign(signable, NewPrivateKeySigner(s.PrivateKey))
+		_, err = signable.SignAndAppend(NewPrivateKeySigner(s.PrivateKey))
 		require.NoError(t, err)
 	}
 
 	// Sign with the invalid signer
-	err = Sign(signable, NewPrivateKeySigner(invalidKey))
+	_, err = signable.SignAndAppend(NewPrivateKeySigner(invalidKey))
 	require.NoError(t, err)
 
 	// Validate the signatures
@@ -538,15 +537,187 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	require.False(t, quorumMet)
 }
 
-func Test_Signable_AddSignature(t *testing.T) {
+func Test_Signable_Sign(t *testing.T) {
 	t.Parallel()
 
-	proposal := MCMSProposal{}
-	signable := &Signable{proposal: &proposal}
+	privKey, err := crypto.HexToECDSA(testPrivateKeyHex)
+	require.NoError(t, err)
 
-	require.Empty(t, proposal.Signatures)
-	signable.AddSignature(types.Signature{})
-	require.Len(t, proposal.Signatures, 1)
+	proposal := &MCMSProposal{
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      "0x01",
+				},
+			},
+		},
+		Transactions: []types.ChainOperation{
+			{
+				ChainSelector: TestChain1,
+				Operation: evm.NewEVMOperation(
+					common.HexToAddress("0x02"),
+					[]byte("0x0000000"), // Use some random data since it doesn't matter
+					big.NewInt(0),
+					"RBACTimelock",
+					[]string{"RBACTimelock", "GrantRole"},
+				),
+			},
+		},
+	}
+
+	tests := []struct {
+		name         string
+		giveProposal *MCMSProposal
+		giveSigner   signer
+		want         types.Signature
+		wantErr      string
+	}{
+		{
+			name:         "success: signs the proposal",
+			giveProposal: proposal,
+			giveSigner:   NewPrivateKeySigner(privKey),
+			want: types.Signature{
+				R: common.HexToHash("0x859c780e5df453945171c96f271c16b5baeeb6eadfa790d4e4d32ee72607334b"),
+				S: common.HexToHash("0x3fd6128a489e81ecce6192804ea26ceaf542ae11f20caae65e6b65662f882eb4"),
+				V: 0,
+			},
+		},
+		{
+			name:         "failure: invalid proposal",
+			giveProposal: &MCMSProposal{},
+			giveSigner:   NewPrivateKeySigner(privKey),
+			wantErr:      "Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+		},
+		{
+			name:         "failure: could not sign",
+			giveProposal: proposal,
+			giveSigner:   newFakeSigner([]byte{}, assert.AnError),
+			wantErr:      assert.AnError.Error(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// We need some inspectors to satisfy dependency validation, but this mock is unused.
+			inspectors := map[types.ChainSelector]sdk.Inspector{
+				TestChain1: mocks.NewInspector(t),
+			}
+
+			// Ensure that there are no signatures to being with
+			require.Empty(t, tt.giveProposal.Signatures)
+
+			signable, err := NewSignable(tt.giveProposal, inspectors)
+			require.NoError(t, err)
+
+			got, err := signable.Sign(tt.giveSigner)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func Test_SignAndAppend(t *testing.T) {
+	t.Parallel()
+
+	privKey, err := crypto.HexToECDSA(testPrivateKeyHex)
+	require.NoError(t, err)
+
+	// Construct a proposal
+	proposal := MCMSProposal{
+		BaseProposal: BaseProposal{
+			Version:              "1.0",
+			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				TestChain1: {
+					StartingOpCount: 0,
+					MCMAddress:      "0x01",
+				},
+			},
+		},
+		Transactions: []types.ChainOperation{
+			{
+				ChainSelector: TestChain1,
+				Operation: evm.NewEVMOperation(
+					common.HexToAddress("0x02"),
+					[]byte("0x0000000"), // Use some random data since it doesn't matter
+					big.NewInt(0),
+					"RBACTimelock",
+					[]string{"RBACTimelock", "GrantRole"},
+				),
+			},
+		},
+	}
+
+	tests := []struct {
+		name    string
+		give    MCMSProposal
+		want    []types.Signature
+		wantErr string
+	}{
+		{
+			name: "success: signs the proposal",
+			give: proposal,
+			want: []types.Signature{
+				{
+					R: common.HexToHash("0x859c780e5df453945171c96f271c16b5baeeb6eadfa790d4e4d32ee72607334b"),
+					S: common.HexToHash("0x3fd6128a489e81ecce6192804ea26ceaf542ae11f20caae65e6b65662f882eb4"),
+					V: 0,
+				},
+			},
+		},
+		{
+			name:    "failure: invalid proposal",
+			give:    MCMSProposal{},
+			wantErr: "Key: 'MCMSProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'MCMSProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'MCMSProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			inspector := mocks.NewInspector(t)
+			inspectors := map[types.ChainSelector]sdk.Inspector{
+				TestChain1: inspector,
+			}
+
+			// Ensure that there are no signatures to being with
+			require.Empty(t, tt.give.Signatures)
+
+			signable, err := NewSignable(&tt.give, (inspectors))
+			require.NoError(t, err)
+			require.NotNil(t, signable)
+
+			got, err := signable.SignAndAppend(NewPrivateKeySigner(privKey))
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+
+				// Ensure that the signature was appended
+				require.Len(t, tt.give.Signatures, len(tt.want))
+				require.ElementsMatch(t, tt.want, tt.give.Signatures)
+				require.Contains(t, tt.give.Signatures, got)
+			}
+		})
+	}
 }
 
 func Test_Signable_GetConfigs(t *testing.T) {
@@ -868,4 +1039,20 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 			}
 		})
 	}
+}
+
+// fakeSigner implements the signer interface for testing purposes
+type fakeSigner struct {
+	sigB []byte
+	err  error
+}
+
+// newFakeSigner creates a new fakeSigner. The args provided will be returned when Sign is called.
+func newFakeSigner(sigB []byte, err error) signer {
+	return &fakeSigner{sigB: sigB, err: err}
+}
+
+// Sign implemnts the signer interface.
+func (f *fakeSigner) Sign(payload []byte) ([]byte, error) {
+	return f.sigB, f.err
 }

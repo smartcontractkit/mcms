@@ -224,7 +224,7 @@ func Test_Proposal_AddSignature(t *testing.T) {
 
 	assert.Empty(t, proposal.Signatures)
 
-	proposal.AddSignature(signature)
+	proposal.AppendSignature(signature)
 
 	assert.Equal(t, []types.Signature{signature}, proposal.Signatures)
 }
