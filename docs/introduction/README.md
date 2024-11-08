@@ -1,8 +1,16 @@
-# Proposal's Flow
+# MCMS
 
-![img.png](img.png)
+## What is it
 
-## Propose-and-Execute Flow
+## Contract architecture
+
+## How it works
+
+(OUT OF DATE)
+
+![flow.png](../_images/flow.png)
+
+### Propose-and-Execute Flow
 
 The following steps need to be performed for a set of onchain maintenance operations
 on the OWNED contracts:
