@@ -70,5 +70,5 @@ see [CONTRIBUTING.md](https://github.com/smartcontractkit/mcms/blob/main/CONTRIB
 
 ## Releasing
 
-For instructions on how to release `job-distributor`,
+For instructions on how to release `mcms`,
 see [RELEASE.md](https://github.com/smartcontractkit/mcms/blob/main/RELEASE.md)
