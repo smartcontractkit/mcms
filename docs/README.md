@@ -18,21 +18,20 @@ without needing to reinvent their multisig management processes.
 
 ## Key Features:
 
-* **Contract Management Across Chains:** MCMS simplifies contract management by allowing users to send a set of
+- **Contract Management Across Chains:** MCMS simplifies contract management by allowing users to send a set of
   transactions to multiple chains using a single set of signatures. This cross-chain capability enables teams to
   streamline operations, reducing the complexity and overhead involved in managing contract security across multiple
   blockchains.
-* **Security:** Ensure the security of products and users by defending against various attack vectors.
-* **Product Agnosticism:** Provide a platform that integrates seamlessly with various products and protocols without
+- **Security:** Ensure the security of products and users by defending against various attack vectors.
+- **Product Agnosticism:** Provide a platform that integrates seamlessly with various products and protocols without
   product-specific modifications.
-* **Cross-Chain Interoperability:** Standardize multisig operations across multiple chains, allowing product teams to
+- **Cross-Chain Interoperability:** Standardize multisig operations across multiple chains, allowing product teams to
   expand to new chains easily. MCMS makes it possible to execute the same set of operations on different chains with
   minimal additional configuration.
-* **Proposal Generation:** The library allows users to generates valid MCMS proposals with transaction to manage and
+- **Proposal Generation:** The library allows users to generates valid MCMS proposals with transaction to manage and
   configure their product-specific smart contracts.
-* **Proposal simulation**: Proposals can be simulated locally before sending them on chain. This allows to catch issues
+- **Proposal simulation**: Proposals can be simulated locally before sending them on chain. This allows to catch issues
   with the transactions.
-* **Proposal Execution**: Proposal are sent on-chain for execution across multiple chains.
-* **Proposal Inspection**: Proposals can be presented in formats that are more human friendly to facilitate reviews and
+- **Proposal Execution**: Proposal are sent on-chain for execution across multiple chains.
+- **Proposal Inspection**: Proposals can be presented in formats that are more human friendly to facilitate reviews and
   collaboration.
- 
