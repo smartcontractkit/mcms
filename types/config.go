@@ -44,15 +44,15 @@ func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*
 // Validate checks if the config is valid, recursively checking all group signers configs.
 func (c *Config) Validate() error {
 	if c.Quorum == 0 {
-		return fmt.Errorf("%w: %w", ErrInvalidConfig, "Quorum must be greater than 0")
+		return fmt.Errorf("%w: Quorum must be greater than 0", ErrInvalidConfig)
 	}
 
 	if len(c.Signers) == 0 && len(c.GroupSigners) == 0 {
-		return fmt.Errorf("%w: %w", ErrInvalidConfig, "Config must have at least one signer or group")
+		return fmt.Errorf("%w: Config must have at least one signer or group", ErrInvalidConfig)
 	}
 
 	if (len(c.Signers) + len(c.GroupSigners)) < int(c.Quorum) {
-		return fmt.Errorf("%w: %w", ErrInvalidConfig, "Quorum must be less than or equal to the number of signers and groups")
+		return fmt.Errorf("%w: Quorum must be less than or equal to the number of signers and groups", ErrInvalidConfig)
 	}
 
 	for _, groupSigner := range c.GroupSigners {
