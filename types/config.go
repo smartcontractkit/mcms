@@ -1,23 +1,14 @@
 package types
 
 import (
+	"errors"
 	"fmt"
 	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
 )
 
-type InvalidMCMSConfigError struct {
-	Reason string
-}
-
-func (e *InvalidMCMSConfigError) Error() string {
-	return fmt.Sprintf("invalid MCMS config: %s", e.Reason)
-}
-
-func NewInvalidMCMSConfigError(reason string) *InvalidMCMSConfigError {
-	return &InvalidMCMSConfigError{Reason: reason}
-}
+var ErrInvalidConfig = errors.New("invalid MCMS config")
 
 // Config is a struct that holds all the configuration for the owner contracts
 type Config struct {
@@ -53,15 +44,15 @@ func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*
 // Validate checks if the config is valid, recursively checking all group signers configs.
 func (c *Config) Validate() error {
 	if c.Quorum == 0 {
-		return NewInvalidMCMSConfigError("Quorum must be greater than 0")
+		return fmt.Errorf("%w: %w", ErrInvalidConfig, "Quorum must be greater than 0")
 	}
 
 	if len(c.Signers) == 0 && len(c.GroupSigners) == 0 {
-		return NewInvalidMCMSConfigError("Config must have at least one signer or group")
+		return fmt.Errorf("%w: %w", ErrInvalidConfig, "Config must have at least one signer or group")
 	}
 
 	if (len(c.Signers) + len(c.GroupSigners)) < int(c.Quorum) {
-		return NewInvalidMCMSConfigError("Quorum must be less than or equal to the number of signers and groups")
+		return fmt.Errorf("%w: %w", ErrInvalidConfig, "Quorum must be less than or equal to the number of signers and groups")
 	}
 
 	for _, groupSigner := range c.GroupSigners {

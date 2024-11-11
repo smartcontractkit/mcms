@@ -11,8 +11,8 @@ func TestErrorMessages(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		err      error
-		expected string
+		err  error
+		want string
 	}{
 		{NewEncoderNotFoundError(1), "encoder not provided for chain selector 1"},
 		{NewChainMetadataNotFoundError(1), "missing metadata for chain 1"},
@@ -24,10 +24,10 @@ func TestErrorMessages(t *testing.T) {
 		{NewQuorumNotReachedError(1), "quorum not reached for chain 1"},
 	}
 
-	for _, test := range tests {
-		got := test.err.Error()
-		if got != test.expected {
-			assert.Equal(t, test.expected, test.err.Error())
+	for _, tt := range tests {
+		got := tt.err.Error()
+		if got != tt.want {
+			assert.Equal(t, tt.want, tt.err.Error())
 		}
 	}
 }
