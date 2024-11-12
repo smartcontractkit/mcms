@@ -1,12 +1,14 @@
 package types
 
 import (
+	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/smartcontractkit/mcms/internal/core"
 )
+
+var ErrInvalidConfig = errors.New("invalid MCMS config")
 
 // Config is a struct that holds all the configuration for the owner contracts
 type Config struct {
@@ -42,21 +44,15 @@ func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*
 // Validate checks if the config is valid, recursively checking all group signers configs.
 func (c *Config) Validate() error {
 	if c.Quorum == 0 {
-		return &core.InvalidMCMSConfigError{
-			Reason: "Quorum must be greater than 0",
-		}
+		return fmt.Errorf("%w: Quorum must be greater than 0", ErrInvalidConfig)
 	}
 
 	if len(c.Signers) == 0 && len(c.GroupSigners) == 0 {
-		return &core.InvalidMCMSConfigError{
-			Reason: "Config must have at least one signer or group",
-		}
+		return fmt.Errorf("%w: Config must have at least one signer or group", ErrInvalidConfig)
 	}
 
 	if (len(c.Signers) + len(c.GroupSigners)) < int(c.Quorum) {
-		return &core.InvalidMCMSConfigError{
-			Reason: "Quorum must be less than or equal to the number of signers and groups",
-		}
+		return fmt.Errorf("%w: Quorum must be less than or equal to the number of signers and groups", ErrInvalidConfig)
 	}
 
 	for _, groupSigner := range c.GroupSigners {
@@ -123,9 +119,8 @@ func (c *Config) CanSetRoot(recoveredSigners []common.Address) (bool, error) {
 	allSigners := c.GetAllSigners()
 	for _, recoveredSigner := range recoveredSigners {
 		if !slices.Contains(allSigners, recoveredSigner) {
-			return false, &core.InvalidSignatureError{
-				RecoveredAddress: recoveredSigner,
-			}
+			// Q: We can't import tha mcms main package here. Should we move every implementation out of types package?
+			return false, fmt.Errorf("recovered signer %s is not a valid signer in the MCMS proposal", recoveredSigner)
 		}
 	}
 

@@ -3,8 +3,8 @@ package mcms
 import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/sdk"
+	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -16,8 +16,8 @@ func newEncoder(
 ) (sdk.Encoder, error) {
 	chain, exists := cselectors.ChainBySelector(uint64(csel))
 	if !exists {
-		return nil, &core.InvalidChainIDError{
-			ReceivedChainID: uint64(csel),
+		return nil, &sdkerrors.InvalidChainIDError{
+			ReceivedChainID: csel,
 		}
 	}
 
