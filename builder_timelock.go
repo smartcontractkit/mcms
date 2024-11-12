@@ -28,9 +28,9 @@ func NewTimelockProposalBuilder() *TimelockProposalBuilder {
 	return builder
 }
 
-// SetOperation sets the operation of the timelock proposal.
-func (b *TimelockProposalBuilder) SetOperation(operation types.TimelockAction) *TimelockProposalBuilder {
-	b.proposal.Operation = operation
+// SetAction sets the action of the timelock proposal.
+func (b *TimelockProposalBuilder) SetAction(action types.TimelockAction) *TimelockProposalBuilder {
+	b.proposal.Action = action
 	return b
 }
 
