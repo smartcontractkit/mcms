@@ -1,7 +1,10 @@
 package mcms
 
 import (
+	"errors"
 	"fmt"
+
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -29,7 +32,6 @@ func NewEncoderNotFoundError(sel types.ChainSelector) *EncoderNotFoundError {
 	return &EncoderNotFoundError{ChainSelector: sel}
 }
 
-// Error implements the error interface.
 func (e *EncoderNotFoundError) Error() string {
 	return fmt.Sprintf("encoder not provided for chain selector %d", e.ChainSelector)
 }
@@ -45,7 +47,6 @@ func NewChainMetadataNotFoundError(sel types.ChainSelector) *ChainMetadataNotFou
 	return &ChainMetadataNotFoundError{ChainSelector: sel}
 }
 
-// Error implements the error interface.
 func (e *ChainMetadataNotFoundError) Error() string {
 	return fmt.Sprintf("missing metadata for chain %d", e.ChainSelector)
 }
@@ -62,7 +63,6 @@ func NewInconsistentConfigsError(selA, selB types.ChainSelector) *InconsistentCo
 	return &InconsistentConfigsError{ChainSelectorA: selA, ChainSelectorB: selB}
 }
 
-// Error implements the error interface.
 func (e *InconsistentConfigsError) Error() string {
 	return fmt.Sprintf("inconsistent configs for chains %d and %d", e.ChainSelectorA, e.ChainSelectorB)
 }
@@ -78,7 +78,46 @@ func NewQuorumNotReachedError(sel types.ChainSelector) *QuorumNotReachedError {
 	return &QuorumNotReachedError{ChainSelector: sel}
 }
 
-// Error implements the error interface.
 func (e *QuorumNotReachedError) Error() string {
 	return fmt.Sprintf("quorum not reached for chain %d", e.ChainSelector)
+}
+
+// InvalidDelayError is the error for when the received delay for Timelock is invalid.
+type InvalidDelayError struct {
+	ReceivedDelay string
+}
+
+// Error returns the error message.
+func (e *InvalidDelayError) Error() string {
+	return fmt.Sprintf("invalid delay: %s", e.ReceivedDelay)
+}
+
+func NewInvalidDelayError(receivedDelay string) *InvalidDelayError {
+	return &InvalidDelayError{ReceivedDelay: receivedDelay}
+}
+
+type InvalidValidUntilError struct {
+	ReceivedValidUntil uint32
+}
+
+func (e *InvalidValidUntilError) Error() string {
+	return fmt.Sprintf("invalid valid until: %v", e.ReceivedValidUntil)
+}
+
+func NewInvalidValidUntilError(receivedValidUntil uint32) *InvalidValidUntilError {
+	return &InvalidValidUntilError{ReceivedValidUntil: receivedValidUntil}
+}
+
+var ErrNoTransactionsInBatch = errors.New("no transactions in batch")
+
+type InvalidSignatureError struct {
+	RecoveredAddress common.Address
+}
+
+func (e *InvalidSignatureError) Error() string {
+	return fmt.Sprintf("invalid signature: received signature for address %s is not a valid signer in the MCMS proposal", e.RecoveredAddress)
+}
+
+func NewInvalidSignatureError(recoveredAddress common.Address) *InvalidSignatureError {
+	return &InvalidSignatureError{RecoveredAddress: recoveredAddress}
 }

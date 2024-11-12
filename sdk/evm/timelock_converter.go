@@ -8,8 +8,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/sdk"
+	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -69,9 +69,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	case types.TimelockActionBypass:
 		data, err = abi.Pack("bypasserExecuteBatch", calls)
 	default:
-		return types.ChainOperation{}, common.Hash{}, &core.InvalidTimelockOperationError{
-			ReceivedTimelockOperation: string(operation),
-		}
+		return types.ChainOperation{}, common.Hash{}, sdkerrors.NewInvalidTimelockOperationError(string(operation))
 	}
 
 	if err != nil {
