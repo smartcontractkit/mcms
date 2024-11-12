@@ -1,6 +1,6 @@
-# MCMS Proposal Format
+# MCMS Proposal
 
-A **MCMS Proposal** is a structured document that defines a set of operations to be executed across multiple blockchains. Proposals are typically created to carry out specific transactions, like contract interactions or asset transfers, in a coordinated manner across different chains.
+The **MCMS Proposal** is a structured document that defines a set of operations to be executed across multiple blockchains. Proposals are typically created to carry out specific transactions, like contract interactions or asset transfers, in a coordinated manner across different chains.
 
 > [!NOTE]
 > An MCMS Proposal is used specifically when controlling only MCM contract.
