@@ -13,7 +13,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/go-playground/validator/v10"
 
-	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -273,9 +272,7 @@ func proposalValidateBasic(proposalObj Proposal) error {
 	validUntil := time.Unix(int64(proposalObj.ValidUntil), 0)
 
 	if time.Now().After(validUntil) {
-		return &core.InvalidValidUntilError{
-			ReceivedValidUntil: proposalObj.ValidUntil,
-		}
+		return NewInvalidValidUntilError(proposalObj.ValidUntil)
 	}
 
 	return nil

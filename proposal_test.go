@@ -184,7 +184,7 @@ func Test_WriteProposal(t *testing.T) {
 			}`,
 		},
 		{
-			name: "success: writes a proposal to an io.Writer",
+			name: "failure: writer returns error",
 			giveWriter: func() io.Writer {
 				return newFakeWriter(0, errors.New("write error"))
 			},

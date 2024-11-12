@@ -1,38 +1,18 @@
-# MCMS Library
+# Many Chain Multisig System
 
 ## Motivation
 
-The **Go-MCMS Library** is designed to provide a product-agnostic, cross-chain multisig platform
-that addresses the need for standardized, secure, and scalable multisig operations across
-different product teams. The motivation for building this platform stems from the need for consistency
-in how teams manage their product lifecycle, particularly in terms of deploying and securing their
-contracts using multisig across various ownership models.
+The **Many Chain Multisig System (MCMS)** is a contract-agnostic, cross-chain multisig platform designed to provide standardized, secure, and scalable multisig contract operations. The need for this platform arises from the challenges teams face in deploying and securing their contracts using multisig across various blockchains. Existing solutions, such as Gnosis Safe, are not designed for multi-chain environments, making it difficult to manage multisig operations across different products and blockchains.
 
-MCMS (ManyChainMultisig System) addresses this challenge by providing a
-standardized interface that facilitates scalable multisig operations across
-multiple chains.
+MCMS addresses this challenge by offering a standardized interface that facilitates scalable multisig operations across multiple chains. The library provides tools to deploy and manage multisig setups while ensuring interoperability, scalability, and security. By leveraging MCMS, teams can focus on their core protocols and products without needing to reinvent their multisig management processes.
 
-The library offers tools to deploy and manage multisig setups while ensuring cross-product interoperability,
-scalability, and security. By leveraging the MCMS library, product teams can focus on their core protocols and products
-without needing to reinvent their multisig management processes.
+## Key Features
 
-## Key Features:
-
-* **Contract Management Across Chains:** MCMS simplifies contract management by allowing users to send a set of
-  transactions to multiple chains using a single set of signatures. This cross-chain capability enables teams to
-  streamline operations, reducing the complexity and overhead involved in managing contract security across multiple
-  blockchains.
-* **Security:** Ensure the security of products and users by defending against various attack vectors.
-* **Product Agnosticism:** Provide a platform that integrates seamlessly with various products and protocols without
-  product-specific modifications.
-* **Cross-Chain Interoperability:** Standardize multisig operations across multiple chains, allowing product teams to
-  expand to new chains easily. MCMS makes it possible to execute the same set of operations on different chains with
-  minimal additional configuration.
-* **Proposal Generation:** The library allows users to generates valid MCMS proposals with transaction to manage and
-  configure their product-specific smart contracts.
-* **Proposal simulation**: Proposals can be simulated locally before sending them on chain. This allows to catch issues
-  with the transactions.
-* **Proposal Execution**: Proposal are sent on-chain for execution across multiple chains.
-* **Proposal Inspection**: Proposals can be presented in formats that are more human friendly to facilitate reviews and
-  collaboration.
- 
+- **Contract Management Across Chains:** Simplifies contract management by allowing users to send a set of transactions to multiple chains using a single set of signatures. This cross-chain capability streamlines operations, reducing complexity and overhead in managing contract security across multiple blockchains.
+- **Security:** Ensures the security of products and users by defending against various attack vectors.
+- **Product Agnosticism:** Integrates seamlessly with various products and protocols without requiring product-specific modifications.
+- **Cross-Chain Interoperability:** Standardizes multisig operations across multiple chains, enabling product teams to expand to new chains easily. MCMS allows the execution of the same set of operations on different chains with minimal additional configuration.
+- **Proposal Generation:** Allows users to generate valid MCMS proposals with transactions to manage and configure their product-specific smart contracts.
+- **Proposal Simulation:** Enables local simulation of proposals before sending them on-chain, allowing issues with transactions to be caught early.
+- **Proposal Execution:** Sends proposals on-chain for execution across multiple chains.
+- **Proposal Inspection:** Presents proposals in human-friendly formats to facilitate reviews and collaboration.

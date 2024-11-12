@@ -1,4 +1,4 @@
-# RBAC TimeLock Proposal Format
+# TimeLock Proposal
 
 The **MCMS + Timelock Implementation** is an extended proposal format designed for teams that incorporate
 RBACTimelock as part of their contract ownership structure. It builds upon the base MCMS proposal structure by adding

@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
 
-	"github.com/smartcontractkit/mcms/internal/core"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -96,10 +95,7 @@ func (m *TimelockProposal) Validate() error {
 	// Validate all chains in transactions have an entry in chain metadata
 	for _, t := range m.Transactions {
 		if _, ok := m.ChainMetadata[t.ChainSelector]; !ok {
-			return &core.MissingChainDetailsError{
-				ChainIdentifier: uint64(t.ChainSelector),
-				Parameter:       "chain metadata",
-			}
+			return NewChainMetadataNotFoundError(t.ChainSelector)
 		}
 		for _, op := range t.Batch {
 			// Chain specific validations.
@@ -172,23 +168,19 @@ func timeLockProposalValidateBasic(timelockProposal TimelockProposal) error {
 	}
 	if timelockProposal.ValidUntil <= currentTimeCasted {
 		// ValidUntil is a Unix timestamp, so it should be greater than the current time
-		return &core.InvalidValidUntilError{
-			ReceivedValidUntil: timelockProposal.ValidUntil,
-		}
+		return NewInvalidValidUntilError(timelockProposal.ValidUntil)
 	}
 
 	// Validate the delay is a valid duration but is only required
 	// for Schedule operations
 	if timelockProposal.Operation == types.TimelockActionSchedule {
 		if _, err := time.ParseDuration(timelockProposal.Delay); err != nil {
-			return &core.InvalidDelayError{
-				ReceivedDelay: timelockProposal.Delay,
-			}
+			return NewInvalidDelayError(timelockProposal.Delay)
 		}
 	}
 
 	if len(timelockProposal.Transactions) > 0 && len(timelockProposal.Transactions[0].Batch) == 0 {
-		return core.ErrNoTransactionsInBatch
+		return ErrNoTransactionsInBatch
 	}
 
 	return nil

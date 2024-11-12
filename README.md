@@ -61,4 +61,14 @@ Run the local documentation server with:
 
 ```
 task docs
-````
+```
+
+## Contributing
+
+For instructions on how to contribute to `mcms`,
+see [CONTRIBUTING.md](https://github.com/smartcontractkit/mcms/blob/main/CONTRIBUTING.md)
+
+## Releasing
+
+For instructions on how to release `mcms`,
+see [RELEASE.md](https://github.com/smartcontractkit/mcms/blob/main/RELEASE.md)

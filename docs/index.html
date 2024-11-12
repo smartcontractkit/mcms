@@ -1,56 +1,93 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>MCMS Docs</title>
-  <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible" />
-  <meta content="Description" name="description">
-  <meta content="width=device-width, initial-scale=1.0, minimum-scale=1.0" name="viewport">
-  <link href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css" rel="stylesheet">
-</head>
-<body>
-  <div id="app"></div>
-  <script>
-    window.$docsify = {
-      name: 'Many Chain Multisig System',
-      repo: 'https://github.com/smartcontractkit/mcms',
-      homepage   : 'README.md',
-      loadSidebar: true
-    }
-  </script>
-  <!-- Docsify v4 -->
+  <head>
+    <meta charset="UTF-8" />
+    <title>MCMS Docs</title>
+    <meta content="IE=edge,chrome=1" http-equiv="X-UA-Compatible" />
+    <meta content="Description" name="description" />
+    <meta
+      content="width=device-width, initial-scale=1.0, minimum-scale=1.0"
+      name="viewport"
+    />
+    <link
+      href="//cdn.jsdelivr.net/npm/docsify@4/lib/themes/vue.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div id="app"></div>
+    <script>
+      window.$docsify = {
+        name: "Many Chain Multisig System",
+        repo: "https://github.com/smartcontractkit/mcms",
+        homepage: "README.md",
+        loadSidebar: true
+      };
+    </script>
+    <!-- Docsify v4 -->
 
-  <script crossorigin="anonymous"
-          integrity="sha384-LthJPBJ4RGco78kBY+EmKz5rmISZ5vrtAu3+l2ALQ2mrZHOe6Wyf6knyKjeC4cL6"
-          src="https://cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js">
-  </script>
-  <script crossorigin="anonymous"
-          integrity="sha384-KaHhgnx/OTLoJ4J33SSJsF4x1pk4I7q3s5ZOfIDHJYl6IG7Oyn2vNDsHiWJe46fD"
-          src="https://cdn.jsdelivr.net/npm/docsify@4"></script>
-  <script crossorigin="anonymous"
-          integrity="sha384-fYBaBAsdPMjWt1AuA+txMoztHnl+zLgObSvwddIabbfUp+36gf/vNOKx88f37zix"
-          src="https://cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js">
-  </script>
-  <script crossorigin="anonymous"
-          integrity="sha384-O8qo5wbS2pixk4AzqGrfOKRD24wzXUoNuryQ70KL5jZtfuTCXdGuLtgdDx0sReMe"
-          src="//cdn.jsdelivr.net/npm/docsify-example-panels@1.1.0"></script>
-  <!-- docsify-tabs (latest v1.x.x) -->
-  <script crossorigin="anonymous"
-          integrity="sha384-QA3IVKzXq6xcKR8yQJHgDbI1FcJiQ137Cuetl1VWzUxJ6BQ7ew0MMq5fg2HbFK1o"
-          src="https://cdn.jsdelivr.net/npm/docsify-tabs@1.6.3"></script>
-  <!-- Latest v2.x.x -->
-  <script crossorigin="anonymous"
-          integrity="sha384-t4d9b4/0dEBkoJ5e77XEPBrqJ790jbFQFmEaTbBqIlTDeGosM1AbZvC1NQwqTg+5"
-          src="https://unpkg.com/docsify-copy-code@2.1.1/dist/docsify-copy-code.min.js"></script>
-  <script crossorigin="anonymous"
-          integrity="sha384-RhrmFFMb0ZCHImjFMpR/UE3VEtIVTCtNrtKQqXCzqXZNJala02N3UbVhi+qzw3CY"
-          src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"></script>
-  <script crossorigin="anonymous"
-          integrity="sha384-YxCco6ByOY5rJ3jD18514fa8w5so07zigIyV6tZa3CWSE5vYrbDSuFkZ5zOknnZ6"
-          src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"></script>
-  <script crossorigin="anonymous"
-          integrity="sha384-9WmlN8ABpoFSSHvBGGjhvB3E/D8UkNB9HpLJjBQFC2VSQsM1odiQDv4NbEo+7l15"
-          src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+    <script
+      crossorigin="anonymous"
+      integrity="sha384-LthJPBJ4RGco78kBY+EmKz5rmISZ5vrtAu3+l2ALQ2mrZHOe6Wyf6knyKjeC4cL6"
+      src="https://cdn.jsdelivr.net/npm/docsify/lib/plugins/search.min.js"
+    ></script>
+    <script
+      crossorigin="anonymous"
+      integrity="sha384-KaHhgnx/OTLoJ4J33SSJsF4x1pk4I7q3s5ZOfIDHJYl6IG7Oyn2vNDsHiWJe46fD"
+      src="https://cdn.jsdelivr.net/npm/docsify@4"
+    ></script>
+    <script
+      crossorigin="anonymous"
+      integrity="sha384-fYBaBAsdPMjWt1AuA+txMoztHnl+zLgObSvwddIabbfUp+36gf/vNOKx88f37zix"
+      src="https://cdn.jsdelivr.net/npm/docsify/lib/plugins/zoom-image.min.js"
+    ></script>
+    <script
+      crossorigin="anonymous"
+      integrity="sha384-O8qo5wbS2pixk4AzqGrfOKRD24wzXUoNuryQ70KL5jZtfuTCXdGuLtgdDx0sReMe"
+      src="//cdn.jsdelivr.net/npm/docsify-example-panels@1.1.0"
+    ></script>
+    <!-- docsify-tabs (latest v1.x.x) -->
+    <script
+      crossorigin="anonymous"
+      integrity="sha384-QA3IVKzXq6xcKR8yQJHgDbI1FcJiQ137Cuetl1VWzUxJ6BQ7ew0MMq5fg2HbFK1o"
+      src="https://cdn.jsdelivr.net/npm/docsify-tabs@1.6.3"
+    ></script>
+    <!-- Latest v2.x.x -->
+    <script
+      crossorigin="anonymous"
+      integrity="sha384-t4d9b4/0dEBkoJ5e77XEPBrqJ790jbFQFmEaTbBqIlTDeGosM1AbZvC1NQwqTg+5"
+      src="https://unpkg.com/docsify-copy-code@2.1.1/dist/docsify-copy-code.min.js"
+    ></script>
+    <script
+      crossorigin="anonymous"
+      integrity="sha384-RhrmFFMb0ZCHImjFMpR/UE3VEtIVTCtNrtKQqXCzqXZNJala02N3UbVhi+qzw3CY"
+      src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-json.min.js"
+    ></script>
+    <script
+      crossorigin="anonymous"
+      integrity="sha384-YxCco6ByOY5rJ3jD18514fa8w5so07zigIyV6tZa3CWSE5vYrbDSuFkZ5zOknnZ6"
+      src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-go.min.js"
+    ></script>
+    <script
+      crossorigin="anonymous"
+      integrity="sha384-9WmlN8ABpoFSSHvBGGjhvB3E/D8UkNB9HpLJjBQFC2VSQsM1odiQDv4NbEo+7l15"
+      src="//cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"
+    ></script>
+    <script
+      crossorigin="anonymous"
+      integrity="sha384-UwaoRTRxt1BoL/u+ucAgzz4PML/diz+5Jd69XmVMhl0pxqSUpm71h+4myV1gjm9h"
+      src="https://unpkg.com/docsify-plugin-flexible-alerts"
+    ></script>
 
-</body>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true });
+      window.mermaid = mermaid;
+    </script>
+    <script
+      integrity="sha384-U2Wy2Wa3grc0soLXlky3iZWvD6N5p3o+Udi8RpPWlbscpUEfi7RuQHzMmSstkHou"
+      crossorigin="anonymous"
+      src="https://unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"
+    ></script>
+  </body>
 </html>
