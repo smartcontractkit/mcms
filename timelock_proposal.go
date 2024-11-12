@@ -17,7 +17,7 @@ var ZERO_HASH = common.Hash{}
 type TimelockProposal struct {
 	BaseProposal
 
-	Operation         types.TimelockAction           `json:"operation" validate:"required,oneof=schedule cancel bypass"`
+	Action            types.TimelockAction           `json:"action" validate:"required,oneof=schedule cancel bypass"`
 	Delay             string                         `json:"delay"` // Will validate conditionally in Validate method
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
 	Transactions      []types.BatchChainOperation    `json:"transactions" validate:"required,min=1"`
@@ -67,7 +67,7 @@ func NewProposalWithTimeLock(
 			Description:          description,
 			ChainMetadata:        chainMetadata,
 		},
-		Operation:         timelockAction,
+		Action:            timelockAction,
 		Delay:             timelockDelay,
 		TimelockAddresses: timelockAddresses,
 		Transactions:      batches,
@@ -141,7 +141,7 @@ func (m *TimelockProposal) Convert() (Proposal, error) {
 		predecessor := predecessorMap[t.ChainSelector]
 
 		chainOp, operationId, err := BatchToChainOperation(
-			t, timelockAddress, m.Delay, m.Operation, predecessor,
+			t, timelockAddress, m.Delay, m.Action, predecessor,
 		)
 		if err != nil {
 			return Proposal{}, err
@@ -171,9 +171,8 @@ func timeLockProposalValidateBasic(timelockProposal TimelockProposal) error {
 		return NewInvalidValidUntilError(timelockProposal.ValidUntil)
 	}
 
-	// Validate the delay is a valid duration but is only required
-	// for Schedule operations
-	if timelockProposal.Operation == types.TimelockActionSchedule {
+	// Validate the delay is a valid duration but is only required for Schedule actions
+	if timelockProposal.Action == types.TimelockActionSchedule {
 		if _, err := time.ParseDuration(timelockProposal.Delay); err != nil {
 			return NewInvalidDelayError(timelockProposal.Delay)
 		}
