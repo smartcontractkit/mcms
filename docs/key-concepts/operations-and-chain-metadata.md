@@ -1,38 +1,94 @@
 # Operations & Chain Metadata
 
-TODO
-
-The objects are shared across all proposal types and contain the information that allow transactions to be executed across chains.
+Operations and Chain Metadata are shared across all proposal types and contain the information that allow transactions to be executed across chains.
 
 ## Chain Metadata
 
-**Key**
-    - **CHAIN_SELECTOR**: The blockchain selector ID, a `uint64` value matching the chain based on the [Chain Selectors](https://github.com/smartcontractkit/chain-selectors)
+ChainMetadata is a map of chain-specific configuration for each blockchain involved in the proposal. The key of the object is the chain selector ID, and the value is the metadata object. An entry is required for every chain referenced in the proposal's operations.
 
-**Metadata Object**
-    - **startingOpCount**: Starting operation count, typically used for parallel signing processes.
-    - **mcmAddress**: The MCM contract address that will process this proposal on the respective
+<!-- panels:start -->
+<!-- div:left-panel -->
+### Chain Metadata Structure
+
+```json
+{
+  "16015286601757825753": {
+    "startingOpCount": 1,
+    "mcmAddress": "0x0"
+  }
+}
+```
+
+<!-- div:right-panel -->
+
+### Chain Selector ID
+
+**Key** uint64<br/>
+The chain selector ID matching the chain based on the [Chain Selectors](https://github.com/smartcontractkit/chain-selectors) library.
+
+### Metadata Object
+
+**startingOpCount** uint64<br/>
+The starting operation count, typically used for parallel signing processes.
+
+---
+
+**mcmAddress** string<br/>
+The MCM contract address that will process this proposal on the respective chain.
+
+<!-- panels:end -->
 
 ## Operations
 
-- **Human-Readable Breadcrumbs**: Non-signed metadata such as `contractType` and `tags` can be used to give additional
-  context to the operations, especially during debugging or reviews. Included in both timelock and non-timelock proposal
-  types.
-- **ContractTypes / ABI Pointers**: These fields allow developers to add helpful references to contracts' ABI, which can
-  simplify operations like decoding payloads.
-- **Tags**: Tags can help in filtering or categorizing operations, adding flexibility to proposal management.
+Operations contain the information required to execute transactions. Metadata fields (`Contract Types` and `Tags`) are optional and can be used to add helpful references to contracts' ABI, simplify operations like decoding payloads, or to categorize operations.
 
-- **chain_metadata**: Contains chain-specific configuration for each blockchain involved in the proposal:
-    - **CHAIN_SELECTOR**: The blockchain selector ID, a `uin64` value matching the chain based on
-      the [Chain Selectors Repo Structure](https://github.com/smartcontractkit/chain-selectors)
-    - **startingOpCount**: Starting operation count, typically used for parallel signing processes.
-    - **mcmAddress**: The MCM contract address that will process this proposal on the respective chain.
+<!-- panels:start -->
 
-- **transactions**: A list of transactions to be executed across chains:
-    - **chain**: The blockchain identifier for the specific transaction.
-    - **to**: The target contract address.
-    - **payload**: The encoded payload (hexadecimal) to be sent with the transaction.
-    - **additionalFields**: A chain-specific object with data relevant for the execution of operations on each chain.
-    - **contractType** (optional): A pointer to the contract's ABI or other relevant metadata.
-    - **tags** (optional): Tags are being considered for categorizing or describing transactions. For
-      example, `"EXAMPLE_TAG"`. -->
+<!-- div:left-panel -->
+
+```json
+{
+  "chainSelector": "16015286601757825753",
+  "to": "0xa",
+  "data": "ZGF0YQ==",
+  "additionalFields": {
+    "value": 0
+  },
+  "contractType": "<CONTRACT_TYPE>",
+  "tags": [
+    "tag1"
+  ]
+}
+```
+
+<!-- div:right-panel -->
+
+**chainSelector** uint64<br/>
+The chain selector id for the chain that the operation will be executed on.
+
+---
+
+**to** string<br/>
+The target contract address.
+
+---
+
+**data** string<br/>
+The encoded data (hexadecimal) to be sent with the transaction.
+
+---
+
+**additionalFields** object<br/>
+A chain family specific object with data relevant for the execution of operations on each chain.
+
+---
+
+**contractType** string _optional_<br/>
+A pointer to the contract's ABI or other relevant metadata. This field is not included in the Merkle tree's hashed transaction data.
+
+---
+
+**tags** array _optional_<br/>
+Tags for categorizing or describing transactions. This field is not included in the Merkle tree's hashed transaction data.
+
+<!-- panels:end -->

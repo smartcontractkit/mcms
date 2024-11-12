@@ -1,72 +1,89 @@
 # TimeLock Proposal
 
-The **MCMS + Timelock Implementation** is an extended proposal format designed for teams that incorporate
-RBACTimelock as part of their contract ownership structure. It builds upon the base MCMS proposal structure by adding
-timelock configurations and operations like scheduling, cancelling, or bypassing transactions.
+The **MCMS + Timelock Implementation** is an extended proposal document designed for teams that incorporate the `RBACTimelock` contract as part of their contract ownership structure. It builds upon the base MCMS proposal structure by adding timelock configurations and actions like scheduling, cancelling, or bypassing transactions.
 
-### General Considerations
+## Features
 
-- **Timelock Configurations**: Timelocks allow delaying the execution of transactions, giving signers time to review
-  and, if necessary, cancel operations.
+- **Timelock Configurations**: Timelocks allow delaying the execution of transactions, giving signers time to review and, if necessary, cancel operations.
 - **Batching**: Transactions can be grouped into batches to be executed together, ensuring atomicity.
-- **Parallel Signing**: The nonce offset helps manage nonces when signing transactions across different chains
-  simultaneously.
-- **Human-Readable Breadcrumbs**: Non-signed metadata such as `contractType` and `tags` can be used to give additional
-  context to the operations, especially during debugging or reviews. Included in both timelock and non-timelock proposal
-  types.
+- **Parallel Signing**: The nonce offset helps manage nonces when signing transactions across different chains simultaneously.
 
-# MCMS + Timelock Proposal Format
+## Timelock Proposal Structure
 
 <!-- panels:start -->
-
 <!-- div:left-panel -->
-
-### JSON Proposal Structure
 
 ```json
 {
-  "version": "<PROPOSAL_FORMAT_VERSION>",
-  "operation": "<schedule | cancel | bypass>",
-  "validUntil": "<UINT256_TIMESTAMP>",
-  "minDelay": "24h",
-  "description": "<Human-readable (but generated) description>",
+  "version": "v1",
+  "kind": "TimelockProposal",
+  "description": "Set a value on the contract",
+  "validUntil": "1920671473",
+  "action": "schedule",
+  "delay": "24h",
+  "overridePreviousRoot": false,
   "signatures": [
-    "<SIGNATURE_ONE>",
-    "<SIGNATURE_TWO>",
-    "<SIGNATURE_THREE>"
+    {
+        "r": "0x1",
+        "s": "0x2",
+        "v": 0,
+    },
+    {
+        "r": "0x3",
+        "s": "0x4",
+        "v": 0,
+    },
   ],
-  "chain_metadata": {
-    "<CHAIN_SELECTOR>": {
-      "startingOpCount": "<offset>",
-      "mcmAddress": "<MCM_ADDRESS>",
-      "timelockAddress": "<TIMELOCK_ADDRESS>"
+  "chainMetadata": {
+    "16015286601757825753": {
+      "startingOpCount": 1,
+      "mcmAddress": "0x0"
     }
+  },
+  "timelockAddresses": {
+    "16015286601757825753": "0x0g"
   },
   "transactions": [
     {
-      "chain": "<CHAIN_SELECTOR>",
-      "to": "<TARGET_CONTRACT>",
-      "payload": "<HEX_PAYLOAD>",
-      "value": "<ETHER_TO_TRANSFER>",
-      "contractType": "<CONTRACT_TYPE>",
-      "tags": [
-        "<sometag>"
+      "chainSelector": "16015286601757825753",
+      "batch": [
+        {
+          "to": "0xa",
+          "data": "ZGF0YQ==",
+          "additionalFields": {
+            "value": 0
+          },
+          "contractType": "<CONTRACT_TYPE>",
+          "tags": [
+            "tag1"
+          ]
+        }
       ]
     },
     {
-      "chain": "<CHAIN_SELECTOR>",
+      "chainSelector": "16015286601757825753",
       "batch": [
         {
-          "to": "<TARGET_CONTRACT>",
-          "payload": "<HEX_PAYLOAD>",
-          "value": "<ETHER_TO_TRANSFER>",
-          "contractType": "<CONTRACT_TYPE>"
+          "to": "0xb",
+          "data": "ZGF0YQ==",
+          "additionalFields": {
+            "value": 0
+          },
+          "contractType": "<CONTRACT_TYPE>",
+          "tags": [
+            "tag1"
+          ]
         },
         {
-          "to": "<TARGET_CONTRACT>",
-          "payload": "<HEX_PAYLOAD>",
-          "value": "<ETHER_TO_TRANSFER>",
-          "contractType": "<CONTRACT_TYPE>"
+          "to": "0xc",
+          "data": "ZGF0YQ==",
+          "additionalFields": {
+            "value": 0
+          },
+          "contractType": "<CONTRACT_TYPE>",
+          "tags": [
+            "tag1"
+          ]
         }
       ]
     }
@@ -76,41 +93,55 @@ timelock configurations and operations like scheduling, cancelling, or bypassing
 
 <!-- div:right-panel -->
 
-### Field Descriptions & General Considerations
+### Proposal Field Descriptions
 
-- **version**: Identifies the format version of the proposal to ensure compatibility.
+**version** string<br/>
+The version of the proposal format to ensure backward compatibility for different parsers. Only `v1` is supported at the moment.
 
-- **operation**: Specifies the high-level action for the proposal. Can be one of:
-    - `schedule`: Sets up transactions to execute after a delay.
-    - `cancel`: Cancels previously scheduled transactions.
-    - `bypass`: Directly executes transactions, skipping the timelock.
+---
 
-- **validUntil**: A timestamp indicating the expiration of the proposal, after which it cannot be executed.
+**kind** string<br/>
+Specifies the type of proposal. In this case, it should be set to `TimelockProposal`.
 
-- **minDelay**: The delay duration that applies to all transactions, ensuring that they are held in the timelock for the
-  specified time.
+---
 
-- **description**: A human-readable description generated by the proposal author to give signers context for the
-  operations.
+**description** string _optional_<br/>
+A human-readable (and typically generated) description intended to give signers context for the proposed change.
 
-- **signatures**: A list of signatures from signers who approve the proposal.
+---
 
-- **chain_metadata**: Chain-specific configuration for the proposal:
-    - **CHAIN_SELECTOR**: The blockchain chain selector ID, a `uin64` value matching the chain based on
-      the [Chain Selectors Repo Structure](https://github.com/smartcontractkit/chain-selectors)
-    - **startingOpCount**: A value used for parallel signing to manage nonces across multiple chains.
-    - **mcmAddress**: The address of the MCM contract on the respective chain.
-    - **timelockAddress**: The address of the timelock contract on the respective chain.
+**validUntil** uint32<br/>
+A Unix timestamp that specifies the proposal's expiration. If the proposal is not executed before this time, it becomes invalid.
 
-- **transactions**: Contains the list of transactions or batches to be executed:
-    - **chain**: The chain identifier where the transaction will be executed.
-    - **to**: The target contract address.
-    - **payload**: The hexadecimal payload to send to the contract.
-    - **additionalFields**: A chain-specific object with data relevant for the execution of operations on each chain.
-    - **contractType** (optional): The type of contract, potentially pointing to an ABI or other metadata.
-    - **tags** (optional): Tags for categorizing or describing transactions.
+---
 
-- **batch**: In some cases, multiple transactions are grouped into a batch to be executed atomically. Each transaction
-  in the batch has the same fields as a regular transaction (e.g., `to`, `payload`, `value`).
+**action** string<br/>
+Specifies the high-level action for the proposal. Can be one of:
+- `schedule`: Sets up transactions to execute after a delay.
+- `cancel`: Cancels previously scheduled transactions.
+- `bypass`: Directly executes transactions, skipping the timelock.
 
+---
+
+**delay** string<br/>
+The delay duration that applies to all transactions, ensuring that they are held in the timelock for the specified time. The format is a string with a number followed by a time unit (e.g., `24h`).
+
+---
+
+**signatures** array of objects<br/>
+A list of cryptographic proposal signatures of the signers, where each element represents one Signature object with their R,S and V values. These ensure that the proposal has been agreed upon by the necessary parties.
+
+---
+
+**chainMetadata** object<br/>
+Maps the chain-specific configuration for each blockchain involved in the proposal. The key of the object is the chain selector ID, and the value is the metadata object. An entry is required for every chain referenced in the proposal's operations.
+
+For more details about the chain metadata, see [Chain Metadata](/key-concepts/operations-and-chain-metadata.md#chain-metadata).
+
+---
+
+**transactions** array of objects<br/>
+A list of operations to be executed across chains. Each operation contains a batch of transaction to be executed atomically. Each transaction in the batch has the same fields as a regular transaction (e.g., `to`, `data`, `value`).
+
+For more details about the operations, see [Operations](/key-concepts/operations-and-chain-metadata.md#operations).
 <!-- panels:end -->
