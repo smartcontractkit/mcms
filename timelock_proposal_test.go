@@ -65,7 +65,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 				},
 				"description": "Test proposal",
 				"overridePreviousRoot": false,
-				"operation": "schedule",
+				"action": "schedule",
 				"delay": "1h",
 				"timelockAddresses": {
 					"16015286601757825753": "0x01"
@@ -97,8 +97,8 @@ func Test_NewTimelockProposal(t *testing.T) {
 					},
 					OverridePreviousRoot: false,
 				},
-				Operation: types.TimelockActionSchedule,
-				Delay:     "1h",
+				Action: types.TimelockActionSchedule,
+				Delay:  "1h",
 				TimelockAddresses: map[types.ChainSelector]string{
 					TestChain2: "0x01",
 				},
@@ -130,7 +130,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 				"chainMetadata": {},
 				"description": "Test proposal",
 				"overridePreviousRoot": false,
-				"operation": "schedule",
+				"action": "schedule",
 				"delay": "1h",
 				"timelockAddresses": {
 					"16015286601757825753": "0x01"
@@ -164,7 +164,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 				},
 				"description": "Test proposal",
 				"overridePreviousRoot": false,
-				"operation": "schedule",
+				"action": "schedule",
 				"delay": "1h",
 				"timelockAddresses": {
 					"16015286601757825753": "0x01"
@@ -230,7 +230,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 					},
 					OverridePreviousRoot: false,
 				},
-				Operation:         types.TimelockActionSchedule,
+				Action:            types.TimelockActionSchedule,
 				Delay:             "1h",
 				TimelockAddresses: map[types.ChainSelector]string{},
 				Transactions: []types.BatchChainOperation{
@@ -258,7 +258,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				},
 				"description": "Test proposal",
 				"overridePreviousRoot": false,
-				"operation": "schedule",
+				"action": "schedule",
 				"delay": "1h",
 				"signatures": null,
 				"timelockAddresses": {},
@@ -427,7 +427,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			batches:        validBatches,
 			timelockAction: types.TimelockAction("invalid"),
 			timelockDelay:  "1h",
-			expectedError:  errors.New("Key: 'TimelockProposal.Operation' Error:Field validation for 'Operation' failed on the 'oneof' tag"),
+			expectedError:  errors.New("Key: 'TimelockProposal.Action' Error:Field validation for 'Action' failed on the 'oneof' tag"),
 		},
 		{
 			name:           "Invalid timelockDelay",

@@ -43,7 +43,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Valid Timelock Proposal").
 					SetOverridePreviousRoot(false).
-					SetOperation(types.TimelockActionSchedule).
+					SetAction(types.TimelockActionSchedule).
 					SetDelay("24h").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
@@ -69,8 +69,8 @@ func TestTimelockProposalBuilder(t *testing.T) {
 						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
 					},
 				},
-				Operation: types.TimelockActionSchedule,
-				Delay:     "24h",
+				Action: types.TimelockActionSchedule,
+				Delay:  "24h",
 				TimelockAddresses: map[types.ChainSelector]string{
 					types.ChainSelector(SepoliaSelector): "0xTimelockAddress",
 				},
@@ -96,7 +96,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Valid Timelock Proposal").
 					SetOverridePreviousRoot(false).
-					SetOperation(types.TimelockActionSchedule).
+					SetAction(types.TimelockActionSchedule).
 					SetDelay("24h").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
@@ -123,8 +123,8 @@ func TestTimelockProposalBuilder(t *testing.T) {
 						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
 					},
 				},
-				Operation: types.TimelockActionSchedule,
-				Delay:     "24h",
+				Action: types.TimelockActionSchedule,
+				Delay:  "24h",
 				TimelockAddresses: map[types.ChainSelector]string{
 					types.ChainSelector(SepoliaSelector): "0xTimelockAddress",
 				},
@@ -150,7 +150,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetValidUntil(futureValidUntilCasted).
 					SetDescription("Missing Delay").
 					SetOverridePreviousRoot(false).
-					SetOperation(types.TimelockActionSchedule).
+					SetAction(types.TimelockActionSchedule).
 					// Missing SetDelay
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
@@ -177,7 +177,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Invalid Delay Format").
 					SetOverridePreviousRoot(false).
-					SetOperation(types.TimelockActionSchedule).
+					SetAction(types.TimelockActionSchedule).
 					SetDelay("invalid_duration").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
@@ -204,7 +204,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetValidUntil(futureValidUntilCasted).
 					SetDescription("Missing Timelock Address").
 					SetOverridePreviousRoot(false).
-					SetOperation(types.TimelockActionSchedule).
+					SetAction(types.TimelockActionSchedule).
 					SetDelay("24h").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					// Missing SetTimelockAddress
@@ -231,7 +231,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetValidUntil(futureValidUntilCasted).
 					SetDescription("Missing Transactions").
 					SetOverridePreviousRoot(false).
-					SetOperation(types.TimelockActionSchedule).
+					SetAction(types.TimelockActionSchedule).
 					SetDelay("24h").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress")
@@ -249,7 +249,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetValidUntil(postValidUntilCasted).
 					SetDescription("ValidUntil in Past").
 					SetOverridePreviousRoot(false).
-					SetOperation(types.TimelockActionSchedule).
+					SetAction(types.TimelockActionSchedule).
 					SetDelay("24h").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
@@ -274,10 +274,10 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			setup: func(b *mcms.TimelockProposalBuilder) {
 				b.SetVersion("v1").
 					SetValidUntil(fixedValidUntilCasted).
-					SetDescription("Invalid Operation").
+					SetDescription("Invalid Action").
 					SetOverridePreviousRoot(false).
-					// Set an invalid operation (not schedule, cancel, or bypass)
-					SetOperation("invalid_operation").
+					// Set an invalid action (not schedule, cancel, or bypass)
+					SetAction("invalid_action").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
 					AddTransaction(types.BatchChainOperation{
@@ -292,7 +292,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			},
 			want: nil,
 			wantErrs: []string{
-				"Key: 'TimelockProposal.Operation' Error:Field validation for 'Operation' failed on the 'oneof' tag",
+				"Key: 'TimelockProposal.Action' Error:Field validation for 'Action' failed on the 'oneof' tag",
 			},
 		},
 	}
