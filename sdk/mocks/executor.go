@@ -23,7 +23,7 @@ func (_m *Executor) EXPECT() *Executor_Expecter {
 }
 
 // ExecuteOperation provides a mock function with given fields: metadata, nonce, proof, op
-func (_m *Executor) ExecuteOperation(metadata types.ChainMetadata, nonce uint32, proof []common.Hash, op types.ChainOperation) (string, error) {
+func (_m *Executor) ExecuteOperation(metadata types.ChainMetadata, nonce uint32, proof []common.Hash, op types.Operation) (string, error) {
 	ret := _m.Called(metadata, nonce, proof, op)
 
 	if len(ret) == 0 {
@@ -32,16 +32,16 @@ func (_m *Executor) ExecuteOperation(metadata types.ChainMetadata, nonce uint32,
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(types.ChainMetadata, uint32, []common.Hash, types.ChainOperation) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(types.ChainMetadata, uint32, []common.Hash, types.Operation) (string, error)); ok {
 		return rf(metadata, nonce, proof, op)
 	}
-	if rf, ok := ret.Get(0).(func(types.ChainMetadata, uint32, []common.Hash, types.ChainOperation) string); ok {
+	if rf, ok := ret.Get(0).(func(types.ChainMetadata, uint32, []common.Hash, types.Operation) string); ok {
 		r0 = rf(metadata, nonce, proof, op)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(types.ChainMetadata, uint32, []common.Hash, types.ChainOperation) error); ok {
+	if rf, ok := ret.Get(1).(func(types.ChainMetadata, uint32, []common.Hash, types.Operation) error); ok {
 		r1 = rf(metadata, nonce, proof, op)
 	} else {
 		r1 = ret.Error(1)
@@ -59,14 +59,14 @@ type Executor_ExecuteOperation_Call struct {
 //   - metadata types.ChainMetadata
 //   - nonce uint32
 //   - proof []common.Hash
-//   - op types.ChainOperation
+//   - op types.Operation
 func (_e *Executor_Expecter) ExecuteOperation(metadata interface{}, nonce interface{}, proof interface{}, op interface{}) *Executor_ExecuteOperation_Call {
 	return &Executor_ExecuteOperation_Call{Call: _e.mock.On("ExecuteOperation", metadata, nonce, proof, op)}
 }
 
-func (_c *Executor_ExecuteOperation_Call) Run(run func(metadata types.ChainMetadata, nonce uint32, proof []common.Hash, op types.ChainOperation)) *Executor_ExecuteOperation_Call {
+func (_c *Executor_ExecuteOperation_Call) Run(run func(metadata types.ChainMetadata, nonce uint32, proof []common.Hash, op types.Operation)) *Executor_ExecuteOperation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(types.ChainMetadata), args[1].(uint32), args[2].([]common.Hash), args[3].(types.ChainOperation))
+		run(args[0].(types.ChainMetadata), args[1].(uint32), args[2].([]common.Hash), args[3].(types.Operation))
 	})
 	return _c
 }
@@ -76,7 +76,7 @@ func (_c *Executor_ExecuteOperation_Call) Return(_a0 string, _a1 error) *Executo
 	return _c
 }
 
-func (_c *Executor_ExecuteOperation_Call) RunAndReturn(run func(types.ChainMetadata, uint32, []common.Hash, types.ChainOperation) (string, error)) *Executor_ExecuteOperation_Call {
+func (_c *Executor_ExecuteOperation_Call) RunAndReturn(run func(types.ChainMetadata, uint32, []common.Hash, types.Operation) (string, error)) *Executor_ExecuteOperation_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -375,7 +375,7 @@ func (_c *Executor_HashMetadata_Call) RunAndReturn(run func(types.ChainMetadata)
 }
 
 // HashOperation provides a mock function with given fields: opCount, metadata, op
-func (_m *Executor) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.ChainOperation) (common.Hash, error) {
+func (_m *Executor) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
 	ret := _m.Called(opCount, metadata, op)
 
 	if len(ret) == 0 {
@@ -384,10 +384,10 @@ func (_m *Executor) HashOperation(opCount uint32, metadata types.ChainMetadata, 
 
 	var r0 common.Hash
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uint32, types.ChainMetadata, types.ChainOperation) (common.Hash, error)); ok {
+	if rf, ok := ret.Get(0).(func(uint32, types.ChainMetadata, types.Operation) (common.Hash, error)); ok {
 		return rf(opCount, metadata, op)
 	}
-	if rf, ok := ret.Get(0).(func(uint32, types.ChainMetadata, types.ChainOperation) common.Hash); ok {
+	if rf, ok := ret.Get(0).(func(uint32, types.ChainMetadata, types.Operation) common.Hash); ok {
 		r0 = rf(opCount, metadata, op)
 	} else {
 		if ret.Get(0) != nil {
@@ -395,7 +395,7 @@ func (_m *Executor) HashOperation(opCount uint32, metadata types.ChainMetadata, 
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uint32, types.ChainMetadata, types.ChainOperation) error); ok {
+	if rf, ok := ret.Get(1).(func(uint32, types.ChainMetadata, types.Operation) error); ok {
 		r1 = rf(opCount, metadata, op)
 	} else {
 		r1 = ret.Error(1)
@@ -412,14 +412,14 @@ type Executor_HashOperation_Call struct {
 // HashOperation is a helper method to define mock.On call
 //   - opCount uint32
 //   - metadata types.ChainMetadata
-//   - op types.ChainOperation
+//   - op types.Operation
 func (_e *Executor_Expecter) HashOperation(opCount interface{}, metadata interface{}, op interface{}) *Executor_HashOperation_Call {
 	return &Executor_HashOperation_Call{Call: _e.mock.On("HashOperation", opCount, metadata, op)}
 }
 
-func (_c *Executor_HashOperation_Call) Run(run func(opCount uint32, metadata types.ChainMetadata, op types.ChainOperation)) *Executor_HashOperation_Call {
+func (_c *Executor_HashOperation_Call) Run(run func(opCount uint32, metadata types.ChainMetadata, op types.Operation)) *Executor_HashOperation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(uint32), args[1].(types.ChainMetadata), args[2].(types.ChainOperation))
+		run(args[0].(uint32), args[1].(types.ChainMetadata), args[2].(types.Operation))
 	})
 	return _c
 }
@@ -429,7 +429,7 @@ func (_c *Executor_HashOperation_Call) Return(_a0 common.Hash, _a1 error) *Execu
 	return _c
 }
 
-func (_c *Executor_HashOperation_Call) RunAndReturn(run func(uint32, types.ChainMetadata, types.ChainOperation) (common.Hash, error)) *Executor_HashOperation_Call {
+func (_c *Executor_HashOperation_Call) RunAndReturn(run func(uint32, types.ChainMetadata, types.Operation) (common.Hash, error)) *Executor_HashOperation_Call {
 	_c.Call.Return(run)
 	return _c
 }

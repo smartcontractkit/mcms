@@ -43,10 +43,10 @@ The **MCMS + Timelock Implementation** is an extended proposal document designed
   "timelockAddresses": {
     "16015286601757825753": "0x0g"
   },
-  "transactions": [
+  "operations": [
     {
       "chainSelector": "16015286601757825753",
-      "batch": [
+      "transactions": [
         {
           "to": "0xa",
           "data": "ZGF0YQ==",
@@ -62,7 +62,7 @@ The **MCMS + Timelock Implementation** is an extended proposal document designed
     },
     {
       "chainSelector": "16015286601757825753",
-      "batch": [
+      "transactions": [
         {
           "to": "0xb",
           "data": "ZGF0YQ==",
@@ -140,8 +140,8 @@ For more details about the chain metadata, see [Chain Metadata](/key-concepts/op
 
 ---
 
-**transactions** array of objects<br/>
+**operations** array of objects<br/>
 A list of operations to be executed across chains. Each operation contains a batch of transaction to be executed atomically. Each transaction in the batch has the same fields as a regular transaction (e.g., `to`, `data`, `value`).
 
-For more details about the operations, see [Operations](/key-concepts/operations-and-chain-metadata.md#operations).
+For more details about the operations, see [Operations](/key-concepts/operations-and-chain-metadata.md#timelock-proposal-operations).
 <!-- panels:end -->

@@ -17,7 +17,7 @@ func NewTimelockProposalBuilder() *TimelockProposalBuilder {
 				ChainMetadata: make(map[types.ChainSelector]types.ChainMetadata),
 			},
 			TimelockAddresses: make(map[types.ChainSelector]string),
-			Transactions:      []types.BatchChainOperation{},
+			Operations:        []types.BatchOperation{},
 		},
 	}
 	builder.BaseProposalBuilder = BaseProposalBuilder[*TimelockProposalBuilder]{
@@ -46,16 +46,16 @@ func (b *TimelockProposalBuilder) SetTimelockAddress(selector types.ChainSelecto
 	return b
 }
 
-// AddTransaction adds a transaction to the timelock proposal.
-func (b *TimelockProposalBuilder) AddTransaction(transaction types.BatchChainOperation) *TimelockProposalBuilder {
-	b.proposal.Transactions = append(b.proposal.Transactions, transaction)
+// AddOperation adds an operation to the timelock proposal.
+func (b *TimelockProposalBuilder) AddOperation(bop types.BatchOperation) *TimelockProposalBuilder {
+	b.proposal.Operations = append(b.proposal.Operations, bop)
 
 	return b
 }
 
 // SetTransactions sets all the transactions of the proposal
-func (b *TimelockProposalBuilder) SetTransactions(transactions []types.BatchChainOperation) *TimelockProposalBuilder {
-	b.proposal.Transactions = transactions
+func (b *TimelockProposalBuilder) SetTransactions(bops []types.BatchOperation) *TimelockProposalBuilder {
+	b.proposal.Operations = bops
 
 	return b
 }

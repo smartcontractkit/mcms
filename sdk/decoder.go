@@ -8,5 +8,5 @@ import (
 //
 // This is only required if the chain supports decoding.
 type Decoder interface {
-	Decode(op types.ChainOperation, abi string) (methodName string, args string, err error)
+	Decode(op types.Operation, abi string) (methodName string, args string, err error)
 }

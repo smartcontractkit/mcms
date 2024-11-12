@@ -14,9 +14,3 @@ const (
 	// TimelockActionBypass directly executes transactions, skipping the timelock.
 	TimelockActionBypass TimelockAction = "bypass"
 )
-
-// BatchChainOperation is a struct that represents a batch of operations to be executed on a chain.
-type BatchChainOperation struct {
-	ChainSelector ChainSelector `json:"chainSelector"`
-	Batch         []Operation   `json:"batch"`
-}

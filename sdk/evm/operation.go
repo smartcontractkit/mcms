@@ -29,7 +29,7 @@ func NewEVMOperation(
 	value *big.Int,
 	contractType string,
 	tags []string,
-) types.Operation {
+) types.Transaction {
 	additionalFields := EVMAdditionalFields{
 		Value: value,
 	}
@@ -39,7 +39,7 @@ func NewEVMOperation(
 		panic(err)
 	}
 
-	return types.Operation{
+	return types.Transaction{
 		To:               to.Hex(),
 		Data:             data,
 		AdditionalFields: marshalledAdditionalFields,

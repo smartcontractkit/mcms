@@ -12,15 +12,15 @@ import (
 // BatchToChainOperation converts a batch of chain operations to a single types.ChainOperation for
 // different chains
 func BatchToChainOperation(
-	batchOps types.BatchChainOperation,
+	bops types.BatchOperation,
 	timelockAddr string,
 	delay string,
 	action types.TimelockAction,
 	predecessor common.Hash,
-) (types.ChainOperation, common.Hash, error) {
-	chainFamily, err := types.GetChainSelectorFamily(batchOps.ChainSelector)
+) (types.Operation, common.Hash, error) {
+	chainFamily, err := types.GetChainSelectorFamily(bops.ChainSelector)
 	if err != nil {
-		return types.ChainOperation{}, common.Hash{}, err
+		return types.Operation{}, common.Hash{}, err
 	}
 
 	var converter sdk.TimelockConverter
@@ -30,6 +30,6 @@ func BatchToChainOperation(
 	}
 
 	return converter.ConvertBatchToChainOperation(
-		batchOps, timelockAddr, delay, action, predecessor,
+		bops, timelockAddr, delay, action, predecessor,
 	)
 }

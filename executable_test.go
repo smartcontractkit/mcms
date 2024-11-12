@@ -54,7 +54,7 @@ func Test_NewExecutable(t *testing.T) {
 						TestChain1: {StartingOpCount: 5},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{ChainSelector: TestChain2},
 				},
 			},
@@ -71,10 +71,10 @@ func Test_NewExecutable(t *testing.T) {
 						TestChain1: {StartingOpCount: 5},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{
 						ChainSelector: TestChain1,
-						Operation: types.Operation{
+						Transaction: types.Transaction{
 							AdditionalFields: json.RawMessage([]byte(``)),
 						},
 					},
@@ -133,10 +133,10 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 				},
 			},
 		},
-		Transactions: []types.ChainOperation{
+		Operations: []types.Operation{
 			{
 				ChainSelector: TestChain1,
-				Operation: evm.NewEVMOperation(
+				Transaction: evm.NewEVMOperation(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -247,10 +247,10 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 				},
 			},
 		},
-		Transactions: []types.ChainOperation{
+		Operations: []types.Operation{
 			{
 				ChainSelector: TestChain1,
-				Operation: evm.NewEVMOperation(
+				Transaction: evm.NewEVMOperation(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -352,14 +352,14 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]types.ChainOperation, 4)
+	operations := make([]types.Operation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmC.Address())
 		require.NoError(t, perr)
 
-		operations[i] = types.ChainOperation{
+		operations[i] = types.Operation{
 			ChainSelector: TestChain1,
-			Operation: evm.NewEVMOperation(
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -385,7 +385,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 				},
 			},
 		},
-		Transactions: operations,
+		Operations: operations,
 	}
 	proposal.UseSimulatedBackend(true)
 
@@ -483,13 +483,13 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]types.ChainOperation, 4)
+	operations := make([]types.Operation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmC.Address())
 		require.NoError(t, perr)
-		operations[i] = types.ChainOperation{
+		operations[i] = types.Operation{
 			ChainSelector: TestChain1,
-			Operation: evm.NewEVMOperation(
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -515,7 +515,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 				},
 			},
 		},
-		Transactions: operations,
+		Operations: operations,
 	}
 	proposal.UseSimulatedBackend(true)
 

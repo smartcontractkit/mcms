@@ -47,9 +47,9 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetDelay("24h").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
-					AddTransaction(types.BatchChainOperation{
+					AddOperation(types.BatchOperation{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								Data:             []byte{0x01},
 								To:               "0xContractAddress",
@@ -74,10 +74,10 @@ func TestTimelockProposalBuilder(t *testing.T) {
 				TimelockAddresses: map[types.ChainSelector]string{
 					types.ChainSelector(SepoliaSelector): "0xTimelockAddress",
 				},
-				Transactions: []types.BatchChainOperation{
+				Operations: []types.BatchOperation{
 					{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								Data:             []byte{0x01},
 								To:               "0xContractAddress",
@@ -100,9 +100,9 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetDelay("24h").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
-					SetTransactions([]types.BatchChainOperation{{
+					SetTransactions([]types.BatchOperation{{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								Data:             []byte{0x01},
 								To:               "0xContractAddress",
@@ -128,10 +128,10 @@ func TestTimelockProposalBuilder(t *testing.T) {
 				TimelockAddresses: map[types.ChainSelector]string{
 					types.ChainSelector(SepoliaSelector): "0xTimelockAddress",
 				},
-				Transactions: []types.BatchChainOperation{
+				Operations: []types.BatchOperation{
 					{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								Data:             []byte{0x01},
 								To:               "0xContractAddress",
@@ -154,9 +154,9 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					// Missing SetDelay
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
-					AddTransaction(types.BatchChainOperation{
+					AddOperation(types.BatchOperation{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								Data:             []byte{0x01},
 								To:               "0xContractAddress",
@@ -181,9 +181,9 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetDelay("invalid_duration").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
-					AddTransaction(types.BatchChainOperation{
+					AddOperation(types.BatchOperation{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								Data:             []byte{0x01},
 								To:               "0xContractAddress",
@@ -208,9 +208,9 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetDelay("24h").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					// Missing SetTimelockAddress
-					AddTransaction(types.BatchChainOperation{
+					AddOperation(types.BatchOperation{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								Data:             []byte{0x01},
 								To:               "0xContractAddress",
@@ -239,7 +239,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 			},
 			want: nil,
 			wantErrs: []string{
-				"Key: 'TimelockProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
+				"Key: 'TimelockProposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
 			},
 		},
 		{
@@ -253,9 +253,9 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetDelay("24h").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
-					AddTransaction(types.BatchChainOperation{
+					AddOperation(types.BatchOperation{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								Data:             []byte{0x01},
 								To:               "0xContractAddress",
@@ -280,9 +280,9 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetAction("invalid_action").
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
 					SetTimelockAddress(types.ChainSelector(SepoliaSelector), "0xTimelockAddress").
-					AddTransaction(types.BatchChainOperation{
+					AddOperation(types.BatchOperation{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								Data: []byte{0x01},
 								To:   "0xContractAddress",

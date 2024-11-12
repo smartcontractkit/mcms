@@ -42,9 +42,9 @@ func TestProposalBuilder(t *testing.T) {
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
-					AddTransaction(types.ChainOperation{
+					AddOperation(types.Operation{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Operation:     types.Operation{Data: []byte{0x01}},
+						Transaction:   types.Transaction{Data: []byte{0x01}},
 					})
 			},
 			want: &mcms.Proposal{
@@ -58,10 +58,10 @@ func TestProposalBuilder(t *testing.T) {
 						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Operation:     types.Operation{Data: []byte{0x01}},
+						Transaction:   types.Transaction{Data: []byte{0x01}},
 					},
 				},
 			},
@@ -75,14 +75,14 @@ func TestProposalBuilder(t *testing.T) {
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
-					SetTransactions([]types.ChainOperation{
+					SetOperations([]types.Operation{
 						{
 							ChainSelector: types.ChainSelector(SepoliaSelector),
-							Operation:     types.Operation{Data: []byte{0x01}},
+							Transaction:   types.Transaction{Data: []byte{0x01}},
 						},
 						{
 							ChainSelector: types.ChainSelector(SepoliaSelector),
-							Operation:     types.Operation{Data: []byte{0x02}},
+							Transaction:   types.Transaction{Data: []byte{0x02}},
 						},
 					})
 			},
@@ -97,14 +97,14 @@ func TestProposalBuilder(t *testing.T) {
 						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Operation:     types.Operation{Data: []byte{0x01}},
+						Transaction:   types.Transaction{Data: []byte{0x01}},
 					},
 					{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Operation:     types.Operation{Data: []byte{0x02}},
+						Transaction:   types.Transaction{Data: []byte{0x02}},
 					},
 				},
 			},
@@ -120,14 +120,14 @@ func TestProposalBuilder(t *testing.T) {
 					SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
 						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
 					}).
-					SetTransactions([]types.ChainOperation{
+					SetOperations([]types.Operation{
 						{
 							ChainSelector: types.ChainSelector(SepoliaSelector),
-							Operation:     types.Operation{Data: []byte{0x01}},
+							Transaction:   types.Transaction{Data: []byte{0x01}},
 						},
 						{
 							ChainSelector: types.ChainSelector(SepoliaSelector),
-							Operation:     types.Operation{Data: []byte{0x02}},
+							Transaction:   types.Transaction{Data: []byte{0x02}},
 						},
 					}).
 					AddSignature(types.Signature{
@@ -152,14 +152,14 @@ func TestProposalBuilder(t *testing.T) {
 						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Operation:     types.Operation{Data: []byte{0x01}},
+						Transaction:   types.Transaction{Data: []byte{0x01}},
 					},
 					{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Operation:     types.Operation{Data: []byte{0x02}},
+						Transaction:   types.Transaction{Data: []byte{0x02}},
 					},
 				},
 			},
@@ -172,9 +172,9 @@ func TestProposalBuilder(t *testing.T) {
 					SetDescription("Missing Version").
 					SetOverridePreviousRoot(false).
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
-					AddTransaction(types.ChainOperation{
+					AddOperation(types.Operation{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Operation:     types.Operation{Data: []byte{0x01}},
+						Transaction:   types.Transaction{Data: []byte{0x01}},
 					})
 			},
 			want: nil,
@@ -190,9 +190,9 @@ func TestProposalBuilder(t *testing.T) {
 					SetDescription("ValidUntil in Past").
 					SetOverridePreviousRoot(false).
 					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
-					AddTransaction(types.ChainOperation{
+					AddOperation(types.Operation{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Operation:     types.Operation{Data: []byte{0x01}},
+						Transaction:   types.Transaction{Data: []byte{0x01}},
 					})
 			},
 			want: nil,
@@ -212,7 +212,7 @@ func TestProposalBuilder(t *testing.T) {
 			},
 			want: nil,
 			wantErrs: []string{
-				"Key: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
+				"Key: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
 			},
 		},
 		{
@@ -223,9 +223,9 @@ func TestProposalBuilder(t *testing.T) {
 					SetDescription("Missing ChainMetadata").
 					SetOverridePreviousRoot(false).
 					// ChainMetadata is not added
-					AddTransaction(types.ChainOperation{
+					AddOperation(types.Operation{
 						ChainSelector: types.ChainSelector(SepoliaSelector),
-						Operation:     types.Operation{Data: []byte{0x01}},
+						Transaction:   types.Transaction{Data: []byte{0x01}},
 					})
 			},
 			want: nil,
