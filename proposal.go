@@ -14,9 +14,9 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
+	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -193,7 +193,7 @@ func (p *Proposal) SigningMessage() ([32]byte, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
-	msg, err := evm.ABIEncode(SignMsgABI, tree.Root, p.ValidUntil)
+	msg, err := abi.ABIEncode(SignMsgABI, tree.Root, p.ValidUntil)
 	if err != nil {
 		return [32]byte{}, err
 	}
