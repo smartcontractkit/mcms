@@ -1,7 +1,6 @@
 package mcms
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,10 +14,13 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
+	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+const SignMsgABI = `[{"type":"bytes32"},{"type":"uint32"}]`
 
 // BaseProposal is the base struct for all MCMS proposals, contains shared fields for all proposal types.
 type BaseProposal struct {
@@ -71,25 +73,25 @@ func WriteProposal(w io.Writer, proposal *Proposal) error {
 	return enc.Encode(proposal)
 }
 
-func (m *Proposal) Validate() error {
+func (p *Proposal) Validate() error {
 	// Run tag-based validation
 	var validate = validator.New()
 
-	if err := validate.Struct(m); err != nil {
+	if err := validate.Struct(p); err != nil {
 		return err
 	}
 
-	if m.Kind != types.KindProposal {
-		return NewInvalidProposalKindError(m.Kind, types.KindProposal)
+	if p.Kind != types.KindProposal {
+		return NewInvalidProposalKindError(p.Kind, types.KindProposal)
 	}
 
-	if err := proposalValidateBasic(*m); err != nil {
+	if err := proposalValidateBasic(*p); err != nil {
 		return err
 	}
 
 	// Validate all chains in transactions have an entry in chain metadata
-	for _, t := range m.Transactions {
-		if _, ok := m.ChainMetadata[t.ChainSelector]; !ok {
+	for _, t := range p.Transactions {
+		if _, ok := p.ChainMetadata[t.ChainSelector]; !ok {
 			return NewChainMetadataNotFoundError(t.ChainSelector)
 		}
 	}
@@ -104,31 +106,31 @@ func (m *Proposal) Validate() error {
 //
 // Note that not all chain families may support this feature, so ensure your tests are only running
 // against chains that support it.
-func (m *Proposal) UseSimulatedBackend(b bool) {
-	m.useSimulatedBackend = b
+func (p *Proposal) UseSimulatedBackend(b bool) {
+	p.useSimulatedBackend = b
 }
 
 // ChainSelectors returns a sorted list of chain selectors from the chains' metadata
-func (m *Proposal) ChainSelectors() []types.ChainSelector {
-	return slices.Sorted(maps.Keys(m.ChainMetadata))
+func (p *Proposal) ChainSelectors() []types.ChainSelector {
+	return slices.Sorted(maps.Keys(p.ChainMetadata))
 }
 
 // MerkleTree generates a merkle tree from the proposal's chain metadata and transactions.
-func (m *Proposal) MerkleTree() (*merkle.Tree, error) {
-	encoders, err := m.GetEncoders()
+func (p *Proposal) MerkleTree() (*merkle.Tree, error) {
+	encoders, err := p.GetEncoders()
 	if err != nil {
 		return nil, wrapTreeGenErr(err)
 	}
 
 	hashLeaves := make([]common.Hash, 0)
-	for _, sel := range m.ChainSelectors() {
+	for _, sel := range p.ChainSelectors() {
 		// Since we create encoders from the list of chain selectors provided in the ChainMetadata,
 		// we can be sure the encoder exists, and don't need to check for existence.
 		encoder := encoders[sel]
 
 		// Similarly, we can be sure the metadata exists, as we iterate over the chain selectors,
 		// since the chain selectors are keys in the ChainMetadata map.
-		metadata := m.ChainMetadata[sel]
+		metadata := p.ChainMetadata[sel]
 
 		encodedRootMetadata, encerr := encoder.HashMetadata(metadata)
 		if encerr != nil {
@@ -138,8 +140,8 @@ func (m *Proposal) MerkleTree() (*merkle.Tree, error) {
 		hashLeaves = append(hashLeaves, encodedRootMetadata)
 	}
 
-	for i, tx := range m.Transactions {
-		txNonces, txerr := m.TransactionNonces()
+	for i, tx := range p.Transactions {
+		txNonces, txerr := p.TransactionNonces()
 		if txerr != nil {
 			return nil, wrapTreeGenErr(txerr)
 		}
@@ -156,7 +158,7 @@ func (m *Proposal) MerkleTree() (*merkle.Tree, error) {
 
 		encodedOp, txerr := encoder.HashOperation(
 			txNonce,
-			m.ChainMetadata[tx.ChainSelector],
+			p.ChainMetadata[tx.ChainSelector],
 			tx,
 		)
 		if txerr != nil {
@@ -173,30 +175,36 @@ func (m *Proposal) MerkleTree() (*merkle.Tree, error) {
 	return merkle.NewTree(hashLeaves), nil
 }
 
-func (m *Proposal) SigningHash() (common.Hash, error) {
-	tree, err := m.MerkleTree()
+// SigningHash returns the hash of the proposal that should be signed, using the tree root and the valid until timestamp.
+func (p *Proposal) SigningHash() (common.Hash, error) {
+	msg, err := p.SigningMessage()
 	if err != nil {
 		return common.Hash{}, err
 	}
 
-	// Convert validUntil to [32]byte
-	var validUntilBytes [32]byte
-	binary.BigEndian.PutUint32(validUntilBytes[28:], m.ValidUntil) // Place the uint32 in the last 4 bytes
-
-	hashToSign := crypto.Keccak256Hash(tree.Root.Bytes(), validUntilBytes[:])
-
-	return toEthSignedMessageHash(hashToSign), nil
+	return toEthSignedMessageHash(msg), nil
 }
 
-// We may need to put this back in
-// func (e *Executor) SigningMessage() ([]byte, error) {
-// 	return ABIEncode(`[{"type":"bytes32"},{"type":"uint32"}]`, s.Tree.Root, s.Proposal.ValidUntil)
-// }
+// SigningMessage generates a signing message without the EIP191 prefix.
+// This function is used for ledger contexts where the ledger itself will apply the EIP191 prefix.
+// Corresponds to the input here https://github.com/smartcontractkit/ccip-owner-contracts/blob/main/src/ManyChainMultiSig.sol#L202
+func (p *Proposal) SigningMessage() ([32]byte, error) {
+	tree, err := p.MerkleTree()
+	if err != nil {
+		return common.Hash{}, err
+	}
+	msg, err := abi.ABIEncode(SignMsgABI, tree.Root, p.ValidUntil)
+	if err != nil {
+		return [32]byte{}, err
+	}
+
+	return crypto.Keccak256Hash(msg), nil
+}
 
 // TransactionCounts returns a map of chain selectors to the number of transactions for that chain
-func (m *Proposal) TransactionCounts() map[types.ChainSelector]uint64 {
+func (p *Proposal) TransactionCounts() map[types.ChainSelector]uint64 {
 	txCounts := make(map[types.ChainSelector]uint64)
-	for _, tx := range m.Transactions {
+	for _, tx := range p.Transactions {
 		txCounts[tx.ChainSelector]++
 	}
 
@@ -209,17 +217,17 @@ func (m *Proposal) TransactionCounts() map[types.ChainSelector]uint64 {
 // It returns a slice of nonces, where each nonce corresponds to a transaction in the same order
 // as the transactions slice. The nonce is calculated as the local index of the transaction with
 // respect to it's chain  selector, plus the starting op count for that chain selector.
-func (m *Proposal) TransactionNonces() ([]uint64, error) {
+func (p *Proposal) TransactionNonces() ([]uint64, error) {
 	// Map to keep track of local index counts for each ChainSelector
-	chainIndexMap := make(map[types.ChainSelector]uint64, len(m.ChainMetadata))
+	chainIndexMap := make(map[types.ChainSelector]uint64, len(p.ChainMetadata))
 
-	txNonces := make([]uint64, len(m.Transactions))
-	for i, tx := range m.Transactions {
+	txNonces := make([]uint64, len(p.Transactions))
+	for i, tx := range p.Transactions {
 		// Get the current local index for this ChainSelector
 		localIndex := chainIndexMap[tx.ChainSelector]
 
 		// Lookup the StartingOpCount for this ChainSelector from cmMap
-		md, ok := m.ChainMetadata[tx.ChainSelector]
+		md, ok := p.ChainMetadata[tx.ChainSelector]
 		if !ok {
 			return nil, NewChainMetadataNotFoundError(tx.ChainSelector)
 		}
@@ -235,11 +243,11 @@ func (m *Proposal) TransactionNonces() ([]uint64, error) {
 }
 
 // GetEncoders generates encoders for each chain in the proposal's chain metadata.
-func (m *Proposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
-	txCounts := m.TransactionCounts()
+func (p *Proposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
+	txCounts := p.TransactionCounts()
 	encoders := make(map[types.ChainSelector]sdk.Encoder)
-	for chainSelector := range m.ChainMetadata {
-		encoder, err := newEncoder(chainSelector, txCounts[chainSelector], m.OverridePreviousRoot, m.useSimulatedBackend)
+	for chainSelector := range p.ChainMetadata {
+		encoder, err := newEncoder(chainSelector, txCounts[chainSelector], p.OverridePreviousRoot, p.useSimulatedBackend)
 		if err != nil {
 			return nil, fmt.Errorf("unable to create encoder: %w", err)
 		}
