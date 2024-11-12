@@ -21,8 +21,7 @@
         name: "Many Chain Multisig System",
         repo: "https://github.com/smartcontractkit/mcms",
         homepage: "README.md",
-        loadSidebar: true,
-        coverpage: true,
+        loadSidebar: true
       };
     </script>
     <!-- Docsify v4 -->
@@ -77,6 +76,18 @@
     <script
       crossorigin="anonymous"
       integrity="sha384-UwaoRTRxt1BoL/u+ucAgzz4PML/diz+5Jd69XmVMhl0pxqSUpm71h+4myV1gjm9h"
-      src="https://unpkg.com/docsify-plugin-flexible-alerts"></script>
+      src="https://unpkg.com/docsify-plugin-flexible-alerts"
+    ></script>
+
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true });
+      window.mermaid = mermaid;
+    </script>
+    <script
+      integrity="sha384-U2Wy2Wa3grc0soLXlky3iZWvD6N5p3o+Udi8RpPWlbscpUEfi7RuQHzMmSstkHou"
+      crossorigin="anonymous"
+      src="https://unpkg.com/docsify-mermaid@2.0.1/dist/docsify-mermaid.js"
+    ></script>
   </body>
 </html>
