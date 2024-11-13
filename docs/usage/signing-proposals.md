@@ -2,7 +2,7 @@
 
 For signing proposals, we use the methods that come with the `Proposal` type.
 
-```golang
+```go
 package examples
 
 import (

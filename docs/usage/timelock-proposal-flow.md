@@ -15,7 +15,7 @@ on the batch, and the timelock will be responsible of ensuring the atomicity of 
 
 See the example below:
 
-```golang
+```go
 package examples
 
 import (

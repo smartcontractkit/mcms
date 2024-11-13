@@ -9,7 +9,7 @@ unmarshaling data from a JSON file. This guide walks you through using the
 function to read a proposal from a JSON file, validate it, and create a new Proposal
 object.
 
-```golang
+```go
 package main
 
 import (
@@ -46,7 +46,7 @@ For the JSON structure of the proposal please check the [MCMS Proposal Format Do
 The Proposal Builder API provides a fluent interface to construct a Proposal with
 customizable fields and metadata, ensuring that each proposal is validated before use.
 
-```golang
+```go
 package main
 
 import (
