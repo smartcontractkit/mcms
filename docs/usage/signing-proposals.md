@@ -37,7 +37,7 @@ func main() {
 	backend := backends.SimulatedBackend{}
 	inspectorsMap := make(map[types.ChainSelector]sdk.Inspector)
 	inspectorsMap[types.ChainSelector(selector)] = evm.NewEVMInspector(backend)
-	signable, err := mcms.NewSignable(&mcmsProposal, inspectorsMap)
+	signable, err := mcms.NewSignable(proposal, inspectorsMap)
 
 	// 3. Sign the proposal bytes
 	// This will be done via ledger, using a private key KMS, etc.
