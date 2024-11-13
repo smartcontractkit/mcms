@@ -22,28 +22,28 @@ var _ sdk.TimelockConverter = (*TimelockConverterEVM)(nil)
 type TimelockConverterEVM struct{}
 
 func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
-	txn types.BatchChainOperation,
+	bop types.BatchOperation,
 	timelockAddress string,
 	minDelay string,
-	operation types.TimelockAction,
+	action types.TimelockAction,
 	predecessor common.Hash,
-) (types.ChainOperation, common.Hash, error) {
+) (types.Operation, common.Hash, error) {
 	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
 	calls := make([]bindings.RBACTimelockCall, 0)
 	tags := make([]string, 0)
-	for _, op := range txn.Batch {
+	for _, tx := range bop.Transactions {
 		// Unmarshal the additional fields
 		var additionalFields EVMAdditionalFields
-		if err := json.Unmarshal(op.AdditionalFields, &additionalFields); err != nil {
-			return types.ChainOperation{}, common.Hash{}, err
+		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+			return types.Operation{}, common.Hash{}, err
 		}
 
 		calls = append(calls, bindings.RBACTimelockCall{
-			Target: common.HexToAddress(op.To),
-			Data:   op.Data,
+			Target: common.HexToAddress(tx.To),
+			Data:   tx.Data,
 			Value:  additionalFields.Value,
 		})
-		tags = append(tags, op.Tags...)
+		tags = append(tags, tx.Tags...)
 	}
 
 	salt := ZERO_HASH
@@ -51,18 +51,18 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 
 	abi, errAbi := bindings.RBACTimelockMetaData.GetAbi()
 	if errAbi != nil {
-		return types.ChainOperation{}, common.Hash{}, errAbi
+		return types.Operation{}, common.Hash{}, errAbi
 	}
 
 	operationId, errHash := hashOperationBatch(calls, predecessor, salt)
 	if errHash != nil {
-		return types.ChainOperation{}, common.Hash{}, errHash
+		return types.Operation{}, common.Hash{}, errHash
 	}
 
 	// Encode the data based on the operation
 	var data []byte
 	var err error
-	switch operation {
+	switch action {
 	case types.TimelockActionSchedule:
 		data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
 	case types.TimelockActionCancel:
@@ -70,16 +70,16 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	case types.TimelockActionBypass:
 		data, err = abi.Pack("bypasserExecuteBatch", calls)
 	default:
-		return types.ChainOperation{}, common.Hash{}, sdkerrors.NewInvalidTimelockOperationError(string(operation))
+		return types.Operation{}, common.Hash{}, sdkerrors.NewInvalidTimelockOperationError(string(action))
 	}
 
 	if err != nil {
-		return types.ChainOperation{}, common.Hash{}, err
+		return types.Operation{}, common.Hash{}, err
 	}
 
-	chainOperation := types.ChainOperation{
-		ChainSelector: txn.ChainSelector,
-		Operation: NewEVMOperation(
+	op := types.Operation{
+		ChainSelector: bop.ChainSelector,
+		Transaction: NewEVMOperation(
 			common.HexToAddress(timelockAddress),
 			data,
 			big.NewInt(0),
@@ -88,7 +88,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 		),
 	}
 
-	return chainOperation, operationId, nil
+	return op, operationId, nil
 }
 
 // hashOperationBatch replicates the hash calculation from Solidity

@@ -28,7 +28,7 @@ func (e *EVMExecutor) ExecuteOperation(
 	metadata types.ChainMetadata,
 	nonce uint32,
 	proof []common.Hash,
-	operation types.ChainOperation,
+	op types.Operation,
 ) (string, error) {
 	if e.EVMEncoder == nil {
 		return "", errors.New("EVMExecutor was created without an encoder")
@@ -39,14 +39,14 @@ func (e *EVMExecutor) ExecuteOperation(
 		return "", err
 	}
 
-	op, err := e.ToGethOperation(nonce, metadata, operation)
+	bindOp, err := e.ToGethOperation(nonce, metadata, op)
 	if err != nil {
 		return "", err
 	}
 
 	tx, err := mcmsObj.Execute(
 		e.auth,
-		op,
+		bindOp,
 		transformHashes(proof),
 	)
 

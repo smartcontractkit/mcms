@@ -23,7 +23,7 @@ var validChainMetadata = map[types.ChainSelector]types.ChainMetadata{
 var validTimelockAddresses = map[types.ChainSelector]string{
 	TestChain1: "0x123",
 }
-var validOp = types.Operation{
+var validTx = types.Transaction{
 	To:               "0x123",
 	AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 	Data:             common.Hex2Bytes("0x"),
@@ -33,11 +33,11 @@ var validOp = types.Operation{
 	},
 }
 
-var validBatches = []types.BatchChainOperation{
+var validBatches = []types.BatchOperation{
 	{
 		ChainSelector: TestChain1,
-		Batch: []types.Operation{
-			validOp,
+		Transactions: []types.Transaction{
+			validTx,
 		},
 	},
 }
@@ -70,10 +70,10 @@ func Test_NewTimelockProposal(t *testing.T) {
 				"timelockAddresses": {
 					"16015286601757825753": "0x01"
 				},
-				"transactions": [
+				"operations": [
 					{
 						"chainSelector": 16015286601757825753,
-						"batch": [
+						"transactions": [
 							{
 								"to": "0x0000000000000000000000000000000000000000",
 								"additionalFields": {"value": 0},
@@ -102,10 +102,10 @@ func Test_NewTimelockProposal(t *testing.T) {
 				TimelockAddresses: map[types.ChainSelector]string{
 					TestChain2: "0x01",
 				},
-				Transactions: []types.BatchChainOperation{
+				Operations: []types.BatchOperation{
 					{
 						ChainSelector: TestChain2,
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								To:               "0x0000000000000000000000000000000000000000",
 								AdditionalFields: []byte(`{"value": 0}`),
@@ -135,10 +135,10 @@ func Test_NewTimelockProposal(t *testing.T) {
 				"timelockAddresses": {
 					"16015286601757825753": "0x01"
 				},
-				"transactions": [
+				"operations": [
 					{
 						"chainSelector": 16015286601757825753,
-						"batch": [
+						"transactions": [
 							{
 								"to": "0x0000000000000000000000000000000000000000",
 								"additionalFields": {"value": 0},
@@ -169,10 +169,10 @@ func Test_NewTimelockProposal(t *testing.T) {
 				"timelockAddresses": {
 					"16015286601757825753": "0x01"
 				},
-				"transactions": [
+				"operations": [
 					{
 						"chainSelector": 16015286601757825753,
-						"batch": [
+						"transactions": [
 							{
 								"to": "0x0000000000000000000000000000000000000000",
 								"additionalFields": {"value": 0},
@@ -233,10 +233,10 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				Action:            types.TimelockActionSchedule,
 				Delay:             "1h",
 				TimelockAddresses: map[types.ChainSelector]string{},
-				Transactions: []types.BatchChainOperation{
+				Operations: []types.BatchOperation{
 					{
 						ChainSelector: TestChain2,
-						Batch: []types.Operation{
+						Transactions: []types.Transaction{
 							{
 								To:               "0x0000000000000000000000000000000000000000",
 								AdditionalFields: []byte(`{"value": 0}`),
@@ -262,10 +262,10 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				"delay": "1h",
 				"signatures": null,
 				"timelockAddresses": {},
-				"transactions": [
+				"operations": [
 					{
 						"chainSelector": 16015286601757825753,
-						"batch": [
+						"transactions": [
 							{
 								"to": "0x0000000000000000000000000000000000000000",
 								"additionalFields": {"value": 0},
@@ -317,7 +317,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 	t.Parallel()
 
 	// Test table with every validation case for NewProposalWithTimeLock
-	testCases := []struct {
+	tests := []struct {
 		name           string
 		version        string
 		validUntil     uint32
@@ -326,7 +326,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 		chainMetadata  map[types.ChainSelector]types.ChainMetadata
 		description    string
 		timelockAddr   map[types.ChainSelector]string
-		batches        []types.BatchChainOperation
+		bops           []types.BatchOperation
 		timelockAction types.TimelockAction
 		timelockDelay  string
 		expectedError  error
@@ -340,7 +340,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			chainMetadata:  validChainMetadata,
 			description:    "description",
 			timelockAddr:   validTimelockAddresses,
-			batches:        validBatches,
+			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
 			expectedError:  nil,
@@ -354,7 +354,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			chainMetadata:  validChainMetadata,
 			description:    "description",
 			timelockAddr:   validTimelockAddresses,
-			batches:        validBatches,
+			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
 			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag"),
@@ -368,7 +368,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			chainMetadata:  validChainMetadata,
 			description:    "description",
 			timelockAddr:   validTimelockAddresses,
-			batches:        validBatches,
+			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
 			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag"),
@@ -382,7 +382,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			chainMetadata:  nil,
 			description:    "description",
 			timelockAddr:   validTimelockAddresses,
-			batches:        validBatches,
+			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
 			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag"),
@@ -396,7 +396,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			chainMetadata:  validChainMetadata,
 			description:    "description",
 			timelockAddr:   nil,
-			batches:        validBatches,
+			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
 			expectedError:  errors.New("Key: 'TimelockProposal.TimelockAddresses' Error:Field validation for 'TimelockAddresses' failed on the 'required' tag"),
@@ -410,10 +410,10 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			chainMetadata:  validChainMetadata,
 			description:    "description",
 			timelockAddr:   validTimelockAddresses,
-			batches:        nil,
+			bops:           nil,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1h",
-			expectedError:  errors.New("Key: 'TimelockProposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag"),
+			expectedError:  errors.New("Key: 'TimelockProposal.Operations' Error:Field validation for 'Operations' failed on the 'required' tag"),
 		},
 		{
 			name:           "Invalid timelockAction",
@@ -424,7 +424,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			chainMetadata:  validChainMetadata,
 			description:    "description",
 			timelockAddr:   validTimelockAddresses,
-			batches:        validBatches,
+			bops:           validBatches,
 			timelockAction: types.TimelockAction("invalid"),
 			timelockDelay:  "1h",
 			expectedError:  errors.New("Key: 'TimelockProposal.Action' Error:Field validation for 'Action' failed on the 'oneof' tag"),
@@ -438,14 +438,14 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			chainMetadata:  validChainMetadata,
 			description:    "description",
 			timelockAddr:   validTimelockAddresses,
-			batches:        validBatches,
+			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
 			timelockDelay:  "1nm",
 			expectedError:  errors.New("invalid delay: 1nm"),
 		},
 	}
 
-	for _, tc := range testCases {
+	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -457,7 +457,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 				tc.chainMetadata,
 				tc.description,
 				tc.timelockAddr,
-				tc.batches,
+				tc.bops,
 				tc.timelockAction,
 				tc.timelockDelay,
 			)
@@ -498,5 +498,5 @@ func TestTimelockProposal_Convert(t *testing.T) {
 	assert.False(t, mcmsProposal.OverridePreviousRoot)
 	assert.Equal(t, validChainMetadata, mcmsProposal.ChainMetadata)
 	assert.Equal(t, "description", mcmsProposal.Description)
-	assert.Len(t, mcmsProposal.Transactions, 1)
+	assert.Len(t, mcmsProposal.Operations, 1)
 }

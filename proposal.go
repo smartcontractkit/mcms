@@ -48,7 +48,7 @@ func (p *BaseProposal) AppendSignature(signature types.Signature) {
 type Proposal struct {
 	BaseProposal
 
-	Transactions []types.ChainOperation `json:"transactions" validate:"required,min=1"`
+	Operations []types.Operation `json:"operations" validate:"required,min=1"`
 }
 
 // NewProposal unmarshal data from the reader to JSON and returns a new Proposal.
@@ -89,10 +89,10 @@ func (p *Proposal) Validate() error {
 		return err
 	}
 
-	// Validate all chains in transactions have an entry in chain metadata
-	for _, t := range p.Transactions {
-		if _, ok := p.ChainMetadata[t.ChainSelector]; !ok {
-			return NewChainMetadataNotFoundError(t.ChainSelector)
+	// Validate all chains in operations have an entry in chain metadata
+	for _, op := range p.Operations {
+		if _, ok := p.ChainMetadata[op.ChainSelector]; !ok {
+			return NewChainMetadataNotFoundError(op.ChainSelector)
 		}
 	}
 
@@ -140,7 +140,7 @@ func (p *Proposal) MerkleTree() (*merkle.Tree, error) {
 		hashLeaves = append(hashLeaves, encodedRootMetadata)
 	}
 
-	for i, tx := range p.Transactions {
+	for i, op := range p.Operations {
 		txNonces, txerr := p.TransactionNonces()
 		if txerr != nil {
 			return nil, wrapTreeGenErr(txerr)
@@ -154,12 +154,12 @@ func (p *Proposal) MerkleTree() (*merkle.Tree, error) {
 		// This will always exist since encoders are created from the chain selectors in the
 		// metadata, and TransactionNonces has validated that the metadata exists for each chain
 		// selector defined in the transactions.
-		encoder := encoders[tx.ChainSelector]
+		encoder := encoders[op.ChainSelector]
 
 		encodedOp, txerr := encoder.HashOperation(
 			txNonce,
-			p.ChainMetadata[tx.ChainSelector],
-			tx,
+			p.ChainMetadata[op.ChainSelector],
+			op,
 		)
 		if txerr != nil {
 			return nil, wrapTreeGenErr(txerr)
@@ -201,11 +201,14 @@ func (p *Proposal) SigningMessage() ([32]byte, error) {
 	return crypto.Keccak256Hash(msg), nil
 }
 
-// TransactionCounts returns a map of chain selectors to the number of transactions for that chain
+// TransactionCounts returns a map of chain selectors to the number of transactions for that chain.
+//
+// Since proposal operations only contains a single transaction, we can count the number of
+// operations per chain selector to get the number of transactions.
 func (p *Proposal) TransactionCounts() map[types.ChainSelector]uint64 {
 	txCounts := make(map[types.ChainSelector]uint64)
-	for _, tx := range p.Transactions {
-		txCounts[tx.ChainSelector]++
+	for _, o := range p.Operations {
+		txCounts[o.ChainSelector]++
 	}
 
 	return txCounts
@@ -221,22 +224,22 @@ func (p *Proposal) TransactionNonces() ([]uint64, error) {
 	// Map to keep track of local index counts for each ChainSelector
 	chainIndexMap := make(map[types.ChainSelector]uint64, len(p.ChainMetadata))
 
-	txNonces := make([]uint64, len(p.Transactions))
-	for i, tx := range p.Transactions {
+	txNonces := make([]uint64, len(p.Operations))
+	for i, op := range p.Operations {
 		// Get the current local index for this ChainSelector
-		localIndex := chainIndexMap[tx.ChainSelector]
+		localIndex := chainIndexMap[op.ChainSelector]
 
 		// Lookup the StartingOpCount for this ChainSelector from cmMap
-		md, ok := p.ChainMetadata[tx.ChainSelector]
+		md, ok := p.ChainMetadata[op.ChainSelector]
 		if !ok {
-			return nil, NewChainMetadataNotFoundError(tx.ChainSelector)
+			return nil, NewChainMetadataNotFoundError(op.ChainSelector)
 		}
 
 		// Add the local index to the StartingOpCount to get the final nonce
 		txNonces[i] = localIndex + md.StartingOpCount
 
 		// Increment the local index for the current ChainSelector
-		chainIndexMap[tx.ChainSelector]++
+		chainIndexMap[op.ChainSelector]++
 	}
 
 	return txNonces, nil

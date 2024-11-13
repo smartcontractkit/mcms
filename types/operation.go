@@ -8,16 +8,23 @@ type OperationMetadata struct {
 	Tags         []string `json:"tags"`
 }
 
-// Operation represents the data of an operation to be executed
-type Operation struct {
+// Transaction contains the transaction data to be executed
+type Transaction struct {
+	OperationMetadata
+
 	To               string          `json:"to"`
 	Data             []byte          `json:"data"`
 	AdditionalFields json.RawMessage `json:"additionalFields"`
-	OperationMetadata
 }
 
-// ChainOperation represents an operation to be executed on a chain
-type ChainOperation struct {
+// Operation represents an operation with a single transaction to be executed
+type Operation struct {
 	ChainSelector ChainSelector `json:"chainSelector"`
-	Operation
+	Transaction   Transaction   `json:"transaction"`
+}
+
+// BatchOperation represents an operation with a batch of transactions to be executed.
+type BatchOperation struct {
+	ChainSelector ChainSelector `json:"chainSelector"`
+	Transactions  []Transaction `json:"transactions"`
 }

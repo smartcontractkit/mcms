@@ -20,7 +20,7 @@ type TimelockProposal struct {
 	Action            types.TimelockAction           `json:"action" validate:"required,oneof=schedule cancel bypass"`
 	Delay             string                         `json:"delay"` // Will validate conditionally in Validate method
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
-	Transactions      []types.BatchChainOperation    `json:"transactions" validate:"required,min=1"`
+	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1"`
 }
 
 // NewTimelockProposal unmarshal data from the reader to JSON and returns a new TimelockProposal.
@@ -53,7 +53,7 @@ func NewProposalWithTimeLock(
 	chainMetadata map[types.ChainSelector]types.ChainMetadata,
 	description string,
 	timelockAddresses map[types.ChainSelector]string,
-	batches []types.BatchChainOperation,
+	batchOps []types.BatchOperation,
 	timelockAction types.TimelockAction,
 	timelockDelay string,
 ) (*TimelockProposal, error) {
@@ -70,7 +70,7 @@ func NewProposalWithTimeLock(
 		Action:            timelockAction,
 		Delay:             timelockDelay,
 		TimelockAddresses: timelockAddresses,
-		Transactions:      batches,
+		Operations:        batchOps,
 	}
 
 	errValidate := p.Validate()
@@ -93,13 +93,14 @@ func (m *TimelockProposal) Validate() error {
 	}
 
 	// Validate all chains in transactions have an entry in chain metadata
-	for _, t := range m.Transactions {
-		if _, ok := m.ChainMetadata[t.ChainSelector]; !ok {
-			return NewChainMetadataNotFoundError(t.ChainSelector)
+	for _, op := range m.Operations {
+		if _, ok := m.ChainMetadata[op.ChainSelector]; !ok {
+			return NewChainMetadataNotFoundError(op.ChainSelector)
 		}
-		for _, op := range t.Batch {
+
+		for _, tx := range op.Transactions {
 			// Chain specific validations.
-			if err := ValidateAdditionalFields(op.AdditionalFields, t.ChainSelector); err != nil {
+			if err := ValidateAdditionalFields(tx.AdditionalFields, op.ChainSelector); err != nil {
 				return err
 			}
 		}
@@ -136,22 +137,22 @@ func (m *TimelockProposal) Convert() (Proposal, error) {
 	result := Proposal{
 		BaseProposal: baseProposal,
 	}
-	for _, t := range m.Transactions {
-		timelockAddress := m.TimelockAddresses[t.ChainSelector]
-		predecessor := predecessorMap[t.ChainSelector]
+	for _, bop := range m.Operations {
+		timelockAddress := m.TimelockAddresses[bop.ChainSelector]
+		predecessor := predecessorMap[bop.ChainSelector]
 
-		chainOp, operationId, err := BatchToChainOperation(
-			t, timelockAddress, m.Delay, m.Action, predecessor,
+		sop, operationId, err := BatchToChainOperation(
+			bop, timelockAddress, m.Delay, m.Action, predecessor,
 		)
 		if err != nil {
 			return Proposal{}, err
 		}
 
 		// Append the converted operation to the MCMS only proposal
-		result.Transactions = append(result.Transactions, chainOp)
+		result.Operations = append(result.Operations, sop)
 
 		// Update predecessor for the chain
-		predecessorMap[t.ChainSelector] = operationId
+		predecessorMap[bop.ChainSelector] = operationId
 	}
 
 	return result, nil
@@ -178,7 +179,7 @@ func timeLockProposalValidateBasic(timelockProposal TimelockProposal) error {
 		}
 	}
 
-	if len(timelockProposal.Transactions) > 0 && len(timelockProposal.Transactions[0].Batch) == 0 {
+	if len(timelockProposal.Operations) > 0 && len(timelockProposal.Operations[0].Transactions) == 0 {
 		return ErrNoTransactionsInBatch
 	}
 
