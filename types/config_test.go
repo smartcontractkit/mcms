@@ -38,7 +38,7 @@ func Test_NewConfig(t *testing.T) {
 	// Invalid configuration
 	got, err = NewConfig(0, signers, groupSigners)
 	require.Error(t, err)
-	assert.Nil(t, got)
+	assert.Equal(t, Config{}, got)
 }
 
 func Test_Config_Validate(t *testing.T) {
