@@ -91,8 +91,7 @@ func main() {
 	// Step 5: Build the Proposal
 	proposal, err := builder.Build()
 	if err != nil {
-		fmt.Println("Failed to build proposal:", err)
-		return
+		panic(err)
 	}
 
 	fmt.Println("Proposal created:", proposal)

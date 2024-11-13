@@ -22,16 +22,14 @@ import (
 func main() {
 	file, err := os.Open("proposal.json")
 	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return
+		panic(err)
 	}
 	defer file.Close()
 
 	// 1. Create the proposal from the JSON data
 	proposal, err := mcms.NewProposal(file)
 	if err != nil {
-		fmt.Println("Error creating proposal:", err)
-		return
+		panic(err)
 	}
 
 	// 2. Create the signable type from the proposal
@@ -49,8 +47,7 @@ func main() {
 	// signerLedger := mcms.NewLedgerSigner([]uint32{44, 60, 0, 0, 0})
 	signature, err := signable.Sign(signer)
 	if err != nil {
-		fmt.Println("Error signing proposal:", err)
-		return
+		panic(err)
 	}
 
 	/// 4. Add the signature

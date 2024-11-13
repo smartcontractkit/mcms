@@ -35,22 +35,21 @@ import (
 func main() {
 	file, err := os.Open("proposal.json")
 	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return
+		panic(err)
 	}
+	
 	defer file.Close()
 
 	// 1. Create the proposal from the JSON data
 	proposal, err := mcms.NewTimelockProposal(file)
 	if err != nil {
-		fmt.Println("Error creating proposal:", err)
-		return
+		panic(err)
 	}
 
 	// 1.1 Convert to MCMS proposal
 	mcmsProposal, err := proposal.Convert()
 	if err != nil {
-		return
+		panic(err)
 	}
 
 	// 2. Create the signable type from the proposal
@@ -59,6 +58,9 @@ func main() {
 	inspectorsMap := make(map[types.ChainSelector]sdk.Inspector)
 	inspectorsMap[types.ChainSelector(selector)] = evm.NewEVMInspector(backend)
 	signable, err := mcms.NewSignable(&mcmsProposal, inspectorsMap)
+	if err != nil {
+		panic(err)
+	}
 
 	// 3. Sign the proposal bytes
 	// This will be generated via ledger, using a private key KMS, etc.
@@ -68,8 +70,7 @@ func main() {
 	// signerLedger := mcms.NewLedgerSigner([]uint32{44, 60, 0, 0, 0})
 	signature, err := signable.Sign(signer)
 	if err != nil {
-		fmt.Println("Error signing proposal:", err)
-		return
+		panic(err)
 	}
 
 	/// 4. Add the signature
