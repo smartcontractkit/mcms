@@ -65,7 +65,7 @@ func main() {
 		SetVersion("1.0").
 		SetValidUntil(1700000000).
 		SetDescription("Increase staking rewards").
-		AddSignature(types.Signature{}).
+		AddSignature(types.Signature{}). // For details on signature generation see https://github.com/smartcontractkit/mcms/blob/main/docs/usage/signing-proposals.md
 		SetOverridePreviousRoot(false).
 		UseSimulatedBackend(true)
 
