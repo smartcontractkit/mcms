@@ -77,11 +77,13 @@ func main() {
 	// Step 2: Initialize the Chain Family Executors
 	selector1 := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector)
 	selector2 := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_GOERLI_ARBITRUM_1.Selector)
-	backend := backends.SimulatedBackend{}
-	executor := evm.NewEVMExecutor(evm.NewEVMEncoder(0, uint64(selector1), false), backend, nil)
+	backend1 := backends.SimulatedBackend{}
+	backend2 := backends.SimulatedBackend{}
+	executor1 := evm.NewEVMExecutor(evm.NewEVMEncoder(0, uint64(selector1), false), backend1, nil)
+	executor2 := evm.NewEVMExecutor(evm.NewEVMEncoder(0, uint64(selector2), false), backend2, nil)
 	executorsMap := map[types.ChainSelector]sdk.Executor{
-		selector1: executor,
-		selector2: executor,
+		selector1: executor1,
+		selector2: executor2,
 	}
 	// Step 3: Create the chain MCMS proposal executor
 	executable, err := mcms.NewExecutable(proposal, executorsMap)
