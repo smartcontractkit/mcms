@@ -37,7 +37,7 @@ func main() {
 }
 ```
 
-For the JSON structure of the proposal please check the
+For the JSON structure of the proposal please check the [MCMS Proposal Format Doc.](../key-concepts/mcms-proposal.md)
 
 ## 2. Programmatic Build
 
