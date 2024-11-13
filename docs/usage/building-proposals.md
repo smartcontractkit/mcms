@@ -47,10 +47,12 @@ The Proposal Builder API provides a fluent interface to construct a Proposal wit
 customizable fields and metadata, ensuring that each proposal is validated before use.
 
 ```golang
-package main
+package examples
 
 import (
 	"fmt"
+
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/types"
@@ -62,8 +64,8 @@ func main() {
 	selector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 	// Step 2: Set Proposal Details
 	builder.
-		SetVersion("1.0").
-		SetValidUntil(1700000000).
+		SetVersion("v1").
+		SetValidUntil(1794610529).
 		SetDescription("Increase staking rewards").
 		AddSignature(types.Signature{}). // For details on signature generation see https://github.com/smartcontractkit/mcms/blob/main/docs/usage/signing-proposals.md
 		SetOverridePreviousRoot(false).
@@ -74,19 +76,49 @@ func main() {
 	// Or set the full metadata map
 	chainMetadataMap := map[types.ChainSelector]types.ChainMetadata{
 		// Each entry sets the timelock address on the given chain selector
-		selector:                 types.ChainMetadata{StartingOpCount: 0, MCMAddress: "0x123"},
-		types.ChainSelector(123): types.ChainMetadata{StartingOpCount: 0, MCMAddress: "0x123"},
+		types.ChainSelector(selector): {StartingOpCount: 0, MCMAddress: "0x123"},
 	}
 	builder.SetChainMetadata(chainMetadataMap)
 
 	// Step 4: Add Transactions
-	builder.AddOperation(types.Operation{Target: "0x5678", Value: "1000", Data: "0xabcdef"})
+	builder.AddOperation(
+		types.Operation{
+			ChainSelector: types.ChainSelector(selector),
+			Transaction: types.Transaction{
+				OperationMetadata: types.OperationMetadata{
+					ContractType: "some-contract",
+					Tags:         []string{"staking", "rewards"},
+				},
+				Data:             []byte("data bytes of the transaction"),
+				AdditionalFields: []byte(`{"value": "100"}`), // Chain specific fields for the operation
+			},
+		})
 	// Or set Full Transactions List
-	ops := []types.Operation{
-		{Target: "0xABCDEF", Value: "500", Data: "0xdata1"},
-		{Target: "0x123456", Value: "300", Data: "0xdata2"},
+	transactions := []types.Operation{
+		{
+			ChainSelector: types.ChainSelector(selector),
+			Transaction: types.Transaction{
+				OperationMetadata: types.OperationMetadata{
+					ContractType: "some-contract",
+					Tags:         []string{"staking", "rewards"},
+				},
+				Data:             []byte("data bytes of the transaction"),
+				AdditionalFields: []byte(`{"value": "100"}`), // Chain specific fields for the operation
+			},
+		},
+		{
+			ChainSelector: types.ChainSelector(selector),
+			Transaction: types.Transaction{
+				OperationMetadata: types.OperationMetadata{
+					ContractType: "some-contract",
+					Tags:         []string{"staking", "rewards"},
+				},
+				Data:             []byte("data bytes of the transaction"),
+				AdditionalFields: []byte(`{"value": "200"}`), // Chain specific fields for the operation
+			},
+		},
 	}
-	builder.SetTransactions(transactions)
+	builder.SetOperations(transactions)
 
 	// Step 5: Build the Proposal
 	proposal, err := builder.Build()
@@ -96,4 +128,5 @@ func main() {
 
 	fmt.Println("Proposal created:", proposal)
 }
+
 ```
