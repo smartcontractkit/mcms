@@ -42,7 +42,7 @@ func main() {
 	}
 	/// 4. Add the signature
 	proposal.AppendSignature(signedBytes)
-	fmt.Println("Successfully created proposal:", proposal)
+	fmt.Println("Successfully signed proposal:", proposal)
 }
 
 ```
