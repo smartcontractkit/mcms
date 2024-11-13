@@ -6,10 +6,16 @@ For signing proposals, we use the methods that come with the `Proposal` type.
 package examples
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"os"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms"
+	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -28,21 +34,28 @@ func main() {
 		return
 	}
 
-	// 2. Get proposal bytes for signature
-	bytes, err := proposal.SigningMessage()
+	// 2. Create the signable type from the proposal
+	selector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
+	backend := backends.SimulatedBackend{}
+	inspectorsMap := make(map[types.ChainSelector]sdk.Inspector)
+	inspectorsMap[types.ChainSelector(selector)] = evm.NewEVMInspector(backend)
+	signable, err := mcms.NewSignable(&mcmsProposal, inspectorsMap)
 
-	// 3. Sign the actual bytes
-	// This should be generated via ledger, using a private key KMS, etc.
-	// For the sake of this example, we will generate a signature using a random private key
-	// and then convert it to bytes
-	signedBytes, err := types.NewSignatureFromBytes(bytes[:])
+	// 3. Sign the proposal bytes
+	// This will be done via ledger, using a private key KMS, etc.
+	// For the sake of this example, we will generate a signature using an empty private key
+	signer := mcms.NewPrivateKeySigner(&ecdsa.PrivateKey{})
+	// Or using ledger, you can call NewLedgerSigner and provide the derivation path as a parameter
+	// signerLedger := mcms.NewLedgerSigner([]uint32{44, 60, 0, 0, 0})
+	signature, err := signable.Sign(signer)
 	if err != nil {
-		fmt.Println("Error creating signature:", err)
+		fmt.Println("Error signing proposal:", err)
 		return
 	}
+
 	/// 4. Add the signature
-	proposal.AppendSignature(signedBytes)
-	fmt.Println("Successfully signed proposal:", proposal)
+	proposal.AppendSignature(signature)
+	fmt.Println("Successfully created proposal:", proposal)
 }
 
 ```

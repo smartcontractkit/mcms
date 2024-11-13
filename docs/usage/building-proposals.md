@@ -15,6 +15,8 @@ package main
 import (
 	"fmt"
 	"os"
+
+	"github.com/smartcontractkit/mcms"
 )
 
 func main() {
@@ -27,7 +29,7 @@ func main() {
 	defer file.Close()
 
 	// Create the proposal from the JSON data
-	proposal, err := NewProposal(file)
+	proposal, err := mcms.NewProposal(file)
 	if err != nil {
 		fmt.Println("Error creating proposal:", err)
 		return
@@ -50,35 +52,35 @@ package main
 import (
 	"fmt"
 
-	"mcms"
-
+	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 func main() {
 	// Step 1: Initialize the ProposalBuilder
 	builder := mcms.NewProposalBuilder()
-
+	selector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 	// Step 2: Set Proposal Details
 	builder.
 		SetVersion("1.0").
 		SetValidUntil(1700000000).
 		SetDescription("Increase staking rewards").
-		AddSignature(types.Signature{Signer: "0x123", Signature: "abcd1234"}).
+		AddSignature(types.Signature{}).
 		SetOverridePreviousRoot(false).
 		UseSimulatedBackend(true)
 
 	// Step 3: Add Chain Metadata
-	builder.AddChainMetadata(types.ChainSelector{ChainID: "0x1"}, types.ChainMetadata{Data: "example"})
+	builder.AddChainMetadata(types.ChainSelector(selector), types.ChainMetadata{StartingOpCount: 0, MCMAddress: "0x123"})
 	// Or set the full metadata map
 	chainMetadataMap := map[types.ChainSelector]types.ChainMetadata{
-		{ChainID: "0x1"}: {Data: "Ethereum Mainnet Metadata"},
-		{ChainID: "0x2"}: {Data: "BSC Mainnet Metadata"},
+		// Each entry sets the timelock address on the given chain selector
+		selector:                 types.ChainMetadata{StartingOpCount: 0, MCMAddress: "0x123"},
+		types.ChainSelector(123): types.ChainMetadata{StartingOpCount: 0, MCMAddress: "0x123"},
 	}
 	builder.SetChainMetadata(chainMetadataMap)
 
 	// Step 4: Add Transactions
-	builder.AddTransaction(types.Operation{To: "0x5678", Data: "0xabcdef"})
+	builder.AddTransaction(types.Operation{Target: "0x5678", Value: "1000", Data: "0xabcdef"})
 	// Or set Full Transactions List
 	transactions := []types.ChainOperation{
 		{Target: "0xABCDEF", Value: "500", Data: "0xdata1"},
