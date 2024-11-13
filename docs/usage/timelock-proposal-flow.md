@@ -30,7 +30,7 @@ func main() {
 		return
 	}
 
-	// 1.1 Convert to MCMS proposa
+	// 1.1 Convert to MCMS proposal
 	mcmsProposal, err := proposal.Convert()
 	if err != nil {
 		return
