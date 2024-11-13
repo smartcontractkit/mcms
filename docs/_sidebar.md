@@ -7,7 +7,7 @@
     - [Merkle Tree Signing](key-concepts/merkle.md)
     - [Chain Family SDK](key-concepts/chain-family-sdk.md ':disabled')
 - [Usage](/usage.md)
-    - [Configuration](/usage/configuration.md ':disabled')
+    - [Configuration](/usage/configuration.md)
     - [Building Proposals](/usage/building-proposals.md)
     - [Signing Proposals](usage/signing-proposals.md)
     - [Executing Proposals](usage/executing-proposals.md)

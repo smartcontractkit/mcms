@@ -21,12 +21,12 @@ func (_m *Configurator[R]) EXPECT() *Configurator_Expecter[R] {
 	return &Configurator_Expecter[R]{mock: &_m.Mock}
 }
 
-// SetConfigInputs provides a mock function with given fields: contract, cfg
-func (_m *Configurator[R]) SetConfigInputs(contract string, cfg types.Config) (R, error) {
+// ToChainConfig provides a mock function with given fields: contract, cfg
+func (_m *Configurator[R]) ToChainConfig(contract string, cfg types.Config) (R, error) {
 	ret := _m.Called(contract, cfg)
 
 	if len(ret) == 0 {
-		panic("no return value specified for SetConfigInputs")
+		panic("no return value specified for ToChainConfig")
 	}
 
 	var r0 R
@@ -49,7 +49,7 @@ func (_m *Configurator[R]) SetConfigInputs(contract string, cfg types.Config) (R
 	return r0, r1
 }
 
-// Configurator_SetConfigInputs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SetConfigInputs'
+// Configurator_SetConfigInputs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ToChainConfig'
 type Configurator_SetConfigInputs_Call[R any] struct {
 	*mock.Call
 }
@@ -58,7 +58,7 @@ type Configurator_SetConfigInputs_Call[R any] struct {
 //   - contract string
 //   - cfg types.Config
 func (_e *Configurator_Expecter[R]) SetConfigInputs(contract interface{}, cfg interface{}) *Configurator_SetConfigInputs_Call[R] {
-	return &Configurator_SetConfigInputs_Call[R]{Call: _e.mock.On("SetConfigInputs", contract, cfg)}
+	return &Configurator_SetConfigInputs_Call[R]{Call: _e.mock.On("ToChainConfig", contract, cfg)}
 }
 
 func (_c *Configurator_SetConfigInputs_Call[R]) Run(run func(contract string, cfg types.Config)) *Configurator_SetConfigInputs_Call[R] {

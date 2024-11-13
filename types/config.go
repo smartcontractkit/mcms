@@ -27,7 +27,7 @@ type Config struct {
 
 // NewConfig returns a new config with the given quorum, signers and group signers and ensures it
 // is valid.
-func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*Config, error) {
+func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (Config, error) {
 	config := Config{
 		Quorum:       quorum,
 		Signers:      signers,
@@ -35,10 +35,10 @@ func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (*
 	}
 
 	if err := config.Validate(); err != nil {
-		return nil, err
+		return Config{}, err
 	}
 
-	return &config, nil
+	return config, nil
 }
 
 // Validate checks if the config is valid, recursively checking all group signers configs.

@@ -136,8 +136,8 @@ func (s *SimulatedChain) SetMCMSConfig(
 		GroupSigners: []types.Config{},
 	}
 
-	configurator := evm.EVMConfigurator{}
-	bindConfig, err := configurator.SetConfigInputs(*cfg)
+	configurator := evm.EVMConfigTransformer{}
+	bindConfig, err := configurator.ToChainConfig(*cfg)
 	require.NoError(t, err)
 
 	signerAddrs := make([]common.Address, len(bindConfig.Signers))

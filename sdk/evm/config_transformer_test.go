@@ -66,7 +66,7 @@ func Test_EVMConfigurator_ToConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			configurator := EVMConfigurator{}
+			configurator := EVMConfigTransformer{}
 			got, err := configurator.ToConfig(tt.give)
 
 			if tt.wantErr != "" {
@@ -249,8 +249,8 @@ func Test_SetConfigInputs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			configurator := EVMConfigurator{}
-			got, err := configurator.SetConfigInputs(tt.giveConfig)
+			configurator := EVMConfigTransformer{}
+			got, err := configurator.ToChainConfig(tt.giveConfig)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
