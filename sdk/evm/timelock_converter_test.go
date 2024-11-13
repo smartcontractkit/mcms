@@ -21,7 +21,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 
 	testCases := []struct {
 		name           string
-		txn            types.BatchChainOperation
+		op             types.BatchOperation
 		minDelay       string
 		operation      types.TimelockAction
 		predecessor    common.Hash
@@ -30,8 +30,8 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 	}{
 		{
 			name: "Schedule operation",
-			txn: types.BatchChainOperation{
-				Batch: []types.Operation{
+			op: types.BatchOperation{
+				Transactions: []types.Transaction{
 					NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
@@ -50,8 +50,8 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 		},
 		{
 			name: "Cancel operation",
-			txn: types.BatchChainOperation{
-				Batch: []types.Operation{
+			op: types.BatchOperation{
+				Transactions: []types.Transaction{
 					NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
@@ -70,8 +70,8 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 		},
 		{
 			name: "Invalid operation",
-			txn: types.BatchChainOperation{
-				Batch: []types.Operation{
+			op: types.BatchOperation{
+				Transactions: []types.Transaction{
 					NewEVMOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
@@ -95,7 +95,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			t.Parallel()
 
 			converter := &TimelockConverterEVM{}
-			chainOperation, operationId, err := converter.ConvertBatchToChainOperation(tc.txn, timelockAddress, tc.minDelay, tc.operation, tc.predecessor)
+			chainOperation, operationId, err := converter.ConvertBatchToChainOperation(tc.op, timelockAddress, tc.minDelay, tc.operation, tc.predecessor)
 
 			if tc.expectedError != nil {
 				require.Error(t, err)
@@ -103,9 +103,9 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.NotEqual(t, common.Hash{}, operationId)
-				assert.Equal(t, tc.expectedOpType, chainOperation.Operation.ContractType)
-				assert.Equal(t, timelockAddress, chainOperation.Operation.To)
-				assert.Equal(t, tc.txn.ChainSelector, chainOperation.ChainSelector)
+				assert.Equal(t, tc.expectedOpType, chainOperation.Transaction.ContractType)
+				assert.Equal(t, timelockAddress, chainOperation.Transaction.To)
+				assert.Equal(t, tc.op.ChainSelector, chainOperation.ChainSelector)
 			}
 		})
 	}

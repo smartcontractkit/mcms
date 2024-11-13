@@ -89,8 +89,8 @@ func (e *Executable) SetRoot(chainSelector types.ChainSelector) (string, error) 
 }
 
 func (e *Executable) Execute(index int) (string, error) {
-	transaction := e.proposal.Transactions[index]
-	chainSelector := transaction.ChainSelector
+	op := e.proposal.Operations[index]
+	chainSelector := op.ChainSelector
 	metadata := e.proposal.ChainMetadata[chainSelector]
 
 	txNonce, err := safecast.Uint64ToUint32(e.txNonces[index])
@@ -98,7 +98,7 @@ func (e *Executable) Execute(index int) (string, error) {
 		return "", err
 	}
 
-	operationHash, err := e.encoders[chainSelector].HashOperation(txNonce, metadata, transaction)
+	operationHash, err := e.encoders[chainSelector].HashOperation(txNonce, metadata, op)
 	if err != nil {
 		return "", err
 	}
@@ -112,6 +112,6 @@ func (e *Executable) Execute(index int) (string, error) {
 		metadata,
 		txNonce,
 		proof,
-		transaction,
+		op,
 	)
 }

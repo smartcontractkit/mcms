@@ -23,7 +23,7 @@ func (_m *Simulator) EXPECT() *Simulator_Expecter {
 }
 
 // SimulateOperation provides a mock function with given fields: nonce, proof, op
-func (_m *Simulator) SimulateOperation(nonce uint32, proof []common.Hash, op types.ChainOperation) (bool, error) {
+func (_m *Simulator) SimulateOperation(nonce uint32, proof []common.Hash, op types.Operation) (bool, error) {
 	ret := _m.Called(nonce, proof, op)
 
 	if len(ret) == 0 {
@@ -32,16 +32,16 @@ func (_m *Simulator) SimulateOperation(nonce uint32, proof []common.Hash, op typ
 
 	var r0 bool
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uint32, []common.Hash, types.ChainOperation) (bool, error)); ok {
+	if rf, ok := ret.Get(0).(func(uint32, []common.Hash, types.Operation) (bool, error)); ok {
 		return rf(nonce, proof, op)
 	}
-	if rf, ok := ret.Get(0).(func(uint32, []common.Hash, types.ChainOperation) bool); ok {
+	if rf, ok := ret.Get(0).(func(uint32, []common.Hash, types.Operation) bool); ok {
 		r0 = rf(nonce, proof, op)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}
 
-	if rf, ok := ret.Get(1).(func(uint32, []common.Hash, types.ChainOperation) error); ok {
+	if rf, ok := ret.Get(1).(func(uint32, []common.Hash, types.Operation) error); ok {
 		r1 = rf(nonce, proof, op)
 	} else {
 		r1 = ret.Error(1)
@@ -58,14 +58,14 @@ type Simulator_SimulateOperation_Call struct {
 // SimulateOperation is a helper method to define mock.On call
 //   - nonce uint32
 //   - proof []common.Hash
-//   - op types.ChainOperation
+//   - op types.Operation
 func (_e *Simulator_Expecter) SimulateOperation(nonce interface{}, proof interface{}, op interface{}) *Simulator_SimulateOperation_Call {
 	return &Simulator_SimulateOperation_Call{Call: _e.mock.On("SimulateOperation", nonce, proof, op)}
 }
 
-func (_c *Simulator_SimulateOperation_Call) Run(run func(nonce uint32, proof []common.Hash, op types.ChainOperation)) *Simulator_SimulateOperation_Call {
+func (_c *Simulator_SimulateOperation_Call) Run(run func(nonce uint32, proof []common.Hash, op types.Operation)) *Simulator_SimulateOperation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(uint32), args[1].([]common.Hash), args[2].(types.ChainOperation))
+		run(args[0].(uint32), args[1].([]common.Hash), args[2].(types.Operation))
 	})
 	return _c
 }
@@ -75,7 +75,7 @@ func (_c *Simulator_SimulateOperation_Call) Return(_a0 bool, _a1 error) *Simulat
 	return _c
 }
 
-func (_c *Simulator_SimulateOperation_Call) RunAndReturn(run func(uint32, []common.Hash, types.ChainOperation) (bool, error)) *Simulator_SimulateOperation_Call {
+func (_c *Simulator_SimulateOperation_Call) RunAndReturn(run func(uint32, []common.Hash, types.Operation) (bool, error)) *Simulator_SimulateOperation_Call {
 	_c.Call.Return(run)
 	return _c
 }

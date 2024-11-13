@@ -1,14 +1,14 @@
-# MCMS Proposal
+# MCM Proposal
 
-The **MCMS Proposal** is a structured document that defines a set of operations to be executed across multiple blockchains. Proposals are typically created to carry out specific transactions, like contract interactions or asset transfers, in a coordinated manner across different chains.
+The **MCM Proposal** is a structured document that defines a set of operations to be executed across multiple blockchains. Proposals are typically created to carry out specific transactions, like contract interactions or asset transfers, in a coordinated manner across different chains.
 
 > [!NOTE]
-> An MCMS Proposal is used specifically when controlling only MCM contract.
+> An MCM Proposal is used specifically when controlling only MCM contract.
 > If you require timelock and batching functionality, consider using the [RBAC Timelock proposal](./timelock-proposal.md).
 
 ## Proposal Structure
 
-The MCMS Proposal can be serialized into a JSON document with the following structure:
+The MCM Proposal can be serialized into a JSON document with the following structure:
 
 <!-- panels:start -->
 <!-- div:left-panel -->
@@ -37,30 +37,34 @@ The MCMS Proposal can be serialized into a JSON document with the following stru
       "mcmAddress": "0x0"
     }
   },
-  "transactions": [
+  "operations": [
     {
       "chainSelector": "16015286601757825753",
-      "to": "0xa",
-      "data": "ZGF0YQ==",
-      "additionalFields": {
-        "value": 0
-      },
-      "contractType": "<CONTRACT_TYPE>",
-      "tags": [
-        "tag1"
-      ]
+      "transaction": {
+        "to": "0xa",
+        "data": "ZGF0YQ==",
+        "additionalFields": {
+          "value": 0
+        },
+        "contractType": "<CONTRACT_TYPE>",
+        "tags": [
+          "tag1"
+        ]
+      }
     },
     {
       "chainSelector": "16015286601757825753",
-      "to": "0xb",
-      "payload": "ZGF0YQ==",
-      "additionalFields": {
-        "value": 0
-      },
-      "contractType": "<CONTRACT_TYPE>",
-      "tags": [
-        "tag1"
-      ]
+      "transaction": {
+        "to": "0xb",
+        "data": "ZGF0YQ==",
+        "additionalFields": {
+          "value": 0
+        },
+        "contractType": "<CONTRACT_TYPE>",
+        "tags": [
+          "tag1"
+        ]
+      }
     }
   ]
 }
@@ -98,12 +102,12 @@ A list of cryptographic proposal signatures of the signers, where each element r
 **chainMetadata** object<br/>
 Maps the chain-specific configuration for each blockchain involved in the proposal. The key of the object is the chain selector ID, and the value is the metadata object. An entry is required for every chain referenced in the proposal's operations.
 
-For more details about the chain metadata, see [Chain Metadata](/key-concepts/operations-and-chain-metadata.md#chain-metadata).
+For more details about the chain metadata, see [Chain Metadata](/key-concepts/chain-metadata.md).
 
 ---
 
-**transactions** array of objects<br/>
+**operations** array of objects<br/>
 A list of operations to be executed across chains.
 
-For more details about the operations, see [Operations](/key-concepts/operations-and-chain-metadata.md#operations).
+For more details about the operations, see [Operations](/key-concepts/operations.md#mcm-proposal-operations).
 <!-- panels:end -->

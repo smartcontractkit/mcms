@@ -31,14 +31,14 @@ func TestValidateAdditionalFields(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		operation   types.ChainOperation
+		operation   types.Operation
 		expectedErr error
 	}{
 		{
 			name: "valid EVM fields",
-			operation: types.ChainOperation{
+			operation: types.Operation{
 				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: types.Operation{
+				Transaction: types.Transaction{
 					AdditionalFields: validEVMFieldsJSON,
 				},
 			},
@@ -47,9 +47,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "invalid EVM fields",
-			operation: types.ChainOperation{
+			operation: types.Operation{
 				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: types.Operation{
+				Transaction: types.Transaction{
 					AdditionalFields: invalidEVMFieldsJSON,
 				},
 			},
@@ -57,9 +57,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "unknown chain family",
-			operation: types.ChainOperation{
+			operation: types.Operation{
 				ChainSelector: 999,
-				Operation: types.Operation{
+				Transaction: types.Transaction{
 					AdditionalFields: nil,
 				},
 			},
@@ -67,9 +67,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name: "invalid JSON for EVM fields",
-			operation: types.ChainOperation{
+			operation: types.Operation{
 				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-				Operation: types.Operation{
+				Transaction: types.Transaction{
 					AdditionalFields: []byte("invalid JSON"),
 				},
 			},
@@ -81,7 +81,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			err := ValidateAdditionalFields(tt.operation.AdditionalFields, tt.operation.ChainSelector)
+			err := ValidateAdditionalFields(tt.operation.Transaction.AdditionalFields, tt.operation.ChainSelector)
 
 			if tt.expectedErr != nil {
 				require.Error(t, err)

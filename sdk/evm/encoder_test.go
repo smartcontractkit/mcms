@@ -30,15 +30,15 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		giveOp  types.ChainOperation
+		giveOp  types.Operation
 		want    string
 		wantErr string
 	}{
 		{
 			name: "success: hash operation",
-			giveOp: types.ChainOperation{
+			giveOp: types.Operation{
 				ChainSelector: chainSelector,
-				Operation: NewEVMOperation(
+				Transaction: NewEVMOperation(
 					common.HexToAddress("0x2"),
 					[]byte("data"),
 					new(big.Int).SetUint64(1000000000000000000),
@@ -50,9 +50,9 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 		},
 		{
 			name: "failure: cannot unmarshal additional fields",
-			giveOp: types.ChainOperation{
+			giveOp: types.Operation{
 				ChainSelector: chainSelector,
-				Operation: types.Operation{
+				Transaction: types.Transaction{
 					AdditionalFields: []byte("invalid"),
 				},
 			},
@@ -111,15 +111,15 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		giveOp  types.ChainOperation
+		giveOp  types.Operation
 		want    bindings.ManyChainMultiSigOp
 		wantErr string
 	}{
 		{
 			name: "success: converts to a geth operations",
-			giveOp: types.ChainOperation{
+			giveOp: types.Operation{
 				ChainSelector: chainSelector,
-				Operation: NewEVMOperation(
+				Transaction: NewEVMOperation(
 					common.HexToAddress("0x2"),
 					[]byte("data"),
 					new(big.Int).SetUint64(1000000000000000000),
@@ -138,9 +138,9 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 		},
 		{
 			name: "failure: cannot unmarshal additional fields",
-			giveOp: types.ChainOperation{
+			giveOp: types.Operation{
 				ChainSelector: chainSelector,
-				Operation: types.Operation{
+				Transaction: types.Transaction{
 					AdditionalFields: []byte("invalid"),
 				},
 			},
