@@ -21,6 +21,7 @@ package examples
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
@@ -35,21 +36,21 @@ import (
 func main() {
 	file, err := os.Open("proposal.json")
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to open file: %v", err)
 	}
-	
+
 	defer file.Close()
 
 	// 1. Create the proposal from the JSON data
-	proposal, err := mcms.NewTimelockProposal(file)
+	timelockProposal, err := mcms.NewTimelockProposal(file)
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to open file: %v", err)
 	}
 
 	// 1.1 Convert to MCMS proposal
-	mcmsProposal, err := proposal.Convert()
+	mcmsProposal, err := timelockProposal.Convert()
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to open file: %v", err)
 	}
 
 	// 2. Create the signable type from the proposal
@@ -59,7 +60,7 @@ func main() {
 	inspectorsMap[types.ChainSelector(selector)] = evm.NewEVMInspector(backend)
 	signable, err := mcms.NewSignable(&mcmsProposal, inspectorsMap)
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to open file: %v", err)
 	}
 
 	// 3. Sign the proposal bytes
@@ -70,11 +71,12 @@ func main() {
 	// signerLedger := mcms.NewLedgerSigner([]uint32{44, 60, 0, 0, 0})
 	signature, err := signable.Sign(signer)
 	if err != nil {
-		panic(err)
+		log.Fatalf("failed to open file: %v", err)
 	}
 
 	/// 4. Add the signature
-	proposal.AppendSignature(signature)
-	fmt.Println("Successfully created proposal:", proposal)
+	mcmsProposal.AppendSignature(signature)
+	fmt.Println("Successfully created proposal:", mcmsProposal)
 }
+
 ```

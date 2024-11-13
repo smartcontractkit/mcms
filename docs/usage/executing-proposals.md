@@ -6,6 +6,7 @@ Here is an example of how to run SetRoot and Execute on a signed proposal.
 package examples
 
 import (
+	"log"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
@@ -21,13 +22,13 @@ func main() {
 	// Step 1: Load the Proposal
 	file, err := os.Open("proposal.json")
 	if err != nil {
-		fmt.Println("Error opening file:", err)
+		log.Fatalf("Error opening proposal file: %v", err)
 		return
 	}
 	defer file.Close()
 	proposal, err := mcms.NewProposal(file)
 	if err != nil {
-		fmt.Println("Error creating proposal:", err)
+		log.Fatalf("Error opening proposal file: %v", err)
 		return
 	}
 
@@ -41,20 +42,21 @@ func main() {
 	// Step 3: Create the chain MCMS proposal executor
 	executable, err := mcms.NewExecutable(proposal, executorsMap)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error opening proposal file: %v", err)
 	}
 
-	// Step 4: SetRoot of a proposal 
+	// Step 4: SetRoot of a proposal
 	_, err = executable.SetRoot(types.ChainSelector(selector))
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error opening proposal file: %v", err)
 	}
 
 	// Step 5: Execute the first operation of the proposal.
 	_, err = executable.Execute(0)
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error opening proposal file: %v", err)
 	}
 }
+
 
 ```

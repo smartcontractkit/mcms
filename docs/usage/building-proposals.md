@@ -47,86 +47,63 @@ The Proposal Builder API provides a fluent interface to construct a Proposal wit
 customizable fields and metadata, ensuring that each proposal is validated before use.
 
 ```golang
-package examples
+package main
 
 import (
-	"fmt"
+	"log"
+	"os"
 
+	"github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms"
+	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 func main() {
-	// Step 1: Initialize the ProposalBuilder
-	builder := mcms.NewProposalBuilder()
-	selector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
-	// Step 2: Set Proposal Details
-	builder.
-		SetVersion("v1").
-		SetValidUntil(1794610529).
-		SetDescription("Increase staking rewards").
-		AddSignature(types.Signature{}). // For details on signature generation see https://github.com/smartcontractkit/mcms/blob/main/docs/usage/signing-proposals.md
-		SetOverridePreviousRoot(false).
-		UseSimulatedBackend(true)
-
-	// Step 3: Add Chain Metadata
-	builder.AddChainMetadata(types.ChainSelector(selector), types.ChainMetadata{StartingOpCount: 0, MCMAddress: "0x123"})
-	// Or set the full metadata map
-	chainMetadataMap := map[types.ChainSelector]types.ChainMetadata{
-		// Each entry sets the timelock address on the given chain selector
-		types.ChainSelector(selector): {StartingOpCount: 0, MCMAddress: "0x123"},
-	}
-	builder.SetChainMetadata(chainMetadataMap)
-
-	// Step 4: Add Transactions
-	builder.AddOperation(
-		types.Operation{
-			ChainSelector: types.ChainSelector(selector),
-			Transaction: types.Transaction{
-				OperationMetadata: types.OperationMetadata{
-					ContractType: "some-contract",
-					Tags:         []string{"staking", "rewards"},
-				},
-				Data:             []byte("data bytes of the transaction"),
-				AdditionalFields: []byte(`{"value": "100"}`), // Chain specific fields for the operation
-			},
-		})
-	// Or set Full Transactions List
-	transactions := []types.Operation{
-		{
-			ChainSelector: types.ChainSelector(selector),
-			Transaction: types.Transaction{
-				OperationMetadata: types.OperationMetadata{
-					ContractType: "some-contract",
-					Tags:         []string{"staking", "rewards"},
-				},
-				Data:             []byte("data bytes of the transaction"),
-				AdditionalFields: []byte(`{"value": "100"}`), // Chain specific fields for the operation
-			},
-		},
-		{
-			ChainSelector: types.ChainSelector(selector),
-			Transaction: types.Transaction{
-				OperationMetadata: types.OperationMetadata{
-					ContractType: "some-contract",
-					Tags:         []string{"staking", "rewards"},
-				},
-				Data:             []byte("data bytes of the transaction"),
-				AdditionalFields: []byte(`{"value": "200"}`), // Chain specific fields for the operation
-			},
-		},
-	}
-	builder.SetOperations(transactions)
-
-	// Step 5: Build the Proposal
-	proposal, err := builder.Build()
+	// Step 1: Load the Proposal
+	file, err := os.Open("proposal.json")
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error opening proposal: %v", err)
+	}
+	defer file.Close()
+	proposal, err := mcms.NewProposal(file)
+	if err != nil {
+		log.Fatalf("Error loading proposal: %v", err)
 	}
 
-	fmt.Println("Proposal created:", proposal)
-}
+	// Step 2: Initialize the Chain Family Executors
+	selector1 := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector)
+	selector2 := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_GOERLI_ARBITRUM_1.Selector)
+	backend := backends.SimulatedBackend{}
+	executor := evm.NewEVMExecutor(evm.NewEVMEncoder(0, uint64(selector1), false), backend, nil)
+	executorsMap := map[types.ChainSelector]sdk.Executor{
+		selector1: executor,
+		selector2: executor,
+	}
+	// Step 3: Create the chain MCMS proposal executor
+	executable, err := mcms.NewExecutable(proposal, executorsMap)
+	if err != nil {
+		log.Fatalf("Error creating executable: %v", err)
+	}
 
+	// Step 4: SetRoot on all chains
+	for _, selector := range []types.ChainSelector{selector1, selector2} {
+		_, err = executable.SetRoot(selector)
+		if err != nil {
+			log.Fatalf("Error setting root: %v", err)
+		}
+	}
+	// Step 5: Execute the all the operations by looping through the proposal
+	for idx := range proposal.Operations {
+		_, err = executable.Execute(idx)
+		if err != nil {
+			log.Fatalf("Error executing operation: %v", err)
+		}
+
+	}
+
+}
 ```
