@@ -73,7 +73,7 @@ func NewProposalBuilder() *ProposalBuilder {
 				Kind:          types.KindProposal,
 				ChainMetadata: make(map[types.ChainSelector]types.ChainMetadata),
 			},
-			Transactions: []types.ChainOperation{},
+			Operations: []types.Operation{},
 		},
 	}
 	// Initialize the BaseProposalBuilder with a reference to the base proposal and the builder itself.
@@ -85,16 +85,16 @@ func NewProposalBuilder() *ProposalBuilder {
 	return builder
 }
 
-// AddTransaction adds a transaction to the Proposal.
-func (b *ProposalBuilder) AddTransaction(transaction types.ChainOperation) *ProposalBuilder {
-	b.proposal.Transactions = append(b.proposal.Transactions, transaction)
+// AddOperation adds an operation to the Proposal.
+func (b *ProposalBuilder) AddOperation(op types.Operation) *ProposalBuilder {
+	b.proposal.Operations = append(b.proposal.Operations, op)
 
 	return b
 }
 
-// SetTransactions sets all the transactions of the Proposal.
-func (b *ProposalBuilder) SetTransactions(transaction []types.ChainOperation) *ProposalBuilder {
-	b.proposal.Transactions = transaction
+// SetOperations sets all the operations of the Proposal.
+func (b *ProposalBuilder) SetOperations(ops []types.Operation) *ProposalBuilder {
+	b.proposal.Operations = ops
 
 	return b
 }

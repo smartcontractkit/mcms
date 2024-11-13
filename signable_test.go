@@ -61,10 +61,10 @@ func Test_NewSignable(t *testing.T) {
 						TestChain1: {StartingOpCount: 5},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{
 						ChainSelector: TestChain1,
-						Operation: types.Operation{
+						Transaction: types.Transaction{
 							AdditionalFields: json.RawMessage([]byte(``)),
 						},
 					},
@@ -122,10 +122,10 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 				},
 			},
 		},
-		Transactions: []types.ChainOperation{
+		Operations: []types.Operation{
 			{
 				ChainSelector: TestChain1,
-				Operation: evm.NewEVMOperation(
+				Transaction: evm.NewEVMOperation(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -187,10 +187,10 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 				},
 			},
 		},
-		Transactions: []types.ChainOperation{
+		Operations: []types.Operation{
 			{
 				ChainSelector: TestChain1,
-				Operation: evm.NewEVMOperation(
+				Transaction: evm.NewEVMOperation(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -244,13 +244,13 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]types.ChainOperation, 4)
+	operations := make([]types.Operation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmC.Address())
 		require.NoError(t, perr)
-		operations[i] = types.ChainOperation{
+		operations[i] = types.Operation{
 			ChainSelector: TestChain1,
-			Operation: evm.NewEVMOperation(
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -276,7 +276,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 				},
 			},
 		},
-		Transactions: operations,
+		Operations: operations,
 	}
 	proposal.UseSimulatedBackend(true)
 
@@ -319,13 +319,13 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]types.ChainOperation, 4)
+	operations := make([]types.Operation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmC.Address())
 		require.NoError(t, perr)
-		operations[i] = types.ChainOperation{
+		operations[i] = types.Operation{
 			ChainSelector: TestChain1,
-			Operation: evm.NewEVMOperation(
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -351,7 +351,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 				},
 			},
 		},
-		Transactions: operations,
+		Operations: operations,
 	}
 	proposal.UseSimulatedBackend(true)
 
@@ -397,13 +397,13 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]types.ChainOperation, 4)
+	operations := make([]types.Operation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmC.Address())
 		require.NoError(t, perr)
-		operations[i] = types.ChainOperation{
+		operations[i] = types.Operation{
 			ChainSelector: TestChain1,
-			Operation: evm.NewEVMOperation(
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -429,7 +429,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 				},
 			},
 		},
-		Transactions: operations,
+		Operations: operations,
 	}
 	proposal.UseSimulatedBackend(true)
 
@@ -480,14 +480,14 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 
-	operations := make([]types.ChainOperation, 4)
+	operations := make([]types.Operation, 4)
 	for i, role := range []common.Hash{proposerRole, bypasserRole, cancellerRole, executorRole} {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmC.Address())
 		require.NoError(t, perr)
 
-		operations[i] = types.ChainOperation{
+		operations[i] = types.Operation{
 			ChainSelector: TestChain1,
-			Operation: evm.NewEVMOperation(
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -513,7 +513,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 				},
 			},
 		},
-		Transactions: operations,
+		Operations: operations,
 	}
 	proposal.UseSimulatedBackend(true)
 
@@ -564,10 +564,10 @@ func Test_Signable_Sign(t *testing.T) {
 				},
 			},
 		},
-		Transactions: []types.ChainOperation{
+		Operations: []types.Operation{
 			{
 				ChainSelector: TestChain1,
-				Operation: evm.NewEVMOperation(
+				Transaction: evm.NewEVMOperation(
 					common.HexToAddress("0x02"),
 					[]byte("0x0000000"), // Use some random data since it doesn't matter
 					big.NewInt(0),
@@ -599,7 +599,7 @@ func Test_Signable_Sign(t *testing.T) {
 			name:         "failure: invalid proposal",
 			giveProposal: &Proposal{},
 			giveSigner:   NewPrivateKeySigner(privKey),
-			wantErr:      "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+			wantErr:      "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'required' tag",
 		},
 		{
 			name:         "failure: could not sign",
@@ -658,10 +658,10 @@ func Test_SignAndAppend(t *testing.T) {
 				},
 			},
 		},
-		Transactions: []types.ChainOperation{
+		Operations: []types.Operation{
 			{
 				ChainSelector: TestChain1,
-				Operation: evm.NewEVMOperation(
+				Transaction: evm.NewEVMOperation(
 					common.HexToAddress("0x02"),
 					[]byte("0x0000000"), // Use some random data since it doesn't matter
 					big.NewInt(0),
@@ -692,7 +692,7 @@ func Test_SignAndAppend(t *testing.T) {
 		{
 			name:    "failure: invalid proposal",
 			give:    Proposal{},
-			wantErr: "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+			wantErr: "Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag\nKey: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'required' tag",
 		},
 	}
 

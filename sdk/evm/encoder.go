@@ -46,12 +46,12 @@ func NewEVMEncoder(txCount uint64, chainID uint64, overridePreviousRoot bool) *E
 	}
 }
 
-// HashOperation converts the MCMS ChainOperation into the format expected by the EVM
+// HashOperation converts the MCMS Operation into the format expected by the EVM
 // ManyChainMultiSig contract, and hashes it.
 func (e *EVMEncoder) HashOperation(
 	opCount uint32,
 	metadata types.ChainMetadata,
-	op types.ChainOperation,
+	op types.Operation,
 ) (common.Hash, error) {
 	bindOp, err := e.ToGethOperation(opCount, metadata, op)
 	if err != nil {
@@ -84,11 +84,11 @@ func (e *EVMEncoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, er
 func (e *EVMEncoder) ToGethOperation(
 	opCount uint32,
 	metadata types.ChainMetadata,
-	op types.ChainOperation,
+	op types.Operation,
 ) (bindings.ManyChainMultiSigOp, error) {
 	// Unmarshal the AdditionalFields from the operation
 	var additionalFields EVMAdditionalFields
-	if err := json.Unmarshal(op.AdditionalFields, &additionalFields); err != nil {
+	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
 		return bindings.ManyChainMultiSigOp{}, err
 	}
 
@@ -96,8 +96,8 @@ func (e *EVMEncoder) ToGethOperation(
 		ChainId:  new(big.Int).SetUint64(e.ChainID),
 		MultiSig: common.HexToAddress(metadata.MCMAddress),
 		Nonce:    new(big.Int).SetUint64(metadata.StartingOpCount + uint64(opCount)),
-		To:       common.HexToAddress(op.To),
-		Data:     op.Data,
+		To:       common.HexToAddress(op.Transaction.To),
+		Data:     op.Transaction.Data,
 		Value:    additionalFields.Value,
 	}, nil
 }

@@ -81,7 +81,7 @@ func (_c *Encoder_HashMetadata_Call) RunAndReturn(run func(types.ChainMetadata) 
 }
 
 // HashOperation provides a mock function with given fields: opCount, metadata, op
-func (_m *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.ChainOperation) (common.Hash, error) {
+func (_m *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
 	ret := _m.Called(opCount, metadata, op)
 
 	if len(ret) == 0 {
@@ -90,10 +90,10 @@ func (_m *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, o
 
 	var r0 common.Hash
 	var r1 error
-	if rf, ok := ret.Get(0).(func(uint32, types.ChainMetadata, types.ChainOperation) (common.Hash, error)); ok {
+	if rf, ok := ret.Get(0).(func(uint32, types.ChainMetadata, types.Operation) (common.Hash, error)); ok {
 		return rf(opCount, metadata, op)
 	}
-	if rf, ok := ret.Get(0).(func(uint32, types.ChainMetadata, types.ChainOperation) common.Hash); ok {
+	if rf, ok := ret.Get(0).(func(uint32, types.ChainMetadata, types.Operation) common.Hash); ok {
 		r0 = rf(opCount, metadata, op)
 	} else {
 		if ret.Get(0) != nil {
@@ -101,7 +101,7 @@ func (_m *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, o
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uint32, types.ChainMetadata, types.ChainOperation) error); ok {
+	if rf, ok := ret.Get(1).(func(uint32, types.ChainMetadata, types.Operation) error); ok {
 		r1 = rf(opCount, metadata, op)
 	} else {
 		r1 = ret.Error(1)
@@ -118,14 +118,14 @@ type Encoder_HashOperation_Call struct {
 // HashOperation is a helper method to define mock.On call
 //   - opCount uint32
 //   - metadata types.ChainMetadata
-//   - op types.ChainOperation
+//   - op types.Operation
 func (_e *Encoder_Expecter) HashOperation(opCount interface{}, metadata interface{}, op interface{}) *Encoder_HashOperation_Call {
 	return &Encoder_HashOperation_Call{Call: _e.mock.On("HashOperation", opCount, metadata, op)}
 }
 
-func (_c *Encoder_HashOperation_Call) Run(run func(opCount uint32, metadata types.ChainMetadata, op types.ChainOperation)) *Encoder_HashOperation_Call {
+func (_c *Encoder_HashOperation_Call) Run(run func(opCount uint32, metadata types.ChainMetadata, op types.Operation)) *Encoder_HashOperation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(uint32), args[1].(types.ChainMetadata), args[2].(types.ChainOperation))
+		run(args[0].(uint32), args[1].(types.ChainMetadata), args[2].(types.Operation))
 	})
 	return _c
 }
@@ -135,7 +135,7 @@ func (_c *Encoder_HashOperation_Call) Return(_a0 common.Hash, _a1 error) *Encode
 	return _c
 }
 
-func (_c *Encoder_HashOperation_Call) RunAndReturn(run func(uint32, types.ChainMetadata, types.ChainOperation) (common.Hash, error)) *Encoder_HashOperation_Call {
+func (_c *Encoder_HashOperation_Call) RunAndReturn(run func(uint32, types.ChainMetadata, types.Operation) (common.Hash, error)) *Encoder_HashOperation_Call {
 	_c.Call.Return(run)
 	return _c
 }

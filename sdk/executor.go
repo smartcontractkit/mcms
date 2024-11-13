@@ -18,7 +18,7 @@ type Executor interface {
 		metadata types.ChainMetadata,
 		nonce uint32,
 		proof []common.Hash,
-		op types.ChainOperation,
+		op types.Operation,
 	) (string, error)
 
 	// Returns a string of the transaction hash

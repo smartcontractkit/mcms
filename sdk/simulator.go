@@ -21,6 +21,6 @@ type Simulator interface {
 	SimulateOperation(
 		nonce uint32,
 		proof []common.Hash,
-		op types.ChainOperation,
+		op types.Operation,
 	) (bool, error)
 }

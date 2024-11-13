@@ -58,7 +58,7 @@ func Test_NewProposal(t *testing.T) {
 				"chainMetadata": {
 					"3379446385462418246": {}
 				},
-				"transactions": [
+				"operations": [
 					{
 						"chainSelector": 3379446385462418246
 					}
@@ -73,7 +73,7 @@ func Test_NewProposal(t *testing.T) {
 						TestChain1: {},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{ChainSelector: TestChain1},
 				},
 			},
@@ -90,7 +90,7 @@ func Test_NewProposal(t *testing.T) {
 				"kind": "Proposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {},
-				"transactions": [
+				"operations": [
 					{}
 				]
 			}`,
@@ -105,7 +105,7 @@ func Test_NewProposal(t *testing.T) {
 				"chainMetadata": {
 					"3379446385462418246": {}
 				},
-				"transactions": [
+				"operations": [
 					{
 						"chainSelector": 3379446385462418246
 					}
@@ -154,7 +154,7 @@ func Test_WriteProposal(t *testing.T) {
 						TestChain1: {},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{ChainSelector: TestChain1},
 				},
 			},
@@ -171,14 +171,16 @@ func Test_WriteProposal(t *testing.T) {
 						"startingOpCount": 0
 					}
 				},
-				"transactions": [
+				"operations": [
 					{
 						"chainSelector": 3379446385462418246,
-						"to": "",
-						"additionalFields": null,
-						"data": null,
-						"tags": null,
-						"contractType": ""
+						"transaction": {
+							"to": "",
+							"additionalFields": null,
+							"data": null,
+							"tags": null,
+							"contractType": ""
+						}
 					}
 				]
 			}`,
@@ -241,10 +243,10 @@ func Test_Proposal_Validate(t *testing.T) {
 						},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{
 						ChainSelector: TestChain1,
-						Operation: types.Operation{
+						Transaction: types.Transaction{
 							To:               TestAddress,
 							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 							Data:             common.Hex2Bytes("0x"),
@@ -267,7 +269,7 @@ func Test_Proposal_Validate(t *testing.T) {
 				"Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag",
 				"Key: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag",
 				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag",
-				"Key: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+				"Key: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'required' tag",
 				"Key: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag",
 			},
 		},
@@ -280,11 +282,11 @@ func Test_Proposal_Validate(t *testing.T) {
 					Signatures:    []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
 				},
-				Transactions: []types.ChainOperation{},
+				Operations: []types.Operation{},
 			},
 			wantErrs: []string{
 				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
-				"Key: 'Proposal.Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
+				"Key: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
 				"Key: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag",
 			},
 		},
@@ -303,7 +305,7 @@ func Test_Proposal_Validate(t *testing.T) {
 						},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{ChainSelector: TestChain2},
 				},
 			},
@@ -361,7 +363,7 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 						TestChain2: {},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{ChainSelector: TestChain1},
 					{ChainSelector: TestChain1},
 					{ChainSelector: TestChain2},
@@ -450,10 +452,10 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 						TestChain2: {StartingOpCount: 10},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{
 						ChainSelector: TestChain1,
-						Operation: types.Operation{
+						Transaction: types.Transaction{
 							To:               TestAddress,
 							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 							Data:             common.Hex2Bytes("0x"),
@@ -465,7 +467,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 					},
 					{
 						ChainSelector: TestChain2,
-						Operation: types.Operation{
+						Transaction: types.Transaction{
 							To:               TestAddress,
 							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 							Data:             common.Hex2Bytes("0x"),
@@ -499,7 +501,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 						TestChain1: {StartingOpCount: 5},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{ChainSelector: TestChain2},
 				},
 			},
@@ -513,7 +515,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 						TestChain1: {StartingOpCount: uint64(math.MaxUint32 + 1)},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{ChainSelector: TestChain1},
 				},
 			},
@@ -527,10 +529,10 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 						TestChain1: {StartingOpCount: 5},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{
 						ChainSelector: TestChain1,
-						Operation: types.Operation{
+						Transaction: types.Transaction{
 							AdditionalFields: json.RawMessage([]byte(``)),
 						},
 					},
@@ -559,14 +561,14 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 func Test_Proposal_TransactionCounts(t *testing.T) {
 	t.Parallel()
 
-	transactions := []types.ChainOperation{
+	ops := []types.Operation{
 		{ChainSelector: TestChain1},
 		{ChainSelector: TestChain1},
 		{ChainSelector: TestChain2},
 	}
 
 	proposal := Proposal{
-		Transactions: transactions,
+		Operations: ops,
 	}
 
 	got := proposal.TransactionCounts()
@@ -596,7 +598,7 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 						TestChain3: {StartingOpCount: 15},
 					},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{ChainSelector: TestChain1},
 					{ChainSelector: TestChain2},
 					{ChainSelector: TestChain1},
@@ -612,7 +614,7 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
 				},
-				Transactions: []types.ChainOperation{
+				Operations: []types.Operation{
 					{ChainSelector: TestChain1},
 				},
 			},

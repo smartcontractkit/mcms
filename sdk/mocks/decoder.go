@@ -22,7 +22,7 @@ func (_m *Decoder) EXPECT() *Decoder_Expecter {
 }
 
 // Decode provides a mock function with given fields: op, abi
-func (_m *Decoder) Decode(op types.ChainOperation, abi string) (string, string, error) {
+func (_m *Decoder) Decode(op types.Operation, abi string) (string, string, error) {
 	ret := _m.Called(op, abi)
 
 	if len(ret) == 0 {
@@ -32,22 +32,22 @@ func (_m *Decoder) Decode(op types.ChainOperation, abi string) (string, string, 
 	var r0 string
 	var r1 string
 	var r2 error
-	if rf, ok := ret.Get(0).(func(types.ChainOperation, string) (string, string, error)); ok {
+	if rf, ok := ret.Get(0).(func(types.Operation, string) (string, string, error)); ok {
 		return rf(op, abi)
 	}
-	if rf, ok := ret.Get(0).(func(types.ChainOperation, string) string); ok {
+	if rf, ok := ret.Get(0).(func(types.Operation, string) string); ok {
 		r0 = rf(op, abi)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(types.ChainOperation, string) string); ok {
+	if rf, ok := ret.Get(1).(func(types.Operation, string) string); ok {
 		r1 = rf(op, abi)
 	} else {
 		r1 = ret.Get(1).(string)
 	}
 
-	if rf, ok := ret.Get(2).(func(types.ChainOperation, string) error); ok {
+	if rf, ok := ret.Get(2).(func(types.Operation, string) error); ok {
 		r2 = rf(op, abi)
 	} else {
 		r2 = ret.Error(2)
@@ -62,15 +62,15 @@ type Decoder_Decode_Call struct {
 }
 
 // Decode is a helper method to define mock.On call
-//   - op types.ChainOperation
+//   - op types.Operation
 //   - abi string
 func (_e *Decoder_Expecter) Decode(op interface{}, abi interface{}) *Decoder_Decode_Call {
 	return &Decoder_Decode_Call{Call: _e.mock.On("Decode", op, abi)}
 }
 
-func (_c *Decoder_Decode_Call) Run(run func(op types.ChainOperation, abi string)) *Decoder_Decode_Call {
+func (_c *Decoder_Decode_Call) Run(run func(op types.Operation, abi string)) *Decoder_Decode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(types.ChainOperation), args[1].(string))
+		run(args[0].(types.Operation), args[1].(string))
 	})
 	return _c
 }
@@ -80,7 +80,7 @@ func (_c *Decoder_Decode_Call) Return(methodName string, args string, err error)
 	return _c
 }
 
-func (_c *Decoder_Decode_Call) RunAndReturn(run func(types.ChainOperation, string) (string, string, error)) *Decoder_Decode_Call {
+func (_c *Decoder_Decode_Call) RunAndReturn(run func(types.Operation, string) (string, string, error)) *Decoder_Decode_Call {
 	_c.Call.Return(run)
 	return _c
 }
