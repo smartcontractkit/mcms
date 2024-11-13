@@ -32,7 +32,7 @@ func main() {
 	bytes, err := proposal.SigningMessage()
 
 	// 3. Sign the actual bytes
-	// This will be generated via ledger, using a private key KMS, etc.
+	// This should be generated via ledger, using a private key KMS, etc.
 	// For the sake of this example, we will generate a signature using a random private key
 	// and then convert it to bytes
 	signedBytes, err := types.NewSignatureFromBytes(bytes[:])
