@@ -82,7 +82,7 @@ func main() {
 	// Step 4: Add Transactions
 	builder.AddOperation(types.Operation{Target: "0x5678", Value: "1000", Data: "0xabcdef"})
 	// Or set Full Transactions List
-	transactions := []types.ChainOperation{
+	ops := []types.Operation{
 		{Target: "0xABCDEF", Value: "500", Data: "0xdata1"},
 		{Target: "0x123456", Value: "300", Data: "0xdata2"},
 	}
