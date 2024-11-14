@@ -231,7 +231,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				builder.SetOverridePreviousRoot(false)
 				builder.SetAction(types.TimelockActionSchedule)
 				builder.SetDelay("1h")
-				builder.SetTimelockAddress(chaintest.Chain2Selector, "")
+				builder.AddTimelockAddress(chaintest.Chain2Selector, "")
 				builder.SetTransactions([]types.BatchOperation{{
 					ChainSelector: chaintest.Chain2Selector,
 					Transactions: []types.Transaction{
