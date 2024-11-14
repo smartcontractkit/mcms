@@ -19,7 +19,7 @@ import (
 
 func main() {
 	// This example will use the ConfigTransformer to get the EVM chain-specific config
-	evmTransformer := evm.NewEVMConfigTransformer()
+	evmTransformer := evm.NewConfigTransformer()
 	// Step 1: Let's create a config of 5 signers with a quorum of 3 and no nested subgroups.
 	config, err := types.NewConfig(
 		3,

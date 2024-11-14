@@ -17,7 +17,7 @@ const maxUint8Value = 255
 
 type ConfigTransformer struct{}
 
-func NewEVMConfigTransformer() *ConfigTransformer {
+func NewConfigTransformer() *ConfigTransformer {
 	return &ConfigTransformer{}
 }
 
