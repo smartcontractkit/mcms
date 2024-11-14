@@ -210,42 +210,41 @@ func Test_WriteTimelockProposal(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		give       *TimelockProposal
+		give       func() *TimelockProposal
 		giveWriter func() io.Writer // Use this to overwrite the default writer
 		want       string
 		wantErr    string
 	}{
 		{
 			name: "success: writes a proposal to an io.Writer",
-			give: &TimelockProposal{
-				BaseProposal: BaseProposal{
-					Version:     "v1",
-					Kind:        types.KindTimelockProposal,
-					ValidUntil:  2004259681,
-					Description: "Test proposal",
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain2Selector: {
-							StartingOpCount: 0,
-							MCMAddress:      "0x0000000000000000000000000000000000000000",
+			give: func() *TimelockProposal {
+				builder := NewTimelockProposalBuilder()
+				builder.SetVersion("v1")
+				builder.SetValidUntil(2004259681)
+				builder.SetDescription("Test proposal")
+				builder.SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
+					chaintest.Chain2Selector: {
+						StartingOpCount: 0,
+						MCMAddress:      "0x0000000000000000000000000000000000000000",
+					},
+				})
+				builder.SetOverridePreviousRoot(false)
+				builder.SetAction(types.TimelockActionSchedule)
+				builder.SetDelay("1h")
+				builder.SetTimelockAddress(chaintest.Chain2Selector, "")
+				builder.SetTransactions([]types.BatchOperation{{
+					ChainSelector: chaintest.Chain2Selector,
+					Transactions: []types.Transaction{
+						{
+							To:               "0x0000000000000000000000000000000000000000",
+							AdditionalFields: []byte(`{"value": 0}`),
+							Data:             []byte("data"),
 						},
 					},
-					OverridePreviousRoot: false,
-				},
-				Action:            types.TimelockActionSchedule,
-				Delay:             "1h",
-				TimelockAddresses: map[types.ChainSelector]string{},
-				Operations: []types.BatchOperation{
-					{
-						ChainSelector: chaintest.Chain2Selector,
-						Transactions: []types.Transaction{
-							{
-								To:               "0x0000000000000000000000000000000000000000",
-								AdditionalFields: []byte(`{"value": 0}`),
-								Data:             []byte("data"),
-							},
-						},
-					},
-				},
+				}})
+				proposal, err := builder.Build()
+				require.NoError(t, err)
+				return proposal
 			},
 			want: `{
 				"version": "v1",
@@ -262,7 +261,9 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				"action": "schedule",
 				"delay": "1h",
 				"signatures": null,
-				"timelockAddresses": {},
+				"timelockAddresses": {
+					"16015286601757825753": ""
+				},
 				"operations": [
 					{
 						"chainSelector": 16015286601757825753,
@@ -284,7 +285,9 @@ func Test_WriteTimelockProposal(t *testing.T) {
 			giveWriter: func() io.Writer {
 				return newFakeWriter(0, errors.New("write error"))
 			},
-			give:    &TimelockProposal{},
+			give: func() *TimelockProposal {
+				return &TimelockProposal{}
+			},
 			wantErr: "write error",
 		},
 	}
@@ -301,8 +304,8 @@ func Test_WriteTimelockProposal(t *testing.T) {
 			} else {
 				w = b
 			}
-
-			err := WriteTimelockProposal(w, tt.give)
+			give := tt.give()
+			err := WriteTimelockProposal(w, give)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

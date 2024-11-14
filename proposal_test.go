@@ -3,6 +3,7 @@ package mcms
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"math"
 	"strings"
@@ -135,28 +136,26 @@ func Test_WriteProposal(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		give       *Proposal
+		give       func() *Proposal
 		giveWriter func() io.Writer // Use this to overwrite the default writer
 		want       string
 		wantErr    string
 	}{
 		{
 			name: "success: writes a proposal to an io.Writer",
-			give: &Proposal{
-				BaseProposal: BaseProposal{
-					Version:    "1",
-					Kind:       types.KindProposal,
-					ValidUntil: 2004259681,
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain1Selector: {},
-					},
-				},
-				Operations: []types.Operation{
-					{ChainSelector: chaintest.Chain1Selector},
-				},
+			give: func() *Proposal {
+
+				builder := NewProposalBuilder()
+				builder.SetVersion("v1")
+				builder.SetValidUntil(2004259681)
+				builder.AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{})
+				builder.AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector})
+				proposal, err := builder.Build()
+				require.NoError(t, err)
+				return proposal
 			},
 			want: `{
-				"version": "1",
+				"version": "v1",
 				"kind": "Proposal",
 				"description": "",
 				"validUntil": 2004259681,
@@ -187,7 +186,9 @@ func Test_WriteProposal(t *testing.T) {
 			giveWriter: func() io.Writer {
 				return newFakeWriter(0, errors.New("write error"))
 			},
-			give:    &Proposal{},
+			give: func() *Proposal {
+				return &Proposal{}
+			},
 			wantErr: "write error",
 		},
 	}
@@ -204,8 +205,8 @@ func Test_WriteProposal(t *testing.T) {
 			} else {
 				w = b
 			}
-
-			err := WriteProposal(w, tt.give)
+			give := tt.give()
+			err := WriteProposal(w, give)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
@@ -346,25 +347,25 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		give    Proposal
+		give    func() Proposal
 		want    map[types.ChainSelector]sdk.Encoder
 		wantErr string
 	}{
 		{
 			name: "success",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					OverridePreviousRoot: false,
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain1Selector: {},
-						chaintest.Chain2Selector: {},
-					},
-				},
-				Operations: []types.Operation{
-					{ChainSelector: chaintest.Chain1Selector},
-					{ChainSelector: chaintest.Chain1Selector},
-					{ChainSelector: chaintest.Chain2Selector},
-				},
+			give: func() Proposal {
+				builder := NewProposalBuilder()
+				builder.SetVersion("v1")
+				builder.SetValidUntil(2552083725)
+				builder.AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{})
+				builder.AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{})
+				builder.AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector})
+				builder.AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector})
+				builder.AddOperation(types.Operation{ChainSelector: chaintest.Chain2Selector})
+				proposal, err := builder.Build()
+				require.NoError(t, err)
+				return *proposal
+
 			},
 			want: map[types.ChainSelector]sdk.Encoder{
 				chaintest.Chain1Selector: evm.NewEVMEncoder(chaintest.Chain1Selector, 2, false, false),
@@ -373,13 +374,18 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 		},
 		{
 			name: "failure: could not create encoder",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					OverridePreviousRoot: false,
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						types.ChainSelector(0): {},
-					},
-				},
+			give: func() Proposal {
+				builder := NewProposalBuilder()
+				builder.SetVersion("v1")
+				builder.SetValidUntil(2552083725)
+				builder.AddChainMetadata(types.ChainSelector(0), types.ChainMetadata{})
+				builder.SetOverridePreviousRoot(false)
+				builder.AddOperation(types.Operation{ChainSelector: types.ChainSelector(0)})
+				proposal, err := builder.Build()
+				fmt.Println(err)
+				require.NoError(t, err)
+				return *proposal
+
 			},
 			wantErr: "unable to create encoder: chain family not found for selector 0",
 		},
@@ -388,8 +394,8 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			encoders, err := tt.give.GetEncoders()
+			give := tt.give()
+			encoders, err := give.GetEncoders()
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
@@ -416,16 +422,17 @@ func Test_Proposal_UseSimulatedBackend(t *testing.T) {
 
 func Test_Proposal_ChainSelectors(t *testing.T) {
 	t.Parallel()
-
-	proposal := Proposal{
-		BaseProposal: BaseProposal{
-			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				chaintest.Chain1Selector: {},
-				chaintest.Chain2Selector: {},
-				chaintest.Chain3Selector: {},
-			},
-		},
-	}
+	builder := NewProposalBuilder()
+	builder.SetVersion("v1")
+	builder.SetValidUntil(2552083725)
+	builder.AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector})
+	builder.SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
+		chaintest.Chain1Selector: {},
+		chaintest.Chain2Selector: {},
+		chaintest.Chain3Selector: {},
+	})
+	proposal, err := builder.Build()
+	require.NoError(t, err)
 
 	// Sorted in ascending order
 	want := []types.ChainSelector{
@@ -441,104 +448,112 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		give     Proposal
+		give     func() Proposal
 		wantRoot common.Hash
 		wantErr  string
 	}{
 		{
 			name: "success: generates a merkle tree",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain1Selector: {StartingOpCount: 5},
-						chaintest.Chain2Selector: {StartingOpCount: 10},
-					},
-				},
-				Operations: []types.Operation{
-					{
-						ChainSelector: chaintest.Chain1Selector,
-						Transaction: types.Transaction{
-							To:               TestAddress,
-							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
-							Data:             common.Hex2Bytes("0x"),
-							OperationMetadata: types.OperationMetadata{
-								ContractType: "Sample contract",
-								Tags:         []string{"tag1", "tag2"},
-							},
+			give: func() Proposal {
+				builder := NewProposalBuilder()
+				builder.SetVersion("v1")
+				builder.SetValidUntil(2552083725)
+				builder.AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{StartingOpCount: 5})
+				builder.AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 10})
+				builder.AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x"),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "Sample contract",
+							Tags:         []string{"tag1", "tag2"},
 						},
 					},
-					{
-						ChainSelector: chaintest.Chain2Selector,
-						Transaction: types.Transaction{
-							To:               TestAddress,
-							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
-							Data:             common.Hex2Bytes("0x"),
-							OperationMetadata: types.OperationMetadata{
-								ContractType: "Sample contract",
-								Tags:         []string{"tag1", "tag2"},
-							},
+				})
+				builder.AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain2Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x"),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "Sample contract",
+							Tags:         []string{"tag1", "tag2"},
 						},
 					},
-				},
+				})
+				proposal, err := builder.Build()
+				require.NoError(t, err)
+				return *proposal
+
 			},
 			wantRoot: common.HexToHash("0x4e899fcdb81dc7f0c1d6609366246807fd897c2afb531ca8f907472fd6e1ed02"),
 		},
 		{
 			name: "failure: could not get encoders",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					OverridePreviousRoot: false,
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						types.ChainSelector(1): {},
-					},
-				},
+			give: func() Proposal {
+				builder := NewProposalBuilder()
+				builder.SetVersion("v1")
+				builder.SetValidUntil(2552083725)
+				builder.AddChainMetadata(types.ChainSelector(1), types.ChainMetadata{StartingOpCount: 5})
+				builder.AddOperation(types.Operation{ChainSelector: types.ChainSelector(1)})
+				proposal, err := builder.Build()
+				require.NoError(t, err)
+				return *proposal
+
 			},
 			wantErr: "merkle tree generation error: unable to create encoder: chain family not found for selector 1",
 		},
 		{
 			name: "failure: missing metadata when fetching nonces",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain1Selector: {StartingOpCount: 5},
+			give: func() Proposal {
+				return Proposal{
+					BaseProposal: BaseProposal{
+						ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+							chaintest.Chain1Selector: {StartingOpCount: 5},
+						},
 					},
-				},
-				Operations: []types.Operation{
-					{ChainSelector: chaintest.Chain2Selector},
-				},
+					Operations: []types.Operation{
+						{ChainSelector: chaintest.Chain2Selector},
+					},
+				}
 			},
 			wantErr: "merkle tree generation error: missing metadata for chain 16015286601757825753",
 		},
 		{
 			name: "failure: nonce must be in the range of a uint32",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain1Selector: {StartingOpCount: uint64(math.MaxUint32 + 1)},
-					},
-				},
-				Operations: []types.Operation{
-					{ChainSelector: chaintest.Chain1Selector},
-				},
+			give: func() Proposal {
+				builder := NewProposalBuilder()
+				builder.SetVersion("v1")
+				builder.SetValidUntil(2552083725)
+				builder.AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{StartingOpCount: math.MaxUint32 + 1})
+				builder.AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector})
+				proposal, err := builder.Build()
+				require.NoError(t, err)
+				return *proposal
 			},
 			wantErr: "merkle tree generation error: value 4294967296 exceeds uint32 range",
 		},
 		{
 			name: "failure: could not hash operation due to invalid additional values",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain1Selector: {StartingOpCount: 5},
-					},
-				},
-				Operations: []types.Operation{
-					{
-						ChainSelector: chaintest.Chain1Selector,
-						Transaction: types.Transaction{
-							AdditionalFields: json.RawMessage([]byte(``)),
+			give: func() Proposal {
+				return Proposal{
+					BaseProposal: BaseProposal{
+						ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+							chaintest.Chain1Selector: {StartingOpCount: 5},
 						},
 					},
-				},
+					Operations: []types.Operation{
+						{
+							ChainSelector: chaintest.Chain1Selector,
+							Transaction: types.Transaction{
+								AdditionalFields: json.RawMessage([]byte(``)),
+							},
+						},
+					},
+				}
 			},
 			wantErr: "merkle tree generation error: unexpected end of JSON input",
 		},
@@ -547,8 +562,8 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			got, err := tt.give.MerkleTree()
+			give := tt.give()
+			got, err := give.MerkleTree()
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
@@ -562,17 +577,18 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 
 func Test_Proposal_TransactionCounts(t *testing.T) {
 	t.Parallel()
-
-	ops := []types.Operation{
+	builder := NewProposalBuilder()
+	builder.SetVersion("v1")
+	builder.SetValidUntil(2552083725)
+	builder.AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{})
+	builder.AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{})
+	builder.SetOperations([]types.Operation{
 		{ChainSelector: chaintest.Chain1Selector},
 		{ChainSelector: chaintest.Chain1Selector},
 		{ChainSelector: chaintest.Chain2Selector},
-	}
-
-	proposal := Proposal{
-		Operations: ops,
-	}
-
+	})
+	proposal, err := builder.Build()
+	require.NoError(t, err)
 	got := proposal.TransactionCounts()
 
 	assert.Equal(t, map[types.ChainSelector]uint64{
@@ -586,49 +602,55 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		give    Proposal
+		give    func() Proposal
 		want    []uint64
 		wantErr string
 	}{
 		{
 			name: "success: returns the nonces for each transaction",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain1Selector: {StartingOpCount: 5},
-						chaintest.Chain2Selector: {StartingOpCount: 10},
-						chaintest.Chain3Selector: {StartingOpCount: 15},
-					},
-				},
-				Operations: []types.Operation{
+			give: func() Proposal {
+				builder := NewProposalBuilder()
+				builder.SetVersion("v1")
+				builder.SetValidUntil(2552083725)
+				builder.AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{StartingOpCount: 5})
+				builder.AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 10})
+				builder.AddChainMetadata(chaintest.Chain3Selector, types.ChainMetadata{StartingOpCount: 15})
+				builder.SetOperations([]types.Operation{
 					{ChainSelector: chaintest.Chain1Selector},
 					{ChainSelector: chaintest.Chain2Selector},
 					{ChainSelector: chaintest.Chain1Selector},
 					{ChainSelector: chaintest.Chain2Selector},
 					{ChainSelector: chaintest.Chain3Selector},
-				},
+				})
+				proposal, err := builder.Build()
+				require.NoError(t, err)
+				return *proposal
 			},
 			want: []uint64{5, 10, 6, 11, 15},
 		},
 		{
 			name: "failure: chain metadata not found for transaction",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
-				},
-				Operations: []types.Operation{
-					{ChainSelector: chaintest.Chain1Selector},
-				},
+			give: func() Proposal {
+				return Proposal{
+					BaseProposal: BaseProposal{
+						ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+							chaintest.Chain1Selector: {StartingOpCount: 5},
+						},
+					},
+					Operations: []types.Operation{
+						{ChainSelector: chaintest.Chain2Selector},
+					},
+				}
 			},
-			wantErr: "missing metadata for chain 3379446385462418246",
+			wantErr: "missing metadata for chain 16015286601757825753",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			got, err := tt.give.TransactionNonces()
+			give := tt.give()
+			got, err := give.TransactionNonces()
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
