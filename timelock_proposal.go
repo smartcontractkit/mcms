@@ -20,7 +20,7 @@ type TimelockProposal struct {
 	Action            types.TimelockAction           `json:"action" validate:"required,oneof=schedule cancel bypass"`
 	Delay             string                         `json:"delay"` // Will validate conditionally in Validate method
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
-	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1"`
+	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1,dive"`
 }
 
 // NewTimelockProposal unmarshal data from the reader to JSON and returns a new TimelockProposal.

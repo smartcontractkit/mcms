@@ -287,8 +287,9 @@ func TestTimelockProposalBuilder(t *testing.T) {
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
-								Data: []byte{0x01},
-								To:   "0xContractAddress",
+								Data:             []byte{0x01},
+								To:               "0xContractAddress",
+								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 							},
 						},
 					})
