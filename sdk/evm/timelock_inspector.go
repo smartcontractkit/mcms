@@ -18,8 +18,8 @@ type TimelockEVMInspector struct {
 	client ContractDeployBackend
 }
 
-// NewTimelockEVMInspector creates a new TimelockEVMInspector
-func NewTimelockEVMInspector(client ContractDeployBackend) *TimelockEVMInspector {
+// NewTimelockInspector creates a new TimelockEVMInspector
+func NewTimelockInspector(client ContractDeployBackend) *TimelockEVMInspector {
 	return &TimelockEVMInspector{
 		client: client,
 	}

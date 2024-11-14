@@ -187,7 +187,7 @@ func TestTimelockEVMInspector_GetRolesTests(t *testing.T) {
 
 			// Create a new mock client and inspector for each test case
 			mockClient := evm_mocks.NewContractDeployBackend(t)
-			inspector := NewTimelockEVMInspector(mockClient)
+			inspector := NewTimelockInspector(mockClient)
 
 			// Load the ABI for encoding
 			parsedABI, err := bindings.RBACTimelockMetaData.GetAbi()
@@ -265,7 +265,7 @@ func TestTimelockEVMInspector_IsOperation(t *testing.T) {
 
 			// Create a new mock client and inspector for each test case
 			mockClient := evm_mocks.NewContractDeployBackend(t)
-			inspector := NewTimelockEVMInspector(mockClient)
+			inspector := NewTimelockInspector(mockClient)
 
 			// Load the ABI for encoding
 			parsedABI, err := bindings.RBACTimelockMetaData.GetAbi()
@@ -317,7 +317,7 @@ func testIsOperationState(
 
 	// Create a new mock client and inspector for each test case
 	mockClient := evm_mocks.NewContractDeployBackend(t)
-	inspector := NewTimelockEVMInspector(mockClient)
+	inspector := NewTimelockInspector(mockClient)
 
 	// Load the ABI for encoding
 	parsedABI, err := bindings.RBACTimelockMetaData.GetAbi()
