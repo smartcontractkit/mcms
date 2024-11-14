@@ -11,16 +11,16 @@ import (
 )
 
 type EVMExecutor struct {
-	*EVMEncoder
-	*EVMInspector
+	*Encoder
+	*Inspector
 	auth *bind.TransactOpts
 }
 
-func NewEVMExecutor(encoder *EVMEncoder, client ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
+func NewEVMExecutor(encoder *Encoder, client ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
 	return &EVMExecutor{
-		EVMEncoder:   encoder,
-		EVMInspector: NewEVMInspector(client),
-		auth:         auth,
+		Encoder:   encoder,
+		Inspector: NewInspector(client),
+		auth:      auth,
 	}
 }
 
@@ -30,7 +30,7 @@ func (e *EVMExecutor) ExecuteOperation(
 	proof []common.Hash,
 	op types.Operation,
 ) (string, error) {
-	if e.EVMEncoder == nil {
+	if e.Encoder == nil {
 		return "", errors.New("EVMExecutor was created without an encoder")
 	}
 
@@ -60,7 +60,7 @@ func (e *EVMExecutor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (string, error) {
-	if e.EVMEncoder == nil {
+	if e.Encoder == nil {
 		return "", errors.New("EVMExecutor was created without an encoder")
 	}
 

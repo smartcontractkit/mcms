@@ -17,11 +17,11 @@ import (
 
 var ZERO_HASH = common.Hash{}
 
-var _ sdk.TimelockConverter = (*TimelockConverterEVM)(nil)
+var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
-type TimelockConverterEVM struct{}
+type TimelockConverter struct{}
 
-func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
+func (t *TimelockConverter) ConvertBatchToChainOperation(
 	bop types.BatchOperation,
 	timelockAddress string,
 	minDelay string,
@@ -33,7 +33,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 	tags := make([]string, 0)
 	for _, tx := range bop.Transactions {
 		// Unmarshal the additional fields
-		var additionalFields EVMAdditionalFields
+		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
 			return types.Operation{}, common.Hash{}, err
 		}
@@ -79,7 +79,7 @@ func (t *TimelockConverterEVM) ConvertBatchToChainOperation(
 
 	op := types.Operation{
 		ChainSelector: bop.ChainSelector,
-		Transaction: NewEVMOperation(
+		Transaction: NewOperation(
 			common.HexToAddress(timelockAddress),
 			data,
 			big.NewInt(0),

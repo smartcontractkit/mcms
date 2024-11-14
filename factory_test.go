@@ -32,7 +32,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns an EVM encoder (not simulated)",
 			giveSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			giveIsSim:    false,
-			want: &evm.EVMEncoder{
+			want: &evm.Encoder{
 				TxCount:              giveTxCount,
 				ChainID:              cselectors.ETHEREUM_TESTNET_SEPOLIA.EvmChainID,
 				OverridePreviousRoot: false,
@@ -42,7 +42,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns an EVM encoder (simulated)",
 			giveSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			giveIsSim:    true,
-			want: &evm.EVMEncoder{
+			want: &evm.Encoder{
 				TxCount:              giveTxCount,
 				ChainID:              1337,
 				OverridePreviousRoot: false,

@@ -41,7 +41,7 @@ func TestOperationFieldsEVM_Validate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			op := EVMAdditionalFields{
+			op := AdditionalFields{
 				Value: tt.value,
 			}
 

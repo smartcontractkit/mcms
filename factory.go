@@ -36,7 +36,7 @@ func newEncoder(
 			chain.EvmChainID = 1337
 		}
 
-		encoder = evm.NewEVMEncoder(
+		encoder = evm.NewEncoder(
 			txCount,
 			chain.EvmChainID,
 			overridePreviousRoot,

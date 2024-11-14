@@ -105,8 +105,8 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 				Return(encodedConfig, tt.mockError)
 
-			// Instantiate EVMInspector with the mock client
-			inspector := NewEVMInspector(mockClient)
+			// Instantiate Inspector with the mock client
+			inspector := NewInspector(mockClient)
 
 			// Call GetConfig and capture the got
 			got, err := inspector.GetConfig(tt.address)
@@ -176,8 +176,8 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 				Return(encodedOpCount, tt.mockError)
 
-			// Instantiate EVMInspector with the mock client
-			inspector := NewEVMInspector(mockClient)
+			// Instantiate Inspector with the mock client
+			inspector := NewInspector(mockClient)
 
 			// Call GetOpCount and capture the got
 			got, err := inspector.GetOpCount(tt.address)
@@ -248,8 +248,8 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 				Return(encodedRoot, tt.mockError)
 
-			// Instantiate EVMInspector with the mock client
-			inspector := NewEVMInspector(mockClient)
+			// Instantiate Inspector with the mock client
+			inspector := NewInspector(mockClient)
 
 			// Call GetRoot and capture the result
 			got, validUntil, err := inspector.GetRoot(tt.address)
@@ -328,8 +328,8 @@ func TestEVMInspector_GetRootMetadata(t *testing.T) {
 			mockClient.EXPECT().CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
 				Return(encodedMetadata, tt.mockError)
 
-			// Instantiate EVMInspector with the mock client
-			inspector := NewEVMInspector(mockClient)
+			// Instantiate Inspector with the mock client
+			inspector := NewInspector(mockClient)
 
 			// Call GetRootMetadata and capture the got
 			got, err := inspector.GetRootMetadata(tt.address)

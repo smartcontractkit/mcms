@@ -38,7 +38,7 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 			name: "success: hash operation",
 			giveOp: types.Operation{
 				ChainSelector: chainSelector,
-				Transaction: NewEVMOperation(
+				Transaction: NewOperation(
 					common.HexToAddress("0x2"),
 					[]byte("data"),
 					new(big.Int).SetUint64(1000000000000000000),
@@ -64,7 +64,7 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			encoder := NewEVMEncoder(5, evmChainID, false)
+			encoder := NewEncoder(5, evmChainID, false)
 			got, err := encoder.HashOperation(giveOpCount, giveMetadata, tt.giveOp)
 
 			if tt.wantErr != "" {
@@ -86,7 +86,7 @@ func TestEVMEncoder_HashMetadata(t *testing.T) {
 		MCMAddress:      "0x1",
 	}
 
-	encoder := NewEVMEncoder(5, 1, false)
+	encoder := NewEncoder(5, 1, false)
 	got, err := encoder.HashMetadata(metadata)
 
 	require.NoError(t, err)
@@ -119,7 +119,7 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 			name: "success: converts to a geth operations",
 			giveOp: types.Operation{
 				ChainSelector: chainSelector,
-				Transaction: NewEVMOperation(
+				Transaction: NewOperation(
 					common.HexToAddress("0x2"),
 					[]byte("data"),
 					new(big.Int).SetUint64(1000000000000000000),
@@ -152,7 +152,7 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			encoder := NewEVMEncoder(5, evmChainID, false)
+			encoder := NewEncoder(5, evmChainID, false)
 			got, err := encoder.ToGethOperation(giveOpCount, giveMetadata, tt.giveOp)
 
 			if tt.wantErr != "" {
@@ -174,7 +174,7 @@ func TestEVMEncoder_ToGethRootMetadata(t *testing.T) {
 		MCMAddress:      "0x1",
 	}
 
-	encoder := NewEVMEncoder(5, 1, false)
+	encoder := NewEncoder(5, 1, false)
 	got := encoder.ToGethRootMetadata(metadata)
 
 	want := bindings.ManyChainMultiSigRootMetadata{

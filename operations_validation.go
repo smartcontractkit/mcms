@@ -22,7 +22,7 @@ func ValidateAdditionalFields(operation json.RawMessage, csel types.ChainSelecto
 	switch chainFamily {
 	case cselectors.FamilyEVM:
 		// Unmarshal and validate for EVM
-		var fields evm.EVMAdditionalFields
+		var fields evm.AdditionalFields
 		if err := json.Unmarshal(operation, &fields); err != nil {
 			return fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
 		}
