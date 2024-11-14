@@ -18,7 +18,7 @@ type TimelockProposal struct {
 	BaseProposal
 
 	Action            types.TimelockAction           `json:"action" validate:"required,oneof=schedule cancel bypass"`
-	Delay             string                         `json:"delay"` // Will validate conditionally in Validate method
+	Delay             types.Duration                 `json:"delay" validate:"required_if=Action schedule"`
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
 	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1"`
 }
@@ -55,7 +55,7 @@ func NewProposalWithTimeLock(
 	timelockAddresses map[types.ChainSelector]string,
 	batchOps []types.BatchOperation,
 	timelockAction types.TimelockAction,
-	timelockDelay string,
+	timelockDelay types.Duration,
 ) (*TimelockProposal, error) {
 	p := TimelockProposal{
 		BaseProposal: BaseProposal{
@@ -170,13 +170,6 @@ func timeLockProposalValidateBasic(timelockProposal TimelockProposal) error {
 	if timelockProposal.ValidUntil <= currentTimeCasted {
 		// ValidUntil is a Unix timestamp, so it should be greater than the current time
 		return NewInvalidValidUntilError(timelockProposal.ValidUntil)
-	}
-
-	// Validate the delay is a valid duration but is only required for Schedule actions
-	if timelockProposal.Action == types.TimelockActionSchedule {
-		if _, err := time.ParseDuration(timelockProposal.Delay); err != nil {
-			return NewInvalidDelayError(timelockProposal.Delay)
-		}
 	}
 
 	if len(timelockProposal.Operations) > 0 && len(timelockProposal.Operations[0].Transactions) == 0 {
