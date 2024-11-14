@@ -10,10 +10,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
@@ -21,9 +21,6 @@ import (
 
 var (
 	TestAddress = "0x1234567890abcdef"
-	TestChain1  = types.ChainSelector(cselectors.GETH_TESTNET.Selector)                    // 3379446385462418246
-	TestChain2  = types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector)        // 16015286601757825753
-	TestChain3  = types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA_BASE_1.Selector) // 10344971235874465080
 )
 
 func Test_BaseProposal_AppendSignature(t *testing.T) {
@@ -70,11 +67,11 @@ func Test_NewProposal(t *testing.T) {
 					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {},
+						chaintest.Chain1Selector: {},
 					},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: TestChain1},
+					{ChainSelector: chaintest.Chain1Selector},
 				},
 			},
 		},
@@ -151,11 +148,11 @@ func Test_WriteProposal(t *testing.T) {
 					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {},
+						chaintest.Chain1Selector: {},
 					},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: TestChain1},
+					{ChainSelector: chaintest.Chain1Selector},
 				},
 			},
 			want: `{
@@ -237,7 +234,7 @@ func Test_Proposal_Validate(t *testing.T) {
 					ValidUntil: 2004259681,
 					Signatures: []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {
+						chaintest.Chain1Selector: {
 							StartingOpCount: 1,
 							MCMAddress:      TestAddress,
 						},
@@ -245,7 +242,7 @@ func Test_Proposal_Validate(t *testing.T) {
 				},
 				Operations: []types.Operation{
 					{
-						ChainSelector: TestChain1,
+						ChainSelector: chaintest.Chain1Selector,
 						Transaction: types.Transaction{
 							To:               TestAddress,
 							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
@@ -299,14 +296,14 @@ func Test_Proposal_Validate(t *testing.T) {
 					ValidUntil: 2004259681,
 					Signatures: []types.Signature{},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {
+						chaintest.Chain1Selector: {
 							StartingOpCount: 1,
 							MCMAddress:      TestAddress,
 						},
 					},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: TestChain2},
+					{ChainSelector: chaintest.Chain2Selector},
 				},
 			},
 			wantErrs: []string{
@@ -359,19 +356,19 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 				BaseProposal: BaseProposal{
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {},
-						TestChain2: {},
+						chaintest.Chain1Selector: {},
+						chaintest.Chain2Selector: {},
 					},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: TestChain1},
-					{ChainSelector: TestChain1},
-					{ChainSelector: TestChain2},
+					{ChainSelector: chaintest.Chain1Selector},
+					{ChainSelector: chaintest.Chain1Selector},
+					{ChainSelector: chaintest.Chain2Selector},
 				},
 			},
 			want: map[types.ChainSelector]sdk.Encoder{
-				TestChain1: evm.NewEVMEncoder(2, 1337, false),
-				TestChain2: evm.NewEVMEncoder(1, 11155111, false),
+				chaintest.Chain1Selector: evm.NewEVMEncoder(2, 1337, false),
+				chaintest.Chain2Selector: evm.NewEVMEncoder(1, 11155111, false),
 			},
 		},
 		{
@@ -423,14 +420,19 @@ func Test_Proposal_ChainSelectors(t *testing.T) {
 	proposal := Proposal{
 		BaseProposal: BaseProposal{
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {},
-				TestChain2: {},
-				TestChain3: {},
+				chaintest.Chain1Selector: {},
+				chaintest.Chain2Selector: {},
+				chaintest.Chain3Selector: {},
 			},
 		},
 	}
 
-	want := []types.ChainSelector{TestChain1, TestChain3, TestChain2} // Sorted in ascending order
+	// Sorted in ascending order
+	want := []types.ChainSelector{
+		chaintest.Chain1Selector,
+		chaintest.Chain3Selector,
+		chaintest.Chain2Selector,
+	}
 	assert.Equal(t, want, proposal.ChainSelectors())
 }
 
@@ -448,13 +450,13 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {StartingOpCount: 5},
-						TestChain2: {StartingOpCount: 10},
+						chaintest.Chain1Selector: {StartingOpCount: 5},
+						chaintest.Chain2Selector: {StartingOpCount: 10},
 					},
 				},
 				Operations: []types.Operation{
 					{
-						ChainSelector: TestChain1,
+						ChainSelector: chaintest.Chain1Selector,
 						Transaction: types.Transaction{
 							To:               TestAddress,
 							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
@@ -466,7 +468,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 						},
 					},
 					{
-						ChainSelector: TestChain2,
+						ChainSelector: chaintest.Chain2Selector,
 						Transaction: types.Transaction{
 							To:               TestAddress,
 							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
@@ -498,11 +500,11 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {StartingOpCount: 5},
+						chaintest.Chain1Selector: {StartingOpCount: 5},
 					},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: TestChain2},
+					{ChainSelector: chaintest.Chain2Selector},
 				},
 			},
 			wantErr: "merkle tree generation error: missing metadata for chain 16015286601757825753",
@@ -512,11 +514,11 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {StartingOpCount: uint64(math.MaxUint32 + 1)},
+						chaintest.Chain1Selector: {StartingOpCount: uint64(math.MaxUint32 + 1)},
 					},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: TestChain1},
+					{ChainSelector: chaintest.Chain1Selector},
 				},
 			},
 			wantErr: "merkle tree generation error: value 4294967296 exceeds uint32 range",
@@ -526,12 +528,12 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {StartingOpCount: 5},
+						chaintest.Chain1Selector: {StartingOpCount: 5},
 					},
 				},
 				Operations: []types.Operation{
 					{
-						ChainSelector: TestChain1,
+						ChainSelector: chaintest.Chain1Selector,
 						Transaction: types.Transaction{
 							AdditionalFields: json.RawMessage([]byte(``)),
 						},
@@ -562,9 +564,9 @@ func Test_Proposal_TransactionCounts(t *testing.T) {
 	t.Parallel()
 
 	ops := []types.Operation{
-		{ChainSelector: TestChain1},
-		{ChainSelector: TestChain1},
-		{ChainSelector: TestChain2},
+		{ChainSelector: chaintest.Chain1Selector},
+		{ChainSelector: chaintest.Chain1Selector},
+		{ChainSelector: chaintest.Chain2Selector},
 	}
 
 	proposal := Proposal{
@@ -574,8 +576,8 @@ func Test_Proposal_TransactionCounts(t *testing.T) {
 	got := proposal.TransactionCounts()
 
 	assert.Equal(t, map[types.ChainSelector]uint64{
-		TestChain1: 2,
-		TestChain2: 1,
+		chaintest.Chain1Selector: 2,
+		chaintest.Chain2Selector: 1,
 	}, got)
 }
 
@@ -593,17 +595,17 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {StartingOpCount: 5},
-						TestChain2: {StartingOpCount: 10},
-						TestChain3: {StartingOpCount: 15},
+						chaintest.Chain1Selector: {StartingOpCount: 5},
+						chaintest.Chain2Selector: {StartingOpCount: 10},
+						chaintest.Chain3Selector: {StartingOpCount: 15},
 					},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: TestChain1},
-					{ChainSelector: TestChain2},
-					{ChainSelector: TestChain1},
-					{ChainSelector: TestChain2},
-					{ChainSelector: TestChain3},
+					{ChainSelector: chaintest.Chain1Selector},
+					{ChainSelector: chaintest.Chain2Selector},
+					{ChainSelector: chaintest.Chain1Selector},
+					{ChainSelector: chaintest.Chain2Selector},
+					{ChainSelector: chaintest.Chain3Selector},
 				},
 			},
 			want: []uint64{5, 10, 6, 11, 15},
@@ -615,7 +617,7 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: TestChain1},
+					{ChainSelector: chaintest.Chain1Selector},
 				},
 			},
 			wantErr: "missing metadata for chain 3379446385462418246",
