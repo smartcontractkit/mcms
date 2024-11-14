@@ -3,10 +3,10 @@ package mcms
 import (
 	"testing"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
@@ -30,17 +30,17 @@ func Test_NewEncoder(t *testing.T) {
 	}{
 		{
 			name:         "success: returns an EVM encoder (not simulated)",
-			giveSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+			giveSelector: chaintest.Chain2Selector,
 			giveIsSim:    false,
 			want: &evm.EVMEncoder{
 				TxCount:              giveTxCount,
-				ChainID:              cselectors.ETHEREUM_TESTNET_SEPOLIA.EvmChainID,
+				ChainID:              chaintest.Chain2EVMID,
 				OverridePreviousRoot: false,
 			},
 		},
 		{
 			name:         "success: returns an EVM encoder (simulated)",
-			giveSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+			giveSelector: chaintest.Chain2Selector,
 			giveIsSim:    true,
 			want: &evm.EVMEncoder{
 				TxCount:              giveTxCount,
@@ -50,7 +50,7 @@ func Test_NewEncoder(t *testing.T) {
 		},
 		{
 			name:         "failure: chain not found for selector",
-			giveSelector: types.ChainSelector(0),
+			giveSelector: chaintest.TestInvalidChainSelector,
 			giveIsSim:    true,
 			wantErr:      "invalid chain ID: 0",
 		},
