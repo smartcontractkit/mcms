@@ -11,17 +11,18 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 var validChainMetadata = map[types.ChainSelector]types.ChainMetadata{
-	TestChain1: {
+	chaintest.Chain1Selector: {
 		StartingOpCount: 1,
 		MCMAddress:      "0x123",
 	},
 }
 var validTimelockAddresses = map[types.ChainSelector]string{
-	TestChain1: "0x123",
+	chaintest.Chain1Selector: "0x123",
 }
 var validTx = types.Transaction{
 	To:               "0x123",
@@ -35,7 +36,7 @@ var validTx = types.Transaction{
 
 var validBatches = []types.BatchOperation{
 	{
-		ChainSelector: TestChain1,
+		ChainSelector: chaintest.Chain1Selector,
 		Transactions: []types.Transaction{
 			validTx,
 		},
@@ -90,7 +91,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 					ValidUntil:  2004259681,
 					Description: "Test proposal",
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain2: {
+						chaintest.Chain2Selector: {
 							StartingOpCount: 0,
 							MCMAddress:      "0x0000000000000000000000000000000000000000",
 						},
@@ -100,11 +101,11 @@ func Test_NewTimelockProposal(t *testing.T) {
 				Action: types.TimelockActionSchedule,
 				Delay:  "1h",
 				TimelockAddresses: map[types.ChainSelector]string{
-					TestChain2: "0x01",
+					chaintest.Chain2Selector: "0x01",
 				},
 				Operations: []types.BatchOperation{
 					{
-						ChainSelector: TestChain2,
+						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
 								To:               "0x0000000000000000000000000000000000000000",
@@ -223,7 +224,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 					ValidUntil:  2004259681,
 					Description: "Test proposal",
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain2: {
+						chaintest.Chain2Selector: {
 							StartingOpCount: 0,
 							MCMAddress:      "0x0000000000000000000000000000000000000000",
 						},
@@ -235,7 +236,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				TimelockAddresses: map[types.ChainSelector]string{},
 				Operations: []types.BatchOperation{
 					{
-						ChainSelector: TestChain2,
+						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
 								To:               "0x0000000000000000000000000000000000000000",
