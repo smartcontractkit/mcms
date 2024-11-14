@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/internal/testutils/evmsim"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -44,18 +45,18 @@ func Test_NewExecutable(t *testing.T) {
 			giveExecutors: map[types.ChainSelector]sdk.Executor{
 				types.ChainSelector(1): executor,
 			},
-			wantErr: "unable to create encoder: invalid chain ID: 1",
+			wantErr: "unable to create encoder: chain family not found for selector 1",
 		},
 		{
 			name: "failure: could not generate tx nonces from proposal (tx does not have matching chain metadata)",
 			giveProposal: &Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {StartingOpCount: 5},
+						chaintest.Chain1Selector: {StartingOpCount: 5},
 					},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: TestChain2},
+					{ChainSelector: chaintest.Chain2Selector},
 				},
 			},
 			giveExecutors: map[types.ChainSelector]sdk.Executor{
@@ -68,12 +69,12 @@ func Test_NewExecutable(t *testing.T) {
 			giveProposal: &Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {StartingOpCount: 5},
+						chaintest.Chain1Selector: {StartingOpCount: 5},
 					},
 				},
 				Operations: []types.Operation{
 					{
-						ChainSelector: TestChain1,
+						ChainSelector: chaintest.Chain1Selector,
 						Transaction: types.Transaction{
 							AdditionalFields: json.RawMessage([]byte(``)),
 						},
@@ -127,7 +128,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      mcmC.Address().Hex(),
 				},
@@ -135,7 +136,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		},
 		Operations: []types.Operation{
 			{
-				ChainSelector: TestChain1,
+				ChainSelector: chaintest.Chain1Selector,
 				Transaction: evm.NewOperation(
 					timelockC.Address(),
 					grantRoleData,
@@ -152,7 +153,9 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewInspector(sim.Backend.Client())}
+	inspectors := map[types.ChainSelector]sdk.Inspector{
+		chaintest.Chain1Selector: evm.NewInspector(sim.Backend.Client()),
+	}
 
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
@@ -173,7 +176,11 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 
 	// Construct executors
 	executors := map[types.ChainSelector]sdk.Executor{
-		TestChain1: evm.NewEVMExecutor(encoders[TestChain1].(*evm.Encoder), sim.Backend.Client(), sim.Signers[0].NewTransactOpts(t)),
+		chaintest.Chain1Selector: evm.NewExecutor(
+			encoders[chaintest.Chain1Selector].(*evm.EVMEncoder),
+			sim.Backend.Client(),
+			sim.Signers[0].NewTransactOpts(t),
+		),
 	}
 
 	// Construct executable
@@ -181,7 +188,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(TestChain1)
+	txHash, err := executable.SetRoot(chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
@@ -241,7 +248,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      mcmC.Address().Hex(),
 				},
@@ -249,8 +256,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		},
 		Operations: []types.Operation{
 			{
-				ChainSelector: TestChain1,
-				Transaction: evm.NewOperation(
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: evm.NewEVMOperation(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -266,7 +273,9 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewInspector(sim.Backend.Client())}
+	inspectors := map[types.ChainSelector]sdk.Inspector{
+		chaintest.Chain1Selector: evm.NewInspector(sim.Backend.Client()),
+	}
 
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
@@ -290,7 +299,11 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 
 	// Construct executors
 	executors := map[types.ChainSelector]sdk.Executor{
-		TestChain1: evm.NewEVMExecutor(encoders[TestChain1].(*evm.Encoder), sim.Backend.Client(), sim.Signers[0].NewTransactOpts(t)),
+		chaintest.Chain1Selector: evm.NewEVMExecutor(
+			encoders[chaintest.Chain1Selector].(*evm.EVMEncoder),
+			sim.Backend.Client(),
+			sim.Signers[0].NewTransactOpts(t),
+		),
 	}
 
 	// Construct executable
@@ -298,7 +311,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(TestChain1)
+	txHash, err := executable.SetRoot(chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
@@ -358,7 +371,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		require.NoError(t, perr)
 
 		operations[i] = types.Operation{
-			ChainSelector: TestChain1,
+			ChainSelector: chaintest.Chain1Selector,
 			Transaction: evm.NewOperation(
 				timelockC.Address(),
 				data,
@@ -379,7 +392,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      mcmC.Address().Hex(),
 				},
@@ -393,7 +406,9 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewInspector(sim.Backend.Client())}
+	inspectors := map[types.ChainSelector]sdk.Inspector{
+		chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client()),
+	}
 
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
@@ -414,7 +429,11 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 
 	// Construct executors
 	executors := map[types.ChainSelector]sdk.Executor{
-		TestChain1: evm.NewEVMExecutor(encoders[TestChain1].(*evm.Encoder), sim.Backend.Client(), sim.Signers[0].NewTransactOpts(t)),
+		chaintest.Chain1Selector: evm.NewEVMExecutor(
+			encoders[chaintest.Chain1Selector].(*evm.EVMEncoder),
+			sim.Backend.Client(),
+			sim.Signers[0].NewTransactOpts(t),
+		),
 	}
 
 	// Construct executable
@@ -422,7 +441,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(TestChain1)
+	txHash, err := executable.SetRoot(chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
@@ -488,8 +507,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		data, perr := timelockAbi.Pack("grantRole", role, mcmC.Address())
 		require.NoError(t, perr)
 		operations[i] = types.Operation{
-			ChainSelector: TestChain1,
-			Transaction: evm.NewOperation(
+			ChainSelector: chaintest.Chain1Selector,
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -509,7 +528,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      mcmC.Address().Hex(),
 				},
@@ -523,7 +542,9 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.NoError(t, err)
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewInspector(sim.Backend.Client())}
+	inspectors := map[types.ChainSelector]sdk.Inspector{
+		chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client()),
+	}
 
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
@@ -547,7 +568,11 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	// Construct executors
 	executors := map[types.ChainSelector]sdk.Executor{
-		TestChain1: evm.NewEVMExecutor(encoders[TestChain1].(*evm.Encoder), sim.Backend.Client(), sim.Signers[0].NewTransactOpts(t)),
+		chaintest.Chain1Selector: evm.NewEVMExecutor(
+			encoders[chaintest.Chain1Selector].(*evm.EVMEncoder),
+			sim.Backend.Client(),
+			sim.Signers[0].NewTransactOpts(t),
+		),
 	}
 
 	// Construct executable
@@ -555,7 +580,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(TestChain1)
+	txHash, err := executable.SetRoot(chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 
