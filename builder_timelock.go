@@ -41,7 +41,17 @@ func (b *TimelockProposalBuilder) SetDelay(delay string) *TimelockProposalBuilde
 }
 
 // SetTimelockAddress adds a timelock address to the timelock proposal.
-func (b *TimelockProposalBuilder) SetTimelockAddress(selector types.ChainSelector, address string) *TimelockProposalBuilder {
+func (b *TimelockProposalBuilder) SetTimelockAddresses(
+	addrs map[types.ChainSelector]string,
+) *TimelockProposalBuilder {
+	b.proposal.TimelockAddresses = addrs
+	return b
+}
+
+// AddTimelockAddress adds a timelock address for the given selector to the timelock proposal.
+func (b *TimelockProposalBuilder) AddTimelockAddress(
+	selector types.ChainSelector, address string,
+) *TimelockProposalBuilder {
 	b.proposal.TimelockAddresses[selector] = address
 	return b
 }

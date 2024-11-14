@@ -18,12 +18,12 @@ import (
 func TestValidateAdditionalFields(t *testing.T) {
 	t.Parallel()
 
-	validEVMFields := evm.EVMAdditionalFields{
+	validEVMFields := evm.AdditionalFields{
 		Value: big.NewInt(100),
 	}
 	validEVMFieldsJSON, err := json.Marshal(validEVMFields)
 	require.NoError(t, err)
-	invalidEVMFields := evm.EVMAdditionalFields{
+	invalidEVMFields := evm.AdditionalFields{
 		Value: big.NewInt(-100),
 	}
 	invalidEVMFieldsJSON, err := json.Marshal(invalidEVMFields)

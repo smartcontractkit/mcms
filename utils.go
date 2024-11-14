@@ -26,7 +26,7 @@ func BatchToChainOperation(
 	var converter sdk.TimelockConverter
 	switch chainFamily {
 	case cselectors.FamilyEVM:
-		converter = &evm.TimelockConverterEVM{}
+		converter = &evm.TimelockConverter{}
 	}
 
 	return converter.ConvertBatchToChainOperation(

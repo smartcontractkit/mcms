@@ -47,7 +47,9 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetAction(types.TimelockActionSchedule).
 					SetDelay("24h").
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
-					SetTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
+					SetTimelockAddresses(map[types.ChainSelector]string{
+						chaintest.Chain2Selector: "0xTimelockAddress",
+					}).
 					AddOperation(types.BatchOperation{
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
@@ -100,7 +102,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetAction(types.TimelockActionSchedule).
 					SetDelay("24h").
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
-					SetTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
+					AddTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
 					SetTransactions([]types.BatchOperation{{
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
@@ -154,7 +156,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetAction(types.TimelockActionSchedule).
 					// Missing SetDelay
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
-					SetTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
+					AddTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
 					AddOperation(types.BatchOperation{
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
@@ -181,7 +183,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetAction(types.TimelockActionSchedule).
 					SetDelay("invalid_duration").
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
-					SetTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
+					AddTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
 					AddOperation(types.BatchOperation{
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
@@ -235,7 +237,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetAction(types.TimelockActionSchedule).
 					SetDelay("24h").
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
-					SetTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress")
+					AddTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress")
 				// No transactions added
 			},
 			want: nil,
@@ -253,7 +255,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetAction(types.TimelockActionSchedule).
 					SetDelay("24h").
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
-					SetTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
+					AddTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
 					AddOperation(types.BatchOperation{
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
@@ -280,7 +282,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					// Set an invalid action (not schedule, cancel, or bypass)
 					SetAction("invalid_action").
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
-					SetTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
+					AddTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
 					AddOperation(types.BatchOperation{
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{

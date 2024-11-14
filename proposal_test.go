@@ -367,8 +367,8 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 				return *proposal
 			},
 			want: map[types.ChainSelector]sdk.Encoder{
-				chaintest.Chain1Selector: evm.NewEVMEncoder(chaintest.Chain1Selector, 2, false, false),
-				chaintest.Chain2Selector: evm.NewEVMEncoder(chaintest.Chain2Selector, 1, false, false),
+				chaintest.Chain1Selector: evm.NewEncoder(chaintest.Chain1Selector, 2, false, false),
+				chaintest.Chain2Selector: evm.NewEncoder(chaintest.Chain2Selector, 1, false, false),
 			},
 		},
 		{
