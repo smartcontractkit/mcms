@@ -137,7 +137,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		Operations: []types.Operation{
 			{
 				ChainSelector: chaintest.Chain1Selector,
-				Transaction: evm.NewEVMOperation(
+				Transaction: evm.NewOperation(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -154,7 +154,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{
-		chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client()),
+		chaintest.Chain1Selector: evm.NewInspector(sim.Backend.Client()),
 	}
 
 	// Construct executor
@@ -176,8 +176,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 
 	// Construct executors
 	executors := map[types.ChainSelector]sdk.Executor{
-		chaintest.Chain1Selector: evm.NewEVMExecutor(
-			encoders[chaintest.Chain1Selector].(*evm.EVMEncoder),
+		chaintest.Chain1Selector: evm.NewExecutor(
+			encoders[chaintest.Chain1Selector].(*evm.Encoder),
 			sim.Backend.Client(),
 			sim.Signers[0].NewTransactOpts(t),
 		),
@@ -257,7 +257,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		Operations: []types.Operation{
 			{
 				ChainSelector: chaintest.Chain1Selector,
-				Transaction: evm.NewEVMOperation(
+				Transaction: evm.NewOperation(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -274,7 +274,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{
-		chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client()),
+		chaintest.Chain1Selector: evm.NewInspector(sim.Backend.Client()),
 	}
 
 	// Construct executor
@@ -299,8 +299,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 
 	// Construct executors
 	executors := map[types.ChainSelector]sdk.Executor{
-		chaintest.Chain1Selector: evm.NewEVMExecutor(
-			encoders[chaintest.Chain1Selector].(*evm.EVMEncoder),
+		chaintest.Chain1Selector: evm.NewExecutor(
+			encoders[chaintest.Chain1Selector].(*evm.Encoder),
 			sim.Backend.Client(),
 			sim.Signers[0].NewTransactOpts(t),
 		),
@@ -372,7 +372,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 
 		operations[i] = types.Operation{
 			ChainSelector: chaintest.Chain1Selector,
-			Transaction: evm.NewEVMOperation(
+			Transaction: evm.NewOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -407,7 +407,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{
-		chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client()),
+		chaintest.Chain1Selector: evm.NewInspector(sim.Backend.Client()),
 	}
 
 	// Construct executor
@@ -429,8 +429,8 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 
 	// Construct executors
 	executors := map[types.ChainSelector]sdk.Executor{
-		chaintest.Chain1Selector: evm.NewEVMExecutor(
-			encoders[chaintest.Chain1Selector].(*evm.EVMEncoder),
+		chaintest.Chain1Selector: evm.NewExecutor(
+			encoders[chaintest.Chain1Selector].(*evm.Encoder),
 			sim.Backend.Client(),
 			sim.Signers[0].NewTransactOpts(t),
 		),
@@ -508,7 +508,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		require.NoError(t, perr)
 		operations[i] = types.Operation{
 			ChainSelector: chaintest.Chain1Selector,
-			Transaction: evm.NewEVMOperation(
+			Transaction: evm.NewOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -543,7 +543,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	// Gen caller map for easy access
 	inspectors := map[types.ChainSelector]sdk.Inspector{
-		chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client()),
+		chaintest.Chain1Selector: evm.NewInspector(sim.Backend.Client()),
 	}
 
 	// Construct executor
@@ -568,8 +568,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 
 	// Construct executors
 	executors := map[types.ChainSelector]sdk.Executor{
-		chaintest.Chain1Selector: evm.NewEVMExecutor(
-			encoders[chaintest.Chain1Selector].(*evm.EVMEncoder),
+		chaintest.Chain1Selector: evm.NewExecutor(
+			encoders[chaintest.Chain1Selector].(*evm.Encoder),
 			sim.Backend.Client(),
 			sim.Signers[0].NewTransactOpts(t),
 		),

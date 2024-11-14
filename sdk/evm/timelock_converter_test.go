@@ -13,7 +13,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
+func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 	t.Parallel()
 
 	timelockAddress := "0x1234567890123456789012345678901234567890"
@@ -32,7 +32,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Schedule operation",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{
-					NewEVMOperation(
+					NewOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -52,7 +52,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Cancel operation",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{
-					NewEVMOperation(
+					NewOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -72,7 +72,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Invalid operation",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{
-					NewEVMOperation(
+					NewOperation(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -94,7 +94,7 @@ func TestTimelockConverterEVM_ConvertBatchToChainOperation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			converter := &TimelockConverterEVM{}
+			converter := &TimelockConverter{}
 			chainOperation, operationId, err := converter.ConvertBatchToChainOperation(tc.op, timelockAddress, tc.minDelay, tc.operation, tc.predecessor)
 
 			if tc.expectedError != nil {

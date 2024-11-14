@@ -14,7 +14,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestEVMEncoder_HashOperation(t *testing.T) {
+func TestEncoder_HashOperation(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -36,7 +36,7 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 			name: "success: hash operation",
 			giveOp: types.Operation{
 				ChainSelector: chaintest.Chain1Selector,
-				Transaction: NewEVMOperation(
+				Transaction: NewOperation(
 					common.HexToAddress("0x2"),
 					[]byte("data"),
 					new(big.Int).SetUint64(1000000000000000000),
@@ -62,7 +62,7 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			encoder := NewEVMEncoder(chaintest.Chain1Selector, 5, false, false)
+			encoder := NewEncoder(chaintest.Chain1Selector, 5, false, false)
 			got, err := encoder.HashOperation(giveOpCount, giveMetadata, tt.giveOp)
 
 			if tt.wantErr != "" {
@@ -76,7 +76,7 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 	}
 }
 
-func TestEVMEncoder_HashMetadata(t *testing.T) {
+func TestEncoder_HashMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -107,7 +107,7 @@ func TestEVMEncoder_HashMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			encoder := NewEVMEncoder(tt.giveSelector, 1, false, false)
+			encoder := NewEncoder(tt.giveSelector, 1, false, false)
 			got, err := encoder.HashMetadata(tt.giveMeta)
 
 			if tt.wantErr != "" {
@@ -120,7 +120,7 @@ func TestEVMEncoder_HashMetadata(t *testing.T) {
 	}
 }
 
-func TestEVMEncoder_ToGethOperation(t *testing.T) {
+func TestEncoder_ToGethOperation(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -147,7 +147,7 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 			giveSelector: chaintest.Chain1Selector,
 			giveOp: types.Operation{
 				ChainSelector: chainSelector,
-				Transaction: NewEVMOperation(
+				Transaction: NewOperation(
 					common.HexToAddress("0x2"),
 					[]byte("data"),
 					new(big.Int).SetUint64(1000000000000000000),
@@ -187,7 +187,7 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			encoder := NewEVMEncoder(tt.giveSelector, 5, false, false)
+			encoder := NewEncoder(tt.giveSelector, 5, false, false)
 			got, err := encoder.ToGethOperation(giveOpCount, giveMetadata, tt.giveOp)
 
 			if tt.wantErr != "" {
@@ -201,7 +201,7 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 	}
 }
 
-func TestEVMEncoder_ToGethRootMetadata(t *testing.T) {
+func TestEncoder_ToGethRootMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -235,7 +235,7 @@ func TestEVMEncoder_ToGethRootMetadata(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		encoder := NewEVMEncoder(tt.giveSelector, 5, false, false)
+		encoder := NewEncoder(tt.giveSelector, 5, false, false)
 
 		got, err := encoder.ToGethRootMetadata(tt.giveMetadata)
 
