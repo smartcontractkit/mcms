@@ -17,7 +17,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestEVMInspector_GetConfig(t *testing.T) {
+func TestInspector_GetConfig(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -126,7 +126,7 @@ func TestEVMInspector_GetConfig(t *testing.T) {
 	}
 }
 
-func TestEVMInspector_GetOpCount(t *testing.T) {
+func TestInspector_GetOpCount(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -197,7 +197,7 @@ func TestEVMInspector_GetOpCount(t *testing.T) {
 	}
 }
 
-func TestEVMInspector_GetRoot(t *testing.T) {
+func TestInspector_GetRoot(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -270,7 +270,7 @@ func TestEVMInspector_GetRoot(t *testing.T) {
 	}
 }
 
-func TestEVMInspector_GetRootMetadata(t *testing.T) {
+func TestInspector_GetRootMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

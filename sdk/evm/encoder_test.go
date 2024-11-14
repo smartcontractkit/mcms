@@ -14,7 +14,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestEVMEncoder_HashOperation(t *testing.T) {
+func TestEncoder_HashOperation(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -76,7 +76,7 @@ func TestEVMEncoder_HashOperation(t *testing.T) {
 	}
 }
 
-func TestEVMEncoder_HashMetadata(t *testing.T) {
+func TestEncoder_HashMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -120,7 +120,7 @@ func TestEVMEncoder_HashMetadata(t *testing.T) {
 	}
 }
 
-func TestEVMEncoder_ToGethOperation(t *testing.T) {
+func TestEncoder_ToGethOperation(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -187,7 +187,7 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			encoder := NewOperation(tt.giveSelector, 5, false, false)
+			encoder := NewEncoder(tt.giveSelector, 5, false, false)
 			got, err := encoder.ToGethOperation(giveOpCount, giveMetadata, tt.giveOp)
 
 			if tt.wantErr != "" {
@@ -201,7 +201,7 @@ func TestEVMEncoder_ToGethOperation(t *testing.T) {
 	}
 }
 
-func TestEVMEncoder_ToGethRootMetadata(t *testing.T) {
+func TestEncoder_ToGethRootMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

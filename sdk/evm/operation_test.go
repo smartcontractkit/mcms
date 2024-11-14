@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestOperationFieldsEVM_Validate(t *testing.T) {
+func TestOperationFields_Validate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

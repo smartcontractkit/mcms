@@ -38,7 +38,7 @@ type Encoder struct {
 	IsSim                bool
 }
 
-// NewEncoder returns a new EVMEncoder.
+// NewEncoder returns a new Encoder.
 func NewEncoder(
 	csel types.ChainSelector, txCount uint64, overridePreviousRoot bool, isSim bool,
 ) *Encoder {
