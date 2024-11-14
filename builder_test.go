@@ -42,7 +42,11 @@ func TestProposalBuilder(t *testing.T) {
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
 					AddOperation(types.Operation{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction: types.Transaction{
+							To:               "0x123",
+							Data:             []byte{0x01},
+							AdditionalFields: []byte{0x02},
+						},
 					})
 			},
 			want: &mcms.Proposal{
@@ -59,7 +63,11 @@ func TestProposalBuilder(t *testing.T) {
 				Operations: []types.Operation{
 					{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction: types.Transaction{
+							To:               "0x123",
+							Data:             []byte{0x01},
+							AdditionalFields: []byte{0x02},
+						},
 					},
 				},
 			},
@@ -76,11 +84,19 @@ func TestProposalBuilder(t *testing.T) {
 					SetOperations([]types.Operation{
 						{
 							ChainSelector: chaintest.Chain2Selector,
-							Transaction:   types.Transaction{Data: []byte{0x01}},
+							Transaction: types.Transaction{
+								To:               "0x123",
+								Data:             []byte{0x01},
+								AdditionalFields: []byte{0x02},
+							},
 						},
 						{
 							ChainSelector: chaintest.Chain2Selector,
-							Transaction:   types.Transaction{Data: []byte{0x02}},
+							Transaction: types.Transaction{
+								To:               "0x123",
+								Data:             []byte{0x01},
+								AdditionalFields: []byte{0x02},
+							},
 						},
 					})
 			},
@@ -98,11 +114,19 @@ func TestProposalBuilder(t *testing.T) {
 				Operations: []types.Operation{
 					{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction: types.Transaction{
+							To:               "0x123",
+							Data:             []byte{0x01},
+							AdditionalFields: []byte{0x02},
+						},
 					},
 					{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x02}},
+						Transaction: types.Transaction{
+							To:               "0x123",
+							Data:             []byte{0x01},
+							AdditionalFields: []byte{0x02},
+						},
 					},
 				},
 			},
@@ -121,11 +145,19 @@ func TestProposalBuilder(t *testing.T) {
 					SetOperations([]types.Operation{
 						{
 							ChainSelector: chaintest.Chain2Selector,
-							Transaction:   types.Transaction{Data: []byte{0x01}},
+							Transaction: types.Transaction{
+								To:               "0x123",
+								Data:             []byte{0x01},
+								AdditionalFields: []byte{0x02},
+							},
 						},
 						{
 							ChainSelector: chaintest.Chain2Selector,
-							Transaction:   types.Transaction{Data: []byte{0x02}},
+							Transaction: types.Transaction{
+								To:               "0x123",
+								Data:             []byte{0x01},
+								AdditionalFields: []byte{0x02},
+							},
 						},
 					}).
 					AddSignature(types.Signature{
@@ -153,11 +185,19 @@ func TestProposalBuilder(t *testing.T) {
 				Operations: []types.Operation{
 					{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction: types.Transaction{
+							To:               "0x123",
+							Data:             []byte{0x01},
+							AdditionalFields: []byte{0x02},
+						},
 					},
 					{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x02}},
+						Transaction: types.Transaction{
+							To:               "0x123",
+							Data:             []byte{0x01},
+							AdditionalFields: []byte{0x02},
+						},
 					},
 				},
 			},
@@ -172,7 +212,11 @@ func TestProposalBuilder(t *testing.T) {
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
 					AddOperation(types.Operation{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction: types.Transaction{
+							To:               "0x123",
+							Data:             []byte{0x01},
+							AdditionalFields: []byte{0x02},
+						},
 					})
 			},
 			want: nil,
@@ -190,7 +234,11 @@ func TestProposalBuilder(t *testing.T) {
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
 					AddOperation(types.Operation{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction: types.Transaction{
+							To:               "0x123",
+							Data:             []byte{0x01},
+							AdditionalFields: []byte{0x02},
+						},
 					})
 			},
 			want: nil,
@@ -223,7 +271,11 @@ func TestProposalBuilder(t *testing.T) {
 					// ChainMetadata is not added
 					AddOperation(types.Operation{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction: types.Transaction{
+							To:               "0x123",
+							Data:             []byte{0x01},
+							AdditionalFields: []byte{0x02},
+						},
 					})
 			},
 			want: nil,
