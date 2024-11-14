@@ -66,8 +66,8 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			configurator := ConfigTransformer{}
-			got, err := configurator.ToConfig(tt.give)
+			transformer := ConfigTransformer{}
+			got, err := transformer.ToConfig(tt.give)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
