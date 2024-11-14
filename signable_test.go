@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/internal/testutils/evmsim"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -51,19 +52,19 @@ func Test_NewSignable(t *testing.T) {
 			giveInspectors: map[types.ChainSelector]sdk.Inspector{
 				types.ChainSelector(1): inspector,
 			},
-			wantErr: "unable to create encoder: invalid chain ID: 1",
+			wantErr: "unable to create encoder: chain family not found for selector 1",
 		},
 		{
 			name: "failure: could not generate tree from proposal (invalid additional values)",
 			giveProposal: &Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {StartingOpCount: 5},
+						chaintest.Chain1Selector: {StartingOpCount: 5},
 					},
 				},
 				Operations: []types.Operation{
 					{
-						ChainSelector: TestChain1,
+						ChainSelector: chaintest.Chain1Selector,
 						Transaction: types.Transaction{
 							AdditionalFields: json.RawMessage([]byte(``)),
 						},
@@ -116,7 +117,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      mcmC.Address().Hex(),
 				},
@@ -124,8 +125,8 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 		},
 		Operations: []types.Operation{
 			{
-				ChainSelector: TestChain1,
-				Transaction: evm.NewOperation(
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: evm.NewEVMOperation(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -138,7 +139,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewInspector(sim.Backend.Client())}
+	inspectors := map[types.ChainSelector]sdk.Inspector{chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
@@ -181,7 +182,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      mcmC.Address().Hex(),
 				},
@@ -189,8 +190,8 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 		},
 		Operations: []types.Operation{
 			{
-				ChainSelector: TestChain1,
-				Transaction: evm.NewOperation(
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: evm.NewEVMOperation(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -203,7 +204,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewInspector(sim.Backend.Client())}
+	inspectors := map[types.ChainSelector]sdk.Inspector{chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
@@ -249,8 +250,8 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmC.Address())
 		require.NoError(t, perr)
 		operations[i] = types.Operation{
-			ChainSelector: TestChain1,
-			Transaction: evm.NewOperation(
+			ChainSelector: chaintest.Chain1Selector,
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -270,7 +271,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      mcmC.Address().Hex(),
 				},
@@ -281,7 +282,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewInspector(sim.Backend.Client())}
+	inspectors := map[types.ChainSelector]sdk.Inspector{chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
@@ -324,8 +325,8 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 		data, perr := timelockAbi.Pack("grantRole", role, mcmC.Address())
 		require.NoError(t, perr)
 		operations[i] = types.Operation{
-			ChainSelector: TestChain1,
-			Transaction: evm.NewOperation(
+			ChainSelector: chaintest.Chain1Selector,
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -345,7 +346,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      mcmC.Address().Hex(),
 				},
@@ -356,7 +357,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewInspector(sim.Backend.Client())}
+	inspectors := map[types.ChainSelector]sdk.Inspector{chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
@@ -402,8 +403,8 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 		data, perr := timelockAbi.Pack("grantRole", role, mcmC.Address())
 		require.NoError(t, perr)
 		operations[i] = types.Operation{
-			ChainSelector: TestChain1,
-			Transaction: evm.NewOperation(
+			ChainSelector: chaintest.Chain1Selector,
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -423,7 +424,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      mcmC.Address().Hex(),
 				},
@@ -434,7 +435,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewInspector(sim.Backend.Client())}
+	inspectors := map[types.ChainSelector]sdk.Inspector{chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
@@ -486,8 +487,8 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 		require.NoError(t, perr)
 
 		operations[i] = types.Operation{
-			ChainSelector: TestChain1,
-			Transaction: evm.NewOperation(
+			ChainSelector: chaintest.Chain1Selector,
+			Transaction: evm.NewEVMOperation(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -507,7 +508,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      mcmC.Address().Hex(),
 				},
@@ -518,7 +519,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	proposal.UseSimulatedBackend(true)
 
 	// Gen caller map for easy access
-	inspectors := map[types.ChainSelector]sdk.Inspector{TestChain1: evm.NewInspector(sim.Backend.Client())}
+	inspectors := map[types.ChainSelector]sdk.Inspector{chaintest.Chain1Selector: evm.NewEVMInspector(sim.Backend.Client())}
 
 	// Construct executor
 	signable, err := NewSignable(&proposal, inspectors)
@@ -558,7 +559,7 @@ func Test_Signable_Sign(t *testing.T) {
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      "0x01",
 				},
@@ -566,8 +567,8 @@ func Test_Signable_Sign(t *testing.T) {
 		},
 		Operations: []types.Operation{
 			{
-				ChainSelector: TestChain1,
-				Transaction: evm.NewOperation(
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: evm.NewEVMOperation(
 					common.HexToAddress("0x02"),
 					[]byte("0x0000000"), // Use some random data since it doesn't matter
 					big.NewInt(0),
@@ -615,7 +616,7 @@ func Test_Signable_Sign(t *testing.T) {
 
 			// We need some inspectors to satisfy dependency validation, but this mock is unused.
 			inspectors := map[types.ChainSelector]sdk.Inspector{
-				TestChain1: mocks.NewInspector(t),
+				chaintest.Chain1Selector: mocks.NewInspector(t),
 			}
 
 			// Ensure that there are no signatures to being with
@@ -652,7 +653,7 @@ func Test_SignAndAppend(t *testing.T) {
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				TestChain1: {
+				chaintest.Chain1Selector: {
 					StartingOpCount: 0,
 					MCMAddress:      "0x01",
 				},
@@ -660,8 +661,8 @@ func Test_SignAndAppend(t *testing.T) {
 		},
 		Operations: []types.Operation{
 			{
-				ChainSelector: TestChain1,
-				Transaction: evm.NewOperation(
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: evm.NewEVMOperation(
 					common.HexToAddress("0x02"),
 					[]byte("0x0000000"), // Use some random data since it doesn't matter
 					big.NewInt(0),
@@ -702,7 +703,7 @@ func Test_SignAndAppend(t *testing.T) {
 
 			inspector := mocks.NewInspector(t)
 			inspectors := map[types.ChainSelector]sdk.Inspector{
-				TestChain1: inspector,
+				chaintest.Chain1Selector: inspector,
 			}
 
 			// Ensure that there are no signatures to being with
@@ -748,8 +749,8 @@ func Test_Signable_GetConfigs(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {MCMAddress: "0x01"},
-						TestChain2: {MCMAddress: "0x02"},
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
+						chaintest.Chain2Selector: {MCMAddress: "0x02"},
 					},
 				},
 			},
@@ -758,13 +759,13 @@ func Test_Signable_GetConfigs(t *testing.T) {
 				m.inspector2.EXPECT().GetConfig("0x02").Return(config2, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
-					TestChain1: m.inspector1,
-					TestChain2: m.inspector2,
+					chaintest.Chain1Selector: m.inspector1,
+					chaintest.Chain2Selector: m.inspector2,
 				}
 			},
 			want: map[types.ChainSelector]*types.Config{
-				TestChain1: config1,
-				TestChain2: config2,
+				chaintest.Chain1Selector: config1,
+				chaintest.Chain2Selector: config2,
 			},
 		},
 		{
@@ -780,7 +781,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {MCMAddress: "0x01"},
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
 					},
 				},
 			},
@@ -794,7 +795,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {MCMAddress: "0x01"},
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
 					},
 				},
 			},
@@ -802,7 +803,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 				m.inspector1.EXPECT().GetConfig("0x01").Return(nil, assert.AnError)
 
 				return map[types.ChainSelector]sdk.Inspector{
-					TestChain1: m.inspector1,
+					chaintest.Chain1Selector: m.inspector1,
 				}
 			},
 			wantErr: assert.AnError.Error(),
@@ -870,8 +871,8 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {MCMAddress: "0x01"},
-						TestChain2: {MCMAddress: "0x02"},
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
+						chaintest.Chain2Selector: {MCMAddress: "0x02"},
 					},
 				},
 			},
@@ -880,8 +881,8 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 				m.inspector2.EXPECT().GetConfig("0x02").Return(config2, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
-					TestChain1: m.inspector1,
-					TestChain2: m.inspector2,
+					chaintest.Chain1Selector: m.inspector1,
+					chaintest.Chain2Selector: m.inspector2,
 				}
 			},
 		},
@@ -898,8 +899,8 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {MCMAddress: "0x01"},
-						TestChain2: {MCMAddress: "0x02"},
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
+						chaintest.Chain2Selector: {MCMAddress: "0x02"},
 					},
 				},
 			},
@@ -908,8 +909,8 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 				m.inspector2.EXPECT().GetConfig("0x02").Return(config3, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
-					TestChain1: m.inspector1,
-					TestChain2: m.inspector2,
+					chaintest.Chain1Selector: m.inspector1,
+					chaintest.Chain2Selector: m.inspector2,
 				}
 			},
 			wantErr: "inconsistent configs for chains 16015286601757825753 and 3379446385462418246",
@@ -959,8 +960,8 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {MCMAddress: "0x01"},
-						TestChain2: {MCMAddress: "0x02"},
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
+						chaintest.Chain2Selector: {MCMAddress: "0x02"},
 					},
 				},
 			},
@@ -969,13 +970,13 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 				m.inspector2.EXPECT().GetOpCount("0x02").Return(200, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
-					TestChain1: m.inspector1,
-					TestChain2: m.inspector2,
+					chaintest.Chain1Selector: m.inspector1,
+					chaintest.Chain2Selector: m.inspector2,
 				}
 			},
 			want: map[types.ChainSelector]uint64{
-				TestChain1: 100,
-				TestChain2: 200,
+				chaintest.Chain1Selector: 100,
+				chaintest.Chain2Selector: 200,
 			},
 		},
 		{
@@ -991,7 +992,7 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {MCMAddress: "0x01"},
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
 					},
 				},
 			},
@@ -1005,7 +1006,7 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 			give: Proposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						TestChain1: {MCMAddress: "0x01"},
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
 					},
 				},
 			},
@@ -1013,7 +1014,7 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 				m.inspector1.EXPECT().GetOpCount("0x01").Return(0, assert.AnError)
 
 				return map[types.ChainSelector]sdk.Inspector{
-					TestChain1: m.inspector1,
+					chaintest.Chain1Selector: m.inspector1,
 				}
 			},
 			wantErr: assert.AnError.Error(),

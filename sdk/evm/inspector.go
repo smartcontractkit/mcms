@@ -9,24 +9,22 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var _ sdk.Inspector = (*Inspector)(nil)
+var _ sdk.Inspector = (*EVMInspector)(nil)
 
-// Inspector is an Inspector implementation for EVM chains, giving access to the state of the MCMS contract
-type Inspector struct {
+// EVMInspector is an Inspector implementation for EVM chains, giving access to the state of the MCMS contract
+type EVMInspector struct {
 	ConfigTransformer
 	client ContractDeployBackend
 }
 
-// NewInspector creates a new Inspector for evm chains.
-func NewInspector(client ContractDeployBackend) *Inspector {
-	return &Inspector{
+func NewEVMInspector(client ContractDeployBackend) *EVMInspector {
+	return &EVMInspector{
 		ConfigTransformer: ConfigTransformer{},
 		client:            client,
 	}
 }
 
-// GetConfig gets the configurations for the contract.
-func (e *Inspector) GetConfig(mcmAddress string) (*types.Config, error) {
+func (e *EVMInspector) GetConfig(mcmAddress string) (*types.Config, error) {
 	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return nil, err
@@ -40,8 +38,7 @@ func (e *Inspector) GetConfig(mcmAddress string) (*types.Config, error) {
 	return e.ToConfig(onchainConfig)
 }
 
-// GetOpCount get the operation count of the contract
-func (e *Inspector) GetOpCount(mcmAddress string) (uint64, error) {
+func (e *EVMInspector) GetOpCount(mcmAddress string) (uint64, error) {
 	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return 0, err
@@ -55,8 +52,7 @@ func (e *Inspector) GetOpCount(mcmAddress string) (uint64, error) {
 	return opCount.Uint64(), nil
 }
 
-// GetRoot gets the merkle root currently in the contract
-func (e *Inspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
+func (e *EVMInspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
 	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return common.Hash{}, 0, err
@@ -70,8 +66,7 @@ func (e *Inspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
 	return root.Root, root.ValidUntil, nil
 }
 
-// GetRootMetadata gets the root metadata, specifically the starting op count.
-func (e *Inspector) GetRootMetadata(mcmAddress string) (types.ChainMetadata, error) {
+func (e *EVMInspector) GetRootMetadata(mcmAddress string) (types.ChainMetadata, error) {
 	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return types.ChainMetadata{}, err

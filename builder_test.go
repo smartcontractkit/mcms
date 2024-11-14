@@ -8,16 +8,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms"
+	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/types"
 )
-
-var SepoliaSelector = chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 
 func TestProposalBuilder(t *testing.T) {
 	t.Parallel()
@@ -41,9 +39,9 @@ func TestProposalBuilder(t *testing.T) {
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
-					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
+					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
 					AddOperation(types.Operation{
-						ChainSelector: types.ChainSelector(SepoliaSelector),
+						ChainSelector: chaintest.Chain2Selector,
 						Transaction:   types.Transaction{Data: []byte{0x01}},
 					})
 			},
@@ -55,12 +53,12 @@ func TestProposalBuilder(t *testing.T) {
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
+						chaintest.Chain2Selector: {StartingOpCount: 0},
 					},
 				},
 				Operations: []types.Operation{
 					{
-						ChainSelector: types.ChainSelector(SepoliaSelector),
+						ChainSelector: chaintest.Chain2Selector,
 						Transaction:   types.Transaction{Data: []byte{0x01}},
 					},
 				},
@@ -74,14 +72,14 @@ func TestProposalBuilder(t *testing.T) {
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
-					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
+					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
 					SetOperations([]types.Operation{
 						{
-							ChainSelector: types.ChainSelector(SepoliaSelector),
+							ChainSelector: chaintest.Chain2Selector,
 							Transaction:   types.Transaction{Data: []byte{0x01}},
 						},
 						{
-							ChainSelector: types.ChainSelector(SepoliaSelector),
+							ChainSelector: chaintest.Chain2Selector,
 							Transaction:   types.Transaction{Data: []byte{0x02}},
 						},
 					})
@@ -94,16 +92,16 @@ func TestProposalBuilder(t *testing.T) {
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
+						chaintest.Chain2Selector: {StartingOpCount: 0},
 					},
 				},
 				Operations: []types.Operation{
 					{
-						ChainSelector: types.ChainSelector(SepoliaSelector),
+						ChainSelector: chaintest.Chain2Selector,
 						Transaction:   types.Transaction{Data: []byte{0x01}},
 					},
 					{
-						ChainSelector: types.ChainSelector(SepoliaSelector),
+						ChainSelector: chaintest.Chain2Selector,
 						Transaction:   types.Transaction{Data: []byte{0x02}},
 					},
 				},
@@ -118,15 +116,15 @@ func TestProposalBuilder(t *testing.T) {
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
 					SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
-						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
+						chaintest.Chain2Selector: {StartingOpCount: 0},
 					}).
 					SetOperations([]types.Operation{
 						{
-							ChainSelector: types.ChainSelector(SepoliaSelector),
+							ChainSelector: chaintest.Chain2Selector,
 							Transaction:   types.Transaction{Data: []byte{0x01}},
 						},
 						{
-							ChainSelector: types.ChainSelector(SepoliaSelector),
+							ChainSelector: chaintest.Chain2Selector,
 							Transaction:   types.Transaction{Data: []byte{0x02}},
 						},
 					}).
@@ -149,16 +147,16 @@ func TestProposalBuilder(t *testing.T) {
 						V: 28,
 					}},
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						types.ChainSelector(SepoliaSelector): {StartingOpCount: 0},
+						chaintest.Chain2Selector: {StartingOpCount: 0},
 					},
 				},
 				Operations: []types.Operation{
 					{
-						ChainSelector: types.ChainSelector(SepoliaSelector),
+						ChainSelector: chaintest.Chain2Selector,
 						Transaction:   types.Transaction{Data: []byte{0x01}},
 					},
 					{
-						ChainSelector: types.ChainSelector(SepoliaSelector),
+						ChainSelector: chaintest.Chain2Selector,
 						Transaction:   types.Transaction{Data: []byte{0x02}},
 					},
 				},
@@ -171,9 +169,9 @@ func TestProposalBuilder(t *testing.T) {
 				b.SetValidUntil(fixedValidUntilCasted).
 					SetDescription("Missing Version").
 					SetOverridePreviousRoot(false).
-					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
+					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
 					AddOperation(types.Operation{
-						ChainSelector: types.ChainSelector(SepoliaSelector),
+						ChainSelector: chaintest.Chain2Selector,
 						Transaction:   types.Transaction{Data: []byte{0x01}},
 					})
 			},
@@ -189,9 +187,9 @@ func TestProposalBuilder(t *testing.T) {
 					SetValidUntil(pastValidUntilCast).
 					SetDescription("ValidUntil in Past").
 					SetOverridePreviousRoot(false).
-					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0}).
+					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
 					AddOperation(types.Operation{
-						ChainSelector: types.ChainSelector(SepoliaSelector),
+						ChainSelector: chaintest.Chain2Selector,
 						Transaction:   types.Transaction{Data: []byte{0x01}},
 					})
 			},
@@ -207,7 +205,7 @@ func TestProposalBuilder(t *testing.T) {
 					SetValidUntil(fixedValidUntilCasted).
 					SetDescription("No Transactions").
 					SetOverridePreviousRoot(false).
-					AddChainMetadata(types.ChainSelector(SepoliaSelector), types.ChainMetadata{StartingOpCount: 0})
+					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0})
 				// No transactions added
 			},
 			want: nil,
@@ -224,7 +222,7 @@ func TestProposalBuilder(t *testing.T) {
 					SetOverridePreviousRoot(false).
 					// ChainMetadata is not added
 					AddOperation(types.Operation{
-						ChainSelector: types.ChainSelector(SepoliaSelector),
+						ChainSelector: chaintest.Chain2Selector,
 						Transaction:   types.Transaction{Data: []byte{0x01}},
 					})
 			},
