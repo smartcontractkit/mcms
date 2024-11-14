@@ -34,8 +34,9 @@ func Test_NewEncoder(t *testing.T) {
 			giveIsSim:    false,
 			want: &evm.EVMEncoder{
 				TxCount:              giveTxCount,
-				ChainID:              chaintest.Chain2EVMID,
+				ChainSelector:        chaintest.Chain2Selector,
 				OverridePreviousRoot: false,
+				IsSim:                false,
 			},
 		},
 		{
@@ -43,16 +44,17 @@ func Test_NewEncoder(t *testing.T) {
 			giveSelector: chaintest.Chain2Selector,
 			giveIsSim:    true,
 			want: &evm.EVMEncoder{
+				ChainSelector:        chaintest.Chain2Selector,
 				TxCount:              giveTxCount,
-				ChainID:              1337,
 				OverridePreviousRoot: false,
+				IsSim:                true,
 			},
 		},
 		{
 			name:         "failure: chain not found for selector",
-			giveSelector: chaintest.TestInvalidChainSelector,
+			giveSelector: chaintest.ChainInvalidSelector,
 			giveIsSim:    true,
-			wantErr:      "invalid chain ID: 0",
+			wantErr:      "chain family not found for selector 0",
 		},
 	}
 

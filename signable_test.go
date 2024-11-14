@@ -52,7 +52,7 @@ func Test_NewSignable(t *testing.T) {
 			giveInspectors: map[types.ChainSelector]sdk.Inspector{
 				types.ChainSelector(1): inspector,
 			},
-			wantErr: "unable to create encoder: invalid chain ID: 1",
+			wantErr: "unable to create encoder: chain family not found for selector 1",
 		},
 		{
 			name: "failure: could not generate tree from proposal (invalid additional values)",

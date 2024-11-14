@@ -34,17 +34,17 @@ func (e *EVMExecutor) ExecuteOperation(
 		return "", errors.New("EVMExecutor was created without an encoder")
 	}
 
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
-	if err != nil {
-		return "", err
-	}
-
 	bindOp, err := e.ToGethOperation(nonce, metadata, op)
 	if err != nil {
 		return "", err
 	}
 
-	tx, err := mcmsObj.Execute(
+	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
+	if err != nil {
+		return "", err
+	}
+
+	tx, err := mcmsC.Execute(
 		e.auth,
 		bindOp,
 		transformHashes(proof),
@@ -64,16 +64,21 @@ func (e *EVMExecutor) SetRoot(
 		return "", errors.New("EVMExecutor was created without an encoder")
 	}
 
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
+	bindMeta, err := e.ToGethRootMetadata(metadata)
 	if err != nil {
 		return "", err
 	}
 
-	tx, err := mcmsObj.SetRoot(
+	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
+	if err != nil {
+		return "", err
+	}
+
+	tx, err := mcmsC.SetRoot(
 		e.auth,
 		root,
 		validUntil,
-		e.ToGethRootMetadata(metadata),
+		bindMeta,
 		transformHashes(proof),
 		transformSignatures(sortedSignatures),
 	)

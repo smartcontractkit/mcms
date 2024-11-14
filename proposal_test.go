@@ -367,8 +367,8 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 				},
 			},
 			want: map[types.ChainSelector]sdk.Encoder{
-				chaintest.Chain1Selector: evm.NewEVMEncoder(2, 1337, false),
-				chaintest.Chain2Selector: evm.NewEVMEncoder(1, 11155111, false),
+				chaintest.Chain1Selector: evm.NewEVMEncoder(chaintest.Chain1Selector, 2, false, false),
+				chaintest.Chain2Selector: evm.NewEVMEncoder(chaintest.Chain2Selector, 1, false, false),
 			},
 		},
 		{
@@ -377,11 +377,11 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 				BaseProposal: BaseProposal{
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						types.ChainSelector(1): {},
+						types.ChainSelector(0): {},
 					},
 				},
 			},
-			wantErr: "unable to create encoder: invalid chain ID: 1",
+			wantErr: "unable to create encoder: chain family not found for selector 0",
 		},
 	}
 
@@ -493,7 +493,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 					},
 				},
 			},
-			wantErr: "merkle tree generation error: unable to create encoder: invalid chain ID: 1",
+			wantErr: "merkle tree generation error: unable to create encoder: chain family not found for selector 1",
 		},
 		{
 			name: "failure: missing metadata when fetching nonces",
