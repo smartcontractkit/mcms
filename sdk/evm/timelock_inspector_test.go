@@ -50,7 +50,7 @@ func mockRoleContractCalls(t *testing.T, mockClient *evm_mocks.ContractDeployBac
 	}
 }
 
-func TestTimelockEVMInspector_GetRolesTests(t *testing.T) {
+func TestTimelockInspector_GetRolesTests(t *testing.T) {
 	t.Parallel()
 
 	tests := []roleFetchTest{
@@ -187,7 +187,7 @@ func TestTimelockEVMInspector_GetRolesTests(t *testing.T) {
 
 			// Create a new mock client and inspector for each test case
 			mockClient := evm_mocks.NewContractDeployBackend(t)
-			inspector := NewTimelockEVMInspector(mockClient)
+			inspector := NewTimelockInspector(mockClient)
 
 			// Load the ABI for encoding
 			parsedABI, err := bindings.RBACTimelockMetaData.GetAbi()
@@ -232,7 +232,7 @@ func TestTimelockEVMInspector_GetRolesTests(t *testing.T) {
 	}
 }
 
-func TestTimelockEVMInspector_IsOperation(t *testing.T) {
+func TestTimelockInspector_IsOperation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -265,7 +265,7 @@ func TestTimelockEVMInspector_IsOperation(t *testing.T) {
 
 			// Create a new mock client and inspector for each test case
 			mockClient := evm_mocks.NewContractDeployBackend(t)
-			inspector := NewTimelockEVMInspector(mockClient)
+			inspector := NewTimelockInspector(mockClient)
 
 			// Load the ABI for encoding
 			parsedABI, err := bindings.RBACTimelockMetaData.GetAbi()
@@ -317,7 +317,7 @@ func testIsOperationState(
 
 	// Create a new mock client and inspector for each test case
 	mockClient := evm_mocks.NewContractDeployBackend(t)
-	inspector := NewTimelockEVMInspector(mockClient)
+	inspector := NewTimelockInspector(mockClient)
 
 	// Load the ABI for encoding
 	parsedABI, err := bindings.RBACTimelockMetaData.GetAbi()
@@ -364,7 +364,7 @@ func testIsOperationState(
 }
 
 // Individual test functions calling the helper function with specific method names
-func TestTimelockEVMInspector_IsOperationPending(t *testing.T) {
+func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -399,7 +399,7 @@ func TestTimelockEVMInspector_IsOperationPending(t *testing.T) {
 	}
 }
 
-func TestTimelockEVMInspector_IsOperationReady(t *testing.T) {
+func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -434,7 +434,7 @@ func TestTimelockEVMInspector_IsOperationReady(t *testing.T) {
 	}
 }
 
-func TestTimelockEVMInspector_IsOperationDone(t *testing.T) {
+func TestTimelockInspector_IsOperationDone(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

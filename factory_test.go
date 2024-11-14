@@ -32,7 +32,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns an EVM encoder (not simulated)",
 			giveSelector: chaintest.Chain2Selector,
 			giveIsSim:    false,
-			want: &evm.EVMEncoder{
+			want: &evm.Encoder{
 				TxCount:              giveTxCount,
 				ChainSelector:        chaintest.Chain2Selector,
 				OverridePreviousRoot: false,
@@ -43,7 +43,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns an EVM encoder (simulated)",
 			giveSelector: chaintest.Chain2Selector,
 			giveIsSim:    true,
-			want: &evm.EVMEncoder{
+			want: &evm.Encoder{
 				ChainSelector:        chaintest.Chain2Selector,
 				TxCount:              giveTxCount,
 				OverridePreviousRoot: false,

@@ -21,7 +21,7 @@ func newEncoder(
 	var encoder sdk.Encoder
 	switch family {
 	case cselectors.FamilyEVM:
-		encoder = evm.NewEVMEncoder(
+		encoder = evm.NewEncoder(
 			csel,
 			txCount,
 			overridePreviousRoot,

@@ -11,22 +11,22 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
-var _ sdk.TimelockInspector = (*TimelockEVMInspector)(nil)
+var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 
-// TimelockEVMInspector is an Inspector implementation for EVM chains for accessing the RBACTimelock contract
-type TimelockEVMInspector struct {
+// TimelockInspector is an Inspector implementation for EVM chains for accessing the RBACTimelock contract
+type TimelockInspector struct {
 	client ContractDeployBackend
 }
 
-// NewTimelockEVMInspector creates a new TimelockEVMInspector
-func NewTimelockEVMInspector(client ContractDeployBackend) *TimelockEVMInspector {
-	return &TimelockEVMInspector{
+// NewTimelockInspector creates a new TimelockInspector
+func NewTimelockInspector(client ContractDeployBackend) *TimelockInspector {
+	return &TimelockInspector{
 		client: client,
 	}
 }
 
 // getAddressesWithRole returns the list of addresses with the given role
-func (tm TimelockEVMInspector) getAddressesWithRole(timelock *bindings.RBACTimelock, role [32]byte) ([]common.Address, error) {
+func (tm TimelockInspector) getAddressesWithRole(timelock *bindings.RBACTimelock, role [32]byte) ([]common.Address, error) {
 	numAddresses, err := timelock.GetRoleMemberCount(&bind.CallOpts{}, role)
 	if err != nil {
 		return nil, err
@@ -49,7 +49,7 @@ func (tm TimelockEVMInspector) getAddressesWithRole(timelock *bindings.RBACTimel
 }
 
 // GetProposers returns the list of addresses with the proposer role
-func (tm TimelockEVMInspector) GetProposers(address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetProposers(address string) ([]common.Address, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
@@ -63,7 +63,7 @@ func (tm TimelockEVMInspector) GetProposers(address string) ([]common.Address, e
 }
 
 // GetExecutors returns the list of addresses with the executor role
-func (tm TimelockEVMInspector) GetExecutors(address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetExecutors(address string) ([]common.Address, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
@@ -77,7 +77,7 @@ func (tm TimelockEVMInspector) GetExecutors(address string) ([]common.Address, e
 }
 
 // GetBypassers returns the list of addresses with the bypasser role
-func (tm TimelockEVMInspector) GetBypassers(address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetBypassers(address string) ([]common.Address, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ func (tm TimelockEVMInspector) GetBypassers(address string) ([]common.Address, e
 }
 
 // GetCancellers returns the list of addresses with the canceller role
-func (tm TimelockEVMInspector) GetCancellers(address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetCancellers(address string) ([]common.Address, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
@@ -104,7 +104,7 @@ func (tm TimelockEVMInspector) GetCancellers(address string) ([]common.Address, 
 	return tm.getAddressesWithRole(timelock, proposerRole)
 }
 
-func (tm TimelockEVMInspector) IsOperation(address string, opID [32]byte) (bool, error) {
+func (tm TimelockInspector) IsOperation(address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
@@ -113,7 +113,7 @@ func (tm TimelockEVMInspector) IsOperation(address string, opID [32]byte) (bool,
 	return timelock.IsOperation(&bind.CallOpts{}, opID)
 }
 
-func (tm TimelockEVMInspector) IsOperationPending(address string, opID [32]byte) (bool, error) {
+func (tm TimelockInspector) IsOperationPending(address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
@@ -122,7 +122,7 @@ func (tm TimelockEVMInspector) IsOperationPending(address string, opID [32]byte)
 	return timelock.IsOperationPending(&bind.CallOpts{}, opID)
 }
 
-func (tm TimelockEVMInspector) IsOperationReady(address string, opID [32]byte) (bool, error) {
+func (tm TimelockInspector) IsOperationReady(address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
@@ -131,7 +131,7 @@ func (tm TimelockEVMInspector) IsOperationReady(address string, opID [32]byte) (
 	return timelock.IsOperationReady(&bind.CallOpts{}, opID)
 }
 
-func (tm TimelockEVMInspector) IsOperationDone(address string, opID [32]byte) (bool, error) {
+func (tm TimelockInspector) IsOperationDone(address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err

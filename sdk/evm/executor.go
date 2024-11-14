@@ -10,28 +10,28 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-type EVMExecutor struct {
+type Executor struct {
 	*Encoder
 	*Inspector
 	auth *bind.TransactOpts
 }
 
-func NewEVMExecutor(encoder *Encoder, client ContractDeployBackend, auth *bind.TransactOpts) *EVMExecutor {
-	return &EVMExecutor{
+func NewExecutor(encoder *Encoder, client ContractDeployBackend, auth *bind.TransactOpts) *Executor {
+	return &Executor{
 		Encoder:   encoder,
 		Inspector: NewInspector(client),
 		auth:      auth,
 	}
 }
 
-func (e *EVMExecutor) ExecuteOperation(
+func (e *Executor) ExecuteOperation(
 	metadata types.ChainMetadata,
 	nonce uint32,
 	proof []common.Hash,
 	op types.Operation,
 ) (string, error) {
 	if e.Encoder == nil {
-		return "", errors.New("EVMExecutor was created without an encoder")
+		return "", errors.New("Executor was created without an encoder")
 	}
 
 	bindOp, err := e.ToGethOperation(nonce, metadata, op)
@@ -53,7 +53,7 @@ func (e *EVMExecutor) ExecuteOperation(
 	return tx.Hash().Hex(), err
 }
 
-func (e *EVMExecutor) SetRoot(
+func (e *Executor) SetRoot(
 	metadata types.ChainMetadata,
 	proof []common.Hash,
 	root [32]byte,
@@ -61,7 +61,7 @@ func (e *EVMExecutor) SetRoot(
 	sortedSignatures []types.Signature,
 ) (string, error) {
 	if e.Encoder == nil {
-		return "", errors.New("EVMExecutor was created without an encoder")
+		return "", errors.New("Executor was created without an encoder")
 	}
 
 	bindMeta, err := e.ToGethRootMetadata(metadata)
