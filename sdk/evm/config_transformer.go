@@ -15,9 +15,14 @@ import (
 
 const maxUint8Value = 255
 
-type EVMConfigurator struct{}
+type ConfigTransformer struct{}
 
-func (e *EVMConfigurator) ToConfig(
+func NewConfigTransformer() *ConfigTransformer {
+	return &ConfigTransformer{}
+}
+
+// ToConfig converts an EVM ManyChainMultiSigConfig to a chain-agnostic types.Config
+func (e *ConfigTransformer) ToConfig(
 	bindConfig bindings.ManyChainMultiSigConfig,
 ) (*types.Config, error) {
 	groupToSigners := make([][]common.Address, len(bindConfig.GroupQuorums))
@@ -52,19 +57,20 @@ func (e *EVMConfigurator) ToConfig(
 	return &groups[0], nil
 }
 
-func (e *EVMConfigurator) SetConfigInputs(
+// ToChainConfig converts a chain-agnostic types.Config to an EVM ManyChainMultiSigConfig
+func (e *ConfigTransformer) ToChainConfig(
 	cfg types.Config,
 ) (bindings.ManyChainMultiSigConfig, error) {
 	var bindConfig bindings.ManyChainMultiSigConfig
 
-	groupQuorums, groupParents, signerAddrs, signerGroups, err := ExtractSetConfigInputs(&cfg)
+	groupQuorums, groupParents, signerAddrs, signerGroups, err := extractSetConfigInputs(&cfg)
 	if err != nil {
 		return bindConfig, err
 	}
 
 	// Check the length of signerAddresses up-front
 	if len(signerAddrs) > maxUint8Value {
-		return bindConfig, sdkerrors.NewTooManySignersError((uint64(len(signerAddrs))))
+		return bindConfig, sdkerrors.NewTooManySignersError(uint64(len(signerAddrs)))
 	}
 
 	// Convert to the binding config
@@ -86,7 +92,7 @@ func (e *EVMConfigurator) SetConfigInputs(
 	}, nil
 }
 
-func ExtractSetConfigInputs(
+func extractSetConfigInputs(
 	group *types.Config,
 ) ([32]uint8, [32]uint8, []common.Address, []uint8, error) {
 	var groupQuorums, groupParents, signerGroups = []uint8{}, []uint8{}, []uint8{}

@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func Test_EVMConfigurator_ToConfig(t *testing.T) {
+func Test_ConfigTransformer_ToConfig(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -66,8 +66,8 @@ func Test_EVMConfigurator_ToConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			configurator := EVMConfigurator{}
-			got, err := configurator.ToConfig(tt.give)
+			transformer := ConfigTransformer{}
+			got, err := transformer.ToConfig(tt.give)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
@@ -249,8 +249,8 @@ func Test_SetConfigInputs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			configurator := EVMConfigurator{}
-			got, err := configurator.SetConfigInputs(tt.giveConfig)
+			transformer := ConfigTransformer{}
+			got, err := transformer.ToChainConfig(tt.giveConfig)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

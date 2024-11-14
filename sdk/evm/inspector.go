@@ -13,14 +13,14 @@ var _ sdk.Inspector = (*EVMInspector)(nil)
 
 // EVMInspector is an Inspector implementation for EVM chains, giving access to the state of the MCMS contract
 type EVMInspector struct {
-	EVMConfigurator
+	ConfigTransformer
 	client ContractDeployBackend
 }
 
 func NewEVMInspector(client ContractDeployBackend) *EVMInspector {
 	return &EVMInspector{
-		EVMConfigurator: EVMConfigurator{},
-		client:          client,
+		ConfigTransformer: ConfigTransformer{},
+		client:            client,
 	}
 }
 

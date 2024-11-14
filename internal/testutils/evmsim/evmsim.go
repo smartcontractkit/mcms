@@ -100,7 +100,7 @@ func NewSimulatedChain(t *testing.T, numSigners uint64) SimulatedChain {
 	}
 }
 
-// Deploy a ManyChainMultiSig contract with the signer
+// DeployMCMContract Deploy a ManyChainMultiSig contract with the signer
 func (s *SimulatedChain) DeployMCMContract(
 	t *testing.T, signer *Signer,
 ) (*bindings.ManyChainMultiSig, *gethTypes.Transaction) {
@@ -136,8 +136,8 @@ func (s *SimulatedChain) SetMCMSConfig(
 		GroupSigners: []types.Config{},
 	}
 
-	configurator := evm.EVMConfigurator{}
-	bindConfig, err := configurator.SetConfigInputs(*cfg)
+	transformer := evm.ConfigTransformer{}
+	bindConfig, err := transformer.ToChainConfig(*cfg)
 	require.NoError(t, err)
 
 	signerAddrs := make([]common.Address, len(bindConfig.Signers))
