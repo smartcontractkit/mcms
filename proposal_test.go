@@ -3,7 +3,6 @@ package mcms
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
 	"math"
 	"strings"
@@ -144,7 +143,6 @@ func Test_WriteProposal(t *testing.T) {
 		{
 			name: "success: writes a proposal to an io.Writer",
 			give: func() *Proposal {
-
 				builder := NewProposalBuilder()
 				builder.SetVersion("v1")
 				builder.SetValidUntil(2004259681)
@@ -152,6 +150,7 @@ func Test_WriteProposal(t *testing.T) {
 				builder.AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector})
 				proposal, err := builder.Build()
 				require.NoError(t, err)
+
 				return proposal
 			},
 			want: `{
@@ -364,8 +363,8 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 				builder.AddOperation(types.Operation{ChainSelector: chaintest.Chain2Selector})
 				proposal, err := builder.Build()
 				require.NoError(t, err)
-				return *proposal
 
+				return *proposal
 			},
 			want: map[types.ChainSelector]sdk.Encoder{
 				chaintest.Chain1Selector: evm.NewEVMEncoder(chaintest.Chain1Selector, 2, false, false),
@@ -382,10 +381,9 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 				builder.SetOverridePreviousRoot(false)
 				builder.AddOperation(types.Operation{ChainSelector: types.ChainSelector(0)})
 				proposal, err := builder.Build()
-				fmt.Println(err)
 				require.NoError(t, err)
-				return *proposal
 
+				return *proposal
 			},
 			wantErr: "unable to create encoder: chain family not found for selector 0",
 		},
@@ -486,8 +484,8 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 				})
 				proposal, err := builder.Build()
 				require.NoError(t, err)
-				return *proposal
 
+				return *proposal
 			},
 			wantRoot: common.HexToHash("0x4e899fcdb81dc7f0c1d6609366246807fd897c2afb531ca8f907472fd6e1ed02"),
 		},
@@ -501,8 +499,8 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 				builder.AddOperation(types.Operation{ChainSelector: types.ChainSelector(1)})
 				proposal, err := builder.Build()
 				require.NoError(t, err)
-				return *proposal
 
+				return *proposal
 			},
 			wantErr: "merkle tree generation error: unable to create encoder: chain family not found for selector 1",
 		},
@@ -532,6 +530,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 				builder.AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector})
 				proposal, err := builder.Build()
 				require.NoError(t, err)
+
 				return *proposal
 			},
 			wantErr: "merkle tree generation error: value 4294967296 exceeds uint32 range",
@@ -624,6 +623,7 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 				})
 				proposal, err := builder.Build()
 				require.NoError(t, err)
+
 				return *proposal
 			},
 			want: []uint64{5, 10, 6, 11, 15},

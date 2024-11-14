@@ -244,6 +244,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				}})
 				proposal, err := builder.Build()
 				require.NoError(t, err)
+
 				return proposal
 			},
 			want: `{
