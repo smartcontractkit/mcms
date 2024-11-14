@@ -15,14 +15,14 @@ import (
 
 const maxUint8Value = 255
 
-type EVMConfigTransformer struct{}
+type ConfigTransformer struct{}
 
-func NewEVMConfigTransformer() *EVMConfigTransformer {
-	return &EVMConfigTransformer{}
+func NewEVMConfigTransformer() *ConfigTransformer {
+	return &ConfigTransformer{}
 }
 
 // ToConfig converts an EVM ManyChainMultiSigConfig to a chain-agnostic types.Config
-func (e *EVMConfigTransformer) ToConfig(
+func (e *ConfigTransformer) ToConfig(
 	bindConfig bindings.ManyChainMultiSigConfig,
 ) (*types.Config, error) {
 	groupToSigners := make([][]common.Address, len(bindConfig.GroupQuorums))
@@ -58,7 +58,7 @@ func (e *EVMConfigTransformer) ToConfig(
 }
 
 // ToChainConfig converts a chain-agnostic types.Config to an EVM ManyChainMultiSigConfig
-func (e *EVMConfigTransformer) ToChainConfig(
+func (e *ConfigTransformer) ToChainConfig(
 	cfg types.Config,
 ) (bindings.ManyChainMultiSigConfig, error) {
 	var bindConfig bindings.ManyChainMultiSigConfig
