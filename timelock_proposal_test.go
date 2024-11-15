@@ -149,16 +149,12 @@ func Test_WriteTimelockProposal(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		setup      func(p *Proposal)
 		giveWriter func() io.Writer // Use this to overwrite the default writer
 		want       string
 		wantErr    string
 	}{
 		{
 			name: "success: writes a proposal to an io.Writer",
-			setup: func(p *Proposal) {
-				// No changes needed, valid proposal
-			},
 			want: `{
 				"version": "v1",
 				"kind": "TimelockProposal",
@@ -197,9 +193,6 @@ func Test_WriteTimelockProposal(t *testing.T) {
 			name: "success: writes a proposal to an io.Writer",
 			giveWriter: func() io.Writer {
 				return newFakeWriter(0, errors.New("write error"))
-			},
-			setup: func(_ *Proposal) {
-				// No changes needed, valid proposal
 			},
 			wantErr: "write error",
 		},

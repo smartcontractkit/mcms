@@ -128,16 +128,12 @@ func Test_WriteProposal(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		setup      func(p *Proposal)
 		giveWriter func() io.Writer // Use this to overwrite the default writer
 		want       string
 		wantErr    string
 	}{
 		{
 			name: "success: writes a proposal to an io.Writer",
-			setup: func(_ *Proposal) {
-				// NOP: valid proposal.
-			},
 			want: `{
 				"version": "v1",
 				"kind": "Proposal",
@@ -169,9 +165,6 @@ func Test_WriteProposal(t *testing.T) {
 			name: "failure: writer returns error",
 			giveWriter: func() io.Writer {
 				return newFakeWriter(0, errors.New("write error"))
-			},
-			setup: func(p *Proposal) {
-				p.Operations = []types.Operation{}
 			},
 			wantErr: "write error",
 		},
@@ -666,9 +659,6 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 	}{
 		{
 			name: "success: returns the nonces for each transaction",
-			setup: func(p *Proposal) {
-				// NOP: valid proposal.
-			},
 			want: []uint64{5, 10, 6, 11, 7},
 		},
 		{
