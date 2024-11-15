@@ -11,6 +11,7 @@
     - [Building Proposals](/usage/building-proposals.md)
     - [Signing Proposals](usage/signing-proposals.md)
     - [Executing Proposals](usage/executing-proposals.md)
+    - [Inspecting Contracts](usage/contract-inspection.md)
     - [MCMS Proposal Flow](/usage/mcms-proposal-flow.md ':disabled')
     - [Timelock Proposal Flow](/usage/timelock-proposal-flow.md)
 - [Contributing](/contributing.md ':disabled')

@@ -17,6 +17,7 @@ type Inspector struct {
 	client ContractDeployBackend
 }
 
+// NewInspector creates a new Inspector for EVM chains
 func NewInspector(client ContractDeployBackend) *Inspector {
 	return &Inspector{
 		ConfigTransformer: ConfigTransformer{},
