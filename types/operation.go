@@ -26,5 +26,5 @@ type Operation struct {
 // BatchOperation represents an operation with a batch of transactions to be executed.
 type BatchOperation struct {
 	ChainSelector ChainSelector `json:"chainSelector"`
-	Transactions  []Transaction `json:"transactions"`
+	Transactions  []Transaction `json:"transactions" validate:"min=1"`
 }

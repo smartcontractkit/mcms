@@ -76,7 +76,6 @@ func WriteProposal(w io.Writer, proposal *Proposal) error {
 func (p *Proposal) Validate() error {
 	// Run tag-based validation
 	var validate = validator.New()
-
 	if err := validate.Struct(p); err != nil {
 		return err
 	}
@@ -85,15 +84,22 @@ func (p *Proposal) Validate() error {
 		return NewInvalidProposalKindError(p.Kind, types.KindProposal)
 	}
 
-	if err := proposalValidateBasic(*p); err != nil {
-		return err
-	}
-
 	// Validate all chains in operations have an entry in chain metadata
 	for _, op := range p.Operations {
 		if _, ok := p.ChainMetadata[op.ChainSelector]; !ok {
 			return NewChainMetadataNotFoundError(op.ChainSelector)
 		}
+	}
+
+	for _, op := range p.Operations {
+		// Chain specific validations.
+		if err := ValidateAdditionalFields(op.Transaction.AdditionalFields, op.ChainSelector); err != nil {
+			return err
+		}
+	}
+
+	if err := proposalValidateBasic(*p); err != nil {
+		return err
 	}
 
 	return nil
