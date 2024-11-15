@@ -20,7 +20,7 @@ type TimelockProposal struct {
 	Action            types.TimelockAction           `json:"action" validate:"required,oneof=schedule cancel bypass"`
 	Delay             types.Duration                 `json:"delay" validate:"required_if=Action schedule"`
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
-	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1"`
+	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1,dive"`
 }
 
 // NewTimelockProposal unmarshal data from the reader to JSON and returns a new TimelockProposal.
@@ -42,43 +42,6 @@ func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
 	enc.SetIndent("", "  ")
 
 	return enc.Encode(p)
-}
-
-// TODO: Could the input params be simplified here?
-func NewProposalWithTimeLock(
-	version string,
-	validUntil uint32,
-	signatures []types.Signature,
-	overridePreviousRoot bool,
-	chainMetadata map[types.ChainSelector]types.ChainMetadata,
-	description string,
-	timelockAddresses map[types.ChainSelector]string,
-	batchOps []types.BatchOperation,
-	timelockAction types.TimelockAction,
-	timelockDelay types.Duration,
-) (*TimelockProposal, error) {
-	p := TimelockProposal{
-		BaseProposal: BaseProposal{
-			Version:              version,
-			Kind:                 types.KindTimelockProposal,
-			ValidUntil:           validUntil,
-			Signatures:           signatures,
-			OverridePreviousRoot: overridePreviousRoot,
-			Description:          description,
-			ChainMetadata:        chainMetadata,
-		},
-		Action:            timelockAction,
-		Delay:             timelockDelay,
-		TimelockAddresses: timelockAddresses,
-		Operations:        batchOps,
-	}
-
-	errValidate := p.Validate()
-	if errValidate != nil {
-		return nil, errValidate
-	}
-
-	return &p, nil
 }
 
 func (m *TimelockProposal) Validate() error {
@@ -170,10 +133,6 @@ func timeLockProposalValidateBasic(timelockProposal TimelockProposal) error {
 	if timelockProposal.ValidUntil <= currentTimeCasted {
 		// ValidUntil is a Unix timestamp, so it should be greater than the current time
 		return NewInvalidValidUntilError(timelockProposal.ValidUntil)
-	}
-
-	if len(timelockProposal.Operations) > 0 && len(timelockProposal.Operations[0].Transactions) == 0 {
-		return ErrNoTransactionsInBatch
 	}
 
 	return nil

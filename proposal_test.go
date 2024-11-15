@@ -57,7 +57,12 @@ func Test_NewProposal(t *testing.T) {
 				},
 				"operations": [
 					{
-						"chainSelector": 3379446385462418246
+						"chainSelector": 3379446385462418246,
+						"transaction": {
+							"to": "0xsomeaddress",
+							"data": "EjM=",
+							"additionalFields": {"value": 0}
+						}
 					}
 				]
 			}`,
@@ -71,7 +76,14 @@ func Test_NewProposal(t *testing.T) {
 					},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: chaintest.Chain1Selector},
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transaction: types.Transaction{
+							To:               "0xsomeaddress",
+							Data:             []byte{0x12, 0x33},              // Representing "0x123" as bytes
+							AdditionalFields: json.RawMessage(`{"value": 0}`), // JSON-encoded `{"value": 0}`
+						},
+					},
 				},
 			},
 		},
@@ -87,28 +99,9 @@ func Test_NewProposal(t *testing.T) {
 				"kind": "Proposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {},
-				"operations": [
-					{}
-				]
+				"operations": []
 			}`,
-			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
-		},
-		{
-			name: "failure: invalid proposal kind",
-			give: `{
-				"version": "v1",
-				"kind": "TimelockProposal",
-				"validUntil": 2004259681,
-				"chainMetadata": {
-					"3379446385462418246": {}
-				},
-				"operations": [
-					{
-						"chainSelector": 3379446385462418246
-					}
-				]
-			}`,
-			wantErr: "invalid proposal kind: TimelockProposal, value accepted is Proposal",
+			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
 		},
 	}
 
@@ -222,12 +215,109 @@ func Test_Proposal_Validate(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		give     Proposal
+		giveFunc func(*Proposal)
 		wantErrs []string
 	}{
 		{
 			name: "valid",
-			give: Proposal{
+			giveFunc: func(*Proposal) {
+				// NOOP: All fields are valid
+			},
+		},
+		{
+			name: "required fields validation",
+			giveFunc: func(p *Proposal) {
+				// Overwrite the timelock proposal with an empty one
+				*p = Proposal{
+					BaseProposal: BaseProposal{},
+				}
+			},
+			wantErrs: []string{
+				"Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag",
+				"Key: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag",
+				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag",
+				"Key: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'required' tag",
+				"Key: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag",
+			},
+		},
+		{
+			name: "min validation",
+			giveFunc: func(p *Proposal) {
+				p.ChainMetadata = map[types.ChainSelector]types.ChainMetadata{}
+				p.Operations = []types.Operation{}
+			},
+			wantErrs: []string{
+				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
+				"Key: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
+			},
+		},
+		{
+			name: "oneof validation",
+			giveFunc: func(p *Proposal) {
+				p.Version = "invalidversion"
+				p.Kind = "invalidkind"
+			},
+			wantErrs: []string{
+				"Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'oneof' tag",
+				"Key: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'oneof' tag",
+			},
+		},
+		{
+			name: "invalid kind: must be TimelockProposal",
+			giveFunc: func(p *Proposal) {
+				p.Kind = types.KindTimelockProposal
+			},
+			wantErrs: []string{
+				"invalid proposal kind: TimelockProposal, value accepted is Proposal",
+			},
+		},
+		{
+			name: "all chain selectors in transactions must be present in chain metadata",
+			giveFunc: func(p *Proposal) {
+				p.Operations[0].ChainSelector = chaintest.Chain2Selector
+			},
+			wantErrs: []string{
+				"missing metadata for chain 16015286601757825753",
+			},
+		},
+		{
+			name: "invalid chain family specific operation data (additional fields)",
+			giveFunc: func(p *Proposal) {
+				p.Operations[0].Transaction.AdditionalFields = json.RawMessage([]byte(`{"value": -100}`))
+			},
+			wantErrs: []string{
+				"invalid EVM value: -100",
+			},
+		},
+		{
+			name: "proposal has expired (validUntil)",
+			giveFunc: func(p *Proposal) {
+				p.ValidUntil = 1
+			},
+			wantErrs: []string{
+				"invalid valid until: 1",
+			},
+		},
+		{
+			name: "operations dive: required fields validation",
+			giveFunc: func(p *Proposal) {
+				p.Operations = []types.Operation{{}}
+			},
+			wantErrs: []string{
+				"Key: 'Proposal.Operations[0].ChainSelector' Error:Field validation for 'ChainSelector' failed on the 'required' tag",
+				"Key: 'Proposal.Operations[0].Transaction.To' Error:Field validation for 'To' failed on the 'required' tag",
+				"Key: 'Proposal.Operations[0].Transaction.Data' Error:Field validation for 'Data' failed on the 'required' tag",
+				"Key: 'Proposal.Operations[0].Transaction.AdditionalFields' Error:Field validation for 'AdditionalFields' failed on the 'required' tag",
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// A valid proposal to be passed to the giveFunc for the test case to modify
+			proposal := Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "v1",
 					Kind:       types.KindProposal,
@@ -247,76 +337,14 @@ func Test_Proposal_Validate(t *testing.T) {
 							To:               TestAddress,
 							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 							Data:             common.Hex2Bytes("0x"),
-							OperationMetadata: types.OperationMetadata{
-								ContractType: "Sample contract",
-								Tags:         []string{"tag1", "tag2"},
-							},
 						},
 					},
 				},
-			},
-			wantErrs: []string{},
-		},
-		{
-			name: "required fields validation",
-			give: Proposal{
-				BaseProposal: BaseProposal{},
-			},
-			wantErrs: []string{
-				"Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag",
-				"Key: 'Proposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag",
-				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag",
-				"Key: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'required' tag",
-				"Key: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag",
-			},
-		},
-		{
-			name: "min validation",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					Version:       "v1",
-					ValidUntil:    2004259681,
-					Signatures:    []types.Signature{},
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
-				},
-				Operations: []types.Operation{},
-			},
-			wantErrs: []string{
-				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
-				"Key: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
-				"Key: 'Proposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag",
-			},
-		},
-		{
-			name: "invalid chain metadata",
-			give: Proposal{
-				BaseProposal: BaseProposal{
-					Version:    "v1",
-					Kind:       types.KindProposal,
-					ValidUntil: 2004259681,
-					Signatures: []types.Signature{},
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain1Selector: {
-							StartingOpCount: 1,
-							MCMAddress:      TestAddress,
-						},
-					},
-				},
-				Operations: []types.Operation{
-					{ChainSelector: chaintest.Chain2Selector},
-				},
-			},
-			wantErrs: []string{
-				"missing metadata for chain 16015286601757825753",
-			},
-		},
-	}
+			}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+			tt.giveFunc(&proposal)
 
-			err := tt.give.Validate()
+			err := proposal.Validate()
 
 			if len(tt.wantErrs) > 0 {
 				require.Error(t, err)

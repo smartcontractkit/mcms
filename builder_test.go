@@ -1,10 +1,9 @@
 package mcms_test
 
 import (
+	"encoding/json"
 	"errors"
-	"fmt"
 	"testing"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
@@ -13,7 +12,6 @@ import (
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
-	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -21,11 +19,20 @@ func TestProposalBuilder(t *testing.T) {
 	t.Parallel()
 
 	// Define a fixed validUntil timestamp for consistency
-	fixedValidUntil := int64(1893456000) // January 1, 2030
-	fixedValidUntilCasted, err := safecast.Int64ToUint32(fixedValidUntil)
-	require.NoError(t, err)
-	pastValidUntilCast, err := safecast.Int64ToUint32(time.Now().Add(-24 * time.Hour).Unix())
-	require.NoError(t, err)
+	validUntil := uint32(1893456000) // January 1, 2030
+
+	tx1 := types.Transaction{
+		To:               "0x123",
+		Data:             []byte{0x01},
+		AdditionalFields: json.RawMessage(`{"value": 0}`),
+	}
+
+	tx2 := types.Transaction{
+		To:               "0x456",
+		Data:             []byte{0x02},
+		AdditionalFields: json.RawMessage(`{"value": 0}`),
+	}
+
 	tests := []struct {
 		name     string
 		setup    func(*mcms.ProposalBuilder)
@@ -36,20 +43,20 @@ func TestProposalBuilder(t *testing.T) {
 			name: "valid Proposal",
 			setup: func(b *mcms.ProposalBuilder) {
 				b.SetVersion("v1").
-					SetValidUntil(fixedValidUntilCasted).
+					SetValidUntil(validUntil).
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
 					AddOperation(types.Operation{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction:   tx1,
 					})
 			},
 			want: &mcms.Proposal{
 				BaseProposal: mcms.BaseProposal{
 					Version:              "v1",
 					Kind:                 types.KindProposal,
-					ValidUntil:           fixedValidUntilCasted,
+					ValidUntil:           validUntil,
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -59,28 +66,28 @@ func TestProposalBuilder(t *testing.T) {
 				Operations: []types.Operation{
 					{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction:   tx1,
 					},
 				},
 			},
 			wantErrs: nil,
 		},
 		{
-			name: "valid Proposal using SetTransactions",
+			name: "valid Proposal using SetOperations",
 			setup: func(b *mcms.ProposalBuilder) {
 				b.SetVersion("v1").
-					SetValidUntil(fixedValidUntilCasted).
+					SetValidUntil(validUntil).
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
 					SetOperations([]types.Operation{
 						{
 							ChainSelector: chaintest.Chain2Selector,
-							Transaction:   types.Transaction{Data: []byte{0x01}},
+							Transaction:   tx1,
 						},
 						{
 							ChainSelector: chaintest.Chain2Selector,
-							Transaction:   types.Transaction{Data: []byte{0x02}},
+							Transaction:   tx2,
 						},
 					})
 			},
@@ -88,7 +95,7 @@ func TestProposalBuilder(t *testing.T) {
 				BaseProposal: mcms.BaseProposal{
 					Version:              "v1",
 					Kind:                 types.KindProposal,
-					ValidUntil:           fixedValidUntilCasted,
+					ValidUntil:           validUntil,
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
@@ -98,11 +105,11 @@ func TestProposalBuilder(t *testing.T) {
 				Operations: []types.Operation{
 					{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction:   tx1,
 					},
 					{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x02}},
+						Transaction:   tx2,
 					},
 				},
 			},
@@ -112,7 +119,7 @@ func TestProposalBuilder(t *testing.T) {
 			name: "valid Proposal with signature and set chain metadata",
 			setup: func(b *mcms.ProposalBuilder) {
 				b.SetVersion("v1").
-					SetValidUntil(fixedValidUntilCasted).
+					SetValidUntil(validUntil).
 					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
 					SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
@@ -121,11 +128,11 @@ func TestProposalBuilder(t *testing.T) {
 					SetOperations([]types.Operation{
 						{
 							ChainSelector: chaintest.Chain2Selector,
-							Transaction:   types.Transaction{Data: []byte{0x01}},
+							Transaction:   tx1,
 						},
 						{
 							ChainSelector: chaintest.Chain2Selector,
-							Transaction:   types.Transaction{Data: []byte{0x02}},
+							Transaction:   tx2,
 						},
 					}).
 					AddSignature(types.Signature{
@@ -138,7 +145,7 @@ func TestProposalBuilder(t *testing.T) {
 				BaseProposal: mcms.BaseProposal{
 					Version:              "v1",
 					Kind:                 types.KindProposal,
-					ValidUntil:           fixedValidUntilCasted,
+					ValidUntil:           validUntil,
 					Description:          "Valid Proposal",
 					OverridePreviousRoot: false,
 					Signatures: []types.Signature{{
@@ -153,82 +160,31 @@ func TestProposalBuilder(t *testing.T) {
 				Operations: []types.Operation{
 					{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction:   tx1,
 					},
 					{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x02}},
+						Transaction:   tx2,
 					},
 				},
 			},
 			wantErrs: nil,
 		},
 		{
-			name: "Missing Version",
+			name: "validation error",
 			setup: func(b *mcms.ProposalBuilder) {
-				b.SetValidUntil(fixedValidUntilCasted).
-					SetDescription("Missing Version").
+				b.SetValidUntil(validUntil).
+					SetDescription("Valid Proposal").
 					SetOverridePreviousRoot(false).
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
 					AddOperation(types.Operation{
 						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
+						Transaction:   tx1,
 					})
 			},
 			want: nil,
 			wantErrs: []string{
 				"Key: 'Proposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag",
-			},
-		},
-		{
-			name: "ValidUntil in Past",
-			setup: func(b *mcms.ProposalBuilder) {
-				b.SetVersion("v1").
-					SetValidUntil(pastValidUntilCast).
-					SetDescription("ValidUntil in Past").
-					SetOverridePreviousRoot(false).
-					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
-					AddOperation(types.Operation{
-						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
-					})
-			},
-			want: nil,
-			wantErrs: []string{
-				fmt.Sprintf("invalid valid until: %d", pastValidUntilCast),
-			},
-		},
-		{
-			name: "No Transactions",
-			setup: func(b *mcms.ProposalBuilder) {
-				b.SetVersion("v1").
-					SetValidUntil(fixedValidUntilCasted).
-					SetDescription("No Transactions").
-					SetOverridePreviousRoot(false).
-					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0})
-				// No transactions added
-			},
-			want: nil,
-			wantErrs: []string{
-				"Key: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
-			},
-		},
-		{
-			name: "Missing ChainMetadata",
-			setup: func(b *mcms.ProposalBuilder) {
-				b.SetVersion("v1").
-					SetValidUntil(fixedValidUntilCasted).
-					SetDescription("Missing ChainMetadata").
-					SetOverridePreviousRoot(false).
-					// ChainMetadata is not added
-					AddOperation(types.Operation{
-						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{Data: []byte{0x01}},
-					})
-			},
-			want: nil,
-			wantErrs: []string{
-				"Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
 			},
 		},
 	}

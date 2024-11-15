@@ -12,19 +12,19 @@ type OperationMetadata struct {
 type Transaction struct {
 	OperationMetadata
 
-	To               string          `json:"to"`
-	Data             []byte          `json:"data"`
-	AdditionalFields json.RawMessage `json:"additionalFields"`
+	To               string          `json:"to" validate:"required"`
+	Data             []byte          `json:"data" validate:"required"`
+	AdditionalFields json.RawMessage `json:"additionalFields" validate:"required"`
 }
 
 // Operation represents an operation with a single transaction to be executed
 type Operation struct {
-	ChainSelector ChainSelector `json:"chainSelector"`
-	Transaction   Transaction   `json:"transaction"`
+	ChainSelector ChainSelector `json:"chainSelector" validate:"required"`
+	Transaction   Transaction   `json:"transaction" validate:"required"`
 }
 
 // BatchOperation represents an operation with a batch of transactions to be executed.
 type BatchOperation struct {
-	ChainSelector ChainSelector `json:"chainSelector"`
-	Transactions  []Transaction `json:"transactions"`
+	ChainSelector ChainSelector `json:"chainSelector" validate:"required"`
+	Transactions  []Transaction `json:"transactions" validate:"required,min=1,dive"`
 }
