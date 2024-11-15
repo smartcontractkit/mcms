@@ -35,13 +35,23 @@ func (b *TimelockProposalBuilder) SetAction(action types.TimelockAction) *Timelo
 }
 
 // SetDelay sets the delay of the timelock proposal.
-func (b *TimelockProposalBuilder) SetDelay(delay string) *TimelockProposalBuilder {
+func (b *TimelockProposalBuilder) SetDelay(delay types.Duration) *TimelockProposalBuilder {
 	b.proposal.Delay = delay
 	return b
 }
 
 // SetTimelockAddress adds a timelock address to the timelock proposal.
-func (b *TimelockProposalBuilder) SetTimelockAddress(selector types.ChainSelector, address string) *TimelockProposalBuilder {
+func (b *TimelockProposalBuilder) SetTimelockAddresses(
+	addrs map[types.ChainSelector]string,
+) *TimelockProposalBuilder {
+	b.proposal.TimelockAddresses = addrs
+	return b
+}
+
+// AddTimelockAddress adds a timelock address for the given selector to the timelock proposal.
+func (b *TimelockProposalBuilder) AddTimelockAddress(
+	selector types.ChainSelector, address string,
+) *TimelockProposalBuilder {
 	b.proposal.TimelockAddresses[selector] = address
 	return b
 }
@@ -53,8 +63,8 @@ func (b *TimelockProposalBuilder) AddOperation(bop types.BatchOperation) *Timelo
 	return b
 }
 
-// SetTransactions sets all the transactions of the proposal
-func (b *TimelockProposalBuilder) SetTransactions(bops []types.BatchOperation) *TimelockProposalBuilder {
+// SetOperations sets all the operations of the proposal
+func (b *TimelockProposalBuilder) SetOperations(bops []types.BatchOperation) *TimelockProposalBuilder {
 	b.proposal.Operations = bops
 
 	return b
@@ -62,7 +72,6 @@ func (b *TimelockProposalBuilder) SetTransactions(bops []types.BatchOperation) *
 
 // Build validates and returns the constructed TimelockProposal.
 func (b *TimelockProposalBuilder) Build() (*TimelockProposal, error) {
-	// Validate the proposal
 	if err := b.proposal.Validate(); err != nil {
 		return nil, err
 	}

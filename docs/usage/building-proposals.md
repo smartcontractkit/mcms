@@ -4,16 +4,13 @@ The library offers 2 ways to build proposals:
 
 ## 1. Build Proposal From File
 
-The NewProposal function helps you create a Proposal instance by reading and
-unmarshaling data from a JSON file. This guide walks you through using the
-function to read a proposal from a JSON file, validate it, and create a new Proposal
-object.
+The NewProposal function helps you create a Proposal instance by reading and unmarshaling data from a JSON file. This guide walks you through using the function to read a proposal from a JSON file, validate it, and create a new Proposal object.
 
 ```go
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
 	"github.com/smartcontractkit/mcms"
@@ -23,34 +20,33 @@ func main() {
 	// Open the JSON file
 	file, err := os.Open("proposal.json")
 	if err != nil {
-		fmt.Println("Error opening file:", err)
-		return
+		log.Fatalf("Error opening file: %v", err)
 	}
 	defer file.Close()
 
 	// Create the proposal from the JSON data
 	proposal, err := mcms.NewProposal(file)
 	if err != nil {
-		fmt.Println("Error creating proposal:", err)
-		return
+		log.Fatalf("Error creating proposal: %v", err)
 	}
 
-	fmt.Println("Successfully created proposal:", proposal)
+	log.Printf("Successfully created proposal: %+v", proposal)
 }
 ```
 
-For the JSON structure of the proposal please check the [MCMS Proposal Format Doc.](../key-concepts/mcms-proposal.md)
+For the JSON structure of the proposal please check the [MCMS Proposal Format Doc.](/key-concepts/mcm-proposal.md)
 
 ## 2. Programmatic Build
 
-The Proposal Builder API provides a fluent interface to construct a Proposal with
-customizable fields and metadata, ensuring that each proposal is validated before use.
+The Proposal Builder API provides a fluent interface to construct a Proposal with customizable fields and metadata, ensuring that each proposal is validated before use.
+
+### Proposal Builder
 
 ```go
 package main
 
 import (
-	"fmt"
+	"log"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
@@ -61,72 +57,188 @@ import (
 func main() {
 	// Step 1: Initialize the ProposalBuilder
 	builder := mcms.NewProposalBuilder()
-	selector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
+	selector := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector)
+
 	// Step 2: Set Proposal Details
 	builder.
 		SetVersion("v1").
 		SetValidUntil(1794610529).
 		SetDescription("Increase staking rewards").
-		AddSignature(types.Signature{}). // For details on signature generation see https://github.com/smartcontractkit/mcms/blob/main/docs/usage/signing-proposals.md
-		SetOverridePreviousRoot(false).
-		UseSimulatedBackend(true)
+		SetOverridePreviousRoot(false)
 
-	// Step 3: Add Chain Metadata
-	builder.AddChainMetadata(types.ChainSelector(selector), types.ChainMetadata{StartingOpCount: 0, MCMAddress: "0x123"})
-	// Or set the full metadata map
-	chainMetadataMap := map[types.ChainSelector]types.ChainMetadata{
-		// Each entry sets the timelock address on the given chain selector
-		types.ChainSelector(selector): {StartingOpCount: 0, MCMAddress: "0x123"},
-	}
-	builder.SetChainMetadata(chainMetadataMap)
+	// Step 3: Set Chain Metadata
+	builder.SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
+		selector: {
+			StartingOpCount: 0,
+			MCMAddress: "0x123",
+		},
+	})
 
-	// Step 4: Add Transactions
+	// append or overwrite chain metadata to the existing map
+	builder.AddChainMetadata(selector, types.ChainMetadata{
+		StartingOpCount: 0, MCMAddress: "0x345",
+	})
+
+	// Step 4: Set Operations
+	builder.SetOperations([]types.Operation{
+		{
+			ChainSelector: selector,
+			Transaction: types.Transaction{
+				OperationMetadata: types.OperationMetadata{
+					ContractType: "some-contract",
+					Tags:         []string{"staking", "rewards"},
+				},
+				To:               "0x1a",
+				Data:             []byte("data bytes of the transaction"),
+				AdditionalFields: []byte(`{"value": "100"}`),
+			},
+		},
+		{
+			ChainSelector: selector,
+			Transaction: types.Transaction{
+				OperationMetadata: types.OperationMetadata{
+					ContractType: "some-contract",
+					Tags:         []string{"staking", "rewards"},
+				},
+				To:               "0x1b",
+				Data:             []byte("data bytes of the transaction"),
+				AdditionalFields: []byte(`{"value": "200"}`),
+			},
+		},
+	})
+
+	// append operations to the existing array
 	builder.AddOperation(
 		types.Operation{
-			ChainSelector: types.ChainSelector(selector),
+			ChainSelector: selector,
 			Transaction: types.Transaction{
 				OperationMetadata: types.OperationMetadata{
 					ContractType: "some-contract",
 					Tags:         []string{"staking", "rewards"},
 				},
+				To: 			  "0x1c",
 				Data:             []byte("data bytes of the transaction"),
-				AdditionalFields: []byte(`{"value": "100"}`), // Chain specific fields for the operation
-			},
-		})
-	// Or set Full Transactions List
-	transactions := []types.Operation{
-		{
-			ChainSelector: types.ChainSelector(selector),
-			Transaction: types.Transaction{
-				OperationMetadata: types.OperationMetadata{
-					ContractType: "some-contract",
-					Tags:         []string{"staking", "rewards"},
-				},
-				Data:             []byte("data bytes of the transaction"),
-				AdditionalFields: []byte(`{"value": "100"}`), // Chain specific fields for the operation
+				AdditionalFields: []byte(`{"value": "100"}`),
 			},
 		},
-		{
-			ChainSelector: types.ChainSelector(selector),
-			Transaction: types.Transaction{
-				OperationMetadata: types.OperationMetadata{
-					ContractType: "some-contract",
-					Tags:         []string{"staking", "rewards"},
-				},
-				Data:             []byte("data bytes of the transaction"),
-				AdditionalFields: []byte(`{"value": "200"}`), // Chain specific fields for the operation
-			},
-		},
-	}
-	builder.SetOperations(transactions)
+	)
 
 	// Step 5: Build the Proposal
 	proposal, err := builder.Build()
 	if err != nil {
-		panic(err)
+		log.Fatalf("Error building proposal: %v", err)
 	}
 
-	fmt.Println("Proposal created:", proposal)
+	log.Printf("Successfully created proposal: %+v", proposal)
 }
+```
 
+### Timelock Proposal Builder
+
+The Timelock Proposal Builder is a specialized builder for creating timelock proposals which adds additional builder methods for setting the action, delay and timelock addresses for the proposal.
+
+```go
+package main
+
+import (
+	"log"
+
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
+	"github.com/smartcontractkit/mcms"
+	"github.com/smartcontractkit/mcms/types"
+)
+
+func main() {
+	// Step 1: Initialize the ProposalBuilder
+	builder := mcms.NewTimelockProposalBuilder()
+	selector := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector)
+
+	delay, err := types.ParseDuration("1h")
+	if err != nil {
+		log.Fatalf("Error parsing duration: %v", err)
+	}
+
+	// Step 2: Set Proposal Details
+	builder.
+		SetVersion("v1").
+		SetValidUntil(1794610529).
+		SetDescription("Increase staking rewards").
+		SetAction(types.TimelockActionSchedule).
+		SetDelay(delay).
+		SetOverridePreviousRoot(false)
+
+	// Step 3: Set Chain Metadata
+	builder.SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
+		selector: {
+			StartingOpCount: 0,
+			MCMAddress:      "0x123",
+		},
+	})
+
+	// append or overwrite chain metadata to the existing map
+	builder.AddChainMetadata(selector, types.ChainMetadata{
+		StartingOpCount: 0, MCMAddress: "0x345",
+	})
+
+	// Step 4: Set Timelock addresses
+	builder.SetTimelockAddresses(map[types.ChainSelector]string{
+		selector: "0x01",
+	})
+
+	// append or overwrite timelock addresses to the existing map
+	builder.AddTimelockAddress(selector, "0x02")
+
+	// Step 4: Set Operations
+	builder.SetOperations([]types.Operation{
+		{
+			ChainSelector: selector,
+			Transaction: types.Transaction{
+				OperationMetadata: types.OperationMetadata{
+					ContractType: "some-contract",
+					Tags:         []string{"staking", "rewards"},
+				},
+				To: 			  "0x1a",
+				Data:             []byte("data bytes of the transaction"),
+				AdditionalFields: []byte(`{"value": "100"}`),
+			},
+		},
+		{
+			ChainSelector: selector,
+			Transaction: types.Transaction{
+				OperationMetadata: types.OperationMetadata{
+					ContractType: "some-contract",
+					Tags:         []string{"staking", "rewards"},
+				},
+				To: 			  "0x1b",
+				Data:             []byte("data bytes of the transaction"),
+				AdditionalFields: []byte(`{"value": "200"}`),
+			},
+		},
+	})
+
+	// append operations to the existing array
+	builder.AddOperation(
+		types.Operation{
+			ChainSelector: selector,
+			Transaction: types.Transaction{
+				OperationMetadata: types.OperationMetadata{
+					ContractType: "some-contract",
+					Tags:         []string{"staking", "rewards"},
+				},
+				To: 			  "0x1c",
+				Data:             []byte("data bytes of the transaction"),
+				AdditionalFields: []byte(`{"value": "100"}`),
+			},
+		},
+	)
+
+	// Step 5: Build the Proposal
+	timelockProposal, err := builder.Build()
+	if err != nil {
+		log.Fatalf("Error building proposal: %v", err)
+	}
+
+	log.Printf("Successfully created proposal: %+v", timelockProposal)
+}
 ```

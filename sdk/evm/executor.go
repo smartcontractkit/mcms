@@ -9,7 +9,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
-
 // Executor is an Executor implementation for EVM chains, allowing for the execution of operations on the MCMS contract
 type Executor struct {
 	*Encoder
