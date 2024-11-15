@@ -154,13 +154,18 @@ func main() {
 	builder := mcms.NewTimelockProposalBuilder()
 	selector := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector)
 
+	delay, err := types.ParseDuration("1h")
+	if err != nil {
+		log.Fatalf("Error parsing duration: %v", err)
+	}
+
 	// Step 2: Set Proposal Details
 	builder.
 		SetVersion("v1").
 		SetValidUntil(1794610529).
 		SetDescription("Increase staking rewards").
 		SetAction(types.TimelockActionSchedule).
-		SetDelay("1h").
+		SetDelay(delay).
 		SetOverridePreviousRoot(false)
 
 	// Step 3: Set Chain Metadata

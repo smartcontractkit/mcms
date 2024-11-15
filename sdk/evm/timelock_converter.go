@@ -3,7 +3,6 @@ package evm
 import (
 	"encoding/json"
 	"math/big"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -24,7 +23,7 @@ type TimelockConverter struct{}
 func (t *TimelockConverter) ConvertBatchToChainOperation(
 	bop types.BatchOperation,
 	timelockAddress string,
-	minDelay string,
+	delay types.Duration,
 	action types.TimelockAction,
 	predecessor common.Hash,
 ) (types.Operation, common.Hash, error) {
@@ -47,7 +46,6 @@ func (t *TimelockConverter) ConvertBatchToChainOperation(
 	}
 
 	salt := ZERO_HASH
-	delay, _ := time.ParseDuration(minDelay)
 
 	abi, errAbi := bindings.RBACTimelockMetaData.GetAbi()
 	if errAbi != nil {

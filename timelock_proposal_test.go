@@ -99,7 +99,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 					OverridePreviousRoot: false,
 				},
 				Action: types.TimelockActionSchedule,
-				Delay:  "1h",
+				Delay:  types.MustParseDuration("1h"),
 				TimelockAddresses: map[types.ChainSelector]string{
 					chaintest.Chain2Selector: "0x01",
 				},
@@ -132,7 +132,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 				"description": "Test proposal",
 				"overridePreviousRoot": false,
 				"action": "schedule",
-				"delay": "1h",
+				"delay": "1h0m0s",
 				"timelockAddresses": {
 					"16015286601757825753": "0x01"
 				},
@@ -230,7 +230,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 					}).
 					SetOverridePreviousRoot(false).
 					SetAction(types.TimelockActionSchedule).
-					SetDelay("1h").
+					SetDelay(types.MustParseDuration("1h")).
 					AddTimelockAddress(chaintest.Chain2Selector, "").
 					SetTransactions([]types.BatchOperation{{
 						ChainSelector: chaintest.Chain2Selector,
@@ -260,7 +260,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				"description": "Test proposal",
 				"overridePreviousRoot": false,
 				"action": "schedule",
-				"delay": "1h",
+				"delay": "1h0m0s",
 				"signatures": null,
 				"timelockAddresses": {
 					"16015286601757825753": ""
@@ -334,7 +334,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 		timelockAddr   map[types.ChainSelector]string
 		bops           []types.BatchOperation
 		timelockAction types.TimelockAction
-		timelockDelay  string
+		timelockDelay  types.Duration
 		expectedError  error
 	}{
 		{
@@ -348,7 +348,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			timelockAddr:   validTimelockAddresses,
 			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  "1h",
+			timelockDelay:  types.MustParseDuration("1h"),
 			expectedError:  nil,
 		},
 		{
@@ -362,7 +362,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			timelockAddr:   validTimelockAddresses,
 			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  "1h",
+			timelockDelay:  types.MustParseDuration("1h"),
 			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag"),
 		},
 		{
@@ -376,7 +376,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			timelockAddr:   validTimelockAddresses,
 			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  "1h",
+			timelockDelay:  types.MustParseDuration("1h"),
 			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag"),
 		},
 		{
@@ -390,7 +390,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			timelockAddr:   validTimelockAddresses,
 			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  "1h",
+			timelockDelay:  types.MustParseDuration("1h"),
 			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag"),
 		},
 		{
@@ -404,7 +404,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			timelockAddr:   nil,
 			bops:           validBatches,
 			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  "1h",
+			timelockDelay:  types.MustParseDuration("1h"),
 			expectedError:  errors.New("Key: 'TimelockProposal.TimelockAddresses' Error:Field validation for 'TimelockAddresses' failed on the 'required' tag"),
 		},
 		{
@@ -418,7 +418,7 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			timelockAddr:   validTimelockAddresses,
 			bops:           nil,
 			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  "1h",
+			timelockDelay:  types.MustParseDuration("1h"),
 			expectedError:  errors.New("Key: 'TimelockProposal.Operations' Error:Field validation for 'Operations' failed on the 'required' tag"),
 		},
 		{
@@ -432,22 +432,8 @@ func TestTimelockProposal_Validation(t *testing.T) {
 			timelockAddr:   validTimelockAddresses,
 			bops:           validBatches,
 			timelockAction: types.TimelockAction("invalid"),
-			timelockDelay:  "1h",
+			timelockDelay:  types.MustParseDuration("1h"),
 			expectedError:  errors.New("Key: 'TimelockProposal.Action' Error:Field validation for 'Action' failed on the 'oneof' tag"),
-		},
-		{
-			name:           "Invalid timelockDelay",
-			version:        "v1",
-			validUntil:     2004259681,
-			signatures:     []types.Signature{},
-			overridePrev:   false,
-			chainMetadata:  validChainMetadata,
-			description:    "description",
-			timelockAddr:   validTimelockAddresses,
-			bops:           validBatches,
-			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  "1nm",
-			expectedError:  errors.New("invalid delay: 1nm"),
 		},
 	}
 
@@ -491,7 +477,7 @@ func TestTimelockProposal_Convert(t *testing.T) {
 		validTimelockAddresses,
 		validBatches,
 		types.TimelockActionSchedule,
-		"1h",
+		types.MustParseDuration("1h"),
 	)
 	require.NoError(t, err)
 

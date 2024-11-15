@@ -22,7 +22,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 	testCases := []struct {
 		name           string
 		op             types.BatchOperation
-		minDelay       string
+		delay          string
 		operation      types.TimelockAction
 		predecessor    common.Hash
 		expectedError  error
@@ -42,7 +42,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 				},
 				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
-			minDelay:       "1h",
+			delay:          "1h",
 			operation:      types.TimelockActionSchedule,
 			predecessor:    zeroHash,
 			expectedError:  nil,
@@ -62,7 +62,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 				},
 				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
-			minDelay:       "1h",
+			delay:          "1h",
 			operation:      types.TimelockActionCancel,
 			predecessor:    zeroHash,
 			expectedError:  nil,
@@ -82,7 +82,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 				},
 				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
-			minDelay:       "1h",
+			delay:          "1h",
 			operation:      types.TimelockAction("invalid"),
 			predecessor:    zeroHash,
 			expectedError:  sdkerrors.NewInvalidTimelockOperationError("invalid"),
@@ -95,7 +95,9 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			t.Parallel()
 
 			converter := &TimelockConverter{}
-			chainOperation, operationId, err := converter.ConvertBatchToChainOperation(tc.op, timelockAddress, tc.minDelay, tc.operation, tc.predecessor)
+			chainOperation, operationId, err := converter.ConvertBatchToChainOperation(
+				tc.op, timelockAddress, types.MustParseDuration(tc.delay), tc.operation, tc.predecessor,
+			)
 
 			if tc.expectedError != nil {
 				require.Error(t, err)
