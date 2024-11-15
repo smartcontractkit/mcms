@@ -218,7 +218,6 @@ func Test_WriteTimelockProposal(t *testing.T) {
 		{
 			name: "success: writes a proposal to an io.Writer",
 			give: func(b *TimelockProposalBuilder) *TimelockProposal {
-
 				b.SetVersion("v1").
 					SetValidUntil(2004259681).
 					SetDescription("Test proposal").

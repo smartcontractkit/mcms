@@ -143,7 +143,6 @@ func Test_WriteProposal(t *testing.T) {
 		{
 			name: "success: writes a proposal to an io.Writer",
 			give: func(b *ProposalBuilder) *Proposal {
-
 				b.SetVersion("v1").
 					SetValidUntil(2004259681).
 					AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
@@ -370,13 +369,11 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 		{
 			name: "failure: could not create encoder",
 			give: func(b *ProposalBuilder) {
-
 				b.SetVersion("v1").
 					SetValidUntil(2552083725).
 					AddChainMetadata(types.ChainSelector(0), types.ChainMetadata{}).
 					SetOverridePreviousRoot(false).
 					AddOperation(types.Operation{ChainSelector: types.ChainSelector(0)})
-
 			},
 			wantErr: "unable to create encoder: chain family not found for selector 0",
 		},
@@ -449,7 +446,6 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 		{
 			name: "success: generates a merkle tree",
 			give: func(b *ProposalBuilder) *Proposal {
-
 				b.SetVersion("v1").
 					SetValidUntil(2552083725).
 					AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{StartingOpCount: 5}).
@@ -488,7 +484,6 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 		{
 			name: "failure: could not get encoders",
 			give: func(b *ProposalBuilder) *Proposal {
-
 				b.SetVersion("v1").
 					SetValidUntil(2552083725).
 					AddChainMetadata(types.ChainSelector(1), types.ChainMetadata{StartingOpCount: 5}).
@@ -519,7 +514,6 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 		{
 			name: "failure: nonce must be in the range of a uint32",
 			give: func(b *ProposalBuilder) *Proposal {
-
 				b.SetVersion("v1").
 					SetValidUntil(2552083725).
 					AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{StartingOpCount: math.MaxUint32 + 1}).
@@ -605,7 +599,6 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 		{
 			name: "success: returns the nonces for each transaction",
 			give: func(b *ProposalBuilder) *Proposal {
-
 				b.SetVersion("v1").
 					SetValidUntil(2552083725).
 					AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{StartingOpCount: 5}).
