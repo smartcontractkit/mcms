@@ -232,7 +232,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 					SetAction(types.TimelockActionSchedule).
 					SetDelay(types.MustParseDuration("1h")).
 					AddTimelockAddress(chaintest.Chain2Selector, "").
-					SetTransactions([]types.BatchOperation{{
+					SetOperations([]types.BatchOperation{{
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
