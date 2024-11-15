@@ -25,3 +25,5 @@ go.work.sum
 .idea/
 .vscode/
 node_modules/
+/blockscout/
+/compose/
