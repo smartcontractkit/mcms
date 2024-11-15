@@ -14,7 +14,7 @@ import (
 func BatchToChainOperation(
 	bops types.BatchOperation,
 	timelockAddr string,
-	delay string,
+	delay types.Duration,
 	action types.TimelockAction,
 	predecessor common.Hash,
 ) (types.Operation, common.Hash, error) {

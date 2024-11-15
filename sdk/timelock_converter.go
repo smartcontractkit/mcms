@@ -11,7 +11,7 @@ type TimelockConverter interface {
 	ConvertBatchToChainOperation(
 		bop types.BatchOperation,
 		timelockAddress string,
-		delay string,
+		delay types.Duration,
 		action types.TimelockAction,
 		predecessor common.Hash,
 	) (types.Operation, common.Hash, error)
