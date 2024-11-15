@@ -660,79 +660,25 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		give    func(b *ProposalBuilder) *Proposal
+		setup   func(b *Proposal)
 		want    []uint64
 		wantErr string
 	}{
 		{
 			name: "success: returns the nonces for each transaction",
-			give: func(b *ProposalBuilder) *Proposal {
-				b.SetVersion("v1").
-					SetValidUntil(2552083725).
-					AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{StartingOpCount: 5}).
-					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 10}).
-					AddChainMetadata(chaintest.Chain3Selector, types.ChainMetadata{StartingOpCount: 15}).
-					SetOperations([]types.Operation{
-						{
-							ChainSelector: chaintest.Chain1Selector,
-							Transaction: types.Transaction{
-								To:               TestAddress,
-								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
-								Data:             common.Hex2Bytes("0x1"),
-							},
-						},
-						{
-							ChainSelector: chaintest.Chain2Selector,
-							Transaction: types.Transaction{
-								To:               TestAddress,
-								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
-								Data:             common.Hex2Bytes("0x1"),
-							},
-						},
-						{
-							ChainSelector: chaintest.Chain1Selector,
-							Transaction: types.Transaction{
-								To:               TestAddress,
-								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
-								Data:             common.Hex2Bytes("0x2"),
-							},
-						},
-						{
-							ChainSelector: chaintest.Chain2Selector,
-							Transaction: types.Transaction{
-								To:               TestAddress,
-								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
-								Data:             common.Hex2Bytes("0x2"),
-							},
-						},
-						{
-							ChainSelector: chaintest.Chain1Selector,
-							Transaction: types.Transaction{
-								To:               TestAddress,
-								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
-								Data:             common.Hex2Bytes("0x1"),
-							},
-						},
-					})
-				proposal, err := b.Build()
-				require.NoError(t, err)
-
-				return proposal
+			setup: func(p *Proposal) {
+				// NOP: valid proposal.
 			},
 			want: []uint64{5, 10, 6, 11, 7},
 		},
 		{
 			name: "failure: chain metadata not found for transaction",
-			give: func(_ *ProposalBuilder) *Proposal {
-				return &Proposal{
-					BaseProposal: BaseProposal{
-						ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-							chaintest.Chain1Selector: {StartingOpCount: 5},
-						},
-					},
-					Operations: []types.Operation{
-						{ChainSelector: chaintest.Chain2Selector},
-					},
+			setup: func(p *Proposal) {
+				p.ChainMetadata = map[types.ChainSelector]types.ChainMetadata{
+					chaintest.Chain1Selector: {StartingOpCount: 5},
+				}
+				p.Operations = []types.Operation{
+					{ChainSelector: chaintest.Chain2Selector},
 				}
 			},
 			wantErr: "missing metadata for chain 16015286601757825753",
@@ -743,7 +689,57 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			builder := NewProposalBuilder()
-			give := tt.give(builder)
+			builder.SetVersion("v1").
+				SetValidUntil(2552083725).
+				AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{StartingOpCount: 5}).
+				AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 10}).
+				AddChainMetadata(chaintest.Chain3Selector, types.ChainMetadata{StartingOpCount: 15}).
+				SetOperations([]types.Operation{
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transaction: types.Transaction{
+							To:               TestAddress,
+							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+							Data:             common.Hex2Bytes("0x1"),
+						},
+					},
+					{
+						ChainSelector: chaintest.Chain2Selector,
+						Transaction: types.Transaction{
+							To:               TestAddress,
+							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+							Data:             common.Hex2Bytes("0x1"),
+						},
+					},
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transaction: types.Transaction{
+							To:               TestAddress,
+							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+							Data:             common.Hex2Bytes("0x2"),
+						},
+					},
+					{
+						ChainSelector: chaintest.Chain2Selector,
+						Transaction: types.Transaction{
+							To:               TestAddress,
+							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+							Data:             common.Hex2Bytes("0x2"),
+						},
+					},
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transaction: types.Transaction{
+							To:               TestAddress,
+							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+							Data:             common.Hex2Bytes("0x1"),
+						},
+					},
+				})
+			give, err := builder.Build()
+			require.NoError(t, err)
+
+			tt.setup(give)
 			got, err := give.TransactionNonces()
 
 			if tt.wantErr != "" {
