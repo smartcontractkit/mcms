@@ -18,6 +18,7 @@ type InvalidProposalKindError struct {
 func (e *InvalidProposalKindError) Error() string {
 	return fmt.Sprintf("invalid proposal kind: %s, value accepted is %s", e.ProvidedKind, e.AcceptedKind)
 }
+
 func NewInvalidProposalKindError(provided, accepted types.ProposalKind) *InvalidProposalKindError {
 	return &InvalidProposalKindError{ProvidedKind: provided, AcceptedKind: accepted}
 }
@@ -80,20 +81,6 @@ func NewQuorumNotReachedError(sel types.ChainSelector) *QuorumNotReachedError {
 
 func (e *QuorumNotReachedError) Error() string {
 	return fmt.Sprintf("quorum not reached for chain %d", e.ChainSelector)
-}
-
-// InvalidDelayError is the error for when the received delay for Timelock is invalid.
-type InvalidDelayError struct {
-	ReceivedDelay string
-}
-
-// Error returns the error message.
-func (e *InvalidDelayError) Error() string {
-	return fmt.Sprintf("invalid delay: %s", e.ReceivedDelay)
-}
-
-func NewInvalidDelayError(receivedDelay string) *InvalidDelayError {
-	return &InvalidDelayError{ReceivedDelay: receivedDelay}
 }
 
 type InvalidValidUntilError struct {
