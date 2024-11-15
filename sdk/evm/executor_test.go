@@ -63,6 +63,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 						big.NewInt(20000000000),
 						nil,
 					)
+
 					return mockTx, nil
 				},
 			},
@@ -121,7 +122,6 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -176,6 +176,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 						big.NewInt(20000000000),
 						nil,
 					)
+
 					return mockTx, nil
 				},
 			},
@@ -225,7 +226,6 @@ func TestExecutor_SetRoot(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
