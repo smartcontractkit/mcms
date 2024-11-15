@@ -48,7 +48,7 @@ func (p *BaseProposal) AppendSignature(signature types.Signature) {
 type Proposal struct {
 	BaseProposal
 
-	Operations []types.Operation `json:"operations" validate:"required,min=1"`
+	Operations []types.Operation `json:"operations" validate:"required,min=1,dive"`
 }
 
 // NewProposal unmarshal data from the reader to JSON and returns a new Proposal.

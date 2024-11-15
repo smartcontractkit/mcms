@@ -340,12 +340,7 @@ func Test_TimelockProposal_Validate(t *testing.T) {
 		{
 			name: "all chain selectors in transactions must be present in chain metadata",
 			giveFunc: func(p *TimelockProposal) {
-				p.Operations = []types.BatchOperation{
-					{
-						ChainSelector: chaintest.Chain2Selector,
-						Transactions:  []types.Transaction{{}},
-					},
-				}
+				p.Operations[0].ChainSelector = chaintest.Chain2Selector
 			},
 			wantErrs: []string{
 				"missing metadata for chain 16015286601757825753",
@@ -354,18 +349,7 @@ func Test_TimelockProposal_Validate(t *testing.T) {
 		{
 			name: "invalid chain family specific operation data (additional fields)",
 			giveFunc: func(p *TimelockProposal) {
-				p.Operations = []types.BatchOperation{
-					{
-						ChainSelector: chaintest.Chain1Selector,
-						Transactions: []types.Transaction{
-							{
-								To:               TestAddress,
-								AdditionalFields: json.RawMessage([]byte(`{"value": -100}`)),
-								Data:             common.Hex2Bytes("0x"),
-							},
-						},
-					},
-				}
+				p.Operations[0].Transactions[0].AdditionalFields = json.RawMessage([]byte(`{"value": -100}`))
 			},
 			wantErrs: []string{
 				"invalid EVM value: -100",
@@ -392,6 +376,27 @@ func Test_TimelockProposal_Validate(t *testing.T) {
 			},
 			wantErrs: []string{
 				"Key: 'TimelockProposal.Operations[0].Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
+			},
+		},
+		{
+			name: "operations dive: required fields validation",
+			giveFunc: func(p *TimelockProposal) {
+				p.Operations[0] = types.BatchOperation{}
+			},
+			wantErrs: []string{
+				"Key: 'TimelockProposal.Operations[0].ChainSelector' Error:Field validation for 'ChainSelector' failed on the 'required' tag",
+				"Key: 'TimelockProposal.Operations[0].Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+			},
+		},
+		{
+			name: "transactions dive: required fields validation",
+			giveFunc: func(p *TimelockProposal) {
+				p.Operations[0].Transactions[0] = types.Transaction{}
+			},
+			wantErrs: []string{
+				"Key: 'TimelockProposal.Operations[0].Transactions[0].To' Error:Field validation for 'To' failed on the 'required' tag",
+				"Key: 'TimelockProposal.Operations[0].Transactions[0].Data' Error:Field validation for 'Data' failed on the 'required' tag",
+				"Key: 'TimelockProposal.Operations[0].Transactions[0].AdditionalFields' Error:Field validation for 'AdditionalFields' failed on the 'required' tag",
 			},
 		},
 	}
@@ -427,10 +432,6 @@ func Test_TimelockProposal_Validate(t *testing.T) {
 								To:               TestAddress,
 								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 								Data:             common.Hex2Bytes("0x"),
-								OperationMetadata: types.OperationMetadata{
-									ContractType: "Sample contract",
-									Tags:         []string{"tag1", "tag2"},
-								},
 							},
 						},
 					},

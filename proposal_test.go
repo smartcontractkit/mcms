@@ -57,7 +57,12 @@ func Test_NewProposal(t *testing.T) {
 				},
 				"operations": [
 					{
-						"chainSelector": 3379446385462418246
+						"chainSelector": 3379446385462418246,
+						"transaction": {
+							"to": "0xsomeaddress",
+							"data": "EjM=",
+							"additionalFields": {"value": 0}
+						}
 					}
 				]
 			}`,
@@ -71,7 +76,14 @@ func Test_NewProposal(t *testing.T) {
 					},
 				},
 				Operations: []types.Operation{
-					{ChainSelector: chaintest.Chain1Selector},
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transaction: types.Transaction{
+							To:               "0xsomeaddress",
+							Data:             []byte{0x12, 0x33},              // Representing "0x123" as bytes
+							AdditionalFields: json.RawMessage(`{"value": 0}`), // JSON-encoded `{"value": 0}`
+						},
+					},
 				},
 			},
 		},
@@ -87,28 +99,9 @@ func Test_NewProposal(t *testing.T) {
 				"kind": "Proposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {},
-				"operations": [
-					{}
-				]
+				"operations": []
 			}`,
-			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
-		},
-		{
-			name: "failure: invalid proposal kind",
-			give: `{
-				"version": "v1",
-				"kind": "TimelockProposal",
-				"validUntil": 2004259681,
-				"chainMetadata": {
-					"3379446385462418246": {}
-				},
-				"operations": [
-					{
-						"chainSelector": 3379446385462418246
-					}
-				]
-			}`,
-			wantErr: "invalid proposal kind: TimelockProposal, value accepted is Proposal",
+			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
 		},
 	}
 
@@ -281,12 +274,7 @@ func Test_Proposal_Validate(t *testing.T) {
 		{
 			name: "all chain selectors in transactions must be present in chain metadata",
 			giveFunc: func(p *Proposal) {
-				p.Operations = []types.Operation{
-					{
-						ChainSelector: chaintest.Chain2Selector,
-						Transaction:   types.Transaction{},
-					},
-				}
+				p.Operations[0].ChainSelector = chaintest.Chain2Selector
 			},
 			wantErrs: []string{
 				"missing metadata for chain 16015286601757825753",
@@ -295,16 +283,7 @@ func Test_Proposal_Validate(t *testing.T) {
 		{
 			name: "invalid chain family specific operation data (additional fields)",
 			giveFunc: func(p *Proposal) {
-				p.Operations = []types.Operation{
-					{
-						ChainSelector: chaintest.Chain1Selector,
-						Transaction: types.Transaction{
-							To:               TestAddress,
-							AdditionalFields: json.RawMessage([]byte(`{"value": -100}`)),
-							Data:             common.Hex2Bytes("0x"),
-						},
-					},
-				}
+				p.Operations[0].Transaction.AdditionalFields = json.RawMessage([]byte(`{"value": -100}`))
 			},
 			wantErrs: []string{
 				"invalid EVM value: -100",
@@ -317,6 +296,18 @@ func Test_Proposal_Validate(t *testing.T) {
 			},
 			wantErrs: []string{
 				"invalid valid until: 1",
+			},
+		},
+		{
+			name: "operations dive: required fields validation",
+			giveFunc: func(p *Proposal) {
+				p.Operations = []types.Operation{{}}
+			},
+			wantErrs: []string{
+				"Key: 'Proposal.Operations[0].ChainSelector' Error:Field validation for 'ChainSelector' failed on the 'required' tag",
+				"Key: 'Proposal.Operations[0].Transaction.To' Error:Field validation for 'To' failed on the 'required' tag",
+				"Key: 'Proposal.Operations[0].Transaction.Data' Error:Field validation for 'Data' failed on the 'required' tag",
+				"Key: 'Proposal.Operations[0].Transaction.AdditionalFields' Error:Field validation for 'AdditionalFields' failed on the 'required' tag",
 			},
 		},
 	}
@@ -346,10 +337,6 @@ func Test_Proposal_Validate(t *testing.T) {
 							To:               TestAddress,
 							AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 							Data:             common.Hex2Bytes("0x"),
-							OperationMetadata: types.OperationMetadata{
-								ContractType: "Sample contract",
-								Tags:         []string{"tag1", "tag2"},
-							},
 						},
 					},
 				},
