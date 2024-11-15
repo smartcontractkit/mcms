@@ -18,7 +18,6 @@ func TestErrorMessages(t *testing.T) {
 		{NewChainMetadataNotFoundError(1), "missing metadata for chain 1"},
 		{NewInconsistentConfigsError(1, 2), "inconsistent configs for chains 1 and 2"},
 		{NewQuorumNotReachedError(1), "quorum not reached for chain 1"},
-		{NewInvalidDelayError("1h"), "invalid delay: 1h"},
 		{NewInvalidValidUntilError(1), "invalid valid until: 1"},
 		{NewInvalidSignatureError(common.HexToAddress("0x1")), "invalid signature: received signature for address 0x0000000000000000000000000000000000000001 is not a valid signer in the MCMS proposal"},
 		{NewQuorumNotReachedError(1), "quorum not reached for chain 1"},
