@@ -198,8 +198,8 @@ func Test_WriteTimelockProposal(t *testing.T) {
 			giveWriter: func() io.Writer {
 				return newFakeWriter(0, errors.New("write error"))
 			},
-			setup: func(b *Proposal) {
-				b = &Proposal{}
+			setup: func(_ *Proposal) {
+				// No changes needed, valid proposal
 			},
 			wantErr: "write error",
 		},

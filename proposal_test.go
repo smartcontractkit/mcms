@@ -155,9 +155,9 @@ func Test_WriteProposal(t *testing.T) {
 					{
 						"chainSelector": 3379446385462418246,
 						"transaction": {
-							"to": "",
-							"additionalFields": null,
-							"data": null,
+							"to": "0x123",
+							"additionalFields": {"value": 0},
+							"data": "",
 							"tags": null,
 							"contractType": ""
 						}
@@ -171,7 +171,7 @@ func Test_WriteProposal(t *testing.T) {
 				return newFakeWriter(0, errors.New("write error"))
 			},
 			setup: func(p *Proposal) {
-				p = &Proposal{}
+				p.Operations = []types.Operation{}
 			},
 			wantErr: "write error",
 		},
@@ -185,7 +185,15 @@ func Test_WriteProposal(t *testing.T) {
 			builder.SetVersion("v1").
 				SetValidUntil(2004259681).
 				AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
-				AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector})
+				AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: types.Transaction{
+						To:               "0x123",
+						AdditionalFields: json.RawMessage(`{"value": 0}`),
+						Data:             common.Hex2Bytes("0x1"),
+					},
+				})
+
 			give, err := builder.Build()
 			require.NoError(t, err)
 
@@ -394,7 +402,6 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 				p.ChainMetadata = map[types.ChainSelector]types.ChainMetadata{
 					types.ChainSelector(0): {},
 				}
-
 			},
 			wantErr: "unable to create encoder: chain family not found for selector 0",
 		},
@@ -409,9 +416,30 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 				SetValidUntil(2552083725).
 				AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
 				AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{}).
-				AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector}).
-				AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector}).
-				AddOperation(types.Operation{ChainSelector: chaintest.Chain2Selector})
+				AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x1"),
+					},
+				}).
+				AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x2"),
+					},
+				}).
+				AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain2Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x3"),
+					},
+				})
 
 			give, err := builder.Build()
 			tt.setup(give)
@@ -447,7 +475,14 @@ func Test_Proposal_ChainSelectors(t *testing.T) {
 	builder := NewProposalBuilder()
 	builder.SetVersion("v1").
 		SetValidUntil(2552083725).
-		AddOperation(types.Operation{ChainSelector: chaintest.Chain1Selector}).
+		AddOperation(types.Operation{
+			ChainSelector: chaintest.Chain1Selector,
+			Transaction: types.Transaction{
+				To:               TestAddress,
+				AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+				Data:             common.Hex2Bytes("0x"),
+			},
+		}).
 		SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
 			chaintest.Chain1Selector: {},
 			chaintest.Chain2Selector: {},
@@ -585,9 +620,30 @@ func Test_Proposal_TransactionCounts(t *testing.T) {
 		AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
 		AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{}).
 		SetOperations([]types.Operation{
-			{ChainSelector: chaintest.Chain1Selector},
-			{ChainSelector: chaintest.Chain1Selector},
-			{ChainSelector: chaintest.Chain2Selector},
+			{
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: types.Transaction{
+					To:               TestAddress,
+					AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+					Data:             common.Hex2Bytes("0x1"),
+				},
+			},
+			{
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: types.Transaction{
+					To:               TestAddress,
+					AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+					Data:             common.Hex2Bytes("0x2"),
+				},
+			},
+			{
+				ChainSelector: chaintest.Chain2Selector,
+				Transaction: types.Transaction{
+					To:               TestAddress,
+					AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+					Data:             common.Hex2Bytes("0x3"),
+				},
+			},
 		})
 	proposal, err := builder.Build()
 	require.NoError(t, err)
@@ -617,18 +673,53 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 10}).
 					AddChainMetadata(chaintest.Chain3Selector, types.ChainMetadata{StartingOpCount: 15}).
 					SetOperations([]types.Operation{
-						{ChainSelector: chaintest.Chain1Selector},
-						{ChainSelector: chaintest.Chain2Selector},
-						{ChainSelector: chaintest.Chain1Selector},
-						{ChainSelector: chaintest.Chain2Selector},
-						{ChainSelector: chaintest.Chain3Selector},
+						{
+							ChainSelector: chaintest.Chain1Selector,
+							Transaction: types.Transaction{
+								To:               TestAddress,
+								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+								Data:             common.Hex2Bytes("0x1"),
+							},
+						},
+						{
+							ChainSelector: chaintest.Chain2Selector,
+							Transaction: types.Transaction{
+								To:               TestAddress,
+								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+								Data:             common.Hex2Bytes("0x1"),
+							},
+						},
+						{
+							ChainSelector: chaintest.Chain1Selector,
+							Transaction: types.Transaction{
+								To:               TestAddress,
+								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+								Data:             common.Hex2Bytes("0x2"),
+							},
+						},
+						{
+							ChainSelector: chaintest.Chain2Selector,
+							Transaction: types.Transaction{
+								To:               TestAddress,
+								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+								Data:             common.Hex2Bytes("0x2"),
+							},
+						},
+						{
+							ChainSelector: chaintest.Chain1Selector,
+							Transaction: types.Transaction{
+								To:               TestAddress,
+								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+								Data:             common.Hex2Bytes("0x1"),
+							},
+						},
 					})
 				proposal, err := b.Build()
 				require.NoError(t, err)
 
 				return proposal
 			},
-			want: []uint64{5, 10, 6, 11, 15},
+			want: []uint64{5, 10, 6, 11, 7},
 		},
 		{
 			name: "failure: chain metadata not found for transaction",
