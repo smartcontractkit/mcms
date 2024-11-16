@@ -659,6 +659,9 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 	}{
 		{
 			name: "success: returns the nonces for each transaction",
+			setup: func(b *Proposal) {
+				// NOP: valid proposal.
+			},
 			want: []uint64{5, 10, 6, 11, 7},
 		},
 		{
