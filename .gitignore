@@ -27,7 +27,5 @@ go.work.sum
 node_modules/
 /blockscout/
 /compose/
-/blockscout/
-/compose/
 /e2e/evm/config.toml
 /e2e/evm/config-cache.toml

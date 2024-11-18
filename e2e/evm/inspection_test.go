@@ -21,7 +21,8 @@ import (
 
 // Config struct for blockchain configuration
 type Config struct {
-	BlockchainA *blockchain.Input `toml:"blockchain_a" validate:"required"`
+	BlockchainA *blockchain.Input `toml:"evm_config" validate:"required"`
+	PrivateKey  string            `toml:"evm_config.private_key_testing" validate:"required"`
 }
 
 // InspectionTestSuite defines a suite for EVM tests
@@ -55,7 +56,7 @@ func (s *InspectionTestSuite) SetupSuite() {
 	s.Client = client
 
 	// Use a pre-funded Anvil account
-	privateKeyHex := "0xYOUR_ANVIL_ACCOUNT_PRIVATE_KEY" // Replace with one of Anvil's pre-funded private keys
+	privateKeyHex := s.Config.PrivateKey
 	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:])
 	require.NoError(s.T(), err, "Failed to parse private key")
 	s.PrivateKey = privateKey
