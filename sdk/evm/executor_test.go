@@ -80,17 +80,17 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			},
 			mockSetup: func(m *evm_mocks.ContractDeployBackend) {
 				// Successful tx send
-				m.On("SendTransaction", mock.Anything, mock.Anything).
+				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
 					Return(nil)
-				m.On("HeaderByNumber", mock.Anything, mock.Anything).
+				m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
 					Return(&evmTypes.Header{}, nil)
-				m.On("SuggestGasPrice", mock.Anything).
+				m.EXPECT().SuggestGasPrice(mock.Anything).
 					Return(big.NewInt(100000000), nil)
-				m.On("PendingCodeAt", mock.Anything, mock.Anything).
+				m.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
 					Return([]byte("0x01"), nil)
-				m.On("EstimateGas", mock.Anything, mock.Anything).
+				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
 					Return(uint64(50000), nil)
-				m.On("PendingNonceAt", mock.Anything, mock.Anything).
+				m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
 					Return(uint64(1), nil)
 			},
 			wantTxHash: "0xc381f411283719726be93f957b9e3ca7d8041725c22fefab8dcf132770adf7a9",
@@ -191,17 +191,17 @@ func TestExecutor_SetRoot(t *testing.T) {
 			},
 			mockSetup: func(m *evm_mocks.ContractDeployBackend) {
 				// Successful tx send
-				m.On("SendTransaction", mock.Anything, mock.Anything).
+				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
 					Return(nil)
-				m.On("HeaderByNumber", mock.Anything, mock.Anything).
+				m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
 					Return(&evmTypes.Header{}, nil)
-				m.On("SuggestGasPrice", mock.Anything).
+				m.EXPECT().SuggestGasPrice(mock.Anything).
 					Return(big.NewInt(100000000), nil)
-				m.On("PendingCodeAt", mock.Anything, mock.Anything).
+				m.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
 					Return([]byte("0x01"), nil)
-				m.On("EstimateGas", mock.Anything, mock.Anything).
+				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
 					Return(uint64(50000), nil)
-				m.On("PendingNonceAt", mock.Anything, mock.Anything).
+				m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
 					Return(uint64(1), nil)
 			},
 			wantTxHash: "0xc381f411283719726be93f957b9e3ca7d8041725c22fefab8dcf132770adf7a9",
