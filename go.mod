@@ -4,7 +4,7 @@ go 1.23.2
 
 require (
 	github.com/ethereum/go-ethereum v1.14.11
-	github.com/go-playground/validator/v10 v10.22.1
+	github.com/go-playground/validator/v10 v10.23.0
 	github.com/smartcontractkit/chain-selectors v1.0.28
 	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.9.0
