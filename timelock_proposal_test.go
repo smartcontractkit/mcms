@@ -8,40 +8,13 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
 )
-
-var validChainMetadata = map[types.ChainSelector]types.ChainMetadata{
-	chaintest.Chain1Selector: {
-		StartingOpCount: 1,
-		MCMAddress:      "0x123",
-	},
-}
-var validTimelockAddresses = map[types.ChainSelector]string{
-	chaintest.Chain1Selector: "0x123",
-}
-var validTx = types.Transaction{
-	To:               "0x123",
-	AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
-	Data:             common.Hex2Bytes("0x"),
-	OperationMetadata: types.OperationMetadata{
-		ContractType: "Sample contract",
-		Tags:         []string{"tag1", "tag2"},
-	},
-}
-
-var validBatches = []types.BatchOperation{
-	{
-		ChainSelector: chaintest.Chain1Selector,
-		Transactions: []types.Transaction{
-			validTx,
-		},
-	},
-}
 
 func Test_NewTimelockProposal(t *testing.T) {
 	t.Parallel()
@@ -151,40 +124,6 @@ func Test_NewTimelockProposal(t *testing.T) {
 			}`,
 			wantErr: "Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
 		},
-		{
-			name: "failure: invalid proposal kind",
-			give: `{
-				"version": "v1",
-				"kind": "Proposal",
-				"validUntil": 2004259681,
-				"chainMetadata": {
-					"16015286601757825753": {
-						"mcmAddress": "0x0000000000000000000000000000000000000000",
-						"startingOpCount": 0
-					}
-				},
-				"description": "Test proposal",
-				"overridePreviousRoot": false,
-				"action": "schedule",
-				"delay": "1h",
-				"timelockAddresses": {
-					"16015286601757825753": "0x01"
-				},
-				"operations": [
-					{
-						"chainSelector": 16015286601757825753,
-						"transactions": [
-							{
-								"to": "0x0000000000000000000000000000000000000000",
-								"additionalFields": {"value": 0},
-								"data": "ZGF0YQ=="
-							}
-						]
-					}
-				]
-			}`,
-			wantErr: "invalid proposal kind: Proposal, value accepted is TimelockProposal",
-		},
 	}
 
 	for _, tt := range tests {
@@ -210,43 +149,12 @@ func Test_WriteTimelockProposal(t *testing.T) {
 
 	tests := []struct {
 		name       string
-		give       *TimelockProposal
 		giveWriter func() io.Writer // Use this to overwrite the default writer
 		want       string
 		wantErr    string
 	}{
 		{
 			name: "success: writes a proposal to an io.Writer",
-			give: &TimelockProposal{
-				BaseProposal: BaseProposal{
-					Version:     "v1",
-					Kind:        types.KindTimelockProposal,
-					ValidUntil:  2004259681,
-					Description: "Test proposal",
-					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain2Selector: {
-							StartingOpCount: 0,
-							MCMAddress:      "0x0000000000000000000000000000000000000000",
-						},
-					},
-					OverridePreviousRoot: false,
-				},
-				Action:            types.TimelockActionSchedule,
-				Delay:             types.MustParseDuration("1h"),
-				TimelockAddresses: map[types.ChainSelector]string{},
-				Operations: []types.BatchOperation{
-					{
-						ChainSelector: chaintest.Chain2Selector,
-						Transactions: []types.Transaction{
-							{
-								To:               "0x0000000000000000000000000000000000000000",
-								AdditionalFields: []byte(`{"value": 0}`),
-								Data:             []byte("data"),
-							},
-						},
-					},
-				},
-			},
 			want: `{
 				"version": "v1",
 				"kind": "TimelockProposal",
@@ -262,7 +170,9 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				"action": "schedule",
 				"delay": "1h0m0s",
 				"signatures": null,
-				"timelockAddresses": {},
+				"timelockAddresses": {
+					"16015286601757825753": ""
+				},
 				"operations": [
 					{
 						"chainSelector": 16015286601757825753,
@@ -284,7 +194,6 @@ func Test_WriteTimelockProposal(t *testing.T) {
 			giveWriter: func() io.Writer {
 				return newFakeWriter(0, errors.New("write error"))
 			},
-			give:    &TimelockProposal{},
 			wantErr: "write error",
 		},
 	}
@@ -292,7 +201,32 @@ func Test_WriteTimelockProposal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
+			builder := NewTimelockProposalBuilder()
+			builder.SetVersion("v1").
+				SetValidUntil(2004259681).
+				SetDescription("Test proposal").
+				SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
+					chaintest.Chain2Selector: {
+						StartingOpCount: 0,
+						MCMAddress:      "0x0000000000000000000000000000000000000000",
+					},
+				}).
+				SetOverridePreviousRoot(false).
+				SetAction(types.TimelockActionSchedule).
+				SetDelay(types.MustParseDuration("1h")).
+				AddTimelockAddress(chaintest.Chain2Selector, "").
+				SetOperations([]types.BatchOperation{{
+					ChainSelector: chaintest.Chain2Selector,
+					Transactions: []types.Transaction{
+						{
+							To:               "0x0000000000000000000000000000000000000000",
+							AdditionalFields: []byte(`{"value": 0}`),
+							Data:             []byte("data"),
+						},
+					},
+				}})
+			give, err := builder.Build()
+			require.NoError(t, err)
 			var w io.Writer
 			b := new(strings.Builder)
 
@@ -302,7 +236,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				w = b
 			}
 
-			err := WriteTimelockProposal(w, tt.give)
+			err = WriteTimelockProposal(w, give)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
@@ -314,167 +248,268 @@ func Test_WriteTimelockProposal(t *testing.T) {
 	}
 }
 
-func TestTimelockProposal_Validation(t *testing.T) {
+func Test_TimelockProposal_Validate(t *testing.T) {
 	t.Parallel()
 
-	// Test table with every validation case for NewProposalWithTimeLock
 	tests := []struct {
-		name           string
-		version        string
-		validUntil     uint32
-		signatures     []types.Signature
-		overridePrev   bool
-		chainMetadata  map[types.ChainSelector]types.ChainMetadata
-		description    string
-		timelockAddr   map[types.ChainSelector]string
-		bops           []types.BatchOperation
-		timelockAction types.TimelockAction
-		timelockDelay  types.Duration
-		expectedError  error
+		name     string
+		giveFunc func(*TimelockProposal)
+		wantErrs []string
 	}{
 		{
-			name:           "Valid proposal",
-			version:        "v1",
-			validUntil:     2004259681,
-			signatures:     []types.Signature{},
-			overridePrev:   false,
-			chainMetadata:  validChainMetadata,
-			description:    "description",
-			timelockAddr:   validTimelockAddresses,
-			bops:           validBatches,
-			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  types.MustParseDuration("1h"),
-			expectedError:  nil,
+			name: "valid with schedule action and delay",
+			giveFunc: func(*TimelockProposal) {
+				// NOOP: All fields are valid
+			},
 		},
 		{
-			name:           "Invalid version",
-			version:        "",
-			validUntil:     2004259681,
-			signatures:     []types.Signature{},
-			overridePrev:   false,
-			chainMetadata:  validChainMetadata,
-			description:    "description",
-			timelockAddr:   validTimelockAddresses,
-			bops:           validBatches,
-			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  types.MustParseDuration("1h"),
-			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag"),
+			name: "valid with non scheduled action and no delay",
+			giveFunc: func(p *TimelockProposal) {
+				p.Action = types.TimelockActionCancel
+				p.Delay = types.Duration{}
+			},
 		},
 		{
-			name:           "Invalid validUntil",
-			version:        "v1",
-			validUntil:     0,
-			signatures:     []types.Signature{},
-			overridePrev:   false,
-			chainMetadata:  validChainMetadata,
-			description:    "description",
-			timelockAddr:   validTimelockAddresses,
-			bops:           validBatches,
-			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  types.MustParseDuration("1h"),
-			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag"),
+			name: "required fields validation",
+			giveFunc: func(p *TimelockProposal) {
+				// Overwrite the timelock proposal with an empty one
+				*p = TimelockProposal{
+					BaseProposal: BaseProposal{},
+				}
+			},
+			wantErrs: []string{
+				"Key: 'TimelockProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'required' tag",
+				"Key: 'TimelockProposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'required' tag",
+				"Key: 'TimelockProposal.BaseProposal.ValidUntil' Error:Field validation for 'ValidUntil' failed on the 'required' tag",
+				"Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag",
+				"Key: 'TimelockProposal.Operations' Error:Field validation for 'Operations' failed on the 'required' tag",
+				"Key: 'TimelockProposal.TimelockAddresses' Error:Field validation for 'TimelockAddresses' failed on the 'required' tag",
+				"Key: 'TimelockProposal.Action' Error:Field validation for 'Action' failed on the 'required' tag",
+			},
 		},
 		{
-			name:           "Invalid chainMetadata",
-			version:        "v1",
-			validUntil:     2004259681,
-			signatures:     []types.Signature{},
-			overridePrev:   false,
-			chainMetadata:  nil,
-			description:    "description",
-			timelockAddr:   validTimelockAddresses,
-			bops:           validBatches,
-			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  types.MustParseDuration("1h"),
-			expectedError:  errors.New("Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'required' tag"),
+			name: "min validation",
+			giveFunc: func(p *TimelockProposal) {
+				p.ChainMetadata = map[types.ChainSelector]types.ChainMetadata{}
+				p.TimelockAddresses = map[types.ChainSelector]string{}
+				p.Operations = []types.BatchOperation{}
+			},
+			wantErrs: []string{
+				"Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
+				"Key: 'TimelockProposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
+				"Key: 'TimelockProposal.TimelockAddresses' Error:Field validation for 'TimelockAddresses' failed on the 'min' tag",
+			},
 		},
 		{
-			name:           "Invalid timelockAddresses",
-			version:        "v1",
-			validUntil:     2004259681,
-			signatures:     []types.Signature{},
-			overridePrev:   false,
-			chainMetadata:  validChainMetadata,
-			description:    "description",
-			timelockAddr:   nil,
-			bops:           validBatches,
-			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  types.MustParseDuration("1h"),
-			expectedError:  errors.New("Key: 'TimelockProposal.TimelockAddresses' Error:Field validation for 'TimelockAddresses' failed on the 'required' tag"),
+			name: "oneof validation",
+			giveFunc: func(p *TimelockProposal) {
+				p.Version = "invalidversion"
+				p.Kind = "invalidking"
+				p.Action = "invalidaction"
+			},
+			wantErrs: []string{
+				"Key: 'TimelockProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'oneof' tag",
+				"Key: 'TimelockProposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'oneof' tag",
+				"Key: 'TimelockProposal.Action' Error:Field validation for 'Action' failed on the 'oneof' tag",
+			},
 		},
 		{
-			name:           "Invalid batches",
-			version:        "v1",
-			validUntil:     2004259681,
-			signatures:     []types.Signature{},
-			overridePrev:   false,
-			chainMetadata:  validChainMetadata,
-			description:    "description",
-			timelockAddr:   validTimelockAddresses,
-			bops:           nil,
-			timelockAction: types.TimelockActionSchedule,
-			timelockDelay:  types.MustParseDuration("1h"),
-			expectedError:  errors.New("Key: 'TimelockProposal.Operations' Error:Field validation for 'Operations' failed on the 'required' tag"),
+			name: "required_if validation",
+			giveFunc: func(p *TimelockProposal) {
+				p.Action = "schedule"
+				p.Delay = types.Duration{}
+			},
+			wantErrs: []string{
+				"Key: 'TimelockProposal.Delay' Error:Field validation for 'Delay' failed on the 'required_if' tag",
+			},
 		},
 		{
-			name:           "Invalid timelockAction",
-			version:        "v1",
-			validUntil:     2004259681,
-			signatures:     []types.Signature{},
-			overridePrev:   false,
-			chainMetadata:  validChainMetadata,
-			description:    "description",
-			timelockAddr:   validTimelockAddresses,
-			bops:           validBatches,
-			timelockAction: types.TimelockAction("invalid"),
-			timelockDelay:  types.MustParseDuration("1h"),
-			expectedError:  errors.New("Key: 'TimelockProposal.Action' Error:Field validation for 'Action' failed on the 'oneof' tag"),
+			name: "invalid kind: must be TimelockProposal",
+			giveFunc: func(p *TimelockProposal) {
+				p.Kind = types.KindProposal
+			},
+			wantErrs: []string{
+				"invalid proposal kind: Proposal, value accepted is TimelockProposal",
+			},
+		},
+		{
+			name: "all chain selectors in transactions must be present in chain metadata",
+			giveFunc: func(p *TimelockProposal) {
+				p.Operations[0].ChainSelector = chaintest.Chain2Selector
+			},
+			wantErrs: []string{
+				"missing metadata for chain 16015286601757825753",
+			},
+		},
+		{
+			name: "invalid chain family specific operation data (additional fields)",
+			giveFunc: func(p *TimelockProposal) {
+				p.Operations[0].Transactions[0].AdditionalFields = json.RawMessage([]byte(`{"value": -100}`))
+			},
+			wantErrs: []string{
+				"invalid EVM value: -100",
+			},
+		},
+		{
+			name: "proposal has expired (validUntil)",
+			giveFunc: func(p *TimelockProposal) {
+				p.ValidUntil = 1
+			},
+			wantErrs: []string{
+				"invalid valid until: 1",
+			},
+		},
+		{
+			name: "must have at least 1 transaction in a batch operation",
+			giveFunc: func(p *TimelockProposal) {
+				p.Operations = []types.BatchOperation{
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transactions:  []types.Transaction{},
+					},
+				}
+			},
+			wantErrs: []string{
+				"Key: 'TimelockProposal.Operations[0].Transactions' Error:Field validation for 'Transactions' failed on the 'min' tag",
+			},
+		},
+		{
+			name: "operations dive: required fields validation",
+			giveFunc: func(p *TimelockProposal) {
+				p.Operations[0] = types.BatchOperation{}
+			},
+			wantErrs: []string{
+				"Key: 'TimelockProposal.Operations[0].ChainSelector' Error:Field validation for 'ChainSelector' failed on the 'required' tag",
+				"Key: 'TimelockProposal.Operations[0].Transactions' Error:Field validation for 'Transactions' failed on the 'required' tag",
+			},
+		},
+		{
+			name: "transactions dive: required fields validation",
+			giveFunc: func(p *TimelockProposal) {
+				p.Operations[0].Transactions[0] = types.Transaction{}
+			},
+			wantErrs: []string{
+				"Key: 'TimelockProposal.Operations[0].Transactions[0].To' Error:Field validation for 'To' failed on the 'required' tag",
+				"Key: 'TimelockProposal.Operations[0].Transactions[0].Data' Error:Field validation for 'Data' failed on the 'required' tag",
+				"Key: 'TimelockProposal.Operations[0].Transactions[0].AdditionalFields' Error:Field validation for 'AdditionalFields' failed on the 'required' tag",
+			},
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := NewProposalWithTimeLock(
-				tc.version,
-				tc.validUntil,
-				tc.signatures,
-				tc.overridePrev,
-				tc.chainMetadata,
-				tc.description,
-				tc.timelockAddr,
-				tc.bops,
-				tc.timelockAction,
-				tc.timelockDelay,
-			)
-			if err != nil && tc.expectedError == nil {
-				t.Errorf("Unexpected error: %v", err)
-				return
+			// A valid timelock proposal to be passed to the giveFunc for the test case to modify
+			proposal := TimelockProposal{
+				BaseProposal: BaseProposal{
+					Version:    "v1",
+					Kind:       types.KindTimelockProposal,
+					ValidUntil: 2004259681,
+					Signatures: []types.Signature{},
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						chaintest.Chain1Selector: {
+							StartingOpCount: 1,
+							MCMAddress:      TestAddress,
+						},
+					},
+				},
+				Action: types.TimelockActionSchedule,
+				Delay:  types.MustParseDuration("1h"),
+				TimelockAddresses: map[types.ChainSelector]string{
+					chaintest.Chain1Selector: "0x01",
+				},
+				Operations: []types.BatchOperation{
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transactions: []types.Transaction{
+							{
+								To:               TestAddress,
+								AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+								Data:             common.Hex2Bytes("0x"),
+							},
+						},
+					},
+				},
 			}
-			if err != nil && tc.expectedError != nil {
-				assert.Equal(t, tc.expectedError.Error(), err.Error())
+
+			tt.giveFunc(&proposal)
+
+			err := proposal.Validate()
+
+			if len(tt.wantErrs) > 0 {
+				require.Error(t, err)
+
+				var errs validator.ValidationErrors
+				if errors.As(err, &errs) {
+					assert.Len(t, errs, len(tt.wantErrs))
+
+					got := []string{}
+					for _, e := range errs {
+						got = append(got, e.Error())
+					}
+
+					assert.ElementsMatch(t, tt.wantErrs, got)
+				} else {
+					assert.ElementsMatch(t, tt.wantErrs, []string{err.Error()})
+				}
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}
 }
 
-func TestTimelockProposal_Convert(t *testing.T) {
+func Test_TimelockProposal_Convert(t *testing.T) {
 	t.Parallel()
 
-	proposal, err := NewProposalWithTimeLock(
-		"v1",
-		2004259681,
-		[]types.Signature{},
-		false,
-		validChainMetadata,
-		"description",
-		validTimelockAddresses,
-		validBatches,
-		types.TimelockActionSchedule,
-		types.MustParseDuration("1h"),
+	var (
+		validChainMetadata = map[types.ChainSelector]types.ChainMetadata{
+			chaintest.Chain1Selector: {
+				StartingOpCount: 1,
+				MCMAddress:      "0x123",
+			},
+		}
+
+		validTimelockAddresses = map[types.ChainSelector]string{
+			chaintest.Chain1Selector: "0x123",
+		}
+
+		validTx = types.Transaction{
+			To:               "0x123",
+			AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+			Data:             common.Hex2Bytes("0x"),
+			OperationMetadata: types.OperationMetadata{
+				ContractType: "Sample contract",
+				Tags:         []string{"tag1", "tag2"},
+			},
+		}
+
+		validBatchOps = []types.BatchOperation{
+			{
+				ChainSelector: chaintest.Chain1Selector,
+				Transactions: []types.Transaction{
+					validTx,
+				},
+			},
+		}
 	)
-	require.NoError(t, err)
+
+	proposal := TimelockProposal{
+		BaseProposal: BaseProposal{
+			Version:              "v1",
+			Kind:                 types.KindTimelockProposal,
+			Description:          "description",
+			ValidUntil:           2004259681,
+			OverridePreviousRoot: false,
+			Signatures:           []types.Signature{},
+			ChainMetadata:        validChainMetadata,
+		},
+		Action:            types.TimelockActionSchedule,
+		Delay:             types.MustParseDuration("1h"),
+		TimelockAddresses: validTimelockAddresses,
+		Operations:        validBatchOps,
+	}
 
 	mcmsProposal, err := proposal.Convert()
 	require.NoError(t, err)

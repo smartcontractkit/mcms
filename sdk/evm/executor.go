@@ -10,12 +10,14 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// Executor is an Executor implementation for EVM chains, allowing for the execution of operations on the MCMS contract
 type Executor struct {
 	*Encoder
 	*Inspector
 	auth *bind.TransactOpts
 }
 
+// NewExecutor creates a new Executor for EVM chains
 func NewExecutor(encoder *Encoder, client ContractDeployBackend, auth *bind.TransactOpts) *Executor {
 	return &Executor{
 		Encoder:   encoder,
