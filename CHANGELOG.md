@@ -4,4 +4,4 @@
 
 ### Major Changes
 
-- Refactored public API and internal packages tu support multiple chain families.
+- Refactored public API and internal packages to support multiple chain families.
