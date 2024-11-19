@@ -13,7 +13,7 @@ func derivePrivateKeyFromMnemonic(mnemonic string, accountIndex uint32) (*ecdsa.
 	// Create a new wallet from the mnemonic
 	wallet, err := hdwallet.NewFromMnemonic(mnemonic)
 	if err != nil {
-		return nil, common.Address{}, fmt.Errorf("failed to create wallet from mnemonic: %v", err)
+		return nil, common.Address{}, fmt.Errorf("failed to create wallet from mnemonic: %w", err)
 	}
 
 	// Define the derivation path for the account
@@ -23,13 +23,13 @@ func derivePrivateKeyFromMnemonic(mnemonic string, accountIndex uint32) (*ecdsa.
 	// Derive the account
 	account, err := wallet.Derive(path, false)
 	if err != nil {
-		return nil, common.Address{}, fmt.Errorf("failed to derive account: %v", err)
+		return nil, common.Address{}, fmt.Errorf("failed to derive account: %w", err)
 	}
 
 	// Get the private key for the account
 	privateKey, err := wallet.PrivateKey(account)
 	if err != nil {
-		return nil, common.Address{}, fmt.Errorf("failed to get private key: %v", err)
+		return nil, common.Address{}, fmt.Errorf("failed to get private key: %w", err)
 	}
 
 	return privateKey, account.Address, nil

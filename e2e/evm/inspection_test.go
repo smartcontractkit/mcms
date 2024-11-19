@@ -3,7 +3,6 @@ package evm
 import (
 	"context"
 	"crypto/ecdsa"
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -11,14 +10,9 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	// Import the 'common' package for 'Address' type
 	"github.com/ethereum/go-ethereum/common"
-
-	// Import your contract bindings here
-	// "github.com/your_project/your_contract_bindings"
 
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
@@ -52,11 +46,8 @@ type InspectionTestSuite struct {
 func (s *InspectionTestSuite) SetupSuite() {
 	// Load the configuration
 	in, err := framework.Load[Config](s.T())
-	require.NoError(s.T(), err)
+	s.Require().NoError(err)
 	s.config = *in
-
-	fmt.Println("Mnemonic: ", s.config.TestData.Mnemonic)
-	fmt.Println("Chain ID: ", s.config.InputChainConf.ChainID)
 
 	// Initialize the blockchain
 	bc, err := blockchain.NewBlockchainNetwork(&blockchain.Input{
@@ -65,27 +56,26 @@ func (s *InspectionTestSuite) SetupSuite() {
 		Port:    s.config.InputChainConf.Port,
 		Type:    s.config.InputChainConf.Type,
 	})
-	require.NoError(s.T(), err)
+	s.Require().NoError(err)
 	s.blockchain = bc
 
 	// Initialize Ethereum client
 	wsURL := s.blockchain.Nodes[0].HostWSUrl
 	client, err := ethclient.DialContext(context.Background(), wsURL)
-	require.NoError(s.T(), err, "Failed to connect to Ethereum client")
+	s.Require().NoError(err, "Failed to connect to Ethereum client")
 	s.client = client
 
 	// Derive the private key from the mnemonic
 	privateKey, address, err := derivePrivateKeyFromMnemonic(s.config.TestData.Mnemonic, 0)
-	require.NoError(s.T(), err, "Failed to derive private key")
+	s.Require().NoError(err, "Failed to derive private key")
 	s.privateKey = privateKey
-
-	fmt.Printf("Using account: %s\n", address.Hex())
+	s.deployedAddr = address.Hex()
 
 	// Set up transaction options
 	chainID, ok := new(big.Int).SetString(s.config.InputChainConf.ChainID, 10)
-	require.True(s.T(), ok, "Invalid chain ID")
+	s.Require().True(ok, "Invalid chain ID")
 	s.auth, err = bind.NewKeyedTransactorWithChainID(s.privateKey, chainID)
-	require.NoError(s.T(), err, "Failed to create transaction options")
+	s.Require().NoError(err, "Failed to create transaction options")
 
 	// Deploy your contract
 	s.deployTestingContract()
@@ -96,15 +86,14 @@ func (s *InspectionTestSuite) deployTestingContract() {
 	// Replace the following with your contract deployment code
 
 	address, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.client)
-	require.NoError(s.T(), err, "Failed to deploy contract")
+	s.Require().NoError(err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
 	_, err = bind.WaitMined(context.Background(), s.client, tx)
-	require.NoError(s.T(), err, "Failed to mine deployment transaction")
+	s.Require().NoError(err, "Failed to mine deployment transaction")
 
 	s.deployedAddr = address.Hex()
 	s.instance = instance
-	fmt.Printf("Contract deployed at address: %s\n", s.deployedAddr)
 
 	// Set configurations
 	s.signerAddresses = []common.Address{
@@ -117,12 +106,10 @@ func (s *InspectionTestSuite) deployTestingContract() {
 	clearRoot := true
 
 	tx, err = s.instance.SetConfig(s.auth, s.signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
-	require.NoError(s.T(), err, "Failed to set contract configuration")
+	s.Require().NoError(err, "Failed to set contract configuration")
 	// Wait for the transaction to be mined
 	_, err = bind.WaitMined(context.Background(), s.client, tx)
-
-	// Placeholder print statement
-	fmt.Println("Contract deployment code should be placed here.")
+	s.Require().NoError(err, "Failed to mine configuration transaction")
 }
 
 // TearDownSuite cleans up resources for the suite
@@ -135,21 +122,49 @@ func (s *InspectionTestSuite) TearDownSuite() {
 func (s *InspectionTestSuite) TestMCMSConfig() {
 	inspector := evm.NewInspector(s.client)
 	config, err := inspector.GetConfig(s.deployedAddr)
-	fmt.Println("config: ", config)
-	fmt.Println("group signers: ", config.GroupSigners)
-	fmt.Println("quorum: ", config.Quorum)
-	s.NoError(err, "Failed to get contract configuration")
+
+	s.Require().NoError(err, "Failed to get contract configuration")
 	s.NotNil(config, "Contract configuration is nil")
 	// Check first group
 	s.Equal(uint8(1), config.Quorum, "Quorum does not match")
-	s.Equal(config.Signers, []common.Address{s.signerAddresses[0]}, "Signers do not match")
+	s.Equal([]common.Address{s.signerAddresses[0]}, config.Signers, "Signers do not match")
 	// Check second group
 	s.Equal(uint8(1), config.GroupSigners[0].Quorum, "Group quorum does not match")
-	s.Equal(config.GroupSigners[0].Signers, []common.Address{s.signerAddresses[1]}, "Group signers do not match")
+	s.Equal([]common.Address{s.signerAddresses[1]}, config.GroupSigners[0].Signers, "Group signers do not match")
+}
 
+// TestGetOpCount checks contract operation count
+func (s *InspectionTestSuite) TestGetOpCount() {
+	inspector := evm.NewInspector(s.client)
+	opCount, err := inspector.GetOpCount(s.deployedAddr)
+
+	s.Require().NoError(err, "Failed to get op count")
+	s.Require().Equal(uint64(0), opCount, "op count do not match")
+}
+
+// TestGetRoot checks contract operation count
+func (s *InspectionTestSuite) TestGetRoot() {
+	inspector := evm.NewInspector(s.client)
+	root, validUntil, err := inspector.GetRoot(s.deployedAddr)
+
+	s.Require().NoError(err, "Failed to get root from contract")
+	s.Equal(common.Hash{}, root, "roots do not match")
+	s.Equal(uint32(0), validUntil, "validUntil do not match")
+}
+
+// TestGetRootMetadata checks contract operation count
+func (s *InspectionTestSuite) TestGetRootMetadata() {
+	inspector := evm.NewInspector(s.client)
+	metadata, err := inspector.GetRootMetadata(s.deployedAddr)
+
+	s.Require().NoError(err, "Failed to get root from contract")
+	s.Equal(metadata.MCMAddress, s.deployedAddr, "roots do not match")
+	s.Equal(uint64(0), metadata.StartingOpCount, "validUntil do not match")
 }
 
 // Entry point for the test suite
 func TestEVMTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(InspectionTestSuite))
 }
