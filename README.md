@@ -51,11 +51,10 @@ More `test` commands can be found by running `task -l`
 ### Running E2E tests
 
 We are using [Chainlink Testing Framework](https://github.com/smartcontractkit/chainlink-testing-framework) for E2E
-tests, so you'll need to setup a `config.toml` you can use the `config.toml.example` in the `e2e`
-repo
+tests, so you'll need to setup a `toml` you can use the `anvil-config.toml.example` for evm anvil client and create in the `e2e` `anvil-config.toml` file.
 
 ```shell
-CTF_CONFIGS=../config.toml go test -tags=e2e -v ./e2e/...
+CTF_CONFIGS=../anvil-config.toml go test -tags=e2e -v ./e2e/...
 ```
 
 ### Running Linters
