@@ -17,3 +17,9 @@ packages:
   github.com/smartcontractkit/mcms/sdk:
   github.com/smartcontractkit/mcms/sdk/evm:
   github.com/smartcontractkit/mcms/sdk/evm/bindings:
+
+# Required to fix the following deprecation warning:
+# https://vektra.github.io/mockery/v2.48/deprecations/#issue-845-fix
+#
+# This is a temporary fix until the issue is resolved mockery v3.
+issue-845-fix: True
