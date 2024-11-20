@@ -40,42 +40,8 @@ type TestContext struct {
 func TestInspection(t *testing.T) {
 	t.Parallel()
 
-	// Load the configuration
-	in, err := framework.Load[Config](t)
-	require.NoError(t, err)
-
-	// Initialize the blockchain
-	bc, err := blockchain.NewBlockchainNetwork(in.BlockchainA)
-	require.NoError(t, err)
-
-	// Initialize Ethereum client
-	wsURL := bc.Nodes[0].HostWSUrl
-	client, err := ethclient.DialContext(context.Background(), wsURL)
-	require.NoError(t, err)
-
-	// Define the deployer's private key
-	privateKeyHex := in.Settings.PrivateKey
-	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" from the key
-	require.NoError(t, err)
-
-	// Define signer addresses
-	signerAddresses := []common.Address{
-		common.HexToAddress("0x1234567890123456789012345678901234567890"),
-		common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef"),
-	}
-
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(31337))
-	require.NoError(t, err)
-
-	contractAddress := deployContract(t, client, auth, signerAddresses)
-
-	// Create a shared context
-	ctx := &TestContext{
-		Client:          client,
-		ContractAddress: contractAddress,
-		DeployerKey:     crypto.PubkeyToAddress(privateKey.PublicKey),
-		SignerAddresses: signerAddresses,
-	}
+	// Initialize the test context
+	ctx := setupTestEnvironment(t)
 
 	// Run tests
 	t.Run("TestGetConfig", func(t *testing.T) {
@@ -97,6 +63,47 @@ func TestInspection(t *testing.T) {
 		t.Parallel()
 		testGetRootMetadata(t, ctx)
 	})
+}
+
+func setupTestEnvironment(t *testing.T) *TestContext {
+	t.Helper()
+
+	// Load the configuration
+	in, err := framework.Load[Config](t)
+	require.NoError(t, err, "Failed to load configuration")
+
+	// Initialize the blockchain
+	bc, err := blockchain.NewBlockchainNetwork(in.BlockchainA)
+	require.NoError(t, err, "Failed to initialize blockchain network")
+
+	// Initialize Ethereum client
+	wsURL := bc.Nodes[0].HostWSUrl
+	client, err := ethclient.DialContext(context.Background(), wsURL)
+	require.NoError(t, err, "Failed to initialize Ethereum client")
+
+	// Get deployer's private key
+	privateKeyHex := in.Settings.PrivateKey
+	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
+	require.NoError(t, err, "Invalid private key")
+
+	// Define signer addresses
+	signerAddresses := []common.Address{
+		common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef"),
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(31337))
+	require.NoError(t, err, "Failed to create transactor")
+
+	contractAddress := deployContract(t, client, auth, signerAddresses)
+
+	// Return the test context
+	return &TestContext{
+		Client:          client,
+		ContractAddress: contractAddress,
+		DeployerKey:     crypto.PubkeyToAddress(privateKey.PublicKey),
+		SignerAddresses: signerAddresses,
+	}
 }
 
 // Helper to deploy the contract
