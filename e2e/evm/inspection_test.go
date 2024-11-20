@@ -6,11 +6,11 @@ package evm
 import (
 	"context"
 	"math/big"
-	"strconv"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"
@@ -68,11 +68,8 @@ func (s *InspectionTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-	chainIDInt, err := strconv.ParseInt(in.BlockchainA.ChainID, 10, 64)
-	s.Require().NoError(err, "Failed to parse chain ID")
-
-	// Convert ChainID to *big.Int
-	chainID := big.NewInt(chainIDInt)
+	chainID, ok := new(big.Int).SetString(in.BlockchainA.ChainID, 10)
+	s.Require().False(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	require.NoError(s.T(), err, "Failed to create transactor")
@@ -88,8 +85,9 @@ func (s *InspectionTestSuite) deployContract() string {
 	require.NoError(s.T(), err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
-	_, err = bind.WaitMined(context.Background(), s.client, tx)
+	receipt, err := bind.WaitMined(context.Background(), s.client, tx)
 	require.NoError(s.T(), err, "Failed to mine deployment transaction")
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Set configurations
 	signerGroups := []uint8{0, 1}   // Two groups: Group 0 and Group 1
@@ -99,7 +97,8 @@ func (s *InspectionTestSuite) deployContract() string {
 
 	tx, err = instance.SetConfig(s.auth, s.signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
 	require.NoError(s.T(), err, "Failed to set contract configuration")
-	_, err = bind.WaitMined(context.Background(), s.client, tx)
+	receipt, err = bind.WaitMined(context.Background(), s.client, tx)
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 	require.NoError(s.T(), err, "Failed to mine configuration transaction")
 
 	return address.Hex()
