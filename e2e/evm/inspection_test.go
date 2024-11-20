@@ -53,12 +53,7 @@ func (s *InspectionTestSuite) SetupSuite() {
 	s.config = *in
 
 	// Initialize the blockchain
-	bc, err := blockchain.NewBlockchainNetwork(&blockchain.Input{
-		ChainID: s.config.InputChainConf.ChainID,
-		Image:   s.config.InputChainConf.Image,
-		Port:    s.config.InputChainConf.Port,
-		Type:    s.config.InputChainConf.Type,
-	})
+bc, err := blockchain.NewBlockchainNetwork(&in.InputChainConf)
 	s.Require().NoError(err)
 	s.blockchain = bc
 
