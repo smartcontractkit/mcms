@@ -4,7 +4,9 @@ The library offers 2 ways to build proposals:
 
 ## 1. Build Proposal From File
 
-The NewProposal function helps you create a Proposal instance by reading and unmarshaling data from a JSON file. This guide walks you through using the function to read a proposal from a JSON file, validate it, and create a new Proposal object.
+The NewProposal function helps you create a Proposal instance by reading and unmarshaling data from a JSON file. This
+guide walks you through using the function to read a proposal from a JSON file, validate it, and create a new Proposal
+object.
 
 ```go
 package main
@@ -38,7 +40,8 @@ For the JSON structure of the proposal please check the [MCMS Proposal Format Do
 
 ## 2. Programmatic Build
 
-The Proposal Builder API provides a fluent interface to construct a Proposal with customizable fields and metadata, ensuring that each proposal is validated before use.
+The Proposal Builder API provides a fluent interface to construct a Proposal with customizable fields and metadata,
+ensuring that each proposal is validated before use.
 
 ### Proposal Builder
 
@@ -70,7 +73,7 @@ func main() {
 	builder.SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
 		selector: {
 			StartingOpCount: 0,
-			MCMAddress: "0x123",
+			MCMAddress:      "0x123",
 		},
 	})
 
@@ -90,7 +93,7 @@ func main() {
 				},
 				To:               "0x1a",
 				Data:             []byte("data bytes of the transaction"),
-				AdditionalFields: []byte(`{"value": "100"}`),
+				AdditionalFields: []byte(`{"value": 100}`),
 			},
 		},
 		{
@@ -102,7 +105,7 @@ func main() {
 				},
 				To:               "0x1b",
 				Data:             []byte("data bytes of the transaction"),
-				AdditionalFields: []byte(`{"value": "200"}`),
+				AdditionalFields: []byte(`{"value": 200}`),
 			},
 		},
 	})
@@ -116,9 +119,9 @@ func main() {
 					ContractType: "some-contract",
 					Tags:         []string{"staking", "rewards"},
 				},
-				To: 			  "0x1c",
+				To:               "0x1c",
 				Data:             []byte("data bytes of the transaction"),
-				AdditionalFields: []byte(`{"value": "100"}`),
+				AdditionalFields: []byte(`{"value": 100}`),
 			},
 		},
 	)
@@ -135,7 +138,8 @@ func main() {
 
 ### Timelock Proposal Builder
 
-The Timelock Proposal Builder is a specialized builder for creating timelock proposals which adds additional builder methods for setting the action, delay and timelock addresses for the proposal.
+The Timelock Proposal Builder is a specialized builder for creating timelock proposals which adds additional builder
+methods for setting the action, delay and timelock addresses for the proposal.
 
 ```go
 package main
@@ -198,7 +202,7 @@ func main() {
 					ContractType: "some-contract",
 					Tags:         []string{"staking", "rewards"},
 				},
-				To: 			  "0x1a",
+				To:               "0x1a",
 				Data:             []byte("data bytes of the transaction"),
 				AdditionalFields: []byte(`{"value": "100"}`),
 			},
@@ -210,7 +214,7 @@ func main() {
 					ContractType: "some-contract",
 					Tags:         []string{"staking", "rewards"},
 				},
-				To: 			  "0x1b",
+				To:               "0x1b",
 				Data:             []byte("data bytes of the transaction"),
 				AdditionalFields: []byte(`{"value": "200"}`),
 			},
@@ -226,7 +230,7 @@ func main() {
 					ContractType: "some-contract",
 					Tags:         []string{"staking", "rewards"},
 				},
-				To: 			  "0x1c",
+				To:               "0x1c",
 				Data:             []byte("data bytes of the transaction"),
 				AdditionalFields: []byte(`{"value": "100"}`),
 			},
