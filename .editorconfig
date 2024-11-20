@@ -1,0 +1,30 @@
+# Root .editorconfig file
+root = true
+
+# Default settings
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Go files
+[*.go]
+indent_style = tab
+indent_size = 4
+max_line_length = 120
+trim_trailing_whitespace = true
+
+# Markdown files
+[*.md]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = false
+insert_final_newline = true
+
+# YAML files
+[*.yaml]
+[*.yml]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
