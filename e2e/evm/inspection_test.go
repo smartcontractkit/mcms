@@ -6,6 +6,7 @@ package evm
 import (
 	"context"
 	"math/big"
+	"os"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -36,33 +37,16 @@ type TestContext struct {
 	SignerAddresses []common.Address
 }
 
-// TestInspection serves as the setup suite
-func TestInspection(t *testing.T) {
-	t.Parallel()
-
+func TestMain(m *testing.M) {
 	// Initialize the test context
-	ctx := setupTestEnvironment(t)
+	_ = setupTestEnvironment(&testing.T{})
 
-	// Run tests
-	t.Run("TestGetConfig", func(t *testing.T) {
-		t.Parallel()
-		ctx.TestGetConfig(t)
-	})
+	// Run the tests
+	code := m.Run()
 
-	t.Run("TestGetOpCount", func(t *testing.T) {
-		t.Parallel()
-		ctx.TestGetOpCount(t)
-	})
+	// Any cleanup / teardown code goes here
 
-	t.Run("TestGetRoot", func(t *testing.T) {
-		t.Parallel()
-		ctx.TestGetRoot(t)
-	})
-
-	t.Run("TestGetRootMetadata", func(t *testing.T) {
-		t.Parallel()
-		ctx.TestGetRootMetadata(t)
-	})
+	os.Exit(code)
 }
 
 func setupTestEnvironment(t *testing.T) *TestContext {
@@ -134,6 +118,8 @@ func deployContract(t *testing.T, client *ethclient.Client, auth *bind.TransactO
 
 // TestMCMSConfig checks contract configuration
 func (ctx *TestContext) TestGetConfig(t *testing.T) {
+	t.Parallel()
+
 	inspector := evm.NewInspector(ctx.Client)
 	config, err := inspector.GetConfig(ctx.ContractAddress)
 
@@ -151,6 +137,8 @@ func (ctx *TestContext) TestGetConfig(t *testing.T) {
 
 // TestGetOpCount checks contract operation count
 func (ctx *TestContext) TestGetOpCount(t *testing.T) {
+	t.Parallel()
+
 	inspector := evm.NewInspector(ctx.Client)
 	opCount, err := inspector.GetOpCount(ctx.ContractAddress)
 
@@ -160,6 +148,8 @@ func (ctx *TestContext) TestGetOpCount(t *testing.T) {
 
 // TestGetRoot checks contract operation count
 func (ctx *TestContext) TestGetRoot(t *testing.T) {
+	t.Parallel()
+
 	inspector := evm.NewInspector(ctx.Client)
 	root, validUntil, err := inspector.GetRoot(ctx.ContractAddress)
 
@@ -170,6 +160,8 @@ func (ctx *TestContext) TestGetRoot(t *testing.T) {
 
 // TestGetRootMetadata checks contract operation count
 func (ctx *TestContext) TestGetRootMetadata(t *testing.T) {
+	t.Parallel()
+
 	inspector := evm.NewInspector(ctx.Client)
 	metadata, err := inspector.GetRootMetadata(ctx.ContractAddress)
 

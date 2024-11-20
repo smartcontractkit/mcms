@@ -5,7 +5,6 @@ go 1.23.2
 require (
 	github.com/ethereum/go-ethereum v1.14.11
 	github.com/go-playground/validator/v10 v10.22.1
-	github.com/miguelmota/go-ethereum-hdwallet v0.1.2
 	github.com/smartcontractkit/chain-selectors v1.0.28
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.2.4
 	github.com/spf13/cast v1.7.0
@@ -36,10 +35,7 @@ require (
 	github.com/aws/smithy-go v1.21.0 // indirect
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.13.0 // indirect
-	github.com/btcsuite/btcd v0.22.1 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.4 // indirect
-	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
-	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cockroachdb/errors v1.11.3 // indirect
