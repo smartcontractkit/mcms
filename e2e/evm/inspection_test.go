@@ -45,23 +45,22 @@ func TestInspection(t *testing.T) {
 
 	// Run tests
 	t.Run("TestGetConfig", func(t *testing.T) {
-		t.Parallel()
-		testGetConfig(t, ctx)
+		ctx.TestGetConfig(t)
 	})
 
 	t.Run("TestGetOpCount", func(t *testing.T) {
 		t.Parallel()
-		testGetOpCount(t, ctx)
+		ctx.TestGetOpCount(t)
 	})
 
 	t.Run("TestGetRoot", func(t *testing.T) {
 		t.Parallel()
-		testGetRoot(t, ctx)
+		ctx.TestGetRoot(t)
 	})
 
 	t.Run("TestGetRootMetadata", func(t *testing.T) {
 		t.Parallel()
-		testGetRootMetadata(t, ctx)
+		ctx.TestGetRootMetadata(t)
 	})
 }
 
@@ -133,7 +132,7 @@ func deployContract(t *testing.T, client *ethclient.Client, auth *bind.TransactO
 }
 
 // TestMCMSConfig checks contract configuration
-func testGetConfig(t *testing.T, ctx *TestContext) {
+func (ctx *TestContext) TestGetConfig(t *testing.T) {
 	inspector := evm.NewInspector(ctx.Client)
 	config, err := inspector.GetConfig(ctx.ContractAddress)
 
@@ -150,7 +149,7 @@ func testGetConfig(t *testing.T, ctx *TestContext) {
 }
 
 // TestGetOpCount checks contract operation count
-func testGetOpCount(t *testing.T, ctx *TestContext) {
+func (ctx *TestContext) TestGetOpCount(t *testing.T) {
 	inspector := evm.NewInspector(ctx.Client)
 	opCount, err := inspector.GetOpCount(ctx.ContractAddress)
 
@@ -159,7 +158,7 @@ func testGetOpCount(t *testing.T, ctx *TestContext) {
 }
 
 // TestGetRoot checks contract operation count
-func testGetRoot(t *testing.T, ctx *TestContext) {
+func (ctx *TestContext) TestGetRoot(t *testing.T) {
 	inspector := evm.NewInspector(ctx.Client)
 	root, validUntil, err := inspector.GetRoot(ctx.ContractAddress)
 
@@ -169,7 +168,7 @@ func testGetRoot(t *testing.T, ctx *TestContext) {
 }
 
 // TestGetRootMetadata checks contract operation count
-func testGetRootMetadata(t *testing.T, ctx *TestContext) {
+func (ctx *TestContext) TestGetRootMetadata(t *testing.T) {
 	inspector := evm.NewInspector(ctx.Client)
 	metadata, err := inspector.GetRootMetadata(ctx.ContractAddress)
 
