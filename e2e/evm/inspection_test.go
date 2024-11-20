@@ -69,7 +69,7 @@ func (s *InspectionTestSuite) SetupSuite() {
 
 	// Parse ChainID from string to int64
 	chainID, ok := new(big.Int).SetString(in.BlockchainA.ChainID, 10)
-	s.Require().False(ok, "Failed to parse chain ID")
+	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	require.NoError(s.T(), err, "Failed to create transactor")
