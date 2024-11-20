@@ -45,6 +45,7 @@ func TestInspection(t *testing.T) {
 
 	// Run tests
 	t.Run("TestGetConfig", func(t *testing.T) {
+		t.Parallel()
 		ctx.TestGetConfig(t)
 	})
 
