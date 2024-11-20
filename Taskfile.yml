@@ -20,4 +20,5 @@ includes:
 
   generate:
     taskfile: ./taskfiles/generate/Taskfile.yml
+    aliases: [gen]
 

@@ -45,6 +45,7 @@ func TestInspection(t *testing.T) {
 	require.NoError(t, err)
 
 	// Initialize the blockchain
+  e2e-test-inspection-go-test-proposition
 	bc, err := blockchain.NewBlockchainNetwork(in.BlockchainA)
 	require.NoError(t, err)
 
