@@ -98,9 +98,8 @@ func (s *InspectionTestSuite) deployContract() string {
 	tx, err = instance.SetConfig(s.auth, s.signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
 	require.NoError(s.T(), err, "Failed to set contract configuration")
 	receipt, err = bind.WaitMined(context.Background(), s.client, tx)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 	require.NoError(s.T(), err, "Failed to mine configuration transaction")
-
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 	return address.Hex()
 }
 
