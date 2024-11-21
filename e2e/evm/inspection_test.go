@@ -44,22 +44,22 @@ type InspectionTestSuite struct {
 func (s *InspectionTestSuite) SetupSuite() {
 	// Load the configuration
 	in, err := framework.Load[Config](s.T())
-	require.NoError(s.T(), err, "Failed to load configuration")
+	s.Require().NoError(err, "Failed to load configuration")
 
 	// Initialize the blockchain
 	bc, err := blockchain.NewBlockchainNetwork(in.BlockchainA)
-	require.NoError(s.T(), err, "Failed to initialize blockchain network")
+	s.Require().NoError(err, "Failed to initialize blockchain network")
 
 	// Initialize Ethereum client
 	wsURL := bc.Nodes[0].HostWSUrl
 	client, err := ethclient.DialContext(context.Background(), wsURL)
-	require.NoError(s.T(), err, "Failed to initialize Ethereum client")
+	s.Require().NoError(err, "Failed to initialize Ethereum client")
 	s.client = client
 
 	// Get deployer's private key
 	privateKeyHex := in.Settings.PrivateKey
 	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
-	require.NoError(s.T(), err, "Invalid private key")
+	s.Require().NoError(err, "Invalid private key")
 
 	// Define signer addresses
 	s.signerAddresses = []common.Address{
@@ -72,7 +72,7 @@ func (s *InspectionTestSuite) SetupSuite() {
 	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-	require.NoError(s.T(), err, "Failed to create transactor")
+	s.Require().NoError(err, "Failed to create transactor")
 	s.auth = auth
 
 	s.contractAddress = s.deployContract()
@@ -96,10 +96,11 @@ func (s *InspectionTestSuite) deployContract() string {
 	clearRoot := true
 
 	tx, err = instance.SetConfig(s.auth, s.signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
-	require.NoError(s.T(), err, "Failed to set contract configuration")
+	s.Require().NoError(err, "Failed to set contract configuration")
 	receipt, err = bind.WaitMined(context.Background(), s.client, tx)
-	require.NoError(s.T(), err, "Failed to mine configuration transaction")
+	s.Require().NoError(err, "Failed to mine configuration transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+
 	return address.Hex()
 }
 
@@ -108,16 +109,16 @@ func (s *InspectionTestSuite) TestGetConfig() {
 	inspector := evm.NewInspector(s.client)
 	config, err := inspector.GetConfig(s.contractAddress)
 
-	require.NoError(s.T(), err, "Failed to get contract configuration")
-	require.NotNil(s.T(), config, "Contract configuration is nil")
+	s.Require().NoError(err, "Failed to get contract configuration")
+	s.Require().NotNil(config, "Contract configuration is nil")
 
 	// Check first group
-	require.Equal(s.T(), uint8(1), config.Quorum, "Quorum does not match")
-	require.Equal(s.T(), s.signerAddresses[0], config.Signers[0], "Signers do not match")
+	s.Require().Equal(uint8(1), config.Quorum, "Quorum does not match")
+	s.Require().Equal(s.signerAddresses[0], config.Signers[0], "Signers do not match")
 
 	// Check second group
-	require.Equal(s.T(), uint8(1), config.GroupSigners[0].Quorum, "Group quorum does not match")
-	require.Equal(s.T(), s.signerAddresses[1], config.GroupSigners[0].Signers[0], "Group signers do not match")
+	s.Require().Equal(uint8(1), config.GroupSigners[0].Quorum, "Group quorum does not match")
+	s.Require().Equal(s.signerAddresses[1], config.GroupSigners[0].Signers[0], "Group signers do not match")
 }
 
 // TestGetOpCount checks contract operation count
@@ -125,8 +126,8 @@ func (s *InspectionTestSuite) TestGetOpCount() {
 	inspector := evm.NewInspector(s.client)
 	opCount, err := inspector.GetOpCount(s.contractAddress)
 
-	require.NoError(s.T(), err, "Failed to get op count")
-	require.Equal(s.T(), uint64(0), opCount, "Operation count does not match")
+	s.Require().NoError(err, "Failed to get op count")
+	s.Require().Equal(uint64(0), opCount, "Operation count does not match")
 }
 
 // TestGetRoot checks contract root
@@ -134,9 +135,9 @@ func (s *InspectionTestSuite) TestGetRoot() {
 	inspector := evm.NewInspector(s.client)
 	root, validUntil, err := inspector.GetRoot(s.contractAddress)
 
-	require.NoError(s.T(), err, "Failed to get root from contract")
-	require.Equal(s.T(), common.Hash{}, root, "Roots do not match")
-	require.Equal(s.T(), uint32(0), validUntil, "ValidUntil does not match")
+	s.Require().NoError(err, "Failed to get root from contract")
+	s.Require().Equal(common.Hash{}, root, "Roots do not match")
+	s.Require().Equal(uint32(0), validUntil, "ValidUntil does not match")
 }
 
 // TestGetRootMetadata checks contract root metadata
@@ -144,9 +145,9 @@ func (s *InspectionTestSuite) TestGetRootMetadata() {
 	inspector := evm.NewInspector(s.client)
 	metadata, err := inspector.GetRootMetadata(s.contractAddress)
 
-	require.NoError(s.T(), err, "Failed to get root metadata from contract")
-	require.Equal(s.T(), metadata.MCMAddress, s.contractAddress, "MCMAddress does not match")
-	require.Equal(s.T(), uint64(0), metadata.StartingOpCount, "StartingOpCount does not match")
+	s.Require().NoError(err, "Failed to get root metadata from contract")
+	s.Require().Equal(metadata.MCMAddress, s.contractAddress, "MCMAddress does not match")
+	s.Require().Equal(uint64(0), metadata.StartingOpCount, "StartingOpCount does not match")
 }
 
 // Run the test suite
