@@ -1,12 +1,11 @@
 //go:build e2e
 // +build e2e
 
-package evm
+package e2e
 
 import (
 	"context"
 	"math/big"
-	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -38,24 +37,16 @@ type InspectionTestSuite struct {
 	deployerKey     common.Address
 	signerAddresses []common.Address
 	auth            *bind.TransactOpts
+	TestSetup       *TestSetup
 }
 
 // SetupSuite runs before the test suite
 func (s *InspectionTestSuite) SetupSuite() {
-	// Load the configuration
+	s.TestSetup = InitializeTestSetup(s.T())
+	s.Require().NoError(err, "Failed to initialize test setup")
+	s.TestSetup = setup
+
 	in, err := framework.Load[Config](s.T())
-	s.Require().NoError(err, "Failed to load configuration")
-
-	// Initialize the blockchain
-	bc, err := blockchain.NewBlockchainNetwork(in.BlockchainA)
-	s.Require().NoError(err, "Failed to initialize blockchain network")
-
-	// Initialize Ethereum client
-	wsURL := bc.Nodes[0].HostWSUrl
-	client, err := ethclient.DialContext(context.Background(), wsURL)
-	s.Require().NoError(err, "Failed to initialize Ethereum client")
-	s.client = client
-
 	// Get deployer's private key
 	privateKeyHex := in.Settings.PrivateKey
 	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
@@ -148,9 +139,4 @@ func (s *InspectionTestSuite) TestGetRootMetadata() {
 	s.Require().NoError(err, "Failed to get root metadata from contract")
 	s.Require().Equal(metadata.MCMAddress, s.contractAddress, "MCMAddress does not match")
 	s.Require().Equal(uint64(0), metadata.StartingOpCount, "StartingOpCount does not match")
-}
-
-// Run the test suite
-func TestEVMTestSuite(t *testing.T) {
-	suite.Run(t, new(InspectionTestSuite))
 }
