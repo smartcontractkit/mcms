@@ -8,7 +8,8 @@
   <br/>
 </div>
 
-Many Chain Multisig System (MCMS) provides tools and libraries to deploy, manage and interact with MCMS across multiple chains.
+Many Chain Multisig System (MCMS) provides tools and libraries to deploy, manage and interact with MCMS across multiple
+chains.
 
 ## Development
 
@@ -18,14 +19,16 @@ Install the developments tools and dependencies to get started.
 
 #### Install `asdf`
 
-[asdf](https://asdf-vm.com/) is a tool version manager. All dependencies used for local development of this repo are managed through `asdf`. To install `asdf`:
+[asdf](https://asdf-vm.com/) is a tool version manager. All dependencies used for local development of this repo are
+managed through `asdf`. To install `asdf`:
 
 1. [Install asdf](https://asdf-vm.com/guide/getting-started.html)
 2. Follow the instructions to ensure `asdf` is shimmed into your terminal or development environment
 
 #### Install `task`
 
-[task](https://github.com/go-task/task) is an alternative to `make` and is used to provide commands for everyday development tasks. To install `task`:
+[task](https://github.com/go-task/task) is an alternative to `make` and is used to provide commands for everyday
+development tasks. To install `task`:
 
 1. Add the asdf task plugin: `asdf plugin add task`
 2. Install `task` with `asdf install task`
@@ -45,6 +48,15 @@ Run the entire test suite with:
 
 More `test` commands can be found by running `task -l`
 
+### Running E2E tests
+
+We are using [Chainlink Testing Framework](https://github.com/smartcontractkit/chainlink-testing-framework) for E2E
+tests, so you'll need to setup a `toml` you can use the `anvil-config.toml.example` for evm anvil client and create in the `e2e` `anvil-config.toml` file.
+
+```shell
+CTF_CONFIGS=../anvil-config.toml go test -tags=e2e -v ./e2e/...
+```
+
 ### Running Linters
 
 Run the linters with:
@@ -55,7 +67,8 @@ More `lint` commands can be found by running `task -l`
 
 ## Documentation
 
-We use [Docsify](https://docsify.js.org) to generate our documentation. You can modify the docs by editing the markdown files in the [`docs`](https://github.com/smartcontractkit/mcms/tree/main/docs) directory.
+We use [Docsify](https://docsify.js.org) to generate our documentation. You can modify the docs by editing the markdown
+files in the [`docs`](https://github.com/smartcontractkit/mcms/tree/main/docs) directory.
 
 Run the local documentation server with:
 

@@ -5,6 +5,7 @@ tasks:
     desc: "Run Go lint checks"
     cmds:
       - golangci-lint run
+      - golangci-lint run --build-tags="e2e,test"
   fix:
     desc: "Fix Go lint issues"
     cmds:
@@ -13,3 +14,4 @@ tasks:
         gofmt -s -w .
         goimports -w .
         golangci-lint run --fix
+        golangci-lint run --fix --build-tags="e2e"
