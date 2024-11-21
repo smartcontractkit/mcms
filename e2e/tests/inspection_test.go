@@ -11,9 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -21,34 +18,22 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
-// Config defines the blockchain configuration
-type Config struct {
-	BlockchainA *blockchain.Input `toml:"evm_config" validate:"required"`
-	Settings    struct {
-		PrivateKey string `toml:"private_key" validate:"required"`
-	} `toml:"settings"`
-}
-
 // InspectionTestSuite defines the test suite
 type InspectionTestSuite struct {
 	suite.Suite
-	client          *ethclient.Client
 	contractAddress string
 	deployerKey     common.Address
 	signerAddresses []common.Address
 	auth            *bind.TransactOpts
-	TestSetup       *TestSetup
+	TestSetup
 }
 
 // SetupSuite runs before the test suite
 func (s *InspectionTestSuite) SetupSuite() {
-	s.TestSetup = InitializeTestSetup(s.T())
-	s.Require().NoError(err, "Failed to initialize test setup")
-	s.TestSetup = setup
+	s.TestSetup = *InitializeSharedTestSetup(s.T())
 
-	in, err := framework.Load[Config](s.T())
 	// Get deployer's private key
-	privateKeyHex := in.Settings.PrivateKey
+	privateKeyHex := s.Settings.PrivateKeys[0]
 	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
 	s.Require().NoError(err, "Invalid private key")
 
@@ -59,7 +44,7 @@ func (s *InspectionTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-	chainID, ok := new(big.Int).SetString(in.BlockchainA.ChainID, 10)
+	chainID, ok := new(big.Int).SetString(s.BlockchainA.ChainID, 10)
 	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
@@ -72,11 +57,11 @@ func (s *InspectionTestSuite) SetupSuite() {
 
 // deployContract is a helper to deploy the contract
 func (s *InspectionTestSuite) deployContract() string {
-	address, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.client)
+	address, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.Client)
 	require.NoError(s.T(), err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(context.Background(), s.client, tx)
+	receipt, err := bind.WaitMined(context.Background(), s.Client, tx)
 	require.NoError(s.T(), err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -88,7 +73,7 @@ func (s *InspectionTestSuite) deployContract() string {
 
 	tx, err = instance.SetConfig(s.auth, s.signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
 	s.Require().NoError(err, "Failed to set contract configuration")
-	receipt, err = bind.WaitMined(context.Background(), s.client, tx)
+	receipt, err = bind.WaitMined(context.Background(), s.Client, tx)
 	s.Require().NoError(err, "Failed to mine configuration transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -97,7 +82,7 @@ func (s *InspectionTestSuite) deployContract() string {
 
 // TestGetConfig checks contract configuration
 func (s *InspectionTestSuite) TestGetConfig() {
-	inspector := evm.NewInspector(s.client)
+	inspector := evm.NewInspector(s.Client)
 	config, err := inspector.GetConfig(s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get contract configuration")
@@ -114,7 +99,7 @@ func (s *InspectionTestSuite) TestGetConfig() {
 
 // TestGetOpCount checks contract operation count
 func (s *InspectionTestSuite) TestGetOpCount() {
-	inspector := evm.NewInspector(s.client)
+	inspector := evm.NewInspector(s.Client)
 	opCount, err := inspector.GetOpCount(s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get op count")
@@ -123,7 +108,7 @@ func (s *InspectionTestSuite) TestGetOpCount() {
 
 // TestGetRoot checks contract root
 func (s *InspectionTestSuite) TestGetRoot() {
-	inspector := evm.NewInspector(s.client)
+	inspector := evm.NewInspector(s.Client)
 	root, validUntil, err := inspector.GetRoot(s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get root from contract")
@@ -133,7 +118,7 @@ func (s *InspectionTestSuite) TestGetRoot() {
 
 // TestGetRootMetadata checks contract root metadata
 func (s *InspectionTestSuite) TestGetRootMetadata() {
-	inspector := evm.NewInspector(s.client)
+	inspector := evm.NewInspector(s.Client)
 	metadata, err := inspector.GetRootMetadata(s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get root metadata from contract")

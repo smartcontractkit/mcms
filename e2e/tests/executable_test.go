@@ -11,13 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/smartcontractkit/mcms"
-	"github.com/smartcontractkit/mcms/e2e/testdata/anvil"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -29,32 +25,19 @@ import (
 // ExecutionTestSuite defines the test suite
 type ExecutionTestSuite struct {
 	suite.Suite
-	client           *ethclient.Client
 	mcmsContract     *bindings.ManyChainMultiSig
 	deployerKey      common.Address
 	signerAddresses  []common.Address
 	auth             *bind.TransactOpts
 	timelockContract *bindings.RBACTimelock
+	TestSetup
 }
 
 // SetupSuite runs before the test suite
 func (s *ExecutionTestSuite) SetupSuite() {
-	// Load the configuration
-	in, err := framework.Load[Config](s.T())
-	s.Require().NoError(err, "Failed to load configuration")
-
-	// Initialize the blockchain
-	bc, err := blockchain.NewBlockchainNetwork(in.BlockchainA)
-	s.Require().NoError(err, "Failed to initialize blockchain network")
-
-	// Initialize Ethereum client
-	wsURL := bc.Nodes[0].HostWSUrl
-	client, err := ethclient.DialContext(context.Background(), wsURL)
-	s.Require().NoError(err, "Failed to initialize Ethereum client")
-	s.client = client
-
+	s.TestSetup = *InitializeSharedTestSetup(s.T())
 	// Get deployer's private key
-	privateKeyHex := in.Settings.PrivateKey
+	privateKeyHex := s.Settings.PrivateKeys[0]
 	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
 	s.Require().NoError(err, "Invalid private key")
 
@@ -65,7 +48,7 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-	chainID, ok := new(big.Int).SetString(in.BlockchainA.ChainID, 10)
+	chainID, ok := new(big.Int).SetString(s.BlockchainA.ChainID, 10)
 	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
@@ -79,11 +62,11 @@ func (s *ExecutionTestSuite) SetupSuite() {
 
 // deployContract is a helper to deploy the contract
 func (s *ExecutionTestSuite) deployMCMSContract() *bindings.ManyChainMultiSig {
-	_, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.client)
+	_, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.Client)
 	s.Require().NoError(err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(context.Background(), s.client, tx)
+	receipt, err := bind.WaitMined(context.Background(), s.Client, tx)
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -95,7 +78,7 @@ func (s *ExecutionTestSuite) deployMCMSContract() *bindings.ManyChainMultiSig {
 
 	tx, err = instance.SetConfig(s.auth, s.signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
 	s.Require().NoError(err, "Failed to set contract configuration")
-	receipt, err = bind.WaitMined(context.Background(), s.client, tx)
+	receipt, err = bind.WaitMined(context.Background(), s.Client, tx)
 	s.Require().NoError(err, "Failed to mine configuration transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -106,7 +89,7 @@ func (s *ExecutionTestSuite) deployMCMSContract() *bindings.ManyChainMultiSig {
 func (s *ExecutionTestSuite) deployTimelockContract(mcmsAddress string) *bindings.RBACTimelock {
 	_, tx, instance, err := bindings.DeployRBACTimelock(
 		s.auth,
-		s.client,
+		s.Client,
 		big.NewInt(0),
 		common.HexToAddress(mcmsAddress),
 		[]common.Address{},
@@ -117,7 +100,7 @@ func (s *ExecutionTestSuite) deployTimelockContract(mcmsAddress string) *binding
 	s.Require().NoError(err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(context.Background(), s.client, tx)
+	receipt, err := bind.WaitMined(context.Background(), s.Client, tx)
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -125,7 +108,7 @@ func (s *ExecutionTestSuite) deployTimelockContract(mcmsAddress string) *binding
 }
 
 // TestGetConfig checks contract configuration
-func (s *ExecutionTestSuite) TestExecute() {
+func (s *ExecutionTestSuite) TestExecuteProposal() {
 	opts := &bind.CallOpts{
 		Context:     context.Background(), // Use a proper context
 		From:        s.auth.From,          // Set the "from" address (optional)
@@ -174,7 +157,7 @@ func (s *ExecutionTestSuite) TestExecute() {
 
 	// Gen caller map for easy access (we can use geth chainselector for anvil)
 	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
-		chaintest.Chain1Selector: evm.NewInspector(s.client),
+		chaintest.Chain1Selector: evm.NewInspector(s.Client),
 	}
 
 	// Construct executor
@@ -182,7 +165,7 @@ func (s *ExecutionTestSuite) TestExecute() {
 	s.Require().NoError(err)
 	s.Require().NotNil(signable)
 
-	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(anvil.Accounts[1].PrivateKey)))
+	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])))
 	s.Require().NoError(err)
 
 	// Validate the signatures
@@ -198,7 +181,7 @@ func (s *ExecutionTestSuite) TestExecute() {
 	executors := map[mcmtypes.ChainSelector]sdk.Executor{
 		chaintest.Chain1Selector: evm.NewExecutor(
 			encoders[chaintest.Chain1Selector].(*evm.Encoder),
-			s.client,
+			s.Client,
 			s.auth,
 		),
 	}
@@ -212,7 +195,7 @@ func (s *ExecutionTestSuite) TestExecute() {
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 
-	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.client, common.HexToHash(txHash))
+	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -226,7 +209,7 @@ func (s *ExecutionTestSuite) TestExecute() {
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.client, common.HexToHash(txHash))
+	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 

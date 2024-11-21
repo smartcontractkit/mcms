@@ -20,6 +20,7 @@ func ParsePrivateKey(privateKeyHex string) *ecdsa.PrivateKey {
 	if err != nil {
 		log.Fatalf("Failed to parse private key: %v", err)
 	}
+
 	return privateKey
 }
 
