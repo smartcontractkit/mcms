@@ -15,7 +15,6 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -82,11 +81,11 @@ func (s *InspectionTestSuite) SetupSuite() {
 // deployContract is a helper to deploy the contract
 func (s *InspectionTestSuite) deployContract() string {
 	address, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.client)
-	require.NoError(s.T(), err, "Failed to deploy contract")
+	s.Require().NoError(err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(context.Background(), s.client, tx)
-	require.NoError(s.T(), err, "Failed to mine deployment transaction")
+	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Set configurations
@@ -152,5 +151,7 @@ func (s *InspectionTestSuite) TestGetRootMetadata() {
 
 // Run the test suite
 func TestEVMTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(InspectionTestSuite))
 }

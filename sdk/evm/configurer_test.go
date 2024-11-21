@@ -10,6 +10,7 @@ import (
 	evmTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	evm_mocks "github.com/smartcontractkit/mcms/sdk/evm/mocks"
@@ -26,14 +27,14 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		mcmAddr    string
-		auth       *bind.TransactOpts
-		cfg        *types.Config
-		clearRoot  bool
-		mockSetup  func(m *evm_mocks.ContractDeployBackend)
-		wantTxHash string
-		wantErr    error
+		name      string
+		mcmAddr   string
+		auth      *bind.TransactOpts
+		cfg       *types.Config
+		clearRoot bool
+		mockSetup func(m *evm_mocks.ContractDeployBackend)
+		want      string
+		wantErr   error
 	}{
 		{
 			name:    "success",
@@ -86,8 +87,8 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
 					Return(uint64(50000), nil)
 			},
-			wantTxHash: "0x861a7de18a94850d8af57088385267ebd680a6397ad5be37bf0851371b051942",
-			wantErr:    nil,
+			want:    "0x861a7de18a94850d8af57088385267ebd680a6397ad5be37bf0851371b051942",
+			wantErr: nil,
 		},
 		{
 			name:    "failure - SendTransaction fails",
@@ -131,13 +132,12 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
 					Return(uint64(50000), nil)
 			},
-			wantTxHash: "",
-			wantErr:    errors.New("transaction failed"),
+			want:    "",
+			wantErr: errors.New("transaction failed"),
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt // Capture range variable
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -157,12 +157,12 @@ func TestConfigurer_SetConfig(t *testing.T) {
 
 			// Assert the results
 			if tt.wantErr != nil {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr.Error())
 				assert.Equal(t, "", txHash)
 			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.wantTxHash, txHash)
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, txHash)
 			}
 
 			// Assert that all expectations were met
