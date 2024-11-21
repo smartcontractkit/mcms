@@ -5,5 +5,5 @@ import (
 )
 
 type Configurer interface {
-	SetConfig(cfg *types.Config, clearRoot bool) (string, error)
+	SetConfig(mcmAddr string, cfg *types.Config, clearRoot bool) (string, error)
 }

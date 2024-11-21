@@ -13,29 +13,30 @@ var _ sdk.Configurer = &Configurer{}
 
 // Configurer configures the MCM contract for EVM chains.
 type Configurer struct {
-	mcmAddr string
-	client  ContractDeployBackend
-	auth    *bind.TransactOpts
+	client ContractDeployBackend
+	auth   *bind.TransactOpts
 }
 
 // NewConfigurer creates a new Configurer for EVM chains.
-func NewConfigurer(mcmAddr string, client ContractDeployBackend, auth *bind.TransactOpts,
+func NewConfigurer(client ContractDeployBackend, auth *bind.TransactOpts,
 ) *Configurer {
 	return &Configurer{
-		mcmAddr: mcmAddr,
-		client:  client,
-		auth:    auth,
+		client: client,
+		auth:   auth,
 	}
 }
 
 // SetConfig sets the configuration for the MCM contract on the EVM chain.
-func (c *Configurer) SetConfig(cfg *types.Config, clearRoot bool) (string, error) {
-	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(c.mcmAddr), c.client)
+func (c *Configurer) SetConfig(mcmAddr string, cfg *types.Config, clearRoot bool) (string, error) {
+	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddr), c.client)
 	if err != nil {
 		return "", err
 	}
 
 	groupQuorums, groupParents, signerAddrs, signerGroups, err := extractSetConfigInputs(cfg)
+	if err != nil {
+		return "", err
+	}
 
 	tx, err := mcmsC.SetConfig(
 		c.auth,
