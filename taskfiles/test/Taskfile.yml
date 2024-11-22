@@ -14,10 +14,10 @@ tasks:
 
   e2e:
     desc: "Run e2e tests"
-    vars:
+    env:
       CTF_CONFIGS: "{{ .CTF_CONFIGS | default \"../anvil-config.toml\" }}"
     cmds:
-      - CTF_CONFIGS={{.CTF_CONFIGS}} go test -tags=e2e {{.CLI_ARGS}} ./e2e/tests...
+      - CTF_CONFIGS=$CTF_CONFIGS go test -tags=e2e {{.CLI_ARGS}} ./e2e/tests...
 
   coverage:
     desc: "Run unit test suite with coverage"
