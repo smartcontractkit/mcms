@@ -68,7 +68,7 @@ jobs:
       - name: Build and test
         uses: smartcontractkit/.github/actions/ci-test-go@7a4d99cb349ea8f25195d2390d157942031f8a57
         with:
-          go-test-cmd: CTF_CONFIGS=../ci/config-ci.toml go test -tags=e2e -v ./e2e/...
+          go-test-cmd: CTF_CONFIGS=../anvil-config.toml go test -tags=e2e -v ./e2e/tests/...
           use-go-cache: true
           # grafana inputs
           metrics-job-name: ci-test

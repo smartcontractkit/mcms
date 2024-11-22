@@ -4,10 +4,23 @@ tasks:
   default:
     desc: "Run the entire test suite"
     cmds:
+      - task: unit
+      - task: e2e
+
+  unit:
+    desc: "Run unit tests"
+    cmds:
       - go test {{.CLI_ARGS}} ./...
 
+  e2e:
+    desc: "Run e2e tests"
+    vars:
+      CTF_CONFIGS: "{{ .CTF_CONFIGS | default \"../anvil-config.toml\" }}"
+    cmds:
+      - CTF_CONFIGS={{.CTF_CONFIGS}} go test -tags=e2e {{.CLI_ARGS}} ./e2e/tests...
+
   coverage:
-    desc: "Run the entire test suite with coverage"
+    desc: "Run unit test suite with coverage"
     cmds:
       - go test -coverprofile=coverage.out -covermode count ./...
       - go tool cover -html=coverage.out
