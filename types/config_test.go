@@ -347,3 +347,59 @@ func Test_Config_CanSetRoot(t *testing.T) {
 		})
 	}
 }
+
+func Test_unorderedArrayEquals(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		a, b []common.Address
+		want bool
+	}{
+		{
+			name: "success: equal arrays in same order",
+			a:    []common.Address{signer1, signer2, signer3},
+			b:    []common.Address{signer1, signer2, signer3},
+			want: true,
+		},
+		{
+			name: "success: equal arrays in different order",
+			a:    []common.Address{signer1, signer2, signer3},
+			b:    []common.Address{signer3, signer1, signer2},
+			want: true,
+		},
+		{
+			name: "failure: different lengths",
+			a:    []common.Address{signer1, signer2},
+			b:    []common.Address{signer1, signer2, signer3},
+			want: false,
+		},
+		{
+			name: "failure: different elements",
+			a:    []common.Address{signer1, signer2, signer3},
+			b:    []common.Address{signer1, signer2, signer4},
+			want: false,
+		},
+		{
+			name: "success: both empty arrays",
+			a:    []common.Address{},
+			b:    []common.Address{},
+			want: true,
+		},
+		{
+			name: "failure: one empty array",
+			a:    []common.Address{signer1},
+			b:    []common.Address{},
+			want: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := unorderedArrayEquals(tt.a, tt.b)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
