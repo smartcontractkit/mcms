@@ -52,7 +52,7 @@ func (s *SigningTestSuite) SetupSuite() {
 
 func (s SigningTestSuite) TestReadAndSign() {
 	// Read the proposal from the file
-	file, err := os.Open("fixtures/proposal-testing.json")
+	file, err := os.Open("e2e/fixtures/proposal-testing.json")
 	if err != nil {
 		log.Fatalf("Failed to open file: %v", err)
 	}
