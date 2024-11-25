@@ -45,6 +45,6 @@ func main() {
   if err != nil {
     log.Fatalf("failed to set config: %v", err)
   }
-  log.Printf("set config tx hash: %s", txHash)
+  log.Printf("set config tx hash: %s\n", txHash)
 }
 ```

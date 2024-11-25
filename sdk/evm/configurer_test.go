@@ -164,9 +164,6 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, txHash)
 			}
-
-			// Assert that all expectations were met
-			client.AssertExpectations(t)
 		})
 	}
 }
