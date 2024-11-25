@@ -8,7 +8,7 @@ require (
 	github.com/smartcontractkit/chain-selectors v1.0.28
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.2.4
 	github.com/spf13/cast v1.7.0
-	github.com/stretchr/testify v1.9.0
+	github.com/stretchr/testify v1.10.0
 	golang.org/x/tools v0.27.0
 )
 
