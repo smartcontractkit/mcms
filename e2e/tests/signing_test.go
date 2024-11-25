@@ -4,16 +4,16 @@
 package e2e
 
 import (
+	"encoding/json"
+	"io"
 	"log"
 	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework"
-
 	"github.com/ethereum/go-ethereum/ethclient"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -39,18 +39,9 @@ type SigningTestSuite struct {
 
 // SetupSuite runs before the test suite
 func (s *SigningTestSuite) SetupSuite() {
-	in, err := framework.Load[Config](s.T())
-	require.NoError(s.T(), err, "Failed to load configuration")
-	// Load the proposal from a file
-	// Create the file
-	file, err := os.Create("proposal-testing.json")
-	if err != nil {
-		log.Fatalf("Failed to create file: %v", err)
-	}
-	defer file.Close()
-
+	s.TestSetup = *InitializeSharedTestSetup(s.T())
 	// convert chain ID string from config to number
-	chainIDNum, ok := new(big.Int).SetString(in.BlockchainA.ChainID, 10)
+	chainIDNum, ok := new(big.Int).SetString(s.BlockchainA.ChainID, 10)
 	require.True(s.T(), ok, "Failed to parse chain ID")
 
 	chainSelector, err := chain_selectors.SelectorFromChainId(chainIDNum.Uint64())
@@ -61,7 +52,7 @@ func (s *SigningTestSuite) SetupSuite() {
 
 func (s SigningTestSuite) TestReadAndSign() {
 	// Read the proposal from the file
-	file, err := os.Open("proposal-testing.json")
+	file, err := os.Open("fixtures/proposal-testing.json")
 	if err != nil {
 		log.Fatalf("Failed to open file: %v", err)
 	}
@@ -78,5 +69,40 @@ func (s SigningTestSuite) TestReadAndSign() {
 		mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])),
 	)
 	s.Require().NoError(err)
-	s.Require().NotNil(signature)
+	expected := types.Signature{
+		R: common.HexToHash("0x51c12e8721bf27f35a0006b3e3ebd0dac111c4bb62dce7b0bd7a3475b2f708a5"),
+		S: common.HexToHash("0x28f29f2a32f4cd9322883fa252742894cc2796a6fbe9cdabd0c6d996eed452f9"),
+		V: 0,
+	}
+	s.Require().Equal(expected, signature)
+	// Write the proposal back to a temp file
+	tmpFile, err := os.CreateTemp("", "signed-proposal-*.json")
+	s.Require().NoError(err)
+	defer os.Remove(tmpFile.Name()) // Clean up the temp file after the test
+	err = mcms.WriteProposal(tmpFile, proposal)
+	s.Require().NoError(err)
+
+	// Read back the written proposal
+	tmpFile.Seek(0, io.SeekStart) // Reset file pointer to the start
+	writtenProposal, err := mcms.NewProposal(tmpFile)
+	s.Require().NoError(err)
+
+	// Validate the appended signature
+	signedProposalJSON, err := json.Marshal(writtenProposal)
+	s.Require().NoError(err)
+
+	var parsedProposal map[string]interface{}
+	err = json.Unmarshal(signedProposalJSON, &parsedProposal)
+	s.Require().NoError(err)
+
+	// Ensure the signature is present and matches
+	signatures, ok := parsedProposal["signatures"].([]interface{})
+	s.Require().True(ok, "Signatures field is missing or of the wrong type")
+	s.Require().NotEmpty(signatures, "Signatures field is empty")
+
+	// Verify the appended signature matches the expected value
+	appendedSignature := signatures[len(signatures)-1].(map[string]interface{})
+	s.Require().Equal(expected.R.Hex(), appendedSignature["R"])
+	s.Require().Equal(expected.S.Hex(), appendedSignature["S"])
+	s.Require().Equal(float64(expected.V), appendedSignature["V"])
 }
