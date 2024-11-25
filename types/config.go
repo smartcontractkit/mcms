@@ -70,10 +70,6 @@ func (c *Config) Equals(other *Config) bool {
 		return false
 	}
 
-	if len(c.Signers) != len(other.Signers) {
-		return false
-	}
-
 	// Compare signers (order doesn't matter)
 	if !unorderedArrayEquals(c.Signers, other.Signers) {
 		return false
@@ -155,28 +151,21 @@ func unorderedArrayEquals[T comparable](a, b []T) bool {
 		return false
 	}
 
-	aMap := make(map[T]struct{})
-	bMap := make(map[T]struct{})
+	countMap := make(map[T]int)
 
-	for _, i := range a {
-		aMap[i] = struct{}{}
+	// Count occurrences in the first slice
+	for _, elem := range a {
+		countMap[elem]++
 	}
 
-	for _, i := range b {
-		bMap[i] = struct{}{}
-	}
-
-	for _, i := range a {
-		if _, ok := bMap[i]; !ok {
+	// Subtract occurrences using the second slice
+	for _, elem := range b {
+		if countMap[elem] == 0 {
 			return false
 		}
+		countMap[elem]--
 	}
 
-	for _, i := range b {
-		if _, ok := aMap[i]; !ok {
-			return false
-		}
-	}
-
+	// If slices are equal, all counts should be zero
 	return true
 }

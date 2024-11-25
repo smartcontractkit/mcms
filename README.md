@@ -48,14 +48,23 @@ Run the entire test suite with:
 
 More `test` commands can be found by running `task -l`
 
-### Running E2E tests
+### Running Unit Tests
 
-We are using [Chainlink Testing Framework](https://github.com/smartcontractkit/chainlink-testing-framework) for E2E
-tests, so you'll need to setup a `toml` you can use the `anvil-config.toml.example` for evm anvil client and create in the `e2e` `anvil-config.toml` file.
+`task test:unit`
 
-```shell
-CTF_CONFIGS=../anvil-config.toml go test -tags=e2e -v ./e2e/...
-```
+### Running E2E Tests
+
+We use [Chainlink Testing Framework](https://github.com/smartcontractkit/chainlink-testing-framework) for E2E tests. Run them with:
+
+`task test:e2e`
+
+For verbose output just pass -v as command argument:
+
+`task test:e2e -- -v`
+
+By default, we use `anvil` evm. If you want to run e2e tests with specific configuration different chain etc. you need to specify path to the config:
+
+`task test:e2e CTF_CONFIGS=../custom-config.toml`
 
 ### Running Linters
 
