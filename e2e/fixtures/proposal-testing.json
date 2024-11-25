@@ -1,0 +1,28 @@
+{
+  "version": "v1",
+  "kind": "Proposal",
+  "validUntil": 1794610529,
+  "signatures": null,
+  "overridePreviousRoot": false,
+  "chainMetadata": {
+    "3379446385462418246": {
+      "startingOpCount": 0,
+      "mcmAddress": "0x123"
+    }
+  },
+  "description": "proposal for e2e tests",
+  "operations": [
+    {
+      "chainSelector": 3379446385462418246,
+      "transaction": {
+        "contractType": "some-contract",
+        "tags": null,
+        "to": "0x1c",
+        "data": "MHgw",
+        "additionalFields": {
+          "value": 100
+        }
+      }
+    }
+  ]
+}
