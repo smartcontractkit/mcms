@@ -9,6 +9,8 @@ import (
 	"log"
 	"math/big"
 	"os"
+	"path/filepath"
+	"runtime"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -52,7 +54,12 @@ func (s *SigningTestSuite) SetupSuite() {
 
 func (s SigningTestSuite) TestReadAndSign() {
 	// Read the proposal from the file
-	file, err := os.Open("e2e/fixtures/proposal-testing.json")
+	_, filename, _, ok := runtime.Caller(0)
+	s.Require().True(ok)
+	projectRoot := filepath.Dir(filepath.Dir(filepath.Dir(filename)))
+	fixturePath := filepath.Join(projectRoot, "e2e", "fixtures", "proposal-testing.json")
+
+	file, err := os.Open(fixturePath)
 	if err != nil {
 		log.Fatalf("Failed to open file: %v", err)
 	}
