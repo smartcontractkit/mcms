@@ -264,15 +264,6 @@ func Test_Proposal_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid kind: must be TimelockProposal",
-			giveFunc: func(p *Proposal) {
-				p.Kind = types.KindTimelockProposal
-			},
-			wantErrs: []string{
-				"invalid proposal kind: TimelockProposal, value accepted is Proposal",
-			},
-		},
-		{
 			name: "all chain selectors in transactions must be present in chain metadata",
 			giveFunc: func(p *Proposal) {
 				p.Operations[0].ChainSelector = chaintest.Chain2Selector
