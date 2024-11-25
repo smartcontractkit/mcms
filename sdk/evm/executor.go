@@ -84,6 +84,9 @@ func (e *Executor) SetRoot(
 		transformHashes(proof),
 		transformSignatures(sortedSignatures),
 	)
+	if err != nil {
+		return "", err
+	}
 
 	return tx.Hash().Hex(), err
 }

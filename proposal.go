@@ -80,10 +80,6 @@ func (p *Proposal) Validate() error {
 		return err
 	}
 
-	if p.Kind != types.KindProposal {
-		return NewInvalidProposalKindError(p.Kind, types.KindProposal)
-	}
-
 	// Validate all chains in operations have an entry in chain metadata
 	for _, op := range p.Operations {
 		if _, ok := p.ChainMetadata[op.ChainSelector]; !ok {
