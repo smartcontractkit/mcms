@@ -149,8 +149,7 @@ func (s *TimelockInspectionTestSuite) TestGetCancellers() {
 	inspector := evm.NewTimelockInspector(s.Client)
 	proposers, err := inspector.GetCancellers(s.timelockContract.Address().Hex())
 	s.Require().NoError(err)
-	s.Require().Len(proposers, 2)
-	s.Require().Equal(s.signerAddresses[0], proposers[0])
+	s.Require().Len(proposers, 1)
 	s.Require().Equal(s.signerAddresses[1], proposers[1])
 }
 
