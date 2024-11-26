@@ -139,9 +139,7 @@ func (s *TimelockInspectionTestSuite) TestGetBypassers() {
 	s.Require().NoError(err)
 	s.Require().Len(proposers, 1) // Ensure lengths match
 	// Check that all elements of signerAddresses are in proposers
-	s.Require().Contains(proposers, s.signerAddresses[0])
 	s.Require().Contains(proposers, s.signerAddresses[1])
-
 }
 
 // TestGetCancellers gets the list of cancellers
@@ -149,7 +147,8 @@ func (s *TimelockInspectionTestSuite) TestGetCancellers() {
 	inspector := evm.NewTimelockInspector(s.Client)
 	proposers, err := inspector.GetCancellers(s.timelockContract.Address().Hex())
 	s.Require().NoError(err)
-	s.Require().Len(proposers, 1)
+	s.Require().Len(proposers, 2)
+	s.Require().Equal(s.signerAddresses[0], proposers[0])
 	s.Require().Equal(s.signerAddresses[1], proposers[1])
 }
 
