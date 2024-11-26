@@ -51,6 +51,9 @@ func (e *Executor) ExecuteOperation(
 		bindOp,
 		transformHashes(proof),
 	)
+	if err != nil {
+		return "", err
+	}
 
 	return tx.Hash().Hex(), err
 }
