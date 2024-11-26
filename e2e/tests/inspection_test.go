@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -58,11 +57,11 @@ func (s *InspectionTestSuite) SetupSuite() {
 // deployContract is a helper to deploy the contract
 func (s *InspectionTestSuite) deployContract() string {
 	address, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.Client)
-	require.NoError(s.T(), err, "Failed to deploy contract")
+	s.Require().NoError(err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(context.Background(), s.Client, tx)
-	require.NoError(s.T(), err, "Failed to mine deployment transaction")
+	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Set configurations
