@@ -13,6 +13,7 @@ import (
 func TestE2ESuite(t *testing.T) {
 	t.Parallel()
 
+	suite.Run(t, new(TimelockInspectionTestSuite))
 	suite.Run(t, new(InspectionTestSuite))
 	suite.Run(t, new(ExecutionTestSuite))
 	suite.Run(t, new(SetRootTestSuite))
