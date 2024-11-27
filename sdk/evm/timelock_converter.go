@@ -52,7 +52,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperation(
 		return types.Operation{}, common.Hash{}, errAbi
 	}
 
-	operationId, errHash := hashOperationBatch(calls, predecessor, salt)
+	operationId, errHash := HashOperationBatch(calls, predecessor, salt)
 	if errHash != nil {
 		return types.Operation{}, common.Hash{}, errHash
 	}
@@ -89,9 +89,9 @@ func (t *TimelockConverter) ConvertBatchToChainOperation(
 	return op, operationId, nil
 }
 
-// hashOperationBatch replicates the hash calculation from Solidity
+// HashOperationBatch replicates the hash calculation from Solidity
 // TODO: see if there's an easier way to do this using the gethwrappers
-func hashOperationBatch(calls []bindings.RBACTimelockCall, predecessor, salt [32]byte) (common.Hash, error) {
+func HashOperationBatch(calls []bindings.RBACTimelockCall, predecessor, salt [32]byte) (common.Hash, error) {
 	const abi = `[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct Call[]","name":"calls","type":"tuple[]"},{"internalType":"bytes32","name":"predecessor","type":"bytes32"},{"internalType":"bytes32","name":"salt","type":"bytes32"}]`
 	encoded, err := abiUtils.ABIEncode(abi, calls, predecessor, salt)
 	if err != nil {
