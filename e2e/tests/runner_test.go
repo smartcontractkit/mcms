@@ -17,4 +17,5 @@ func TestE2ESuite(t *testing.T) {
 	suite.Run(t, new(InspectionTestSuite))
 	suite.Run(t, new(ExecutionTestSuite))
 	suite.Run(t, new(SetRootTestSuite))
+	suite.Run(t, new(SigningTestSuite))
 }
