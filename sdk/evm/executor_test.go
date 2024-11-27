@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -95,6 +96,55 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			},
 			wantTxHash: "0xc381f411283719726be93f957b9e3ca7d8041725c22fefab8dcf132770adf7a9",
 			wantErr:    nil,
+		},
+		{
+			name: "failure in tx execution",
+			encoder: &evm.Encoder{
+				ChainSelector: chaintest.Chain1Selector,
+			},
+			auth: &bind.TransactOpts{
+				Context: context.Background(),
+				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+					mockTx := evmTypes.NewTransaction(
+						1,
+						common.HexToAddress("0xMockedAddress"),
+						big.NewInt(1000000000000000000),
+						21000,
+						big.NewInt(20000000000),
+						nil,
+					)
+
+					return mockTx, nil
+				},
+			},
+			metadata: types.ChainMetadata{
+				MCMAddress: "0xAddress",
+			},
+			nonce: 1,
+			op: types.Operation{
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: types.Transaction{
+					To:               "0xTo",
+					Data:             []byte{1, 2, 3},
+					AdditionalFields: json.RawMessage(`{"value": 0}`)},
+			},
+			mockSetup: func(m *evm_mocks.ContractDeployBackend) {
+				// Successful tx send
+				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("error during tx send"))
+				m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
+					Return(&evmTypes.Header{}, nil)
+				m.EXPECT().SuggestGasPrice(mock.Anything).
+					Return(big.NewInt(100000000), nil)
+				m.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
+					Return([]byte("0x01"), nil)
+				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
+					Return(uint64(50000), nil)
+				m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
+					Return(uint64(1), nil)
+			},
+			wantTxHash: "",
+			wantErr:    fmt.Errorf("error during tx send"),
 		},
 		{
 			name:       "failure - nil encoder",
@@ -206,6 +256,53 @@ func TestExecutor_SetRoot(t *testing.T) {
 			},
 			wantTxHash: "0xc381f411283719726be93f957b9e3ca7d8041725c22fefab8dcf132770adf7a9",
 			wantErr:    nil,
+		},
+		{
+			name: "failure in tx send",
+			encoder: &evm.Encoder{
+				ChainSelector: chaintest.Chain1Selector,
+			},
+			auth: &bind.TransactOpts{
+				Context: context.Background(),
+				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+					mockTx := evmTypes.NewTransaction(
+						1,
+						common.HexToAddress("0xMockedAddress"),
+						big.NewInt(1000000000000000000),
+						21000,
+						big.NewInt(20000000000),
+						nil,
+					)
+
+					return mockTx, nil
+				},
+			},
+			metadata: types.ChainMetadata{
+				MCMAddress: "0xAddress",
+			},
+			root:       [32]byte{1, 2, 3},
+			validUntil: 4130013354,
+			sortedSignatures: []types.Signature{
+				{},
+				{},
+			},
+			mockSetup: func(m *evm_mocks.ContractDeployBackend) {
+				// Successful tx send
+				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
+					Return(fmt.Errorf("error during tx send"))
+				m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
+					Return(&evmTypes.Header{}, nil)
+				m.EXPECT().SuggestGasPrice(mock.Anything).
+					Return(big.NewInt(100000000), nil)
+				m.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
+					Return([]byte("0x01"), nil)
+				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
+					Return(uint64(50000), nil)
+				m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
+					Return(uint64(1), nil)
+			},
+			wantTxHash: "",
+			wantErr:    fmt.Errorf("error during tx send"),
 		},
 		{
 			name:       "failure - nil encoder",
