@@ -76,6 +76,6 @@ func ReadFixture(path string) (*os.File, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to open fixture file: %w", err)
 	}
-	return file, nil
 
+	return file, nil
 }
