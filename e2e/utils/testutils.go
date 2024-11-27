@@ -4,7 +4,11 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"log"
+	"os"
+	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/ethereum/go-ethereum"
@@ -57,4 +61,20 @@ func WaitMinedWithTxHash(ctx context.Context, b bind.DeployBackend, txHash commo
 			// Continue polling
 		}
 	}
+}
+
+func ReadFixture(path string) (*os.File, error) {
+	_, filename, _, ok := runtime.Caller(0)
+	if !ok {
+		return nil, fmt.Errorf("Failed to get current file path")
+	}
+	projectRoot := filepath.Dir(filepath.Dir(filepath.Dir(filename)))
+	fixturePath := filepath.Join(projectRoot, "e2e", "fixtures", path)
+
+	file, err := os.Open(fixturePath)
+
+	if err != nil {
+		return nil, fmt.Errorf("Failed to open fixture file: %w", err)
+	}
+	return file, nil
 }
