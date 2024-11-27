@@ -36,6 +36,8 @@ type TestSetup struct {
 
 // InitializeSharedTestSetup ensures the TestSetup is initialized only once
 func InitializeSharedTestSetup(t *testing.T) *TestSetup {
+	t.Helper()
+
 	setupOnce.Do(func() {
 		in, err := framework.Load[Config](t)
 		if err != nil {
