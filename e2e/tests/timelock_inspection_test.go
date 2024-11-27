@@ -31,6 +31,17 @@ type TimelockInspectionTestSuite struct {
 	TestSetup
 }
 
+func (s *TimelockInspectionTestSuite) granRole(role [32]byte, address common.Address) {
+	tx, err := s.timelockContract.GrantRole(s.auth, role, address)
+	s.Require().NoError(err)
+	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, tx.Hash())
+	s.Require().NoError(err)
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, tx.Hash())
+	s.Require().NoError(err)
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+}
+
 // SetupSuite runs before the test suite
 func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.TestSetup = *InitializeSharedTestSetup(s.T())
@@ -66,51 +77,20 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	// Grant Some Roles for testing
 	// Proposers
 	role, err := s.timelockContract.PROPOSERROLE(&bind.CallOpts{})
-	s.Require().NoError(err)
-	tx, err := s.timelockContract.GrantRole(s.auth, role, s.signerAddresses[0])
-	s.Require().NoError(err)
-	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
-
+	s.granRole(role, s.signerAddresses[0])
 	// Executors
 	role, err = s.timelockContract.EXECUTORROLE(&bind.CallOpts{})
-	s.Require().NoError(err)
-	tx, err = s.timelockContract.GrantRole(s.auth, role, s.signerAddresses[0])
-	s.Require().NoError(err)
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
-
-	tx, err = s.timelockContract.GrantRole(s.auth, role, s.signerAddresses[1])
-	s.Require().NoError(err)
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+	s.granRole(role, s.signerAddresses[0])
+	s.granRole(role, s.signerAddresses[1])
 
 	// By passers
 	role, err = s.timelockContract.BYPASSERROLE(&bind.CallOpts{})
-	s.Require().NoError(err)
-	tx, err = s.timelockContract.GrantRole(s.auth, role, s.signerAddresses[1])
-	s.Require().NoError(err)
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+	s.granRole(role, s.signerAddresses[1])
 
 	// Cancellers
 	role, err = s.timelockContract.CANCELLERROLE(&bind.CallOpts{})
-	s.Require().NoError(err)
-	tx, err = s.timelockContract.GrantRole(s.auth, role, s.signerAddresses[0])
-	s.Require().NoError(err)
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
-
-	tx, err = s.timelockContract.GrantRole(s.auth, role, s.signerAddresses[1])
-	s.Require().NoError(err)
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+	s.granRole(role, s.signerAddresses[0])
+	s.granRole(role, s.signerAddresses[1])
 }
 
 // TestGetProposers gets the list of proposers
@@ -294,20 +274,25 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	s.Require().NoError(err)
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
-	// Execute the op and check it is done
-	time.Sleep(5 * time.Second) // Wait for the operation to be done
-	tx, err = timelockContract.ExecuteBatch(s.auth, calls, pred, salt)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(tx.Hash())
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+	// Use `Eventually` to wait for the transaction to be mined and the operation to be done
+	s.Require().Eventually(func() bool {
+		// Attempt to execute the batch
+		tx, err := timelockContract.ExecuteBatch(s.auth, calls, pred, salt)
+		s.Require().NoError(err, "Failed to execute batch")
+		s.Require().NotEmpty(tx.Hash(), "Transaction hash is empty")
 
-	// Check if the operation is done
-	inspector := evm.NewTimelockInspector(s.Client)
-	opID, err := evm.HashOperationBatch(calls, pred, salt)
-	s.Require().NoError(err)
-	isOpDone, err := inspector.IsOperationDone(timelockContract.Address().Hex(), opID)
-	s.Require().NoError(err)
-	s.Require().True(isOpDone)
+		// Wait for the transaction to be mined
+		receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, tx.Hash())
+		s.Require().NoError(err, "Failed to wait for transaction to be mined")
+		s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status, "Transaction was not successful")
+
+		// Check if the operation is done
+		inspector := evm.NewTimelockInspector(s.Client)
+		opID, err := evm.HashOperationBatch(calls, pred, salt)
+		s.Require().NoError(err, "Failed to compute operation ID")
+
+		isOpDone, err := inspector.IsOperationDone(timelockContract.Address().Hex(), opID)
+		s.Require().NoError(err, "Failed to check if operation is done")
+		return isOpDone
+	}, 5*time.Second, 500*time.Millisecond, "Operation was not completed in time")
 }
