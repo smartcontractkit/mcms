@@ -12,12 +12,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/smartcontractkit/mcms"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
-	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
@@ -32,7 +31,7 @@ type SetRootTestSuite struct {
 	signerAddresses  []common.Address
 	auth             *bind.TransactOpts
 	timelockContract *bindings.RBACTimelock
-	selector         mcmtypes.ChainSelector
+	chainSelector    mcmtypes.ChainSelector
 	TestSetup
 }
 
@@ -51,7 +50,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-	chainID, ok := new(big.Int).SetString(s.BlockchainA.ChainID, 10)
+	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, 10)
 	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
@@ -61,9 +60,9 @@ func (s *SetRootTestSuite) SetupSuite() {
 	s.mcmsContract = s.deployMCMSContract()
 	s.timelockContract = s.deployTimelockContract(s.mcmsContract.Address().String())
 	s.deployerKey = crypto.PubkeyToAddress(privateKey.PublicKey)
-	selector, err := chain_selectors.SelectorFromChainId(chainID.Uint64())
+	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.Settings.ChainFamily)
 	s.Require().NoError(err)
-	s.selector = mcmtypes.ChainSelector(selector)
+	s.chainSelector = mcmtypes.ChainSelector(chainDetails.ChainSelector)
 }
 
 // deployMCMSContract is a helper to deploy the MCMS contract with the required configuration for the test.
@@ -122,11 +121,11 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(
-			chaintest.Chain1Selector,
+			s.chainSelector,
 			mcmtypes.ChainMetadata{MCMAddress: s.mcmsContract.Address().String()},
 		).
 		AddOperation(mcmtypes.Operation{
-			ChainSelector: chaintest.Chain1Selector,
+			ChainSelector: s.chainSelector,
 			Transaction: mcmtypes.Transaction{
 				To:               s.signerAddresses[0].Hex(),
 				Data:             []byte("0x"),
@@ -136,15 +135,9 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	proposal, err := builder.Build()
 	s.Require().NoError(err)
 
-	// Construct executor
-	chainIDNum, ok := new(big.Int).SetString(s.BlockchainA.ChainID, 10)
-	s.Require().True(ok)
-	selector, err := chain_selectors.SelectorFromChainId(chainIDNum.Uint64())
-	s.Require().NoError(err)
-
 	// Sign the proposal
 	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
-		chaintest.Chain1Selector: evm.NewInspector(s.Client),
+		s.chainSelector: evm.NewInspector(s.Client),
 	}
 	signable, err := mcms.NewSignable(proposal, inspectors)
 	s.Require().NoError(err)
@@ -160,17 +153,17 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	// Create the chain MCMS proposal executor
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
-	encoder := encoders[mcmtypes.ChainSelector(selector)].(*evm.Encoder)
+	encoder := encoders[mcmtypes.ChainSelector(s.chainSelector)].(*evm.Encoder)
 
 	executor := evm.NewExecutor(encoder, s.Client, s.auth)
 	executorsMap := map[mcmtypes.ChainSelector]sdk.Executor{
-		mcmtypes.ChainSelector(selector): executor,
+		s.chainSelector: executor,
 	}
 	executable, err := mcms.NewExecutable(proposal, executorsMap)
 	s.Require().NoError(err)
 
 	// Call SetRoot
-	txHash, err := executable.SetRoot(mcmtypes.ChainSelector(selector))
+	txHash, err := executable.SetRoot(s.chainSelector)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 
@@ -190,14 +183,14 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 		SetAction(mcmtypes.TimelockActionSchedule).
 		SetDelay(mcmtypes.MustParseDuration("24h")).
 		SetTimelockAddresses(map[mcmtypes.ChainSelector]string{
-			chaintest.Chain1Selector: s.timelockContract.Address().String(),
+			s.chainSelector: s.timelockContract.Address().String(),
 		}).
 		AddChainMetadata(
-			chaintest.Chain1Selector,
+			s.chainSelector,
 			mcmtypes.ChainMetadata{MCMAddress: s.mcmsContract.Address().String()},
 		).
 		AddOperation(mcmtypes.BatchOperation{
-			ChainSelector: chaintest.Chain1Selector,
+			ChainSelector: s.chainSelector,
 			Transactions: []mcmtypes.Transaction{
 				{
 					To:               s.signerAddresses[0].Hex(),
@@ -218,7 +211,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 
 	// Sign proposal
 	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
-		chaintest.Chain1Selector: evm.NewInspector(s.Client),
+		s.chainSelector: evm.NewInspector(s.Client),
 	}
 	signable, err := mcms.NewSignable(&proposal, inspectors)
 	s.Require().NoError(err)
@@ -226,25 +219,19 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])))
 	s.Require().NoError(err)
 
-	// Construct executor
-	chainIDNum, ok := new(big.Int).SetString(s.BlockchainA.ChainID, 10)
-	s.Require().True(ok)
-	selector, err := chain_selectors.SelectorFromChainId(chainIDNum.Uint64())
-	s.Require().NoError(err)
-
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
-	encoder := encoders[mcmtypes.ChainSelector(selector)].(*evm.Encoder)
+	encoder := encoders[mcmtypes.ChainSelector(s.chainSelector)].(*evm.Encoder)
 
 	executor := evm.NewExecutor(encoder, s.Client, s.auth)
 	executorsMap := map[mcmtypes.ChainSelector]sdk.Executor{
-		mcmtypes.ChainSelector(selector): executor,
+		s.chainSelector: executor,
 	}
 	// Create the chain MCMS proposal executor
 	executable, err := mcms.NewExecutable(&proposal, executorsMap)
 	s.Require().NoError(err)
 	// Call SetRoot
-	txHash, err := executable.SetRoot(mcmtypes.ChainSelector(selector))
+	txHash, err := executable.SetRoot(s.chainSelector)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 	// Check receipt

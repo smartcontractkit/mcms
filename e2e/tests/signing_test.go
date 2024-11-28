@@ -6,13 +6,12 @@ package e2e
 import (
 	"encoding/json"
 	"io"
-	"math/big"
 	"os"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -20,7 +19,7 @@ import (
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
-	"github.com/smartcontractkit/mcms/types"
+	mcmtypes "github.com/smartcontractkit/mcms/types"
 )
 
 // SigningTestSuite tests signing a proposal and converting back to a file
@@ -33,31 +32,27 @@ type SigningTestSuite struct {
 	deployerKey     common.Address
 	signerAddresses []common.Address
 	auth            *bind.TransactOpts
-	selector        types.ChainSelector
+	chainSelector   mcmtypes.ChainSelector
 }
 
 // SetupSuite runs before the test suite
 func (s *SigningTestSuite) SetupSuite() {
 	s.TestSetup = *InitializeSharedTestSetup(s.T())
-	// convert chain ID string from config to number
-	chainIDNum, ok := new(big.Int).SetString(s.BlockchainA.ChainID, 10)
-	require.True(s.T(), ok, "Failed to parse chain ID")
 
-	chainSelector, err := chain_selectors.SelectorFromChainId(chainIDNum.Uint64())
-	require.NoError(s.T(), err, "Failed to get chain selector from chain ID")
-	s.selector = types.ChainSelector(chainSelector)
-
+	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.Settings.ChainFamily)
+	s.Require().NoError(err)
+	s.chainSelector = mcmtypes.ChainSelector(chainDetails.ChainSelector)
 }
 
-func (s SigningTestSuite) TestReadAndSign() {
+func (s *SigningTestSuite) TestReadAndSign() {
 	file, err := testutils.ReadFixture("proposal-testing.json")
 	defer file.Close()
 	s.Require().NoError(err)
 	proposal, err := mcms.NewProposal(file)
 	require.NoError(s.T(), err)
 	require.NotNil(s.T(), proposal)
-	inspectors := map[types.ChainSelector]sdk.Inspector{
-		s.selector: evm.NewInspector(s.client),
+	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
+		s.chainSelector: evm.NewInspector(s.client),
 	}
 	signable, err := mcms.NewSignable(proposal, inspectors)
 	require.NoError(s.T(), err)
@@ -65,7 +60,7 @@ func (s SigningTestSuite) TestReadAndSign() {
 		mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])),
 	)
 	s.Require().NoError(err)
-	expected := types.Signature{
+	expected := mcmtypes.Signature{
 		R: common.HexToHash("0x51c12e8721bf27f35a0006b3e3ebd0dac111c4bb62dce7b0bd7a3475b2f708a5"),
 		S: common.HexToHash("0x28f29f2a32f4cd9322883fa252742894cc2796a6fbe9cdabd0c6d996eed452f9"),
 		V: 0,
@@ -74,12 +69,20 @@ func (s SigningTestSuite) TestReadAndSign() {
 	// Write the proposal back to a temp file
 	tmpFile, err := os.CreateTemp("", "signed-proposal-*.json")
 	s.Require().NoError(err)
-	defer os.Remove(tmpFile.Name()) // Clean up the temp file after the test
+	defer func(name string) {
+		err := os.Remove(name)
+		if err != nil {
+
+		}
+	}(tmpFile.Name()) // Clean up the temp file after the test
 	err = mcms.WriteProposal(tmpFile, proposal)
 	s.Require().NoError(err)
 
 	// Read back the written proposal
-	tmpFile.Seek(0, io.SeekStart) // Reset file pointer to the start
+	_, err = tmpFile.Seek(0, io.SeekStart)
+	if err != nil {
+		return
+	} // Reset file pointer to the start
 	writtenProposal, err := mcms.NewProposal(tmpFile)
 	s.Require().NoError(err)
 
