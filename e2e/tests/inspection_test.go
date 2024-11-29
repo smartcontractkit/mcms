@@ -13,6 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
+	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
@@ -33,8 +34,7 @@ func (s *InspectionTestSuite) SetupSuite() {
 
 	// Get deployer's private key
 	privateKeyHex := s.Settings.PrivateKeys[0]
-	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
-	s.Require().NoError(err, "Invalid private key")
+	privateKey := testutils.ParsePrivateKey(privateKeyHex)
 
 	// Define signer addresses
 	s.signerAddresses = []common.Address{
@@ -43,7 +43,7 @@ func (s *InspectionTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-	chainID, ok := new(big.Int).SetString(s.BlockchainA.ChainID, 10)
+	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, 10)
 	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)

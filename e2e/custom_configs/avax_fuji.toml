@@ -1,0 +1,15 @@
+[evm_config.out]
+chain_id = "43113"
+use_cache = true
+
+[[evm_config.out.nodes]]
+docker_internal_http_url = "https://ava-testnet.public.blastapi.io/ext/bc/C/rpc"
+docker_internal_ws_url = "wss://avalanche-fuji-c-chain-rpc.publicnode.com"
+http_url = "https://ava-testnet.public.blastapi.io/ext/bc/C/rpc"
+ws_url = "wss://avalanche-fuji-c-chain-rpc.publicnode.com"
+
+[settings]
+chain_family = "evm"
+# Add valid private keys here or to the .env file in ./.env for the network as PRIVATE_KEYS_E2E=x,y variable.
+# Be aware that some of the tests might use two private keys (deployer and signer).
+private_keys = []

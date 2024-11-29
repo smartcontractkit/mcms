@@ -57,7 +57,7 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-	chainID, ok := new(big.Int).SetString(s.BlockchainA.ChainID, 10)
+	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, 10)
 	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)

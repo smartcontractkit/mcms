@@ -13,9 +13,10 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
+	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
-	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
@@ -26,6 +27,7 @@ import (
 type ExecutionTestSuite struct {
 	suite.Suite
 	mcmsContract     *bindings.ManyChainMultiSig
+	chainSelector    mcmtypes.ChainSelector
 	deployerKey      common.Address
 	signerAddresses  []common.Address
 	auth             *bind.TransactOpts
@@ -48,7 +50,7 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-	chainID, ok := new(big.Int).SetString(s.BlockchainA.ChainID, 10)
+	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, 10)
 	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
@@ -58,6 +60,10 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.mcmsContract = s.deployMCMSContract()
 	s.timelockContract = s.deployTimelockContract(s.mcmsContract.Address().Hex())
 	s.deployerKey = crypto.PubkeyToAddress(privateKey.PublicKey)
+
+	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.Settings.ChainFamily)
+	s.Require().NoError(err)
+	s.chainSelector = mcmtypes.ChainSelector(chainDetails.ChainSelector)
 }
 
 // deployContract is a helper to deploy the contract
@@ -107,7 +113,7 @@ func (s *ExecutionTestSuite) deployTimelockContract(mcmsAddress string) *binding
 	return instance
 }
 
-// TestGetConfig checks contract configuration
+// TestExecuteProposal executes a proposal after setting the root
 func (s *ExecutionTestSuite) TestExecuteProposal() {
 	opts := &bind.CallOpts{
 		Context:     context.Background(), // Use a proper context
@@ -132,7 +138,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 			Signatures:           []mcmtypes.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
-				chaintest.Chain1Selector: {
+				s.chainSelector: {
 					StartingOpCount: 0,
 					MCMAddress:      s.mcmsContract.Address().Hex(),
 				},
@@ -140,7 +146,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 		},
 		Operations: []mcmtypes.Operation{
 			{
-				ChainSelector: chaintest.Chain1Selector,
+				ChainSelector: s.chainSelector,
 				Transaction: evm.NewOperation(
 					common.HexToAddress(s.timelockContract.Address().Hex()),
 					grantRoleData,
@@ -157,7 +163,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 
 	// Gen caller map for easy access (we can use geth chainselector for anvil)
 	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
-		chaintest.Chain1Selector: evm.NewInspector(s.Client),
+		s.chainSelector: evm.NewInspector(s.Client),
 	}
 
 	// Construct executor
@@ -179,8 +185,8 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 
 	// Construct executors
 	executors := map[mcmtypes.ChainSelector]sdk.Executor{
-		chaintest.Chain1Selector: evm.NewExecutor(
-			encoders[chaintest.Chain1Selector].(*evm.Encoder),
+		s.chainSelector: evm.NewExecutor(
+			encoders[s.chainSelector].(*evm.Encoder),
 			s.Client,
 			s.auth,
 		),
@@ -191,7 +197,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NoError(err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(chaintest.Chain1Selector)
+	txHash, err := executable.SetRoot(s.chainSelector)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 

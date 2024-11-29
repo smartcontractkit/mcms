@@ -15,7 +15,7 @@ tasks:
   e2e:
     desc: "Run e2e tests"
     env:
-      CTF_CONFIGS: "{{ .CTF_CONFIGS | default \"../anvil-config.toml\" }}"
+      CTF_CONFIGS: "{{ .CTF_CONFIGS | default \"../config.toml\" }}"
     cmds:
       - CTF_CONFIGS=$CTF_CONFIGS go test -tags=e2e {{.CLI_ARGS}} ./e2e/tests...
 

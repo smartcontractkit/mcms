@@ -62,9 +62,10 @@ For verbose output just pass -v as command argument:
 
 `task test:e2e -- -v`
 
-By default, we use `anvil` evm. If you want to run e2e tests with specific configuration different chain etc. you need to specify path to the config:
+By default, we use `anvil` evm. If you want to run e2e tests with specific configuration different chain etc. you need to specify path to the config
+after default one to override or add to the previous values. It's pattern of CTF more [here](https://smartcontractkit.github.io/chainlink-testing-framework/framework/test_configuration_overrides.html):
 
-`task test:e2e CTF_CONFIGS=../custom-config.toml`
+`task test:e2e CTF_CONFIGS=../config.toml,../custom_configs/avax_fuji.toml`
 
 ### Running Linters
 

@@ -19,7 +19,7 @@ go.work
 go.work.sum
 
 # env file
-.env
+e2e/custom_configs/.env
 
 # Editor config directories
 .idea/
