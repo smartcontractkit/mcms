@@ -8,11 +8,9 @@ import (
 	"io"
 	"os"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/smartcontractkit/mcms"
@@ -27,12 +25,8 @@ type SigningTestSuite struct {
 	suite.Suite
 	TestSetup
 
-	client          *ethclient.Client
-	contractAddress string
-	deployerKey     common.Address
-	signerAddresses []common.Address
-	auth            *bind.TransactOpts
-	chainSelector   mcmtypes.ChainSelector
+	client        *ethclient.Client
+	chainSelector mcmtypes.ChainSelector
 }
 
 // SetupSuite runs before the test suite
@@ -46,16 +40,22 @@ func (s *SigningTestSuite) SetupSuite() {
 
 func (s *SigningTestSuite) TestReadAndSign() {
 	file, err := testutils.ReadFixture("proposal-testing.json")
-	defer file.Close()
+	s.Require().NoError(err, "Failed to read fixture") // Check immediately after ReadFixture
+	defer func(file *os.File) {
+		if file != nil {
+			err = file.Close()
+			s.Require().NoError(err, "Failed to close file")
+		}
+	}(file)
 	s.Require().NoError(err)
 	proposal, err := mcms.NewProposal(file)
-	require.NoError(s.T(), err)
-	require.NotNil(s.T(), proposal)
+	s.Require().NoError(err)
+	s.Require().NotNil(proposal)
 	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
 		s.chainSelector: evm.NewInspector(s.client),
 	}
 	signable, err := mcms.NewSignable(proposal, inspectors)
-	require.NoError(s.T(), err)
+	s.Require().NoError(err)
 	signature, err := signable.SignAndAppend(
 		mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])),
 	)
@@ -70,19 +70,16 @@ func (s *SigningTestSuite) TestReadAndSign() {
 	tmpFile, err := os.CreateTemp("", "signed-proposal-*.json")
 	s.Require().NoError(err)
 	defer func(name string) {
-		err := os.Remove(name)
-		if err != nil {
-
-		}
-	}(tmpFile.Name()) // Clean up the temp file after the test
+		err = os.Remove(name)
+		s.Require().NoError(err, "Failed to remove temp file")
+	}(tmpFile.Name())
 	err = mcms.WriteProposal(tmpFile, proposal)
 	s.Require().NoError(err)
 
 	// Read back the written proposal
 	_, err = tmpFile.Seek(0, io.SeekStart)
-	if err != nil {
-		return
-	} // Reset file pointer to the start
+	s.Require().NoError(err, "Failed to reset file pointer to the start")
+
 	writtenProposal, err := mcms.NewProposal(tmpFile)
 	s.Require().NoError(err)
 
@@ -90,17 +87,17 @@ func (s *SigningTestSuite) TestReadAndSign() {
 	signedProposalJSON, err := json.Marshal(writtenProposal)
 	s.Require().NoError(err)
 
-	var parsedProposal map[string]interface{}
+	var parsedProposal map[string]any
 	err = json.Unmarshal(signedProposalJSON, &parsedProposal)
 	s.Require().NoError(err)
 
 	// Ensure the signature is present and matches
-	signatures, ok := parsedProposal["signatures"].([]interface{})
+	signatures, ok := parsedProposal["signatures"].([]any)
 	s.Require().True(ok, "Signatures field is missing or of the wrong type")
 	s.Require().NotEmpty(signatures, "Signatures field is empty")
 
 	// Verify the appended signature matches the expected value
-	appendedSignature := signatures[len(signatures)-1].(map[string]interface{})
+	appendedSignature := signatures[len(signatures)-1].(map[string]any)
 	s.Require().Equal(expected.R.Hex(), appendedSignature["R"])
 	s.Require().Equal(expected.S.Hex(), appendedSignature["S"])
 	s.Require().Equal(float64(expected.V), appendedSignature["V"])
