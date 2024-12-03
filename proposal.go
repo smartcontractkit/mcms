@@ -66,11 +66,11 @@ func NewProposal(reader io.Reader) (*Proposal, error) {
 }
 
 // WriteProposal marshals the proposal to JSON and writes it to the provided writer.
-func WriteProposal(w io.Writer, proposal *Proposal) error {
+func (p *Proposal) Write(w io.Writer) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 
-	return enc.Encode(proposal)
+	return enc.Encode(p)
 }
 
 func (p *Proposal) Validate() error {
@@ -261,6 +261,16 @@ func (p *Proposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
 	}
 
 	return encoders, nil
+}
+
+// Executable converts the proposal to an Executable.
+func (p *Proposal) Executable(executors map[types.ChainSelector]sdk.Executor) (*Executable, error) {
+	return NewExecutable(p, executors)
+}
+
+// Executable converts the proposal to an Executable.
+func (p *Proposal) Signable(inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error) {
+	return NewSignable(p, inspectors)
 }
 
 func toEthSignedMessageHash(messageHash common.Hash) common.Hash {

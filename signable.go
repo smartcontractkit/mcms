@@ -17,51 +17,51 @@ var (
 )
 
 // Signable provides signing functionality for an Proposal. It contains all the necessary
-// information required to validate, sign, and check the quorum of a proposal.
+// information required to validate, sign, and check the quorum of a Proposal.
 
-// Signable contains the proposal itself, a Merkle tree representation of the proposal, encoders for
+// Signable contains the Proposal itself, a Merkle tree representation of the Proposal, encoders for
 // different chains to perform the signing, while the inspectors are used for retrieving contract
 // configurations and operational counts on chain.
 type Signable struct {
-	proposal   *Proposal
+	Proposal   *Proposal
 	tree       *merkle.Tree
 	encoders   map[types.ChainSelector]sdk.Encoder
 	inspectors map[types.ChainSelector]sdk.Inspector
 }
 
-// NewSignable creates a new Signable from a proposal and inspectors, and initializes the encoders
+// NewSignable creates a new Signable from a Proposal and inspectors, and initializes the encoders
 // and merkle tree.
 func NewSignable(
-	proposal *Proposal,
+	Proposal *Proposal,
 	inspectors map[types.ChainSelector]sdk.Inspector,
 ) (*Signable, error) {
-	encoders, err := proposal.GetEncoders()
+	encoders, err := Proposal.GetEncoders()
 	if err != nil {
 		return nil, err
 	}
 
-	tree, err := proposal.MerkleTree()
+	tree, err := Proposal.MerkleTree()
 	if err != nil {
 		return nil, err
 	}
 
 	return &Signable{
-		proposal:   proposal,
+		Proposal:   Proposal,
 		tree:       tree,
 		encoders:   encoders,
 		inspectors: inspectors,
 	}, nil
 }
 
-// Sign signs the root of the proposal's Merkle tree with the provided signer.
+// Sign signs the root of the Proposal's Merkle tree with the provided signer.
 func (s *Signable) Sign(signer signer) (sig types.Signature, err error) {
-	// Validate proposal
-	if err = s.proposal.Validate(); err != nil {
+	// Validate Proposal
+	if err = s.Proposal.Validate(); err != nil {
 		return sig, err
 	}
 
 	// Get the signing hash
-	payload, err := s.proposal.SigningHash()
+	payload, err := s.Proposal.SigningHash()
 	if err != nil {
 		return sig, err
 	}
@@ -75,32 +75,32 @@ func (s *Signable) Sign(signer signer) (sig types.Signature, err error) {
 	return types.NewSignatureFromBytes(sigB)
 }
 
-// SignAndAppend signs the proposal using the provided signer and appends the resulting signature
-// to the proposal's list of signatures.
+// SignAndAppend signs the Proposal using the provided signer and appends the resulting signature
+// to the Proposal's list of signatures.
 //
-// This function modifies the proposal in place by adding the new signature to its Signatures
+// This function modifies the Proposal in place by adding the new signature to its Signatures
 // slice.
 func (s *Signable) SignAndAppend(signer signer) (types.Signature, error) {
-	// Sign the proposal
+	// Sign the Proposal
 	sig, err := s.Sign(signer)
 	if err != nil {
 		return types.Signature{}, err
 	}
 
-	// Add the signature to the proposal
-	s.proposal.AppendSignature(sig)
+	// Add the signature to the Proposal
+	s.Proposal.AppendSignature(sig)
 
 	return sig, nil
 }
 
-// GetConfigs retrieves the MCMS contract configurations for each chain in the proposal.
+// GetConfigs retrieves the MCMS contract configurations for each chain in the Proposal.
 func (s *Signable) GetConfigs() (map[types.ChainSelector]*types.Config, error) {
 	if s.inspectors == nil {
 		return nil, ErrInspectorsNotProvided
 	}
 
 	configs := make(map[types.ChainSelector]*types.Config)
-	for chain, metadata := range s.proposal.ChainMetadata {
+	for chain, metadata := range s.Proposal.ChainMetadata {
 		inspector, ok := s.inspectors[chain]
 		if !ok {
 			return nil, fmt.Errorf("inspector not found for chain %d", chain)
@@ -117,9 +117,9 @@ func (s *Signable) GetConfigs() (map[types.ChainSelector]*types.Config, error) {
 	return configs, nil
 }
 
-// CheckQuorum checks if the quorum for the proposal on the given chain has been reached. This will
+// CheckQuorum checks if the quorum for the Proposal on the given chain has been reached. This will
 // fetch the current configuration for the chain and check if the recovered signers from the
-// proposal's signatures can set the root.
+// Proposal's signatures can set the root.
 func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 	if s.inspectors == nil {
 		return false, ErrInspectorsNotProvided
@@ -130,13 +130,13 @@ func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 		return false, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 	}
 
-	hash, err := s.proposal.SigningHash()
+	hash, err := s.Proposal.SigningHash()
 	if err != nil {
 		return false, err
 	}
 
-	recoveredSigners := make([]common.Address, len(s.proposal.Signatures))
-	for i, sig := range s.proposal.Signatures {
+	recoveredSigners := make([]common.Address, len(s.Proposal.Signatures))
+	for i, sig := range s.Proposal.Signatures {
 		recoveredAddr, rerr := sig.Recover(hash)
 		if rerr != nil {
 			return false, rerr
@@ -145,7 +145,7 @@ func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 		recoveredSigners[i] = recoveredAddr
 	}
 
-	configuration, err := inspector.GetConfig(s.proposal.ChainMetadata[chain].MCMAddress)
+	configuration, err := inspector.GetConfig(s.Proposal.ChainMetadata[chain].MCMAddress)
 	if err != nil {
 		return false, err
 	}
@@ -153,10 +153,10 @@ func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 	return configuration.CanSetRoot(recoveredSigners)
 }
 
-// ValidateSignatures checks if the quorum for the proposal has been reached on the MCM contracts
-// across all chains in the proposal.
+// ValidateSignatures checks if the quorum for the Proposal has been reached on the MCM contracts
+// across all chains in the Proposal.
 func (s *Signable) ValidateSignatures() (bool, error) {
-	for chain := range s.proposal.ChainMetadata {
+	for chain := range s.Proposal.ChainMetadata {
 		checkQuorum, err := s.CheckQuorum(chain)
 		if err != nil {
 			return false, err
@@ -170,26 +170,26 @@ func (s *Signable) ValidateSignatures() (bool, error) {
 	return true, nil
 }
 
-// ValidateConfigs checks the MCMS contract configurations for each chain in the proposal for
+// ValidateConfigs checks the MCMS contract configurations for each chain in the Proposal for
 // consistency.
 //
 // We expect that the configurations for each chain are the same so that the same quorum can be
-// reached across all chains in the proposal.
+// reached across all chains in the Proposal.
 func (s *Signable) ValidateConfigs() error {
 	configs, err := s.GetConfigs()
 	if err != nil {
 		return err
 	}
 
-	for i, sel := range s.proposal.ChainSelectors() {
+	for i, sel := range s.Proposal.ChainSelectors() {
 		if i == 0 {
 			continue
 		}
 
-		if !configs[sel].Equals(configs[s.proposal.ChainSelectors()[i-1]]) {
+		if !configs[sel].Equals(configs[s.Proposal.ChainSelectors()[i-1]]) {
 			return &InconsistentConfigsError{
 				ChainSelectorA: sel,
-				ChainSelectorB: s.proposal.ChainSelectors()[i-1],
+				ChainSelectorB: s.Proposal.ChainSelectors()[i-1],
 			}
 		}
 	}
@@ -198,7 +198,7 @@ func (s *Signable) ValidateConfigs() error {
 }
 
 // getCurrentOpCounts returns the current op counts for the MCM contract on each chain in the
-// proposal. This data is fetched from the contract on the chain using the provided inspectors.
+// Proposal. This data is fetched from the contract on the chain using the provided inspectors.
 //
 // Note: This function is currently not used but left for potential future use.
 func (s *Signable) getCurrentOpCounts() (map[types.ChainSelector]uint64, error) {
@@ -207,7 +207,7 @@ func (s *Signable) getCurrentOpCounts() (map[types.ChainSelector]uint64, error) 
 	}
 
 	opCounts := make(map[types.ChainSelector]uint64)
-	for sel, metadata := range s.proposal.ChainMetadata {
+	for sel, metadata := range s.Proposal.ChainMetadata {
 		inspector, ok := s.inspectors[sel]
 		if !ok {
 			return nil, fmt.Errorf("inspector not found for chain %d", sel)

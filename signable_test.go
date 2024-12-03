@@ -823,7 +823,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 			})
 
 			signable := &Signable{
-				proposal:   &tt.give,
+				Proposal:   &tt.give,
 				inspectors: giveInspectors,
 			}
 
@@ -930,7 +930,7 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 			})
 
 			signable := &Signable{
-				proposal:   &tt.give,
+				Proposal:   &tt.give,
 				inspectors: giveInspectors,
 			}
 
@@ -1034,7 +1034,7 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 			})
 
 			signable := &Signable{
-				proposal:   &tt.give,
+				Proposal:   &tt.give,
 				inspectors: giveInspectors,
 			}
 

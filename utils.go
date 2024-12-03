@@ -1,6 +1,12 @@
 package mcms
 
 import (
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"os"
+
 	"github.com/ethereum/go-ethereum/common"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
@@ -8,6 +14,47 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+type ProposalInterface interface {
+	Validate() error
+	GetEncoders() (map[types.ChainSelector]sdk.Encoder, error)
+	Executable(executors map[types.ChainSelector]sdk.Executor) (*Executable, error)
+	Signable(inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error)
+	AppendSignature(signature types.Signature)
+	Write(w io.Writer) error
+}
+
+func LoadProposal(filePath string) (ProposalInterface, error) {
+	// Open the file
+	file, err := os.Open(filePath)
+	if err != nil {
+		fmt.Println("Error opening file:", err)
+		return nil, err
+	}
+	defer file.Close() // Ensure the file is closed when done
+
+	// Temporary struct to read the proposal kind
+	type TemporaryProposal struct {
+		ProposalKind types.ProposalKind `json:"kind"`
+	}
+
+	// Read the proposal kind
+	var tempProposal TemporaryProposal
+	err = json.NewDecoder(file).Decode(&tempProposal)
+	if err != nil {
+		fmt.Println("Error reading file:", err)
+		return nil, err
+	}
+
+	switch tempProposal.ProposalKind {
+	case types.KindProposal:
+		return NewProposal(file)
+	case types.KindTimelockProposal:
+		return NewTimelockProposal(file)
+	default:
+		return nil, errors.New("unknown proposal type")
+	}
+}
 
 // BatchToChainOperation converts a batch of chain operations to a single types.ChainOperation for
 // different chains

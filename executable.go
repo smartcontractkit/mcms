@@ -13,7 +13,7 @@ import (
 // information required to call SetRoot and Execute on the various chains that the proposal
 // targets.
 type Executable struct {
-	proposal  *Proposal
+	Proposal  *Proposal
 	executors map[types.ChainSelector]sdk.Executor
 	encoders  map[types.ChainSelector]sdk.Encoder
 	tree      *merkle.Tree
@@ -44,7 +44,7 @@ func NewExecutable(
 	}
 
 	return &Executable{
-		proposal:  proposal,
+		Proposal:  proposal,
 		executors: executors,
 		encoders:  encoders,
 		tree:      tree,
@@ -53,7 +53,7 @@ func NewExecutable(
 }
 
 func (e *Executable) SetRoot(chainSelector types.ChainSelector) (string, error) {
-	metadata := e.proposal.ChainMetadata[chainSelector]
+	metadata := e.Proposal.ChainMetadata[chainSelector]
 
 	metadataHash, err := e.encoders[chainSelector].HashMetadata(metadata)
 	if err != nil {
@@ -65,13 +65,13 @@ func (e *Executable) SetRoot(chainSelector types.ChainSelector) (string, error) 
 		return "", err
 	}
 
-	hash, err := e.proposal.SigningHash()
+	hash, err := e.Proposal.SigningHash()
 	if err != nil {
 		return "", err
 	}
 
 	// Sort signatures by recovered address
-	sortedSignatures := slices.Clone(e.proposal.Signatures) // Clone so we don't modify the original
+	sortedSignatures := slices.Clone(e.Proposal.Signatures) // Clone so we don't modify the original
 	slices.SortFunc(sortedSignatures, func(a, b types.Signature) int {
 		recoveredSignerA, _ := a.Recover(hash)
 		recoveredSignerB, _ := b.Recover(hash)
@@ -83,15 +83,15 @@ func (e *Executable) SetRoot(chainSelector types.ChainSelector) (string, error) 
 		metadata,
 		proof,
 		[32]byte(e.tree.Root.Bytes()),
-		e.proposal.ValidUntil,
+		e.Proposal.ValidUntil,
 		sortedSignatures,
 	)
 }
 
 func (e *Executable) Execute(index int) (string, error) {
-	op := e.proposal.Operations[index]
+	op := e.Proposal.Operations[index]
 	chainSelector := op.ChainSelector
-	metadata := e.proposal.ChainMetadata[chainSelector]
+	metadata := e.Proposal.ChainMetadata[chainSelector]
 
 	txNonce, err := safecast.Uint64ToUint32(e.txNonces[index])
 	if err != nil {

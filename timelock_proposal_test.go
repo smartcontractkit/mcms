@@ -236,7 +236,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				w = b
 			}
 
-			err = WriteTimelockProposal(w, give)
+			err = give.Write(w)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

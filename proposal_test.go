@@ -199,7 +199,7 @@ func Test_WriteProposal(t *testing.T) {
 				w = b
 			}
 
-			err = WriteProposal(w, give)
+			err = give.Write(w)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

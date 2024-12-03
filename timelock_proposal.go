@@ -9,6 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -37,11 +38,11 @@ func NewTimelockProposal(r io.Reader) (*TimelockProposal, error) {
 	return &p, nil
 }
 
-func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
+func (m *TimelockProposal) Write(w io.Writer) error {
 	enc := json.NewEncoder(w)
 	enc.SetIndent("", "  ")
 
-	return enc.Encode(p)
+	return enc.Encode(m)
 }
 
 func (m *TimelockProposal) Validate() error {
@@ -136,4 +137,36 @@ func timeLockProposalValidateBasic(timelockProposal TimelockProposal) error {
 	}
 
 	return nil
+}
+
+func (m *TimelockProposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
+	// Convert the proposal to an MCMS only proposal
+	proposal, err := m.Convert()
+	if err != nil {
+		return nil, err
+	}
+
+	return proposal.GetEncoders()
+}
+
+// Executable converts the proposal to an Executable.
+func (m *TimelockProposal) Executable(executors map[types.ChainSelector]sdk.Executor) (*Executable, error) {
+	// Convert the proposal to an MCMS only proposal
+	proposal, err := m.Convert()
+	if err != nil {
+		return nil, err
+	}
+
+	return NewExecutable(&proposal, executors)
+}
+
+// Executable converts the proposal to an Executable.
+func (m *TimelockProposal) Signable(inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error) {
+	// Convert the proposal to an MCMS only proposal
+	proposal, err := m.Convert()
+	if err != nil {
+		return nil, err
+	}
+
+	return NewSignable(&proposal, inspectors)
 }
