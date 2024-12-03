@@ -109,38 +109,6 @@ func TestSimulator_ExecuteOperation(t *testing.T) {
 			wantTxHash: "",
 			wantErr:    errors.New("Simulator was created without an encoder"),
 		},
-		{
-			name: "failure in geth operation conversion due to invalid chain ID",
-			auth: &bind.TransactOpts{
-				From:    common.HexToAddress("0xFrom"),
-				Context: context.Background(),
-				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
-					mockTx := evmTypes.NewTransaction(
-						1,
-						common.HexToAddress("0xMockedAddress"),
-						big.NewInt(1000000000000000000),
-						21000,
-						big.NewInt(20000000000),
-						nil,
-					)
-
-					return mockTx, nil
-				},
-			},
-			encoder: &evm.Encoder{
-				ChainSelector: types.ChainSelector(1),
-			},
-			op: types.Operation{
-				ChainSelector: types.ChainSelector(1),
-				Transaction: types.Transaction{
-					To:               "0xTo",
-					Data:             []byte{1, 2, 3},
-					AdditionalFields: json.RawMessage(`{"value": 0}`)},
-			},
-			mockSetup:  func(m *evm_mocks.ContractDeployBackend) {},
-			wantTxHash: "",
-			wantErr:    errors.New("invalid chain ID: 1"),
-		},
 	}
 
 	for _, tt := range tests {
@@ -154,7 +122,7 @@ func TestSimulator_ExecuteOperation(t *testing.T) {
 			}
 
 			simulator := evm.NewSimulator(tt.encoder, client)
-			err := simulator.SimulateOperation(tt.auth.From.Hex(), tt.metadata, tt.nonce, tt.proof, tt.op)
+			err := simulator.SimulateOperation(tt.metadata, tt.op)
 
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())

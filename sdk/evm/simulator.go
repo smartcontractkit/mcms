@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"encoding/json"
 	"errors"
 	"math/big"
 
@@ -73,10 +74,7 @@ func (s *Simulator) SimulateSetRoot(
 }
 
 func (s *Simulator) SimulateOperation(
-	originCaller string, // TODO: do we need this or can we just use a random address?
 	metadata types.ChainMetadata,
-	nonce uint32,
-	proof []common.Hash,
 	operation types.Operation,
 ) error {
 	if s.Encoder == nil {
@@ -87,31 +85,18 @@ func (s *Simulator) SimulateOperation(
 		return errors.New("Simulator was created without an inspector")
 	}
 
-	bindOp, err := s.ToGethOperation(nonce, metadata, operation)
-	if err != nil {
+	// Unmarshal the AdditionalFields from the operation
+	var additionalFields AdditionalFields
+	if err := json.Unmarshal(operation.Transaction.AdditionalFields, &additionalFields); err != nil {
 		return err
 	}
 
-	abi, err := bindings.ManyChainMultiSigMetaData.GetAbi()
-	if err != nil {
-		return err
-	}
-
-	data, err := abi.Pack(
-		"execute",
-		bindOp,
-		transformHashes(proof),
-	)
-	if err != nil {
-		return err
-	}
-
-	mcmAddr := common.HexToAddress(metadata.MCMAddress)
-	_, err = s.client.CallContract(context.Background(), ethereum.CallMsg{
-		From:  common.HexToAddress(originCaller),
-		To:    &mcmAddr,
-		Value: big.NewInt(0),
-		Data:  data,
+	toAddr := common.HexToAddress(operation.Transaction.To)
+	_, err := s.client.CallContract(context.Background(), ethereum.CallMsg{
+		From:  common.HexToAddress(metadata.MCMAddress),
+		To:    &toAddr,
+		Value: additionalFields.Value,
+		Data:  operation.Transaction.Data,
 	}, nil)
 	return err
 }

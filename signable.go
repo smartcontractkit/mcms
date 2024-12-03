@@ -14,6 +14,7 @@ import (
 
 var (
 	ErrInspectorsNotProvided = errors.New("inspectors not provided")
+	ErrSimulatorsNotProvided = errors.New("simulators not provided")
 )
 
 // Signable provides signing functionality for an Proposal. It contains all the necessary
@@ -25,8 +26,10 @@ var (
 type Signable struct {
 	proposal   *Proposal
 	tree       *merkle.Tree
+	txNonces   []uint64
 	encoders   map[types.ChainSelector]sdk.Encoder
 	inspectors map[types.ChainSelector]sdk.Inspector
+	simulators map[types.ChainSelector]sdk.Simulator
 }
 
 // NewSignable creates a new Signable from a proposal and inspectors, and initializes the encoders
@@ -45,11 +48,18 @@ func NewSignable(
 		return nil, err
 	}
 
+	// Generate the tx nonces from the proposal
+	txNonces, err := proposal.TransactionNonces()
+	if err != nil {
+		return nil, err
+	}
+
 	return &Signable{
 		proposal:   proposal,
 		tree:       tree,
 		encoders:   encoders,
 		inspectors: inspectors,
+		txNonces:   txNonces,
 	}, nil
 }
 
@@ -91,6 +101,28 @@ func (s *Signable) SignAndAppend(signer signer) (types.Signature, error) {
 	s.proposal.AppendSignature(sig)
 
 	return sig, nil
+}
+
+// Simulate simulates the proposal on the given chain using the provided simulator.
+func (s *Signable) Simulate() error {
+	if s.simulators == nil {
+		return ErrSimulatorsNotProvided
+	}
+
+	for _, op := range s.proposal.Operations {
+		simulator, ok := s.simulators[op.ChainSelector]
+		if !ok {
+			return fmt.Errorf("simulator not found for chain %d", op.ChainSelector)
+		}
+
+		// TODO: should we fail on the first error or aggregate all simulation errors?
+		err := simulator.SimulateOperation(s.proposal.ChainMetadata[op.ChainSelector], op)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // GetConfigs retrieves the MCMS contract configurations for each chain in the proposal.

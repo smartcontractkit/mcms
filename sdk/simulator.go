@@ -16,11 +16,10 @@ type Simulator interface {
 		root [32]byte,
 		validUntil uint32,
 		sortedSignatures []types.Signature,
-	) (bool, error)
+	) error
 
 	SimulateOperation(
-		nonce uint32,
-		proof []common.Hash,
-		op types.Operation,
-	) (bool, error)
+		metadata types.ChainMetadata,
+		operation types.Operation,
+	) error
 }
