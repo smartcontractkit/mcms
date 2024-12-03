@@ -33,11 +33,11 @@ func (s *Simulator) SimulateSetRoot(
 	sortedSignatures []types.Signature,
 ) error {
 	if s.Encoder == nil {
-		return errors.New("Simulator was created without an inspector")
+		return errors.New("Simulator was created without an encoder")
 	}
 
 	if s.Inspector == nil {
-		return errors.New("Simulator was created without an encoder")
+		return errors.New("Simulator was created without an inspector")
 	}
 
 	bindMeta, err := s.ToGethRootMetadata(metadata)
@@ -80,11 +80,11 @@ func (s *Simulator) SimulateOperation(
 	operation types.Operation,
 ) error {
 	if s.Encoder == nil {
-		return errors.New("Simulator was created without an inspector")
+		return errors.New("Simulator was created without an encoder")
 	}
 
 	if s.Inspector == nil {
-		return errors.New("Simulator was created without an encoder")
+		return errors.New("Simulator was created without an inspector")
 	}
 
 	bindOp, err := s.ToGethOperation(nonce, metadata, operation)

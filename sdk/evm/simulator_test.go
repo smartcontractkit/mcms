@@ -52,6 +52,7 @@ func TestSimulator_ExecuteOperation(t *testing.T) {
 				ChainSelector: chaintest.Chain1Selector,
 			},
 			auth: &bind.TransactOpts{
+				From:    common.HexToAddress("0xFrom"),
 				Context: context.Background(),
 				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
 					mockTx := evmTypes.NewTransaction(
@@ -79,24 +80,30 @@ func TestSimulator_ExecuteOperation(t *testing.T) {
 			},
 			mockSetup: func(m *evm_mocks.ContractDeployBackend) {
 				// Successful tx send
-				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-					Return(nil)
-				m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
-					Return(&evmTypes.Header{}, nil)
-				m.EXPECT().SuggestGasPrice(mock.Anything).
-					Return(big.NewInt(100000000), nil)
-				m.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
-					Return([]byte("0x01"), nil)
-				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
-					Return(uint64(50000), nil)
-				m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
-					Return(uint64(1), nil)
+				m.EXPECT().CallContract(mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, nil)
 			},
 			wantTxHash: "0xc381f411283719726be93f957b9e3ca7d8041725c22fefab8dcf132770adf7a9",
 			wantErr:    nil,
 		},
 		{
-			name:       "failure - nil encoder",
+			name: "failure - nil encoder",
+			auth: &bind.TransactOpts{
+				From:    common.HexToAddress("0xFrom"),
+				Context: context.Background(),
+				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+					mockTx := evmTypes.NewTransaction(
+						1,
+						common.HexToAddress("0xMockedAddress"),
+						big.NewInt(1000000000000000000),
+						21000,
+						big.NewInt(20000000000),
+						nil,
+					)
+
+					return mockTx, nil
+				},
+			},
 			encoder:    nil,
 			mockSetup:  func(m *evm_mocks.ContractDeployBackend) {},
 			wantTxHash: "",
@@ -104,6 +111,22 @@ func TestSimulator_ExecuteOperation(t *testing.T) {
 		},
 		{
 			name: "failure in geth operation conversion due to invalid chain ID",
+			auth: &bind.TransactOpts{
+				From:    common.HexToAddress("0xFrom"),
+				Context: context.Background(),
+				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+					mockTx := evmTypes.NewTransaction(
+						1,
+						common.HexToAddress("0xMockedAddress"),
+						big.NewInt(1000000000000000000),
+						21000,
+						big.NewInt(20000000000),
+						nil,
+					)
+
+					return mockTx, nil
+				},
+			},
 			encoder: &evm.Encoder{
 				ChainSelector: types.ChainSelector(1),
 			},
@@ -164,6 +187,7 @@ func TestSimulator_SetRoot(t *testing.T) {
 				ChainSelector: chaintest.Chain1Selector,
 			},
 			auth: &bind.TransactOpts{
+				From:    common.HexToAddress("0xFrom"),
 				Context: context.Background(),
 				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
 					mockTx := evmTypes.NewTransaction(
@@ -189,24 +213,30 @@ func TestSimulator_SetRoot(t *testing.T) {
 			},
 			mockSetup: func(m *evm_mocks.ContractDeployBackend) {
 				// Successful tx send
-				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-					Return(nil)
-				m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
-					Return(&evmTypes.Header{}, nil)
-				m.EXPECT().SuggestGasPrice(mock.Anything).
-					Return(big.NewInt(100000000), nil)
-				m.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
-					Return([]byte("0x01"), nil)
-				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
-					Return(uint64(50000), nil)
-				m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
-					Return(uint64(1), nil)
+				m.EXPECT().CallContract(mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, nil)
 			},
 			wantTxHash: "0xc381f411283719726be93f957b9e3ca7d8041725c22fefab8dcf132770adf7a9",
 			wantErr:    nil,
 		},
 		{
-			name:       "failure - nil encoder",
+			name: "failure - nil encoder",
+			auth: &bind.TransactOpts{
+				From:    common.HexToAddress("0xFrom"),
+				Context: context.Background(),
+				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+					mockTx := evmTypes.NewTransaction(
+						1,
+						common.HexToAddress("0xMockedAddress"),
+						big.NewInt(1000000000000000000),
+						21000,
+						big.NewInt(20000000000),
+						nil,
+					)
+
+					return mockTx, nil
+				},
+			},
 			encoder:    nil,
 			mockSetup:  func(m *evm_mocks.ContractDeployBackend) {},
 			wantTxHash: "",
@@ -214,6 +244,22 @@ func TestSimulator_SetRoot(t *testing.T) {
 		},
 		{
 			name: "failure in geth operation conversion due to invalid chain ID",
+			auth: &bind.TransactOpts{
+				From:    common.HexToAddress("0xFrom"),
+				Context: context.Background(),
+				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+					mockTx := evmTypes.NewTransaction(
+						1,
+						common.HexToAddress("0xMockedAddress"),
+						big.NewInt(1000000000000000000),
+						21000,
+						big.NewInt(20000000000),
+						nil,
+					)
+
+					return mockTx, nil
+				},
+			},
 			encoder: &evm.Encoder{
 				ChainSelector: types.ChainSelector(1),
 			},
