@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestLoadProposal(t *testing.T) {
@@ -36,10 +37,10 @@ func TestLoadProposal(t *testing.T) {
 			proposal, err := LoadProposal(reader)
 
 			if tt.wantErr == "" {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NotNil(t, proposal)
 			} else {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.Nil(t, proposal)
 				assert.Contains(t, err.Error(), tt.wantErr)
 			}
