@@ -735,3 +735,135 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 		})
 	}
 }
+
+func Test_Proposal_Signable(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		setup   func(p *Proposal)
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(_ *Proposal) {
+				// NOP: valid proposal.
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			builder := NewProposalBuilder()
+			builder.SetVersion("v1").
+				SetValidUntil(2552083725).
+				AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
+				AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{}).
+				AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x1"),
+					},
+				}).
+				AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x2"),
+					},
+				}).
+				AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain2Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x3"),
+					},
+				})
+
+			give, err := builder.Build()
+			tt.setup(give)
+
+			require.NoError(t, err)
+			signable, err := give.Signable(nil)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.NotNil(t, signable)
+			}
+		})
+	}
+}
+
+func Test_Proposal_Executable(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		setup   func(p *Proposal)
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(_ *Proposal) {
+				// NOP: valid proposal.
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			builder := NewProposalBuilder()
+			builder.SetVersion("v1").
+				SetValidUntil(2552083725).
+				AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
+				AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{}).
+				AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x1"),
+					},
+				}).
+				AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x2"),
+					},
+				}).
+				AddOperation(types.Operation{
+					ChainSelector: chaintest.Chain2Selector,
+					Transaction: types.Transaction{
+						To:               TestAddress,
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x3"),
+					},
+				})
+
+			give, err := builder.Build()
+			tt.setup(give)
+
+			require.NoError(t, err)
+			executable, err := give.Executable(nil)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.NotNil(t, executable)
+			}
+		})
+	}
+}
