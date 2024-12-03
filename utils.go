@@ -3,7 +3,6 @@ package mcms
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -18,7 +17,6 @@ func LoadProposal(filePath string) (ProposalInterface, error) {
 	// Open the file
 	file, err := os.Open(filePath)
 	if err != nil {
-		fmt.Println("Error opening file:", err)
 		return nil, err
 	}
 	defer file.Close() // Ensure the file is closed when done
@@ -32,7 +30,6 @@ func LoadProposal(filePath string) (ProposalInterface, error) {
 	var tempProposal TemporaryProposal
 	err = json.NewDecoder(file).Decode(&tempProposal)
 	if err != nil {
-		fmt.Println("Error reading file:", err)
 		return nil, err
 	}
 
