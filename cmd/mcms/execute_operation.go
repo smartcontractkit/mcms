@@ -19,7 +19,7 @@ func buildExecuteOperationCmd(proposalPath string, chainSelector uint64) *cobra.
 
 	cmd := cobra.Command{
 		Use:   "execute-operation",
-		Short: "Executes all operations for a given chain in an MCMS Proposal. Root must be set first.",
+		Short: "Executes a single operation on a given chain in an MCMS Proposal. Root must be set first.",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			proposal, err := loadProposal(proposalPath)

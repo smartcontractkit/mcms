@@ -15,8 +15,8 @@ import (
 
 func buildDeployCmd(chainSelector uint64) *cobra.Command {
 	return &cobra.Command{
-		Use:   "set-root",
-		Short: "Sets the Merkle Root on the MCM Contract",
+		Use:   "deploy",
+		Short: "Deploys the MCMS contract on the specified chain",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Get EVM chain ID

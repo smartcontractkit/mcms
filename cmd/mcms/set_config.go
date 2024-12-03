@@ -21,8 +21,8 @@ func buildSetConfigCmd(chainSelector uint64) *cobra.Command {
 	)
 
 	cmd := &cobra.Command{
-		Use:   "set-root",
-		Short: "Sets the Merkle Root on the MCM Contract",
+		Use:   "set-config",
+		Short: "Sets the Configuration on the MCM Contract",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Get EVM chain ID
