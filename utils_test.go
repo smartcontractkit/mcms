@@ -8,6 +8,7 @@ import (
 )
 
 func TestLoadProposal(t *testing.T) {
+	t.Parallel()
 	t.Run("should return error for invalid JSON", func(t *testing.T) {
 		input := `{invalid json}`
 		reader := strings.NewReader(input)
