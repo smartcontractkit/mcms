@@ -49,6 +49,8 @@ func loadPrivateKey() (*ecdsa.PrivateKey, error) {
 	return ecdsa, nil
 }
 
+// TODO: we shouldn't rely on the geth bind.DeployBackend here. This is some tech debt that needs to be resolved.
+// The clients here will not always be EVM clients, so that needs to be abstracted away.
 func loadRPCs(chainSelectors []mcms_types.ChainSelector) (map[mcms_types.ChainSelector]*ethclient.Client, error) {
 	// Load .env file
 	if err := godotenv.Load(".env"); err != nil {
