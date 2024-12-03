@@ -93,6 +93,7 @@ issues:
     # Exclude the directory from linting because it will soon be removed and only contains
     # generated code. Can be removed once the gethwrappers directory is removed.
     - sdk/evm/bindings
+    - cmd/
   exclude-rules:
     - path: _test\.go
       linters:

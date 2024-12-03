@@ -22,6 +22,16 @@ import (
 
 const SignMsgABI = `[{"type":"bytes32"},{"type":"uint32"}]`
 
+// ProposalInterface is the interface for all MCMS proposals.
+type ProposalInterface interface {
+	Validate() error
+	GetEncoders() (map[types.ChainSelector]sdk.Encoder, error)
+	Executable(executors map[types.ChainSelector]sdk.Executor) (*Executable, error)
+	Signable(inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error)
+	AppendSignature(signature types.Signature)
+	Write(w io.Writer) error
+}
+
 // BaseProposal is the base struct for all MCMS proposals, contains shared fields for all proposal types.
 type BaseProposal struct {
 	Version              string                                      `json:"version" validate:"required,oneof=v1"`

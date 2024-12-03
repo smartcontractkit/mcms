@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -14,15 +13,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
-
-type ProposalInterface interface {
-	Validate() error
-	GetEncoders() (map[types.ChainSelector]sdk.Encoder, error)
-	Executable(executors map[types.ChainSelector]sdk.Executor) (*Executable, error)
-	Signable(inspectors map[types.ChainSelector]sdk.Inspector) (*Signable, error)
-	AppendSignature(signature types.Signature)
-	Write(w io.Writer) error
-}
 
 func LoadProposal(filePath string) (ProposalInterface, error) {
 	// Open the file
