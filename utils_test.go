@@ -9,24 +9,40 @@ import (
 
 func TestLoadProposal(t *testing.T) {
 	t.Parallel()
-	t.Run("should return error for invalid JSON", func(t *testing.T) {
-		input := `{invalid json}`
-		reader := strings.NewReader(input)
 
-		proposal, err := LoadProposal(reader)
+	tests := []struct {
+		name    string
+		input   string
+		wantErr string
+	}{
+		{
+			name:    "should return error for invalid JSON",
+			input:   `{invalid json}`,
+			wantErr: "invalid character 'i' looking for beginning of object",
+		},
+		{
+			name:    "should return error for unknown proposal type",
+			input:   `{"kind": "unknown_type"}`,
+			wantErr: "unknown proposal type",
+		},
+	}
 
-		assert.Error(t, err)
-		assert.Nil(t, proposal)
-	})
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 
-	t.Run("should return error for unknown proposal type", func(t *testing.T) {
-		input := `{"kind": "unknown_type"}`
-		reader := strings.NewReader(input)
+			reader := strings.NewReader(tt.input)
 
-		proposal, err := LoadProposal(reader)
+			proposal, err := LoadProposal(reader)
 
-		assert.Error(t, err)
-		assert.Nil(t, proposal)
-		assert.Equal(t, "unknown proposal type", err.Error())
-	})
+			if tt.wantErr == "" {
+				assert.NoError(t, err)
+				assert.NotNil(t, proposal)
+			} else {
+				assert.Error(t, err)
+				assert.Nil(t, proposal)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			}
+		})
+	}
 }
