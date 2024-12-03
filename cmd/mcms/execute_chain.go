@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	chainsel "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
@@ -21,7 +20,7 @@ func buildExecuteChainCmd(proposalPath string, chainSelector uint64) *cobra.Comm
 		Short: "Executes all operations for a given chain in an MCMS Proposal. Root must be set first.",
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			proposal, err := mcms.LoadProposal(proposalPath)
+			proposal, err := loadProposal(proposalPath)
 			if err != nil {
 				fmt.Printf("Error loading proposal: %s\n", err)
 				return err

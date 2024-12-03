@@ -18,7 +18,7 @@ func newSignPrivateKeyCmd(proposalPath string) *cobra.Command {
 		Long:  `Configure a private key in a .env file (using the PRIVATE_KEY var) and sign a proposal with it.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Load Proposal
-			proposal, err := mcms.LoadProposal(proposalPath)
+			proposal, err := loadProposal(proposalPath)
 			if err != nil {
 				fmt.Printf("Error loading proposal: %s\n", err)
 				return err

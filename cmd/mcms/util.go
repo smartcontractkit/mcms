@@ -3,6 +3,7 @@ package mcms
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/smartcontractkit/mcms"
 	mcms_types "github.com/smartcontractkit/mcms/types"
 )
 
@@ -26,6 +28,23 @@ func getMapKeys[T comparable, V any](m map[T]V) []T {
 		keys = append(keys, k)
 	}
 	return keys
+}
+
+func loadProposal(proposalPath string) (mcms.ProposalInterface, error) {
+	// Open the file
+	file, err := os.Open(proposalPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close() // Ensure the file is closed when done
+
+	// Load Proposal
+	proposal, err := mcms.LoadProposal(file)
+	if err != nil {
+		return nil, err
+	}
+
+	return proposal, nil
 }
 
 func loadPrivateKey() (*ecdsa.PrivateKey, error) {
@@ -76,6 +95,23 @@ func loadRPCs(chainSelectors []mcms_types.ChainSelector) (map[mcms_types.ChainSe
 	}
 
 	return clients, nil
+}
+
+func loadConfig(configPath string) (*mcms_types.Config, error) {
+	// Open the file
+	file, err := os.Open(configPath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close() // Ensure the file is closed when done
+
+	var config mcms_types.Config
+	err = json.NewDecoder(file).Decode(&config)
+	if err != nil {
+		return nil, err
+	}
+
+	return &config, nil
 }
 
 // TODO: we shouldn't rely on the geth bind.DeployBackend here

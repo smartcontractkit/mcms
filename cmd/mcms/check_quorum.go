@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
@@ -18,7 +17,7 @@ func buildMCMSCheckQuorumCmd(proposalPath string, chainSelector uint64) *cobra.C
 		Short: "Determines whether the provided signatures meet the quorum to set the root",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			fmt.Printf("Checking quorum for proposal %s\n", proposalPath)
-			proposal, err := mcms.LoadProposal(proposalPath)
+			proposal, err := loadProposal(proposalPath)
 			if err != nil {
 				fmt.Printf("Error loading proposal: %s\n", err)
 				return err

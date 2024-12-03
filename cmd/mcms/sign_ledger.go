@@ -21,7 +21,7 @@ func newSignLedgerCmd(proposalPath string) *cobra.Command {
 		Long:  ``,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Load Proposal
-			proposal, err := mcms.LoadProposal(proposalPath)
+			proposal, err := loadProposal(proposalPath)
 			if err != nil {
 				fmt.Printf("Error loading proposal: %s\n", err)
 				return err

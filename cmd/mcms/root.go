@@ -21,6 +21,7 @@ func BuildMCMSCmd() *cobra.Command {
 	cmd.PersistentFlags().Uint64Var(&chainSelector, "selector", 0, "Chain selector for the command to connect to")
 
 	cmd.AddCommand(buildDeployCmd(chainSelector))
+	cmd.AddCommand(buildSetConfigCmd(chainSelector))
 	cmd.AddCommand(buildMCMSCheckQuorumCmd(proposalPath, chainSelector))
 	cmd.AddCommand(buildExecuteChainCmd(proposalPath, chainSelector))
 	cmd.AddCommand(buildExecuteOperationCmd(proposalPath, chainSelector))

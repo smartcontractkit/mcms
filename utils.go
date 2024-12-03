@@ -3,7 +3,7 @@ package mcms
 import (
 	"encoding/json"
 	"errors"
-	"os"
+	"io"
 
 	"github.com/ethereum/go-ethereum/common"
 	cselectors "github.com/smartcontractkit/chain-selectors"
@@ -13,14 +13,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func LoadProposal(filePath string) (ProposalInterface, error) {
-	// Open the file
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-	defer file.Close() // Ensure the file is closed when done
-
+func LoadProposal(file io.Reader) (ProposalInterface, error) {
 	// Temporary struct to read the proposal kind
 	type TemporaryProposal struct {
 		ProposalKind types.ProposalKind `json:"kind"`
@@ -28,7 +21,7 @@ func LoadProposal(filePath string) (ProposalInterface, error) {
 
 	// Read the proposal kind
 	var tempProposal TemporaryProposal
-	err = json.NewDecoder(file).Decode(&tempProposal)
+	err := json.NewDecoder(file).Decode(&tempProposal)
 	if err != nil {
 		return nil, err
 	}
