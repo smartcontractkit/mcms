@@ -70,6 +70,7 @@ func (s *Simulator) SimulateSetRoot(
 		Value: big.NewInt(0),
 		Data:  data,
 	}, nil)
+
 	return err
 }
 
@@ -98,6 +99,7 @@ func (s *Simulator) SimulateOperation(
 		Value: additionalFields.Value,
 		Data:  operation.Transaction.Data,
 	}, nil)
+
 	return err
 }
 
