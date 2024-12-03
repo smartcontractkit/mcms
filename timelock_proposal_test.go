@@ -522,3 +522,136 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 	assert.Equal(t, "description", mcmsProposal.Description)
 	assert.Len(t, mcmsProposal.Operations, 1)
 }
+
+func Test_TimelockProposal_GetEncoders(t *testing.T) {
+	t.Parallel()
+
+	proposal := TimelockProposal{
+		BaseProposal: BaseProposal{
+			Version:    "v1",
+			Kind:       types.KindTimelockProposal,
+			ValidUntil: 2004259681,
+			Signatures: []types.Signature{},
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				chaintest.Chain1Selector: {
+					StartingOpCount: 1,
+					MCMAddress:      "0x123",
+				},
+			},
+		},
+		Action: types.TimelockActionSchedule,
+		Delay:  types.MustParseDuration("1h"),
+		TimelockAddresses: map[types.ChainSelector]string{
+			chaintest.Chain1Selector: "0x123",
+		},
+		Operations: []types.BatchOperation{
+			{
+				ChainSelector: chaintest.Chain1Selector,
+				Transactions: []types.Transaction{
+					{
+						To:               "0x123",
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x"),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "Sample contract",
+							Tags:         []string{"tag1", "tag2"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	encoders, err := proposal.GetEncoders()
+	require.NoError(t, err)
+
+	assert.Len(t, encoders, 1)
+}
+
+func Test_TimelockProposal_Signable(t *testing.T) {
+	t.Parallel()
+
+	proposal := TimelockProposal{
+		BaseProposal: BaseProposal{
+			Version:    "v1",
+			Kind:       types.KindTimelockProposal,
+			ValidUntil: 2004259681,
+			Signatures: []types.Signature{},
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				chaintest.Chain1Selector: {
+					StartingOpCount: 1,
+					MCMAddress:      "0x123",
+				},
+			},
+		},
+		Action: types.TimelockActionSchedule,
+		Delay:  types.MustParseDuration("1h"),
+		TimelockAddresses: map[types.ChainSelector]string{
+			chaintest.Chain1Selector: "0x123",
+		},
+		Operations: []types.BatchOperation{
+			{
+				ChainSelector: chaintest.Chain1Selector,
+				Transactions: []types.Transaction{
+					{
+						To:               "0x123",
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x"),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "Sample contract",
+							Tags:         []string{"tag1", "tag2"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	signable, err := proposal.Signable(nil)
+	require.NoError(t, err)
+	require.NotNil(t, signable)
+}
+
+func Test_TimelockProposal_Executable(t *testing.T) {
+	t.Parallel()
+
+	proposal := TimelockProposal{
+		BaseProposal: BaseProposal{
+			Version:    "v1",
+			Kind:       types.KindTimelockProposal,
+			ValidUntil: 2004259681,
+			Signatures: []types.Signature{},
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				chaintest.Chain1Selector: {
+					StartingOpCount: 1,
+					MCMAddress:      "0x123",
+				},
+			},
+		},
+		Action: types.TimelockActionSchedule,
+		Delay:  types.MustParseDuration("1h"),
+		TimelockAddresses: map[types.ChainSelector]string{
+			chaintest.Chain1Selector: "0x123",
+		},
+		Operations: []types.BatchOperation{
+			{
+				ChainSelector: chaintest.Chain1Selector,
+				Transactions: []types.Transaction{
+					{
+						To:               "0x123",
+						AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+						Data:             common.Hex2Bytes("0x"),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "Sample contract",
+							Tags:         []string{"tag1", "tag2"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	executable, err := proposal.Executable(nil)
+	require.NoError(t, err)
+	require.NotNil(t, executable)
+}
