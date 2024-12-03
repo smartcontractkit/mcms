@@ -73,7 +73,7 @@ func (s *SigningTestSuite) TestReadAndSign() {
 		err = os.Remove(name)
 		s.Require().NoError(err, "Failed to remove temp file")
 	}(tmpFile.Name())
-	err = mcms.WriteProposal(tmpFile, proposal)
+	err = proposal.Write(tmpFile)
 	s.Require().NoError(err)
 
 	// Read back the written proposal
