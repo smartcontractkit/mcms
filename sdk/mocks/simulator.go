@@ -3,7 +3,10 @@
 package mocks
 
 import (
+	context "context"
+
 	common "github.com/ethereum/go-ethereum/common"
+
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/smartcontractkit/mcms/types"
@@ -22,17 +25,17 @@ func (_m *Simulator) EXPECT() *Simulator_Expecter {
 	return &Simulator_Expecter{mock: &_m.Mock}
 }
 
-// SimulateOperation provides a mock function with given fields: metadata, operation
-func (_m *Simulator) SimulateOperation(metadata types.ChainMetadata, operation types.Operation) error {
-	ret := _m.Called(metadata, operation)
+// SimulateOperation provides a mock function with given fields: ctx, metadata, operation
+func (_m *Simulator) SimulateOperation(ctx context.Context, metadata types.ChainMetadata, operation types.Operation) error {
+	ret := _m.Called(ctx, metadata, operation)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SimulateOperation")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(types.ChainMetadata, types.Operation) error); ok {
-		r0 = rf(metadata, operation)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, types.Operation) error); ok {
+		r0 = rf(ctx, metadata, operation)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -46,15 +49,16 @@ type Simulator_SimulateOperation_Call struct {
 }
 
 // SimulateOperation is a helper method to define mock.On call
+//   - ctx context.Context
 //   - metadata types.ChainMetadata
 //   - operation types.Operation
-func (_e *Simulator_Expecter) SimulateOperation(metadata interface{}, operation interface{}) *Simulator_SimulateOperation_Call {
-	return &Simulator_SimulateOperation_Call{Call: _e.mock.On("SimulateOperation", metadata, operation)}
+func (_e *Simulator_Expecter) SimulateOperation(ctx interface{}, metadata interface{}, operation interface{}) *Simulator_SimulateOperation_Call {
+	return &Simulator_SimulateOperation_Call{Call: _e.mock.On("SimulateOperation", ctx, metadata, operation)}
 }
 
-func (_c *Simulator_SimulateOperation_Call) Run(run func(metadata types.ChainMetadata, operation types.Operation)) *Simulator_SimulateOperation_Call {
+func (_c *Simulator_SimulateOperation_Call) Run(run func(ctx context.Context, metadata types.ChainMetadata, operation types.Operation)) *Simulator_SimulateOperation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(types.ChainMetadata), args[1].(types.Operation))
+		run(args[0].(context.Context), args[1].(types.ChainMetadata), args[2].(types.Operation))
 	})
 	return _c
 }
@@ -64,22 +68,22 @@ func (_c *Simulator_SimulateOperation_Call) Return(_a0 error) *Simulator_Simulat
 	return _c
 }
 
-func (_c *Simulator_SimulateOperation_Call) RunAndReturn(run func(types.ChainMetadata, types.Operation) error) *Simulator_SimulateOperation_Call {
+func (_c *Simulator_SimulateOperation_Call) RunAndReturn(run func(context.Context, types.ChainMetadata, types.Operation) error) *Simulator_SimulateOperation_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// SimulateSetRoot provides a mock function with given fields: metadata, proof, root, validUntil, sortedSignatures
-func (_m *Simulator) SimulateSetRoot(metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature) error {
-	ret := _m.Called(metadata, proof, root, validUntil, sortedSignatures)
+// SimulateSetRoot provides a mock function with given fields: ctx, originCaller, metadata, proof, root, validUntil, sortedSignatures
+func (_m *Simulator) SimulateSetRoot(ctx context.Context, originCaller string, metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature) error {
+	ret := _m.Called(ctx, originCaller, metadata, proof, root, validUntil, sortedSignatures)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SimulateSetRoot")
 	}
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) error); ok {
-		r0 = rf(metadata, proof, root, validUntil, sortedSignatures)
+	if rf, ok := ret.Get(0).(func(context.Context, string, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) error); ok {
+		r0 = rf(ctx, originCaller, metadata, proof, root, validUntil, sortedSignatures)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -93,18 +97,20 @@ type Simulator_SimulateSetRoot_Call struct {
 }
 
 // SimulateSetRoot is a helper method to define mock.On call
+//   - ctx context.Context
+//   - originCaller string
 //   - metadata types.ChainMetadata
 //   - proof []common.Hash
 //   - root [32]byte
 //   - validUntil uint32
 //   - sortedSignatures []types.Signature
-func (_e *Simulator_Expecter) SimulateSetRoot(metadata interface{}, proof interface{}, root interface{}, validUntil interface{}, sortedSignatures interface{}) *Simulator_SimulateSetRoot_Call {
-	return &Simulator_SimulateSetRoot_Call{Call: _e.mock.On("SimulateSetRoot", metadata, proof, root, validUntil, sortedSignatures)}
+func (_e *Simulator_Expecter) SimulateSetRoot(ctx interface{}, originCaller interface{}, metadata interface{}, proof interface{}, root interface{}, validUntil interface{}, sortedSignatures interface{}) *Simulator_SimulateSetRoot_Call {
+	return &Simulator_SimulateSetRoot_Call{Call: _e.mock.On("SimulateSetRoot", ctx, originCaller, metadata, proof, root, validUntil, sortedSignatures)}
 }
 
-func (_c *Simulator_SimulateSetRoot_Call) Run(run func(metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature)) *Simulator_SimulateSetRoot_Call {
+func (_c *Simulator_SimulateSetRoot_Call) Run(run func(ctx context.Context, originCaller string, metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature)) *Simulator_SimulateSetRoot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(types.ChainMetadata), args[1].([]common.Hash), args[2].([32]byte), args[3].(uint32), args[4].([]types.Signature))
+		run(args[0].(context.Context), args[1].(string), args[2].(types.ChainMetadata), args[3].([]common.Hash), args[4].([32]byte), args[5].(uint32), args[6].([]types.Signature))
 	})
 	return _c
 }
@@ -114,7 +120,7 @@ func (_c *Simulator_SimulateSetRoot_Call) Return(_a0 error) *Simulator_SimulateS
 	return _c
 }
 
-func (_c *Simulator_SimulateSetRoot_Call) RunAndReturn(run func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) error) *Simulator_SimulateSetRoot_Call {
+func (_c *Simulator_SimulateSetRoot_Call) RunAndReturn(run func(context.Context, string, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) error) *Simulator_SimulateSetRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }

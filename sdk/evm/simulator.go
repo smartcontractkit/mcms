@@ -19,14 +19,23 @@ type Simulator struct {
 	*Inspector
 }
 
-func NewSimulator(encoder *Encoder, client ContractDeployBackend) *Simulator {
+func NewSimulator(encoder *Encoder, client ContractDeployBackend) (*Simulator, error) {
+	if encoder == nil {
+		return nil, errors.New("Simulator was created without an encoder")
+	}
+
+	if client == nil {
+		return nil, errors.New("Simulator was created without an inspector")
+	}
+
 	return &Simulator{
 		Encoder:   encoder,
 		Inspector: NewInspector(client),
-	}
+	}, nil
 }
 
 func (s *Simulator) SimulateSetRoot(
+	ctx context.Context,
 	originCaller string, // TODO: do we need this or can we just use a random address?
 	metadata types.ChainMetadata,
 	proof []common.Hash,
@@ -34,14 +43,6 @@ func (s *Simulator) SimulateSetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) error {
-	if s.Encoder == nil {
-		return errors.New("Simulator was created without an encoder")
-	}
-
-	if s.Inspector == nil {
-		return errors.New("Simulator was created without an inspector")
-	}
-
 	bindMeta, err := s.ToGethRootMetadata(metadata)
 	if err != nil {
 		return err
@@ -65,7 +66,7 @@ func (s *Simulator) SimulateSetRoot(
 	}
 
 	mcmAddr := common.HexToAddress(metadata.MCMAddress)
-	_, err = s.client.CallContract(context.Background(), ethereum.CallMsg{
+	_, err = s.client.CallContract(ctx, ethereum.CallMsg{
 		From:  common.HexToAddress(originCaller),
 		To:    &mcmAddr,
 		Value: big.NewInt(0),
@@ -76,6 +77,7 @@ func (s *Simulator) SimulateSetRoot(
 }
 
 func (s *Simulator) SimulateOperation(
+	ctx context.Context,
 	metadata types.ChainMetadata,
 	operation types.Operation,
 ) error {
@@ -94,7 +96,7 @@ func (s *Simulator) SimulateOperation(
 	}
 
 	toAddr := common.HexToAddress(operation.Transaction.To)
-	_, err := s.client.CallContract(context.Background(), ethereum.CallMsg{
+	_, err := s.client.CallContract(ctx, ethereum.CallMsg{
 		From:  common.HexToAddress(metadata.MCMAddress),
 		To:    &toAddr,
 		Value: additionalFields.Value,

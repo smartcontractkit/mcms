@@ -25,10 +25,52 @@ func TestNewSimulator(t *testing.T) {
 	mockEncoder := &evm.Encoder{}
 	mockClient := evm_mocks.NewContractDeployBackend(t)
 
-	simulator := evm.NewSimulator(mockEncoder, mockClient)
+	// Test error cases
+	tests := []struct {
+		name       string
+		encoder    *evm.Encoder
+		client     evm.ContractDeployBackend
+		wantErr    error
+		wantErrMsg string
+	}{
+		{
+			name:       "success",
+			encoder:    mockEncoder,
+			client:     mockClient,
+			wantErr:    nil,
+			wantErrMsg: "",
+		},
+		{
+			name:       "nil encoder",
+			encoder:    nil,
+			client:     mockClient,
+			wantErr:    errors.New("Simulator was created without an encoder"),
+			wantErrMsg: "Simulator was created without an encoder",
+		},
+		{
+			name:       "nil client",
+			encoder:    mockEncoder,
+			client:     nil,
+			wantErr:    errors.New("Simulator was created without an inspector"),
+			wantErrMsg: "Simulator was created without an inspector",
+		},
+	}
 
-	assert.Equal(t, mockEncoder, simulator.Encoder, "expected Encoder to be set correctly")
-	assert.NotNil(t, simulator.Inspector, "expected Inspector to be initialized")
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			simulator, err := evm.NewSimulator(tt.encoder, tt.client)
+			if tt.wantErr == nil {
+				assert.NoError(t, err)
+				assert.NotNil(t, simulator, "expected non-nil simulator when no error is returned")
+			} else {
+				assert.Nil(t, simulator, "expected nil simulator when error is returned")
+				assert.EqualError(t, err, tt.wantErrMsg, "expected error message to match")
+				assert.Equal(t, tt.wantErr, err, "expected error to match")
+			}
+		})
+	}
 }
 
 func TestSimulator_ExecuteOperation(t *testing.T) {
@@ -86,29 +128,6 @@ func TestSimulator_ExecuteOperation(t *testing.T) {
 			wantTxHash: "0xc381f411283719726be93f957b9e3ca7d8041725c22fefab8dcf132770adf7a9",
 			wantErr:    nil,
 		},
-		{
-			name: "failure - nil encoder",
-			auth: &bind.TransactOpts{
-				From:    common.HexToAddress("0xFrom"),
-				Context: context.Background(),
-				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
-					mockTx := evmTypes.NewTransaction(
-						1,
-						common.HexToAddress("0xMockedAddress"),
-						big.NewInt(1000000000000000000),
-						21000,
-						big.NewInt(20000000000),
-						nil,
-					)
-
-					return mockTx, nil
-				},
-			},
-			encoder:    nil,
-			mockSetup:  func(m *evm_mocks.ContractDeployBackend) {},
-			wantTxHash: "",
-			wantErr:    errors.New("Simulator was created without an encoder"),
-		},
 	}
 
 	for _, tt := range tests {
@@ -121,8 +140,14 @@ func TestSimulator_ExecuteOperation(t *testing.T) {
 				tt.mockSetup(client)
 			}
 
-			simulator := evm.NewSimulator(tt.encoder, client)
-			err := simulator.SimulateOperation(tt.metadata, tt.op)
+			simulator, err := evm.NewSimulator(tt.encoder, client)
+			assert.NoError(t, err)
+
+			err = simulator.SimulateOperation(
+				context.TODO(),
+				tt.metadata,
+				tt.op,
+			)
 
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
@@ -188,29 +213,6 @@ func TestSimulator_SetRoot(t *testing.T) {
 			wantErr:    nil,
 		},
 		{
-			name: "failure - nil encoder",
-			auth: &bind.TransactOpts{
-				From:    common.HexToAddress("0xFrom"),
-				Context: context.Background(),
-				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
-					mockTx := evmTypes.NewTransaction(
-						1,
-						common.HexToAddress("0xMockedAddress"),
-						big.NewInt(1000000000000000000),
-						21000,
-						big.NewInt(20000000000),
-						nil,
-					)
-
-					return mockTx, nil
-				},
-			},
-			encoder:    nil,
-			mockSetup:  func(m *evm_mocks.ContractDeployBackend) {},
-			wantTxHash: "",
-			wantErr:    errors.New("Simulator was created without an encoder"),
-		},
-		{
 			name: "failure in geth operation conversion due to invalid chain ID",
 			auth: &bind.TransactOpts{
 				From:    common.HexToAddress("0xFrom"),
@@ -247,8 +249,10 @@ func TestSimulator_SetRoot(t *testing.T) {
 				tt.mockSetup(client)
 			}
 
-			simulator := evm.NewSimulator(tt.encoder, client)
-			err := simulator.SimulateSetRoot(
+			simulator, err := evm.NewSimulator(tt.encoder, client)
+			assert.NoError(t, err)
+			err = simulator.SimulateSetRoot(
+				context.TODO(),
 				tt.auth.From.Hex(),
 				tt.metadata,
 				tt.proof,

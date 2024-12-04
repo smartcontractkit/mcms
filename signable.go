@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -108,7 +109,7 @@ func (s *Signable) Simulate() error {
 		}
 
 		// TODO: should we fail on the first error or aggregate all simulation errors?
-		err := simulator.SimulateOperation(s.proposal.ChainMetadata[op.ChainSelector], op)
+		err := simulator.SimulateOperation(context.Background(), s.proposal.ChainMetadata[op.ChainSelector], op)
 		if err != nil {
 			return err
 		}

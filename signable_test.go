@@ -889,8 +889,8 @@ func Test_Signable_Simulate(t *testing.T) {
 				Operations: operations,
 			},
 			giveSimulators: func(m *simulatorMocks) map[types.ChainSelector]sdk.Simulator {
-				m.simulator1.EXPECT().SimulateOperation(mock.Anything, mock.Anything).Return(nil)
-				m.simulator2.EXPECT().SimulateOperation(mock.Anything, mock.Anything).Return(nil)
+				m.simulator1.EXPECT().SimulateOperation(mock.Anything, mock.Anything, mock.Anything).Return(nil)
+				m.simulator2.EXPECT().SimulateOperation(mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 				return map[types.ChainSelector]sdk.Simulator{
 					chaintest.Chain1Selector: m.simulator1,
@@ -932,7 +932,7 @@ func Test_Signable_Simulate(t *testing.T) {
 				Operations: operations,
 			},
 			giveSimulators: func(m *simulatorMocks) map[types.ChainSelector]sdk.Simulator {
-				m.simulator1.EXPECT().SimulateOperation(mock.Anything, mock.Anything).Return(assert.AnError)
+				m.simulator1.EXPECT().SimulateOperation(mock.Anything, mock.Anything, mock.Anything).Return(assert.AnError)
 				return map[types.ChainSelector]sdk.Simulator{
 					chaintest.Chain1Selector: m.simulator1,
 					chaintest.Chain2Selector: m.simulator2,
