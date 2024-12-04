@@ -142,7 +142,7 @@ func TestSimulator_ExecuteOperation(t *testing.T) {
 			}
 
 			simulator, err := evm.NewSimulator(tt.encoder, client)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			err = simulator.SimulateOperation(
 				context.TODO(),
