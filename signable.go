@@ -26,7 +26,6 @@ var (
 type Signable struct {
 	proposal   *Proposal
 	tree       *merkle.Tree
-	txNonces   []uint64
 	encoders   map[types.ChainSelector]sdk.Encoder
 	inspectors map[types.ChainSelector]sdk.Inspector
 	simulators map[types.ChainSelector]sdk.Simulator
@@ -48,18 +47,11 @@ func NewSignable(
 		return nil, err
 	}
 
-	// Generate the tx nonces from the proposal
-	txNonces, err := proposal.TransactionNonces()
-	if err != nil {
-		return nil, err
-	}
-
 	return &Signable{
 		proposal:   proposal,
 		tree:       tree,
 		encoders:   encoders,
 		inspectors: inspectors,
-		txNonces:   txNonces,
 	}, nil
 }
 
