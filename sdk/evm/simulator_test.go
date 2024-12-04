@@ -12,6 +12,7 @@ import (
 	evmTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -62,11 +63,11 @@ func TestNewSimulator(t *testing.T) {
 
 			simulator, err := evm.NewSimulator(tt.encoder, tt.client)
 			if tt.wantErr == nil {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.NotNil(t, simulator, "expected non-nil simulator when no error is returned")
 			} else {
 				assert.Nil(t, simulator, "expected nil simulator when error is returned")
-				assert.EqualError(t, err, tt.wantErrMsg, "expected error message to match")
+				require.EqualError(t, err, tt.wantErrMsg, "expected error message to match")
 				assert.Equal(t, tt.wantErr, err, "expected error to match")
 			}
 		})
@@ -250,7 +251,7 @@ func TestSimulator_SetRoot(t *testing.T) {
 			}
 
 			simulator, err := evm.NewSimulator(tt.encoder, client)
-			assert.NoError(t, err)
+			require.NoError(t, err)
 			err = simulator.SimulateSetRoot(
 				context.TODO(),
 				tt.auth.From.Hex(),
