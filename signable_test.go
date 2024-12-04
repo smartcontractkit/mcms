@@ -763,6 +763,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
 				m.inspector1.EXPECT().GetConfig("0x01").Return(config1, nil)
 				m.inspector2.EXPECT().GetConfig("0x02").Return(config2, nil)
+
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
 					chaintest.Chain2Selector: m.inspector2,
@@ -890,6 +891,7 @@ func Test_Signable_Simulate(t *testing.T) {
 			giveSimulators: func(m *simulatorMocks) map[types.ChainSelector]sdk.Simulator {
 				m.simulator1.EXPECT().SimulateOperation(mock.Anything, mock.Anything).Return(nil)
 				m.simulator2.EXPECT().SimulateOperation(mock.Anything, mock.Anything).Return(nil)
+
 				return map[types.ChainSelector]sdk.Simulator{
 					chaintest.Chain1Selector: m.simulator1,
 					chaintest.Chain2Selector: m.simulator2,
