@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"context"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/types"
@@ -11,16 +13,18 @@ import (
 // This is only required if the chain supports simulation.
 type Simulator interface {
 	SimulateSetRoot(
+		ctx context.Context,
+		originCaller string,
 		metadata types.ChainMetadata,
 		proof []common.Hash,
 		root [32]byte,
 		validUntil uint32,
 		sortedSignatures []types.Signature,
-	) (bool, error)
+	) error
 
 	SimulateOperation(
-		nonce uint32,
-		proof []common.Hash,
-		op types.Operation,
-	) (bool, error)
+		ctx context.Context,
+		metadata types.ChainMetadata,
+		operation types.Operation,
+	) error
 }
