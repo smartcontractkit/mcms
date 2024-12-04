@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
@@ -24,6 +25,11 @@ import (
 type inspectorMocks struct {
 	inspector1 *sdkmocks.Inspector
 	inspector2 *sdkmocks.Inspector
+}
+
+type simulatorMocks struct {
+	simulator1 *sdkmocks.Simulator
+	simulator2 *sdkmocks.Simulator
 }
 
 func Test_NewSignable(t *testing.T) {
@@ -757,7 +763,6 @@ func Test_Signable_GetConfigs(t *testing.T) {
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
 				m.inspector1.EXPECT().GetConfig("0x01").Return(config1, nil)
 				m.inspector2.EXPECT().GetConfig("0x02").Return(config2, nil)
-
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
 					chaintest.Chain2Selector: m.inspector2,
@@ -834,6 +839,130 @@ func Test_Signable_GetConfigs(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tt.want, configs)
+			}
+		})
+	}
+}
+
+func Test_Signable_Simulate(t *testing.T) {
+	t.Parallel()
+
+	operations := []types.Operation{
+		{
+			ChainSelector: chaintest.Chain1Selector,
+			Transaction: evm.NewOperation(
+				common.HexToAddress("0x02"),
+				[]byte("0x0000000"), // Use some random data since it doesn't matter
+				big.NewInt(0),
+				"RBACTimelock",
+				[]string{"RBACTimelock", "GrantRole"},
+			),
+		},
+		{
+			ChainSelector: chaintest.Chain2Selector,
+			Transaction: evm.NewOperation(
+				common.HexToAddress("0x02"),
+				[]byte("0x0000000"), // Use some random data since it doesn't matter
+				big.NewInt(0),
+				"RBACTimelock",
+				[]string{"RBACTimelock", "GrantRole"},
+			),
+		},
+	}
+
+	tests := []struct {
+		name           string
+		give           Proposal
+		giveSimulators func(*simulatorMocks) map[types.ChainSelector]sdk.Simulator
+		wantErr        string
+	}{
+		{
+			name: "success",
+			give: Proposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
+						chaintest.Chain2Selector: {MCMAddress: "0x02"},
+					},
+				},
+				Operations: operations,
+			},
+			giveSimulators: func(m *simulatorMocks) map[types.ChainSelector]sdk.Simulator {
+				m.simulator1.EXPECT().SimulateOperation(mock.Anything, mock.Anything).Return(nil)
+				m.simulator2.EXPECT().SimulateOperation(mock.Anything, mock.Anything).Return(nil)
+				return map[types.ChainSelector]sdk.Simulator{
+					chaintest.Chain1Selector: m.simulator1,
+					chaintest.Chain2Selector: m.simulator2,
+				}
+			},
+		},
+		{
+			name: "failure: no simulators",
+			give: Proposal{},
+			giveSimulators: func(m *simulatorMocks) map[types.ChainSelector]sdk.Simulator {
+				return nil
+			},
+			wantErr: ErrSimulatorsNotProvided.Error(),
+		},
+		{
+			name: "failure: simulator not found",
+			give: Proposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
+					},
+				},
+				Operations: operations,
+			},
+			giveSimulators: func(m *simulatorMocks) map[types.ChainSelector]sdk.Simulator {
+				return map[types.ChainSelector]sdk.Simulator{}
+			},
+			wantErr: "simulator not found for chain 3379446385462418246",
+		},
+		{
+			name: "failure: on chain simulate failure",
+			give: Proposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						chaintest.Chain1Selector: {MCMAddress: "0x01"},
+					},
+				},
+				Operations: operations,
+			},
+			giveSimulators: func(m *simulatorMocks) map[types.ChainSelector]sdk.Simulator {
+				m.simulator1.EXPECT().SimulateOperation(mock.Anything, mock.Anything).Return(assert.AnError)
+				return map[types.ChainSelector]sdk.Simulator{
+					chaintest.Chain1Selector: m.simulator1,
+					chaintest.Chain2Selector: m.simulator2,
+				}
+			},
+			wantErr: assert.AnError.Error(),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			simulator1 := sdkmocks.NewSimulator(t)
+			simulator2 := sdkmocks.NewSimulator(t)
+
+			giveSimulators := tt.giveSimulators(&simulatorMocks{
+				simulator1: simulator1,
+				simulator2: simulator2,
+			})
+
+			signable := &Signable{
+				proposal:   &tt.give,
+				simulators: giveSimulators,
+			}
+
+			err := signable.Simulate()
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
 			}
 		})
 	}

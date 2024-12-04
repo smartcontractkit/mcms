@@ -112,8 +112,10 @@ func (s *Signable) Simulate() error {
 	for _, op := range s.proposal.Operations {
 		simulator, ok := s.simulators[op.ChainSelector]
 		if !ok {
+			fmt.Printf("simulator not found for chain %d", op.ChainSelector)
 			return fmt.Errorf("simulator not found for chain %d", op.ChainSelector)
 		}
+		fmt.Printf("Simulating operation on chain %d", op.ChainSelector)
 
 		// TODO: should we fail on the first error or aggregate all simulation errors?
 		err := simulator.SimulateOperation(s.proposal.ChainMetadata[op.ChainSelector], op)

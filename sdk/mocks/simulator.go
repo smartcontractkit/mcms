@@ -22,32 +22,22 @@ func (_m *Simulator) EXPECT() *Simulator_Expecter {
 	return &Simulator_Expecter{mock: &_m.Mock}
 }
 
-// SimulateOperation provides a mock function with given fields: nonce, proof, op
-func (_m *Simulator) SimulateOperation(nonce uint32, proof []common.Hash, op types.Operation) (bool, error) {
-	ret := _m.Called(nonce, proof, op)
+// SimulateOperation provides a mock function with given fields: metadata, operation
+func (_m *Simulator) SimulateOperation(metadata types.ChainMetadata, operation types.Operation) error {
+	ret := _m.Called(metadata, operation)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SimulateOperation")
 	}
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(uint32, []common.Hash, types.Operation) (bool, error)); ok {
-		return rf(nonce, proof, op)
-	}
-	if rf, ok := ret.Get(0).(func(uint32, []common.Hash, types.Operation) bool); ok {
-		r0 = rf(nonce, proof, op)
+	var r0 error
+	if rf, ok := ret.Get(0).(func(types.ChainMetadata, types.Operation) error); ok {
+		r0 = rf(metadata, operation)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(uint32, []common.Hash, types.Operation) error); ok {
-		r1 = rf(nonce, proof, op)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Simulator_SimulateOperation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SimulateOperation'
@@ -56,56 +46,45 @@ type Simulator_SimulateOperation_Call struct {
 }
 
 // SimulateOperation is a helper method to define mock.On call
-//   - nonce uint32
-//   - proof []common.Hash
-//   - op types.Operation
-func (_e *Simulator_Expecter) SimulateOperation(nonce interface{}, proof interface{}, op interface{}) *Simulator_SimulateOperation_Call {
-	return &Simulator_SimulateOperation_Call{Call: _e.mock.On("SimulateOperation", nonce, proof, op)}
+//   - metadata types.ChainMetadata
+//   - operation types.Operation
+func (_e *Simulator_Expecter) SimulateOperation(metadata interface{}, operation interface{}) *Simulator_SimulateOperation_Call {
+	return &Simulator_SimulateOperation_Call{Call: _e.mock.On("SimulateOperation", metadata, operation)}
 }
 
-func (_c *Simulator_SimulateOperation_Call) Run(run func(nonce uint32, proof []common.Hash, op types.Operation)) *Simulator_SimulateOperation_Call {
+func (_c *Simulator_SimulateOperation_Call) Run(run func(metadata types.ChainMetadata, operation types.Operation)) *Simulator_SimulateOperation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(uint32), args[1].([]common.Hash), args[2].(types.Operation))
+		run(args[0].(types.ChainMetadata), args[1].(types.Operation))
 	})
 	return _c
 }
 
-func (_c *Simulator_SimulateOperation_Call) Return(_a0 bool, _a1 error) *Simulator_SimulateOperation_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *Simulator_SimulateOperation_Call) Return(_a0 error) *Simulator_SimulateOperation_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Simulator_SimulateOperation_Call) RunAndReturn(run func(uint32, []common.Hash, types.Operation) (bool, error)) *Simulator_SimulateOperation_Call {
+func (_c *Simulator_SimulateOperation_Call) RunAndReturn(run func(types.ChainMetadata, types.Operation) error) *Simulator_SimulateOperation_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SimulateSetRoot provides a mock function with given fields: metadata, proof, root, validUntil, sortedSignatures
-func (_m *Simulator) SimulateSetRoot(metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature) (bool, error) {
+func (_m *Simulator) SimulateSetRoot(metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature) error {
 	ret := _m.Called(metadata, proof, root, validUntil, sortedSignatures)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SimulateSetRoot")
 	}
 
-	var r0 bool
-	var r1 error
-	if rf, ok := ret.Get(0).(func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) (bool, error)); ok {
-		return rf(metadata, proof, root, validUntil, sortedSignatures)
-	}
-	if rf, ok := ret.Get(0).(func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) bool); ok {
+	var r0 error
+	if rf, ok := ret.Get(0).(func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) error); ok {
 		r0 = rf(metadata, proof, root, validUntil, sortedSignatures)
 	} else {
-		r0 = ret.Get(0).(bool)
+		r0 = ret.Error(0)
 	}
 
-	if rf, ok := ret.Get(1).(func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) error); ok {
-		r1 = rf(metadata, proof, root, validUntil, sortedSignatures)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // Simulator_SimulateSetRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SimulateSetRoot'
@@ -130,12 +109,12 @@ func (_c *Simulator_SimulateSetRoot_Call) Run(run func(metadata types.ChainMetad
 	return _c
 }
 
-func (_c *Simulator_SimulateSetRoot_Call) Return(_a0 bool, _a1 error) *Simulator_SimulateSetRoot_Call {
-	_c.Call.Return(_a0, _a1)
+func (_c *Simulator_SimulateSetRoot_Call) Return(_a0 error) *Simulator_SimulateSetRoot_Call {
+	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *Simulator_SimulateSetRoot_Call) RunAndReturn(run func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) (bool, error)) *Simulator_SimulateSetRoot_Call {
+func (_c *Simulator_SimulateSetRoot_Call) RunAndReturn(run func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) error) *Simulator_SimulateSetRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }
