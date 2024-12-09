@@ -24,8 +24,6 @@ type Config struct {
 	BlockchainA *blockchain.Input `toml:"evm_config" validate:"required"`
 	Settings    struct {
 		PrivateKeys []string `toml:"private_keys"`
-		// ChainFamily is temporary in Settings until CTF will add this field to BlockchainA input/output Config
-		ChainFamily string `toml:"chain_family"`
 	} `toml:"settings"`
 }
 

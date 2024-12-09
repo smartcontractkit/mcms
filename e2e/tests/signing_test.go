@@ -33,7 +33,7 @@ type SigningTestSuite struct {
 func (s *SigningTestSuite) SetupSuite() {
 	s.TestSetup = *InitializeSharedTestSetup(s.T())
 
-	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.Settings.ChainFamily)
+	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)
 	s.chainSelector = mcmtypes.ChainSelector(chainDetails.ChainSelector)
 }
