@@ -498,7 +498,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 			setup: func(_ *Proposal) {
 				// NOP: valid proposal.
 			},
-			wantRoot: common.HexToHash("0x4e899fcdb81dc7f0c1d6609366246807fd897c2afb531ca8f907472fd6e1ed02"),
+			wantRoot: common.HexToHash("0x4fdb98431759bbcab33cbd1b4034fea43ef360f11b1de4ca10fc20f8916bda19"),
 		},
 		{
 			name: "failure: could not get encoders",

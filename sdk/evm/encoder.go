@@ -109,7 +109,7 @@ func (e *Encoder) ToGethOperation(
 	return bindings.ManyChainMultiSigOp{
 		ChainId:  new(big.Int).SetUint64(evmChainID),
 		MultiSig: common.HexToAddress(metadata.MCMAddress),
-		Nonce:    new(big.Int).SetUint64(metadata.StartingOpCount + uint64(opCount)),
+		Nonce:    new(big.Int).SetUint64(uint64(opCount)),
 		To:       common.HexToAddress(op.Transaction.To),
 		Data:     op.Transaction.Data,
 		Value:    additionalFields.Value,

@@ -153,9 +153,8 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	// Create the chain MCMS proposal executor
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
-	encoder := encoders[mcmtypes.ChainSelector(s.chainSelector)].(*evm.Encoder)
 
-	executor := evm.NewExecutor(encoder, s.Client, s.auth)
+	executor := evm.NewExecutor(encoders[(s.chainSelector)].(*evm.Encoder), s.Client, s.auth)
 	executorsMap := map[mcmtypes.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
 	}
@@ -221,9 +220,8 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
-	encoder := encoders[mcmtypes.ChainSelector(s.chainSelector)].(*evm.Encoder)
 
-	executor := evm.NewExecutor(encoder, s.Client, s.auth)
+	executor := evm.NewExecutor(encoders[(s.chainSelector)].(*evm.Encoder), s.Client, s.auth)
 	executorsMap := map[mcmtypes.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
 	}

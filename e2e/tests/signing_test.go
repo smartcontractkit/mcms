@@ -100,5 +100,5 @@ func (s *SigningTestSuite) TestReadAndSign() {
 	appendedSignature := signatures[len(signatures)-1].(map[string]any)
 	s.Require().Equal(expected.R.Hex(), appendedSignature["R"])
 	s.Require().Equal(expected.S.Hex(), appendedSignature["S"])
-	s.Require().Equal(float64(expected.V), appendedSignature["V"])
+	s.Require().InDelta(expected.V, appendedSignature["V"], 1e-9)
 }
