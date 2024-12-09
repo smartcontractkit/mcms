@@ -77,18 +77,22 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	// Grant Some Roles for testing
 	// Proposers
 	role, err := s.timelockContract.PROPOSERROLE(&bind.CallOpts{})
+	s.Require().NoError(err)
 	s.granRole(role, s.signerAddresses[0])
 	// Executors
 	role, err = s.timelockContract.EXECUTORROLE(&bind.CallOpts{})
+	s.Require().NoError(err)
 	s.granRole(role, s.signerAddresses[0])
 	s.granRole(role, s.signerAddresses[1])
 
 	// By passers
 	role, err = s.timelockContract.BYPASSERROLE(&bind.CallOpts{})
+	s.Require().NoError(err)
 	s.granRole(role, s.signerAddresses[1])
 
 	// Cancellers
 	role, err = s.timelockContract.CANCELLERROLE(&bind.CallOpts{})
+	s.Require().NoError(err)
 	s.granRole(role, s.signerAddresses[0])
 	s.granRole(role, s.signerAddresses[1])
 }
@@ -293,6 +297,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 
 		isOpDone, err := inspector.IsOperationDone(timelockContract.Address().Hex(), opID)
 		s.Require().NoError(err, "Failed to check if operation is done")
+
 		return isOpDone
 	}, 5*time.Second, 500*time.Millisecond, "Operation was not completed in time")
 }

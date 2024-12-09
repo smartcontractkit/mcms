@@ -458,5 +458,4 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	proposer, err = s.timelockContract.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
 	s.Require().NoError(err)
 	s.Require().Equal(s.mcmsContract.Address().Hex(), proposer.Hex())
-
 }
