@@ -171,6 +171,9 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NoError(err)
 	s.Require().NotNil(signable)
 
+	err = signable.ValidateConfigs()
+	s.Require().NoError(err)
+
 	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])))
 	s.Require().NoError(err)
 
