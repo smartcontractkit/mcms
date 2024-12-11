@@ -67,6 +67,13 @@ after default one to override or add to the previous values. It's pattern of CTF
 
 `task test:e2e CTF_CONFIGS=../config.toml,../custom_configs/avax_fuji.toml`
 
+### Running Ledger Signing Test
+
+For real ledger signing verification you can run:
+`task test:ledger`
+
+Remember to connect usb device, unlock it and open ethereum app.
+
 ### Running Linters
 
 Run the linters with:
