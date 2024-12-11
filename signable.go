@@ -56,6 +56,11 @@ func NewSignable(
 	}, nil
 }
 
+// SetSimulators allows setting the simulators map for the Signable instance.
+func (s *Signable) SetSimulators(simulators map[types.ChainSelector]sdk.Simulator) {
+	s.simulators = simulators
+}
+
 // Sign signs the root of the proposal's Merkle tree with the provided signer.
 func (s *Signable) Sign(signer signer) (sig types.Signature, err error) {
 	// Validate proposal
