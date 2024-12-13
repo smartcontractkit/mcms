@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/smartcontractkit/mcms/sdk/usbwallet"
 )
 
 // signer is an interface for different strategies for signing payloads.
