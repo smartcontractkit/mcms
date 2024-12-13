@@ -106,7 +106,7 @@ func (w *ledgerDriver) ledgerSignPersonalMessage(derivationPath []uint32, messag
 
 	// Extract the Ethereum signature and do a sanity validation
 	if len(reply) != crypto.SignatureLength {
-		return nil, fmt.Errorf("reply lacks signature", "reply", reply)
+		return nil, fmt.Errorf("reply lacks signature: reploy %v", reply)
 	}
 	signature := append(reply[1:], reply[0])
 	return signature, nil
