@@ -90,12 +90,10 @@ func (s *Signable) Sign(signer signer) (sig types.Signature, err error) {
 // slice.
 func (s *Signable) SignAndAppend(signer signer) (types.Signature, error) {
 	// Sign the proposal
-	fmt.Println("HELLO")
 	sig, err := s.Sign(signer)
 	if err != nil {
 		return types.Signature{}, err
 	}
-	fmt.Println("HELLO2")
 
 	// Add the signature to the proposal
 	s.proposal.AppendSignature(sig)
