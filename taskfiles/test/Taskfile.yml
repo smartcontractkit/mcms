@@ -24,3 +24,8 @@ tasks:
     cmds:
       - go test -coverprofile=coverage.out -covermode count ./...
       - go tool cover -html=coverage.out
+
+  ledger:
+    desc: "Run ledger signing test"
+    cmds:
+      - go test -tags=ledger {{.CLI_ARGS}} ./e2e/ledger

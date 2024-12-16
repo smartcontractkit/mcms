@@ -61,7 +61,7 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.timelockContract = s.deployTimelockContract(s.mcmsContract.Address().Hex())
 	s.deployerKey = crypto.PubkeyToAddress(privateKey.PublicKey)
 
-	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.Settings.ChainFamily)
+	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)
 	s.chainSelector = mcmtypes.ChainSelector(chainDetails.ChainSelector)
 }
@@ -171,6 +171,9 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NoError(err)
 	s.Require().NotNil(signable)
 
+	err = signable.ValidateConfigs()
+	s.Require().NoError(err)
+
 	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])))
 	s.Require().NoError(err)
 
@@ -230,6 +233,232 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NoError(err)
 	s.Require().Equal(big.NewInt(1), proposerCount)
 	proposer, err := s.timelockContract.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
+	s.Require().NoError(err)
+	s.Require().Equal(s.mcmsContract.Address().Hex(), proposer.Hex())
+}
+
+// TestExecuteProposalMultiple executes 2 proposals to check nonce calculation mechanisms are working
+func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
+	opts := &bind.CallOpts{
+		Context:     context.Background(), // Use a proper context
+		From:        s.auth.From,          // Set the "from" address (optional)
+		BlockNumber: nil,                  // Use the latest block (nil by default)
+	}
+	// Construct example transaction
+	role, err := s.timelockContract.PROPOSERROLE(&bind.CallOpts{})
+	s.Require().NoError(err)
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
+	s.Require().NoError(err)
+	grantRoleData, err := timelockAbi.Pack("grantRole", role, s.auth.From)
+	s.Require().NoError(err)
+
+	// Construct a proposal
+	proposal := mcms.Proposal{
+		BaseProposal: mcms.BaseProposal{
+			Version:              "v1",
+			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+			Kind:                 mcmtypes.KindProposal,
+			ValidUntil:           2004259681,
+			Signatures:           []mcmtypes.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
+				s.chainSelector: {
+					StartingOpCount: 1,
+					MCMAddress:      s.mcmsContract.Address().Hex(),
+				},
+			},
+		},
+		Operations: []mcmtypes.Operation{
+			{
+				ChainSelector: s.chainSelector,
+				Transaction: evm.NewOperation(
+					common.HexToAddress(s.timelockContract.Address().Hex()),
+					grantRoleData,
+					big.NewInt(0),
+					"RBACTimelock",
+					[]string{"RBACTimelock", "GrantRole"},
+				),
+			},
+		},
+	}
+
+	tree, err := proposal.MerkleTree()
+	s.Require().NoError(err)
+
+	// Gen caller map for easy access (we can use geth chainselector for anvil)
+	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
+		s.chainSelector: evm.NewInspector(s.Client),
+	}
+
+	// Construct executor
+	signable, err := mcms.NewSignable(&proposal, inspectors)
+	s.Require().NoError(err)
+	s.Require().NotNil(signable)
+
+	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])))
+	s.Require().NoError(err)
+
+	// Validate the signatures
+	quorumMet, err := signable.ValidateSignatures()
+	s.Require().NoError(err)
+	s.Require().True(quorumMet)
+
+	// Construct encoders
+	encoders, err := proposal.GetEncoders()
+	s.Require().NoError(err)
+
+	// Construct executors
+	executors := map[mcmtypes.ChainSelector]sdk.Executor{
+		s.chainSelector: evm.NewExecutor(
+			encoders[s.chainSelector].(*evm.Encoder),
+			s.Client,
+			s.auth,
+		),
+	}
+
+	// Construct executable
+	executable, err := mcms.NewExecutable(&proposal, executors)
+	s.Require().NoError(err)
+
+	// SetRoot on the contract
+	txHash, err := executable.SetRoot(s.chainSelector)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(txHash)
+
+	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+
+	root, err := s.mcmsContract.GetRoot(&bind.CallOpts{})
+	s.Require().NoError(err)
+	s.Require().Equal(root.Root, [32]byte(tree.Root))
+	s.Require().Equal(root.ValidUntil, proposal.ValidUntil)
+
+	// Execute the proposal
+	txHash, err = executable.Execute(0)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(txHash)
+
+	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+
+	// Check the state of the MCMS contract
+	newOpCount, err := s.mcmsContract.GetOpCount(opts)
+	s.Require().NoError(err)
+	s.Require().NotNil(newOpCount)
+	s.Require().Equal(uint64(2), newOpCount.Uint64())
+
+	// Check the state of the timelock contract
+	proposerCount, err := s.timelockContract.GetRoleMemberCount(&bind.CallOpts{}, role)
+	s.Require().NoError(err)
+	s.Require().Equal(big.NewInt(2), proposerCount)
+	proposer, err := s.timelockContract.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
+	s.Require().NoError(err)
+	s.Require().Equal(s.mcmsContract.Address().Hex(), proposer.Hex())
+
+	role2, err := s.timelockContract.EXECUTORROLE(&bind.CallOpts{})
+	s.Require().NoError(err)
+	grantRoleData2, err := timelockAbi.Pack("grantRole", role2, s.mcmsContract.Address())
+	s.Require().NoError(err)
+	// Construct 2nd proposal
+
+	proposal2 := mcms.Proposal{
+		BaseProposal: mcms.BaseProposal{
+			Version:              "v1",
+			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+			Kind:                 mcmtypes.KindProposal,
+			ValidUntil:           2004259681,
+			Signatures:           []mcmtypes.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
+				s.chainSelector: {
+					StartingOpCount: 2,
+					MCMAddress:      s.mcmsContract.Address().Hex(),
+				},
+			},
+		},
+		Operations: []mcmtypes.Operation{
+			{
+				ChainSelector: s.chainSelector,
+				Transaction: evm.NewOperation(
+					common.HexToAddress(s.timelockContract.Address().Hex()),
+					grantRoleData2,
+					big.NewInt(0),
+					"RBACTimelock",
+					[]string{"RBACTimelock", "GrantRole"},
+				),
+			},
+		},
+	}
+
+	// Construct executor
+	signable2, err := mcms.NewSignable(&proposal2, inspectors)
+	s.Require().NoError(err)
+	s.Require().NotNil(signable)
+
+	_, err = signable2.SignAndAppend(mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])))
+	s.Require().NoError(err)
+
+	// Validate the signatures
+	quorumMet, err = signable2.ValidateSignatures()
+	s.Require().NoError(err)
+	s.Require().True(quorumMet)
+
+	// Construct encoders
+	encoders2, err := proposal2.GetEncoders()
+	s.Require().NoError(err)
+
+	// Construct executors
+	executors2 := map[mcmtypes.ChainSelector]sdk.Executor{
+		s.chainSelector: evm.NewExecutor(
+			encoders2[s.chainSelector].(*evm.Encoder),
+			s.Client,
+			s.auth,
+		),
+	}
+
+	// Construct executable
+	executable2, err := mcms.NewExecutable(&proposal2, executors2)
+	s.Require().NoError(err)
+
+	// SetRoot on the contract
+	txHash, err = executable2.SetRoot(s.chainSelector)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(txHash)
+
+	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+
+	tree2, err := proposal2.MerkleTree()
+	s.Require().NoError(err)
+
+	root, err = s.mcmsContract.GetRoot(&bind.CallOpts{})
+	s.Require().NoError(err)
+	s.Require().Equal(root.Root, [32]byte(tree2.Root))
+	s.Require().Equal(root.ValidUntil, proposal2.ValidUntil)
+
+	// Execute the proposal
+	txHash, err = executable2.Execute(0)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(txHash)
+
+	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+
+	// Check the state of the MCMS contract
+	newOpCount, err = s.mcmsContract.GetOpCount(opts)
+	s.Require().NoError(err)
+	s.Require().NotNil(newOpCount)
+	s.Require().Equal(uint64(3), newOpCount.Uint64())
+
+	// Check the state of the timelock contract
+	proposerCount, err = s.timelockContract.GetRoleMemberCount(&bind.CallOpts{}, role2)
+	s.Require().NoError(err)
+	s.Require().Equal(big.NewInt(1), proposerCount)
+	proposer, err = s.timelockContract.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
 	s.Require().NoError(err)
 	s.Require().Equal(s.mcmsContract.Address().Hex(), proposer.Hex())
 }

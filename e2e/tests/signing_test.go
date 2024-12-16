@@ -33,7 +33,7 @@ type SigningTestSuite struct {
 func (s *SigningTestSuite) SetupSuite() {
 	s.TestSetup = *InitializeSharedTestSetup(s.T())
 
-	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.Settings.ChainFamily)
+	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)
 	s.chainSelector = mcmtypes.ChainSelector(chainDetails.ChainSelector)
 }
@@ -100,5 +100,5 @@ func (s *SigningTestSuite) TestReadAndSign() {
 	appendedSignature := signatures[len(signatures)-1].(map[string]any)
 	s.Require().Equal(expected.R.Hex(), appendedSignature["R"])
 	s.Require().Equal(expected.S.Hex(), appendedSignature["S"])
-	s.Require().Equal(float64(expected.V), appendedSignature["V"])
+	s.Require().InDelta(expected.V, appendedSignature["V"], 1e-9)
 }

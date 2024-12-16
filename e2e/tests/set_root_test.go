@@ -60,7 +60,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 	s.mcmsContract = s.deployMCMSContract()
 	s.timelockContract = s.deployTimelockContract(s.mcmsContract.Address().String())
 	s.deployerKey = crypto.PubkeyToAddress(privateKey.PublicKey)
-	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.Settings.ChainFamily)
+	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.BlockchainA.Out.Family)
 	s.Require().NoError(err)
 	s.chainSelector = mcmtypes.ChainSelector(chainDetails.ChainSelector)
 }
@@ -129,7 +129,7 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 			Transaction: mcmtypes.Transaction{
 				To:               s.signerAddresses[0].Hex(),
 				Data:             []byte("0x"),
-				AdditionalFields: json.RawMessage(`{"value": 3}`),
+				AdditionalFields: json.RawMessage(`{"value": 0}`),
 			},
 		})
 	proposal, err := builder.Build()
@@ -153,13 +153,23 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	// Create the chain MCMS proposal executor
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
-	encoder := encoders[mcmtypes.ChainSelector(s.chainSelector)].(*evm.Encoder)
+	encoder := encoders[s.chainSelector].(*evm.Encoder)
 
 	executor := evm.NewExecutor(encoder, s.Client, s.auth)
 	executorsMap := map[mcmtypes.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
 	}
 	executable, err := mcms.NewExecutable(proposal, executorsMap)
+	s.Require().NoError(err)
+
+	// Prepare and execute simulation
+	simulator, err := evm.NewSimulator(encoder, s.Client)
+	s.Require().NoError(err, "Failed to create simulator")
+	simulators := map[mcmtypes.ChainSelector]sdk.Simulator{
+		s.chainSelector: simulator,
+	}
+	signable.SetSimulators(simulators)
+	err = signable.Simulate()
 	s.Require().NoError(err)
 
 	// Call SetRoot
@@ -221,12 +231,23 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
-	encoder := encoders[mcmtypes.ChainSelector(s.chainSelector)].(*evm.Encoder)
+	encoder := encoders[s.chainSelector].(*evm.Encoder)
 
 	executor := evm.NewExecutor(encoder, s.Client, s.auth)
 	executorsMap := map[mcmtypes.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
 	}
+
+	// Prepare and execute simulation
+	simulator, err := evm.NewSimulator(encoder, s.Client)
+	s.Require().NoError(err, "Failed to create simulator")
+	simulators := map[mcmtypes.ChainSelector]sdk.Simulator{
+		s.chainSelector: simulator,
+	}
+	signable.SetSimulators(simulators)
+	err = signable.Simulate()
+	s.Require().NoError(err)
+
 	// Create the chain MCMS proposal executor
 	executable, err := mcms.NewExecutable(&proposal, executorsMap)
 	s.Require().NoError(err)

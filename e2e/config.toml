@@ -4,8 +4,12 @@ image = "f4hrenh9it/foundry:latest"
 port = "8545"
 type = "anvil"
 
+[evm_config.out]
+family = "evm"
+
+
 [settings]
-chain_family = "evm"
+
 # Predefined anvil keys for testing
 private_keys = [
     "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
