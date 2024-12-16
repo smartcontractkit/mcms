@@ -7,7 +7,7 @@ require (
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/joho/godotenv v1.5.1
 	github.com/smartcontractkit/chain-selectors v1.0.34
-	github.com/smartcontractkit/chainlink-testing-framework/framework v0.3.6
+	github.com/smartcontractkit/chainlink-testing-framework/framework v0.3.7
 	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/tools v0.27.0
