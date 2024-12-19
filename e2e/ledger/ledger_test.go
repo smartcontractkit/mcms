@@ -95,6 +95,6 @@ func TestManualLedgerSigning(t *testing.T) { //nolint:paralleltest
 	recoveredAddr, err := signature.Recover(hash)
 	require.NoError(t, err, "Failed to recover signer address")
 
-	require.Equal(t, accountPublicKey, recoveredAddr, "Signature verification failed")
+	require.Equal(t, accountPublicKey, recoveredAddr.Hex(), "Signature verification failed")
 	t.Logf("Signature verified successfully. Signed by: %s\n", recoveredAddr.Hex())
 }

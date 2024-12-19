@@ -5,8 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/smartcontractkit/mcms/sdk/usbwallet"
 )
 
 // signer is an interface for different strategies for signing payloads.
@@ -27,8 +28,10 @@ func NewPrivateKeySigner(pk *ecdsa.PrivateKey) *PrivateKeySigner {
 }
 
 // Sign signs the payload using the private key.
+// The payload here should be without the EIP 191 prefix,
+// and the function will add it before signing.
 func (s *PrivateKeySigner) Sign(payload []byte) ([]byte, error) {
-	return crypto.Sign(payload, s.pk)
+	return crypto.Sign(toEthSignedMessageHash(payload).Bytes(), s.pk)
 }
 
 var _ signer = &LedgerSigner{}
@@ -44,6 +47,8 @@ func NewLedgerSigner(derivationPath []uint32) *LedgerSigner {
 }
 
 // Sign signs the payload using the first wallet found on a Ledger.
+// The payload here should be without the EIP 191 prefix,
+// and the ledger will add it before signing.
 func (s *LedgerSigner) Sign(payload []byte) ([]byte, error) {
 	// Load ledger
 	ledgerhub, err := usbwallet.NewLedgerHub()
@@ -71,5 +76,5 @@ func (s *LedgerSigner) Sign(payload []byte) ([]byte, error) {
 	}
 
 	// Sign the payload with EIP 191
-	return wallet.SignText(account, payload)
+	return wallet.SignText(account, payload[:])
 }

@@ -184,13 +184,13 @@ func (p *Proposal) SigningHash() (common.Hash, error) {
 		return common.Hash{}, err
 	}
 
-	return toEthSignedMessageHash(msg), nil
+	return toEthSignedMessageHash(msg.Bytes()), nil
 }
 
 // SigningMessage generates a signing message without the EIP191 prefix.
 // This function is used for ledger contexts where the ledger itself will apply the EIP191 prefix.
 // Corresponds to the input here https://github.com/smartcontractkit/ccip-owner-contracts/blob/main/src/ManyChainMultiSig.sol#L202
-func (p *Proposal) SigningMessage() ([32]byte, error) {
+func (p *Proposal) SigningMessage() (common.Hash, error) {
 	tree, err := p.MerkleTree()
 	if err != nil {
 		return common.Hash{}, err
@@ -261,15 +261,6 @@ func (p *Proposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
 	}
 
 	return encoders, nil
-}
-
-func toEthSignedMessageHash(messageHash common.Hash) common.Hash {
-	// Add the Ethereum signed message prefix
-	prefix := []byte("\x19Ethereum Signed Message:\n32")
-	data := append(prefix, messageHash.Bytes()...)
-
-	// Hash the prefixed message
-	return crypto.Keccak256Hash(data)
 }
 
 // proposalValidateBasic basic validation for an MCMS proposal
