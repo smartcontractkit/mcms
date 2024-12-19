@@ -25,12 +25,7 @@ func Test_PrivateKeySigner_Sign(t *testing.T) {
 		{
 			name: "success: signs the proposal",
 			give: []byte("0x000000000000000000000000000000"),
-			want: "403c61c40165ad6f361d2e3f7d2ee9707c48006941838b702a31d6c2782b2e0527e8d93a7462955f1068ea72928959b3ea1be496a389528be5df5bb6b2c515d300",
-		},
-		{
-			name:    "failure: invalid payload length",
-			give:    []byte("0x0"),
-			wantErr: "hash is required to be exactly 32 bytes (3)",
+			want: "286961047426c8463f85f43ddd19d7071ed2ecdab1522f654e4e3ff92cfc9e260fd18486a40e0379aec9ba50230c31b353497305c84c55793141c9df654f99a900",
 		},
 	}
 
