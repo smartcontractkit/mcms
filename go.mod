@@ -8,7 +8,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
 	github.com/smartcontractkit/chain-selectors v1.0.34
-	github.com/smartcontractkit/chainlink-testing-framework/framework v0.3.6
+	github.com/smartcontractkit/chainlink-testing-framework/framework v0.3.9
 	github.com/spf13/cast v1.7.0
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/tools v0.27.0
