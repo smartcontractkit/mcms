@@ -9,7 +9,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var _ sdk.Configurer = &Configurer{}
+var _ sdk.Configurer[string] = &Configurer{}
 
 // Configurer configures the MCM contract for EVM chains.
 type Configurer struct {

@@ -56,7 +56,17 @@ More `test` commands can be found by running `task -l`
 
 We use [Chainlink Testing Framework](https://github.com/smartcontractkit/chainlink-testing-framework) for E2E tests. Run them with:
 
-`task test:e2e`
+For solana on MacOS we need a special docker image. Run:
+
+```shell
+task test:solana-build-e2e
+```
+
+to build the image, and then run the tests with
+
+```shell
+task test:e2e
+```
 
 For verbose output just pass -v as command argument:
 
