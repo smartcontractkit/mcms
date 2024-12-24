@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e
+package e2e_solana
 
 import (
 	bin "github.com/gagliardetto/binary"
@@ -14,23 +14,9 @@ import (
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/mcms"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
-type SolanaInspectionTestSuite struct {
-	suite.Suite
-	TestSetup
-}
-
-// this key matches the public key in the config.toml so it gets funded by the genesis block
-var privateKey = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
-
-// SetupSuite runs before the test suite
-func (s *SolanaInspectionTestSuite) SetupSuite() {
-	s.TestSetup = *InitializeSharedTestSetup(s.T())
-}
-
-func (s *SolanaInspectionTestSuite) TestSetupMCM() {
+func (s *SolanaTestSuite) Test_InitializeMCM() {
 	mcm.SetProgramID(config.McmProgram)
 
 	wallet, err := solana.PrivateKeyFromBase58(privateKey)

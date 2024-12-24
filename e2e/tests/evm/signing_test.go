@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e
+package e2e_evm
 
 import (
 	"encoding/json"
@@ -14,6 +14,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/smartcontractkit/mcms"
+	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -23,7 +24,7 @@ import (
 // SigningTestSuite tests signing a proposal and converting back to a file
 type SigningTestSuite struct {
 	suite.Suite
-	TestSetup
+	e2e.TestSetup
 
 	client        *ethclient.Client
 	chainSelector mcmtypes.ChainSelector
@@ -31,7 +32,7 @@ type SigningTestSuite struct {
 
 // SetupSuite runs before the test suite
 func (s *SigningTestSuite) SetupSuite() {
-	s.TestSetup = *InitializeSharedTestSetup(s.T())
+	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
 	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)

@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e
+package e2e_evm
 
 //go:generate ./compile-mcm-solana.sh
 
@@ -20,5 +20,4 @@ func TestE2ESuite(t *testing.T) {
 	suite.Run(t, new(ExecutionTestSuite))
 	suite.Run(t, new(SetRootTestSuite))
 	suite.Run(t, new(SigningTestSuite))
-	suite.Run(t, new(SolanaInspectionTestSuite))
 }
