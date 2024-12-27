@@ -362,8 +362,8 @@ github.com/smartcontractkit/chain-selectors v1.0.34 h1:MJ17OGu8+jjl426pcKrJkCf3f
 github.com/smartcontractkit/chain-selectors v1.0.34/go.mod h1:xsKM0aN3YGcQKTPRPDDtPx2l4mlTN1Djmg0VVXV40b8=
 github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20241220212237-609f7b0c9734 h1:0Rab4HkELPMEwiBLZ9LBVMbwHWxqtVBf1XQiM2D66wk=
 github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20241220212237-609f7b0c9734/go.mod h1:Bmwq4lNb5tE47sydN0TKetcLEGbgl+VxHEWp4S0LI60=
-github.com/smartcontractkit/chainlink-testing-framework/framework v0.3.9 h1:zGzmYKsygqzSGmbf0orAswjo8Oca1gkClHXV7AemFpM=
-github.com/smartcontractkit/chainlink-testing-framework/framework v0.3.9/go.mod h1:mMUqvS3BZfvN1OfK4OFTYf1+T0X6nwmSXJM2keaPsSM=
+github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.0 h1:xq9nXacFPzIiQmnT9WGO6tHZySe/qZpERwewUElNGuM=
+github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.0/go.mod h1:mMUqvS3BZfvN1OfK4OFTYf1+T0X6nwmSXJM2keaPsSM=
 github.com/spf13/cast v1.7.1 h1:cuNEagBQEHWN1FnbGEjCXL2szYEXqfJPbP2HNUaca9Y=
 github.com/spf13/cast v1.7.1/go.mod h1:ancEpBxwJDODSW/UG4rDrAqiKolqNNh2DX3mk86cAdo=
 github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 h1:RN5mrigyirb8anBEtdjtHFIufXdacyTi6i4KBfeNXeo=
