@@ -67,6 +67,13 @@ after default one to override or add to the previous values. It's pattern of CTF
 
 `task test:e2e CTF_CONFIGS=../config.toml,../custom_configs/avax_fuji.toml`
 
+#### Generating MCM Solana compiled program
+
+To run e2e tests for solana blockchain, we need to have the MCM compiled program.
+MCM Solana program is located in [chainlink-ccip](https://github.com/smartcontractkit/chainlink-ccip/tree/main/chains/solana/contracts/programs) repo.
+We can run `go generate -tags=e2e ./e2e/...` to pull in the latest version of the program from that repo and compile it.
+The output will be saved in `e2e/artifacts/solana/` folder.
+
 ### Running Ledger Signing Test
 
 For real ledger signing verification you can run:
