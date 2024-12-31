@@ -16,3 +16,14 @@ private_keys = [
     "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
     "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
 ]
+
+[solana_config]
+chain_id = "1"
+port = "8999"
+type = "solana"
+public_key ="9n1pyVGGo6V4mpiSDMVay5As9NurEkY283wwRk1Kto2C"
+# to run this locally replace with the path to the contracts directory
+#contracts_dir = "/Users/ggoh/work/mcms/e2e/tests/deploy"
+
+[solana_config.solana_programs]
+mcm = "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX"
