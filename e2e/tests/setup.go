@@ -91,6 +91,11 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 		var solanaWsClient *ws.Client
 		var solanaBlockChainOutput *blockchain.Output
 		if in.SolanaChain != nil {
+			// provide the contracts dir if running in CI
+			if len(in.SolanaChain.ContractsDir) == 0 && os.Getenv("CI") == "true" {
+				in.SolanaChain.ContractsDir = "/home/runner/work/mcms/mcms/e2e/artifacts/solana"
+			}
+
 			// Initialize Solana client
 			solanaBlockChainOutput, err = blockchain.NewBlockchainNetwork(in.SolanaChain)
 			if err != nil {
