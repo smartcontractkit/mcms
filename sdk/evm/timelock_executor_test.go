@@ -49,6 +49,19 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 		},
 	}
 
+	sharedMockSetup := func(m *evm_mocks.ContractDeployBackend) {
+		m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
+			Return(&evmTypes.Header{}, nil)
+		m.EXPECT().SuggestGasPrice(mock.Anything).
+			Return(big.NewInt(100000000), nil)
+		m.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
+			Return([]byte("0x01"), nil)
+		m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
+			Return(uint64(50000), nil)
+		m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
+			Return(uint64(1), nil)
+	}
+
 	tests := []struct {
 		name            string
 		auth            *bind.TransactOpts
@@ -77,16 +90,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				// Successful tx send
 				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
 					Return(nil)
-				m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
-					Return(&evmTypes.Header{}, nil)
-				m.EXPECT().SuggestGasPrice(mock.Anything).
-					Return(big.NewInt(100000000), nil)
-				m.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
-					Return([]byte("0x01"), nil)
-				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
-					Return(uint64(50000), nil)
-				m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
-					Return(uint64(1), nil)
+				sharedMockSetup(m)
 			},
 			wantTxHash: "0xc381f411283719726be93f957b9e3ca7d8041725c22fefab8dcf132770adf7a9",
 			wantErr:    nil,
@@ -108,16 +112,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				// Successful tx send
 				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
 					Return(fmt.Errorf("error during tx send"))
-				m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
-					Return(&evmTypes.Header{}, nil)
-				m.EXPECT().SuggestGasPrice(mock.Anything).
-					Return(big.NewInt(100000000), nil)
-				m.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
-					Return([]byte("0x01"), nil)
-				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
-					Return(uint64(50000), nil)
-				m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
-					Return(uint64(1), nil)
+				sharedMockSetup(m)
 			},
 			wantTxHash: "",
 			wantErr:    fmt.Errorf("error during tx send"),
