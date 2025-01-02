@@ -37,7 +37,7 @@ func (t *TimelockExecutor) Execute(bop types.BatchOperation, timelockAddress str
 	for i, tx := range bop.Transactions {
 		// Unmarshal the AdditionalFields from the operation
 		var additionalFields AdditionalFields
-		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+		if err = json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
 			return "", err
 		}
 
