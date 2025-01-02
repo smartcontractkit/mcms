@@ -10,11 +10,12 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	evmTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	evm_mocks "github.com/smartcontractkit/mcms/sdk/evm/mocks"
 	"github.com/smartcontractkit/mcms/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 )
 
 func TestNewTimelockExecutor(t *testing.T) {
