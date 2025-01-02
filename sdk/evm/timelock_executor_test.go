@@ -33,6 +33,22 @@ func TestNewTimelockExecutor(t *testing.T) {
 func TestTimelockExecutor_Execute(t *testing.T) {
 	t.Parallel()
 
+	mockAuth := &bind.TransactOpts{
+		Context: context.Background(),
+		Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+			mockTx := evmTypes.NewTransaction(
+				1,
+				common.HexToAddress("0xMockedAddress"),
+				big.NewInt(1000000000000000000),
+				21000,
+				big.NewInt(20000000000),
+				nil,
+			)
+
+			return mockTx, nil
+		},
+	}
+
 	tests := []struct {
 		name            string
 		auth            *bind.TransactOpts
@@ -45,22 +61,8 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 		wantErr         error
 	}{
 		{
-			name: "success",
-			auth: &bind.TransactOpts{
-				Context: context.Background(),
-				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
-					mockTx := evmTypes.NewTransaction(
-						1,
-						common.HexToAddress("0xMockedAddress"),
-						big.NewInt(1000000000000000000),
-						21000,
-						big.NewInt(20000000000),
-						nil,
-					)
-
-					return mockTx, nil
-				},
-			},
+			name:            "success",
+			auth:            mockAuth,
 			timelockAddress: "0xMockedTimelockAddress",
 			bop: types.BatchOperation{
 				ChainSelector: chaintest.Chain1Selector,
@@ -90,22 +92,8 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			wantErr:    nil,
 		},
 		{
-			name: "failure in tx execution",
-			auth: &bind.TransactOpts{
-				Context: context.Background(),
-				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
-					mockTx := evmTypes.NewTransaction(
-						1,
-						common.HexToAddress("0xMockedAddress"),
-						big.NewInt(1000000000000000000),
-						21000,
-						big.NewInt(20000000000),
-						nil,
-					)
-
-					return mockTx, nil
-				},
-			},
+			name:            "failure in tx execution",
+			auth:            mockAuth,
 			timelockAddress: "0xMockedTimelockAddress",
 			bop: types.BatchOperation{
 				ChainSelector: chaintest.Chain1Selector,
