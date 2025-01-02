@@ -9,10 +9,11 @@ require (
 	github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/solana-go v1.12.0
 	github.com/go-playground/validator/v10 v10.23.0
+	github.com/google/go-cmp v0.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
 	github.com/smartcontractkit/chain-selectors v1.0.34
-	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20241220212237-609f7b0c9734
+	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20241230134533-3209b8db4377
 	github.com/smartcontractkit/chainlink-common v0.3.0
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.1
 	github.com/spf13/cast v1.7.1
@@ -87,7 +88,6 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang-jwt/jwt/v4 v4.5.1 // indirect
 	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/rpc v1.2.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect

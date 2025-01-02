@@ -17,6 +17,12 @@ packages:
   github.com/smartcontractkit/mcms/sdk:
   github.com/smartcontractkit/mcms/sdk/evm:
   github.com/smartcontractkit/mcms/sdk/evm/bindings:
+  github.com/gagliardetto/solana-go/rpc:
+    interfaces:
+      JSONRPCClient:
+        config:
+          dir: "./sdk/solana/mocks"
+          filename: "jsonrpcclient.go"
 
 # Required to fix the following deprecation warning:
 # https://vektra.github.io/mockery/v2.48/deprecations/#issue-845-fix

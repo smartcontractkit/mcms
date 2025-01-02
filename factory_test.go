@@ -50,6 +50,17 @@ func Test_NewEncoder(t *testing.T) {
 				IsSim:                true,
 			},
 		},
+		// {
+		// 	name:         "success: returns a Solana encoder (not simulated)",
+		// 	giveSelector: chaintest.Chain4Selector,
+		// 	giveIsSim:    false,
+		// 	want: &evm.Encoder{
+		// 		TxCount:              giveTxCount,
+		// 		ChainSelector:        chaintest.Chain4Selector,
+		// 		OverridePreviousRoot: false,
+		// 		IsSim:                false,
+		// 	},
+		// },
 		{
 			name:         "failure: chain not found for selector",
 			giveSelector: chaintest.ChainInvalidSelector,

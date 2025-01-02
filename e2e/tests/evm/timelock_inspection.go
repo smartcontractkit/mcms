@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e
+package e2e_evm
 
 import (
 	"context"
@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
+	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
@@ -28,7 +29,7 @@ type TimelockInspectionTestSuite struct {
 	auth             *bind.TransactOpts
 	publicKey        common.Address
 	timelockContract *bindings.RBACTimelock
-	TestSetup
+	e2e.TestSetup
 }
 
 func (s *TimelockInspectionTestSuite) granRole(role [32]byte, address common.Address) {
@@ -44,7 +45,7 @@ func (s *TimelockInspectionTestSuite) granRole(role [32]byte, address common.Add
 
 // SetupSuite runs before the test suite
 func (s *TimelockInspectionTestSuite) SetupSuite() {
-	s.TestSetup = *InitializeSharedTestSetup(s.T())
+	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 	// Get deployer's private key
 	privateKeyHex := s.Settings.PrivateKeys[0]
 	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix

@@ -19,6 +19,10 @@ var (
 	Chain3Selector    = types.ChainSelector(Chain3RawSelector)                // 10344971235874465080
 	Chain3EVMID       = cselectors.ETHEREUM_TESTNET_SEPOLIA_BASE_1.EvmChainID // 84532
 
+	Chain4RawSelector = cselectors.SOLANA_DEVNET.Selector      // 16423721717087811551
+	Chain4Selector    = types.ChainSelector(Chain4RawSelector) // 16423721717087811551
+	Chain4SolanaID    = cselectors.SOLANA_DEVNET.ChainID       // EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG
+
 	// ChainInvalidSelector is a chain selector that doesn't exist.
 	ChainInvalidSelector = types.ChainSelector(0)
 )

@@ -63,7 +63,7 @@ func (e *ConfigTransformer) ToChainConfig(
 ) (bindings.ManyChainMultiSigConfig, error) {
 	var bindConfig bindings.ManyChainMultiSigConfig
 
-	groupQuorums, groupParents, signerAddrs, signerGroups, err := extractSetConfigInputs(&cfg)
+	groupQuorums, groupParents, signerAddrs, signerGroups, err := ExtractSetConfigInputs(&cfg)
 	if err != nil {
 		return bindConfig, err
 	}
@@ -92,7 +92,7 @@ func (e *ConfigTransformer) ToChainConfig(
 	}, nil
 }
 
-func extractSetConfigInputs(
+func ExtractSetConfigInputs(
 	group *types.Config,
 ) ([32]uint8, [32]uint8, []common.Address, []uint8, error) {
 	var groupQuorums, groupParents, signerGroups = []uint8{}, []uint8{}, []uint8{}

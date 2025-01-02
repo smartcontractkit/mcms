@@ -33,7 +33,7 @@ func (c *Configurer) SetConfig(mcmAddr string, cfg *types.Config, clearRoot bool
 		return "", err
 	}
 
-	groupQuorums, groupParents, signerAddrs, signerGroups, err := extractSetConfigInputs(cfg)
+	groupQuorums, groupParents, signerAddrs, signerGroups, err := ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return "", err
 	}
