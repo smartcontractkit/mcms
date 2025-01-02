@@ -50,11 +50,11 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				Context: context.Background(),
 				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
 					mockTx := evmTypes.NewTransaction(
-						1,
-						common.HexToAddress("0xMockedAddress"),
-						big.NewInt(1000000000000000000),
+						2,
+						common.HexToAddress("0xMockAddress"),
+						big.NewInt(100000000000000000),
 						21000,
-						big.NewInt(20000000000),
+						big.NewInt(200000000000),
 						nil,
 					)
 
@@ -84,9 +84,9 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
 					Return(uint64(50000), nil)
 				m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
-					Return(uint64(1), nil)
+					Return(uint64(2), nil)
 			},
-			wantTxHash: "0xc381f411283719726be93f957b9e3ca7d8041725c22fefab8dcf132770adf7a9",
+			wantTxHash: "0xae099393f6f9662fadfc2587c00e40e161270bdd1084fe554b9e0d2a2ddcc879",
 			wantErr:    nil,
 		},
 		{
@@ -95,11 +95,11 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				Context: context.Background(),
 				Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
 					mockTx := evmTypes.NewTransaction(
-						1,
-						common.HexToAddress("0xMockedAddress"),
-						big.NewInt(1000000000000000000),
+						2,
+						common.HexToAddress("0xMockAddress"),
+						big.NewInt(100000000000000000),
 						21000,
-						big.NewInt(20000000000),
+						big.NewInt(200000000000),
 						nil,
 					)
 
@@ -129,7 +129,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				m.EXPECT().EstimateGas(mock.Anything, mock.Anything).
 					Return(uint64(50000), nil)
 				m.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
-					Return(uint64(1), nil)
+					Return(uint64(2), nil)
 			},
 			wantTxHash: "",
 			wantErr:    fmt.Errorf("error during tx send"),
