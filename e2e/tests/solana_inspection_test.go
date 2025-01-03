@@ -4,37 +4,44 @@
 package e2e
 
 import (
+	"context"
+
+	"github.com/ethereum/go-ethereum/common"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/mcms"
 	"github.com/smartcontractkit/chainlink-common/pkg/utils/tests"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 )
 
 type SolanaInspectionTestSuite struct {
 	suite.Suite
 	TestSetup
+	wallet solana.PrivateKey
 }
 
 // this key matches the public key in the config.toml so it gets funded by the genesis block
 var privateKey = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
 
-// SetupSuite runs before the test suite
 func (s *SolanaInspectionTestSuite) SetupSuite() {
 	s.TestSetup = *InitializeSharedTestSetup(s.T())
-}
-
-func (s *SolanaInspectionTestSuite) TestSetupMCM() {
-	mcm.SetProgramID(config.McmProgram)
 
 	wallet, err := solana.PrivateKeyFromBase58(privateKey)
 	require.NoError(s.T(), err)
+	s.wallet = wallet
+
+	s.initializeMCM()
+}
+
+func (s *SolanaInspectionTestSuite) initializeMCM() {
+	mcm.SetProgramID(config.McmProgram)
 
 	ctx := tests.Context(s.T())
 
@@ -60,7 +67,7 @@ func (s *SolanaInspectionTestSuite) TestSetupMCM() {
 		config.TestChainID,
 		seed,
 		multisigConfigPDA,
-		wallet.PublicKey(),
+		s.wallet.PublicKey(),
 		solana.SystemProgramID,
 		config.McmProgram,
 		programData.Address,
@@ -68,13 +75,28 @@ func (s *SolanaInspectionTestSuite) TestSetupMCM() {
 		expiringRootAndOpCountPDA,
 	).ValidateAndBuild()
 	require.NoError(s.T(), err)
-	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix}, wallet, config.DefaultCommitment)
+	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix}, s.wallet, config.DefaultCommitment)
+}
 
-	// get config and validate
-	var configAccount mcm.MultisigConfig
-	err = common.GetAccountDataBorshInto(ctx, s.SolanaClient, multisigConfigPDA, config.DefaultCommitment, &configAccount)
-	require.NoError(s.T(), err, "failed to get account data")
+func (s *SolanaInspectionTestSuite) TestGetOpCount() {
+	inspector := solanasdk.NewInspector(context.TODO(), s.SolanaClient)
 
-	require.Equal(s.T(), config.TestChainID, configAccount.ChainId)
-	require.Equal(s.T(), wallet.PublicKey(), configAccount.Owner)
+	seed := config.TestMsigNamePaddedBuffer
+	expiringRootAndOpCountPDA := mcms.ExpiringRootAndOpCountAddress(seed)
+	opCount, err := inspector.GetOpCount(expiringRootAndOpCountPDA.String())
+
+	s.Require().NoError(err, "Failed to get op count")
+	s.Require().Equal(uint64(0), opCount, "Operation count does not match")
+}
+
+func (s *SolanaInspectionTestSuite) TestGetRoot() {
+	inspector := solanasdk.NewInspector(context.TODO(), s.SolanaClient)
+
+	seed := config.TestMsigNamePaddedBuffer
+	expiringRootAndOpCountPDA := mcms.ExpiringRootAndOpCountAddress(seed)
+	root, validUntil, err := inspector.GetRoot(expiringRootAndOpCountPDA.String())
+
+	s.Require().NoError(err, "Failed to get root from contract")
+	s.Require().Equal(common.Hash{}, root, "Roots do not match")
+	s.Require().Equal(uint32(0), validUntil, "ValidUntil does not match")
 }
