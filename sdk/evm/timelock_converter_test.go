@@ -25,6 +25,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 		delay          string
 		operation      types.TimelockAction
 		predecessor    common.Hash
+		salt           common.Hash
 		expectedError  error
 		expectedOpType string
 	}{
@@ -45,6 +46,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			delay:          "1h",
 			operation:      types.TimelockActionSchedule,
 			predecessor:    zeroHash,
+			salt:           zeroHash,
 			expectedError:  nil,
 			expectedOpType: "RBACTimelock",
 		},
@@ -65,6 +67,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			delay:          "1h",
 			operation:      types.TimelockActionCancel,
 			predecessor:    zeroHash,
+			salt:           zeroHash,
 			expectedError:  nil,
 			expectedOpType: "RBACTimelock",
 		},
@@ -85,6 +88,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			delay:          "1h",
 			operation:      types.TimelockAction("invalid"),
 			predecessor:    zeroHash,
+			salt:           zeroHash,
 			expectedError:  sdkerrors.NewInvalidTimelockOperationError("invalid"),
 			expectedOpType: "",
 		},
@@ -96,7 +100,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 
 			converter := &TimelockConverter{}
 			chainOperation, operationId, err := converter.ConvertBatchToChainOperation(
-				tc.op, timelockAddress, types.MustParseDuration(tc.delay), tc.operation, tc.predecessor,
+				tc.op, timelockAddress, types.MustParseDuration(tc.delay), tc.operation, tc.predecessor, tc.salt,
 			)
 
 			if tc.expectedError != nil {

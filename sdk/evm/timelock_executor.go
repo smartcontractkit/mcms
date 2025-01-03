@@ -15,6 +15,7 @@ var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
 
 // TimelockExecutor is an Executor implementation for EVM chains for accessing the RBACTimelock contract
 type TimelockExecutor struct {
+	TimelockInspector
 	client ContractDeployBackend
 	auth   *bind.TransactOpts
 }
@@ -22,8 +23,9 @@ type TimelockExecutor struct {
 // NewTimelockExecutor creates a new TimelockExecutor
 func NewTimelockExecutor(client ContractDeployBackend, auth *bind.TransactOpts) *TimelockExecutor {
 	return &TimelockExecutor{
-		client: client,
-		auth:   auth,
+		TimelockInspector: *NewTimelockInspector(client),
+		client:            client,
+		auth:              auth,
 	}
 }
 

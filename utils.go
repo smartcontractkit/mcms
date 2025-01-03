@@ -18,6 +18,7 @@ func BatchToChainOperation(
 	delay types.Duration,
 	action types.TimelockAction,
 	predecessor common.Hash,
+	salt common.Hash,
 ) (types.Operation, common.Hash, error) {
 	chainFamily, err := types.GetChainSelectorFamily(bops.ChainSelector)
 	if err != nil {
@@ -31,7 +32,7 @@ func BatchToChainOperation(
 	}
 
 	return converter.ConvertBatchToChainOperation(
-		bops, timelockAddr, delay, action, predecessor,
+		bops, timelockAddr, delay, action, predecessor, salt,
 	)
 }
 
