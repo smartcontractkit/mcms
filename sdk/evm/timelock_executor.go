@@ -33,7 +33,7 @@ func (t *TimelockExecutor) Execute(bop types.BatchOperation, timelockAddress str
 		return "", err
 	}
 
-	calls := make([]bindings.RBACTimelockCall, len(bop.Transactions))
+	calls := make([]bindings.RBACTimelockCall, 0, len(bop.Transactions))
 	for i, tx := range bop.Transactions {
 		// Unmarshal the AdditionalFields from the operation
 		var additionalFields AdditionalFields
