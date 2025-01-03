@@ -15,7 +15,7 @@ DEST_DIR="../artifacts/solana"
 TEMP_DIR=$(mktemp -d)
 COMMIT_HASH="a91ea5187123329c28553b884e31e5fce4f0e030" # 31 Dec 2024
 
-git clone --depth 1 $REPO_URL $TEMP_DIR/$REPO_DIR
+git clone $REPO_URL $TEMP_DIR/$REPO_DIR
 cd $TEMP_DIR/$REPO_DIR/$MCM_DIR
 git checkout $COMMIT_HASH
 
