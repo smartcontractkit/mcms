@@ -160,7 +160,13 @@ func (s *SimulatedChain) SetMCMSConfig(
 
 // Deploy a RBACTimelock contract with the signer. The admin addr is usually set to the MCMS contract address.
 func (s *SimulatedChain) DeployRBACTimelock(
-	t *testing.T, signer *Signer, adminAddr common.Address,
+	t *testing.T,
+	signer *Signer,
+	adminAddr common.Address,
+	proposers []common.Address,
+	executors []common.Address,
+	bypassers []common.Address,
+	cancellers []common.Address,
 ) (*bindings.RBACTimelock, *gethTypes.Transaction) {
 	t.Helper()
 
@@ -169,10 +175,10 @@ func (s *SimulatedChain) DeployRBACTimelock(
 		s.Backend.Client(),
 		big.NewInt(0),
 		adminAddr,
-		[]common.Address{},
-		[]common.Address{},
-		[]common.Address{},
-		[]common.Address{},
+		proposers,
+		executors,
+		cancellers,
+		bypassers,
 	)
 	require.NoError(t, err)
 

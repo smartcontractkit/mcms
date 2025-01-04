@@ -103,7 +103,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
 
 	// Deploy a timelock contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address())
+	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 
 	// Construct example transaction
 	role, err := timelockC.PROPOSERROLE(&bind.CallOpts{})
@@ -168,7 +168,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
 
 	// Deploy a timelockC contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address())
+	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 
 	// Construct example transaction
 	role, err := timelockC.PROPOSERROLE(&bind.CallOpts{})
@@ -237,7 +237,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
 
 	// Deploy a timelockC contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address())
+	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 
 	// Construct example transactions
 	proposerRole, err := timelockC.PROPOSERROLE(&bind.CallOpts{})
@@ -312,7 +312,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
 
 	// Deploy a timelockC contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address())
+	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 
 	// Construct example transactions
 	proposerRole, err := timelockC.PROPOSERROLE(&bind.CallOpts{})
@@ -390,7 +390,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
 
 	// Deploy a timelockC contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address())
+	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 
 	// Construct example transactions
 	proposerRole, err := timelockC.PROPOSERROLE(&bind.CallOpts{})
@@ -469,7 +469,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
 
 	// Deploy a timelockC contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address())
+	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 
 	// Generate a new key for an invalid signer
 	invalidKey, err := crypto.GenerateKey()

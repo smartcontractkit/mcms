@@ -108,7 +108,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
 
 	// Deploy a timelock contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address())
+	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 
 	// Construct example transaction
 	role, err := timelockC.PROPOSERROLE(&bind.CallOpts{})
@@ -228,7 +228,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
 
 	// Deploy a timelock contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address())
+	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 
 	// Construct example transaction
 	role, err := timelockC.PROPOSERROLE(&bind.CallOpts{})
@@ -351,7 +351,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
 
 	// Deploy a timelockC contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address())
+	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 
 	// Construct example transactions
 	proposerRole, err := timelockC.PROPOSERROLE(&bind.CallOpts{})
@@ -488,7 +488,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
 
 	// Deploy a timelockC contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address())
+	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmC.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
 
 	// Construct example transactions
 	proposerRole, err := timelockC.PROPOSERROLE(&bind.CallOpts{})
