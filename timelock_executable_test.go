@@ -324,14 +324,14 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 			continue
 		}
 
-		var isOperation bool
+		var isOperation, isOperationPending, isOperationReady bool
 		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
 		require.NoError(t, err)
 		require.True(t, isOperation)
-		isOperationPending, err := timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
+		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
 		require.NoError(t, err)
 		require.True(t, isOperationPending)
-		isOperationReady, err := timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
+		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
 		require.NoError(t, err)
 		require.False(t, isOperationReady)
 	}
