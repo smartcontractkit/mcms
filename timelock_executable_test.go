@@ -344,7 +344,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	require.NoError(t, err)
 
 	// Execute the proposal
-	txHash, err = tExecutable.Execute(0)
+	_, err = tExecutable.Execute(0)
 	require.NoError(t, err)
 	sim.Backend.Commit()
 
