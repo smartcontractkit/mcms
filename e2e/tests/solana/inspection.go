@@ -43,7 +43,7 @@ func (s *SolanaTestSuite) Test_Solana_InitializeMCM() {
 	require.NoError(s.T(), bin.UnmarshalBorsh(&programData, data.Bytes()))
 
 	ix, err := mcm.NewInitializeInstruction(
-		config.TestChainID,
+		uint64(s.chainSelector),
 		seed,
 		multisigConfigPDA,
 		wallet.PublicKey(),
@@ -61,6 +61,6 @@ func (s *SolanaTestSuite) Test_Solana_InitializeMCM() {
 	err = common.GetAccountDataBorshInto(ctx, s.SolanaClient, multisigConfigPDA, config.DefaultCommitment, &configAccount)
 	require.NoError(s.T(), err, "failed to get account data")
 
-	require.Equal(s.T(), config.TestChainID, configAccount.ChainId)
+	require.Equal(s.T(), uint64(s.chainSelector), configAccount.ChainId)
 	require.Equal(s.T(), wallet.PublicKey(), configAccount.Owner)
 }
