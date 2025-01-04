@@ -1,6 +1,7 @@
 package solana
 
 import (
+	"bytes"
 	"context"
 	"fmt"
 	"slices"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
@@ -15,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 var anyContext = mock.MatchedBy(func(_ context.Context) bool { return true })
@@ -153,6 +156,29 @@ func generateSigners(t *testing.T, numSigners int) []common.Address {
 	slices.SortFunc(signers, func(a, b common.Address) int { return a.Cmp(b) })
 
 	return signers
+}
+
+func generateSignatures(t *testing.T, numSignatures int) []types.Signature {
+	t.Helper()
+
+	privateKey, err := crypto.GenerateKey()
+	require.NoError(t, err)
+
+	signatures := make([]types.Signature, numSignatures)
+	for i := range signatures {
+		payload := []byte(fmt.Sprintf("\x19Ethereum Signed Message:\n320x%d", i))
+		hash := crypto.Keccak256Hash(payload)
+
+		sigBytes, err := crypto.Sign(hash[:], privateKey)
+		require.NoError(t, err)
+
+		signatures[i], err = types.NewSignatureFromBytes(sigBytes)
+		require.NoError(t, err)
+	}
+
+	slices.SortFunc(signatures, func(a, b types.Signature) int { return bytes.Compare(a.ToBytes(), b.ToBytes()) })
+
+	return signatures
 }
 
 func ptrTo[T any](value T) *T { return &value }

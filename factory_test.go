@@ -9,6 +9,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -48,6 +49,16 @@ func Test_NewEncoder(t *testing.T) {
 				TxCount:              giveTxCount,
 				OverridePreviousRoot: false,
 				IsSim:                true,
+			},
+		},
+		{
+			name:         "success: returns a Solana encoder (not simulated)",
+			giveSelector: chaintest.Chain4Selector,
+			giveIsSim:    false,
+			want: &solana.Encoder{
+				TxCount:              giveTxCount,
+				ChainSelector:        chaintest.Chain4Selector,
+				OverridePreviousRoot: false,
 			},
 		},
 		{
