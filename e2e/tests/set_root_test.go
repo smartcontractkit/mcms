@@ -216,7 +216,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 		})
 	proposalTimelock, err := builder.Build()
 	s.Require().NoError(err)
-	proposal, err := proposalTimelock.Convert()
+	proposal, _, err := proposalTimelock.Convert()
 	s.Require().NoError(err)
 
 	// Sign proposal
