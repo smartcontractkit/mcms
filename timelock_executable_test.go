@@ -11,6 +11,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	geth_types "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/require"
+
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/internal/testutils/evmsim"
@@ -19,15 +21,12 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/sdk/mocks"
 	"github.com/smartcontractkit/mcms/types"
-	"github.com/stretchr/testify/require"
 )
 
 var (
 	proposerRole  = crypto.Keccak256Hash([]byte("PROPOSER_ROLE"))
 	bypasserRole  = crypto.Keccak256Hash([]byte("BYPASSER_ROLE"))
 	cancellerRole = crypto.Keccak256Hash([]byte("CANCELLER_ROLE"))
-	adminRole     = crypto.Keccak256Hash([]byte("ADMIN_ROLE"))
-	executorRole  = crypto.Keccak256Hash([]byte("EXECUTOR_ROLE"))
 )
 
 func Test_NewTimelockExecutable(t *testing.T) {
