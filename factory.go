@@ -5,6 +5,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -26,6 +27,13 @@ func newEncoder(
 			txCount,
 			overridePreviousRoot,
 			isSim,
+		)
+	case cselectors.FamilySolana:
+		encoder = solana.NewEncoder(
+			csel,
+			txCount,
+			overridePreviousRoot,
+			// isSim,
 		)
 	}
 

@@ -2,6 +2,7 @@ package solana
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -9,6 +10,8 @@ import (
 )
 
 type PDASeed [32]byte
+
+var ErrInvalidContractAddressFormat error = errors.New("invalid solana contract address format")
 
 // ContractAddress returns a string representation of a solana contract id
 // which is a combination of the program id and the seed <PROGRAM_ID>.<SEED>
@@ -20,7 +23,7 @@ func ParseContractAddress(address string) (solana.PublicKey, PDASeed, error) {
 	const numParts = 2
 	parts := strings.SplitN(address, ".", numParts)
 	if len(parts) != numParts {
-		return solana.PublicKey{}, PDASeed{}, fmt.Errorf("invalid solana contract address format: %q", address)
+		return solana.PublicKey{}, PDASeed{}, fmt.Errorf("%w: %q", ErrInvalidContractAddressFormat, address)
 	}
 
 	programID, err := solana.PublicKeyFromBase58(parts[0])
