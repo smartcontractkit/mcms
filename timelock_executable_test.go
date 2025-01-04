@@ -304,6 +304,18 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	require.NotNil(t, newOpCount)
 	require.Equal(t, uint64(1), newOpCount.Uint64())
 
+	// Construct executors
+	tExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
+		chaintest.Chain1Selector: evm.NewTimelockExecutor(
+			sim.Backend.Client(),
+			sim.Signers[0].NewTransactOpts(t),
+		),
+	}
+
+	// Create new executable
+	tExecutable, err := NewTimelockExecutable(&proposal, tExecutors)
+	require.NoError(t, err)
+
 	for i := range predecessors {
 		if i == 0 {
 			continue
@@ -320,21 +332,13 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 		require.False(t, isOperationReady)
 	}
 
+	// Check IsReady function fails
+	err = tExecutable.IsReady()
+	require.Error(t, err)
+
 	// sleep for 5 seconds and then mine a block
 	require.NoError(t, sim.Backend.AdjustTime(5*time.Second))
 	sim.Backend.Commit() // Note < 1.14 geth needs a commit after adjusting time.
-
-	// Construct executors
-	tExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
-		chaintest.Chain1Selector: evm.NewTimelockExecutor(
-			sim.Backend.Client(),
-			sim.Signers[0].NewTransactOpts(t),
-		),
-	}
-
-	// Create new executable
-	tExecutable, err := NewTimelockExecutable(&proposal, tExecutors)
-	require.NoError(t, err)
 
 	// Check that the operation is now ready
 	err = tExecutable.IsReady()
