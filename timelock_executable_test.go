@@ -27,6 +27,7 @@ var (
 	proposerRole  = crypto.Keccak256Hash([]byte("PROPOSER_ROLE"))
 	bypasserRole  = crypto.Keccak256Hash([]byte("BYPASSER_ROLE"))
 	cancellerRole = crypto.Keccak256Hash([]byte("CANCELLER_ROLE"))
+	adminRole     = crypto.Keccak256Hash([]byte("ADMIN_ROLE"))
 )
 
 func Test_NewTimelockExecutable(t *testing.T) {
@@ -162,9 +163,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	)
 
 	// Give timelock admin permissions
-	adminRole, err := timelockC.ADMINROLE(&bind.CallOpts{})
-	require.NoError(t, err)
-	_, err = timelockC.GrantRole(sim.Signers[0].NewTransactOpts(t), adminRole, timelockC.Address())
+	_, err := timelockC.GrantRole(sim.Signers[0].NewTransactOpts(t), adminRole, timelockC.Address())
 	require.NoError(t, err)
 	sim.Backend.Commit()
 
