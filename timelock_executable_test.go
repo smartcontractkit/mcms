@@ -175,9 +175,10 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	// Construct example transactions
 	grantRoleDatas := make([][]byte, 0)
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
+	var grantRoleData []byte
 	for _, role := range targetRoles {
 		require.NoError(t, err)
-		grantRoleData, err := timelockAbi.Pack("grantRole", role, sim.Signers[0].Address(t))
+		grantRoleData, err = timelockAbi.Pack("grantRole", role, sim.Signers[0].Address(t))
 		require.NoError(t, err)
 		grantRoleDatas = append(grantRoleDatas, grantRoleData)
 	}
@@ -285,6 +286,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	require.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
+	var receipt *geth_types.Receipt
 	for i := range proposal.Operations {
 		txHash, err = executable.Execute(i)
 		require.NoError(t, err)
@@ -292,7 +294,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 		sim.Backend.Commit()
 
 		// Wait for the transaction to be mined
-		receipt, err := testutils.WaitMinedWithTxHash(context.TODO(), sim.Backend.Client(), common.HexToHash(txHash))
+		receipt, err = testutils.WaitMinedWithTxHash(context.TODO(), sim.Backend.Client(), common.HexToHash(txHash))
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 		require.Equal(t, geth_types.ReceiptStatusSuccessful, receipt.Status)
