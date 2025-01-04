@@ -50,6 +50,7 @@ func (p *BaseProposal) AppendSignature(signature types.Signature) {
 func (p *BaseProposal) Salt() [32]byte {
 	var salt [32]byte
 	binary.BigEndian.PutUint32(salt[:], p.ValidUntil)
+
 	return salt
 }
 

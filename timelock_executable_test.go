@@ -175,8 +175,8 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 
 	// Construct example transactions
 	grantRoleDatas := make([][]byte, 0)
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	for _, role := range targetRoles {
-		timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 		require.NoError(t, err)
 		grantRoleData, err := timelockAbi.Pack("grantRole", role, sim.Signers[0].Address(t))
 		require.NoError(t, err)
