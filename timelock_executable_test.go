@@ -184,8 +184,9 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	}
 
 	// Validate Contract State and verify role does not exist
+	var hasRole bool
 	for _, role := range targetRoles {
-		hasRole, err := timelockC.HasRole(&bind.CallOpts{}, role, sim.Signers[0].Address(t))
+		hasRole, err = timelockC.HasRole(&bind.CallOpts{}, role, sim.Signers[0].Address(t))
 		require.NoError(t, err)
 		require.False(t, hasRole)
 	}
