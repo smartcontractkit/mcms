@@ -147,6 +147,8 @@ func Test_ScheduleAndExecuteProposal(t *testing.T) {
 }
 
 func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Hash) {
+	t.Helper()
+
 	sim := evmsim.NewSimulatedChain(t, 1)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -284,7 +286,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	require.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	for i := 0; i < len(proposal.Operations); i++ {
+	for i := range proposal.Operations {
 		txHash, err = executable.Execute(i)
 		require.NoError(t, err)
 		require.NotEmpty(t, txHash)
