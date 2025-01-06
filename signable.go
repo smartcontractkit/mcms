@@ -136,7 +136,7 @@ func (s *Signable) GetConfigs() (map[types.ChainSelector]*types.Config, error) {
 			return nil, fmt.Errorf("inspector not found for chain %d", chain)
 		}
 
-		configuration, err := inspector.GetConfig(metadata.MCMAddress)
+		configuration, err := inspector.GetConfig(context.Background(), toAddrMetadata(metadata))
 		if err != nil {
 			return nil, err
 		}
@@ -175,7 +175,7 @@ func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 		recoveredSigners[i] = recoveredAddr
 	}
 
-	configuration, err := inspector.GetConfig(s.proposal.ChainMetadata[chain].MCMAddress)
+	configuration, err := inspector.GetConfig(context.Background(), toAddrMetadata(s.proposal.ChainMetadata[chain]))
 	if err != nil {
 		return false, err
 	}
@@ -243,7 +243,7 @@ func (s *Signable) getCurrentOpCounts() (map[types.ChainSelector]uint64, error) 
 			return nil, fmt.Errorf("inspector not found for chain %d", sel)
 		}
 
-		opCount, err := inspector.GetOpCount(metadata.MCMAddress)
+		opCount, err := inspector.GetOpCount(context.Background(), toAddrMetadata(metadata))
 		if err != nil {
 			return nil, err
 		}
@@ -252,4 +252,11 @@ func (s *Signable) getCurrentOpCounts() (map[types.ChainSelector]uint64, error) 
 	}
 
 	return opCounts, nil
+}
+
+func toAddrMetadata(metadata types.ChainMetadata) sdk.AddrMetadata {
+	return sdk.AddrMetadata{
+		MCMAddress:             metadata.MCMAddress,
+		SolanaAdditionalFields: sdk.SolanaAdditionalFields{MSIGName: []byte(metadata.MSIGName)},
+	}
 }

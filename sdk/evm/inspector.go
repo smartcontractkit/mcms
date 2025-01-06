@@ -1,6 +1,8 @@
 package evm
 
 import (
+	"context"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -25,8 +27,8 @@ func NewInspector(client ContractDeployBackend) *Inspector {
 	}
 }
 
-func (e *Inspector) GetConfig(mcmAddress string) (*types.Config, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+func (e *Inspector) GetConfig(_ context.Context, addr sdk.AddrMetadata) (*types.Config, error) {
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(addr.MCMAddress), e.client)
 	if err != nil {
 		return nil, err
 	}
@@ -39,8 +41,8 @@ func (e *Inspector) GetConfig(mcmAddress string) (*types.Config, error) {
 	return e.ToConfig(onchainConfig)
 }
 
-func (e *Inspector) GetOpCount(mcmAddress string) (uint64, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+func (e *Inspector) GetOpCount(_ context.Context, addr sdk.AddrMetadata) (uint64, error) {
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(addr.MCMAddress), e.client)
 	if err != nil {
 		return 0, err
 	}
@@ -53,8 +55,8 @@ func (e *Inspector) GetOpCount(mcmAddress string) (uint64, error) {
 	return opCount.Uint64(), nil
 }
 
-func (e *Inspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+func (e *Inspector) GetRoot(_ context.Context, addr sdk.AddrMetadata) (common.Hash, uint32, error) {
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(addr.MCMAddress), e.client)
 	if err != nil {
 		return common.Hash{}, 0, err
 	}
@@ -67,8 +69,8 @@ func (e *Inspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
 	return root.Root, root.ValidUntil, nil
 }
 
-func (e *Inspector) GetRootMetadata(mcmAddress string) (types.ChainMetadata, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+func (e *Inspector) GetRootMetadata(_ context.Context, addr sdk.AddrMetadata) (types.ChainMetadata, error) {
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(addr.MCMAddress), e.client)
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}
@@ -80,6 +82,6 @@ func (e *Inspector) GetRootMetadata(mcmAddress string) (types.ChainMetadata, err
 
 	return types.ChainMetadata{
 		StartingOpCount: metadata.PreOpCount.Uint64(),
-		MCMAddress:      mcmAddress,
+		MCMAddress:      addr.MCMAddress,
 	}, nil
 }

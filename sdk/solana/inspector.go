@@ -18,23 +18,25 @@ var _ sdk.Inspector = (*Inspector)(nil)
 
 // Inspector is an Inspector implementation for Solana chains, giving access to the state of the MCMS contract
 type Inspector struct {
-	ctx          context.Context
 	solanaClient *rpc.Client
 }
 
-func NewInspector(ctx context.Context, solanaClient *rpc.Client) *Inspector {
+func NewInspector(solanaClient *rpc.Client) *Inspector {
 	return &Inspector{
-		ctx:          ctx,
 		solanaClient: solanaClient,
 	}
 }
 
-func (e *Inspector) GetConfig(multisigConfigPDA string) (*types.Config, error) {
+func (e *Inspector) GetConfig(ctx context.Context, addr sdk.AddrMetadata) (*types.Config, error) {
 	panic("implement me")
 }
 
-func (e *Inspector) GetOpCount(expiringRootAndOpCountPDA string) (uint64, error) {
-	data, err := e.getExpiringRootAndOpCountData(expiringRootAndOpCountPDA)
+func (e *Inspector) GetOpCount(ctx context.Context, addr sdk.AddrMetadata) (uint64, error) {
+	pda, err := e.expiringRootAndOpCountAddress(addr.MCMAddress, addr.SolanaAdditionalFields.MSIGName)
+	if err != nil {
+		return 0, err
+	}
+	data, err := e.getExpiringRootAndOpCountData(ctx, pda)
 	if err != nil {
 		return 0, err
 	}
@@ -42,8 +44,12 @@ func (e *Inspector) GetOpCount(expiringRootAndOpCountPDA string) (uint64, error)
 	return data.OpCount, err
 }
 
-func (e *Inspector) GetRoot(expiringRootAndOpCountPDA string) (common.Hash, uint32, error) {
-	data, err := e.getExpiringRootAndOpCountData(expiringRootAndOpCountPDA)
+func (e *Inspector) GetRoot(ctx context.Context, addr sdk.AddrMetadata) (common.Hash, uint32, error) {
+	pda, err := e.expiringRootAndOpCountAddress(addr.MCMAddress, addr.SolanaAdditionalFields.MSIGName)
+	if err != nil {
+		return common.Hash{}, 0, err
+	}
+	data, err := e.getExpiringRootAndOpCountData(ctx, pda)
 	if err != nil {
 		return common.Hash{}, 0, err
 	}
@@ -51,17 +57,25 @@ func (e *Inspector) GetRoot(expiringRootAndOpCountPDA string) (common.Hash, uint
 	return data.Root, data.ValidUntil, err
 }
 
-func (e *Inspector) GetRootMetadata(expiringRootAndOpCountPDA string) (types.ChainMetadata, error) {
+func (e *Inspector) GetRootMetadata(ctx context.Context, addr sdk.AddrMetadata) (types.ChainMetadata, error) {
 	panic("implement me")
 }
 
-func (e *Inspector) getExpiringRootAndOpCountData(expiringRootAndOpCountPDA string) (mcm.ExpiringRootAndOpCount, error) {
-	pdaAddr, err := solana.PublicKeyFromBase58(expiringRootAndOpCountPDA)
+func (e *Inspector) expiringRootAndOpCountAddress(programAddr string, msigName []byte) (solana.PublicKey, error) {
+	programID, err := solana.PublicKeyFromBase58(programAddr)
 	if err != nil {
-		return mcm.ExpiringRootAndOpCount{}, err
+		return solana.PublicKey{}, err
 	}
+	pda, _, err := solana.FindProgramAddress([][]byte{
+		[]byte("expiring_root_and_op_count"),
+		msigName[:],
+	}, programID)
+	return pda, err
+}
+
+func (e *Inspector) getExpiringRootAndOpCountData(ctx context.Context, expiringRootAndOpCountPDA solana.PublicKey) (mcm.ExpiringRootAndOpCount, error) {
 	var newRootAndOpCount mcm.ExpiringRootAndOpCount
-	err = solanaCommon.GetAccountDataBorshInto(e.ctx, e.solanaClient, pdaAddr, config.DefaultCommitment, &newRootAndOpCount)
+	err := solanaCommon.GetAccountDataBorshInto(ctx, e.solanaClient, expiringRootAndOpCountPDA, config.DefaultCommitment, &newRootAndOpCount)
 	if err != nil {
 		return mcm.ExpiringRootAndOpCount{}, err
 	}
