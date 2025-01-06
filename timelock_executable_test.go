@@ -36,32 +36,32 @@ func Test_NewTimelockExecutable(t *testing.T) {
 	var (
 		executor = mocks.NewTimelockExecutor(t)
 
-		validChainMetadata = map[types.ChainSelector]types.ChainMetadata{
+		chainMetadata = map[types.ChainSelector]types.ChainMetadata{
 			chaintest.Chain1Selector: {
 				StartingOpCount: 1,
-				MCMAddress:      "0x123",
+				MCMAddress:      "0x1234",
 			},
 		}
 
-		validTimelockAddresses = map[types.ChainSelector]string{
-			chaintest.Chain1Selector: "0x123",
+		timelockAddresses = map[types.ChainSelector]string{
+			chaintest.Chain1Selector: "0x1234",
 		}
 
-		validTx = types.Transaction{
-			To:               "0x123",
+		tx = types.Transaction{
+			To:               "0x1234",
 			AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
-			Data:             common.Hex2Bytes("0x"),
+			Data:             common.Hex2Bytes("0x0"),
 			OperationMetadata: types.OperationMetadata{
-				ContractType: "Sample contract",
-				Tags:         []string{"tag1", "tag2"},
+				ContractType: "Test contract",
+				Tags:         []string{"testTag1", "testTag2"},
 			},
 		}
 
-		validBatchOps = []types.BatchOperation{
+		batchOps = []types.BatchOperation{
 			{
 				ChainSelector: chaintest.Chain1Selector,
 				Transactions: []types.Transaction{
-					validTx,
+					tx,
 				},
 			},
 		}
@@ -84,12 +84,12 @@ func Test_NewTimelockExecutable(t *testing.T) {
 					ValidUntil:           2004259681,
 					OverridePreviousRoot: false,
 					Signatures:           []types.Signature{},
-					ChainMetadata:        validChainMetadata,
+					ChainMetadata:        chainMetadata,
 				},
 				Action:            types.TimelockActionSchedule,
 				Delay:             types.MustParseDuration("1h"),
-				TimelockAddresses: validTimelockAddresses,
-				Operations:        validBatchOps,
+				TimelockAddresses: timelockAddresses,
+				Operations:        batchOps,
 			},
 			giveExecutors: map[types.ChainSelector]sdk.TimelockExecutor{
 				types.ChainSelector(1): executor,
