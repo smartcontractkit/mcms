@@ -16,8 +16,8 @@ func NewTimelockProposalBuilder() *TimelockProposalBuilder {
 				Kind:          types.KindTimelockProposal,
 				ChainMetadata: make(map[types.ChainSelector]types.ChainMetadata),
 			},
-			TimelockAddresses: make(map[types.ChainSelector]string),
-			Operations:        []types.BatchOperation{},
+			TimelockIDs: make(map[types.ChainSelector]types.ContractID),
+			Operations:  []types.BatchOperation{},
 		},
 	}
 	builder.BaseProposalBuilder = BaseProposalBuilder[*TimelockProposalBuilder]{
@@ -42,17 +42,17 @@ func (b *TimelockProposalBuilder) SetDelay(delay types.Duration) *TimelockPropos
 
 // SetTimelockAddress adds a timelock address to the timelock proposal.
 func (b *TimelockProposalBuilder) SetTimelockAddresses(
-	addrs map[types.ChainSelector]string,
+	addrs map[types.ChainSelector]types.ContractID,
 ) *TimelockProposalBuilder {
-	b.proposal.TimelockAddresses = addrs
+	b.proposal.TimelockIDs = addrs
 	return b
 }
 
 // AddTimelockAddress adds a timelock address for the given selector to the timelock proposal.
 func (b *TimelockProposalBuilder) AddTimelockAddress(
-	selector types.ChainSelector, address string,
+	selector types.ChainSelector, timelockID types.ContractID,
 ) *TimelockProposalBuilder {
-	b.proposal.TimelockAddresses[selector] = address
+	b.proposal.TimelockIDs[selector] = timelockID
 	return b
 }
 

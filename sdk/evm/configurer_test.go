@@ -153,7 +153,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			configurer := evm.NewConfigurer(client, tt.auth)
 
 			// Call SetConfig
-			txHash, err := configurer.SetConfig(tt.mcmAddr, tt.cfg, tt.clearRoot)
+			txHash, err := configurer.SetConfig(evm.NewEVMContractID(tt.mcmAddr), tt.cfg, tt.clearRoot)
 
 			// Assert the results
 			if tt.wantErr != nil {

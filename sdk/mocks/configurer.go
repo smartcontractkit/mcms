@@ -21,9 +21,9 @@ func (_m *Configurer) EXPECT() *Configurer_Expecter {
 	return &Configurer_Expecter{mock: &_m.Mock}
 }
 
-// SetConfig provides a mock function with given fields: mcmAddr, cfg, clearRoot
-func (_m *Configurer) SetConfig(mcmAddr string, cfg *types.Config, clearRoot bool) (string, error) {
-	ret := _m.Called(mcmAddr, cfg, clearRoot)
+// SetConfig provides a mock function with given fields: mcmID, cfg, clearRoot
+func (_m *Configurer) SetConfig(mcmID types.ContractID, cfg *types.Config, clearRoot bool) (string, error) {
+	ret := _m.Called(mcmID, cfg, clearRoot)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetConfig")
@@ -31,17 +31,17 @@ func (_m *Configurer) SetConfig(mcmAddr string, cfg *types.Config, clearRoot boo
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string, *types.Config, bool) (string, error)); ok {
-		return rf(mcmAddr, cfg, clearRoot)
+	if rf, ok := ret.Get(0).(func(types.ContractID, *types.Config, bool) (string, error)); ok {
+		return rf(mcmID, cfg, clearRoot)
 	}
-	if rf, ok := ret.Get(0).(func(string, *types.Config, bool) string); ok {
-		r0 = rf(mcmAddr, cfg, clearRoot)
+	if rf, ok := ret.Get(0).(func(types.ContractID, *types.Config, bool) string); ok {
+		r0 = rf(mcmID, cfg, clearRoot)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(string, *types.Config, bool) error); ok {
-		r1 = rf(mcmAddr, cfg, clearRoot)
+	if rf, ok := ret.Get(1).(func(types.ContractID, *types.Config, bool) error); ok {
+		r1 = rf(mcmID, cfg, clearRoot)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -55,16 +55,16 @@ type Configurer_SetConfig_Call struct {
 }
 
 // SetConfig is a helper method to define mock.On call
-//   - mcmAddr string
+//   - mcmID types.ContractID
 //   - cfg *types.Config
 //   - clearRoot bool
-func (_e *Configurer_Expecter) SetConfig(mcmAddr interface{}, cfg interface{}, clearRoot interface{}) *Configurer_SetConfig_Call {
-	return &Configurer_SetConfig_Call{Call: _e.mock.On("SetConfig", mcmAddr, cfg, clearRoot)}
+func (_e *Configurer_Expecter) SetConfig(mcmID interface{}, cfg interface{}, clearRoot interface{}) *Configurer_SetConfig_Call {
+	return &Configurer_SetConfig_Call{Call: _e.mock.On("SetConfig", mcmID, cfg, clearRoot)}
 }
 
-func (_c *Configurer_SetConfig_Call) Run(run func(mcmAddr string, cfg *types.Config, clearRoot bool)) *Configurer_SetConfig_Call {
+func (_c *Configurer_SetConfig_Call) Run(run func(mcmID types.ContractID, cfg *types.Config, clearRoot bool)) *Configurer_SetConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string), args[1].(*types.Config), args[2].(bool))
+		run(args[0].(types.ContractID), args[1].(*types.Config), args[2].(bool))
 	})
 	return _c
 }
@@ -74,7 +74,7 @@ func (_c *Configurer_SetConfig_Call) Return(_a0 string, _a1 error) *Configurer_S
 	return _c
 }
 
-func (_c *Configurer_SetConfig_Call) RunAndReturn(run func(string, *types.Config, bool) (string, error)) *Configurer_SetConfig_Call {
+func (_c *Configurer_SetConfig_Call) RunAndReturn(run func(types.ContractID, *types.Config, bool) (string, error)) *Configurer_SetConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

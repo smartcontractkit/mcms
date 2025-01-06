@@ -27,12 +27,17 @@ func NewInspector(solanaClient *rpc.Client) *Inspector {
 	}
 }
 
-func (e *Inspector) GetConfig(ctx context.Context, addr sdk.AddrMetadata) (*types.Config, error) {
+func (e *Inspector) GetConfig(ctx context.Context, mcmID types.ContractID) (*types.Config, error) {
 	panic("implement me")
 }
 
-func (e *Inspector) GetOpCount(ctx context.Context, addr sdk.AddrMetadata) (uint64, error) {
-	pda, err := e.expiringRootAndOpCountAddress(addr.MCMAddress, addr.SolanaAdditionalFields.MSIGName)
+func (e *Inspector) GetOpCount(ctx context.Context, mcmID types.ContractID) (uint64, error) {
+	mcmSolanaID, err := FromContractID(mcmID)
+	if err != nil {
+		return 0, err
+	}
+
+	pda, err := e.expiringRootAndOpCountAddress(mcmSolanaID)
 	if err != nil {
 		return 0, err
 	}
@@ -44,8 +49,13 @@ func (e *Inspector) GetOpCount(ctx context.Context, addr sdk.AddrMetadata) (uint
 	return data.OpCount, err
 }
 
-func (e *Inspector) GetRoot(ctx context.Context, addr sdk.AddrMetadata) (common.Hash, uint32, error) {
-	pda, err := e.expiringRootAndOpCountAddress(addr.MCMAddress, addr.SolanaAdditionalFields.MSIGName)
+func (e *Inspector) GetRoot(ctx context.Context, mcmID types.ContractID) (common.Hash, uint32, error) {
+	mcmSolanaID, err := FromContractID(mcmID)
+	if err != nil {
+		return common.Hash{}, 0, err
+	}
+
+	pda, err := e.expiringRootAndOpCountAddress(mcmSolanaID)
 	if err != nil {
 		return common.Hash{}, 0, err
 	}
@@ -57,19 +67,16 @@ func (e *Inspector) GetRoot(ctx context.Context, addr sdk.AddrMetadata) (common.
 	return data.Root, data.ValidUntil, err
 }
 
-func (e *Inspector) GetRootMetadata(ctx context.Context, addr sdk.AddrMetadata) (types.ChainMetadata, error) {
+func (e *Inspector) GetRootMetadata(ctx context.Context, mcmID types.ContractID) (types.ChainMetadata, error) {
 	panic("implement me")
 }
 
-func (e *Inspector) expiringRootAndOpCountAddress(programAddr string, msigName []byte) (solana.PublicKey, error) {
-	programID, err := solana.PublicKeyFromBase58(programAddr)
-	if err != nil {
-		return solana.PublicKey{}, err
-	}
+func (e *Inspector) expiringRootAndOpCountAddress(mcmID *SolanaContractID) (solana.PublicKey, error) {
 	pda, _, err := solana.FindProgramAddress([][]byte{
 		[]byte("expiring_root_and_op_count"),
-		msigName[:],
-	}, programID)
+		mcmID.InstanceID[:],
+	}, mcmID.ProgramID)
+
 	return pda, err
 }
 

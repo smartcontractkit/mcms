@@ -96,7 +96,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 
 			converter := &TimelockConverter{}
 			chainOperation, operationId, err := converter.ConvertBatchToChainOperation(
-				tc.op, timelockAddress, types.MustParseDuration(tc.delay), tc.operation, tc.predecessor,
+				tc.op, NewEVMContractID(timelockAddress), types.MustParseDuration(tc.delay), tc.operation, tc.predecessor,
 			)
 
 			if tc.expectedError != nil {

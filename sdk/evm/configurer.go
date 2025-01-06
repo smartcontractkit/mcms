@@ -27,7 +27,12 @@ func NewConfigurer(client ContractDeployBackend, auth *bind.TransactOpts,
 }
 
 // SetConfig sets the configuration for the MCM contract on the EVM chain.
-func (c *Configurer) SetConfig(mcmAddr string, cfg *types.Config, clearRoot bool) (string, error) {
+func (c *Configurer) SetConfig(mcmID types.ContractID, cfg *types.Config, clearRoot bool) (string, error) {
+	mcmAddr, err := AddressFromContractID(mcmID)
+	if err != nil {
+		return "", err
+	}
+
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddr), c.client)
 	if err != nil {
 		return "", err

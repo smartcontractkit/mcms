@@ -12,11 +12,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/go-playground/validator/v10"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -24,13 +27,13 @@ const SignMsgABI = `[{"type":"bytes32"},{"type":"uint32"}]`
 
 // BaseProposal is the base struct for all MCMS proposals, contains shared fields for all proposal types.
 type BaseProposal struct {
-	Version              string                                      `json:"version" validate:"required,oneof=v1"`
-	Kind                 types.ProposalKind                          `json:"kind" validate:"required,oneof=Proposal TimelockProposal"`
-	ValidUntil           uint32                                      `json:"validUntil" validate:"required"`
-	Signatures           []types.Signature                           `json:"signatures" validate:"omitempty,dive,required"`
-	OverridePreviousRoot bool                                        `json:"overridePreviousRoot"`
-	ChainMetadata        map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata" validate:"required,min=1"`
-	Description          string                                      `json:"description"`
+	Version              string             `json:"version" validate:"required,oneof=v1"`
+	Kind                 types.ProposalKind `json:"kind" validate:"required,oneof=Proposal TimelockProposal"`
+	ValidUntil           uint32             `json:"validUntil" validate:"required"`
+	Signatures           []types.Signature  `json:"signatures" validate:"omitempty,dive,required"`
+	OverridePreviousRoot bool               `json:"overridePreviousRoot"`
+	ChainMetadata        chainMetadataMap   `json:"chainMetadata" validate:"required,min=1"`
+	Description          string             `json:"description"`
 
 	// This field is passed to SDK implementations to indicate whether the proposal is being run
 	// against a simulated environment. This is only used for testing purposes.
@@ -75,7 +78,7 @@ func WriteProposal(w io.Writer, proposal *Proposal) error {
 
 func (p *Proposal) Validate() error {
 	// Run tag-based validation
-	var validate = validator.New()
+	validate := validator.New()
 	if err := validate.Struct(p); err != nil {
 		return err
 	}
@@ -278,4 +281,68 @@ func proposalValidateBasic(proposalObj Proposal) error {
 // merkle tree generation.
 func wrapTreeGenErr(err error) error {
 	return fmt.Errorf("merkle tree generation error: %w", err)
+}
+
+type chainMetadataMap map[types.ChainSelector]types.ChainMetadata
+
+func (m *chainMetadataMap) UnmarshalJSON(data []byte) error {
+	var orig map[types.ChainSelector]json.RawMessage // types.ChainMetadata
+	err := json.Unmarshal(data, &orig)
+	if err != nil {
+		return err
+	}
+
+	*m = make(chainMetadataMap, len(orig))
+	for chainSelector, metadataRaw := range orig {
+		chainMetadata, err := unmarshalChainMetadata(chainSelector, metadataRaw)
+		if err != nil {
+			return fmt.Errorf("unable to unmarshal chain metadata: %w", err)
+		}
+
+		(*m)[chainSelector] = chainMetadata
+	}
+
+	return nil
+}
+
+func unmarshalChainMetadata(chainSelector types.ChainSelector, data []byte) (types.ChainMetadata, error) {
+	family, err := types.GetChainSelectorFamily(chainSelector)
+	if err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("unable to unmarshal chain metadata: %w", err)
+	}
+
+	switch family {
+	case cselectors.FamilyEVM:
+		var m struct {
+			StartingOpCount uint64            `json:"startingOpCount"`
+			ContractID      evm.EVMContractID `json:"contractId"`
+		}
+		err := json.Unmarshal(data, &m)
+		if err != nil {
+			return types.ChainMetadata{}, err
+		}
+
+		return types.ChainMetadata{
+			StartingOpCount: m.StartingOpCount,
+			ContractID:      &m.ContractID,
+		}, nil
+
+	case cselectors.FamilySolana:
+		var m struct {
+			StartingOpCount uint64                  `json:"startingOpCount"`
+			ContractID      solana.SolanaContractID `json:"contractID"`
+		}
+		err := json.Unmarshal(data, &m)
+		if err != nil {
+			return types.ChainMetadata{}, err
+		}
+
+		return types.ChainMetadata{
+			StartingOpCount: m.StartingOpCount,
+			ContractID:      &m.ContractID,
+		}, nil
+
+	default:
+		return types.ChainMetadata{}, types.ErrUnsupportedChainFamily
+	}
 }

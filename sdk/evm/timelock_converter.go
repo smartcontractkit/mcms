@@ -22,18 +22,25 @@ type TimelockConverter struct{}
 
 func (t *TimelockConverter) ConvertBatchToChainOperation(
 	bop types.BatchOperation,
-	timelockAddress string,
+	timelockID types.ContractID,
 	delay types.Duration,
 	action types.TimelockAction,
 	predecessor common.Hash,
 ) (types.Operation, common.Hash, error) {
+	var err error
+	timelockAddress, err := AddressFromContractID(timelockID)
+	if err != nil {
+		return types.Operation{}, common.Hash{}, err
+	}
+
 	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
 	calls := make([]bindings.RBACTimelockCall, 0)
 	tags := make([]string, 0)
 	for _, tx := range bop.Transactions {
 		// Unmarshal the additional fields
 		var additionalFields AdditionalFields
-		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+		err = json.Unmarshal(tx.AdditionalFields, &additionalFields)
+		if err != nil {
 			return types.Operation{}, common.Hash{}, err
 		}
 
@@ -59,7 +66,6 @@ func (t *TimelockConverter) ConvertBatchToChainOperation(
 
 	// Encode the data based on the operation
 	var data []byte
-	var err error
 	switch action {
 	case types.TimelockActionSchedule:
 		data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))

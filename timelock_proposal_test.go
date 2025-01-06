@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -73,8 +74,8 @@ func Test_NewTimelockProposal(t *testing.T) {
 				},
 				Action: types.TimelockActionSchedule,
 				Delay:  types.MustParseDuration("1h"),
-				TimelockAddresses: map[types.ChainSelector]string{
-					chaintest.Chain2Selector: "0x01",
+				TimelockIDs: map[types.ChainSelector]types.ContractID{
+					chaintest.Chain2Selector: evm.NewEVMContractID("0x01"),
 				},
 				Operations: []types.BatchOperation{
 					{
@@ -214,7 +215,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				SetOverridePreviousRoot(false).
 				SetAction(types.TimelockActionSchedule).
 				SetDelay(types.MustParseDuration("1h")).
-				AddTimelockAddress(chaintest.Chain2Selector, "").
+				AddTimelockAddress(chaintest.Chain2Selector, evm.NewEVMContractID("")).
 				SetOperations([]types.BatchOperation{{
 					ChainSelector: chaintest.Chain2Selector,
 					Transactions: []types.Transaction{
@@ -291,7 +292,7 @@ func Test_TimelockProposal_Validate(t *testing.T) {
 			name: "min validation",
 			giveFunc: func(p *TimelockProposal) {
 				p.ChainMetadata = map[types.ChainSelector]types.ChainMetadata{}
-				p.TimelockAddresses = map[types.ChainSelector]string{}
+				p.TimelockIDs = map[types.ChainSelector]types.ContractID{}
 				p.Operations = []types.BatchOperation{}
 			},
 			wantErrs: []string{
@@ -416,8 +417,8 @@ func Test_TimelockProposal_Validate(t *testing.T) {
 				},
 				Action: types.TimelockActionSchedule,
 				Delay:  types.MustParseDuration("1h"),
-				TimelockAddresses: map[types.ChainSelector]string{
-					chaintest.Chain1Selector: "0x01",
+				TimelockIDs: map[types.ChainSelector]types.ContractID{
+					chaintest.Chain1Selector: evm.NewEVMContractID("0x01"),
 				},
 				Operations: []types.BatchOperation{
 					{
@@ -471,8 +472,8 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 			},
 		}
 
-		validTimelockAddresses = map[types.ChainSelector]string{
-			chaintest.Chain1Selector: "0x123",
+		validTimelockAddresses = map[types.ChainSelector]types.ContractID{
+			chaintest.Chain1Selector: evm.NewEVMContractID("0x123"),
 		}
 
 		validTx = types.Transaction{
@@ -505,10 +506,10 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 			Signatures:           []types.Signature{},
 			ChainMetadata:        validChainMetadata,
 		},
-		Action:            types.TimelockActionSchedule,
-		Delay:             types.MustParseDuration("1h"),
-		TimelockAddresses: validTimelockAddresses,
-		Operations:        validBatchOps,
+		Action:      types.TimelockActionSchedule,
+		Delay:       types.MustParseDuration("1h"),
+		TimelockIDs: validTimelockAddresses,
+		Operations:  validBatchOps,
 	}
 
 	mcmsProposal, err := proposal.Convert()

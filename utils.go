@@ -14,7 +14,7 @@ import (
 // different chains
 func BatchToChainOperation(
 	bops types.BatchOperation,
-	timelockAddr string,
+	timelockID types.ContractID,
 	delay types.Duration,
 	action types.TimelockAction,
 	predecessor common.Hash,
@@ -31,7 +31,7 @@ func BatchToChainOperation(
 	}
 
 	return converter.ConvertBatchToChainOperation(
-		bops, timelockAddr, delay, action, predecessor,
+		bops, timelockID, delay, action, predecessor,
 	)
 }
 

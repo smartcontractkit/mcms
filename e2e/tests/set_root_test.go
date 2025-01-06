@@ -192,8 +192,8 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 		SetOverridePreviousRoot(true).
 		SetAction(mcmtypes.TimelockActionSchedule).
 		SetDelay(mcmtypes.MustParseDuration("24h")).
-		SetTimelockAddresses(map[mcmtypes.ChainSelector]string{
-			s.chainSelector: s.timelockContract.Address().String(),
+		SetTimelockAddresses(map[mcmtypes.ChainSelector]mcmtypes.ContractID{
+			s.chainSelector: evm.NewEVMContractID(s.timelockContract.Address().String()),
 		}).
 		AddChainMetadata(
 			s.chainSelector,

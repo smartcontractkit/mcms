@@ -5,5 +5,5 @@ import (
 )
 
 type Configurer interface {
-	SetConfig(mcmAddr string, cfg *types.Config, clearRoot bool) (string, error)
+	SetConfig(mcmID types.ContractID, cfg *types.Config, clearRoot bool) (string, error)
 }

@@ -1,16 +1,20 @@
 package sdk
 
 import (
+	"context"
+
 	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type TimelockInspector interface {
-	GetProposers(address string) ([]common.Address, error)
-	GetExecutors(address string) ([]common.Address, error)
-	GetBypassers(address string) ([]common.Address, error)
-	GetCancellers(address string) ([]common.Address, error)
-	IsOperation(address string, opID [32]byte) (bool, error)
-	IsOperationPending(address string, opID [32]byte) (bool, error)
-	IsOperationReady(address string, opID [32]byte) (bool, error)
-	IsOperationDone(address string, opID [32]byte) (bool, error)
+	GetProposers(ctx context.Context, timelockID types.ContractID) ([]common.Address, error)
+	GetExecutors(ctx context.Context, timelockID types.ContractID) ([]common.Address, error)
+	GetBypassers(ctx context.Context, timelockID types.ContractID) ([]common.Address, error)
+	GetCancellers(ctx context.Context, timelockID types.ContractID) ([]common.Address, error)
+	IsOperation(ctx context.Context, timelockID types.ContractID, opID [32]byte) (bool, error)
+	IsOperationPending(ctx context.Context, timelockID types.ContractID, opID [32]byte) (bool, error)
+	IsOperationReady(ctx context.Context, timelockID types.ContractID, opID [32]byte) (bool, error)
+	IsOperationDone(ctx context.Context, timelockID types.ContractID, opID [32]byte) (bool, error)
 }

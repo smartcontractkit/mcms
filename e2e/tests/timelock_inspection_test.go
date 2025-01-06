@@ -99,8 +99,10 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 
 // TestGetProposers gets the list of proposers
 func (s *TimelockInspectionTestSuite) TestGetProposers() {
+	ctx := context.Background()
 	inspector := evm.NewTimelockInspector(s.Client)
-	proposers, err := inspector.GetProposers(s.timelockContract.Address().Hex())
+
+	proposers, err := inspector.GetProposers(ctx, evm.NewEVMContractID(s.timelockContract.Address().Hex()))
 	s.Require().NoError(err)
 	s.Require().Len(proposers, 1)
 	s.Require().Equal(s.signerAddresses[0], proposers[0])
@@ -108,36 +110,43 @@ func (s *TimelockInspectionTestSuite) TestGetProposers() {
 
 // TestGetExecutors gets the list of executors
 func (s *TimelockInspectionTestSuite) TestGetExecutors() {
+	ctx := context.Background()
 	inspector := evm.NewTimelockInspector(s.Client)
-	proposers, err := inspector.GetExecutors(s.timelockContract.Address().Hex())
+
+	executors, err := inspector.GetExecutors(ctx, evm.NewEVMContractID(s.timelockContract.Address().Hex()))
 	s.Require().NoError(err)
-	s.Require().Len(proposers, 2)
-	s.Require().Equal(s.signerAddresses[0], proposers[0])
-	s.Require().Equal(s.signerAddresses[1], proposers[1])
+	s.Require().Len(executors, 2)
+	s.Require().Equal(s.signerAddresses[0], executors[0])
+	s.Require().Equal(s.signerAddresses[1], executors[1])
 }
 
 // TestGetBypassers gets the list of bypassers
 func (s *TimelockInspectionTestSuite) TestGetBypassers() {
+	ctx := context.Background()
 	inspector := evm.NewTimelockInspector(s.Client)
-	proposers, err := inspector.GetBypassers(s.timelockContract.Address().Hex())
+
+	bypassers, err := inspector.GetExecutors(ctx, evm.NewEVMContractID(s.timelockContract.Address().Hex()))
 	s.Require().NoError(err)
-	s.Require().Len(proposers, 1) // Ensure lengths match
+	s.Require().Len(bypassers, 1) // Ensure lengths match
 	// Check that all elements of signerAddresses are in proposers
-	s.Require().Contains(proposers, s.signerAddresses[1])
+	s.Require().Contains(bypassers, s.signerAddresses[1])
 }
 
 // TestGetCancellers gets the list of cancellers
 func (s *TimelockInspectionTestSuite) TestGetCancellers() {
+	ctx := context.Background()
 	inspector := evm.NewTimelockInspector(s.Client)
-	proposers, err := inspector.GetCancellers(s.timelockContract.Address().Hex())
+
+	cancellers, err := inspector.GetCancellers(ctx, evm.NewEVMContractID(s.timelockContract.Address().Hex()))
 	s.Require().NoError(err)
-	s.Require().Len(proposers, 2)
-	s.Require().Equal(s.signerAddresses[0], proposers[0])
-	s.Require().Equal(s.signerAddresses[1], proposers[1])
+	s.Require().Len(cancellers, 2)
+	s.Require().Equal(s.signerAddresses[0], cancellers[0])
+	s.Require().Equal(s.signerAddresses[1], cancellers[1])
 }
 
 // TestIsOperation tests the IsOperation method
 func (s *TimelockInspectionTestSuite) TestIsOperation() {
+	ctx := context.Background()
 	inspector := evm.NewTimelockInspector(s.Client)
 
 	// Schedule a test operation
@@ -159,13 +168,14 @@ func (s *TimelockInspectionTestSuite) TestIsOperation() {
 
 	opID, err := evm.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
-	isOP, err := inspector.IsOperation(s.timelockContract.Address().Hex(), opID)
+	isOP, err := inspector.IsOperation(ctx, evm.NewEVMContractID(s.timelockContract.Address().Hex()), opID)
 	s.Require().NoError(err)
 	s.Require().True(isOP)
 }
 
 // TestIsOperationPending tests the IsOperationPending method
 func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
+	ctx := context.Background()
 	inspector := evm.NewTimelockInspector(s.Client)
 
 	// Schedule a test operation
@@ -188,13 +198,14 @@ func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 
 	opID, err := evm.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
-	isOP, err := inspector.IsOperationPending(s.timelockContract.Address().Hex(), opID)
+	isOP, err := inspector.IsOperationPending(ctx, evm.NewEVMContractID(s.timelockContract.Address().Hex()), opID)
 	s.Require().NoError(err)
 	s.Require().True(isOP)
 }
 
 // TestIsOperationReady tests the IsOperationReady and IsOperationDone methods
 func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
+	ctx := context.Background()
 	inspector := evm.NewTimelockInspector(s.Client)
 
 	// Schedule a test operation
@@ -219,12 +230,14 @@ func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 
 	opID, err := evm.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
-	isOP, err := inspector.IsOperationReady(s.timelockContract.Address().Hex(), opID)
+	isOP, err := inspector.IsOperationReady(ctx, evm.NewEVMContractID(s.timelockContract.Address().Hex()), opID)
 	s.Require().NoError(err)
 	s.Require().True(isOP)
 }
 
 func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
+	ctx := context.Background()
+
 	// Deploy a new timelock for this test
 	timelockContract := testutils.DeployTimelockContract(&s.Suite, s.Client, s.auth, s.publicKey.String())
 
@@ -295,7 +308,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 		opID, err := evm.HashOperationBatch(calls, pred, salt)
 		s.Require().NoError(err, "Failed to compute operation ID")
 
-		isOpDone, err := inspector.IsOperationDone(timelockContract.Address().Hex(), opID)
+		isOpDone, err := inspector.IsOperationDone(ctx, evm.NewEVMContractID(s.timelockContract.Address().Hex()), opID)
 		s.Require().NoError(err, "Failed to check if operation is done")
 
 		return isOpDone

@@ -9,8 +9,6 @@ import (
 
 	mock "github.com/stretchr/testify/mock"
 
-	sdk "github.com/smartcontractkit/mcms/sdk"
-
 	types "github.com/smartcontractkit/mcms/types"
 )
 
@@ -86,9 +84,9 @@ func (_c *Executor_ExecuteOperation_Call) RunAndReturn(run func(types.ChainMetad
 	return _c
 }
 
-// GetConfig provides a mock function with given fields: ctx, addr
-func (_m *Executor) GetConfig(ctx context.Context, addr sdk.AddrMetadata) (*types.Config, error) {
-	ret := _m.Called(ctx, addr)
+// GetConfig provides a mock function with given fields: ctx, mcmID
+func (_m *Executor) GetConfig(ctx context.Context, mcmID types.ContractID) (*types.Config, error) {
+	ret := _m.Called(ctx, mcmID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetConfig")
@@ -96,19 +94,19 @@ func (_m *Executor) GetConfig(ctx context.Context, addr sdk.AddrMetadata) (*type
 
 	var r0 *types.Config
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, sdk.AddrMetadata) (*types.Config, error)); ok {
-		return rf(ctx, addr)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ContractID) (*types.Config, error)); ok {
+		return rf(ctx, mcmID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, sdk.AddrMetadata) *types.Config); ok {
-		r0 = rf(ctx, addr)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ContractID) *types.Config); ok {
+		r0 = rf(ctx, mcmID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.Config)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, sdk.AddrMetadata) error); ok {
-		r1 = rf(ctx, addr)
+	if rf, ok := ret.Get(1).(func(context.Context, types.ContractID) error); ok {
+		r1 = rf(ctx, mcmID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -123,14 +121,14 @@ type Executor_GetConfig_Call struct {
 
 // GetConfig is a helper method to define mock.On call
 //   - ctx context.Context
-//   - addr sdk.AddrMetadata
-func (_e *Executor_Expecter) GetConfig(ctx interface{}, addr interface{}) *Executor_GetConfig_Call {
-	return &Executor_GetConfig_Call{Call: _e.mock.On("GetConfig", ctx, addr)}
+//   - mcmID types.ContractID
+func (_e *Executor_Expecter) GetConfig(ctx interface{}, mcmID interface{}) *Executor_GetConfig_Call {
+	return &Executor_GetConfig_Call{Call: _e.mock.On("GetConfig", ctx, mcmID)}
 }
 
-func (_c *Executor_GetConfig_Call) Run(run func(ctx context.Context, addr sdk.AddrMetadata)) *Executor_GetConfig_Call {
+func (_c *Executor_GetConfig_Call) Run(run func(ctx context.Context, mcmID types.ContractID)) *Executor_GetConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk.AddrMetadata))
+		run(args[0].(context.Context), args[1].(types.ContractID))
 	})
 	return _c
 }
@@ -140,14 +138,14 @@ func (_c *Executor_GetConfig_Call) Return(_a0 *types.Config, _a1 error) *Executo
 	return _c
 }
 
-func (_c *Executor_GetConfig_Call) RunAndReturn(run func(context.Context, sdk.AddrMetadata) (*types.Config, error)) *Executor_GetConfig_Call {
+func (_c *Executor_GetConfig_Call) RunAndReturn(run func(context.Context, types.ContractID) (*types.Config, error)) *Executor_GetConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetOpCount provides a mock function with given fields: ctx, addr
-func (_m *Executor) GetOpCount(ctx context.Context, addr sdk.AddrMetadata) (uint64, error) {
-	ret := _m.Called(ctx, addr)
+// GetOpCount provides a mock function with given fields: ctx, mcmID
+func (_m *Executor) GetOpCount(ctx context.Context, mcmID types.ContractID) (uint64, error) {
+	ret := _m.Called(ctx, mcmID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOpCount")
@@ -155,17 +153,17 @@ func (_m *Executor) GetOpCount(ctx context.Context, addr sdk.AddrMetadata) (uint
 
 	var r0 uint64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, sdk.AddrMetadata) (uint64, error)); ok {
-		return rf(ctx, addr)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ContractID) (uint64, error)); ok {
+		return rf(ctx, mcmID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, sdk.AddrMetadata) uint64); ok {
-		r0 = rf(ctx, addr)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ContractID) uint64); ok {
+		r0 = rf(ctx, mcmID)
 	} else {
 		r0 = ret.Get(0).(uint64)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, sdk.AddrMetadata) error); ok {
-		r1 = rf(ctx, addr)
+	if rf, ok := ret.Get(1).(func(context.Context, types.ContractID) error); ok {
+		r1 = rf(ctx, mcmID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -180,14 +178,14 @@ type Executor_GetOpCount_Call struct {
 
 // GetOpCount is a helper method to define mock.On call
 //   - ctx context.Context
-//   - addr sdk.AddrMetadata
-func (_e *Executor_Expecter) GetOpCount(ctx interface{}, addr interface{}) *Executor_GetOpCount_Call {
-	return &Executor_GetOpCount_Call{Call: _e.mock.On("GetOpCount", ctx, addr)}
+//   - mcmID types.ContractID
+func (_e *Executor_Expecter) GetOpCount(ctx interface{}, mcmID interface{}) *Executor_GetOpCount_Call {
+	return &Executor_GetOpCount_Call{Call: _e.mock.On("GetOpCount", ctx, mcmID)}
 }
 
-func (_c *Executor_GetOpCount_Call) Run(run func(ctx context.Context, addr sdk.AddrMetadata)) *Executor_GetOpCount_Call {
+func (_c *Executor_GetOpCount_Call) Run(run func(ctx context.Context, mcmID types.ContractID)) *Executor_GetOpCount_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk.AddrMetadata))
+		run(args[0].(context.Context), args[1].(types.ContractID))
 	})
 	return _c
 }
@@ -197,14 +195,14 @@ func (_c *Executor_GetOpCount_Call) Return(_a0 uint64, _a1 error) *Executor_GetO
 	return _c
 }
 
-func (_c *Executor_GetOpCount_Call) RunAndReturn(run func(context.Context, sdk.AddrMetadata) (uint64, error)) *Executor_GetOpCount_Call {
+func (_c *Executor_GetOpCount_Call) RunAndReturn(run func(context.Context, types.ContractID) (uint64, error)) *Executor_GetOpCount_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRoot provides a mock function with given fields: ctx, addr
-func (_m *Executor) GetRoot(ctx context.Context, addr sdk.AddrMetadata) (common.Hash, uint32, error) {
-	ret := _m.Called(ctx, addr)
+// GetRoot provides a mock function with given fields: ctx, mcmID
+func (_m *Executor) GetRoot(ctx context.Context, mcmID types.ContractID) (common.Hash, uint32, error) {
+	ret := _m.Called(ctx, mcmID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRoot")
@@ -213,25 +211,25 @@ func (_m *Executor) GetRoot(ctx context.Context, addr sdk.AddrMetadata) (common.
 	var r0 common.Hash
 	var r1 uint32
 	var r2 error
-	if rf, ok := ret.Get(0).(func(context.Context, sdk.AddrMetadata) (common.Hash, uint32, error)); ok {
-		return rf(ctx, addr)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ContractID) (common.Hash, uint32, error)); ok {
+		return rf(ctx, mcmID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, sdk.AddrMetadata) common.Hash); ok {
-		r0 = rf(ctx, addr)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ContractID) common.Hash); ok {
+		r0 = rf(ctx, mcmID)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(common.Hash)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, sdk.AddrMetadata) uint32); ok {
-		r1 = rf(ctx, addr)
+	if rf, ok := ret.Get(1).(func(context.Context, types.ContractID) uint32); ok {
+		r1 = rf(ctx, mcmID)
 	} else {
 		r1 = ret.Get(1).(uint32)
 	}
 
-	if rf, ok := ret.Get(2).(func(context.Context, sdk.AddrMetadata) error); ok {
-		r2 = rf(ctx, addr)
+	if rf, ok := ret.Get(2).(func(context.Context, types.ContractID) error); ok {
+		r2 = rf(ctx, mcmID)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -246,14 +244,14 @@ type Executor_GetRoot_Call struct {
 
 // GetRoot is a helper method to define mock.On call
 //   - ctx context.Context
-//   - addr sdk.AddrMetadata
-func (_e *Executor_Expecter) GetRoot(ctx interface{}, addr interface{}) *Executor_GetRoot_Call {
-	return &Executor_GetRoot_Call{Call: _e.mock.On("GetRoot", ctx, addr)}
+//   - mcmID types.ContractID
+func (_e *Executor_Expecter) GetRoot(ctx interface{}, mcmID interface{}) *Executor_GetRoot_Call {
+	return &Executor_GetRoot_Call{Call: _e.mock.On("GetRoot", ctx, mcmID)}
 }
 
-func (_c *Executor_GetRoot_Call) Run(run func(ctx context.Context, addr sdk.AddrMetadata)) *Executor_GetRoot_Call {
+func (_c *Executor_GetRoot_Call) Run(run func(ctx context.Context, mcmID types.ContractID)) *Executor_GetRoot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk.AddrMetadata))
+		run(args[0].(context.Context), args[1].(types.ContractID))
 	})
 	return _c
 }
@@ -263,14 +261,14 @@ func (_c *Executor_GetRoot_Call) Return(_a0 common.Hash, _a1 uint32, _a2 error) 
 	return _c
 }
 
-func (_c *Executor_GetRoot_Call) RunAndReturn(run func(context.Context, sdk.AddrMetadata) (common.Hash, uint32, error)) *Executor_GetRoot_Call {
+func (_c *Executor_GetRoot_Call) RunAndReturn(run func(context.Context, types.ContractID) (common.Hash, uint32, error)) *Executor_GetRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRootMetadata provides a mock function with given fields: ctx, addr
-func (_m *Executor) GetRootMetadata(ctx context.Context, addr sdk.AddrMetadata) (types.ChainMetadata, error) {
-	ret := _m.Called(ctx, addr)
+// GetRootMetadata provides a mock function with given fields: ctx, mcmID
+func (_m *Executor) GetRootMetadata(ctx context.Context, mcmID types.ContractID) (types.ChainMetadata, error) {
+	ret := _m.Called(ctx, mcmID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRootMetadata")
@@ -278,17 +276,17 @@ func (_m *Executor) GetRootMetadata(ctx context.Context, addr sdk.AddrMetadata) 
 
 	var r0 types.ChainMetadata
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, sdk.AddrMetadata) (types.ChainMetadata, error)); ok {
-		return rf(ctx, addr)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ContractID) (types.ChainMetadata, error)); ok {
+		return rf(ctx, mcmID)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, sdk.AddrMetadata) types.ChainMetadata); ok {
-		r0 = rf(ctx, addr)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ContractID) types.ChainMetadata); ok {
+		r0 = rf(ctx, mcmID)
 	} else {
 		r0 = ret.Get(0).(types.ChainMetadata)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, sdk.AddrMetadata) error); ok {
-		r1 = rf(ctx, addr)
+	if rf, ok := ret.Get(1).(func(context.Context, types.ContractID) error); ok {
+		r1 = rf(ctx, mcmID)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -303,14 +301,14 @@ type Executor_GetRootMetadata_Call struct {
 
 // GetRootMetadata is a helper method to define mock.On call
 //   - ctx context.Context
-//   - addr sdk.AddrMetadata
-func (_e *Executor_Expecter) GetRootMetadata(ctx interface{}, addr interface{}) *Executor_GetRootMetadata_Call {
-	return &Executor_GetRootMetadata_Call{Call: _e.mock.On("GetRootMetadata", ctx, addr)}
+//   - mcmID types.ContractID
+func (_e *Executor_Expecter) GetRootMetadata(ctx interface{}, mcmID interface{}) *Executor_GetRootMetadata_Call {
+	return &Executor_GetRootMetadata_Call{Call: _e.mock.On("GetRootMetadata", ctx, mcmID)}
 }
 
-func (_c *Executor_GetRootMetadata_Call) Run(run func(ctx context.Context, addr sdk.AddrMetadata)) *Executor_GetRootMetadata_Call {
+func (_c *Executor_GetRootMetadata_Call) Run(run func(ctx context.Context, mcmID types.ContractID)) *Executor_GetRootMetadata_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(sdk.AddrMetadata))
+		run(args[0].(context.Context), args[1].(types.ContractID))
 	})
 	return _c
 }
@@ -320,7 +318,7 @@ func (_c *Executor_GetRootMetadata_Call) Return(_a0 types.ChainMetadata, _a1 err
 	return _c
 }
 
-func (_c *Executor_GetRootMetadata_Call) RunAndReturn(run func(context.Context, sdk.AddrMetadata) (types.ChainMetadata, error)) *Executor_GetRootMetadata_Call {
+func (_c *Executor_GetRootMetadata_Call) RunAndReturn(run func(context.Context, types.ContractID) (types.ChainMetadata, error)) *Executor_GetRootMetadata_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -42,8 +43,8 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
 						chaintest.Chain2Selector: {StartingOpCount: 0},
 					}).
-					SetTimelockAddresses(map[types.ChainSelector]string{
-						chaintest.Chain2Selector: "0xTimelockAddress",
+					SetTimelockAddresses(map[types.ChainSelector]types.ContractID{
+						chaintest.Chain2Selector: evm.NewEVMContractID("0xTimelockAddress"),
 					}).
 					SetOperations([]types.BatchOperation{{
 						ChainSelector: chaintest.Chain2Selector,
@@ -64,8 +65,8 @@ func TestTimelockProposalBuilder(t *testing.T) {
 				},
 				Action: types.TimelockActionSchedule,
 				Delay:  types.MustParseDuration("24h"),
-				TimelockAddresses: map[types.ChainSelector]string{
-					chaintest.Chain2Selector: "0xTimelockAddress",
+				TimelockIDs: map[types.ChainSelector]types.ContractID{
+					chaintest.Chain2Selector: evm.NewEVMContractID("0xTimelockAddress"),
 				},
 				Operations: []types.BatchOperation{
 					{
@@ -85,7 +86,7 @@ func TestTimelockProposalBuilder(t *testing.T) {
 					SetAction(types.TimelockActionSchedule).
 					SetDelay(types.MustParseDuration("24h")).
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{StartingOpCount: 0}).
-					AddTimelockAddress(chaintest.Chain2Selector, "0xTimelockAddress").
+					AddTimelockAddress(chaintest.Chain2Selector, evm.NewEVMContractID("0xTimelockAddress")).
 					AddOperation(types.BatchOperation{
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions:  []types.Transaction{tx1},
@@ -104,8 +105,8 @@ func TestTimelockProposalBuilder(t *testing.T) {
 				},
 				Action: types.TimelockActionSchedule,
 				Delay:  types.MustParseDuration("24h"),
-				TimelockAddresses: map[types.ChainSelector]string{
-					chaintest.Chain2Selector: "0xTimelockAddress",
+				TimelockIDs: map[types.ChainSelector]types.ContractID{
+					chaintest.Chain2Selector: evm.NewEVMContractID("0xTimelockAddress"),
 				},
 				Operations: []types.BatchOperation{
 					{

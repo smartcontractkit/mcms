@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"context"
 	"encoding/json"
 	"math/big"
 	"testing"
@@ -35,9 +36,7 @@ type simulatorMocks struct {
 func Test_NewSignable(t *testing.T) {
 	t.Parallel()
 
-	var (
-		inspector = mocks.NewInspector(t) // We only need this to fulfill the interface argument requirements
-	)
+	inspector := mocks.NewInspector(t) // We only need this to fulfill the interface argument requirements
 
 	tests := []struct {
 		name           string
@@ -738,6 +737,7 @@ func Test_SignAndAppend(t *testing.T) {
 func Test_Signable_GetConfigs(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	var (
 		config1 = &types.Config{}
 		config2 = &types.Config{}
@@ -761,8 +761,8 @@ func Test_Signable_GetConfigs(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetConfig("0x01").Return(config1, nil)
-				m.inspector2.EXPECT().GetConfig("0x02").Return(config2, nil)
+				m.inspector1.EXPECT().GetConfig(ctx, evm.NewEVMContractID("0x01")).Return(config1, nil)
+				m.inspector2.EXPECT().GetConfig(ctx, evm.NewEVMContractID("0x02")).Return(config2, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -806,7 +806,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetConfig("0x01").Return(nil, assert.AnError)
+				m.inspector1.EXPECT().GetConfig(ctx, "0x01").Return(nil, assert.AnError)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -974,6 +974,7 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 	t.Parallel()
 
 	var (
+		ctx     = context.Background()
 		signer1 = common.HexToAddress("0x1")
 		signer2 = common.HexToAddress("0x2")
 
@@ -1008,8 +1009,8 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetConfig("0x01").Return(config1, nil)
-				m.inspector2.EXPECT().GetConfig("0x02").Return(config2, nil)
+				m.inspector1.EXPECT().GetConfig(ctx, evm.NewEVMContractID("0x01")).Return(config1, nil)
+				m.inspector2.EXPECT().GetConfig(ctx, evm.NewEVMContractID("0x02")).Return(config2, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -1036,8 +1037,8 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetConfig("0x01").Return(config1, nil)
-				m.inspector2.EXPECT().GetConfig("0x02").Return(config3, nil)
+				m.inspector1.EXPECT().GetConfig(ctx, evm.NewEVMContractID("0x01")).Return(config1, nil)
+				m.inspector2.EXPECT().GetConfig(ctx, evm.NewEVMContractID("0x02")).Return(config3, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -1079,6 +1080,7 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 func Test_Signable_getCurrentOpCounts(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	tests := []struct {
 		name           string
 		give           Proposal
@@ -1097,8 +1099,8 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetOpCount("0x01").Return(100, nil)
-				m.inspector2.EXPECT().GetOpCount("0x02").Return(200, nil)
+				m.inspector1.EXPECT().GetOpCount(ctx, evm.NewEVMContractID("0x01")).Return(100, nil)
+				m.inspector2.EXPECT().GetOpCount(ctx, evm.NewEVMContractID("0x02")).Return(200, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -1142,7 +1144,7 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetOpCount("0x01").Return(0, assert.AnError)
+				m.inspector1.EXPECT().GetOpCount(ctx, evm.NewEVMContractID("0x01")).Return(0, assert.AnError)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,

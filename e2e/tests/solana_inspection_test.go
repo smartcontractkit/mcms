@@ -79,23 +79,21 @@ func (s *SolanaInspectionTestSuite) initializeMCM() {
 }
 
 func (s *SolanaInspectionTestSuite) TestGetOpCount() {
-	inspector := solanasdk.NewInspector(context.TODO(), s.SolanaClient)
+	ctx := context.TODO()
+	inspector := solanasdk.NewInspector(s.SolanaClient)
+	contractID := solanasdk.NewSolanaContractID(config.McmProgram, config.TestMsigNamePaddedBuffer)
 
-	seed := config.TestMsigNamePaddedBuffer
-	expiringRootAndOpCountPDA := mcms.ExpiringRootAndOpCountAddress(seed)
-	opCount, err := inspector.GetOpCount(expiringRootAndOpCountPDA.String())
-
+	opCount, err := inspector.GetOpCount(ctx, contractID)
 	s.Require().NoError(err, "Failed to get op count")
 	s.Require().Equal(uint64(0), opCount, "Operation count does not match")
 }
 
 func (s *SolanaInspectionTestSuite) TestGetRoot() {
-	inspector := solanasdk.NewInspector(context.TODO(), s.SolanaClient)
+	ctx := context.TODO()
+	inspector := solanasdk.NewInspector(s.SolanaClient)
+	contractID := solanasdk.NewSolanaContractID(config.McmProgram, config.TestMsigNamePaddedBuffer)
 
-	seed := config.TestMsigNamePaddedBuffer
-	expiringRootAndOpCountPDA := mcms.ExpiringRootAndOpCountAddress(seed)
-	root, validUntil, err := inspector.GetRoot(expiringRootAndOpCountPDA.String())
-
+	root, validUntil, err := inspector.GetRoot(ctx, contractID)
 	s.Require().NoError(err, "Failed to get root from contract")
 	s.Require().Equal(common.Hash{}, root, "Roots do not match")
 	s.Require().Equal(uint32(0), validUntil, "ValidUntil does not match")

@@ -17,10 +17,10 @@ var ZERO_HASH = common.Hash{}
 type TimelockProposal struct {
 	BaseProposal
 
-	Action            types.TimelockAction           `json:"action" validate:"required,oneof=schedule cancel bypass"`
-	Delay             types.Duration                 `json:"delay" validate:"required_if=Action schedule"`
-	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
-	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1,dive"`
+	Action      types.TimelockAction                     `json:"action" validate:"required,oneof=schedule cancel bypass"`
+	Delay       types.Duration                           `json:"delay" validate:"required_if=Action schedule"`
+	TimelockIDs map[types.ChainSelector]types.ContractID `json:"timelockIDs" validate:"required,min=1"`
+	Operations  []types.BatchOperation                   `json:"operations" validate:"required,min=1,dive"`
 }
 
 // NewTimelockProposal unmarshal data from the reader to JSON and returns a new TimelockProposal.
@@ -46,7 +46,7 @@ func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
 
 func (m *TimelockProposal) Validate() error {
 	// Run tag-based validation
-	var validate = validator.New()
+	validate := validator.New()
 	if err := validate.Struct(m); err != nil {
 		return err
 	}
@@ -101,11 +101,11 @@ func (m *TimelockProposal) Convert() (Proposal, error) {
 		BaseProposal: baseProposal,
 	}
 	for _, bop := range m.Operations {
-		timelockAddress := m.TimelockAddresses[bop.ChainSelector]
+		timelockID := m.TimelockIDs[bop.ChainSelector]
 		predecessor := predecessorMap[bop.ChainSelector]
 
 		sop, operationId, err := BatchToChainOperation(
-			bop, timelockAddress, m.Delay, m.Action, predecessor,
+			bop, timelockID, m.Delay, m.Action, predecessor,
 		)
 		if err != nil {
 			return Proposal{}, err

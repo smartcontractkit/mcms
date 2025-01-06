@@ -53,7 +53,10 @@ func Test_NewProposal(t *testing.T) {
 				"kind": "Proposal",
 				"validUntil": 2004259681,
 				"chainMetadata": {
-					"3379446385462418246": {}
+					"3379446385462418246": {
+						"contractId": { "address": "0xmcmAddress" },
+						"startingOpCount": 123
+					}
 				},
 				"operations": [
 					{
@@ -72,7 +75,10 @@ func Test_NewProposal(t *testing.T) {
 					Kind:       types.KindProposal,
 					ValidUntil: 2004259681,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-						chaintest.Chain1Selector: {},
+						chaintest.Chain1Selector: {
+							StartingOpCount: 123,
+							ContractID:      &evm.EVMContractID{Address: "0xmcmAddress"},
+						},
 					},
 				},
 				Operations: []types.Operation{

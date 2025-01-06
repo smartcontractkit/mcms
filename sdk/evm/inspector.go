@@ -27,8 +27,13 @@ func NewInspector(client ContractDeployBackend) *Inspector {
 	}
 }
 
-func (e *Inspector) GetConfig(_ context.Context, addr sdk.AddrMetadata) (*types.Config, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(addr.MCMAddress), e.client)
+func (e *Inspector) GetConfig(_ context.Context, mcmID types.ContractID) (*types.Config, error) {
+	mcmAddress, err := AddressFromContractID(mcmID)
+	if err != nil {
+		return nil, err
+	}
+
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return nil, err
 	}
@@ -41,8 +46,13 @@ func (e *Inspector) GetConfig(_ context.Context, addr sdk.AddrMetadata) (*types.
 	return e.ToConfig(onchainConfig)
 }
 
-func (e *Inspector) GetOpCount(_ context.Context, addr sdk.AddrMetadata) (uint64, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(addr.MCMAddress), e.client)
+func (e *Inspector) GetOpCount(_ context.Context, mcmID types.ContractID) (uint64, error) {
+	mcmAddress, err := AddressFromContractID(mcmID)
+	if err != nil {
+		return 0, err
+	}
+
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return 0, err
 	}
@@ -55,8 +65,13 @@ func (e *Inspector) GetOpCount(_ context.Context, addr sdk.AddrMetadata) (uint64
 	return opCount.Uint64(), nil
 }
 
-func (e *Inspector) GetRoot(_ context.Context, addr sdk.AddrMetadata) (common.Hash, uint32, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(addr.MCMAddress), e.client)
+func (e *Inspector) GetRoot(_ context.Context, mcmID types.ContractID) (common.Hash, uint32, error) {
+	mcmAddress, err := AddressFromContractID(mcmID)
+	if err != nil {
+		return common.Hash{}, 0, err
+	}
+
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return common.Hash{}, 0, err
 	}
@@ -69,8 +84,13 @@ func (e *Inspector) GetRoot(_ context.Context, addr sdk.AddrMetadata) (common.Ha
 	return root.Root, root.ValidUntil, nil
 }
 
-func (e *Inspector) GetRootMetadata(_ context.Context, addr sdk.AddrMetadata) (types.ChainMetadata, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(addr.MCMAddress), e.client)
+func (e *Inspector) GetRootMetadata(_ context.Context, mcmID types.ContractID) (types.ChainMetadata, error) {
+	mcmAddress, err := AddressFromContractID(mcmID)
+	if err != nil {
+		return types.ChainMetadata{}, err
+	}
+
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}
@@ -82,6 +102,6 @@ func (e *Inspector) GetRootMetadata(_ context.Context, addr sdk.AddrMetadata) (t
 
 	return types.ChainMetadata{
 		StartingOpCount: metadata.PreOpCount.Uint64(),
-		MCMAddress:      addr.MCMAddress,
+		MCMAddress:      mcmAddress,
 	}, nil
 }
