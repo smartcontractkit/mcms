@@ -57,7 +57,7 @@ func main() {
 	selector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 	backend := backends.SimulatedBackend{}
 	inspectorsMap := make(map[types.ChainSelector]sdk.Inspector)
-	inspectorsMap[types.ChainSelector(selector)] = evm.NewEVMInspector(backend)
+	inspectorsMap[types.ChainSelector(selector)] = evm.NewInspector(backend)
 	signable, err := mcms.NewSignable(&mcmsProposal, inspectorsMap)
 	if err != nil {
 		log.Fatalf("failed to open file: %v", err)
