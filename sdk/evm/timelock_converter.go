@@ -26,6 +26,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperation(
 	delay types.Duration,
 	action types.TimelockAction,
 	predecessor common.Hash,
+	salt common.Hash,
 ) (types.Operation, common.Hash, error) {
 	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
 	calls := make([]bindings.RBACTimelockCall, 0)
@@ -44,8 +45,6 @@ func (t *TimelockConverter) ConvertBatchToChainOperation(
 		})
 		tags = append(tags, tx.Tags...)
 	}
-
-	salt := ZERO_HASH
 
 	abi, errAbi := bindings.RBACTimelockMetaData.GetAbi()
 	if errAbi != nil {
