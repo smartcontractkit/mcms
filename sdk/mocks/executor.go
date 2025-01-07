@@ -3,7 +3,10 @@
 package mocks
 
 import (
+	context "context"
+
 	common "github.com/ethereum/go-ethereum/common"
+
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/smartcontractkit/mcms/types"
@@ -22,9 +25,9 @@ func (_m *Executor) EXPECT() *Executor_Expecter {
 	return &Executor_Expecter{mock: &_m.Mock}
 }
 
-// ExecuteOperation provides a mock function with given fields: metadata, nonce, proof, op
-func (_m *Executor) ExecuteOperation(metadata types.ChainMetadata, nonce uint32, proof []common.Hash, op types.Operation) (string, error) {
-	ret := _m.Called(metadata, nonce, proof, op)
+// ExecuteOperation provides a mock function with given fields: ctx, metadata, nonce, proof, op
+func (_m *Executor) ExecuteOperation(ctx context.Context, metadata types.ChainMetadata, nonce uint32, proof []common.Hash, op types.Operation) (string, error) {
+	ret := _m.Called(ctx, metadata, nonce, proof, op)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ExecuteOperation")
@@ -32,17 +35,17 @@ func (_m *Executor) ExecuteOperation(metadata types.ChainMetadata, nonce uint32,
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(types.ChainMetadata, uint32, []common.Hash, types.Operation) (string, error)); ok {
-		return rf(metadata, nonce, proof, op)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) (string, error)); ok {
+		return rf(ctx, metadata, nonce, proof, op)
 	}
-	if rf, ok := ret.Get(0).(func(types.ChainMetadata, uint32, []common.Hash, types.Operation) string); ok {
-		r0 = rf(metadata, nonce, proof, op)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) string); ok {
+		r0 = rf(ctx, metadata, nonce, proof, op)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(types.ChainMetadata, uint32, []common.Hash, types.Operation) error); ok {
-		r1 = rf(metadata, nonce, proof, op)
+	if rf, ok := ret.Get(1).(func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) error); ok {
+		r1 = rf(ctx, metadata, nonce, proof, op)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,17 +59,18 @@ type Executor_ExecuteOperation_Call struct {
 }
 
 // ExecuteOperation is a helper method to define mock.On call
+//   - ctx context.Context
 //   - metadata types.ChainMetadata
 //   - nonce uint32
 //   - proof []common.Hash
 //   - op types.Operation
-func (_e *Executor_Expecter) ExecuteOperation(metadata interface{}, nonce interface{}, proof interface{}, op interface{}) *Executor_ExecuteOperation_Call {
-	return &Executor_ExecuteOperation_Call{Call: _e.mock.On("ExecuteOperation", metadata, nonce, proof, op)}
+func (_e *Executor_Expecter) ExecuteOperation(ctx interface{}, metadata interface{}, nonce interface{}, proof interface{}, op interface{}) *Executor_ExecuteOperation_Call {
+	return &Executor_ExecuteOperation_Call{Call: _e.mock.On("ExecuteOperation", ctx, metadata, nonce, proof, op)}
 }
 
-func (_c *Executor_ExecuteOperation_Call) Run(run func(metadata types.ChainMetadata, nonce uint32, proof []common.Hash, op types.Operation)) *Executor_ExecuteOperation_Call {
+func (_c *Executor_ExecuteOperation_Call) Run(run func(ctx context.Context, metadata types.ChainMetadata, nonce uint32, proof []common.Hash, op types.Operation)) *Executor_ExecuteOperation_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(types.ChainMetadata), args[1].(uint32), args[2].([]common.Hash), args[3].(types.Operation))
+		run(args[0].(context.Context), args[1].(types.ChainMetadata), args[2].(uint32), args[3].([]common.Hash), args[4].(types.Operation))
 	})
 	return _c
 }
@@ -76,14 +80,14 @@ func (_c *Executor_ExecuteOperation_Call) Return(_a0 string, _a1 error) *Executo
 	return _c
 }
 
-func (_c *Executor_ExecuteOperation_Call) RunAndReturn(run func(types.ChainMetadata, uint32, []common.Hash, types.Operation) (string, error)) *Executor_ExecuteOperation_Call {
+func (_c *Executor_ExecuteOperation_Call) RunAndReturn(run func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) (string, error)) *Executor_ExecuteOperation_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetConfig provides a mock function with given fields: mcmAddress
-func (_m *Executor) GetConfig(mcmAddress string) (*types.Config, error) {
-	ret := _m.Called(mcmAddress)
+// GetConfig provides a mock function with given fields: ctx, mcmAddr
+func (_m *Executor) GetConfig(ctx context.Context, mcmAddr string) (*types.Config, error) {
+	ret := _m.Called(ctx, mcmAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetConfig")
@@ -91,19 +95,19 @@ func (_m *Executor) GetConfig(mcmAddress string) (*types.Config, error) {
 
 	var r0 *types.Config
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*types.Config, error)); ok {
-		return rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*types.Config, error)); ok {
+		return rf(ctx, mcmAddr)
 	}
-	if rf, ok := ret.Get(0).(func(string) *types.Config); ok {
-		r0 = rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *types.Config); ok {
+		r0 = rf(ctx, mcmAddr)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.Config)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(mcmAddress)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, mcmAddr)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -117,14 +121,15 @@ type Executor_GetConfig_Call struct {
 }
 
 // GetConfig is a helper method to define mock.On call
-//   - mcmAddress string
-func (_e *Executor_Expecter) GetConfig(mcmAddress interface{}) *Executor_GetConfig_Call {
-	return &Executor_GetConfig_Call{Call: _e.mock.On("GetConfig", mcmAddress)}
+//   - ctx context.Context
+//   - mcmAddr string
+func (_e *Executor_Expecter) GetConfig(ctx interface{}, mcmAddr interface{}) *Executor_GetConfig_Call {
+	return &Executor_GetConfig_Call{Call: _e.mock.On("GetConfig", ctx, mcmAddr)}
 }
 
-func (_c *Executor_GetConfig_Call) Run(run func(mcmAddress string)) *Executor_GetConfig_Call {
+func (_c *Executor_GetConfig_Call) Run(run func(ctx context.Context, mcmAddr string)) *Executor_GetConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -134,14 +139,14 @@ func (_c *Executor_GetConfig_Call) Return(_a0 *types.Config, _a1 error) *Executo
 	return _c
 }
 
-func (_c *Executor_GetConfig_Call) RunAndReturn(run func(string) (*types.Config, error)) *Executor_GetConfig_Call {
+func (_c *Executor_GetConfig_Call) RunAndReturn(run func(context.Context, string) (*types.Config, error)) *Executor_GetConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetOpCount provides a mock function with given fields: mcmAddress
-func (_m *Executor) GetOpCount(mcmAddress string) (uint64, error) {
-	ret := _m.Called(mcmAddress)
+// GetOpCount provides a mock function with given fields: ctx, mcmAddr
+func (_m *Executor) GetOpCount(ctx context.Context, mcmAddr string) (uint64, error) {
+	ret := _m.Called(ctx, mcmAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOpCount")
@@ -149,17 +154,17 @@ func (_m *Executor) GetOpCount(mcmAddress string) (uint64, error) {
 
 	var r0 uint64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (uint64, error)); ok {
-		return rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (uint64, error)); ok {
+		return rf(ctx, mcmAddr)
 	}
-	if rf, ok := ret.Get(0).(func(string) uint64); ok {
-		r0 = rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) uint64); ok {
+		r0 = rf(ctx, mcmAddr)
 	} else {
 		r0 = ret.Get(0).(uint64)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(mcmAddress)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, mcmAddr)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -173,14 +178,15 @@ type Executor_GetOpCount_Call struct {
 }
 
 // GetOpCount is a helper method to define mock.On call
-//   - mcmAddress string
-func (_e *Executor_Expecter) GetOpCount(mcmAddress interface{}) *Executor_GetOpCount_Call {
-	return &Executor_GetOpCount_Call{Call: _e.mock.On("GetOpCount", mcmAddress)}
+//   - ctx context.Context
+//   - mcmAddr string
+func (_e *Executor_Expecter) GetOpCount(ctx interface{}, mcmAddr interface{}) *Executor_GetOpCount_Call {
+	return &Executor_GetOpCount_Call{Call: _e.mock.On("GetOpCount", ctx, mcmAddr)}
 }
 
-func (_c *Executor_GetOpCount_Call) Run(run func(mcmAddress string)) *Executor_GetOpCount_Call {
+func (_c *Executor_GetOpCount_Call) Run(run func(ctx context.Context, mcmAddr string)) *Executor_GetOpCount_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -190,14 +196,14 @@ func (_c *Executor_GetOpCount_Call) Return(_a0 uint64, _a1 error) *Executor_GetO
 	return _c
 }
 
-func (_c *Executor_GetOpCount_Call) RunAndReturn(run func(string) (uint64, error)) *Executor_GetOpCount_Call {
+func (_c *Executor_GetOpCount_Call) RunAndReturn(run func(context.Context, string) (uint64, error)) *Executor_GetOpCount_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRoot provides a mock function with given fields: mcmAddress
-func (_m *Executor) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
-	ret := _m.Called(mcmAddress)
+// GetRoot provides a mock function with given fields: ctx, mcmAddr
+func (_m *Executor) GetRoot(ctx context.Context, mcmAddr string) (common.Hash, uint32, error) {
+	ret := _m.Called(ctx, mcmAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRoot")
@@ -206,25 +212,25 @@ func (_m *Executor) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
 	var r0 common.Hash
 	var r1 uint32
 	var r2 error
-	if rf, ok := ret.Get(0).(func(string) (common.Hash, uint32, error)); ok {
-		return rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (common.Hash, uint32, error)); ok {
+		return rf(ctx, mcmAddr)
 	}
-	if rf, ok := ret.Get(0).(func(string) common.Hash); ok {
-		r0 = rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) common.Hash); ok {
+		r0 = rf(ctx, mcmAddr)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(common.Hash)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) uint32); ok {
-		r1 = rf(mcmAddress)
+	if rf, ok := ret.Get(1).(func(context.Context, string) uint32); ok {
+		r1 = rf(ctx, mcmAddr)
 	} else {
 		r1 = ret.Get(1).(uint32)
 	}
 
-	if rf, ok := ret.Get(2).(func(string) error); ok {
-		r2 = rf(mcmAddress)
+	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = rf(ctx, mcmAddr)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -238,14 +244,15 @@ type Executor_GetRoot_Call struct {
 }
 
 // GetRoot is a helper method to define mock.On call
-//   - mcmAddress string
-func (_e *Executor_Expecter) GetRoot(mcmAddress interface{}) *Executor_GetRoot_Call {
-	return &Executor_GetRoot_Call{Call: _e.mock.On("GetRoot", mcmAddress)}
+//   - ctx context.Context
+//   - mcmAddr string
+func (_e *Executor_Expecter) GetRoot(ctx interface{}, mcmAddr interface{}) *Executor_GetRoot_Call {
+	return &Executor_GetRoot_Call{Call: _e.mock.On("GetRoot", ctx, mcmAddr)}
 }
 
-func (_c *Executor_GetRoot_Call) Run(run func(mcmAddress string)) *Executor_GetRoot_Call {
+func (_c *Executor_GetRoot_Call) Run(run func(ctx context.Context, mcmAddr string)) *Executor_GetRoot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -255,14 +262,14 @@ func (_c *Executor_GetRoot_Call) Return(_a0 common.Hash, _a1 uint32, _a2 error) 
 	return _c
 }
 
-func (_c *Executor_GetRoot_Call) RunAndReturn(run func(string) (common.Hash, uint32, error)) *Executor_GetRoot_Call {
+func (_c *Executor_GetRoot_Call) RunAndReturn(run func(context.Context, string) (common.Hash, uint32, error)) *Executor_GetRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRootMetadata provides a mock function with given fields: mcmAddress
-func (_m *Executor) GetRootMetadata(mcmAddress string) (types.ChainMetadata, error) {
-	ret := _m.Called(mcmAddress)
+// GetRootMetadata provides a mock function with given fields: ctx, mcmAddr
+func (_m *Executor) GetRootMetadata(ctx context.Context, mcmAddr string) (types.ChainMetadata, error) {
+	ret := _m.Called(ctx, mcmAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRootMetadata")
@@ -270,17 +277,17 @@ func (_m *Executor) GetRootMetadata(mcmAddress string) (types.ChainMetadata, err
 
 	var r0 types.ChainMetadata
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (types.ChainMetadata, error)); ok {
-		return rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (types.ChainMetadata, error)); ok {
+		return rf(ctx, mcmAddr)
 	}
-	if rf, ok := ret.Get(0).(func(string) types.ChainMetadata); ok {
-		r0 = rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) types.ChainMetadata); ok {
+		r0 = rf(ctx, mcmAddr)
 	} else {
 		r0 = ret.Get(0).(types.ChainMetadata)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(mcmAddress)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, mcmAddr)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -294,14 +301,15 @@ type Executor_GetRootMetadata_Call struct {
 }
 
 // GetRootMetadata is a helper method to define mock.On call
-//   - mcmAddress string
-func (_e *Executor_Expecter) GetRootMetadata(mcmAddress interface{}) *Executor_GetRootMetadata_Call {
-	return &Executor_GetRootMetadata_Call{Call: _e.mock.On("GetRootMetadata", mcmAddress)}
+//   - ctx context.Context
+//   - mcmAddr string
+func (_e *Executor_Expecter) GetRootMetadata(ctx interface{}, mcmAddr interface{}) *Executor_GetRootMetadata_Call {
+	return &Executor_GetRootMetadata_Call{Call: _e.mock.On("GetRootMetadata", ctx, mcmAddr)}
 }
 
-func (_c *Executor_GetRootMetadata_Call) Run(run func(mcmAddress string)) *Executor_GetRootMetadata_Call {
+func (_c *Executor_GetRootMetadata_Call) Run(run func(ctx context.Context, mcmAddr string)) *Executor_GetRootMetadata_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -311,7 +319,7 @@ func (_c *Executor_GetRootMetadata_Call) Return(_a0 types.ChainMetadata, _a1 err
 	return _c
 }
 
-func (_c *Executor_GetRootMetadata_Call) RunAndReturn(run func(string) (types.ChainMetadata, error)) *Executor_GetRootMetadata_Call {
+func (_c *Executor_GetRootMetadata_Call) RunAndReturn(run func(context.Context, string) (types.ChainMetadata, error)) *Executor_GetRootMetadata_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -434,9 +442,9 @@ func (_c *Executor_HashOperation_Call) RunAndReturn(run func(uint32, types.Chain
 	return _c
 }
 
-// SetRoot provides a mock function with given fields: metadata, proof, root, validUntil, sortedSignatures
-func (_m *Executor) SetRoot(metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature) (string, error) {
-	ret := _m.Called(metadata, proof, root, validUntil, sortedSignatures)
+// SetRoot provides a mock function with given fields: ctx, metadata, proof, root, validUntil, sortedSignatures
+func (_m *Executor) SetRoot(ctx context.Context, metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature) (string, error) {
+	ret := _m.Called(ctx, metadata, proof, root, validUntil, sortedSignatures)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetRoot")
@@ -444,17 +452,17 @@ func (_m *Executor) SetRoot(metadata types.ChainMetadata, proof []common.Hash, r
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) (string, error)); ok {
-		return rf(metadata, proof, root, validUntil, sortedSignatures)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) (string, error)); ok {
+		return rf(ctx, metadata, proof, root, validUntil, sortedSignatures)
 	}
-	if rf, ok := ret.Get(0).(func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) string); ok {
-		r0 = rf(metadata, proof, root, validUntil, sortedSignatures)
+	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) string); ok {
+		r0 = rf(ctx, metadata, proof, root, validUntil, sortedSignatures)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) error); ok {
-		r1 = rf(metadata, proof, root, validUntil, sortedSignatures)
+	if rf, ok := ret.Get(1).(func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) error); ok {
+		r1 = rf(ctx, metadata, proof, root, validUntil, sortedSignatures)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -468,18 +476,19 @@ type Executor_SetRoot_Call struct {
 }
 
 // SetRoot is a helper method to define mock.On call
+//   - ctx context.Context
 //   - metadata types.ChainMetadata
 //   - proof []common.Hash
 //   - root [32]byte
 //   - validUntil uint32
 //   - sortedSignatures []types.Signature
-func (_e *Executor_Expecter) SetRoot(metadata interface{}, proof interface{}, root interface{}, validUntil interface{}, sortedSignatures interface{}) *Executor_SetRoot_Call {
-	return &Executor_SetRoot_Call{Call: _e.mock.On("SetRoot", metadata, proof, root, validUntil, sortedSignatures)}
+func (_e *Executor_Expecter) SetRoot(ctx interface{}, metadata interface{}, proof interface{}, root interface{}, validUntil interface{}, sortedSignatures interface{}) *Executor_SetRoot_Call {
+	return &Executor_SetRoot_Call{Call: _e.mock.On("SetRoot", ctx, metadata, proof, root, validUntil, sortedSignatures)}
 }
 
-func (_c *Executor_SetRoot_Call) Run(run func(metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature)) *Executor_SetRoot_Call {
+func (_c *Executor_SetRoot_Call) Run(run func(ctx context.Context, metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature)) *Executor_SetRoot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(types.ChainMetadata), args[1].([]common.Hash), args[2].([32]byte), args[3].(uint32), args[4].([]types.Signature))
+		run(args[0].(context.Context), args[1].(types.ChainMetadata), args[2].([]common.Hash), args[3].([32]byte), args[4].(uint32), args[5].([]types.Signature))
 	})
 	return _c
 }
@@ -489,7 +498,7 @@ func (_c *Executor_SetRoot_Call) Return(_a0 string, _a1 error) *Executor_SetRoot
 	return _c
 }
 
-func (_c *Executor_SetRoot_Call) RunAndReturn(run func(types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) (string, error)) *Executor_SetRoot_Call {
+func (_c *Executor_SetRoot_Call) RunAndReturn(run func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) (string, error)) *Executor_SetRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }

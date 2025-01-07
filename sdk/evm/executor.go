@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"context"
 	"errors"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -27,6 +28,7 @@ func NewExecutor(encoder *Encoder, client ContractDeployBackend, auth *bind.Tran
 }
 
 func (e *Executor) ExecuteOperation(
+	ctx context.Context,
 	metadata types.ChainMetadata,
 	nonce uint32,
 	proof []common.Hash,
@@ -46,11 +48,10 @@ func (e *Executor) ExecuteOperation(
 		return "", err
 	}
 
-	tx, err := mcmsC.Execute(
-		e.auth,
-		bindOp,
-		transformHashes(proof),
-	)
+	opts := *e.auth
+	opts.Context = ctx
+
+	tx, err := mcmsC.Execute(&opts, bindOp, transformHashes(proof))
 	if err != nil {
 		return "", err
 	}
@@ -59,6 +60,7 @@ func (e *Executor) ExecuteOperation(
 }
 
 func (e *Executor) SetRoot(
+	ctx context.Context,
 	metadata types.ChainMetadata,
 	proof []common.Hash,
 	root [32]byte,
@@ -79,8 +81,11 @@ func (e *Executor) SetRoot(
 		return "", err
 	}
 
+	opts := *e.auth
+	opts.Context = ctx
+
 	tx, err := mcmsC.SetRoot(
-		e.auth,
+		&opts,
 		root,
 		validUntil,
 		bindMeta,

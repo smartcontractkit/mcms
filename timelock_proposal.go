@@ -46,7 +46,7 @@ func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
 
 func (m *TimelockProposal) Validate() error {
 	// Run tag-based validation
-	var validate = validator.New()
+	validate := validator.New()
 	if err := validate.Struct(m); err != nil {
 		return err
 	}
