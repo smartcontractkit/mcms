@@ -118,6 +118,8 @@ func Test_NewTimelockExecutable(t *testing.T) {
 func Test_ScheduleAndExecuteProposal(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
+
 	tests := []struct {
 		name        string
 		targetRoles []common.Hash
@@ -142,12 +144,12 @@ func Test_ScheduleAndExecuteProposal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			scheduleAndExecuteGrantRolesProposal(t, tt.targetRoles)
+			scheduleAndExecuteGrantRolesProposal(t, ctx, tt.targetRoles)
 		})
 	}
 }
 
-func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Hash) {
+func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
 	t.Helper()
 
 	sim := evmsim.NewSimulatedChain(t, 1)
@@ -253,7 +255,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	require.NoError(t, err)
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.NoError(t, err)
 	require.True(t, quorumMet)
 
@@ -275,7 +277,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(chaintest.Chain1Selector)
+	txHash, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
@@ -289,13 +291,13 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	// Execute the proposal
 	var receipt *geth_types.Receipt
 	for i := range proposal.Operations {
-		txHash, err = executable.Execute(i)
+		txHash, err = executable.Execute(ctx, i)
 		require.NoError(t, err)
 		require.NotEmpty(t, txHash)
 		sim.Backend.Commit()
 
 		// Wait for the transaction to be mined
-		receipt, err = testutils.WaitMinedWithTxHash(context.TODO(), sim.Backend.Client(), common.HexToHash(txHash))
+		receipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 		require.Equal(t, geth_types.ReceiptStatusSuccessful, receipt.Status)
@@ -337,7 +339,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	}
 
 	// Check IsReady function fails
-	err = tExecutable.IsReady()
+	err = tExecutable.IsReady(ctx)
 	require.Error(t, err)
 
 	// sleep for 5 seconds and then mine a block
@@ -345,11 +347,11 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	sim.Backend.Commit() // Note < 1.14 geth needs a commit after adjusting time.
 
 	// Check that the operation is now ready
-	err = tExecutable.IsReady()
+	err = tExecutable.IsReady(ctx)
 	require.NoError(t, err)
 
 	// Execute the proposal
-	_, err = tExecutable.Execute(0)
+	_, err = tExecutable.Execute(ctx, 0)
 	require.NoError(t, err)
 	sim.Backend.Commit()
 

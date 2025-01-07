@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"context"
 	"encoding/json"
 	"math/big"
 	"testing"
@@ -103,6 +104,7 @@ func Test_NewExecutable(t *testing.T) {
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	sim := evmsim.NewSimulatedChain(t, 1)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -166,7 +168,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.NoError(t, err)
 	require.True(t, quorumMet)
 
@@ -188,7 +190,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(chaintest.Chain1Selector)
+	txHash, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
@@ -200,7 +202,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	txHash, err = executable.Execute(0)
+	txHash, err = executable.Execute(ctx, 0)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
@@ -223,6 +225,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	sim := evmsim.NewSimulatedChain(t, 3)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -289,7 +292,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	}
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.NoError(t, err)
 	require.True(t, quorumMet)
 
@@ -311,7 +314,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(chaintest.Chain1Selector)
+	txHash, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
@@ -323,7 +326,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.Equal(t, root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	txHash, err = executable.Execute(0)
+	txHash, err = executable.Execute(ctx, 0)
 	require.NoError(t, err)
 	require.NotEqual(t, "", txHash)
 	sim.Backend.Commit()
@@ -346,6 +349,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	sim := evmsim.NewSimulatedChain(t, 1)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -419,7 +423,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.NoError(t, err)
 	require.True(t, quorumMet)
 
@@ -441,7 +445,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(chaintest.Chain1Selector)
+	txHash, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
@@ -455,7 +459,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	// Execute the proposal
 	for i := range 4 {
 		// Execute the proposal
-		txHash, err = executable.Execute(i)
+		txHash, err = executable.Execute(ctx, i)
 		require.NoError(t, err)
 		require.NotEqual(t, "", txHash)
 
@@ -483,6 +487,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	sim := evmsim.NewSimulatedChain(t, 3)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -558,7 +563,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	}
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.NoError(t, err)
 	require.True(t, quorumMet)
 
@@ -580,7 +585,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(chaintest.Chain1Selector)
+	txHash, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 
@@ -595,7 +600,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	// Execute the proposal
 	for i := range 4 {
 		// Execute the proposal
-		txHash, err = executable.Execute(i)
+		txHash, err = executable.Execute(ctx, i)
 		require.NoError(t, err)
 		require.NotEqual(t, "", txHash)
 

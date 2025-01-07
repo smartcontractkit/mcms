@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -29,7 +30,9 @@ func NewTimelockExecutor(client ContractDeployBackend, auth *bind.TransactOpts) 
 	}
 }
 
-func (t *TimelockExecutor) Execute(bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash) (string, error) {
+func (t *TimelockExecutor) Execute(
+	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
+) (string, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(timelockAddress), t.client)
 	if err != nil {
 		return "", err
@@ -50,7 +53,10 @@ func (t *TimelockExecutor) Execute(bop types.BatchOperation, timelockAddress str
 		}
 	}
 
-	tx, err := timelock.ExecuteBatch(t.auth, calls, predecessor, salt)
+	opts := *t.auth
+	opts.Context = ctx
+
+	tx, err := timelock.ExecuteBatch(&opts, calls, predecessor, salt)
 	if err != nil {
 		return "", err
 	}

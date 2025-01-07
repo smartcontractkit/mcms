@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"context"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -26,8 +27,10 @@ func NewTimelockInspector(client ContractDeployBackend) *TimelockInspector {
 }
 
 // getAddressesWithRole returns the list of addresses with the given role
-func (tm TimelockInspector) getAddressesWithRole(timelock *bindings.RBACTimelock, role [32]byte) ([]common.Address, error) {
-	numAddresses, err := timelock.GetRoleMemberCount(&bind.CallOpts{}, role)
+func (tm TimelockInspector) getAddressesWithRole(
+	ctx context.Context, timelock *bindings.RBACTimelock, role [32]byte,
+) ([]common.Address, error) {
+	numAddresses, err := timelock.GetRoleMemberCount(&bind.CallOpts{Context: ctx}, role)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +41,7 @@ func (tm TimelockInspector) getAddressesWithRole(timelock *bindings.RBACTimelock
 		if err != nil {
 			return nil, err
 		}
-		address, err := timelock.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(idx))
+		address, err := timelock.GetRoleMember(&bind.CallOpts{Context: ctx}, role, big.NewInt(idx))
 		if err != nil {
 			return nil, err
 		}
@@ -49,7 +52,7 @@ func (tm TimelockInspector) getAddressesWithRole(timelock *bindings.RBACTimelock
 }
 
 // GetProposers returns the list of addresses with the proposer role
-func (tm TimelockInspector) GetProposers(address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetProposers(ctx context.Context, address string) ([]common.Address, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
@@ -59,83 +62,83 @@ func (tm TimelockInspector) GetProposers(address string) ([]common.Address, erro
 		return nil, err
 	}
 
-	return tm.getAddressesWithRole(timelock, proposerRole)
+	return tm.getAddressesWithRole(ctx, timelock, proposerRole)
 }
 
 // GetExecutors returns the list of addresses with the executor role
-func (tm TimelockInspector) GetExecutors(address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetExecutors(ctx context.Context, address string) ([]common.Address, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
 	}
-	proposerRole, err := timelock.EXECUTORROLE(nil)
+	executorRole, err := timelock.EXECUTORROLE(nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return tm.getAddressesWithRole(timelock, proposerRole)
+	return tm.getAddressesWithRole(ctx, timelock, executorRole)
 }
 
 // GetBypassers returns the list of addresses with the bypasser role
-func (tm TimelockInspector) GetBypassers(address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetBypassers(ctx context.Context, address string) ([]common.Address, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
 	}
-	proposerRole, err := timelock.BYPASSERROLE(nil)
+	bypasserRole, err := timelock.BYPASSERROLE(nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return tm.getAddressesWithRole(timelock, proposerRole)
+	return tm.getAddressesWithRole(ctx, timelock, bypasserRole)
 }
 
 // GetCancellers returns the list of addresses with the canceller role
-func (tm TimelockInspector) GetCancellers(address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetCancellers(ctx context.Context, address string) ([]common.Address, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
 	}
-	proposerRole, err := timelock.CANCELLERROLE(nil)
+	cancellerRole, err := timelock.CANCELLERROLE(nil)
 	if err != nil {
 		return nil, err
 	}
 
-	return tm.getAddressesWithRole(timelock, proposerRole)
+	return tm.getAddressesWithRole(ctx, timelock, cancellerRole)
 }
 
-func (tm TimelockInspector) IsOperation(address string, opID [32]byte) (bool, error) {
+func (tm TimelockInspector) IsOperation(ctx context.Context, address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
 	}
 
-	return timelock.IsOperation(&bind.CallOpts{}, opID)
+	return timelock.IsOperation(&bind.CallOpts{Context: ctx}, opID)
 }
 
-func (tm TimelockInspector) IsOperationPending(address string, opID [32]byte) (bool, error) {
+func (tm TimelockInspector) IsOperationPending(ctx context.Context, address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
 	}
 
-	return timelock.IsOperationPending(&bind.CallOpts{}, opID)
+	return timelock.IsOperationPending(&bind.CallOpts{Context: ctx}, opID)
 }
 
-func (tm TimelockInspector) IsOperationReady(address string, opID [32]byte) (bool, error) {
+func (tm TimelockInspector) IsOperationReady(ctx context.Context, address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
 	}
 
-	return timelock.IsOperationReady(&bind.CallOpts{}, opID)
+	return timelock.IsOperationReady(&bind.CallOpts{Context: ctx}, opID)
 }
 
-func (tm TimelockInspector) IsOperationDone(address string, opID [32]byte) (bool, error) {
+func (tm TimelockInspector) IsOperationDone(ctx context.Context, address string, opID [32]byte) (bool, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return false, err
 	}
 
-	return timelock.IsOperationDone(&bind.CallOpts{}, opID)
+	return timelock.IsOperationDone(&bind.CallOpts{Context: ctx}, opID)
 }

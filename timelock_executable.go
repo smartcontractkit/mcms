@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -44,11 +45,11 @@ func NewTimelockExecutable(
 // Note: there is some edge cases here where some operations are ready
 // but others are not. This is not handled here. Regardless, execution
 // should not begin until all operations are ready.
-func (t *TimelockExecutable) IsReady() error {
+func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 	for i, op := range t.proposal.Operations {
 		cs := op.ChainSelector
 		timelock := t.proposal.TimelockAddresses[cs]
-		isOpReady, err := t.executors[cs].IsOperationReady(timelock, t.predecessors[i+1])
+		isOpReady, err := t.executors[cs].IsOperationReady(ctx, timelock, t.predecessors[i+1])
 		if err != nil {
 			return err
 		}
@@ -61,9 +62,10 @@ func (t *TimelockExecutable) IsReady() error {
 	return nil
 }
 
-func (t *TimelockExecutable) Execute(index int) (string, error) {
+func (t *TimelockExecutable) Execute(ctx context.Context, index int) (string, error) {
 	op := t.proposal.Operations[index]
 	return t.executors[op.ChainSelector].Execute(
+		ctx,
 		op,
 		t.proposal.TimelockAddresses[op.ChainSelector],
 		t.predecessors[index],

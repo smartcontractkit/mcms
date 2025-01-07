@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"context"
 	"encoding/json"
 	"math/big"
 	"testing"
@@ -17,7 +18,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	"github.com/smartcontractkit/mcms/sdk/mocks"
 	sdkmocks "github.com/smartcontractkit/mcms/sdk/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -35,9 +35,7 @@ type simulatorMocks struct {
 func Test_NewSignable(t *testing.T) {
 	t.Parallel()
 
-	var (
-		inspector = mocks.NewInspector(t) // We only need this to fulfill the interface argument requirements
-	)
+	inspector := sdkmocks.NewInspector(t) // We only need this to fulfill the interface argument requirements
 
 	tests := []struct {
 		name           string
@@ -98,6 +96,7 @@ func Test_NewSignable(t *testing.T) {
 func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	sim := evmsim.NewSimulatedChain(t, 1)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -155,7 +154,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.NoError(t, err)
 	require.True(t, quorumMet)
 }
@@ -163,6 +162,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	sim := evmsim.NewSimulatedChain(t, 3)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -224,7 +224,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 	}
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.NoError(t, err)
 	require.True(t, quorumMet)
 }
@@ -232,6 +232,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	sim := evmsim.NewSimulatedChain(t, 1)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -299,7 +300,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 	require.NoError(t, err)
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.NoError(t, err)
 	require.True(t, quorumMet)
 }
@@ -307,6 +308,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	sim := evmsim.NewSimulatedChain(t, 3)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -377,7 +379,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 	}
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.NoError(t, err)
 	require.True(t, quorumMet)
 }
@@ -385,6 +387,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	sim := evmsim.NewSimulatedChain(t, 3)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -455,7 +458,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	}
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.Error(t, err)
 	require.IsType(t, &QuorumNotReachedError{}, err)
 	require.False(t, quorumMet)
@@ -464,6 +467,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	sim := evmsim.NewSimulatedChain(t, 3)
 	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
 	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
@@ -543,7 +547,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	require.NoError(t, err)
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.Error(t, err)
 	// TODO: This should be an InvalidSignatureError, but right now the error is untyped. Depends on the import issue
 	// require.IsType(t, &InvalidSignatureError{}, err)
@@ -622,7 +626,7 @@ func Test_Signable_Sign(t *testing.T) {
 
 			// We need some inspectors to satisfy dependency validation, but this mock is unused.
 			inspectors := map[types.ChainSelector]sdk.Inspector{
-				chaintest.Chain1Selector: mocks.NewInspector(t),
+				chaintest.Chain1Selector: sdkmocks.NewInspector(t),
 			}
 
 			// Ensure that there are no signatures to being with
@@ -707,7 +711,7 @@ func Test_SignAndAppend(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			inspector := mocks.NewInspector(t)
+			inspector := sdkmocks.NewInspector(t)
 			inspectors := map[types.ChainSelector]sdk.Inspector{
 				chaintest.Chain1Selector: inspector,
 			}
@@ -738,6 +742,7 @@ func Test_SignAndAppend(t *testing.T) {
 func Test_Signable_GetConfigs(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	var (
 		config1 = &types.Config{}
 		config2 = &types.Config{}
@@ -761,8 +766,8 @@ func Test_Signable_GetConfigs(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetConfig("0x01").Return(config1, nil)
-				m.inspector2.EXPECT().GetConfig("0x02").Return(config2, nil)
+				m.inspector1.EXPECT().GetConfig(ctx, "0x01").Return(config1, nil)
+				m.inspector2.EXPECT().GetConfig(ctx, "0x02").Return(config2, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -806,7 +811,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetConfig("0x01").Return(nil, assert.AnError)
+				m.inspector1.EXPECT().GetConfig(ctx, "0x01").Return(nil, assert.AnError)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -833,7 +838,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 				inspectors: giveInspectors,
 			}
 
-			configs, err := signable.GetConfigs()
+			configs, err := signable.GetConfigs(ctx)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
@@ -848,6 +853,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 func Test_Signable_Simulate(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	operations := []types.Operation{
 		{
 			ChainSelector: chaintest.Chain1Selector,
@@ -959,7 +965,7 @@ func Test_Signable_Simulate(t *testing.T) {
 				simulators: giveSimulators,
 			}
 
-			err := signable.Simulate()
+			err := signable.Simulate(ctx)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
@@ -974,6 +980,7 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 	t.Parallel()
 
 	var (
+		ctx     = context.Background()
 		signer1 = common.HexToAddress("0x1")
 		signer2 = common.HexToAddress("0x2")
 
@@ -1008,8 +1015,8 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetConfig("0x01").Return(config1, nil)
-				m.inspector2.EXPECT().GetConfig("0x02").Return(config2, nil)
+				m.inspector1.EXPECT().GetConfig(ctx, "0x01").Return(config1, nil)
+				m.inspector2.EXPECT().GetConfig(ctx, "0x02").Return(config2, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -1036,8 +1043,8 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetConfig("0x01").Return(config1, nil)
-				m.inspector2.EXPECT().GetConfig("0x02").Return(config3, nil)
+				m.inspector1.EXPECT().GetConfig(ctx, "0x01").Return(config1, nil)
+				m.inspector2.EXPECT().GetConfig(ctx, "0x02").Return(config3, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -1065,7 +1072,7 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 				inspectors: giveInspectors,
 			}
 
-			err := signable.ValidateConfigs()
+			err := signable.ValidateConfigs(ctx)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
@@ -1079,6 +1086,7 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 func Test_Signable_getCurrentOpCounts(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	tests := []struct {
 		name           string
 		give           Proposal
@@ -1097,8 +1105,8 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetOpCount("0x01").Return(100, nil)
-				m.inspector2.EXPECT().GetOpCount("0x02").Return(200, nil)
+				m.inspector1.EXPECT().GetOpCount(ctx, "0x01").Return(100, nil)
+				m.inspector2.EXPECT().GetOpCount(ctx, "0x02").Return(200, nil)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -1142,7 +1150,7 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 				},
 			},
 			giveInspectors: func(m *inspectorMocks) map[types.ChainSelector]sdk.Inspector {
-				m.inspector1.EXPECT().GetOpCount("0x01").Return(0, assert.AnError)
+				m.inspector1.EXPECT().GetOpCount(ctx, "0x01").Return(0, assert.AnError)
 
 				return map[types.ChainSelector]sdk.Inspector{
 					chaintest.Chain1Selector: m.inspector1,
@@ -1169,7 +1177,7 @@ func Test_Signable_getCurrentOpCounts(t *testing.T) {
 				inspectors: giveInspectors,
 			}
 
-			got, err := signable.getCurrentOpCounts()
+			got, err := signable.getCurrentOpCounts(ctx)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

@@ -115,8 +115,9 @@ func (s *ExecutionTestSuite) deployTimelockContract(mcmsAddress string) *binding
 
 // TestExecuteProposal executes a proposal after setting the root
 func (s *ExecutionTestSuite) TestExecuteProposal() {
+	ctx := context.Background()
 	opts := &bind.CallOpts{
-		Context:     context.Background(), // Use a proper context
+		Context:     ctx,
 		From:        s.auth.From,          // Set the "from" address (optional)
 		BlockNumber: nil,                  // Use the latest block (nil by default)
 	}
@@ -171,14 +172,14 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NoError(err)
 	s.Require().NotNil(signable)
 
-	err = signable.ValidateConfigs()
+	err = signable.ValidateConfigs(ctx)
 	s.Require().NoError(err)
 
 	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])))
 	s.Require().NoError(err)
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	s.Require().NoError(err)
 	s.Require().True(quorumMet)
 
@@ -200,7 +201,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NoError(err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(s.chainSelector)
+	txHash, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 
@@ -214,7 +215,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().Equal(root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	txHash, err = executable.Execute(0)
+	txHash, err = executable.Execute(ctx, 0)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 
@@ -239,8 +240,9 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 
 // TestExecuteProposalMultiple executes 2 proposals to check nonce calculation mechanisms are working
 func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
+	ctx := context.Background()
 	opts := &bind.CallOpts{
-		Context:     context.Background(), // Use a proper context
+		Context:     ctx,
 		From:        s.auth.From,          // Set the "from" address (optional)
 		BlockNumber: nil,                  // Use the latest block (nil by default)
 	}
@@ -299,7 +301,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	s.Require().NoError(err)
 	s.Require().True(quorumMet)
 
@@ -321,7 +323,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(s.chainSelector)
+	txHash, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 
@@ -335,7 +337,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().Equal(root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	txHash, err = executable.Execute(0)
+	txHash, err = executable.Execute(ctx, 0)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 
@@ -401,7 +403,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 
 	// Validate the signatures
-	quorumMet, err = signable2.ValidateSignatures()
+	quorumMet, err = signable2.ValidateSignatures(ctx)
 	s.Require().NoError(err)
 	s.Require().True(quorumMet)
 
@@ -423,7 +425,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 
 	// SetRoot on the contract
-	txHash, err = executable2.SetRoot(s.chainSelector)
+	txHash, err = executable2.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 
@@ -440,7 +442,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().Equal(root.ValidUntil, proposal2.ValidUntil)
 
 	// Execute the proposal
-	txHash, err = executable2.Execute(0)
+	txHash, err = executable2.Execute(ctx, 0)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 

@@ -3,7 +3,10 @@
 package mocks
 
 import (
+	context "context"
+
 	common "github.com/ethereum/go-ethereum/common"
+
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/smartcontractkit/mcms/types"
@@ -22,9 +25,9 @@ func (_m *Inspector) EXPECT() *Inspector_Expecter {
 	return &Inspector_Expecter{mock: &_m.Mock}
 }
 
-// GetConfig provides a mock function with given fields: mcmAddress
-func (_m *Inspector) GetConfig(mcmAddress string) (*types.Config, error) {
-	ret := _m.Called(mcmAddress)
+// GetConfig provides a mock function with given fields: ctx, mcmAddr
+func (_m *Inspector) GetConfig(ctx context.Context, mcmAddr string) (*types.Config, error) {
+	ret := _m.Called(ctx, mcmAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetConfig")
@@ -32,19 +35,19 @@ func (_m *Inspector) GetConfig(mcmAddress string) (*types.Config, error) {
 
 	var r0 *types.Config
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (*types.Config, error)); ok {
-		return rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*types.Config, error)); ok {
+		return rf(ctx, mcmAddr)
 	}
-	if rf, ok := ret.Get(0).(func(string) *types.Config); ok {
-		r0 = rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) *types.Config); ok {
+		r0 = rf(ctx, mcmAddr)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*types.Config)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(mcmAddress)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, mcmAddr)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -58,14 +61,15 @@ type Inspector_GetConfig_Call struct {
 }
 
 // GetConfig is a helper method to define mock.On call
-//   - mcmAddress string
-func (_e *Inspector_Expecter) GetConfig(mcmAddress interface{}) *Inspector_GetConfig_Call {
-	return &Inspector_GetConfig_Call{Call: _e.mock.On("GetConfig", mcmAddress)}
+//   - ctx context.Context
+//   - mcmAddr string
+func (_e *Inspector_Expecter) GetConfig(ctx interface{}, mcmAddr interface{}) *Inspector_GetConfig_Call {
+	return &Inspector_GetConfig_Call{Call: _e.mock.On("GetConfig", ctx, mcmAddr)}
 }
 
-func (_c *Inspector_GetConfig_Call) Run(run func(mcmAddress string)) *Inspector_GetConfig_Call {
+func (_c *Inspector_GetConfig_Call) Run(run func(ctx context.Context, mcmAddr string)) *Inspector_GetConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -75,14 +79,14 @@ func (_c *Inspector_GetConfig_Call) Return(_a0 *types.Config, _a1 error) *Inspec
 	return _c
 }
 
-func (_c *Inspector_GetConfig_Call) RunAndReturn(run func(string) (*types.Config, error)) *Inspector_GetConfig_Call {
+func (_c *Inspector_GetConfig_Call) RunAndReturn(run func(context.Context, string) (*types.Config, error)) *Inspector_GetConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetOpCount provides a mock function with given fields: mcmAddress
-func (_m *Inspector) GetOpCount(mcmAddress string) (uint64, error) {
-	ret := _m.Called(mcmAddress)
+// GetOpCount provides a mock function with given fields: ctx, mcmAddr
+func (_m *Inspector) GetOpCount(ctx context.Context, mcmAddr string) (uint64, error) {
+	ret := _m.Called(ctx, mcmAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOpCount")
@@ -90,17 +94,17 @@ func (_m *Inspector) GetOpCount(mcmAddress string) (uint64, error) {
 
 	var r0 uint64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (uint64, error)); ok {
-		return rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (uint64, error)); ok {
+		return rf(ctx, mcmAddr)
 	}
-	if rf, ok := ret.Get(0).(func(string) uint64); ok {
-		r0 = rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) uint64); ok {
+		r0 = rf(ctx, mcmAddr)
 	} else {
 		r0 = ret.Get(0).(uint64)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(mcmAddress)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, mcmAddr)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -114,14 +118,15 @@ type Inspector_GetOpCount_Call struct {
 }
 
 // GetOpCount is a helper method to define mock.On call
-//   - mcmAddress string
-func (_e *Inspector_Expecter) GetOpCount(mcmAddress interface{}) *Inspector_GetOpCount_Call {
-	return &Inspector_GetOpCount_Call{Call: _e.mock.On("GetOpCount", mcmAddress)}
+//   - ctx context.Context
+//   - mcmAddr string
+func (_e *Inspector_Expecter) GetOpCount(ctx interface{}, mcmAddr interface{}) *Inspector_GetOpCount_Call {
+	return &Inspector_GetOpCount_Call{Call: _e.mock.On("GetOpCount", ctx, mcmAddr)}
 }
 
-func (_c *Inspector_GetOpCount_Call) Run(run func(mcmAddress string)) *Inspector_GetOpCount_Call {
+func (_c *Inspector_GetOpCount_Call) Run(run func(ctx context.Context, mcmAddr string)) *Inspector_GetOpCount_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -131,14 +136,14 @@ func (_c *Inspector_GetOpCount_Call) Return(_a0 uint64, _a1 error) *Inspector_Ge
 	return _c
 }
 
-func (_c *Inspector_GetOpCount_Call) RunAndReturn(run func(string) (uint64, error)) *Inspector_GetOpCount_Call {
+func (_c *Inspector_GetOpCount_Call) RunAndReturn(run func(context.Context, string) (uint64, error)) *Inspector_GetOpCount_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRoot provides a mock function with given fields: mcmAddress
-func (_m *Inspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
-	ret := _m.Called(mcmAddress)
+// GetRoot provides a mock function with given fields: ctx, mcmAddr
+func (_m *Inspector) GetRoot(ctx context.Context, mcmAddr string) (common.Hash, uint32, error) {
+	ret := _m.Called(ctx, mcmAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRoot")
@@ -147,25 +152,25 @@ func (_m *Inspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
 	var r0 common.Hash
 	var r1 uint32
 	var r2 error
-	if rf, ok := ret.Get(0).(func(string) (common.Hash, uint32, error)); ok {
-		return rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (common.Hash, uint32, error)); ok {
+		return rf(ctx, mcmAddr)
 	}
-	if rf, ok := ret.Get(0).(func(string) common.Hash); ok {
-		r0 = rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) common.Hash); ok {
+		r0 = rf(ctx, mcmAddr)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(common.Hash)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(string) uint32); ok {
-		r1 = rf(mcmAddress)
+	if rf, ok := ret.Get(1).(func(context.Context, string) uint32); ok {
+		r1 = rf(ctx, mcmAddr)
 	} else {
 		r1 = ret.Get(1).(uint32)
 	}
 
-	if rf, ok := ret.Get(2).(func(string) error); ok {
-		r2 = rf(mcmAddress)
+	if rf, ok := ret.Get(2).(func(context.Context, string) error); ok {
+		r2 = rf(ctx, mcmAddr)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -179,14 +184,15 @@ type Inspector_GetRoot_Call struct {
 }
 
 // GetRoot is a helper method to define mock.On call
-//   - mcmAddress string
-func (_e *Inspector_Expecter) GetRoot(mcmAddress interface{}) *Inspector_GetRoot_Call {
-	return &Inspector_GetRoot_Call{Call: _e.mock.On("GetRoot", mcmAddress)}
+//   - ctx context.Context
+//   - mcmAddr string
+func (_e *Inspector_Expecter) GetRoot(ctx interface{}, mcmAddr interface{}) *Inspector_GetRoot_Call {
+	return &Inspector_GetRoot_Call{Call: _e.mock.On("GetRoot", ctx, mcmAddr)}
 }
 
-func (_c *Inspector_GetRoot_Call) Run(run func(mcmAddress string)) *Inspector_GetRoot_Call {
+func (_c *Inspector_GetRoot_Call) Run(run func(ctx context.Context, mcmAddr string)) *Inspector_GetRoot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -196,14 +202,14 @@ func (_c *Inspector_GetRoot_Call) Return(_a0 common.Hash, _a1 uint32, _a2 error)
 	return _c
 }
 
-func (_c *Inspector_GetRoot_Call) RunAndReturn(run func(string) (common.Hash, uint32, error)) *Inspector_GetRoot_Call {
+func (_c *Inspector_GetRoot_Call) RunAndReturn(run func(context.Context, string) (common.Hash, uint32, error)) *Inspector_GetRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRootMetadata provides a mock function with given fields: mcmAddress
-func (_m *Inspector) GetRootMetadata(mcmAddress string) (types.ChainMetadata, error) {
-	ret := _m.Called(mcmAddress)
+// GetRootMetadata provides a mock function with given fields: ctx, mcmAddr
+func (_m *Inspector) GetRootMetadata(ctx context.Context, mcmAddr string) (types.ChainMetadata, error) {
+	ret := _m.Called(ctx, mcmAddr)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRootMetadata")
@@ -211,17 +217,17 @@ func (_m *Inspector) GetRootMetadata(mcmAddress string) (types.ChainMetadata, er
 
 	var r0 types.ChainMetadata
 	var r1 error
-	if rf, ok := ret.Get(0).(func(string) (types.ChainMetadata, error)); ok {
-		return rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) (types.ChainMetadata, error)); ok {
+		return rf(ctx, mcmAddr)
 	}
-	if rf, ok := ret.Get(0).(func(string) types.ChainMetadata); ok {
-		r0 = rf(mcmAddress)
+	if rf, ok := ret.Get(0).(func(context.Context, string) types.ChainMetadata); ok {
+		r0 = rf(ctx, mcmAddr)
 	} else {
 		r0 = ret.Get(0).(types.ChainMetadata)
 	}
 
-	if rf, ok := ret.Get(1).(func(string) error); ok {
-		r1 = rf(mcmAddress)
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, mcmAddr)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -235,14 +241,15 @@ type Inspector_GetRootMetadata_Call struct {
 }
 
 // GetRootMetadata is a helper method to define mock.On call
-//   - mcmAddress string
-func (_e *Inspector_Expecter) GetRootMetadata(mcmAddress interface{}) *Inspector_GetRootMetadata_Call {
-	return &Inspector_GetRootMetadata_Call{Call: _e.mock.On("GetRootMetadata", mcmAddress)}
+//   - ctx context.Context
+//   - mcmAddr string
+func (_e *Inspector_Expecter) GetRootMetadata(ctx interface{}, mcmAddr interface{}) *Inspector_GetRootMetadata_Call {
+	return &Inspector_GetRootMetadata_Call{Call: _e.mock.On("GetRootMetadata", ctx, mcmAddr)}
 }
 
-func (_c *Inspector_GetRootMetadata_Call) Run(run func(mcmAddress string)) *Inspector_GetRootMetadata_Call {
+func (_c *Inspector_GetRootMetadata_Call) Run(run func(ctx context.Context, mcmAddr string)) *Inspector_GetRootMetadata_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(string))
+		run(args[0].(context.Context), args[1].(string))
 	})
 	return _c
 }
@@ -252,7 +259,7 @@ func (_c *Inspector_GetRootMetadata_Call) Return(_a0 types.ChainMetadata, _a1 er
 	return _c
 }
 
-func (_c *Inspector_GetRootMetadata_Call) RunAndReturn(run func(string) (types.ChainMetadata, error)) *Inspector_GetRootMetadata_Call {
+func (_c *Inspector_GetRootMetadata_Call) RunAndReturn(run func(context.Context, string) (types.ChainMetadata, error)) *Inspector_GetRootMetadata_Call {
 	_c.Call.Return(run)
 	return _c
 }
