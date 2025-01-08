@@ -15,7 +15,7 @@ func NewConfigTransformer() *ConfigTransformer {
 	return &ConfigTransformer{}
 }
 
-// ToConfig converts an EVM ManyChainMultiSigConfig to a chain-agnostic types.Config
+// ToConfig converts an Solana ManyChainMultiSigConfig to a chain-agnostic types.Config
 func (e *ConfigTransformer) ToConfig(
 	bindConfig *bindings.MultisigConfig,
 ) (*types.Config, error) {
@@ -51,7 +51,7 @@ func (e *ConfigTransformer) ToConfig(
 	return &groups[0], nil
 }
 
-// ToChainConfig converts a chain-agnostic types.Config to an EVM ManyChainMultiSigConfig
+// ToChainConfig converts a chain-agnostic types.Config to an Solana ManyChainMultiSigConfig
 func (e *ConfigTransformer) ToChainConfig(
 	cfg types.Config,
 ) (bindings.MultisigConfig, error) {
