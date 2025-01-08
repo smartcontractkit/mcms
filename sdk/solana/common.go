@@ -47,7 +47,7 @@ func FindSeenSignedHashesPDA(
 	return findPDA(programID, seeds)
 }
 
-func findPDA(programID solana.PublicKey, seeds [][]byte,) (solana.PublicKey, error) {
+func findPDA(programID solana.PublicKey, seeds [][]byte) (solana.PublicKey, error) {
 	pda, _, err := solana.FindProgramAddress(seeds, programID)
 	if err != nil {
 		return solana.PublicKey{}, fmt.Errorf("unable to find %s pda: %w", string(seeds[0]), err)
