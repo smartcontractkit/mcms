@@ -114,6 +114,7 @@ func (s *SetRootTestSuite) deployTimelockContract(mcmsAddress string) *bindings.
 
 // TestSetRootProposal sets the root of the MCMS contract
 func (s *SetRootTestSuite) TestSetRootProposal() {
+	ctx := context.Background()
 	builder := mcms.NewProposalBuilder()
 	builder.
 		SetVersion("v1").
@@ -146,7 +147,7 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	s.Require().NoError(err)
 
 	// Validate the signatures
-	quorumMet, err := signable.ValidateSignatures()
+	quorumMet, err := signable.ValidateSignatures(ctx)
 	s.Require().NoError(err)
 	s.Require().True(quorumMet)
 
@@ -169,15 +170,15 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 		s.chainSelector: simulator,
 	}
 	signable.SetSimulators(simulators)
-	err = signable.Simulate()
+	err = signable.Simulate(ctx)
 	s.Require().NoError(err)
 
 	// Call SetRoot
-	txHash, err := executable.SetRoot(s.chainSelector)
+	txHash, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 
-	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.Client, common.HexToHash(txHash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }
@@ -216,7 +217,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 		})
 	proposalTimelock, err := builder.Build()
 	s.Require().NoError(err)
-	proposal, err := proposalTimelock.Convert()
+	proposal, _, err := proposalTimelock.Convert()
 	s.Require().NoError(err)
 
 	// Sign proposal
@@ -239,20 +240,21 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	}
 
 	// Prepare and execute simulation
+	ctx := context.Background()
 	simulator, err := evm.NewSimulator(encoder, s.Client)
 	s.Require().NoError(err, "Failed to create simulator")
 	simulators := map[mcmtypes.ChainSelector]sdk.Simulator{
 		s.chainSelector: simulator,
 	}
 	signable.SetSimulators(simulators)
-	err = signable.Simulate()
+	err = signable.Simulate(ctx)
 	s.Require().NoError(err)
 
 	// Create the chain MCMS proposal executor
 	executable, err := mcms.NewExecutable(&proposal, executorsMap)
 	s.Require().NoError(err)
 	// Call SetRoot
-	txHash, err := executable.SetRoot(s.chainSelector)
+	txHash, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txHash)
 	// Check receipt

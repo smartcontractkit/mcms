@@ -1,5 +1,13 @@
 # @smartcontractkit/mcms
 
+## 0.5.0
+
+### Minor Changes
+
+- [#214](https://github.com/smartcontractkit/mcms/pull/214) [`04cb547`](https://github.com/smartcontractkit/mcms/commit/04cb5474e8ce890566a4e48739a1d917f245c72f) Thanks [@akhilchainani](https://github.com/akhilchainani)! - Add helper function for timelock proposal execution
+
+- [#210](https://github.com/smartcontractkit/mcms/pull/210) [`8431019`](https://github.com/smartcontractkit/mcms/commit/8431019b9a672edf0c257982d677dcf04897c770) Thanks [@akhilchainani](https://github.com/akhilchainani)! - Implement timelock executor interface + EVM implementation
+
 ## 0.4.0
 
 ### Minor Changes

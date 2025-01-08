@@ -81,8 +81,10 @@ func (s *InspectionTestSuite) deployContract() string {
 
 // TestGetConfig checks contract configuration
 func (s *InspectionTestSuite) TestGetConfig() {
+	ctx := context.Background()
+
 	inspector := evm.NewInspector(s.Client)
-	config, err := inspector.GetConfig(s.contractAddress)
+	config, err := inspector.GetConfig(ctx, s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get contract configuration")
 	s.Require().NotNil(config, "Contract configuration is nil")
@@ -98,8 +100,10 @@ func (s *InspectionTestSuite) TestGetConfig() {
 
 // TestGetOpCount checks contract operation count
 func (s *InspectionTestSuite) TestGetOpCount() {
+	ctx := context.Background()
+
 	inspector := evm.NewInspector(s.Client)
-	opCount, err := inspector.GetOpCount(s.contractAddress)
+	opCount, err := inspector.GetOpCount(ctx, s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get op count")
 	s.Require().Equal(uint64(0), opCount, "Operation count does not match")
@@ -107,8 +111,10 @@ func (s *InspectionTestSuite) TestGetOpCount() {
 
 // TestGetRoot checks contract root
 func (s *InspectionTestSuite) TestGetRoot() {
+	ctx := context.Background()
+
 	inspector := evm.NewInspector(s.Client)
-	root, validUntil, err := inspector.GetRoot(s.contractAddress)
+	root, validUntil, err := inspector.GetRoot(ctx, s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get root from contract")
 	s.Require().Equal(common.Hash{}, root, "Roots do not match")
@@ -117,8 +123,10 @@ func (s *InspectionTestSuite) TestGetRoot() {
 
 // TestGetRootMetadata checks contract root metadata
 func (s *InspectionTestSuite) TestGetRootMetadata() {
+	ctx := context.Background()
+
 	inspector := evm.NewInspector(s.Client)
-	metadata, err := inspector.GetRootMetadata(s.contractAddress)
+	metadata, err := inspector.GetRootMetadata(ctx, s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get root metadata from contract")
 	s.Require().Equal(metadata.MCMAddress, s.contractAddress, "MCMAddress does not match")

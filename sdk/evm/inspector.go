@@ -1,6 +1,8 @@
 package evm
 
 import (
+	"context"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -25,13 +27,13 @@ func NewInspector(client ContractDeployBackend) *Inspector {
 	}
 }
 
-func (e *Inspector) GetConfig(mcmAddress string) (*types.Config, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+func (e *Inspector) GetConfig(ctx context.Context, address string) (*types.Config, error) {
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(address), e.client)
 	if err != nil {
 		return nil, err
 	}
 
-	onchainConfig, err := mcmsObj.GetConfig(&bind.CallOpts{})
+	onchainConfig, err := mcmsObj.GetConfig(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return nil, err
 	}
@@ -39,13 +41,13 @@ func (e *Inspector) GetConfig(mcmAddress string) (*types.Config, error) {
 	return e.ToConfig(onchainConfig)
 }
 
-func (e *Inspector) GetOpCount(mcmAddress string) (uint64, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+func (e *Inspector) GetOpCount(ctx context.Context, address string) (uint64, error) {
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(address), e.client)
 	if err != nil {
 		return 0, err
 	}
 
-	opCount, err := mcmsObj.GetOpCount(&bind.CallOpts{})
+	opCount, err := mcmsObj.GetOpCount(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return 0, err
 	}
@@ -53,13 +55,13 @@ func (e *Inspector) GetOpCount(mcmAddress string) (uint64, error) {
 	return opCount.Uint64(), nil
 }
 
-func (e *Inspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+func (e *Inspector) GetRoot(ctx context.Context, address string) (common.Hash, uint32, error) {
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(address), e.client)
 	if err != nil {
 		return common.Hash{}, 0, err
 	}
 
-	root, err := mcmsObj.GetRoot(&bind.CallOpts{})
+	root, err := mcmsObj.GetRoot(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return common.Hash{}, 0, err
 	}
@@ -67,19 +69,19 @@ func (e *Inspector) GetRoot(mcmAddress string) (common.Hash, uint32, error) {
 	return root.Root, root.ValidUntil, nil
 }
 
-func (e *Inspector) GetRootMetadata(mcmAddress string) (types.ChainMetadata, error) {
-	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddress), e.client)
+func (e *Inspector) GetRootMetadata(ctx context.Context, address string) (types.ChainMetadata, error) {
+	mcmsObj, err := bindings.NewManyChainMultiSig(common.HexToAddress(address), e.client)
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}
 
-	metadata, err := mcmsObj.GetRootMetadata(&bind.CallOpts{})
+	metadata, err := mcmsObj.GetRootMetadata(&bind.CallOpts{Context: ctx})
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}
 
 	return types.ChainMetadata{
 		StartingOpCount: metadata.PreOpCount.Uint64(),
-		MCMAddress:      mcmAddress,
+		MCMAddress:      address,
 	}, nil
 }

@@ -14,5 +14,6 @@ type TimelockConverter interface {
 		delay types.Duration,
 		action types.TimelockAction,
 		predecessor common.Hash,
+		salt common.Hash,
 	) (types.Operation, common.Hash, error)
 }

@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"context"
 	"slices"
 
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
@@ -52,7 +53,7 @@ func NewExecutable(
 	}, nil
 }
 
-func (e *Executable) SetRoot(chainSelector types.ChainSelector) (string, error) {
+func (e *Executable) SetRoot(ctx context.Context, chainSelector types.ChainSelector) (string, error) {
 	metadata := e.proposal.ChainMetadata[chainSelector]
 
 	metadataHash, err := e.encoders[chainSelector].HashMetadata(metadata)
@@ -80,6 +81,7 @@ func (e *Executable) SetRoot(chainSelector types.ChainSelector) (string, error) 
 	})
 
 	return e.executors[chainSelector].SetRoot(
+		ctx,
 		metadata,
 		proof,
 		[32]byte(e.tree.Root.Bytes()),
@@ -88,7 +90,7 @@ func (e *Executable) SetRoot(chainSelector types.ChainSelector) (string, error) 
 	)
 }
 
-func (e *Executable) Execute(index int) (string, error) {
+func (e *Executable) Execute(ctx context.Context, index int) (string, error) {
 	op := e.proposal.Operations[index]
 	chainSelector := op.ChainSelector
 	metadata := e.proposal.ChainMetadata[chainSelector]
@@ -109,6 +111,7 @@ func (e *Executable) Execute(index int) (string, error) {
 	}
 
 	return e.executors[chainSelector].ExecuteOperation(
+		ctx,
 		metadata,
 		txNonce,
 		proof,

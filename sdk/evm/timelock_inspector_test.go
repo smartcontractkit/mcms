@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"testing"
@@ -53,6 +54,7 @@ func mockRoleContractCalls(t *testing.T, mockClient *evm_mocks.ContractDeployBac
 func TestTimelockInspector_GetRolesTests(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	tests := []roleFetchTest{
 		{
 			name:            "GetProposers success",
@@ -206,13 +208,13 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 			var got []common.Address
 			switch tt.roleFetchType {
 			case "proposers":
-				got, err = inspector.GetProposers(tt.address)
+				got, err = inspector.GetProposers(ctx, tt.address)
 			case "executors":
-				got, err = inspector.GetExecutors(tt.address)
+				got, err = inspector.GetExecutors(ctx, tt.address)
 			case "cancellers":
-				got, err = inspector.GetCancellers(tt.address)
+				got, err = inspector.GetCancellers(ctx, tt.address)
 			case "bypassers":
-				got, err = inspector.GetBypassers(tt.address)
+				got, err = inspector.GetBypassers(ctx, tt.address)
 			default:
 				t.Fatalf("unsupported roleFetchType: %s", tt.roleFetchType)
 			}
@@ -235,6 +237,7 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 func TestTimelockInspector_IsOperation(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	tests := []struct {
 		name      string
 		address   string
@@ -286,7 +289,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 			}
 
 			// Call the `IsOperation` method
-			got, err := inspector.IsOperation(tt.address, tt.opId)
+			got, err := inspector.IsOperation(ctx, tt.address, tt.opId)
 
 			// Assertions for expected error or successful result
 			if tt.wantErr != nil {
@@ -315,6 +318,8 @@ func testIsOperationState(
 ) {
 	t.Helper()
 
+	ctx := context.Background()
+
 	// Create a new mock client and inspector for each test case
 	mockClient := evm_mocks.NewContractDeployBackend(t)
 	inspector := NewTimelockInspector(mockClient)
@@ -341,11 +346,11 @@ func testIsOperationState(
 	var got bool
 	switch methodName {
 	case "isOperationPending":
-		got, err = inspector.IsOperationPending(address, opId)
+		got, err = inspector.IsOperationPending(ctx, address, opId)
 	case "isOperationReady":
-		got, err = inspector.IsOperationReady(address, opId)
+		got, err = inspector.IsOperationReady(ctx, address, opId)
 	case "isOperationDone":
-		got, err = inspector.IsOperationDone(address, opId)
+		got, err = inspector.IsOperationDone(ctx, address, opId)
 	default:
 		t.Fatalf("unsupported methodName: %s", methodName)
 	}

@@ -102,7 +102,7 @@ func (s *Signable) SignAndAppend(signer signer) (types.Signature, error) {
 }
 
 // Simulate simulates the proposal on the given chain using the provided simulator.
-func (s *Signable) Simulate() error {
+func (s *Signable) Simulate(ctx context.Context) error {
 	if s.simulators == nil {
 		return ErrSimulatorsNotProvided
 	}
@@ -114,7 +114,7 @@ func (s *Signable) Simulate() error {
 		}
 
 		// TODO: should we fail on the first error or aggregate all simulation errors?
-		err := simulator.SimulateOperation(context.Background(), s.proposal.ChainMetadata[op.ChainSelector], op)
+		err := simulator.SimulateOperation(ctx, s.proposal.ChainMetadata[op.ChainSelector], op)
 		if err != nil {
 			return err
 		}
@@ -124,7 +124,7 @@ func (s *Signable) Simulate() error {
 }
 
 // GetConfigs retrieves the MCMS contract configurations for each chain in the proposal.
-func (s *Signable) GetConfigs() (map[types.ChainSelector]*types.Config, error) {
+func (s *Signable) GetConfigs(ctx context.Context) (map[types.ChainSelector]*types.Config, error) {
 	if s.inspectors == nil {
 		return nil, ErrInspectorsNotProvided
 	}
@@ -136,7 +136,7 @@ func (s *Signable) GetConfigs() (map[types.ChainSelector]*types.Config, error) {
 			return nil, fmt.Errorf("inspector not found for chain %d", chain)
 		}
 
-		configuration, err := inspector.GetConfig(metadata.MCMAddress)
+		configuration, err := inspector.GetConfig(ctx, metadata.MCMAddress)
 		if err != nil {
 			return nil, err
 		}
@@ -150,7 +150,7 @@ func (s *Signable) GetConfigs() (map[types.ChainSelector]*types.Config, error) {
 // CheckQuorum checks if the quorum for the proposal on the given chain has been reached. This will
 // fetch the current configuration for the chain and check if the recovered signers from the
 // proposal's signatures can set the root.
-func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
+func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (bool, error) {
 	if s.inspectors == nil {
 		return false, ErrInspectorsNotProvided
 	}
@@ -175,7 +175,7 @@ func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 		recoveredSigners[i] = recoveredAddr
 	}
 
-	configuration, err := inspector.GetConfig(s.proposal.ChainMetadata[chain].MCMAddress)
+	configuration, err := inspector.GetConfig(ctx, s.proposal.ChainMetadata[chain].MCMAddress)
 	if err != nil {
 		return false, err
 	}
@@ -185,9 +185,9 @@ func (s *Signable) CheckQuorum(chain types.ChainSelector) (bool, error) {
 
 // ValidateSignatures checks if the quorum for the proposal has been reached on the MCM contracts
 // across all chains in the proposal.
-func (s *Signable) ValidateSignatures() (bool, error) {
+func (s *Signable) ValidateSignatures(ctx context.Context) (bool, error) {
 	for chain := range s.proposal.ChainMetadata {
-		checkQuorum, err := s.CheckQuorum(chain)
+		checkQuorum, err := s.CheckQuorum(ctx, chain)
 		if err != nil {
 			return false, err
 		}
@@ -205,8 +205,8 @@ func (s *Signable) ValidateSignatures() (bool, error) {
 //
 // We expect that the configurations for each chain are the same so that the same quorum can be
 // reached across all chains in the proposal.
-func (s *Signable) ValidateConfigs() error {
-	configs, err := s.GetConfigs()
+func (s *Signable) ValidateConfigs(ctx context.Context) error {
+	configs, err := s.GetConfigs(ctx)
 	if err != nil {
 		return err
 	}
@@ -231,7 +231,7 @@ func (s *Signable) ValidateConfigs() error {
 // proposal. This data is fetched from the contract on the chain using the provided inspectors.
 //
 // Note: This function is currently not used but left for potential future use.
-func (s *Signable) getCurrentOpCounts() (map[types.ChainSelector]uint64, error) {
+func (s *Signable) getCurrentOpCounts(ctx context.Context) (map[types.ChainSelector]uint64, error) {
 	if s.inspectors == nil {
 		return nil, ErrInspectorsNotProvided
 	}
@@ -243,7 +243,7 @@ func (s *Signable) getCurrentOpCounts() (map[types.ChainSelector]uint64, error) 
 			return nil, fmt.Errorf("inspector not found for chain %d", sel)
 		}
 
-		opCount, err := inspector.GetOpCount(metadata.MCMAddress)
+		opCount, err := inspector.GetOpCount(ctx, metadata.MCMAddress)
 		if err != nil {
 			return nil, err
 		}

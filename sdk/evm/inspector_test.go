@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
@@ -20,6 +21,7 @@ import (
 func TestInspector_GetConfig(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	tests := []struct {
 		name       string
 		address    string
@@ -109,7 +111,7 @@ func TestInspector_GetConfig(t *testing.T) {
 			inspector := NewInspector(mockClient)
 
 			// Call GetConfig and capture the got
-			got, err := inspector.GetConfig(tt.address)
+			got, err := inspector.GetConfig(ctx, tt.address)
 
 			// Assertions for want error or successful got
 			if tt.wantErr != nil {
@@ -129,6 +131,7 @@ func TestInspector_GetConfig(t *testing.T) {
 func TestInspector_GetOpCount(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	tests := []struct {
 		name       string
 		address    string
@@ -180,7 +183,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 			inspector := NewInspector(mockClient)
 
 			// Call GetOpCount and capture the got
-			got, err := inspector.GetOpCount(tt.address)
+			got, err := inspector.GetOpCount(ctx, tt.address)
 
 			// Assertions for want error or successful got
 			if tt.wantErr != nil {
@@ -200,6 +203,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 func TestInspector_GetRoot(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	tests := []struct {
 		name           string
 		address        string
@@ -252,7 +256,7 @@ func TestInspector_GetRoot(t *testing.T) {
 			inspector := NewInspector(mockClient)
 
 			// Call GetRoot and capture the result
-			got, validUntil, err := inspector.GetRoot(tt.address)
+			got, validUntil, err := inspector.GetRoot(ctx, tt.address)
 
 			// Assertions for want error or successful result
 			if tt.wantErr != nil {
@@ -273,6 +277,7 @@ func TestInspector_GetRoot(t *testing.T) {
 func TestInspector_GetRootMetadata(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	tests := []struct {
 		name       string
 		address    string
@@ -332,7 +337,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 			inspector := NewInspector(mockClient)
 
 			// Call GetRootMetadata and capture the got
-			got, err := inspector.GetRootMetadata(tt.address)
+			got, err := inspector.GetRootMetadata(ctx, tt.address)
 
 			// Assertions for want error or successful got
 			if tt.wantErr != nil {

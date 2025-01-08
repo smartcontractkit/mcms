@@ -1,6 +1,8 @@
 package evm
 
 import (
+	"context"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -27,7 +29,7 @@ func NewConfigurer(client ContractDeployBackend, auth *bind.TransactOpts,
 }
 
 // SetConfig sets the configuration for the MCM contract on the EVM chain.
-func (c *Configurer) SetConfig(mcmAddr string, cfg *types.Config, clearRoot bool) (string, error) {
+func (c *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (string, error) {
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddr), c.client)
 	if err != nil {
 		return "", err
@@ -38,8 +40,11 @@ func (c *Configurer) SetConfig(mcmAddr string, cfg *types.Config, clearRoot bool
 		return "", err
 	}
 
+	opts := *c.auth
+	opts.Context = ctx
+
 	tx, err := mcmsC.SetConfig(
-		c.auth,
+		&opts,
 		signerAddrs,
 		signerGroups,
 		groupQuorums,

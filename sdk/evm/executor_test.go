@@ -36,6 +36,7 @@ func TestNewExecutor(t *testing.T) {
 func TestExecutor_ExecuteOperation(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	tests := []struct {
 		name       string
 		encoder    *evm.Encoder
@@ -182,7 +183,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			}
 
 			executor := evm.NewExecutor(tt.encoder, client, tt.auth)
-			txHash, err := executor.ExecuteOperation(tt.metadata, tt.nonce, tt.proof, tt.op)
+			txHash, err := executor.ExecuteOperation(ctx, tt.metadata, tt.nonce, tt.proof, tt.op)
 
 			assert.Equal(t, tt.wantTxHash, txHash)
 			if tt.wantErr != nil {
@@ -197,6 +198,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 func TestExecutor_SetRoot(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	tests := []struct {
 		name             string
 		encoder          *evm.Encoder
@@ -333,7 +335,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 			}
 
 			executor := evm.NewExecutor(tt.encoder, client, tt.auth)
-			txHash, err := executor.SetRoot(tt.metadata,
+			txHash, err := executor.SetRoot(ctx, tt.metadata,
 				tt.proof,
 				tt.root,
 				tt.validUntil,

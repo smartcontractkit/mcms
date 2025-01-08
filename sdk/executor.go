@@ -1,6 +1,8 @@
 package sdk
 
 import (
+	"context"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/types"
@@ -15,6 +17,7 @@ type Executor interface {
 
 	// Returns a string of the transaction hash
 	ExecuteOperation(
+		ctx context.Context,
 		metadata types.ChainMetadata,
 		nonce uint32,
 		proof []common.Hash,
@@ -23,6 +26,7 @@ type Executor interface {
 
 	// Returns a string of the transaction hash
 	SetRoot(
+		ctx context.Context,
 		metadata types.ChainMetadata,
 		proof []common.Hash,
 		root [32]byte,
