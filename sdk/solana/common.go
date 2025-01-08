@@ -58,8 +58,8 @@ func findPDA(programID solana.PublicKey, seeds [][]byte,) (solana.PublicKey, err
 
 func validUntilBytes(validUntil uint32) []byte {
 	const uint32Size = 4
-	validUntilBytes := make([]byte, uint32Size)
-	binary.LittleEndian.PutUint32(validUntilBytes, validUntil)
+	vuBytes := make([]byte, uint32Size)
+	binary.LittleEndian.PutUint32(vuBytes, validUntil)
 
-	return validUntilBytes
+	return vuBytes
 }
