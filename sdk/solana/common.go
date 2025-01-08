@@ -10,73 +10,47 @@ import (
 
 func FindSignerPDA(programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
 	seeds := [][]byte{[]byte("multisig_signer"), pdaSeed[:]}
-	pda, _, err := solana.FindProgramAddress(seeds, programID)
-	if err != nil {
-		return solana.PublicKey{}, fmt.Errorf("unable to find multisig_signer pda: %w", err)
-	}
-
-	return pda, nil
+	return findPDA(programID, seeds)
 }
 
 func FindConfigPDA(programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
 	seeds := [][]byte{[]byte("multisig_config"), pdaSeed[:]}
-	pda, _, err := solana.FindProgramAddress(seeds, programID)
-	if err != nil {
-		return solana.PublicKey{}, fmt.Errorf("unable to find multisig_config pda: %w", err)
-	}
-
-	return pda, nil
+	return findPDA(programID, seeds)
 }
 
 func FindConfigSignersPDA(programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
 	seeds := [][]byte{[]byte("multisig_config_signers"), pdaSeed[:]}
-	pda, _, err := solana.FindProgramAddress(seeds, programID)
-	if err != nil {
-		return solana.PublicKey{}, fmt.Errorf("unable to find multisig_config_signers pda: %w", err)
-	}
-
-	return pda, nil
+	return findPDA(programID, seeds)
 }
 
 func FindRootMetadataPDA(programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
 	seeds := [][]byte{[]byte("root_metadata"), pdaSeed[:]}
-	pda, _, err := solana.FindProgramAddress(seeds, programID)
-	if err != nil {
-		return solana.PublicKey{}, fmt.Errorf("unable to find root_metadata pda: %w", err)
-	}
-
-	return pda, nil
+	return findPDA(programID, seeds)
 }
 
 func FindExpiringRootAndOpCountPDA(programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
 	seeds := [][]byte{[]byte("expiring_root_and_op_count"), pdaSeed[:]}
-	pda, _, err := solana.FindProgramAddress(seeds, programID)
-	if err != nil {
-		return solana.PublicKey{}, fmt.Errorf("unable to find expiring_root_and_op_count pda: %w", err)
-	}
-
-	return pda, nil
+	return findPDA(programID, seeds)
 }
 
 func FindRootSignaturesPDA(
 	programID solana.PublicKey, pdaSeed PDASeed, root common.Hash, validUntil uint32,
 ) (solana.PublicKey, error) {
 	seeds := [][]byte{[]byte("root_signatures"), pdaSeed[:], root[:], validUntilBytes(validUntil)}
-	pda, _, err := solana.FindProgramAddress(seeds, programID)
-	if err != nil {
-		return solana.PublicKey{}, fmt.Errorf("unable to find root_signatures pda: %w", err)
-	}
-
-	return pda, nil
+	return findPDA(programID, seeds)
 }
 
 func FindSeenSignedHashesPDA(
 	programID solana.PublicKey, pdaSeed PDASeed, root common.Hash, validUntil uint32,
 ) (solana.PublicKey, error) {
 	seeds := [][]byte{[]byte("seen_signed_hashes"), pdaSeed[:], root[:], validUntilBytes(validUntil)}
+	return findPDA(programID, seeds)
+}
+
+func findPDA(programID solana.PublicKey, seeds [][]byte,) (solana.PublicKey, error) {
 	pda, _, err := solana.FindProgramAddress(seeds, programID)
 	if err != nil {
-		return solana.PublicKey{}, fmt.Errorf("unable to find seen_signed_hashes pda: %w", err)
+		return solana.PublicKey{}, fmt.Errorf("unable to find %s pda: %w", string(seeds[0]), err)
 	}
 
 	return pda, nil

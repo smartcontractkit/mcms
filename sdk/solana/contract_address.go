@@ -8,7 +8,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 )
 
-type PDASeed [32]byte // FIXME: shouldn't this be defined in chainlink-ccip/chains/solana?
+type PDASeed [32]byte
 
 // ContractAddress returns a string representation of a solana contract id
 // which is a combination of the program id and the seed <PROGRAM_ID>.<SEED>
