@@ -3,7 +3,6 @@ package solana
 import (
 	"context"
 	"fmt"
-	"math"
 
 	evmCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
@@ -47,8 +46,8 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 		return "", fmt.Errorf("unable to extract set config inputs: %w", err)
 	}
 
-	if len(signerAddresses) > math.MaxUint8 {
-		return "", fmt.Errorf("too many signers (max %d)", math.MaxUint8)
+	if len(signerAddresses) > config.MaxNumSigners {
+		return "", fmt.Errorf("too many signers (max %d)", config.MaxNumSigners)
 	}
 
 	// FIXME: global variables are bad, mmkay?

@@ -3,7 +3,6 @@ package solana
 import (
 	"context"
 	"fmt"
-	"math"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -73,9 +72,9 @@ func TestConfigurer_SetConfig(t *testing.T) {
 		},
 		{
 			name:      "failure: too many signers",
-			mcmConfig: &types.Config{Quorum: 1, Signers: generateSigners(t, math.MaxUint8+1)},
+			mcmConfig: &types.Config{Quorum: 1, Signers: generateSigners(t, 181)},
 			setup:     func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
-			wantErr:   "too many signers (max 255)",
+			wantErr:   "too many signers (max 180)",
 		},
 		{
 			name:      "failure: initialize signers error",
