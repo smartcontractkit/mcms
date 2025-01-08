@@ -46,7 +46,7 @@ func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
 
 func (m *TimelockProposal) Validate() error {
 	// Run tag-based validation
-	var validate = validator.New()
+	validate := validator.New()
 	if err := validate.Struct(m); err != nil {
 		return err
 	}
@@ -76,16 +76,14 @@ func (m *TimelockProposal) Validate() error {
 	return nil
 }
 
-// Convert the proposal to an MCMS only proposal.
+// Convert the proposal to an MCMS only proposal and also return all predecessors for easy access later.
 // Every transaction to be sent from the Timelock is encoded with the corresponding timelock method.
-func (m *TimelockProposal) Convert() (Proposal, error) {
+func (m *TimelockProposal) Convert() (Proposal, []common.Hash, error) {
 	baseProposal := m.BaseProposal
 
 	// Start predecessor map with all chains pointing to the zero hash
-	predecessorMap := make(map[types.ChainSelector]common.Hash)
-	for chain := range m.ChainMetadata {
-		predecessorMap[chain] = ZERO_HASH
-	}
+	predecessors := make([]common.Hash, len(m.Operations)+1)
+	predecessors[0] = ZERO_HASH
 
 	// Convert chain metadata
 	baseProposal.ChainMetadata = make(map[types.ChainSelector]types.ChainMetadata)
@@ -100,25 +98,25 @@ func (m *TimelockProposal) Convert() (Proposal, error) {
 	result := Proposal{
 		BaseProposal: baseProposal,
 	}
-	for _, bop := range m.Operations {
+	for i, bop := range m.Operations {
 		timelockAddress := m.TimelockAddresses[bop.ChainSelector]
-		predecessor := predecessorMap[bop.ChainSelector]
+		predecessor := predecessors[i]
 
 		sop, operationId, err := BatchToChainOperation(
-			bop, timelockAddress, m.Delay, m.Action, predecessor,
+			bop, timelockAddress, m.Delay, m.Action, predecessor, baseProposal.Salt(),
 		)
 		if err != nil {
-			return Proposal{}, err
+			return Proposal{}, nil, err
 		}
 
 		// Append the converted operation to the MCMS only proposal
 		result.Operations = append(result.Operations, sop)
 
 		// Update predecessor for the chain
-		predecessorMap[bop.ChainSelector] = operationId
+		predecessors[i+1] = operationId
 	}
 
-	return result, nil
+	return result, predecessors, nil
 }
 
 // timeLockProposalValidateBasic basic validation for an MCMS proposal

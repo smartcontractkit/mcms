@@ -33,6 +33,8 @@ func TestNewTimelockExecutor(t *testing.T) {
 func TestTimelockExecutor_Execute(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
+
 	mockAuth := &bind.TransactOpts{
 		Context: context.Background(),
 		Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
@@ -129,7 +131,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			}
 
 			executor := NewTimelockExecutor(client, test.auth)
-			txHash, err := executor.Execute(test.bop, test.timelockAddress, test.predecessor, test.salt)
+			txHash, err := executor.Execute(ctx, test.bop, test.timelockAddress, test.predecessor, test.salt)
 
 			assert.Equal(t, test.wantTxHash, txHash)
 			if test.wantErr != nil {

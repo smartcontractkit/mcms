@@ -511,7 +511,7 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 		Operations:        validBatchOps,
 	}
 
-	mcmsProposal, err := proposal.Convert()
+	mcmsProposal, predecessors, err := proposal.Convert()
 	require.NoError(t, err)
 
 	assert.Equal(t, "v1", mcmsProposal.Version)
@@ -521,4 +521,5 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 	assert.Equal(t, validChainMetadata, mcmsProposal.ChainMetadata)
 	assert.Equal(t, "description", mcmsProposal.Description)
 	assert.Len(t, mcmsProposal.Operations, 1)
+	assert.Len(t, predecessors, 2)
 }

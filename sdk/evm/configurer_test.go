@@ -1,6 +1,7 @@
 package evm_test
 
 import (
+	"context"
 	"errors"
 	"math/big"
 	"testing"
@@ -20,6 +21,8 @@ import (
 // TestConfigurer_SetConfig tests the SetConfig method of the Configurer.
 func TestConfigurer_SetConfig(t *testing.T) {
 	t.Parallel()
+
+	ctx := context.Background()
 
 	// Helper function to create a common.Address from string
 	addr := func(address string) common.Address {
@@ -153,7 +156,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			configurer := evm.NewConfigurer(client, tt.auth)
 
 			// Call SetConfig
-			txHash, err := configurer.SetConfig(tt.mcmAddr, tt.cfg, tt.clearRoot)
+			txHash, err := configurer.SetConfig(ctx, tt.mcmAddr, tt.cfg, tt.clearRoot)
 
 			// Assert the results
 			if tt.wantErr != nil {

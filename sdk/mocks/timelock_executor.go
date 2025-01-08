@@ -3,7 +3,10 @@
 package mocks
 
 import (
+	context "context"
+
 	common "github.com/ethereum/go-ethereum/common"
+
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/smartcontractkit/mcms/types"
@@ -22,9 +25,9 @@ func (_m *TimelockExecutor) EXPECT() *TimelockExecutor_Expecter {
 	return &TimelockExecutor_Expecter{mock: &_m.Mock}
 }
 
-// Execute provides a mock function with given fields: bop, timelockAddress, predecessor, salt
-func (_m *TimelockExecutor) Execute(bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash) (string, error) {
-	ret := _m.Called(bop, timelockAddress, predecessor, salt)
+// Execute provides a mock function with given fields: ctx, bop, timelockAddress, predecessor, salt
+func (_m *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash) (string, error) {
+	ret := _m.Called(ctx, bop, timelockAddress, predecessor, salt)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Execute")
@@ -32,17 +35,17 @@ func (_m *TimelockExecutor) Execute(bop types.BatchOperation, timelockAddress st
 
 	var r0 string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(types.BatchOperation, string, common.Hash, common.Hash) (string, error)); ok {
-		return rf(bop, timelockAddress, predecessor, salt)
+	if rf, ok := ret.Get(0).(func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) (string, error)); ok {
+		return rf(ctx, bop, timelockAddress, predecessor, salt)
 	}
-	if rf, ok := ret.Get(0).(func(types.BatchOperation, string, common.Hash, common.Hash) string); ok {
-		r0 = rf(bop, timelockAddress, predecessor, salt)
+	if rf, ok := ret.Get(0).(func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) string); ok {
+		r0 = rf(ctx, bop, timelockAddress, predecessor, salt)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
 
-	if rf, ok := ret.Get(1).(func(types.BatchOperation, string, common.Hash, common.Hash) error); ok {
-		r1 = rf(bop, timelockAddress, predecessor, salt)
+	if rf, ok := ret.Get(1).(func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) error); ok {
+		r1 = rf(ctx, bop, timelockAddress, predecessor, salt)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -56,17 +59,18 @@ type TimelockExecutor_Execute_Call struct {
 }
 
 // Execute is a helper method to define mock.On call
+//   - ctx context.Context
 //   - bop types.BatchOperation
 //   - timelockAddress string
 //   - predecessor common.Hash
 //   - salt common.Hash
-func (_e *TimelockExecutor_Expecter) Execute(bop interface{}, timelockAddress interface{}, predecessor interface{}, salt interface{}) *TimelockExecutor_Execute_Call {
-	return &TimelockExecutor_Execute_Call{Call: _e.mock.On("Execute", bop, timelockAddress, predecessor, salt)}
+func (_e *TimelockExecutor_Expecter) Execute(ctx interface{}, bop interface{}, timelockAddress interface{}, predecessor interface{}, salt interface{}) *TimelockExecutor_Execute_Call {
+	return &TimelockExecutor_Execute_Call{Call: _e.mock.On("Execute", ctx, bop, timelockAddress, predecessor, salt)}
 }
 
-func (_c *TimelockExecutor_Execute_Call) Run(run func(bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash)) *TimelockExecutor_Execute_Call {
+func (_c *TimelockExecutor_Execute_Call) Run(run func(ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash)) *TimelockExecutor_Execute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(types.BatchOperation), args[1].(string), args[2].(common.Hash), args[3].(common.Hash))
+		run(args[0].(context.Context), args[1].(types.BatchOperation), args[2].(string), args[3].(common.Hash), args[4].(common.Hash))
 	})
 	return _c
 }
@@ -76,7 +80,475 @@ func (_c *TimelockExecutor_Execute_Call) Return(_a0 string, _a1 error) *Timelock
 	return _c
 }
 
-func (_c *TimelockExecutor_Execute_Call) RunAndReturn(run func(types.BatchOperation, string, common.Hash, common.Hash) (string, error)) *TimelockExecutor_Execute_Call {
+func (_c *TimelockExecutor_Execute_Call) RunAndReturn(run func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) (string, error)) *TimelockExecutor_Execute_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetBypassers provides a mock function with given fields: ctx, address
+func (_m *TimelockExecutor) GetBypassers(ctx context.Context, address string) ([]common.Address, error) {
+	ret := _m.Called(ctx, address)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetBypassers")
+	}
+
+	var r0 []common.Address
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]common.Address, error)); ok {
+		return rf(ctx, address)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []common.Address); ok {
+		r0 = rf(ctx, address)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]common.Address)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, address)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TimelockExecutor_GetBypassers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetBypassers'
+type TimelockExecutor_GetBypassers_Call struct {
+	*mock.Call
+}
+
+// GetBypassers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - address string
+func (_e *TimelockExecutor_Expecter) GetBypassers(ctx interface{}, address interface{}) *TimelockExecutor_GetBypassers_Call {
+	return &TimelockExecutor_GetBypassers_Call{Call: _e.mock.On("GetBypassers", ctx, address)}
+}
+
+func (_c *TimelockExecutor_GetBypassers_Call) Run(run func(ctx context.Context, address string)) *TimelockExecutor_GetBypassers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *TimelockExecutor_GetBypassers_Call) Return(_a0 []common.Address, _a1 error) *TimelockExecutor_GetBypassers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TimelockExecutor_GetBypassers_Call) RunAndReturn(run func(context.Context, string) ([]common.Address, error)) *TimelockExecutor_GetBypassers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetCancellers provides a mock function with given fields: ctx, address
+func (_m *TimelockExecutor) GetCancellers(ctx context.Context, address string) ([]common.Address, error) {
+	ret := _m.Called(ctx, address)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetCancellers")
+	}
+
+	var r0 []common.Address
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]common.Address, error)); ok {
+		return rf(ctx, address)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []common.Address); ok {
+		r0 = rf(ctx, address)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]common.Address)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, address)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TimelockExecutor_GetCancellers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetCancellers'
+type TimelockExecutor_GetCancellers_Call struct {
+	*mock.Call
+}
+
+// GetCancellers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - address string
+func (_e *TimelockExecutor_Expecter) GetCancellers(ctx interface{}, address interface{}) *TimelockExecutor_GetCancellers_Call {
+	return &TimelockExecutor_GetCancellers_Call{Call: _e.mock.On("GetCancellers", ctx, address)}
+}
+
+func (_c *TimelockExecutor_GetCancellers_Call) Run(run func(ctx context.Context, address string)) *TimelockExecutor_GetCancellers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *TimelockExecutor_GetCancellers_Call) Return(_a0 []common.Address, _a1 error) *TimelockExecutor_GetCancellers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TimelockExecutor_GetCancellers_Call) RunAndReturn(run func(context.Context, string) ([]common.Address, error)) *TimelockExecutor_GetCancellers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetExecutors provides a mock function with given fields: ctx, address
+func (_m *TimelockExecutor) GetExecutors(ctx context.Context, address string) ([]common.Address, error) {
+	ret := _m.Called(ctx, address)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetExecutors")
+	}
+
+	var r0 []common.Address
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]common.Address, error)); ok {
+		return rf(ctx, address)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []common.Address); ok {
+		r0 = rf(ctx, address)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]common.Address)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, address)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TimelockExecutor_GetExecutors_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetExecutors'
+type TimelockExecutor_GetExecutors_Call struct {
+	*mock.Call
+}
+
+// GetExecutors is a helper method to define mock.On call
+//   - ctx context.Context
+//   - address string
+func (_e *TimelockExecutor_Expecter) GetExecutors(ctx interface{}, address interface{}) *TimelockExecutor_GetExecutors_Call {
+	return &TimelockExecutor_GetExecutors_Call{Call: _e.mock.On("GetExecutors", ctx, address)}
+}
+
+func (_c *TimelockExecutor_GetExecutors_Call) Run(run func(ctx context.Context, address string)) *TimelockExecutor_GetExecutors_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *TimelockExecutor_GetExecutors_Call) Return(_a0 []common.Address, _a1 error) *TimelockExecutor_GetExecutors_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TimelockExecutor_GetExecutors_Call) RunAndReturn(run func(context.Context, string) ([]common.Address, error)) *TimelockExecutor_GetExecutors_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetProposers provides a mock function with given fields: ctx, address
+func (_m *TimelockExecutor) GetProposers(ctx context.Context, address string) ([]common.Address, error) {
+	ret := _m.Called(ctx, address)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetProposers")
+	}
+
+	var r0 []common.Address
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]common.Address, error)); ok {
+		return rf(ctx, address)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []common.Address); ok {
+		r0 = rf(ctx, address)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]common.Address)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, address)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TimelockExecutor_GetProposers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetProposers'
+type TimelockExecutor_GetProposers_Call struct {
+	*mock.Call
+}
+
+// GetProposers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - address string
+func (_e *TimelockExecutor_Expecter) GetProposers(ctx interface{}, address interface{}) *TimelockExecutor_GetProposers_Call {
+	return &TimelockExecutor_GetProposers_Call{Call: _e.mock.On("GetProposers", ctx, address)}
+}
+
+func (_c *TimelockExecutor_GetProposers_Call) Run(run func(ctx context.Context, address string)) *TimelockExecutor_GetProposers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *TimelockExecutor_GetProposers_Call) Return(_a0 []common.Address, _a1 error) *TimelockExecutor_GetProposers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TimelockExecutor_GetProposers_Call) RunAndReturn(run func(context.Context, string) ([]common.Address, error)) *TimelockExecutor_GetProposers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// IsOperation provides a mock function with given fields: ctx, address, opID
+func (_m *TimelockExecutor) IsOperation(ctx context.Context, address string, opID [32]byte) (bool, error) {
+	ret := _m.Called(ctx, address, opID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsOperation")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, [32]byte) (bool, error)); ok {
+		return rf(ctx, address, opID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, [32]byte) bool); ok {
+		r0 = rf(ctx, address, opID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, [32]byte) error); ok {
+		r1 = rf(ctx, address, opID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TimelockExecutor_IsOperation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsOperation'
+type TimelockExecutor_IsOperation_Call struct {
+	*mock.Call
+}
+
+// IsOperation is a helper method to define mock.On call
+//   - ctx context.Context
+//   - address string
+//   - opID [32]byte
+func (_e *TimelockExecutor_Expecter) IsOperation(ctx interface{}, address interface{}, opID interface{}) *TimelockExecutor_IsOperation_Call {
+	return &TimelockExecutor_IsOperation_Call{Call: _e.mock.On("IsOperation", ctx, address, opID)}
+}
+
+func (_c *TimelockExecutor_IsOperation_Call) Run(run func(ctx context.Context, address string, opID [32]byte)) *TimelockExecutor_IsOperation_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].([32]byte))
+	})
+	return _c
+}
+
+func (_c *TimelockExecutor_IsOperation_Call) Return(_a0 bool, _a1 error) *TimelockExecutor_IsOperation_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TimelockExecutor_IsOperation_Call) RunAndReturn(run func(context.Context, string, [32]byte) (bool, error)) *TimelockExecutor_IsOperation_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// IsOperationDone provides a mock function with given fields: ctx, address, opID
+func (_m *TimelockExecutor) IsOperationDone(ctx context.Context, address string, opID [32]byte) (bool, error) {
+	ret := _m.Called(ctx, address, opID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsOperationDone")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, [32]byte) (bool, error)); ok {
+		return rf(ctx, address, opID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, [32]byte) bool); ok {
+		r0 = rf(ctx, address, opID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, [32]byte) error); ok {
+		r1 = rf(ctx, address, opID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TimelockExecutor_IsOperationDone_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsOperationDone'
+type TimelockExecutor_IsOperationDone_Call struct {
+	*mock.Call
+}
+
+// IsOperationDone is a helper method to define mock.On call
+//   - ctx context.Context
+//   - address string
+//   - opID [32]byte
+func (_e *TimelockExecutor_Expecter) IsOperationDone(ctx interface{}, address interface{}, opID interface{}) *TimelockExecutor_IsOperationDone_Call {
+	return &TimelockExecutor_IsOperationDone_Call{Call: _e.mock.On("IsOperationDone", ctx, address, opID)}
+}
+
+func (_c *TimelockExecutor_IsOperationDone_Call) Run(run func(ctx context.Context, address string, opID [32]byte)) *TimelockExecutor_IsOperationDone_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].([32]byte))
+	})
+	return _c
+}
+
+func (_c *TimelockExecutor_IsOperationDone_Call) Return(_a0 bool, _a1 error) *TimelockExecutor_IsOperationDone_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TimelockExecutor_IsOperationDone_Call) RunAndReturn(run func(context.Context, string, [32]byte) (bool, error)) *TimelockExecutor_IsOperationDone_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// IsOperationPending provides a mock function with given fields: ctx, address, opID
+func (_m *TimelockExecutor) IsOperationPending(ctx context.Context, address string, opID [32]byte) (bool, error) {
+	ret := _m.Called(ctx, address, opID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsOperationPending")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, [32]byte) (bool, error)); ok {
+		return rf(ctx, address, opID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, [32]byte) bool); ok {
+		r0 = rf(ctx, address, opID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, [32]byte) error); ok {
+		r1 = rf(ctx, address, opID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TimelockExecutor_IsOperationPending_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsOperationPending'
+type TimelockExecutor_IsOperationPending_Call struct {
+	*mock.Call
+}
+
+// IsOperationPending is a helper method to define mock.On call
+//   - ctx context.Context
+//   - address string
+//   - opID [32]byte
+func (_e *TimelockExecutor_Expecter) IsOperationPending(ctx interface{}, address interface{}, opID interface{}) *TimelockExecutor_IsOperationPending_Call {
+	return &TimelockExecutor_IsOperationPending_Call{Call: _e.mock.On("IsOperationPending", ctx, address, opID)}
+}
+
+func (_c *TimelockExecutor_IsOperationPending_Call) Run(run func(ctx context.Context, address string, opID [32]byte)) *TimelockExecutor_IsOperationPending_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].([32]byte))
+	})
+	return _c
+}
+
+func (_c *TimelockExecutor_IsOperationPending_Call) Return(_a0 bool, _a1 error) *TimelockExecutor_IsOperationPending_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TimelockExecutor_IsOperationPending_Call) RunAndReturn(run func(context.Context, string, [32]byte) (bool, error)) *TimelockExecutor_IsOperationPending_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// IsOperationReady provides a mock function with given fields: ctx, address, opID
+func (_m *TimelockExecutor) IsOperationReady(ctx context.Context, address string, opID [32]byte) (bool, error) {
+	ret := _m.Called(ctx, address, opID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsOperationReady")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, [32]byte) (bool, error)); ok {
+		return rf(ctx, address, opID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, [32]byte) bool); ok {
+		r0 = rf(ctx, address, opID)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, [32]byte) error); ok {
+		r1 = rf(ctx, address, opID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TimelockExecutor_IsOperationReady_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsOperationReady'
+type TimelockExecutor_IsOperationReady_Call struct {
+	*mock.Call
+}
+
+// IsOperationReady is a helper method to define mock.On call
+//   - ctx context.Context
+//   - address string
+//   - opID [32]byte
+func (_e *TimelockExecutor_Expecter) IsOperationReady(ctx interface{}, address interface{}, opID interface{}) *TimelockExecutor_IsOperationReady_Call {
+	return &TimelockExecutor_IsOperationReady_Call{Call: _e.mock.On("IsOperationReady", ctx, address, opID)}
+}
+
+func (_c *TimelockExecutor_IsOperationReady_Call) Run(run func(ctx context.Context, address string, opID [32]byte)) *TimelockExecutor_IsOperationReady_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].([32]byte))
+	})
+	return _c
+}
+
+func (_c *TimelockExecutor_IsOperationReady_Call) Return(_a0 bool, _a1 error) *TimelockExecutor_IsOperationReady_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TimelockExecutor_IsOperationReady_Call) RunAndReturn(run func(context.Context, string, [32]byte) (bool, error)) *TimelockExecutor_IsOperationReady_Call {
 	_c.Call.Return(run)
 	return _c
 }

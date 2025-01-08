@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"context"
 	"encoding/json"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,6 +16,7 @@ var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
 
 // TimelockExecutor is an Executor implementation for EVM chains for accessing the RBACTimelock contract
 type TimelockExecutor struct {
+	TimelockInspector
 	client ContractDeployBackend
 	auth   *bind.TransactOpts
 }
@@ -22,12 +24,15 @@ type TimelockExecutor struct {
 // NewTimelockExecutor creates a new TimelockExecutor
 func NewTimelockExecutor(client ContractDeployBackend, auth *bind.TransactOpts) *TimelockExecutor {
 	return &TimelockExecutor{
-		client: client,
-		auth:   auth,
+		TimelockInspector: *NewTimelockInspector(client),
+		client:            client,
+		auth:              auth,
 	}
 }
 
-func (t *TimelockExecutor) Execute(bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash) (string, error) {
+func (t *TimelockExecutor) Execute(
+	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
+) (string, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(timelockAddress), t.client)
 	if err != nil {
 		return "", err
@@ -48,7 +53,10 @@ func (t *TimelockExecutor) Execute(bop types.BatchOperation, timelockAddress str
 		}
 	}
 
-	tx, err := timelock.ExecuteBatch(t.auth, calls, predecessor, salt)
+	opts := *t.auth
+	opts.Context = ctx
+
+	tx, err := timelock.ExecuteBatch(&opts, calls, predecessor, salt)
 	if err != nil {
 		return "", err
 	}
