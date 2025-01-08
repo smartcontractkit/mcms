@@ -18,7 +18,7 @@ private_keys = [
 ]
 
 [solana_config]
-chain_id = "1"
+chain_id = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG"
 port = "8999"
 type = "solana"
 public_key ="9n1pyVGGo6V4mpiSDMVay5As9NurEkY283wwRk1Kto2C"
