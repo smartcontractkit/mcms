@@ -2,11 +2,12 @@ package solana
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
+	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -25,8 +26,29 @@ func NewInspector(client *rpc.Client) *Inspector {
 	return &Inspector{client: client}
 }
 
-func (e *Inspector) GetConfig(ctx context.Context, mcmAddress string) (*types.Config, error) {
-	panic("implement me")
+func (e *Inspector) GetConfig(ctx context.Context, address string) (*types.Config, error) {
+	programID, instanceID, err := ParseContractAddress(address)
+	if err != nil {
+		return nil, err
+	}
+
+	configPDA, err := FindConfigPDA(programID, instanceID)
+	if err != nil {
+		return nil, err
+	}
+
+	var chainConfig bindings.MultisigConfig
+	err = solanaCommon.GetAccountDataBorshInto(ctx, e.client, configPDA, rpc.CommitmentConfirmed, &chainConfig)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get config: %w", err)
+	}
+
+	mcmConfig, err := NewConfigTransformer().ToConfig(&chainConfig)
+	if err != nil {
+		return nil, fmt.Errorf("unable to convert chain config: %w", err)
+	}
+
+	return mcmConfig, nil
 }
 
 func (e *Inspector) GetOpCount(ctx context.Context, mcmAddress string) (uint64, error) {
@@ -74,7 +96,7 @@ func (e *Inspector) GetRootMetadata(ctx context.Context, mcmAddress string) (typ
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}
-	var newRootMetadata mcm.RootMetadata
+	var newRootMetadata bindings.RootMetadata
 	err = solanaCommon.GetAccountDataBorshInto(ctx, e.client, pda, rpc.CommitmentConfirmed, &newRootMetadata)
 	if err != nil {
 		return types.ChainMetadata{}, err
@@ -86,11 +108,13 @@ func (e *Inspector) GetRootMetadata(ctx context.Context, mcmAddress string) (typ
 	}, nil
 }
 
-func (e *Inspector) getExpiringRootAndOpCountData(ctx context.Context, expiringRootAndOpCountPDA solana.PublicKey) (mcm.ExpiringRootAndOpCount, error) {
-	var newRootAndOpCount mcm.ExpiringRootAndOpCount
-	err := solanaCommon.GetAccountDataBorshInto(ctx, e.client, expiringRootAndOpCountPDA, rpc.CommitmentConfirmed, &newRootAndOpCount)
+func (e *Inspector) getExpiringRootAndOpCountData(ctx context.Context, expiringRootAndOpCountPDA solana.PublicKey,
+) (bindings.ExpiringRootAndOpCount, error) {
+	var newRootAndOpCount bindings.ExpiringRootAndOpCount
+	err := solanaCommon.GetAccountDataBorshInto(ctx, e.client, expiringRootAndOpCountPDA, rpc.CommitmentConfirmed,
+		&newRootAndOpCount)
 	if err != nil {
-		return mcm.ExpiringRootAndOpCount{}, err
+		return bindings.ExpiringRootAndOpCount{}, err
 	}
 
 	return newRootAndOpCount, nil

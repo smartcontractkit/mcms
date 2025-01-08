@@ -18,12 +18,13 @@ private_keys = [
 ]
 
 [solana_config]
-chain_id = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG"
+chain_id = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG"  # devnet chain id; fixme: figure out how to use local solana-test-validator
 port = "8999"
 type = "solana"
 public_key ="9n1pyVGGo6V4mpiSDMVay5As9NurEkY283wwRk1Kto2C"
-# to run this locally replace with the path to the contracts directory
-#contracts_dir = "/Users/ggoh/work/mcms/e2e/artifacts/solana"
+
+[solana_config.out]
+family = "solana"
 
 [solana_config.solana_programs]
 mcm = "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX"

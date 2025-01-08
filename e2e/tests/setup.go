@@ -3,6 +3,8 @@ package e2e
 import (
 	"context"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -17,8 +19,10 @@ import (
 
 // Shared test setup
 var (
-	sharedSetup *TestSetup
-	setupOnce   sync.Once
+	sharedSetup       *TestSetup
+	setupOnce         sync.Once
+	_, fileName, _, _ = runtime.Caller(0)
+	ProjectRoot       = filepath.Dir(filepath.Dir(filepath.Dir(fileName)))
 )
 
 // Config defines the blockchain configuration
@@ -91,9 +95,8 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 		var solanaWsClient *ws.Client
 		var solanaBlockChainOutput *blockchain.Output
 		if in.SolanaChain != nil {
-			// provide the contracts dir if running in CI
-			if len(in.SolanaChain.ContractsDir) == 0 && os.Getenv("CI") == "true" {
-				in.SolanaChain.ContractsDir = "/home/runner/work/mcms/mcms/e2e/artifacts/solana"
+			if in.SolanaChain.ContractsDir == "" {
+				in.SolanaChain.ContractsDir = filepath.Join(ProjectRoot, "/e2e/artifacts/solana")
 			}
 
 			// Initialize Solana client
