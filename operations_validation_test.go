@@ -18,15 +18,18 @@ import (
 func TestValidateAdditionalFields(t *testing.T) {
 	t.Parallel()
 
-	validEVMFields := evm.AdditionalFields{
-		Value: big.NewInt(100),
-	}
+	validEVMFields := evm.AdditionalFields{Value: big.NewInt(100)}
 	validEVMFieldsJSON, err := json.Marshal(validEVMFields)
 	require.NoError(t, err)
+
 	invalidEVMFields := evm.AdditionalFields{
 		Value: big.NewInt(-100),
 	}
 	invalidEVMFieldsJSON, err := json.Marshal(invalidEVMFields)
+	require.NoError(t, err)
+
+	validSolanaFields := evm.AdditionalFields{Value: big.NewInt(2)}
+	validSolanaFieldsJSON, err := json.Marshal(validSolanaFields)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -54,6 +57,16 @@ func TestValidateAdditionalFields(t *testing.T) {
 				},
 			},
 			expectedErr: errors.New("invalid EVM value"),
+		},
+		{
+			name: "valid Solana fields",
+			operation: types.Operation{
+				ChainSelector: types.ChainSelector(cselectors.SOLANA_DEVNET.Selector),
+				Transaction: types.Transaction{
+					AdditionalFields: validSolanaFieldsJSON,
+				},
+			},
+			expectedErr: nil,
 		},
 		{
 			name: "unknown chain family",

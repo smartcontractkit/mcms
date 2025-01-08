@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e
+package e2e_evm
 
 import (
 	"context"
@@ -16,6 +16,7 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms"
+	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -32,12 +33,12 @@ type ExecutionTestSuite struct {
 	signerAddresses  []common.Address
 	auth             *bind.TransactOpts
 	timelockContract *bindings.RBACTimelock
-	TestSetup
+	e2e.TestSetup
 }
 
 // SetupSuite runs before the test suite
 func (s *ExecutionTestSuite) SetupSuite() {
-	s.TestSetup = *InitializeSharedTestSetup(s.T())
+	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 	// Get deployer's private key
 	privateKeyHex := s.Settings.PrivateKeys[0]
 	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
@@ -118,8 +119,8 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	ctx := context.Background()
 	opts := &bind.CallOpts{
 		Context:     ctx,
-		From:        s.auth.From,          // Set the "from" address (optional)
-		BlockNumber: nil,                  // Use the latest block (nil by default)
+		From:        s.auth.From, // Set the "from" address (optional)
+		BlockNumber: nil,         // Use the latest block (nil by default)
 	}
 	// Construct example transaction
 	role, err := s.timelockContract.PROPOSERROLE(&bind.CallOpts{})
@@ -243,8 +244,8 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	ctx := context.Background()
 	opts := &bind.CallOpts{
 		Context:     ctx,
-		From:        s.auth.From,          // Set the "from" address (optional)
-		BlockNumber: nil,                  // Use the latest block (nil by default)
+		From:        s.auth.From, // Set the "from" address (optional)
+		BlockNumber: nil,         // Use the latest block (nil by default)
 	}
 	// Construct example transaction
 	role, err := s.timelockContract.PROPOSERROLE(&bind.CallOpts{})

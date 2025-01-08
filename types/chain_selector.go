@@ -25,6 +25,7 @@ var (
 // supportedFamilies is a list of supported chain families that MCMS supports
 var supportedFamilies = []string{
 	cselectors.FamilyEVM,
+	cselectors.FamilySolana,
 }
 
 // GetChainSelectorFamily returns the family of the chain selector.

@@ -34,6 +34,9 @@ func ValidateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 		}
 
 		validator = fields
+	case cselectors.FamilySolana:
+		fields := evm.AdditionalFields{Value: big.NewInt(0)}
+		validator = fields
 	}
 
 	// Call Validate on the chain-specific struct
