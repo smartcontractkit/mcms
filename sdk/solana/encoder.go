@@ -7,9 +7,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	solana "github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go"
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/mcms"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -45,6 +46,10 @@ func (e *Encoder) HashOperation(
 	metadata types.ChainMetadata,
 	op types.Operation,
 ) (common.Hash, error) {
+	_, mcmName, err := ParseContractAddress(metadata.MCMAddress)
+	if err != nil {
+		return common.Hash{}, err
+	}
 	hashBytes := crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP_SOLANA"))
 	configPDA := mcms.McmConfigAddress(mcmName)
 
@@ -73,6 +78,10 @@ func (e *Encoder) HashOperation(
 // HashMetadata converts the MCMS ChainMetadata into the format expected by the Solana
 // ManyChainMultiSig contract, and hashes it.
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
+	_, mcmName, err := ParseContractAddress(metadata.MCMAddress)
+	if err != nil {
+		return common.Hash{}, err
+	}
 	hashBytes := crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_SOLANA"))
 	configPDA := mcms.McmConfigAddress(mcmName)
 

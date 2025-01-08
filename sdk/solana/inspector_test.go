@@ -1,6 +1,7 @@
 package solana
 
 import (
+	"context"
 	"fmt"
 	"testing"
 
@@ -28,7 +29,8 @@ func TestInspector_GetConfig(t *testing.T) {
 
 	chainSelector := cselectors.SOLANA_DEVNET.Selector
 	mcmAddress := "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX"
-	configPDA := configPDA(t, mcmAddress)
+	mcmName := [32]byte{1, 2, 3, 4}
+	configPDA := configPDA(t, mcmAddress, mcmName)
 
 	tests := []struct {
 		name    string
@@ -108,7 +110,7 @@ func TestInspector_GetConfig(t *testing.T) {
 			inspector, jsonRPCClient := newTestInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.GetConfig(mcmAddress)
+			got, err := inspector.GetConfig(context.Background(), mcmAddress)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)

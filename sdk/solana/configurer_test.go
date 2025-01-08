@@ -1,6 +1,7 @@
 package solana
 
 import (
+	"context"
 	"fmt"
 	"math"
 	"testing"
@@ -36,7 +37,8 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	auth, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
 	mcmAddress := solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
-	configPDA := configPDA(t, mcmAddress.String())
+	msigName := [32]byte{1, 2, 3, 4}
+	configPDA := configPDA(t, mcmAddress.String(), msigName)
 	defaultMcmConfig := &types.Config{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x1")}}
 	clearRoot := false
 
@@ -164,7 +166,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			configurer, mockJSONRPCClient := newTestConfigurer(t, auth, chainSelector)
 			tt.setup(t, configurer, mockJSONRPCClient)
 
-			got, err := configurer.SetConfig(mcmAddress.String(), tt.mcmConfig, clearRoot)
+			got, err := configurer.SetConfig(context.Background(), mcmAddress.String(), tt.mcmConfig, clearRoot)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)

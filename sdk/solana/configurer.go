@@ -36,10 +36,10 @@ func NewConfigurer(client *rpc.Client, auth solana.PrivateKey, chainSelector typ
 }
 
 // SetConfig sets the configuration for the MCM contract on the EVM chain.
-func (c *Configurer) SetConfig(mcmAddressHex string, cfg *types.Config, clearRoot bool) (string, error) {
+func (c *Configurer) SetConfig(ctx context.Context, contractID string, cfg *types.Config, clearRoot bool) (string, error) {
 	ctx, cancel := context.WithCancel(context.Background()) // FIXME: add context as a method parameter?
 	defer cancel()
-
+	programID, mcmName, err := ParseContractAddress(contractID)
 	// FIXME: reuse ExtractSetConfigInputs from sdk.evm or duplicate it?
 	groupQuorums, groupParents, signerAddresses, signerGroups, err := evmsdk.ExtractSetConfigInputs(cfg)
 	if err != nil {
@@ -52,17 +52,15 @@ func (c *Configurer) SetConfig(mcmAddressHex string, cfg *types.Config, clearRoo
 
 	// FIXME: global variables are bad, mmkay?
 	config.TestChainID = uint64(c.chainSelector)
-	config.McmProgram = solana.MustPublicKeyFromBase58(mcmAddressHex)
-	bindings.SetProgramID(config.McmProgram) // see https://github.com/gagliardetto/solana-go/issues/254
 
-	mcmAddress := solana.MustPublicKeyFromBase58(mcmAddressHex)
+	bindings.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
+
 	configPDA := mcms.McmConfigAddress(mcmName)
 	rootMetadataPDA := mcms.RootMetadataAddress(mcmName)
 	expiringRootAndOpCountPDA := mcms.ExpiringRootAndOpCountAddress(mcmName)
 	configSignersPDA := mcms.McmConfigSignersAddress(mcmName)
 
-	err = initializeMcmProgram(ctx, c.client, c.auth, uint64(c.chainSelector), mcmAddress, mcmName,
-		configPDA, rootMetadataPDA, expiringRootAndOpCountPDA)
+	err = initializeMcmProgram(ctx, c.client, c.auth, uint64(c.chainSelector), programID, mcmName, configPDA, rootMetadataPDA, expiringRootAndOpCountPDA)
 	if err != nil {
 		return "", fmt.Errorf("unable to initialize mcm program: %w", err)
 	}
@@ -73,7 +71,7 @@ func (c *Configurer) SetConfig(mcmAddressHex string, cfg *types.Config, clearRoo
 	}
 
 	setConfigInstruction := bindings.NewSetConfigInstruction(mcmName, signerGroups, groupQuorums, groupParents,
-		clearRoot, configPDA, configSignersPDA, rootMetadataPDA, expiringRootAndOpCountPDA,
+		clearRoot, configPDA, configSignersPDA,
 		c.auth.PublicKey(), solana.SystemProgramID)
 	signature, err := sendAndConfirm(ctx, c.client, c.auth, setConfigInstruction, rpc.CommitmentConfirmed)
 	if err != nil {

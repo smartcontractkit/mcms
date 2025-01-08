@@ -21,7 +21,7 @@ import (
 
 var anyContext = mock.MatchedBy(func(_ context.Context) bool { return true })
 
-func configPDA(t *testing.T, mcmAddress string) solana.PublicKey {
+func configPDA(t *testing.T, mcmAddress string, mcmName [32]byte) solana.PublicKey {
 	t.Helper()
 
 	var err error
@@ -31,7 +31,7 @@ func configPDA(t *testing.T, mcmAddress string) solana.PublicKey {
 	return mcmsUtils.McmConfigAddress(mcmName)
 }
 
-func rootMetadataPDA(t *testing.T, mcmAddress string) solana.PublicKey {
+func rootMetadataPDA(t *testing.T, mcmAddress string, mcmName [32]byte) solana.PublicKey {
 	t.Helper()
 
 	var err error
@@ -41,7 +41,7 @@ func rootMetadataPDA(t *testing.T, mcmAddress string) solana.PublicKey {
 	return mcmsUtils.RootMetadataAddress(mcmName)
 }
 
-func expiringRootAndOpCountPDA(t *testing.T, mcmAddress string) solana.PublicKey {
+func expiringRootAndOpCountPDA(t *testing.T, mcmAddress string, mcmName [32]byte) solana.PublicKey {
 	t.Helper()
 
 	var err error
