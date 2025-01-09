@@ -40,7 +40,6 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 		return "", err
 	}
 
-	// FIXME: reuse ExtractSetConfigInputs from sdk.evm or duplicate it?
 	groupQuorums, groupParents, signerAddresses, signerGroups, err := evmsdk.ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return "", fmt.Errorf("unable to extract set config inputs: %w", err)
@@ -69,12 +68,6 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 	configSignersPDA, err := FindConfigSignersPDA(programID, pdaSeed)
 	if err != nil {
 		return "", err
-	}
-
-	err = initializeMcmProgram(ctx, c.client, c.auth, uint64(c.chainSelector), programID, pdaSeed,
-		configPDA, rootMetadataPDA, expiringRootAndOpCountPDA)
-	if err != nil {
-		return "", fmt.Errorf("unable to initialize mcm program: %w", err)
 	}
 
 	err = c.preloadSigners(ctx, pdaSeed, solanaSignerAddresses(signerAddresses), configPDA, configSignersPDA)
