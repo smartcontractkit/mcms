@@ -7,8 +7,8 @@ import (
 	"math"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gagliardetto/solana-go"
-	solana "github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
