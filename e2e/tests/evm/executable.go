@@ -119,8 +119,8 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	ctx := context.Background()
 	opts := &bind.CallOpts{
 		Context:     ctx,
-		From:        s.auth.From,          // Set the "from" address (optional)
-		BlockNumber: nil,                  // Use the latest block (nil by default)
+		From:        s.auth.From, // Set the "from" address (optional)
+		BlockNumber: nil,         // Use the latest block (nil by default)
 	}
 	// Construct example transaction
 	role, err := s.timelockContract.PROPOSERROLE(&bind.CallOpts{})
@@ -244,8 +244,8 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	ctx := context.Background()
 	opts := &bind.CallOpts{
 		Context:     ctx,
-		From:        s.auth.From,          // Set the "from" address (optional)
-		BlockNumber: nil,                  // Use the latest block (nil by default)
+		From:        s.auth.From, // Set the "from" address (optional)
+		BlockNumber: nil,         // Use the latest block (nil by default)
 	}
 	// Construct example transaction
 	role, err := s.timelockContract.PROPOSERROLE(&bind.CallOpts{})

@@ -4,6 +4,8 @@
 package e2e_solana
 
 import (
+	"context"
+
 	"github.com/ethereum/go-ethereum/common"
 	solana "github.com/gagliardetto/solana-go"
 	"github.com/google/go-cmp/cmp"
@@ -14,9 +16,12 @@ import (
 
 func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 	// --- arrange ---
-	mcmAddress := s.SolanaChain.SolanaPrograms["mcm"] // FIXME: replace with runtime deployment?
+	ctx := context.Background()
+	programID, err := solana.PublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
+	s.Require().NoError(err)
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
+	mcmAddress := mcmsSolana.ContractAddress(programID, testPDASeed)
 
 	testEVMAccounts := generateTestEVMAccounts(s.T(), 14)
 	config := types.Config{
@@ -37,7 +42,7 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 					testEVMAccounts[7].Address,
 				},
 				GroupSigners: []types.Config{},
-				// FIXME: the following does not work
+				// FIXME: needs https://github.com/smartcontractkit/mcms/pull/216
 				// GroupSigners: []types.Config{
 				// 	{
 				// 		Quorum: 1,
@@ -63,14 +68,14 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 	}
 
 	// --- act ---
-	configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.chainSelector)
-	signature, err := configurer.SetConfig(mcmAddress, &config, true)
+	configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.ChainSelector)
+	signature, err := configurer.SetConfig(ctx, mcmAddress, &config, true)
 	s.Require().NoError(err)
-    _, err = solana.SignatureFromBase58(signature)
+	_, err = solana.SignatureFromBase58(signature)
 	s.Require().NoError(err)
 
 	// --- assert ---
-	gotConfig, err := mcmsSolana.NewInspector(s.SolanaClient).GetConfig(mcmAddress)
+	gotConfig, err := mcmsSolana.NewInspector(s.SolanaClient).GetConfig(ctx, mcmAddress)
 	s.Require().NoError(err)
 	s.Require().NotNil(gotConfig)
 	s.Require().Empty(cmp.Diff(config, *gotConfig))

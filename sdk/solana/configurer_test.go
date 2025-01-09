@@ -3,7 +3,6 @@ package solana
 import (
 	"context"
 	"fmt"
-	"math"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -11,7 +10,6 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
@@ -33,12 +31,10 @@ func Test_NewConfigurer(t *testing.T) {
 func TestConfigurer_SetConfig(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
 	auth, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
-	mcmAddress := solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
-	msigName := [32]byte{1, 2, 3, 4}
-	configPDA := configPDA(t, mcmAddress.String(), msigName)
 	defaultMcmConfig := &types.Config{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x1")}}
 	clearRoot := false
 
@@ -55,9 +51,6 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
 
-				accountInfo := &mcm.MultisigConfig{ChainId: uint64(chainSelector), Owner: solana.SystemProgramID}
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, accountInfo, nil)
-
 				// TODO: extract/decode payload in transaction data and test values
 				// 4 transactions: init-signers, append-signers, finalize-signers, set-config
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -73,18 +66,15 @@ func TestConfigurer_SetConfig(t *testing.T) {
 		},
 		{
 			name:      "failure: too many signers",
-			mcmConfig: &types.Config{Quorum: 1, Signers: generateSigners(t, math.MaxUint8+1)},
+			mcmConfig: &types.Config{Quorum: 1, Signers: generateSigners(t, 181)},
 			setup:     func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
-			wantErr:   "too many signers (max 255)",
+			wantErr:   "too many signers (max 180)",
 		},
 		{
 			name:      "failure: initialize signers error",
 			mcmConfig: defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
-
-				accountInfo := &mcm.MultisigConfig{ChainId: uint64(chainSelector), Owner: solana.SystemProgramID}
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, accountInfo, nil)
 
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
 					"4PQcRHQJT4cRQZooAhZMAP9ZXJsAka9DeKvXeYvXAvPpHb4Qkc5rmTSHDA2SZSh9aKPBguBx4kmcyHHbkytoAiRr",
@@ -97,9 +87,6 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmConfig: defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
-
-				accountInfo := &mcm.MultisigConfig{ChainId: uint64(chainSelector), Owner: solana.SystemProgramID}
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, accountInfo, nil)
 
 				// initialize signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -117,9 +104,6 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmConfig: defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
-
-				accountInfo := &mcm.MultisigConfig{ChainId: uint64(chainSelector), Owner: solana.SystemProgramID}
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, accountInfo, nil)
 
 				// initialize signers + append signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -139,9 +123,6 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmConfig: &types.Config{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x1")}},
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
-
-				accountInfo := &mcm.MultisigConfig{ChainId: uint64(chainSelector), Owner: solana.SystemProgramID}
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, accountInfo, nil)
 
 				// initialize signers + append signers + finalize signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -166,7 +147,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			configurer, mockJSONRPCClient := newTestConfigurer(t, auth, chainSelector)
 			tt.setup(t, configurer, mockJSONRPCClient)
 
-			got, err := configurer.SetConfig(context.Background(), mcmAddress.String(), tt.mcmConfig, clearRoot)
+			got, err := configurer.SetConfig(ctx, ContractAddress(testProgramID, testPDASeed), tt.mcmConfig, clearRoot)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)

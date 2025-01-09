@@ -27,10 +27,10 @@ func Test_NewInspector(t *testing.T) {
 func TestInspector_GetConfig(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	chainSelector := cselectors.SOLANA_DEVNET.Selector
-	mcmAddress := "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX"
-	mcmName := [32]byte{1, 2, 3, 4}
-	configPDA := configPDA(t, mcmAddress, mcmName)
+	configPDA, err := FindConfigPDA(testProgramID, testPDASeed)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name    string
@@ -43,7 +43,7 @@ func TestInspector_GetConfig(t *testing.T) {
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
 				mcmConfig := &bindings.MultisigConfig{
 					ChainId:      chainSelector,
-					MultisigName: mcmName,
+					MultisigName: testPDASeed,
 					Owner:        solana.SystemProgramID,
 					Signers: []bindings.McmSigner{
 						{EvmAddress: common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdef"), Index: 0, Group: 0},
@@ -110,7 +110,7 @@ func TestInspector_GetConfig(t *testing.T) {
 			inspector, jsonRPCClient := newTestInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.GetConfig(context.Background(), mcmAddress)
+			got, err := inspector.GetConfig(ctx, ContractAddress(testProgramID, testPDASeed))
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)

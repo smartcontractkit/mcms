@@ -12,8 +12,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
+	"github.com/gagliardetto/solana-go"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -25,13 +25,8 @@ import (
 // Constants and globals
 
 // this key matches the public key in the config.toml so it gets funded by the genesis block
-// FIXME: read from container?
 const privateKey = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
-
-var (
-	mcmAddress = config.McmProgram // FIXME: actually deploy a new contract
-	mcmName    = config.McmProgram
-)
+var testPDASeed = [32]byte{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
 
 // -----------------------------------------------------------------------------
 // EVMTestAccount is data type wrapping attributes typically needed when managing
@@ -76,8 +71,7 @@ func generateTestEVMAccounts(t *testing.T, numAccounts int) []EVMTestAccount {
 		return strings.Compare(strings.ToLower(a.HexAddress), strings.ToLower(b.HexAddress))
 	})
 
-	// for i := range testAccounts { t.Logf("Test account %d: %s", i, testAccounts[i].HexAddress) }
-	return  testAccounts
+	return testAccounts
 }
 
 // -----------------------------------------------------------------------------
@@ -86,15 +80,18 @@ type SolanaTestSuite struct {
 	suite.Suite
 	e2e.TestSetup
 
-	chainSelector types.ChainSelector
+	ChainSelector types.ChainSelector
+	MCMProgramID  solana.PublicKey
 }
 
 // SetupSuite runs before the test suite
 func (s *SolanaTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
+	s.MCMProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
 
-	chainDetails, err := chain_selectors.GetChainDetailsByChainIDAndFamily(
-		s.SolanaChain.ChainID, chain_selectors.FamilySolana)
+	details, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, cselectors.FamilySolana)
 	s.Require().NoError(err)
-	s.chainSelector = types.ChainSelector(chainDetails.ChainSelector)
+	s.ChainSelector = types.ChainSelector(details.ChainSelector)
+
+	s.SetupMCM()
 }

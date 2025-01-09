@@ -6,11 +6,16 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
+)
+
+const (
+	// FIXME: should we reuse these from sdk/evm/utils or duplicate them here?
+	SignatureVOffset    = 27
+	SignatureVThreshold = 2
 )
 
 func FindSignerPDA(programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
@@ -69,68 +74,6 @@ func validUntilBytes(validUntil uint32) []byte {
 	return vuBytes
 }
 
-// FIXME: this should probably happen right after deployment; should we move to a
-// "test" package and remove the call from SetConfig, SetRoot and Execute?
-func initializeMcmProgram(
-	ctx context.Context, client *rpc.Client, auth solana.PrivateKey,
-	chainSelector uint64, mcmAddress solana.PublicKey, mcmName [32]byte,
-	configPDA, rootMetadataPDA, expiringRootAndOpCountPDA solana.PublicKey,
-) error {
-	var configAccount bindings.MultisigConfig
-	err := solanaCommon.GetAccountDataBorshInto(ctx, client, configPDA, rpc.CommitmentConfirmed, &configAccount)
-	if err == nil {
-		// fmt.Printf("MCM ALREADY INITIALIZED\n")
-		return nil
-	}
-
-	data, err := client.GetAccountInfoWithOpts(ctx, mcmAddress, &rpc.GetAccountInfoOpts{
-		Commitment: rpc.CommitmentConfirmed,
-	})
-	if err != nil {
-		return fmt.Errorf("unable to get account info: %w", err)
-	}
-
-	var programData struct {
-		DataType uint32
-		Address  solana.PublicKey
-	}
-	err = bin.UnmarshalBorsh(&programData, data.Bytes())
-	if err != nil {
-		return fmt.Errorf("unable to unmarshal borsh: %w", err)
-	}
-
-	instruction := bindings.NewInitializeInstruction(
-		chainSelector,
-		mcmName,
-		configPDA,
-		auth.PublicKey(),
-		solana.SystemProgramID,
-		mcmAddress,
-		programData.Address,
-		rootMetadataPDA,
-		expiringRootAndOpCountPDA,
-	)
-
-	_, err = sendAndConfirm(ctx, client, auth, instruction, rpc.CommitmentConfirmed)
-	if err != nil {
-		return fmt.Errorf("unable to initialize mcm program: %w", err)
-	}
-
-	// check that the config info was indeed saved
-	err = solanaCommon.GetAccountDataBorshInto(ctx, client, configPDA, rpc.CommitmentConfirmed, &configAccount)
-	if err != nil {
-		return fmt.Errorf("unable to get account data borsh: %w", err)
-	}
-	if chainSelector != configAccount.ChainId {
-		return fmt.Errorf("chain selector does not match: %v vs %v", chainSelector, configAccount.ChainId)
-	}
-	if auth.PublicKey() != configAccount.Owner {
-		return fmt.Errorf("owner does not match: %v vs %v", auth.PublicKey(), configAccount.Owner)
-	}
-
-	return nil
-}
-
 type instructionBuilder interface {
 	ValidateAndBuild() (*bindings.Instruction, error)
 }
@@ -164,7 +107,6 @@ func sendAndConfirm[B instructionBuilder](
 	return transaction.Signatures[0].String(), nil
 }
 
-// chunkIndexes returns a slice of [2]int pairs, where each pair represents the start and end indexes of a chunk.
 func chunkIndexes(numItems int, chunkSize int) [][2]int {
 	indexes := make([][2]int, 0)
 

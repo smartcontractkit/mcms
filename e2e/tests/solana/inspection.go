@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e
+package e2e_solana
 
 import (
 	"context"
@@ -11,42 +11,14 @@ import (
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
-	"github.com/stretchr/testify/suite"
 
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
-	"github.com/smartcontractkit/mcms/types"
 )
 
-type SolanaInspectionTestSuite struct {
-	suite.Suite
-	TestSetup
-
-	ChainSelector types.ChainSelector
-	MCMProgramID  solana.PublicKey
-}
-
-var (
-	// this key matches the public key in the config.toml so it gets funded by the genesis block
-	privateKey  = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
-	testPDASeed = [32]byte{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
-)
-
-func (s *SolanaInspectionTestSuite) SetupSuite() {
-	s.TestSetup = *InitializeSharedTestSetup(s.T())
-	s.MCMProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
-
-	details, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, cselectors.FamilySolana)
-	s.Require().NoError(err)
-	s.ChainSelector = types.ChainSelector(details.ChainSelector)
-
-	s.SetupMCM()
-}
-
-func (s *SolanaInspectionTestSuite) SetupMCM() {
+func (s *SolanaTestSuite) SetupMCM() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
 
@@ -100,7 +72,7 @@ func (s *SolanaInspectionTestSuite) SetupMCM() {
 	s.Require().Equal(wallet.PublicKey(), configAccount.Owner)
 }
 
-func (s *SolanaInspectionTestSuite) TestGetOpCount() {
+func (s *SolanaTestSuite) TestGetOpCount() {
 	ctx := context.Background()
 	inspector := solanasdk.NewInspector(s.SolanaClient)
 	opCount, err := inspector.GetOpCount(ctx, solanasdk.ContractAddress(s.MCMProgramID, testPDASeed))
@@ -109,7 +81,7 @@ func (s *SolanaInspectionTestSuite) TestGetOpCount() {
 	s.Require().Equal(uint64(0), opCount, "Operation count does not match")
 }
 
-func (s *SolanaInspectionTestSuite) TestGetRoot() {
+func (s *SolanaTestSuite) TestGetRoot() {
 	ctx := context.Background()
 	inspector := solanasdk.NewInspector(s.SolanaClient)
 	root, validUntil, err := inspector.GetRoot(ctx, solanasdk.ContractAddress(s.MCMProgramID, testPDASeed))
@@ -119,7 +91,7 @@ func (s *SolanaInspectionTestSuite) TestGetRoot() {
 	s.Require().Equal(uint32(0), validUntil, "ValidUntil does not match")
 }
 
-func (s *SolanaInspectionTestSuite) TestGetRootMetadata() {
+func (s *SolanaTestSuite) TestGetRootMetadata() {
 	ctx := context.Background()
 	inspector := solanasdk.NewInspector(s.SolanaClient)
 	address := solanasdk.ContractAddress(s.MCMProgramID, testPDASeed)
