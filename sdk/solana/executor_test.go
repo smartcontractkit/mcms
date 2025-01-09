@@ -2,320 +2,223 @@ package solana
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gagliardetto/solana-go"
+	solana "github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/google/go-cmp/cmp"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var McmProgram = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
-var McmName = "test-mcms"
-
-const dummyPrivateKey = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
-
 func TestNewExecutor(t *testing.T) {
-	type args struct {
-		client  *rpc.Client
-		auth    solana.PrivateKey
-		encoder *Encoder
-	}
-	tests := []struct {
-		name string
-		args args
-		want *Executor
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		assert.Equalf(t, tt.want, NewExecutor(tt.args.client, tt.args.auth, tt.args.encoder), "%q. NewExecutor()", tt.name)
-	}
+	t.Parallel()
+
+	client := &rpc.Client{}
+	auth := solana.MustPrivateKeyFromBase58("DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc")
+	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
+	encoder := NewEncoder(chainSelector, 1, false)
+
+	executor := NewExecutor(client, auth, encoder)
+
+	require.NotNil(t, executor)
 }
 
 func TestExecutor_ExecuteOperation(t *testing.T) {
+	t.Parallel()
+	// TODO
+}
 
-	type args struct {
-		metadata types.ChainMetadata
-		nonce    uint32
-		proof    []common.Hash
-		op       types.Operation
-	}
-	selector := cselectors.SOLANA_DEVNET.Selector
-	auth, err := solana.PrivateKeyFromBase58(dummyPrivateKey)
-	require.NoError(t, err)
-	contractID := fmt.Sprintf("%s.%s", McmProgram.String(), McmName)
-	data := []byte{1, 2, 3, 4}
+func TestExecutor_SetRoot(t *testing.T) {
+	t.Parallel()
+
 	ctx := context.Background()
-	accounts := []solana.AccountMeta{}
-	tx, err := NewTransaction(McmProgram.String(), data, accounts, "solana-testing", []string{})
+	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
+	auth, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
-	tests := []struct {
-		name string
-		args args
 
-		mockSetup func(*mocks.JSONRPCClient)
-		want      string
-		assertion assert.ErrorAssertionFunc
-		wantErr   error
+	defaultMetadata := types.ChainMetadata{StartingOpCount: 100, MCMAddress: ContractAddress(testProgramID, testPDASeed)}
+	defaultProof := []common.Hash{common.HexToHash("0x1"), common.HexToHash("0x2")}
+	defaultRoot := common.HexToHash("0x1234")
+	defaultValidUntil := uint32(2082758400)
+	defaultSignatures := []types.Signature{
+		{R: common.HexToHash("0x3"), S: common.HexToHash("0x4"), V: 27},
+		{R: common.HexToHash("0x5"), S: common.HexToHash("0x6"), V: 27},
+	}
+
+	tests := []struct {
+		name       string
+		metadata   types.ChainMetadata
+		proof      []common.Hash
+		root       [32]byte
+		validUntil uint32
+		signatures []types.Signature
+		setup      func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient)
+		want       string
+		wantErr    string
 	}{
 		{
-			name: "success: ExecuteOperation",
-			args: args{
-				metadata: types.ChainMetadata{
-					MCMAddress: contractID,
-				},
-				nonce: 0,
-				proof: []common.Hash{
-					common.HexToHash("0x1"),
-				},
-				op: types.Operation{
-					Transaction:   tx,
-					ChainSelector: types.ChainSelector(selector),
-				},
-			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
-				mockSolanaTransaction(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", nil)
-			},
-			want:      "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
-			assertion: assert.NoError,
-		},
-		{
-			name: "error: invalid contract ID provided",
-			args: args{
-				metadata: types.ChainMetadata{
-					MCMAddress: "bad id",
-				},
-				nonce: 0,
-				proof: []common.Hash{
-					common.HexToHash("0x1"),
-				},
-				op: types.Operation{
-					Transaction:   tx,
-					ChainSelector: types.ChainSelector(selector),
-				},
-			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
+			name:       "success",
+			metadata:   defaultMetadata,
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: defaultSignatures,
+			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
+				t.Helper()
 
+				// TODO: extract/decode payload in transaction data and test values
+				// 4 transactions: init-signatures, append-signatures, finalize-signatures, set-root
+				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
+					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil)
+				mockSolanaTransaction(t, mockJSONRPCClient, 51, 61,
+					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr", nil)
+				mockSolanaTransaction(t, mockJSONRPCClient, 52, 62,
+					"GHR9z23oUJnS2aV5HZ9zEpUpEe4qoBLFMzuBjNA3xJcQuc6JjDmuUq2VVmxqwPeFzfs8V7nfjqc1wRviEb82bRu", nil)
+				mockSolanaTransaction(t, mockJSONRPCClient, 53, 63,
+					"oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo", nil)
 			},
-			want:    "",
-			wantErr: errors.New("invalid contract ID provided"),
-			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.EqualError(t, err, "invalid solana contract address format: \"bad id\"")
-			},
+			want: "oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo",
 		},
 		{
-			name: "error: ix send failure",
-			args: args{
-				metadata: types.ChainMetadata{
-					MCMAddress: contractID,
-				},
-				nonce: 0,
-				proof: []common.Hash{
-					common.HexToHash("0x1"),
-				},
-				op: types.Operation{
-					Transaction:   tx,
-					ChainSelector: types.ChainSelector(selector),
-				},
-			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
-				mockSolanaTransaction(t,
-					m,
-					20,
-					5,
-					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
-					errors.New("ix send failure"))
-			},
-			want:    "",
-			wantErr: errors.New("invalid contract ID provided"),
-			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.EqualError(t, err, "unable to call execute operation instruction: unable to send instruction: ix send failure")
-			},
+			name:       "failure: invalid address",
+			metadata:   types.ChainMetadata{StartingOpCount: 100, MCMAddress: "invalid-mcm-address"},
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: defaultSignatures,
+			setup:      func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
+			wantErr:    "invalid solana contract address format: \"invalid-mcm-address\"",
 		},
 		{
-			name: "error: invalid additional fields",
-			args: args{
-				metadata: types.ChainMetadata{
-					MCMAddress: contractID,
-				},
-				nonce: 0,
-				proof: []common.Hash{
-					common.HexToHash("0x1"),
-				},
-				op: types.Operation{
-					Transaction: types.Transaction{
-						AdditionalFields: []byte("bad data"),
-					},
-					ChainSelector: types.ChainSelector(selector),
-				},
-			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
+			name:       "failure: too many signatures",
+			metadata:   defaultMetadata,
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: generateSignatures(t, 256),
+			setup:      func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
+			wantErr:    "too many signatures (max 255)",
+		},
+		{
+			name:       "failure: initialize signatures error",
+			metadata:   defaultMetadata,
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: defaultSignatures,
+			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
+				t.Helper()
 
+				// init-signatures
+				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
+					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v",
+					fmt.Errorf("initialize signatures error"))
 			},
-			want:    "",
-			wantErr: errors.New("invalid contract ID provided"),
-			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
-				return assert.EqualError(t, err, "unable to unmarshal additional fields: invalid character 'b' looking for beginning of value")
+			wantErr: "unable to initialize signatures: unable to send instruction: initialize signatures error",
+		},
+		{
+			name:       "failure: append signatures error",
+			metadata:   defaultMetadata,
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: defaultSignatures,
+			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
+				t.Helper()
+
+				// init-signatures
+				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
+					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil)
+
+				// append-signatures
+				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
+					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr",
+					fmt.Errorf("append signatures error"))
 			},
+			wantErr: "unable to append signatures (0): unable to send instruction: append signatures error",
+		},
+		{
+			name:       "failure: finalize signatures error",
+			metadata:   defaultMetadata,
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: defaultSignatures,
+			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
+				t.Helper()
+
+				// init-signatures + append-signatures
+				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
+					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil)
+				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
+					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr", nil)
+
+				// finalize-signatures
+				mockSolanaTransaction(t, mockJSONRPCClient, 52, 62,
+					"GHR9z23oUJnS2aV5HZ9zEpUpEe4qoBLFMzuBjNA3xJcQuc6JjDmuUq2VVmxqwPeFzfs8V7nfjqc1wRviEb82bRu",
+					fmt.Errorf("finalize signatures error"))
+			},
+			wantErr: "unable to finalize signatures: unable to send instruction: finalize signatures error",
+		},
+		{
+			name:       "failure: set-root error",
+			metadata:   defaultMetadata,
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: defaultSignatures,
+			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
+				t.Helper()
+
+				// init-signatures + append-signatures + finalize-signatures
+				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
+					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil)
+				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
+					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr", nil)
+				mockSolanaTransaction(t, mockJSONRPCClient, 52, 62,
+					"GHR9z23oUJnS2aV5HZ9zEpUpEe4qoBLFMzuBjNA3xJcQuc6JjDmuUq2VVmxqwPeFzfs8V7nfjqc1wRviEb82bRu", nil)
+
+				// set-root
+				mockSolanaTransaction(t, mockJSONRPCClient, 53, 63,
+					"oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo",
+					fmt.Errorf("set root error"))
+			},
+			wantErr: "unable to set root: unable to send instruction: set root error",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			jsonRPCClient := mocks.NewJSONRPCClient(t)
-			encoder := NewEncoder(types.ChainSelector(selector), uint64(tt.args.nonce), false)
-			client := rpc.NewWithCustomRPCClient(jsonRPCClient)
-			tt.mockSetup(jsonRPCClient)
-			e := NewExecutor(client, auth, encoder)
+			t.Parallel()
 
-			got, err := e.ExecuteOperation(ctx, tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)
-			if tt.wantErr != nil {
-				tt.assertion(t, err, fmt.Sprintf("%q. Executor.ExecuteOperation()", tt.name))
+			executor, mockJSONRPCClient := newTestExecutor(t, auth, chainSelector)
+			tt.setup(t, executor, mockJSONRPCClient)
+
+			got, err := executor.SetRoot(ctx, tt.metadata, tt.proof, tt.root, tt.validUntil, tt.signatures)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Empty(t, cmp.Diff(tt.want, got))
 			} else {
-				assert.NoError(t, err)
+				require.ErrorContains(t, err, tt.wantErr)
 			}
-			assert.Equalf(t, tt.want, got, "%q. Executor.ExecuteOperation()", tt.name)
 		})
-
 	}
 }
 
-func TestExecutor_SetRoot(t *testing.T) {
-	type fields struct {
-		Encoder   *Encoder
-		Inspector *Inspector
-		client    *rpc.Client
-		auth      solana.PrivateKey
-	}
-	type args struct {
-		metadata         types.ChainMetadata
-		proof            []common.Hash
-		root             [32]byte
-		validUntil       uint32
-		sortedSignatures []types.Signature
-	}
-	tests := []struct {
-		name      string
-		fields    fields
-		args      args
-		want      string
-		assertion assert.ErrorAssertionFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		e := &Executor{
-			Encoder:   tt.fields.Encoder,
-			Inspector: tt.fields.Inspector,
-			client:    tt.fields.client,
-			auth:      tt.fields.auth,
-		}
-		got, err := e.SetRoot(tt.args.metadata, tt.args.proof, tt.args.root, tt.args.validUntil, tt.args.sortedSignatures)
-		tt.assertion(t, err, fmt.Sprintf("%q. Executor.SetRoot()", tt.name))
-		assert.Equalf(t, tt.want, got, "%q. Executor.SetRoot()", tt.name)
-	}
-}
+// ----- helpers -----
 
-func TestExecutor_preloadSignatures(t *testing.T) {
-	type fields struct {
-		Encoder   *Encoder
-		Inspector *Inspector
-		client    *rpc.Client
-		auth      solana.PrivateKey
-	}
-	type args struct {
-		ctx              context.Context
-		mcmName          [32]byte
-		root             [32]byte
-		validUntil       uint32
-		sortedSignatures []types.Signature
-		signaturesPDA    solana.PublicKey
-	}
-	tests := []struct {
-		name      string
-		fields    fields
-		args      args
-		assertion assert.ErrorAssertionFunc
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		e := &Executor{
-			Encoder:   tt.fields.Encoder,
-			Inspector: tt.fields.Inspector,
-			client:    tt.fields.client,
-			auth:      tt.fields.auth,
-		}
-		tt.assertion(t, e.preloadSignatures(tt.args.ctx, tt.args.mcmName, tt.args.root, tt.args.validUntil, tt.args.sortedSignatures, tt.args.signaturesPDA), fmt.Sprintf("%q. Executor.preloadSignatures()", tt.name))
-	}
-}
+func newTestExecutor(t *testing.T, auth solana.PrivateKey, chainSelector types.ChainSelector) (*Executor, *mocks.JSONRPCClient) {
+	t.Helper()
 
-func TestExecutor_solanaMetadata(t *testing.T) {
-	type fields struct {
-		Encoder   *Encoder
-		Inspector *Inspector
-		client    *rpc.Client
-		auth      solana.PrivateKey
-	}
-	type args struct {
-		metadata  types.ChainMetadata
-		configPDA [32]byte
-	}
-	tests := []struct {
-		name   string
-		fields fields
-		args   args
-		want   mcm.RootMetadataInput
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		e := &Executor{
-			Encoder:   tt.fields.Encoder,
-			Inspector: tt.fields.Inspector,
-			client:    tt.fields.client,
-			auth:      tt.fields.auth,
-		}
-		assert.Equalf(t, tt.want, e.solanaMetadata(tt.args.metadata, tt.args.configPDA), "%q. Executor.solanaMetadata()", tt.name)
-	}
-}
+	mockJSONRPCClient := mocks.NewJSONRPCClient(t)
+	client := rpc.NewWithCustomRPCClient(mockJSONRPCClient)
+	encoder := NewEncoder(chainSelector, 1, false)
 
-func Test_solanaProof(t *testing.T) {
-	type args struct {
-		proof []common.Hash
-	}
-	tests := []struct {
-		name string
-		args args
-		want [][32]uint8
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		assert.Equalf(t, tt.want, solanaProof(tt.args.proof), "%q. solanaProof()", tt.name)
-	}
-}
-
-func Test_solanaSignatures(t *testing.T) {
-	type args struct {
-		signatures []types.Signature
-	}
-	tests := []struct {
-		name string
-		args args
-		want []mcm.Signature
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		assert.Equalf(t, tt.want, solanaSignatures(tt.args.signatures), "%q. solanaSignatures()", tt.name)
-	}
+	return NewExecutor(client, auth, encoder), mockJSONRPCClient
 }

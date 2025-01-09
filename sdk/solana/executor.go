@@ -8,22 +8,21 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
+	solana "github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/mcms"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-const (
-	// FIXME: should we reuse these from sdk/evm/utils or duplicate them here?
-	SignatureVOffset    = 27
-	SignatureVThreshold = 2
-)
+var _ sdk.Executor = (*Executor)(nil)
 
-// Executor is an Executor implementation for EVM chains, allowing for the execution of operations on the MCMS contract
+// Executor is an Executor implementation for Solana chains, allowing for the execution of
+// operations on the MCMS contract
 type Executor struct {
 	*Encoder
 	*Inspector
@@ -31,7 +30,7 @@ type Executor struct {
 	auth   solana.PrivateKey
 }
 
-// NewExecutor creates a new Executor for EVM chains
+// NewExecutor creates a new Executor for Solana chains
 func NewExecutor(client *rpc.Client, auth solana.PrivateKey, encoder *Encoder) *Executor {
 	return &Executor{
 		Encoder:   encoder,
@@ -96,49 +95,55 @@ func (e *Executor) ExecuteOperation(
 }
 
 func (e *Executor) SetRoot(
+	ctx context.Context,
 	metadata types.ChainMetadata,
 	proof []common.Hash,
 	root [32]byte,
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (string, error) {
-	programID, msigName, err := ParseContractAddress(metadata.MCMAddress)
+	programID, pdaSeed, err := ParseContractAddress(metadata.MCMAddress)
 	if err != nil {
 		return "", err
 	}
-	ctx, cancel := context.WithCancel(context.Background()) // FIXME: add context as a method parameter?
-	defer cancel()
 
 	if len(sortedSignatures) > math.MaxUint8 {
 		return "", fmt.Errorf("too many signatures (max %d)", math.MaxUint8)
 	}
 
 	// FIXME: global variables are bad, mmkay?
-	config.TestChainID = uint64(e.ChainSelector)
+	// see https://github.com/gagliardetto/solana-go/issues/254
+	mcm.SetProgramID(programID)
 
-	mcm.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
-
-	mcmAddress := solana.MustPublicKeyFromBase58(metadata.MCMAddress)
-	configPDA := mcms.McmConfigAddress(msigName)
-	rootMetadataPDA := mcms.RootMetadataAddress(msigName)
-	expiringRootAndOpCountPDA := mcms.ExpiringRootAndOpCountAddress(msigName)
-	signaturesPDA := mcms.RootSignaturesAddress(msigName, root, validUntil)
-	seenSignedHashesPDA := mcms.SeenSignedHashesAddress(msigName, root, validUntil)
-
-	err = initializeMcmProgram(ctx, e.client, e.auth, uint64(e.ChainSelector), mcmAddress, msigName,
-		configPDA, rootMetadataPDA, expiringRootAndOpCountPDA)
+	configPDA, err := FindConfigPDA(programID, pdaSeed)
 	if err != nil {
-		return "", fmt.Errorf("unable to initialize mcm program: %w", err)
+		return "", err
+	}
+	rootMetadataPDA, err := FindRootMetadataPDA(programID, pdaSeed)
+	if err != nil {
+		return "", err
+	}
+	expiringRootAndOpCountPDA, err := FindExpiringRootAndOpCountPDA(programID, pdaSeed)
+	if err != nil {
+		return "", err
+	}
+	rootSignaturesPDA, err := FindRootSignaturesPDA(programID, pdaSeed, root, validUntil)
+	if err != nil {
+		return "", err
+	}
+	seenSignedHashesPDA, err := FindSeenSignedHashesPDA(programID, pdaSeed, root, validUntil)
+	if err != nil {
+		return "", err
 	}
 
-	err = e.preloadSignatures(ctx, msigName, root, validUntil, sortedSignatures, signaturesPDA)
+	err = e.preloadSignatures(ctx, pdaSeed, root, validUntil, sortedSignatures, rootSignaturesPDA)
 	if err != nil {
-		return "", fmt.Errorf("unable to preload signatures: %w", err)
+		return "", err
 	}
 
-	setRootInstruction := mcm.NewSetRootInstruction(msigName, root, validUntil,
+	setRootInstruction := mcm.NewSetRootInstruction(pdaSeed, root, validUntil,
 		e.solanaMetadata(metadata, configPDA), solanaProof(proof),
-		signaturesPDA, rootMetadataPDA, seenSignedHashesPDA, expiringRootAndOpCountPDA, configPDA,
+		rootSignaturesPDA, rootMetadataPDA, seenSignedHashesPDA, expiringRootAndOpCountPDA, configPDA,
 		e.auth.PublicKey(), solana.SystemProgramID)
 	signature, err := sendAndConfirm(ctx, e.client, e.auth, setRootInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
@@ -157,7 +162,7 @@ func (e *Executor) preloadSignatures(
 	signaturesPDA solana.PublicKey,
 ) error {
 	initSignaturesInstruction := mcm.NewInitSignaturesInstruction(mcmName, root, validUntil,
-		uint8(len(sortedSignatures)), signaturesPDA, e.auth.PublicKey(), solana.SystemProgramID)
+		uint8(len(sortedSignatures)), signaturesPDA, e.auth.PublicKey(), solana.SystemProgramID) //nolint:gosec
 	_, err := sendAndConfirm(ctx, e.client, e.auth, initSignaturesInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return fmt.Errorf("unable to initialize signatures: %w", err)
@@ -168,9 +173,9 @@ func (e *Executor) preloadSignatures(
 	for i, chunkIndex := range chunkIndexes(len(solanaSignatures), config.MaxAppendSignatureBatchSize) {
 		appendSignaturesInstruction := mcm.NewAppendSignaturesInstruction(mcmName, root, validUntil,
 			solanaSignatures[chunkIndex[0]:chunkIndex[1]], signaturesPDA, e.auth.PublicKey())
-		_, err := sendAndConfirm(ctx, e.client, e.auth, appendSignaturesInstruction, rpc.CommitmentConfirmed)
-		if err != nil {
-			return fmt.Errorf("unable to append signatures (%d): %w", i, err)
+		_, serr := sendAndConfirm(ctx, e.client, e.auth, appendSignaturesInstruction, rpc.CommitmentConfirmed)
+		if serr != nil {
+			return fmt.Errorf("unable to append signatures (%d): %w", i, serr)
 		}
 	}
 
@@ -199,6 +204,7 @@ func solanaProof(proof []common.Hash) [][32]uint8 {
 	for i := range proof {
 		sproof[i] = proof[i]
 	}
+
 	return sproof
 }
 
@@ -212,5 +218,6 @@ func solanaSignatures(signatures []types.Signature) []mcm.Signature {
 
 		solanaSignatures[i] = mcm.Signature{R: signature.R, S: signature.S, V: v}
 	}
+
 	return solanaSignatures
 }

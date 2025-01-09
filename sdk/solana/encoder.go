@@ -3,13 +3,12 @@ package solana
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/gagliardetto/solana-go"
-
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/mcms"
+	solana "github.com/gagliardetto/solana-go"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -46,16 +45,25 @@ func (e *Encoder) HashOperation(
 	metadata types.ChainMetadata,
 	op types.Operation,
 ) (common.Hash, error) {
-	_, mcmName, err := ParseContractAddress(metadata.MCMAddress)
+	hashBytes := crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP_SOLANA"))
+
+	programID, pdaSeed, err := ParseContractAddress(metadata.MCMAddress)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("unable to parse solana contract address: %w", err)
+	}
+
+	configPDA, err := FindConfigPDA(programID, pdaSeed)
 	if err != nil {
 		return common.Hash{}, err
 	}
-	hashBytes := crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP_SOLANA"))
-	configPDA := mcms.McmConfigAddress(mcmName)
 
-	toAddress, err := solana.HashFromBase58(op.Transaction.To)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("unable to get hash from base58 To address: %v", err)
+	toProgramID, _, err := ParseContractAddress(op.Transaction.To)
+	if errors.Is(err, ErrInvalidContractAddressFormat) {
+		var pkerr error
+		toProgramID, pkerr = solana.PublicKeyFromBase58(op.Transaction.To)
+		if pkerr != nil {
+			return common.Hash{}, fmt.Errorf("unable to get hash from base58 To address: %w", err)
+		}
 	}
 
 	buffers := [][]byte{
@@ -63,7 +71,7 @@ func (e *Encoder) HashOperation(
 		numToU64LePaddedEncoding(uint64(e.ChainSelector)),
 		configPDA[:],
 		numToU64LePaddedEncoding(uint64(opCount)),
-		toAddress[:],
+		toProgramID[:],
 		numToU64LePaddedEncoding(uint64(len(op.Transaction.Data))),
 		op.Transaction.Data,
 		numToU64LePaddedEncoding(uint64(len(e.RemainingAccounts))),
@@ -78,12 +86,17 @@ func (e *Encoder) HashOperation(
 // HashMetadata converts the MCMS ChainMetadata into the format expected by the Solana
 // ManyChainMultiSig contract, and hashes it.
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
-	_, mcmName, err := ParseContractAddress(metadata.MCMAddress)
+	hashBytes := crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_SOLANA"))
+
+	programID, pdaSeed, err := ParseContractAddress(metadata.MCMAddress)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("unable to parse solana contract address: %w", err)
+	}
+
+	configPDA, err := FindConfigPDA(programID, pdaSeed)
 	if err != nil {
 		return common.Hash{}, err
 	}
-	hashBytes := crypto.Keccak256Hash([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_SOLANA"))
-	configPDA := mcms.McmConfigAddress(mcmName)
 
 	buffers := [][]byte{
 		hashBytes[:],
@@ -103,16 +116,21 @@ func calculateHash(buffers [][]byte) [32]byte {
 }
 
 func numToU64LePaddedEncoding(n uint64) []byte {
-	b := make([]byte, 32)
-	binary.LittleEndian.PutUint64(b[24:], n)
+	const numBytes = 32
+	const offset = 24
+	b := make([]byte, numBytes)
+	binary.LittleEndian.PutUint64(b[offset:], n)
+
 	return b
 }
 
 func boolToPaddedEncoding(b bool) []byte {
-	result := make([]byte, 32)
+	const numBytes = 32
+	result := make([]byte, numBytes)
 	if b {
-		result[31] = 1
+		result[numBytes-1] = 1
 	}
+
 	return result
 }
 
@@ -125,5 +143,6 @@ func serializeAccountMeta(a *solana.AccountMeta) []byte {
 		flags |= 0b01
 	}
 	result := append(a.PublicKey.Bytes(), flags)
+
 	return result
 }
