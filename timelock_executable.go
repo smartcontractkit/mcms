@@ -13,17 +13,17 @@ import (
 // TimelockExecutable is a struct that represents a proposal that can be executed
 // with a timelock. It contains all the information required to call executeBatch
 // for scheduled calls
-type TimelockExecutable struct {
+type TimelockExecutable[T any] struct {
 	proposal     *TimelockProposal
 	predecessors []common.Hash
-	executors    map[types.ChainSelector]sdk.TimelockExecutor
+	executors    map[types.ChainSelector]sdk.TimelockExecutor[T]
 }
 
 // NewTimelockExecutable creates a new TimelockExecutable from a proposal and a map of executors.
-func NewTimelockExecutable(
+func NewTimelockExecutable[T any](
 	proposal *TimelockProposal,
-	executors map[types.ChainSelector]sdk.TimelockExecutor,
-) (*TimelockExecutable, error) {
+	executors map[types.ChainSelector]sdk.TimelockExecutor[T],
+) (*TimelockExecutable[T], error) {
 	if proposal.Action != types.TimelockActionSchedule {
 		return nil, fmt.Errorf("TimelockExecutable can only be created from a TimelockProposal with action 'schedule'")
 	}
@@ -33,7 +33,7 @@ func NewTimelockExecutable(
 		return nil, err
 	}
 
-	return &TimelockExecutable{
+	return &TimelockExecutable[T]{
 		proposal:     proposal,
 		executors:    executors,
 		predecessors: predecessors,
@@ -45,7 +45,7 @@ func NewTimelockExecutable(
 // Note: there is some edge cases here where some operations are ready
 // but others are not. This is not handled here. Regardless, execution
 // should not begin until all operations are ready.
-func (t *TimelockExecutable) IsReady(ctx context.Context) error {
+func (t *TimelockExecutable[T]) IsReady(ctx context.Context) error {
 	for i, op := range t.proposal.Operations {
 		cs := op.ChainSelector
 		timelock := t.proposal.TimelockAddresses[cs]
@@ -62,7 +62,7 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 	return nil
 }
 
-func (t *TimelockExecutable) Execute(ctx context.Context, index int) (string, error) {
+func (t *TimelockExecutable[T]) Execute(ctx context.Context, index int) (string, error) {
 	op := t.proposal.Operations[index]
 	return t.executors[op.ChainSelector].Execute(
 		ctx,

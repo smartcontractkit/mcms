@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
+var _ sdk.TimelockExecutor[common.Address] = (*TimelockExecutor)(nil)
 
 // TimelockExecutor is an Executor implementation for EVM chains for accessing the RBACTimelock contract
 type TimelockExecutor struct {

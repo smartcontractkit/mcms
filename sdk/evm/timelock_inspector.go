@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
-var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
+var _ sdk.TimelockInspector[common.Address] = (*TimelockInspector)(nil)
 
 // TimelockInspector is an Inspector implementation for EVM chains for accessing the RBACTimelock contract
 type TimelockInspector struct {

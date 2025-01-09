@@ -34,7 +34,7 @@ func Test_NewTimelockExecutable(t *testing.T) {
 	t.Parallel()
 
 	var (
-		executor = mocks.NewTimelockExecutor(t)
+		executor = mocks.NewTimelockExecutor[common.Address](t)
 
 		chainMetadata = map[types.ChainSelector]types.ChainMetadata{
 			chaintest.Chain1Selector: {
@@ -70,7 +70,7 @@ func Test_NewTimelockExecutable(t *testing.T) {
 	tests := []struct {
 		name          string
 		giveProposal  *TimelockProposal
-		giveExecutors map[types.ChainSelector]sdk.TimelockExecutor
+		giveExecutors map[types.ChainSelector]sdk.TimelockExecutor[common.Address]
 		wantErr       bool
 		wantErrMsg    string
 	}{
@@ -91,7 +91,7 @@ func Test_NewTimelockExecutable(t *testing.T) {
 				TimelockAddresses: timelockAddresses,
 				Operations:        batchOps,
 			},
-			giveExecutors: map[types.ChainSelector]sdk.TimelockExecutor{
+			giveExecutors: map[types.ChainSelector]sdk.TimelockExecutor[common.Address]{
 				types.ChainSelector(1): executor,
 			},
 			wantErr:    false,
@@ -310,7 +310,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	require.Equal(t, uint64(1), newOpCount.Uint64())
 
 	// Construct executors
-	tExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
+	tExecutors := map[types.ChainSelector]sdk.TimelockExecutor[common.Address]{
 		chaintest.Chain1Selector: evm.NewTimelockExecutor(
 			sim.Backend.Client(),
 			sim.Signers[0].NewTransactOpts(t),
