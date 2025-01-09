@@ -70,6 +70,27 @@ func Test_FindSeenSignedHashesPDA(t *testing.T) {
 	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("FxPYSHG9tm35T43zpAuVDdNY8uMPQfaaVBftxVrLyXVq")))
 }
 
+func Test_FindTimelockConfigPDA(t *testing.T) {
+	t.Parallel()
+	pda, err := FindTimelockConfigPDA(testProgramID, testPDASeed)
+	require.NoError(t, err)
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("27X4nnwKaRk93RamRXQSfNyuB1pBSSK1hf2ULUeL1VCp")))
+}
+
+func Test_FindTimelockOperationPDA(t *testing.T) {
+	t.Parallel()
+	pda, err := FindTimelockOperationPDA(testProgramID, testPDASeed)
+	require.NoError(t, err)
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("8TL4xwjpntLQXeFbADMPnooDofGUwocc4ikHAJb41Fcm")))
+}
+
+func Test_FindTimelockSignerPDA(t *testing.T) {
+	t.Parallel()
+	pda, err := FindTimelockSignerPDA(testProgramID, testPDASeed)
+	require.NoError(t, err)
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("HAQoFdsmxUFgAfBb6u9AXvg9q1nJthWb7xMYWpvzFJfg")))
+}
+
 func Test_sendAndConfirm(t *testing.T) {
 	t.Parallel()
 
