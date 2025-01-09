@@ -23,7 +23,11 @@ func NewTransaction(
 	accounts []solana.AccountMeta,
 	contractType string,
 	tags []string,
-) types.Transaction {
+) (types.Transaction, error) {
+	_, err := solana.PublicKeyFromBase58(contractID)
+	if err != nil {
+		return types.Transaction{}, err
+	}
 	additionalFields := AdditionalFields{
 		Accounts: accounts,
 	}
@@ -41,5 +45,5 @@ func NewTransaction(
 			ContractType: contractType,
 			Tags:         tags,
 		},
-	}
+	}, nil
 }

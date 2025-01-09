@@ -2,6 +2,7 @@ package solana
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -53,8 +54,10 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	require.NoError(t, err)
 	contractID := fmt.Sprintf("%s.%s", McmProgram.String(), McmName)
 	data := []byte{1, 2, 3, 4}
+	ctx := context.Background()
 	accounts := []solana.AccountMeta{}
-	tx := NewTransaction(McmProgram.String(), data, accounts, "solana-testing", []string{})
+	tx, err := NewTransaction(McmProgram.String(), data, accounts, "solana-testing", []string{})
+	require.NoError(t, err)
 	tests := []struct {
 		name string
 		args args
@@ -65,7 +68,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 		wantErr   error
 	}{
 		{
-			name: "Test ExecuteOperation",
+			name: "success: ExecuteOperation",
 			args: args{
 				metadata: types.ChainMetadata{
 					MCMAddress: contractID,
@@ -85,22 +88,103 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			want:      "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
 			assertion: assert.NoError,
 		},
+		{
+			name: "error: invalid contract ID provided",
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress: "bad id",
+				},
+				nonce: 0,
+				proof: []common.Hash{
+					common.HexToHash("0x1"),
+				},
+				op: types.Operation{
+					Transaction:   tx,
+					ChainSelector: types.ChainSelector(selector),
+				},
+			},
+			mockSetup: func(m *mocks.JSONRPCClient) {
+
+			},
+			want:    "",
+			wantErr: errors.New("invalid contract ID provided"),
+			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.EqualError(t, err, "invalid solana contract address format: \"bad id\"")
+			},
+		},
+		{
+			name: "error: ix send failure",
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress: contractID,
+				},
+				nonce: 0,
+				proof: []common.Hash{
+					common.HexToHash("0x1"),
+				},
+				op: types.Operation{
+					Transaction:   tx,
+					ChainSelector: types.ChainSelector(selector),
+				},
+			},
+			mockSetup: func(m *mocks.JSONRPCClient) {
+				mockSolanaTransaction(t,
+					m,
+					20,
+					5,
+					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
+					errors.New("ix send failure"))
+			},
+			want:    "",
+			wantErr: errors.New("invalid contract ID provided"),
+			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.EqualError(t, err, "unable to call execute operation instruction: unable to send instruction: ix send failure")
+			},
+		},
+		{
+			name: "error: invalid additional fields",
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress: contractID,
+				},
+				nonce: 0,
+				proof: []common.Hash{
+					common.HexToHash("0x1"),
+				},
+				op: types.Operation{
+					Transaction: types.Transaction{
+						AdditionalFields: []byte("bad data"),
+					},
+					ChainSelector: types.ChainSelector(selector),
+				},
+			},
+			mockSetup: func(m *mocks.JSONRPCClient) {
+
+			},
+			want:    "",
+			wantErr: errors.New("invalid contract ID provided"),
+			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.EqualError(t, err, "unable to unmarshal additional fields: invalid character 'b' looking for beginning of value")
+			},
+		},
 	}
 	for _, tt := range tests {
-		jsonRPCClient := mocks.NewJSONRPCClient(t)
-		encoder := NewEncoder(types.ChainSelector(selector), uint64(tt.args.nonce), false)
-		client := rpc.NewWithCustomRPCClient(jsonRPCClient)
-		tt.mockSetup(jsonRPCClient)
-		e := NewExecutor(client, auth, encoder)
+		t.Run(tt.name, func(t *testing.T) {
+			jsonRPCClient := mocks.NewJSONRPCClient(t)
+			encoder := NewEncoder(types.ChainSelector(selector), uint64(tt.args.nonce), false)
+			client := rpc.NewWithCustomRPCClient(jsonRPCClient)
+			tt.mockSetup(jsonRPCClient)
+			e := NewExecutor(client, auth, encoder)
 
-		got, err := e.ExecuteOperation(tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)
-		if tt.wantErr != nil {
-			assert.ErrorIs(t, err, tt.wantErr)
-		} else {
-			assert.NoError(t, err)
-		}
-		tt.assertion(t, err, fmt.Sprintf("%q. Executor.ExecuteOperation()", tt.name))
-		assert.Equalf(t, tt.want, got, "%q. Executor.ExecuteOperation()", tt.name)
+			got, err := e.ExecuteOperation(ctx, tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)
+			if tt.wantErr != nil {
+				tt.assertion(t, err, fmt.Sprintf("%q. Executor.ExecuteOperation()", tt.name))
+			} else {
+				assert.NoError(t, err)
+			}
+			assert.Equalf(t, tt.want, got, "%q. Executor.ExecuteOperation()", tt.name)
+		})
+
 	}
 }
 

@@ -42,6 +42,7 @@ func NewExecutor(client *rpc.Client, auth solana.PrivateKey, encoder *Encoder) *
 }
 
 func (e *Executor) ExecuteOperation(
+	ctx context.Context,
 	metadata types.ChainMetadata,
 	nonce uint32,
 	proofs []common.Hash,
@@ -65,7 +66,7 @@ func (e *Executor) ExecuteOperation(
 	// Unmarshal the AdditionalFields from the operation
 	var additionalFields AdditionalFields
 	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
-		return "", err
+		return "", fmt.Errorf("unable to unmarshal additional fields: %w", err)
 	}
 	to, err := solana.PublicKeyFromBase58(op.Transaction.To)
 	if err != nil {
@@ -86,8 +87,7 @@ func (e *Executor) ExecuteOperation(
 		mcms.McmSignerAddress(msigName),
 		e.auth.PublicKey(),
 	)
-	// TODO: this should come as a param
-	ctx := context.Background()
+
 	signature, err := sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
 		return "", fmt.Errorf("unable to call execute operation instruction: %w", err)
