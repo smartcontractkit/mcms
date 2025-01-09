@@ -18,9 +18,14 @@ func Test_GetChainSelectorFamily(t *testing.T) {
 		wantErr string
 	}{
 		{
-			name: "success",
+			name: "success: evm",
 			give: ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			want: cselectors.FamilyEVM,
+		},
+		{
+			name: "success: solana",
+			give: ChainSelector(cselectors.SOLANA_DEVNET.Selector),
+			want: cselectors.FamilySolana,
 		},
 		{
 			name:    "invalid chain selector",

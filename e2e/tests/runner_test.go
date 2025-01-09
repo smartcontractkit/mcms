@@ -1,24 +1,26 @@
 //go:build e2e
 // +build e2e
 
-package e2e
-
-//go:generate ./compile-mcm-solana.sh
+package e2e_test
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/suite"
+
+	"github.com/smartcontractkit/mcms/e2e/tests/evm"
+	"github.com/smartcontractkit/mcms/e2e/tests/solana"
 )
 
-// Run the test suite
-func TestE2ESuite(t *testing.T) {
-	t.Parallel()
+func TestEVMSuite(t *testing.T) {
+	suite.Run(t, new(e2e_evm.InspectionTestSuite))
+	suite.Run(t, new(e2e_evm.ExecutionTestSuite))
+	suite.Run(t, new(e2e_evm.TimelockInspectionTestSuite))
+	suite.Run(t, new(e2e_evm.SetRootTestSuite))
+	suite.Run(t, new(e2e_evm.SigningTestSuite))
+}
 
-	suite.Run(t, new(TimelockInspectionTestSuite))
-	suite.Run(t, new(InspectionTestSuite))
-	suite.Run(t, new(ExecutionTestSuite))
-	suite.Run(t, new(SetRootTestSuite))
-	suite.Run(t, new(SigningTestSuite))
-	suite.Run(t, new(SolanaInspectionTestSuite))
+//go:generate ./solana/compile-mcm-contracts.sh
+func TestSolanaSuite(t *testing.T) {
+	suite.Run(t, new(e2e_solana.SolanaTestSuite))
 }
