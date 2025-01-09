@@ -238,7 +238,6 @@ func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 }
 
 func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
-	s.T().Skip("fails after addition of context parameters")
 	ctx := context.Background()
 
 	// Deploy a new timelock for this test
@@ -311,7 +310,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 		opID, err := evm.HashOperationBatch(calls, pred, salt)
 		s.Require().NoError(err, "Failed to compute operation ID")
 
-		isOpDone, err := inspector.IsOperationDone(ctx, s.timelockContract.Address().Hex(), opID)
+		isOpDone, err := inspector.IsOperationDone(ctx, timelockContract.Address().Hex(), opID)
 		s.Require().NoError(err, "Failed to check if operation is done")
 
 		return isOpDone
