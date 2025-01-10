@@ -9,16 +9,19 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 var (
-	testProgramID = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
-	testPDASeed   = PDASeed{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
-	testRoot      = common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000")
+	testChainSelector = types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
+	testProgramID     = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
+	testPDASeed       = PDASeed{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
+	testRoot          = common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000")
 )
 
 func Test_FindSignerPDA(t *testing.T) {
