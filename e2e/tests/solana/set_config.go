@@ -7,12 +7,14 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
-	solana "github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go"
 	"github.com/google/go-cmp/cmp"
 
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+var testPDASeedSetConfigTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'c', 'o', 'n', 'f'}
 
 func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 	// --- arrange ---
@@ -21,7 +23,7 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 	s.Require().NoError(err)
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
-	mcmAddress := mcmsSolana.ContractAddress(programID, testPDASeed)
+	mcmAddress := mcmsSolana.ContractAddress(programID, testPDASeedSetConfigTest)
 
 	testEVMAccounts := generateTestEVMAccounts(s.T(), 14)
 	config := types.Config{

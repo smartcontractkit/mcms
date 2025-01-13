@@ -17,12 +17,15 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+var testPDASeedSetRootTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r', 'o', 'o', 't'}
+
 func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	// --- arrange ---
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
 
-	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeed)
+	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedSetRootTest)
+
 	recipientAddress := s.SolanaChain.PublicKey
 	signerEVMAccount := NewEVMTestAccount(s.T())
 	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{signerEVMAccount.Address}}
@@ -30,7 +33,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 
-	validUntil := uint32(time.Now().Add(10*time.Second).Unix())
+	validUntil := uint32(time.Now().Add(10 * time.Second).Unix())
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(validUntil).
@@ -78,6 +81,6 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 
 	gotRoot, gotValidUntil, err := inspectors[s.ChainSelector].GetRoot(ctx, mcmAddress)
 	s.Require().NoError(err)
-	s.Require().Equal(common.HexToHash("0x8989abc60a89d96842203b5f04f50360f3a7d753e32db82795610c17766d28f0"), gotRoot)
+	s.Require().Equal(common.HexToHash("0x11329486f2a7bb589320f2a8e9fad50fd5ed9ceeb3c1e2f71491d5ab848c7f60"), gotRoot)
 	s.Require().Equal(validUntil, gotValidUntil)
 }

@@ -166,6 +166,13 @@ func TestEncoder_HashMetadata(t *testing.T) {
 			want:     common.HexToHash("0xceb06356f4b7718cdf9b585ba3725a0f4670742d7c367b4ec87b9938c7f6412a"),
 		},
 		{
+			name:     "success: test case to test matching chainlink-ccip implementation",
+			txCount:  5,
+			override: true,
+			metadata: types.ChainMetadata{StartingOpCount: 10, MCMAddress: ContractAddress(testProgramID, testPDASeed)},
+			want:     common.HexToHash("0xaea0d6d8a1f2ed42a6a54473af0a0dc9dcc73442841b5e16c0872f7ef7cadabd"),
+		},
+		{
 			name:     "success: txcount=0 override=false starting-op-count=0",
 			txCount:  0,
 			override: false,

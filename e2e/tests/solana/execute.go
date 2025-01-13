@@ -5,6 +5,7 @@ package e2e_solana
 
 import (
 	"context"
+	"crypto/sha256"
 	"fmt"
 	"time"
 
@@ -19,11 +20,19 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+func getAnchorInstructionData(method string, data []byte) []byte {
+	discriminator := sha256.Sum256([]byte("global:" + method))
+	return append(discriminator[:8], data...)
+}
+
+var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
+
 func (s *SolanaTestSuite) Test_Solana_Execute() {
 	// --- arrange ---
 	ctx := context.Background()
 	mcmAddress := s.SolanaChain.SolanaPrograms["mcm"]
-	mcmID := fmt.Sprintf("%s.%s", mcmAddress, testPDASeed)
+	mcmID := fmt.Sprintf("%s.%s", mcmAddress, testPDASeedExec)
+
 	recipientAddress := s.SolanaChain.PublicKey
 	recipetPubKey, err := solana.PublicKeyFromBase58(recipientAddress)
 	s.Require().NoError(err)
@@ -43,32 +52,46 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	// Define transfer amount (e.g., 1 SOL = 1e9 lamports)
 	transferAmount := uint64(1e9)
 	// Create transfer instruction
-	recent, err := s.SolanaClient.GetLatestBlockhash(context.TODO(), rpc.CommitmentFinalized)
+	_, err = s.SolanaClient.GetLatestBlockhash(context.TODO(), rpc.CommitmentFinalized)
 	if err != nil {
 		panic(err)
 	}
 	s.Require().NoError(err)
-	tx, err := solana.NewTransaction(
-		[]solana.Instruction{
-			system.NewTransferInstruction(
-				transferAmount,
-				auth.PublicKey(),
-				recipetPubKey,
-			).Build(),
-		},
-		recent.Value.Blockhash,
-		solana.TransactionPayer(auth.PublicKey()),
-	)
+	ix := system.NewTransferInstruction(
+		transferAmount,
+		auth.PublicKey(),
+		recipetPubKey,
+	).Build()
+
+	//tx, err := solana.NewTransaction(
+	//	[]solana.Instruction{
+	//		ix,
+	//	},
+	//	recent.Value.Blockhash,
+	//	solana.TransactionPayer(auth.PublicKey()),
+	//)
 	s.Require().NoError(err)
-	txBytes, err := tx.MarshalBinary()
+	ixBytes, err := ix.Data()
+	//ixBytes = getAnchorInstructionData("transfer", ixBytes)
+	//txBytesAnchor := getAnchorInstructionData("transfer", ixBytes)
 	s.Require().NoError(err)
-	solanaMcmTx, err := mcmsSolana.NewTransaction(mcmAddress,
-		txBytes,
+	solanaMcmTx, err := mcmsSolana.NewTransaction(solana.SystemProgramID.String(),
+		ixBytes,
 		[]solana.AccountMeta{
 			{
 				PublicKey:  auth.PublicKey(),
 				IsSigner:   true,
 				IsWritable: true,
+			},
+			{
+				PublicKey:  recipetPubKey,
+				IsSigner:   false,
+				IsWritable: true,
+			},
+			{
+				PublicKey:  solana.SystemProgramID,
+				IsSigner:   false,
+				IsWritable: false,
 			},
 		},
 		"test",
