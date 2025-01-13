@@ -3,6 +3,7 @@ package solana
 import (
 	"bytes"
 	"encoding/binary"
+	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -21,7 +22,6 @@ var _ sdk.Encoder = (*Encoder)(nil)
 type Encoder struct {
 	ChainSelector        types.ChainSelector
 	TxCount              uint64
-	RemainingAccounts    []*solana.AccountMeta
 	OverridePreviousRoot bool
 }
 
@@ -57,6 +57,16 @@ func (e *Encoder) HashOperation(
 		return common.Hash{}, err
 	}
 
+	additionalFields := struct {
+		RemainingAccounts []solana.AccountMeta
+	}{}
+	if len(op.Transaction.AdditionalFields) > 0 {
+		err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields)
+		if err != nil {
+			return common.Hash{}, fmt.Errorf("unable to parse operation additional fields: %w", err)
+		}
+	}
+
 	toProgramID, _, err := ParseContractAddress(op.Transaction.To)
 	if errors.Is(err, ErrInvalidContractAddressFormat) {
 		var pkerr error
@@ -74,10 +84,11 @@ func (e *Encoder) HashOperation(
 		toProgramID[:],
 		numToU64LePaddedEncoding(uint64(len(op.Transaction.Data))),
 		op.Transaction.Data,
-		numToU64LePaddedEncoding(uint64(len(e.RemainingAccounts))),
+		numToU64LePaddedEncoding(uint64(len(additionalFields.RemainingAccounts))),
 	}
-	for _, account := range e.RemainingAccounts {
-		buffers = append(buffers, serializeAccountMeta(account))
+
+	for _, account := range additionalFields.RemainingAccounts {
+		buffers = append(buffers, serializeAccountMeta(&account))
 	}
 
 	return calculateHash(buffers), nil

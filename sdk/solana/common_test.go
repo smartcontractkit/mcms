@@ -9,16 +9,19 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 var (
-	testProgramID = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
-	testPDASeed   = PDASeed{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
-	testRoot      = common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000")
+	testChainSelector = types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
+	testProgramID     = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
+	testPDASeed       = PDASeed{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
+	testRoot          = common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000")
 )
 
 func Test_FindSignerPDA(t *testing.T) {
@@ -68,6 +71,27 @@ func Test_FindSeenSignedHashesPDA(t *testing.T) {
 	pda, err := FindSeenSignedHashesPDA(testProgramID, testPDASeed, testRoot, 1735689600)
 	require.NoError(t, err)
 	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("FxPYSHG9tm35T43zpAuVDdNY8uMPQfaaVBftxVrLyXVq")))
+}
+
+func Test_FindTimelockConfigPDA(t *testing.T) {
+	t.Parallel()
+	pda, err := FindTimelockConfigPDA(testProgramID, testPDASeed)
+	require.NoError(t, err)
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("27X4nnwKaRk93RamRXQSfNyuB1pBSSK1hf2ULUeL1VCp")))
+}
+
+func Test_FindTimelockOperationPDA(t *testing.T) {
+	t.Parallel()
+	pda, err := FindTimelockOperationPDA(testProgramID, testPDASeed)
+	require.NoError(t, err)
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("8TL4xwjpntLQXeFbADMPnooDofGUwocc4ikHAJb41Fcm")))
+}
+
+func Test_FindTimelockSignerPDA(t *testing.T) {
+	t.Parallel()
+	pda, err := FindTimelockSignerPDA(testProgramID, testPDASeed)
+	require.NoError(t, err)
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("HAQoFdsmxUFgAfBb6u9AXvg9q1nJthWb7xMYWpvzFJfg")))
 }
 
 func Test_sendAndConfirm(t *testing.T) {

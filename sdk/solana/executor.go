@@ -2,18 +2,15 @@ package solana
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 
 	"github.com/ethereum/go-ethereum/common"
-
-	"github.com/gagliardetto/solana-go"
+	solana "github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/mcms"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -44,56 +41,13 @@ func (e *Executor) ExecuteOperation(
 	ctx context.Context,
 	metadata types.ChainMetadata,
 	nonce uint32,
-	proofs []common.Hash,
+	proof []common.Hash,
 	op types.Operation,
 ) (string, error) {
-	programID, msigName, err := ParseContractAddress(metadata.MCMAddress)
-	if err != nil {
-		return "", err
-	}
-	chainID := uint64(e.ChainSelector)
-	byteProofs := [][32]byte{}
-	for _, p := range proofs {
-		byteProofs = append(byteProofs, p)
-	}
-
-	mcm.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
-	configPDA := mcms.McmConfigAddress(msigName)
-	rootMetadataPDA := mcms.RootMetadataAddress(msigName)
-	expiringRootAndOpCountPDA := mcms.ExpiringRootAndOpCountAddress(msigName)
-
-	// Unmarshal the AdditionalFields from the operation
-	var additionalFields AdditionalFields
-	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
-		return "", fmt.Errorf("unable to unmarshal additional fields: %w", err)
-	}
-	to, err := solana.PublicKeyFromBase58(op.Transaction.To)
-	if err != nil {
-		return "", err
-	}
-
-	ix := mcm.NewExecuteInstruction(
-		msigName,
-		chainID,
-		uint64(nonce),
-		op.Transaction.Data,
-		byteProofs,
-
-		configPDA,
-		rootMetadataPDA,
-		expiringRootAndOpCountPDA,
-		to,
-		mcms.McmSignerAddress(msigName),
-		e.auth.PublicKey(),
-	)
-
-	signature, err := sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
-	if err != nil {
-		return "", fmt.Errorf("unable to call execute operation instruction: %w", err)
-	}
-	return signature, nil
+	return "", fmt.Errorf("not implemented")
 }
 
+// SetRoot sets the merkle root in the MCM contract on the Solana chain
 func (e *Executor) SetRoot(
 	ctx context.Context,
 	metadata types.ChainMetadata,
