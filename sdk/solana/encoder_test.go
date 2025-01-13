@@ -4,10 +4,14 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/types"
 )
+
+var testAccount = solana.MustPublicKeyFromBase58("4HeqEoSyfYpeC2goFLj9eHgkxV33mR5G7JYAbRsN14uQ")
+var testAccount2 = solana.MustPublicKeyFromBase58("HzwwijybRfFkQvtLyVNzTr7EVpQZkoStdr47mvaYMD4y")
 
 func TestNewEncoder(t *testing.T) {
 	t.Parallel()
@@ -22,7 +26,14 @@ func TestNewEncoder(t *testing.T) {
 
 func TestEncoder_HashOperation(t *testing.T) {
 	t.Parallel()
-
+	solanaTx, err := NewTransaction(
+		testAccount.String(),
+		[]byte("test data"),
+		[]solana.AccountMeta{{PublicKey: testAccount2, IsSigner: true, IsWritable: false}},
+		"unit-tests",
+		[]string{"test"},
+	)
+	require.NoError(t, err)
 	tests := []struct {
 		name     string
 		txCount  uint64
@@ -53,7 +64,19 @@ func TestEncoder_HashOperation(t *testing.T) {
 					}`),
 				},
 			},
-			want: common.HexToHash("0x405bf6d2fd25e1e7c4bb4e34b15c7dafee95cbac5c6b9ec0259b54da7cb97fd6"),
+			want: common.HexToHash("0xb8378ac2ea11c40643c828a93db1d1fb1829d19b261ea4d5f5119e28f2ad03c7"),
+		},
+		{
+			name:     "success: solana encoded tx",
+			txCount:  3,
+			override: true,
+			opCount:  1,
+			metadata: types.ChainMetadata{StartingOpCount: 123, MCMAddress: ContractAddress(testProgramID, testPDASeed)},
+			op: types.Operation{
+				ChainSelector: testChainSelector,
+				Transaction:   solanaTx,
+			},
+			want: common.HexToHash("0xf41c25f49165165af155c093688ba869707285742fe9c8d089ffb4ccf185e332"),
 		},
 		{
 			name:     "success: txcount=1 override=false op-count=1 starting-op-count=0",
@@ -67,7 +90,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 					To:   "4HeqEoSyfYpeC2goFLj9eHgkxV33mR5G7JYAbRsN14uQ",
 					Data: []byte{},
 					AdditionalFields: []byte(`{
-						"remainingAccounts": [{
+						"accounts": [{
 							"publicKey":  "EDYUM4CJzrCj5fz4PGGWDhiBTxKfzX9mtWNn8YLnNYUs",
 							"isSigner":   false,
 							"isWritable": false
@@ -115,7 +138,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 					AdditionalFields: []byte(`invalid`),
 				},
 			},
-			wantErr: "unable to parse operation additional fields: invalid character 'i'",
+			wantErr: "unable to unmarshal additional fields: invalid character 'i' looking for beginning of value",
 		},
 		{
 			name:     "failure: invalid 'to' address",

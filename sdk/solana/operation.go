@@ -24,7 +24,7 @@ func NewTransaction(
 	contractType string,
 	tags []string,
 ) (types.Transaction, error) {
-	_, err := solana.PublicKeyFromBase58(contractID)
+	key, err := solana.PublicKeyFromBase58(contractID)
 	if err != nil {
 		return types.Transaction{}, err
 	}
@@ -38,7 +38,7 @@ func NewTransaction(
 	}
 
 	return types.Transaction{
-		To:               contractID,
+		To:               key.String(),
 		Data:             data,
 		AdditionalFields: marshalledAdditionalFields,
 		OperationMetadata: types.OperationMetadata{

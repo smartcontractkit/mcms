@@ -43,7 +43,7 @@ func (e *Executor) ExecuteOperation(
 	ctx context.Context,
 	metadata types.ChainMetadata,
 	nonce uint32,
-	proofs []common.Hash,
+	proof []common.Hash,
 	op types.Operation,
 ) (string, error) {
 	programID, msigName, err := ParseContractAddress(metadata.MCMAddress)
@@ -51,9 +51,9 @@ func (e *Executor) ExecuteOperation(
 		return "", err
 	}
 	chainID := uint64(e.ChainSelector)
-	byteProofs := [][32]byte{}
-	for _, p := range proofs {
-		byteProofs = append(byteProofs, p)
+	byteProof := [][32]byte{}
+	for _, p := range proof {
+		byteProof = append(byteProof, p)
 	}
 
 	mcm.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
@@ -76,7 +76,7 @@ func (e *Executor) ExecuteOperation(
 		chainID,
 		uint64(nonce),
 		op.Transaction.Data,
-		byteProofs,
+		byteProof,
 
 		configPDA,
 		rootMetadataPDA,
@@ -90,10 +90,8 @@ func (e *Executor) ExecuteOperation(
 	for _, account := range additionalFields.Accounts {
 		accounts = append(accounts, &account)
 	}
-	err = ix.SetAccounts(accounts)
-	if err != nil {
-		return "", fmt.Errorf("unable to set accounts: %w", err)
-	}
+	ix.AccountMetaSlice = accounts
+
 	signature, err := sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
 		return "", fmt.Errorf("unable to call execute operation instruction: %w", err)

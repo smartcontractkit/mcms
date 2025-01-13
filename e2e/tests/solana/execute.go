@@ -33,9 +33,9 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	mcmAddress := s.SolanaChain.SolanaPrograms["mcm"]
 	mcmID := fmt.Sprintf("%s.%s", mcmAddress, testPDASeedExec)
 
-	recipientAddress := s.SolanaChain.PublicKey
-	recipetPubKey, err := solana.PublicKeyFromBase58(recipientAddress)
-	s.Require().NoError(err)
+	recipientAddress := solana.NewWallet()
+	recipientPubKey := recipientAddress.PublicKey()
+
 	signerEVMAccount := NewEVMTestAccount(s.T())
 	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{signerEVMAccount.Address}}
 
@@ -45,10 +45,11 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	// Get the initial balance of the recipient
 	initialBalance, err := s.SolanaClient.GetBalance(
 		ctx,
-		recipetPubKey,
+		recipientPubKey,
 		rpc.CommitmentProcessed,
 	)
 	s.Require().NoError(err)
+
 	// Define transfer amount (e.g., 1 SOL = 1e9 lamports)
 	transferAmount := uint64(1e9)
 	// Create transfer instruction
@@ -60,21 +61,12 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	ix := system.NewTransferInstruction(
 		transferAmount,
 		auth.PublicKey(),
-		recipetPubKey,
+		recipientPubKey,
 	).Build()
-
-	//tx, err := solana.NewTransaction(
-	//	[]solana.Instruction{
-	//		ix,
-	//	},
-	//	recent.Value.Blockhash,
-	//	solana.TransactionPayer(auth.PublicKey()),
-	//)
 	s.Require().NoError(err)
 	ixBytes, err := ix.Data()
-	//ixBytes = getAnchorInstructionData("transfer", ixBytes)
-	//txBytesAnchor := getAnchorInstructionData("transfer", ixBytes)
 	s.Require().NoError(err)
+
 	solanaMcmTx, err := mcmsSolana.NewTransaction(solana.SystemProgramID.String(),
 		ixBytes,
 		[]solana.AccountMeta{
@@ -84,10 +76,11 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 				IsWritable: true,
 			},
 			{
-				PublicKey:  recipetPubKey,
+				PublicKey:  recipientPubKey,
 				IsSigner:   false,
 				IsWritable: true,
 			},
+
 			{
 				PublicKey:  solana.SystemProgramID,
 				IsSigner:   false,
@@ -98,10 +91,11 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 		[]string{"e2e-tests"},
 	)
 	s.Require().NoError(err)
+
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
-		SetValidUntil(uint32(time.Now().Add(10*time.Second).Unix())).
-		SetDescription("proposal to test SetRoot").
+		SetValidUntil(uint32(time.Now().Add(10*time.Hour).Unix())).
+		SetDescription("proposal to test Execute").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmID}).
 		AddOperation(types.Operation{
@@ -134,6 +128,8 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 	signature, err := executable.SetRoot(ctx, s.ChainSelector)
 	s.Require().NoError(err)
+	_, err = solana.SignatureFromBase58(signature)
+	s.Require().NoError(err)
 
 	// --- act: call Execute ---
 	signature, err = executable.Execute(ctx, 0)
@@ -145,7 +141,7 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	// Get the final balance of the recipient
 	finalBalance, err := s.SolanaClient.GetBalance(
 		ctx,
-		recipetPubKey,
+		recipientPubKey,
 		rpc.CommitmentProcessed,
 	)
 	s.Require().NoError(err)
