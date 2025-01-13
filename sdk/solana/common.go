@@ -58,20 +58,20 @@ func FindSeenSignedHashesPDA(
 }
 
 func FindTimelockConfigPDA(
-	programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
-	seeds := [][]byte{[]byte("timelock_config"), pdaSeed[:]}
+	programID solana.PublicKey, timelockID PDASeed) (solana.PublicKey, error) {
+	seeds := [][]byte{[]byte("timelock_config"), timelockID[:]}
 	return findPDA(programID, seeds)
 }
 
 func FindTimelockOperationPDA(
-	programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
-	seeds := [][]byte{[]byte("timelock_operation"), pdaSeed[:]}
+	programID solana.PublicKey, timelockID PDASeed, opID [32]byte) (solana.PublicKey, error) {
+	seeds := [][]byte{[]byte("timelock_operation"), timelockID[:], opID[:]}
 	return findPDA(programID, seeds)
 }
 
 func FindTimelockSignerPDA(
-	programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
-	seeds := [][]byte{[]byte("timelock_signer"), pdaSeed[:]}
+	programID solana.PublicKey, timelockID PDASeed) (solana.PublicKey, error) {
+	seeds := [][]byte{[]byte("timelock_signer"), timelockID[:]}
 	return findPDA(programID, seeds)
 }
 

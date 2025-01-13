@@ -45,6 +45,41 @@ func mockGetAccountInfo(
 	}).Once()
 }
 
+func mockGetBlockTime(
+	t *testing.T, client *mocks.JSONRPCClient, block uint64,
+	blockTime *solana.UnixTimeSeconds, mockBlockHeightError error,
+	mockBlockTimeError error,
+) {
+	t.Helper()
+
+	// mock getBlockHeight
+	client.EXPECT().CallForInto(anyContext, mock.Anything, "getBlockHeight",
+		[]any{rpc.M{"commitment": rpc.CommitmentConfirmed}},
+	).RunAndReturn(func(_ context.Context, output any, _ string, _ []any) error {
+		result, ok := output.(*uint64)
+		require.True(t, ok)
+
+		*result = block // set block height as 1
+
+		return mockBlockHeightError
+	}).Once()
+
+	if mockBlockHeightError != nil {
+		return
+	}
+
+	client.EXPECT().CallForInto(
+		anyContext, mock.Anything, "getBlockTime", []any{block},
+	).RunAndReturn(func(_ context.Context, output any, _ string, _ []any) error {
+		result, ok := output.(**solana.UnixTimeSeconds)
+		require.True(t, ok)
+
+		*result = blockTime
+
+		return mockBlockTimeError
+	}).Once()
+}
+
 func mockSolanaTransaction(
 	t *testing.T, client *mocks.JSONRPCClient, lastBlockHeight uint64, slot uint64, signature string, mockError error,
 ) {
