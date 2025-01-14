@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e_solana
+package solanae2e
 
 import (
 	"context"
@@ -19,6 +19,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/tokens"
 
 	"github.com/smartcontractkit/mcms"
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
@@ -56,13 +57,13 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	tokenProgram := config.Token2022Program
 
 	// Use CreateToken utility to get initialization instructions
-	decimals := uint8(9)
+	decimals := 9
 	createTokenIxs, err := tokens.CreateToken(
 		ctx,
 		tokenProgram,     // token program
 		mint,             // mint account
 		auth.PublicKey(), // initial mint owner(admin)
-		decimals,         // decimals
+		uint8(decimals),  // decimals
 		s.SolanaClient,
 		config.DefaultCommitment,
 	)
@@ -89,7 +90,8 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 
 	// Build the mint ix, this one will go through MCMS
-	numTokens := uint64(1000)
+	var numTokens uint64 = 1000
+	s.Require().NoError(err)
 	amount := numTokens * solana.LAMPORTS_PER_SOL
 	ix2, err := token.NewMintToInstruction(amount, mint, receiverATA, signerPDA, nil).ValidateAndBuild()
 	accounts := ix2.Accounts()
@@ -99,7 +101,6 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 			// if we keep this true, we'll have errors requiring a private key for a PDA which is not possible.
 			acc.IsSigner = false
 		}
-		fmt.Println("acc", acc.PublicKey.String(), "signer", acc.IsSigner, "write", acc.IsWritable)
 	}
 	s.Require().NoError(err)
 	ix2Bytes, err := ix2.Data()
@@ -115,9 +116,13 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 
 	// Create the proposal
+	duration := 10
+	validUntil := time.Now().Add(time.Duration(duration) * time.Hour).Unix()
+	validUntilCast, err := safecast.Int64ToUint32(validUntil)
+	s.Require().NoError(err)
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
-		SetValidUntil(uint32(time.Now().Add(10*time.Hour).Unix())).
+		SetValidUntil(validUntilCast).
 		SetDescription("proposal to test Execute with a token distribution").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmID}).

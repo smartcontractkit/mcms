@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e_evm
+package evme2e
 
 import (
 	"encoding/json"
@@ -101,5 +101,6 @@ func (s *SigningTestSuite) TestReadAndSign() {
 	appendedSignature := signatures[len(signatures)-1].(map[string]any)
 	s.Require().Equal(expected.R.Hex(), appendedSignature["R"])
 	s.Require().Equal(expected.S.Hex(), appendedSignature["S"])
-	s.Require().InDelta(expected.V, appendedSignature["V"], 1e-9)
+	delta := 1e-9
+	s.Require().InDelta(expected.V, appendedSignature["V"], delta)
 }

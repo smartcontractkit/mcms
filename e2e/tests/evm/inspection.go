@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e_evm
+package evme2e
 
 import (
 	"context"
@@ -44,7 +44,8 @@ func (s *InspectionTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, 10)
+	base := 10
+	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, base)
 	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)

@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e_solana
+package solanae2e
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 
 	"github.com/smartcontractkit/mcms"
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
@@ -21,7 +22,8 @@ var testPDASeedSetRootTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r
 
 func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	// --- arrange ---
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	timeAmount := 10
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeAmount)*time.Second)
 	s.T().Cleanup(cancel)
 
 	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedSetRootTest)
@@ -33,10 +35,12 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 
-	validUntil := uint32(time.Now().Add(10 * time.Second).Unix())
+	validUntil := time.Now().Add(time.Duration(timeAmount) * time.Hour).Unix()
+	validUntilCast, err := safecast.Int64ToUint32(validUntil)
+	s.Require().NoError(err)
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
-		SetValidUntil(validUntil).
+		SetValidUntil(validUntilCast).
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmAddress}).

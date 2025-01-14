@@ -57,9 +57,9 @@ func (e *Executor) ExecuteOperation(
 	}
 
 	mcm.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
-	configPDA := mcms.McmConfigAddress(msigName)
-	rootMetadataPDA := mcms.RootMetadataAddress(msigName)
-	expiringRootAndOpCountPDA := mcms.ExpiringRootAndOpCountAddress(msigName)
+	configPDA := mcms.GetConfigPDA(msigName)
+	rootMetadataPDA := mcms.GetRootMetadataPDA(msigName)
+	expiringRootAndOpCountPDA := mcms.GetExpiringRootAndOpCountPDA(msigName)
 
 	// Unmarshal the AdditionalFields from the operation
 	var additionalFields AdditionalFields
@@ -82,7 +82,7 @@ func (e *Executor) ExecuteOperation(
 		rootMetadataPDA,
 		expiringRootAndOpCountPDA,
 		to,
-		mcms.McmSignerAddress(msigName),
+		mcms.GetSignerPDA(msigName),
 		e.auth.PublicKey(),
 	)
 	// Append the accounts from the AdditionalFields

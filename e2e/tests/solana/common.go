@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e_solana
+package solanae2e
 
 import (
 	"context"
@@ -35,8 +35,6 @@ import (
 // this key matches the public key in the config.toml so it gets funded by the genesis block
 const privateKey = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
 
-var testPDASeed = [32]byte{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
-
 // -----------------------------------------------------------------------------
 // EVMTestAccount is data type wrapping attributes typically needed when managing
 // ethereum accounts.
@@ -47,7 +45,7 @@ type EVMTestAccount struct {
 	HexPrivateKey string
 }
 
-// NewTestAccount generates a new ecdsa key and returns a TestAccount structure
+// NewEVMTestAccount generates a new ecdsa key and returns a TestAccount structure
 // with the associated attributes.
 func NewEVMTestAccount(t *testing.T) EVMTestAccount {
 	t.Helper()
@@ -68,6 +66,7 @@ func NewEVMTestAccount(t *testing.T) EVMTestAccount {
 	}
 }
 
+// generateTestEVMAccounts generates a slice of EVMTestAccount structures
 func generateTestEVMAccounts(t *testing.T, numAccounts int) []EVMTestAccount {
 	t.Helper()
 
@@ -84,7 +83,6 @@ func generateTestEVMAccounts(t *testing.T, numAccounts int) []EVMTestAccount {
 	return testAccounts
 }
 
-// -----------------------------------------------------------------------------
 // SolanaTestSuite
 type SolanaTestSuite struct {
 	suite.Suite
@@ -96,7 +94,8 @@ type SolanaTestSuite struct {
 
 // SetupMCM initializes the MCM account with the given PDA seed
 func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	amount := 10
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(amount)*time.Second)
 	s.T().Cleanup(cancel)
 
 	bindings.SetProgramID(s.MCMProgramID)

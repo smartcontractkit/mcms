@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e_evm
+package evme2e
 
 import (
 	"context"
@@ -51,7 +51,8 @@ func (s *SetRootTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, 10)
+	amount := 10
+	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, amount)
 	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
@@ -116,10 +117,11 @@ func (s *SetRootTestSuite) deployTimelockContract(mcmsAddress string) *bindings.
 // TestSetRootProposal sets the root of the MCMS contract
 func (s *SetRootTestSuite) TestSetRootProposal() {
 	ctx := context.Background()
+	var validUntil uint32 = 1794610529
 	builder := mcms.NewProposalBuilder()
 	builder.
 		SetVersion("v1").
-		SetValidUntil(1794610529).
+		SetValidUntil(validUntil).
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(
@@ -187,9 +189,10 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 // TestSetRootTimelockProposal sets the root of the MCMS contract from a timelock proposal type.
 func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	builder := mcms.NewTimelockProposalBuilder()
+	var validUntil uint32 = 1794610529
 	builder.
 		SetVersion("v1").
-		SetValidUntil(1794610529).
+		SetValidUntil(validUntil).
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
 		SetAction(mcmtypes.TimelockActionSchedule).
