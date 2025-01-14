@@ -37,6 +37,7 @@ func TestNewExecutor(t *testing.T) {
 }
 
 func TestExecutor_ExecuteOperation(t *testing.T) {
+	t.Parallel()
 
 	type args struct {
 		metadata types.ChainMetadata
@@ -103,7 +104,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			},
 			want:    "",
 			wantErr: errors.New("invalid contract ID provided"),
-			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
+			assertion: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.EqualError(t, err, "invalid solana contract address format: \"bad id\"")
 			},
 		},
@@ -132,7 +133,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			},
 			want:    "",
 			wantErr: errors.New("invalid contract ID provided"),
-			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
+			assertion: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.EqualError(t, err, "unable to call execute operation instruction: unable to send instruction: ix send failure")
 			},
 		},
@@ -158,13 +159,15 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			},
 			want:    "",
 			wantErr: errors.New("invalid contract ID provided"),
-			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
+			assertion: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.EqualError(t, err, "unable to unmarshal additional fields: invalid character 'b' looking for beginning of value")
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			jsonRPCClient := mocks.NewJSONRPCClient(t)
 			encoder := NewEncoder(types.ChainSelector(selector), uint64(tt.args.nonce), false)
 			client := rpc.NewWithCustomRPCClient(jsonRPCClient)
@@ -175,11 +178,10 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			if tt.wantErr != nil {
 				tt.assertion(t, err, fmt.Sprintf("%q. Executor.ExecuteOperation()", tt.name))
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
-			assert.Equalf(t, tt.want, got, "%q. Executor.ExecuteOperation()", tt.name)
+			require.Equalf(t, tt.want, got, "%q. Executor.ExecuteOperation()", tt.name)
 		})
-
 	}
 }
 
