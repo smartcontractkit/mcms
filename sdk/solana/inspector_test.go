@@ -42,9 +42,9 @@ func TestInspector_GetConfig(t *testing.T) {
 			name: "success",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
 				mcmConfig := &bindings.MultisigConfig{
-					ChainId:      chainSelector,
-					MultisigName: testPDASeed,
-					Owner:        solana.SystemProgramID,
+					ChainId:    chainSelector,
+					MultisigId: testPDASeed,
+					Owner:      solana.SystemProgramID,
 					Signers: []bindings.McmSigner{
 						{EvmAddress: common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdef"), Index: 0, Group: 0},
 						{EvmAddress: common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"), Index: 1, Group: 0},

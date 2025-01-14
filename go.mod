@@ -13,7 +13,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
 	github.com/smartcontractkit/chain-selectors v1.0.35
-	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250103152858-8973fd0c912b
+	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250110192108-679d6f555e8d
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.1
 	github.com/spf13/cast v1.7.1
 	github.com/stretchr/testify v1.10.0
