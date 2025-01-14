@@ -122,6 +122,174 @@ func TestInspector_GetConfig(t *testing.T) {
 	}
 }
 
+func TestInspector_GetOpCount(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	opCountPDA, err := FindExpiringRootAndOpCountPDA(testProgramID, testPDASeed)
+	require.NoError(t, err)
+
+	tests := []struct {
+		name    string
+		setup   func(*mocks.JSONRPCClient)
+		want    uint64
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				newRootAndOpCount := &bindings.ExpiringRootAndOpCount{OpCount: 123}
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, newRootAndOpCount, nil)
+			},
+			want: 123,
+		},
+		{
+			name: "error: rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				err := fmt.Errorf("json rpc call failed")
+				newRootAndOpCount := &bindings.ExpiringRootAndOpCount{OpCount: 123}
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, newRootAndOpCount, err)
+			},
+			want:    0,
+			wantErr: "json rpc call failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			inspector, jsonRPCClient := newTestInspector(t)
+			tt.setup(jsonRPCClient)
+
+			got, err := inspector.GetOpCount(ctx, ContractAddress(testProgramID, testPDASeed))
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInspector_GetRoot(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	opCountPDA, err := FindExpiringRootAndOpCountPDA(testProgramID, testPDASeed)
+	require.NoError(t, err)
+
+	hash := common.HexToHash("0xabcdefabcdefabcdefabcdefabcdefabcdef")
+	tests := []struct {
+		name           string
+		setup          func(*mocks.JSONRPCClient)
+		wantRoot       common.Hash
+		wantValidUntil uint32
+		wantErr        string
+	}{
+		{
+			name: "success",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				newRootAndOpCount := &bindings.ExpiringRootAndOpCount{
+					Root:       hash,
+					ValidUntil: 123,
+				}
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, newRootAndOpCount, nil)
+			},
+			wantRoot:       hash,
+			wantValidUntil: 123,
+		},
+		{
+			name: "error: rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				err := fmt.Errorf("json rpc call failed")
+				newRootAndOpCount := &bindings.ExpiringRootAndOpCount{
+					Root:       hash,
+					ValidUntil: 123,
+				}
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, newRootAndOpCount, err)
+			},
+			wantErr: "json rpc call failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			inspector, jsonRPCClient := newTestInspector(t)
+			tt.setup(jsonRPCClient)
+
+			root, validUntil, err := inspector.GetRoot(ctx, ContractAddress(testProgramID, testPDASeed))
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.wantRoot, root)
+				require.Equal(t, tt.wantValidUntil, validUntil)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestInspector_GetRootMetadata(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	rootMetadataPDA, err := FindRootMetadataPDA(testProgramID, testPDASeed)
+	require.NoError(t, err)
+
+	address := ContractAddress(testProgramID, testPDASeed)
+	tests := []struct {
+		name    string
+		setup   func(*mocks.JSONRPCClient)
+		want    types.ChainMetadata
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				newRootMetadata := &bindings.RootMetadata{PreOpCount: 123}
+				mockGetAccountInfo(t, mockJSONRPCClient, rootMetadataPDA, newRootMetadata, nil)
+			},
+			want: types.ChainMetadata{
+				StartingOpCount: 123,
+				MCMAddress:      address,
+			},
+		},
+		{
+			name: "error: rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				err := fmt.Errorf("json rpc call failed")
+				newRootMetadata := &bindings.RootMetadata{PreOpCount: 123}
+				mockGetAccountInfo(t, mockJSONRPCClient, rootMetadataPDA, newRootMetadata, err)
+			},
+			wantErr: "json rpc call failed",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			inspector, jsonRPCClient := newTestInspector(t)
+			tt.setup(jsonRPCClient)
+
+			got, err := inspector.GetRootMetadata(ctx, address)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Empty(t, cmp.Diff(tt.want, got))
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+		})
+	}
+}
+
 // ----- helpers -----
 
 func newTestInspector(t *testing.T) (*Inspector, *mocks.JSONRPCClient) {
