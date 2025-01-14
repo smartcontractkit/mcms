@@ -94,6 +94,7 @@ type SolanaTestSuite struct {
 	MCMProgramID  solana.PublicKey
 }
 
+// SetupMCM initializes the MCM account with the given PDA seed
 func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
@@ -160,5 +161,4 @@ func (s *SolanaTestSuite) SetupSuite() {
 	s.SetupMCM(testPDASeedSetConfigTest)
 	s.SetupMCM(testPDASeedSetRootTest)
 	s.SetupMCM(testPDASeedExec)
-
 }

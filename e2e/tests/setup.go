@@ -98,7 +98,6 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			if in.SolanaChain.ContractsDir == "" {
 				in.SolanaChain.ContractsDir = filepath.Join(ProjectRoot, "/e2e/artifacts/solana")
 			}
-			t.Logf("CONTRACTS DIR: %q", in.SolanaChain.ContractsDir)
 
 			// Initialize Solana client
 			solanaBlockChainOutput, err = blockchain.NewBlockchainNetwork(in.SolanaChain)

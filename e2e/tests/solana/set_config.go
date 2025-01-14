@@ -16,6 +16,10 @@ import (
 
 var testPDASeedSetConfigTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'c', 'o', 'n', 'f'}
 
+const Quorum3 = 3
+const Quorum2 = 3
+const Quorum4 = 3
+
 func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 	// --- arrange ---
 	ctx := context.Background()
@@ -24,10 +28,10 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 	mcmAddress := mcmsSolana.ContractAddress(programID, testPDASeedSetConfigTest)
-
-	testEVMAccounts := generateTestEVMAccounts(s.T(), 14)
+	numAccounts := 14
+	testEVMAccounts := generateTestEVMAccounts(s.T(), numAccounts)
 	config := types.Config{
-		Quorum: 2,
+		Quorum: Quorum2,
 		Signers: []common.Address{
 			testEVMAccounts[0].Address,
 			testEVMAccounts[1].Address,
@@ -35,7 +39,7 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 		},
 		GroupSigners: []types.Config{
 			{
-				Quorum: 4,
+				Quorum: Quorum4,
 				Signers: []common.Address{
 					testEVMAccounts[3].Address,
 					testEVMAccounts[4].Address,
@@ -57,7 +61,7 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 				// },
 			},
 			{
-				Quorum: 3,
+				Quorum: Quorum3,
 				Signers: []common.Address{
 					testEVMAccounts[10].Address,
 					testEVMAccounts[11].Address,

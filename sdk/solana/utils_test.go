@@ -13,8 +13,6 @@ import (
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
-	mcmsUtils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/mcms"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -23,36 +21,6 @@ import (
 )
 
 var anyContext = mock.MatchedBy(func(_ context.Context) bool { return true })
-
-func configPDA(t *testing.T, mcmAddress string, mcmName [32]byte) solana.PublicKey {
-	t.Helper()
-
-	var err error
-	config.McmProgram, err = solana.PublicKeyFromBase58(mcmAddress) // FIXME: needed for mcm.McmConfigAddress
-	require.NoError(t, err)
-
-	return mcmsUtils.McmConfigAddress(mcmName)
-}
-
-func rootMetadataPDA(t *testing.T, mcmAddress string, mcmName [32]byte) solana.PublicKey {
-	t.Helper()
-
-	var err error
-	config.McmProgram, err = solana.PublicKeyFromBase58(mcmAddress) // FIXME: needed for mcm.McmConfigAddress
-	require.NoError(t, err)
-
-	return mcmsUtils.RootMetadataAddress(mcmName)
-}
-
-func expiringRootAndOpCountPDA(t *testing.T, mcmAddress string, mcmName [32]byte) solana.PublicKey {
-	t.Helper()
-
-	var err error
-	config.McmProgram, err = solana.PublicKeyFromBase58(mcmAddress) // FIXME: needed for mcm.McmConfigAddress
-	require.NoError(t, err)
-
-	return mcmsUtils.ExpiringRootAndOpCountAddress(mcmName)
-}
 
 func mockGetAccountInfo(
 	t *testing.T, mockJSONRPCClient *mocks.JSONRPCClient, account solana.PublicKey, accountInfo any,

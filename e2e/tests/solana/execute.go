@@ -56,12 +56,13 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	tokenProgram := config.Token2022Program
 
 	// Use CreateToken utility to get initialization instructions
+	decimals := uint8(9)
 	createTokenIxs, err := tokens.CreateToken(
 		ctx,
 		tokenProgram,     // token program
 		mint,             // mint account
 		auth.PublicKey(), // initial mint owner(admin)
-		9,                // decimals
+		decimals,         // decimals
 		s.SolanaClient,
 		config.DefaultCommitment,
 	)
@@ -88,7 +89,8 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 
 	// Build the mint ix, this one will go through MCMS
-	amount := 1000 * solana.LAMPORTS_PER_SOL
+	numTokens := uint64(1000)
+	amount := numTokens * solana.LAMPORTS_PER_SOL
 	ix2, err := token.NewMintToInstruction(amount, mint, receiverATA, signerPDA, nil).ValidateAndBuild()
 	accounts := ix2.Accounts()
 	for _, acc := range accounts {
@@ -160,7 +162,6 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 
 	// --- assert balances
-	// Get the final balance of the recipient
 	finalBalance, err := s.SolanaClient.GetTokenAccountBalance(
 		ctx,
 		receiverATA,
