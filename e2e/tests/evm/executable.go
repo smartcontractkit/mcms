@@ -359,7 +359,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	newOpCount, err := s.mcmsContract.GetOpCount(opts)
 	s.Require().NoError(err)
 	s.Require().NotNil(newOpCount)
-	want := 2
+	var want uint64 = 2
 	s.Require().Equal(want, newOpCount.Uint64())
 
 	// Check the state of the timelock contract
