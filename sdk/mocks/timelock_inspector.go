@@ -5,8 +5,6 @@ package mocks
 import (
 	context "context"
 
-	common "github.com/ethereum/go-ethereum/common"
-
 	mock "github.com/stretchr/testify/mock"
 )
 
@@ -24,23 +22,23 @@ func (_m *TimelockInspector) EXPECT() *TimelockInspector_Expecter {
 }
 
 // GetBypassers provides a mock function with given fields: ctx, address
-func (_m *TimelockInspector) GetBypassers(ctx context.Context, address string) ([]common.Address, error) {
+func (_m *TimelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
 	ret := _m.Called(ctx, address)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetBypassers")
 	}
 
-	var r0 []common.Address
+	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]common.Address, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
 		return rf(ctx, address)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []common.Address); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []string); ok {
 		r0 = rf(ctx, address)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]common.Address)
+			r0 = ret.Get(0).([]string)
 		}
 	}
 
@@ -72,34 +70,34 @@ func (_c *TimelockInspector_GetBypassers_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *TimelockInspector_GetBypassers_Call) Return(_a0 []common.Address, _a1 error) *TimelockInspector_GetBypassers_Call {
+func (_c *TimelockInspector_GetBypassers_Call) Return(_a0 []string, _a1 error) *TimelockInspector_GetBypassers_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *TimelockInspector_GetBypassers_Call) RunAndReturn(run func(context.Context, string) ([]common.Address, error)) *TimelockInspector_GetBypassers_Call {
+func (_c *TimelockInspector_GetBypassers_Call) RunAndReturn(run func(context.Context, string) ([]string, error)) *TimelockInspector_GetBypassers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetCancellers provides a mock function with given fields: ctx, address
-func (_m *TimelockInspector) GetCancellers(ctx context.Context, address string) ([]common.Address, error) {
+func (_m *TimelockInspector) GetCancellers(ctx context.Context, address string) ([]string, error) {
 	ret := _m.Called(ctx, address)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetCancellers")
 	}
 
-	var r0 []common.Address
+	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]common.Address, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
 		return rf(ctx, address)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []common.Address); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []string); ok {
 		r0 = rf(ctx, address)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]common.Address)
+			r0 = ret.Get(0).([]string)
 		}
 	}
 
@@ -131,34 +129,34 @@ func (_c *TimelockInspector_GetCancellers_Call) Run(run func(ctx context.Context
 	return _c
 }
 
-func (_c *TimelockInspector_GetCancellers_Call) Return(_a0 []common.Address, _a1 error) *TimelockInspector_GetCancellers_Call {
+func (_c *TimelockInspector_GetCancellers_Call) Return(_a0 []string, _a1 error) *TimelockInspector_GetCancellers_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *TimelockInspector_GetCancellers_Call) RunAndReturn(run func(context.Context, string) ([]common.Address, error)) *TimelockInspector_GetCancellers_Call {
+func (_c *TimelockInspector_GetCancellers_Call) RunAndReturn(run func(context.Context, string) ([]string, error)) *TimelockInspector_GetCancellers_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetExecutors provides a mock function with given fields: ctx, address
-func (_m *TimelockInspector) GetExecutors(ctx context.Context, address string) ([]common.Address, error) {
+func (_m *TimelockInspector) GetExecutors(ctx context.Context, address string) ([]string, error) {
 	ret := _m.Called(ctx, address)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetExecutors")
 	}
 
-	var r0 []common.Address
+	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]common.Address, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
 		return rf(ctx, address)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []common.Address); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []string); ok {
 		r0 = rf(ctx, address)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]common.Address)
+			r0 = ret.Get(0).([]string)
 		}
 	}
 
@@ -190,34 +188,34 @@ func (_c *TimelockInspector_GetExecutors_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *TimelockInspector_GetExecutors_Call) Return(_a0 []common.Address, _a1 error) *TimelockInspector_GetExecutors_Call {
+func (_c *TimelockInspector_GetExecutors_Call) Return(_a0 []string, _a1 error) *TimelockInspector_GetExecutors_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *TimelockInspector_GetExecutors_Call) RunAndReturn(run func(context.Context, string) ([]common.Address, error)) *TimelockInspector_GetExecutors_Call {
+func (_c *TimelockInspector_GetExecutors_Call) RunAndReturn(run func(context.Context, string) ([]string, error)) *TimelockInspector_GetExecutors_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetProposers provides a mock function with given fields: ctx, address
-func (_m *TimelockInspector) GetProposers(ctx context.Context, address string) ([]common.Address, error) {
+func (_m *TimelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
 	ret := _m.Called(ctx, address)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetProposers")
 	}
 
-	var r0 []common.Address
+	var r0 []string
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string) ([]common.Address, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
 		return rf(ctx, address)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string) []common.Address); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string) []string); ok {
 		r0 = rf(ctx, address)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]common.Address)
+			r0 = ret.Get(0).([]string)
 		}
 	}
 
@@ -249,12 +247,12 @@ func (_c *TimelockInspector_GetProposers_Call) Run(run func(ctx context.Context,
 	return _c
 }
 
-func (_c *TimelockInspector_GetProposers_Call) Return(_a0 []common.Address, _a1 error) *TimelockInspector_GetProposers_Call {
+func (_c *TimelockInspector_GetProposers_Call) Return(_a0 []string, _a1 error) *TimelockInspector_GetProposers_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *TimelockInspector_GetProposers_Call) RunAndReturn(run func(context.Context, string) ([]common.Address, error)) *TimelockInspector_GetProposers_Call {
+func (_c *TimelockInspector_GetProposers_Call) RunAndReturn(run func(context.Context, string) ([]string, error)) *TimelockInspector_GetProposers_Call {
 	_c.Call.Return(run)
 	return _c
 }

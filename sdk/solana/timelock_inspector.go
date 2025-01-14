@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
@@ -27,19 +26,19 @@ func NewTimelockInspector(client *rpc.Client) *TimelockInspector {
 	return &TimelockInspector{client: client}
 }
 
-func (t TimelockInspector) GetProposers(ctx context.Context, address string) ([]common.Address, error) {
+func (t TimelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
 	panic("implement me")
 }
 
-func (t TimelockInspector) GetExecutors(ctx context.Context, address string) ([]common.Address, error) {
+func (t TimelockInspector) GetExecutors(ctx context.Context, address string) ([]string, error) {
 	panic("implement me")
 }
 
-func (t TimelockInspector) GetBypassers(ctx context.Context, address string) ([]common.Address, error) {
+func (t TimelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
 	panic("implement me")
 }
 
-func (t TimelockInspector) GetCancellers(ctx context.Context, address string) ([]common.Address, error) {
+func (t TimelockInspector) GetCancellers(ctx context.Context, address string) ([]string, error) {
 	panic("implement me")
 }
 
