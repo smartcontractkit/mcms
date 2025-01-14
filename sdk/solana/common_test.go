@@ -20,6 +20,7 @@ import (
 var (
 	testChainSelector = types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
 	testProgramID     = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
+	testOpID          = [32]byte{1, 2, 3, 4}
 	testPDASeed       = PDASeed{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
 	testRoot          = common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000")
 )
@@ -82,9 +83,9 @@ func Test_FindTimelockConfigPDA(t *testing.T) {
 
 func Test_FindTimelockOperationPDA(t *testing.T) {
 	t.Parallel()
-	pda, err := FindTimelockOperationPDA(testProgramID, testPDASeed)
+	pda, err := FindTimelockOperationPDA(testProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("8TL4xwjpntLQXeFbADMPnooDofGUwocc4ikHAJb41Fcm")))
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("8iy9TQJB1jBBMBmwmiguZDRZpbDQNuvRCQu4cfdpgbKy")))
 }
 
 func Test_FindTimelockSignerPDA(t *testing.T) {
