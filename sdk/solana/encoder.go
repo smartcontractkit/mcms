@@ -84,7 +84,7 @@ func (e *Encoder) HashOperation(
 		numToU64LePaddedEncoding(uint64(len(additionalFields.Accounts))),
 	}
 	for _, account := range additionalFields.Accounts {
-		buffers = append(buffers, serializeAccountMeta(&account))
+		buffers = append(buffers, serializeAccountMeta(account))
 	}
 
 	return calculateHash(buffers), nil

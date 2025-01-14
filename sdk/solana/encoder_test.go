@@ -29,7 +29,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 	solanaTx, err := NewTransaction(
 		testAccount.String(),
 		[]byte("test data"),
-		[]solana.AccountMeta{{PublicKey: testAccount2, IsSigner: true, IsWritable: false}},
+		[]*solana.AccountMeta{{PublicKey: testAccount2, IsSigner: true, IsWritable: false}},
 		"unit-tests",
 		[]string{"test"},
 	)

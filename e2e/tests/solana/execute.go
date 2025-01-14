@@ -5,14 +5,18 @@ package e2e_solana
 
 import (
 	"context"
-	"crypto/sha256"
 	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
+	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
+	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/tokens"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -20,91 +24,109 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func getAnchorInstructionData(method string, data []byte) []byte {
-	discriminator := sha256.Sum256([]byte("global:" + method))
-	return append(discriminator[:8], data...)
-}
-
 var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 
 func (s *SolanaTestSuite) Test_Solana_Execute() {
-	// --- arrange ---
+	// Get required programs and accounts
 	ctx := context.Background()
 	mcmAddress := s.SolanaChain.SolanaPrograms["mcm"]
 	mcmID := fmt.Sprintf("%s.%s", mcmAddress, testPDASeedExec)
-
-	recipientAddress := solana.NewWallet()
-	recipientPubKey := recipientAddress.PublicKey()
-
 	signerEVMAccount := NewEVMTestAccount(s.T())
-	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{signerEVMAccount.Address}}
-
-	auth, err := solana.PrivateKeyFromBase58(privateKey)
+	signerPDA, err := mcmsSolana.FindSignerPDA(config.McmProgram, testPDASeedExec)
 	s.Require().NoError(err)
 
-	// Get the initial balance of the recipient
-	initialBalance, err := s.SolanaClient.GetBalance(
+	// Build a simple 1 signer config
+	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{signerEVMAccount.Address}}
+
+	// Fund the signer PDA account
+	auth, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+	fundPDAIx, err := system.NewTransferInstruction(
+		1*solana.LAMPORTS_PER_SOL,
+		auth.PublicKey(),
+		signerPDA,
+	).ValidateAndBuild()
+	s.Require().NoError(err)
+	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{fundPDAIx}, auth, config.DefaultCommitment)
+
+	// Setup SPL token for testing a mint via MCMS
+	mintKeypair, err := solana.NewRandomPrivateKey()
+	s.Require().NoError(err)
+	mint := mintKeypair.PublicKey()
+	tokenProgram := config.Token2022Program
+
+	// Use CreateToken utility to get initialization instructions
+	createTokenIxs, err := tokens.CreateToken(
 		ctx,
-		recipientPubKey,
+		tokenProgram,     // token program
+		mint,             // mint account
+		auth.PublicKey(), // initial mint owner(admin)
+		9,                // decimals
+		s.SolanaClient,
+		config.DefaultCommitment,
+	)
+	s.Require().NoError(err)
+	authIx, err := tokens.SetTokenMintAuthority(tokenProgram, signerPDA, mint, auth.PublicKey())
+	s.Require().NoError(err)
+	setupIxs := append(createTokenIxs, authIx)
+	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, setupIxs, auth, config.DefaultCommitment, solanaCommon.AddSigners(mintKeypair))
+
+	// Mint tokens to receiver
+	receiver, err := solana.NewRandomPrivateKey()
+	s.Require().NoError(err)
+	ix1, receiverATA, err := tokens.CreateAssociatedTokenAccount(tokenProgram, mint, receiver.PublicKey(), auth.PublicKey())
+	s.Require().NoError(err)
+	s.Require().NotEqual(receiverATA.String(), "")
+	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix1}, auth, config.DefaultCommitment, solanaCommon.AddSigners(mintKeypair))
+
+	// Get receiverATA initial balance
+	initialBalance, err := s.SolanaClient.GetTokenAccountBalance(
+		context.Background(),
+		receiverATA, // The associated token account address
 		rpc.CommitmentProcessed,
 	)
 	s.Require().NoError(err)
 
-	// Define transfer amount (e.g., 1 SOL = 1e9 lamports)
-	transferAmount := uint64(1e9)
-	// Create transfer instruction
-	_, err = s.SolanaClient.GetLatestBlockhash(context.TODO(), rpc.CommitmentFinalized)
-	if err != nil {
-		panic(err)
+	// Build the mint ix, this one will go through MCMS
+	amount := 1000 * solana.LAMPORTS_PER_SOL
+	ix2, err := token.NewMintToInstruction(amount, mint, receiverATA, signerPDA, nil).ValidateAndBuild()
+	accounts := ix2.Accounts()
+	for _, acc := range accounts {
+		if acc.PublicKey == signerPDA {
+			// important step: when using MCMS we want to set the signer to false because the rust contract will sign using invoke_signer
+			// if we keep this true, we'll have errors requiring a private key for a PDA which is not possible.
+			acc.IsSigner = false
+		}
+		fmt.Println("acc", acc.PublicKey.String(), "signer", acc.IsSigner, "write", acc.IsWritable)
 	}
 	s.Require().NoError(err)
-	ix := system.NewTransferInstruction(
-		transferAmount,
-		auth.PublicKey(),
-		recipientPubKey,
-	).Build()
-	s.Require().NoError(err)
-	ixBytes, err := ix.Data()
+	ix2Bytes, err := ix2.Data()
 	s.Require().NoError(err)
 
-	solanaMcmTx, err := mcmsSolana.NewTransaction(solana.SystemProgramID.String(),
-		ixBytes,
-		[]solana.AccountMeta{
-			{
-				PublicKey:  auth.PublicKey(),
-				IsSigner:   true,
-				IsWritable: true,
-			},
-			{
-				PublicKey:  recipientPubKey,
-				IsSigner:   false,
-				IsWritable: true,
-			},
-
-			{
-				PublicKey:  solana.SystemProgramID,
-				IsSigner:   false,
-				IsWritable: false,
-			},
-		},
-		"test",
-		[]string{"e2e-tests"},
+	// Build the mcms transaction for the proposal
+	solanaMcmTxMint, err := mcmsSolana.NewTransaction(solana.Token2022ProgramID.String(),
+		ix2Bytes,
+		ix2.Accounts(),
+		"Token",
+		[]string{"minting-test"},
 	)
 	s.Require().NoError(err)
 
+	// Create the proposal
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(uint32(time.Now().Add(10*time.Hour).Unix())).
-		SetDescription("proposal to test Execute").
+		SetDescription("proposal to test Execute with a token distribution").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmID}).
 		AddOperation(types.Operation{
 			ChainSelector: s.ChainSelector,
-			Transaction:   solanaMcmTx,
+			Transaction:   solanaMcmTxMint,
 		}).
 		Build()
 	s.Require().NoError(err)
 
+	// build encoders, executors and inspectors.
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*mcmsSolana.Encoder)
@@ -139,12 +161,14 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 
 	// --- assert balances
 	// Get the final balance of the recipient
-	finalBalance, err := s.SolanaClient.GetBalance(
+	finalBalance, err := s.SolanaClient.GetTokenAccountBalance(
 		ctx,
-		recipientPubKey,
+		receiverATA,
 		rpc.CommitmentProcessed,
 	)
 	s.Require().NoError(err)
-	// final balance should be 1 more SOL
-	s.Require().Equal(initialBalance.Value+transferAmount, finalBalance.Value)
+
+	// final balance should be 1000000000000 more units
+	s.Require().Equal(initialBalance.Value.Amount, "0")
+	s.Require().Equal(finalBalance.Value.Amount, "1000000000000")
 }

@@ -9,7 +9,7 @@ import (
 )
 
 type AdditionalFields struct {
-	Accounts []solana.AccountMeta `json:"accounts" validate:"required"`
+	Accounts []*solana.AccountMeta `json:"accounts" validate:"required"`
 }
 
 // Validate ensures the solana-specific fields are correct
@@ -20,7 +20,7 @@ func (f AdditionalFields) Validate() error {
 func NewTransaction(
 	contractID string,
 	data []byte,
-	accounts []solana.AccountMeta,
+	accounts []*solana.AccountMeta,
 	contractType string,
 	tags []string,
 ) (types.Transaction, error) {

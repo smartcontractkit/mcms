@@ -88,10 +88,9 @@ func (e *Executor) ExecuteOperation(
 	// Append the accounts from the AdditionalFields
 	accounts := ix.GetAccounts()
 	for _, account := range additionalFields.Accounts {
-		accounts = append(accounts, &account)
+		accounts = append(accounts, account)
 	}
 	ix.AccountMetaSlice = accounts
-
 	signature, err := sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
 		return "", fmt.Errorf("unable to call execute operation instruction: %w", err)
