@@ -47,37 +47,12 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	).ValidateAndBuild()
 	s.Require().NoError(err)
 	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{fundPDAIx}, auth, config.DefaultCommitment)
-
 	// Setup SPL token for testing a mint via MCMS
 	mintKeypair, err := solana.NewRandomPrivateKey()
 	s.Require().NoError(err)
 	mint := mintKeypair.PublicKey()
-	tokenProgram := config.Token2022Program
-
-	// Use CreateToken utility to get initialization instructions
-
-	createTokenIxs, err := tokens.CreateToken(
-		ctx,
-		tokenProgram,     // token program
-		mint,             // mint account
-		auth.PublicKey(), // initial mint owner(admin)
-		uint8(9),         // decimals
-		s.SolanaClient,
-		config.DefaultCommitment,
-	)
-	s.Require().NoError(err)
-	authIx, err := tokens.SetTokenMintAuthority(tokenProgram, signerPDA, mint, auth.PublicKey())
-	s.Require().NoError(err)
-	setupIxs := append(createTokenIxs, authIx)
-	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, setupIxs, auth, config.DefaultCommitment, solanaCommon.AddSigners(mintKeypair))
-
-	// Mint tokens to receiver
-	receiver, err := solana.NewRandomPrivateKey()
-	s.Require().NoError(err)
-	ix1, receiverATA, err := tokens.CreateAssociatedTokenAccount(tokenProgram, mint, receiver.PublicKey(), auth.PublicKey())
-	s.Require().NoError(err)
-	s.Require().NotEqual(receiverATA.String(), "")
-	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix1}, auth, config.DefaultCommitment, solanaCommon.AddSigners(mintKeypair))
+	// set up the token program
+	receiverATA := s.setupTokenProgram(ctx, auth, signerPDA, mintKeypair)
 
 	// Get receiverATA initial balance
 	initialBalance, err := s.SolanaClient.GetTokenAccountBalance(
@@ -87,28 +62,8 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	)
 	s.Require().NoError(err)
 
-	amount := 1000 * solana.LAMPORTS_PER_SOL
-	ix2, err := token.NewMintToInstruction(amount, mint, receiverATA, signerPDA, nil).ValidateAndBuild()
-	accounts := ix2.Accounts()
-	for _, acc := range accounts {
-		if acc.PublicKey == signerPDA {
-			// important step: when using MCMS we want to set the signer to false because the rust contract will sign using invoke_signer
-			// if we keep this true, we'll have errors requiring a private key for a PDA which is not possible.
-			acc.IsSigner = false
-		}
-	}
-	s.Require().NoError(err)
-	ix2Bytes, err := ix2.Data()
-	s.Require().NoError(err)
-
-	// Build the mcms transaction for the proposal
-	solanaMcmTxMint, err := mcmsSolana.NewTransaction(solana.Token2022ProgramID.String(),
-		ix2Bytes,
-		ix2.Accounts(),
-		"Token",
-		[]string{"minting-test"},
-	)
-	s.Require().NoError(err)
+	// Build the Mint TX for the proposal
+	solanaMcmTxMint := s.buildMintTx(mint, receiverATA, signerPDA)
 
 	// Create the proposal
 	s.Require().NoError(err)
@@ -144,7 +99,7 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	_, err = configurer.SetConfig(ctx, mcmID, &mcmConfig, true)
 	s.Require().NoError(err)
 
-	// --- act: call SetRoot ---
+	// call SetRoot
 	executable, err := mcms.NewExecutable(proposal, executors)
 	s.Require().NoError(err)
 	signature, err := executable.SetRoot(ctx, s.ChainSelector)
@@ -169,4 +124,58 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	// final balance should be 1000000000000 more units
 	s.Require().Equal(initialBalance.Value.Amount, "0")
 	s.Require().Equal(finalBalance.Value.Amount, "1000000000000")
+}
+func (s SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicKey) types.Transaction {
+	amount := 1000 * solana.LAMPORTS_PER_SOL
+	ix2, err := token.NewMintToInstruction(amount, mint, receiverATA, signerPDA, nil).ValidateAndBuild()
+	accounts := ix2.Accounts()
+	for _, acc := range accounts {
+		if acc.PublicKey == signerPDA {
+			// important step: when using MCMS we want to set the signer to false because the rust contract will sign using invoke_signer
+			// if we keep this true, we'll have errors requiring a private key for a PDA which is not possible.
+			acc.IsSigner = false
+		}
+	}
+	s.Require().NoError(err)
+	ix2Bytes, err := ix2.Data()
+	s.Require().NoError(err)
+
+	// Build the mcms transaction for the proposal
+	solanaMcmTxMint, err := mcmsSolana.NewTransaction(solana.Token2022ProgramID.String(),
+		ix2Bytes,
+		ix2.Accounts(),
+		"Token",
+		[]string{"minting-test"},
+	)
+	s.Require().NoError(err)
+	return solanaMcmTxMint
+}
+
+// setupTokenProgram sets up a token program with a mint and an associated token account for the receiver
+func (s SolanaTestSuite) setupTokenProgram(ctx context.Context, auth solana.PrivateKey, signerPDA solana.PublicKey, mint solana.PrivateKey) (receiverATA solana.PublicKey) {
+	tokenProgram := solana.Token2022ProgramID
+	// Use CreateToken utility to get initialization instructions
+	createTokenIxs, err := tokens.CreateToken(
+		ctx,
+		tokenProgram,     // token program
+		mint.PublicKey(), // mint account
+		auth.PublicKey(), // initial mint owner(admin)
+		uint8(9),         // decimals
+		s.SolanaClient,
+		config.DefaultCommitment,
+	)
+	s.Require().NoError(err)
+	authIx, err := tokens.SetTokenMintAuthority(tokenProgram, signerPDA, mint.PublicKey(), auth.PublicKey())
+	s.Require().NoError(err)
+	setupIxs := append(createTokenIxs, authIx)
+	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, setupIxs, auth, config.DefaultCommitment, solanaCommon.AddSigners(mint))
+	// Create ATA for the receiver
+	receiver, err := solana.NewRandomPrivateKey()
+	s.Require().NoError(err)
+	ix1, receiverATA, err := tokens.CreateAssociatedTokenAccount(tokenProgram, mint.PublicKey(), receiver.PublicKey(), auth.PublicKey())
+	s.Require().NoError(err)
+	s.Require().NotEqual(receiverATA.String(), "")
+	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix1}, auth, config.DefaultCommitment, solanaCommon.AddSigners(mint))
+
+	return receiverATA
 }

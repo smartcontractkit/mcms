@@ -351,7 +351,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	newOpCount, err := s.mcmsContract.GetOpCount(opts)
 	s.Require().NoError(err)
 	s.Require().NotNil(newOpCount)
-	s.Require().Equal(2, newOpCount.Uint64())
+	s.Require().Equal(uint64(2), newOpCount.Uint64())
 
 	// Check the state of the timelock contract
 	proposerCount, err := s.timelockContract.GetRoleMemberCount(&bind.CallOpts{}, role)
@@ -457,7 +457,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 	s.Require().NotNil(newOpCount)
 
-	s.Require().Equal(3, newOpCount.Uint64())
+	s.Require().Equal(uint64(3), newOpCount.Uint64())
 
 	// Check the state of the timelock contract
 	proposerCount, err = s.timelockContract.GetRoleMemberCount(&bind.CallOpts{}, role2)
