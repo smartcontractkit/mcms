@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e_solana
+package solanae2e
 
 import (
 	"crypto/ecdsa"
@@ -26,6 +26,7 @@ import (
 
 // this key matches the public key in the config.toml so it gets funded by the genesis block
 const privateKey = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
+
 var testPDASeed = [32]byte{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
 
 // -----------------------------------------------------------------------------

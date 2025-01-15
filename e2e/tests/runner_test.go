@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/smartcontractkit/mcms/e2e/tests/evm"
-	"github.com/smartcontractkit/mcms/e2e/tests/solana"
+	e2e_evm "github.com/smartcontractkit/mcms/e2e/tests/evm"
+	e2e_solana "github.com/smartcontractkit/mcms/e2e/tests/solana"
 )
 
 func TestEVMSuite(t *testing.T) {
