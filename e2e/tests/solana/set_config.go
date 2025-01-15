@@ -1,13 +1,13 @@
 //go:build e2e
 // +build e2e
 
-package e2e_solana
+package solanae2e
 
 import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
-	solana "github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go"
 	"github.com/google/go-cmp/cmp"
 
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"

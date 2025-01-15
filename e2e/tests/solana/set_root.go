@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package e2e_solana
+package solanae2e
 
 import (
 	"context"
@@ -30,7 +30,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 
-	validUntil := uint32(time.Now().Add(10*time.Second).Unix())
+	validUntil := uint32(time.Now().Add(10 * time.Second).Unix())
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(validUntil).
