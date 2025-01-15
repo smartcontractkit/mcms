@@ -22,8 +22,7 @@ var testPDASeedSetRootTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r
 
 func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	// --- arrange ---
-	timeAmount := 10
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(timeAmount)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
 
 	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedSetRootTest)
@@ -35,7 +34,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 
-	validUntil := time.Now().Add(time.Duration(timeAmount) * time.Hour).Unix()
+	validUntil := time.Now().Add(10 * time.Hour).Unix()
 	validUntilCast, err := safecast.Int64ToUint32(validUntil)
 	s.Require().NoError(err)
 	proposal, err := mcms.NewProposalBuilder().

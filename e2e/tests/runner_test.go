@@ -13,8 +13,6 @@ import (
 )
 
 func TestEVMSuite(t *testing.T) {
-	t.Parallel()
-
 	suite.Run(t, new(e2e_evm.InspectionTestSuite))
 	suite.Run(t, new(e2e_evm.ExecutionTestSuite))
 	suite.Run(t, new(e2e_evm.TimelockInspectionTestSuite))
@@ -24,7 +22,5 @@ func TestEVMSuite(t *testing.T) {
 
 //go:generate ./solana/compile-mcm-contracts.sh
 func TestSolanaSuite(t *testing.T) {
-	t.Parallel()
-
 	suite.Run(t, new(e2e_solana.SolanaTestSuite))
 }

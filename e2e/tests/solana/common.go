@@ -35,7 +35,6 @@ import (
 // this key matches the public key in the config.toml so it gets funded by the genesis block
 const privateKey = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
 
-// -----------------------------------------------------------------------------
 // EVMTestAccount is data type wrapping attributes typically needed when managing
 // ethereum accounts.
 type EVMTestAccount struct {
@@ -79,11 +78,10 @@ func generateTestEVMAccounts(t *testing.T, numAccounts int) []EVMTestAccount {
 		return strings.Compare(strings.ToLower(a.HexAddress), strings.ToLower(b.HexAddress))
 	})
 
-	// for i := range testAccounts { t.Logf("Test account %d: %s", i, testAccounts[i].HexAddress) }
 	return testAccounts
 }
 
-// SolanaTestSuite
+// SolanaTestSuite is the base test suite for all solana e2e tests
 type SolanaTestSuite struct {
 	suite.Suite
 	e2e.TestSetup
@@ -94,8 +92,7 @@ type SolanaTestSuite struct {
 
 // SetupMCM initializes the MCM account with the given PDA seed
 func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
-	amount := 10
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(amount)*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
 
 	bindings.SetProgramID(s.MCMProgramID)

@@ -21,9 +21,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
-const delaySeconds = 5
-const retryMs = 500
-
 // TimelockInspectionTestSuite is a suite of tests for the RBACTimelock contract inspection.
 type TimelockInspectionTestSuite struct {
 	suite.Suite
@@ -62,8 +59,7 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-	base := 10
-	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, base)
+	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, 10)
 	s.Require().True(ok, "Failed to parse chain ID")
 
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
@@ -121,8 +117,7 @@ func (s *TimelockInspectionTestSuite) TestGetExecutors() {
 
 	executors, err := inspector.GetExecutors(ctx, s.timelockContract.Address().Hex())
 	s.Require().NoError(err)
-	expectedNum := 2
-	s.Require().Len(executors, expectedNum)
+	s.Require().Len(executors, 2)
 	s.Require().Equal(s.signerAddresses[0], executors[0])
 	s.Require().Equal(s.signerAddresses[1], executors[1])
 }
@@ -146,8 +141,7 @@ func (s *TimelockInspectionTestSuite) TestGetCancellers() {
 
 	cancellers, err := inspector.GetCancellers(ctx, s.timelockContract.Address().Hex())
 	s.Require().NoError(err)
-	expectedNum := 2
-	s.Require().Len(cancellers, expectedNum)
+	s.Require().Len(cancellers, 2)
 	s.Require().Equal(s.signerAddresses[0], cancellers[0])
 	s.Require().Equal(s.signerAddresses[1], cancellers[1])
 }
@@ -164,8 +158,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperation() {
 			Value:  big.NewInt(1),
 		},
 	}
-	var timeHour int64 = 3600
-	delay := big.NewInt(timeHour)
+	delay := big.NewInt(3600)
 	pred := [32]byte{0x0}
 	salt := [32]byte{0x01}
 	tx, err := s.timelockContract.ScheduleBatch(s.auth, calls, pred, salt, delay)
@@ -188,15 +181,13 @@ func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 	inspector := evm.NewTimelockInspector(s.Client)
 
 	// Schedule a test operation
-	var val int64 = 2
 	calls := []bindings.RBACTimelockCall{
 		{
 			Target: s.signerAddresses[0],
-			Value:  big.NewInt(val),
+			Value:  big.NewInt(2),
 		},
 	}
-	var delayTime int64 = 3600
-	delay := big.NewInt(delayTime)
+	delay := big.NewInt(3600)
 	pred, err := evm.HashOperationBatch(calls, [32]byte{0x0}, [32]byte{0x01})
 	s.Require().NoError(err)
 	salt := [32]byte{0x01}
@@ -255,19 +246,17 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	// Get the suggested gas price
 	gasPrice, err := s.Client.SuggestGasPrice(ctx)
 	s.Require().NoError(err)
-	var gasLimit uint64 = 30000
 	to := timelockContract.Address()
 
 	pendingNonce, err := s.Client.PendingNonceAt(ctx, s.publicKey)
 	s.Require().NoError(err)
-	var val int64 = 4e15
-	var gas int64 = 10
+
 	txData := &types.LegacyTx{
 		Nonce:    pendingNonce,
 		To:       &to,
-		Value:    big.NewInt(val), // 0.004 ETH
-		GasPrice: gasPrice.Mul(gasPrice, big.NewInt(gas)),
-		Gas:      gasLimit,
+		Value:    big.NewInt(4e15), // 0.004 ETH
+		GasPrice: gasPrice.Mul(gasPrice, big.NewInt(10)),
+		Gas:      30000,
 	}
 	tx := types.NewTx(txData)
 	// Sign the transaction
@@ -324,5 +313,5 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 		s.Require().NoError(err, "Failed to check if operation is done")
 
 		return isOpDone
-	}, delaySeconds*time.Second, retryMs*time.Millisecond, "Operation was not completed in time")
+	}, 5*time.Second, 500*time.Millisecond, "Operation was not completed in time")
 }
