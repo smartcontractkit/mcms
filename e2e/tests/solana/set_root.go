@@ -12,7 +12,6 @@ import (
 	"github.com/gagliardetto/solana-go"
 
 	"github.com/smartcontractkit/mcms"
-	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"

@@ -15,7 +15,7 @@ import (
 
 func TestTimelockInspector_IsOperation(t *testing.T) {
 	t.Parallel()
-	operationPDA, err := FindTimelockOperationPDA(testProgramID, testPDASeed, testOpID)
+	operationPDA, err := FindTimelockOperationPDA(testMCMSProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
 
 	operation := createTimelockOperation(t, 123)
@@ -55,7 +55,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 			inspector, jsonRPCClient := newTestTimelockInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.IsOperation(context.Background(), ContractAddress(testProgramID, testPDASeed), testOpID)
+			got, err := inspector.IsOperation(context.Background(), ContractAddress(testMCMSProgramID, testPDASeed), testOpID)
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 			} else {
@@ -68,7 +68,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 
 func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	t.Parallel()
-	operationPDA, err := FindTimelockOperationPDA(testProgramID, testPDASeed, testOpID)
+	operationPDA, err := FindTimelockOperationPDA(testMCMSProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -117,7 +117,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 			inspector, jsonRPCClient := newTestTimelockInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.IsOperationPending(context.Background(), ContractAddress(testProgramID, testPDASeed), testOpID)
+			got, err := inspector.IsOperationPending(context.Background(), ContractAddress(testMCMSProgramID, testPDASeed), testOpID)
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 			} else {
@@ -130,7 +130,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 
 func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	t.Parallel()
-	operationPDA, err := FindTimelockOperationPDA(testProgramID, testPDASeed, testOpID)
+	operationPDA, err := FindTimelockOperationPDA(testMCMSProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -234,7 +234,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 			inspector, jsonRPCClient := newTestTimelockInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.IsOperationReady(context.Background(), ContractAddress(testProgramID, testPDASeed), testOpID)
+			got, err := inspector.IsOperationReady(context.Background(), ContractAddress(testMCMSProgramID, testPDASeed), testOpID)
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 			} else {
@@ -247,7 +247,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 
 func TestIsOperationDone(t *testing.T) {
 	t.Parallel()
-	operationPDA, err := FindTimelockOperationPDA(testProgramID, testPDASeed, testOpID)
+	operationPDA, err := FindTimelockOperationPDA(testMCMSProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -288,7 +288,7 @@ func TestIsOperationDone(t *testing.T) {
 			inspector, jsonRPCClient := newTestTimelockInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.IsOperationDone(context.Background(), ContractAddress(testProgramID, testPDASeed), testOpID)
+			got, err := inspector.IsOperationDone(context.Background(), ContractAddress(testMCMSProgramID, testPDASeed), testOpID)
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 			} else {

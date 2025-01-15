@@ -29,10 +29,9 @@ var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 func (s *SolanaTestSuite) Test_Solana_Execute() {
 	// Get required programs and accounts
 	ctx := context.Background()
-	mcmAddress := s.SolanaChain.SolanaPrograms["mcm"]
-	mcmID := fmt.Sprintf("%s.%s", mcmAddress, testPDASeedExec)
+	mcmID := fmt.Sprintf("%s.%s", s.MCMProgramID, testPDASeedExec)
 	signerEVMAccount := NewEVMTestAccount(s.T())
-	signerPDA, err := mcmsSolana.FindSignerPDA(config.McmProgram, testPDASeedExec)
+	signerPDA, err := mcmsSolana.FindSignerPDA(s.MCMProgramID, testPDASeedExec)
 	s.Require().NoError(err)
 
 	// Build a simple 1 signer config

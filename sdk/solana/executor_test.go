@@ -18,9 +18,6 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var McmProgram = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
-var McmName = "test-mcms"
-
 const dummyPrivateKey = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
 
 func TestNewExecutor(t *testing.T) {
@@ -48,11 +45,11 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	selector := cselectors.SOLANA_DEVNET.Selector
 	auth, err := solana.PrivateKeyFromBase58(dummyPrivateKey)
 	require.NoError(t, err)
-	contractID := fmt.Sprintf("%s.%s", McmProgram.String(), McmName)
+	contractID := fmt.Sprintf("%s.%s", testMCMSProgramID.String(), testPDASeed)
 	data := []byte{1, 2, 3, 4}
 	ctx := context.Background()
 	accounts := []*solana.AccountMeta{}
-	tx, err := NewTransaction(McmProgram.String(), data, accounts, "solana-testing", []string{})
+	tx, err := NewTransaction(testMCMSProgramID.String(), data, accounts, "solana-testing", []string{})
 	require.NoError(t, err)
 	tests := []struct {
 		name string
@@ -193,7 +190,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 	auth, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
 
-	defaultMetadata := types.ChainMetadata{StartingOpCount: 100, MCMAddress: ContractAddress(testProgramID, testPDASeed)}
+	defaultMetadata := types.ChainMetadata{StartingOpCount: 100, MCMAddress: ContractAddress(testMCMSProgramID, testPDASeed)}
 	defaultProof := []common.Hash{common.HexToHash("0x1"), common.HexToHash("0x2")}
 	defaultRoot := common.HexToHash("0x1234")
 	defaultValidUntil := uint32(2082758400)

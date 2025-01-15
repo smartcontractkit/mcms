@@ -3,6 +3,7 @@ package solana
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 
@@ -12,7 +13,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/mcms"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -46,34 +46,52 @@ func (e *Executor) ExecuteOperation(
 	proof []common.Hash,
 	op types.Operation,
 ) (string, error) {
-	programID, msigName, err := ParseContractAddress(metadata.MCMAddress)
+	programID, msigID, err := ParseContractAddress(metadata.MCMAddress)
 	if err != nil {
 		return "", err
 	}
-	chainID := uint64(e.ChainSelector)
-	byteProof := [][32]byte{}
+	selector := uint64(e.ChainSelector)
+	byteProof := make([][32]byte, 0, len(proof))
 	for _, p := range proof {
 		byteProof = append(byteProof, p)
 	}
 
 	mcm.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
-	configPDA := mcms.GetConfigPDA(msigName)
-	rootMetadataPDA := mcms.GetRootMetadataPDA(msigName)
-	expiringRootAndOpCountPDA := mcms.GetExpiringRootAndOpCountPDA(msigName)
+	configPDA, err := FindConfigPDA(programID, msigID)
+	if err != nil {
+		return "", err
+	}
+	rootMetadataPDA, err := FindRootMetadataPDA(programID, msigID)
+	if err != nil {
+		return "", err
+	}
+	expiringRootAndOpCountPDA, err := FindExpiringRootAndOpCountPDA(programID, msigID)
+	if err != nil {
+		return "", err
+	}
+	signedPDA, err := FindSignerPDA(programID, msigID)
+	if err != nil {
+		return "", err
+
+	}
 
 	// Unmarshal the AdditionalFields from the operation
 	var additionalFields AdditionalFields
 	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
 		return "", fmt.Errorf("unable to unmarshal additional fields: %w", err)
 	}
-	to, err := solana.PublicKeyFromBase58(op.Transaction.To)
-	if err != nil {
-		return "", err
+	toProgramID, _, err := ParseContractAddress(op.Transaction.To)
+	if errors.Is(err, ErrInvalidContractAddressFormat) {
+		var pkerr error
+		toProgramID, pkerr = solana.PublicKeyFromBase58(op.Transaction.To)
+		if pkerr != nil {
+			return "", fmt.Errorf("unable to get hash from base58 To address: %w", err)
+		}
 	}
 
 	ix := mcm.NewExecuteInstruction(
-		msigName,
-		chainID,
+		msigID,
+		selector,
 		uint64(nonce),
 		op.Transaction.Data,
 		byteProof,
@@ -81,14 +99,12 @@ func (e *Executor) ExecuteOperation(
 		configPDA,
 		rootMetadataPDA,
 		expiringRootAndOpCountPDA,
-		to,
-		mcms.GetSignerPDA(msigName),
+		toProgramID,
+		signedPDA,
 		e.auth.PublicKey(),
 	)
 	// Append the accounts from the AdditionalFields
-	accounts := ix.GetAccounts()
-	accounts = append(accounts, additionalFields.Accounts...)
-	ix.AccountMetaSlice = accounts
+	ix.AccountMetaSlice = append(ix.AccountMetaSlice, additionalFields.Accounts...)
 	signature, err := sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
 		return "", fmt.Errorf("unable to call execute operation instruction: %w", err)
