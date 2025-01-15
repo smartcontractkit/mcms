@@ -125,7 +125,7 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().Equal(initialBalance.Value.Amount, "0")
 	s.Require().Equal(finalBalance.Value.Amount, "1000000000000")
 }
-func (s SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicKey) types.Transaction {
+func (s *SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicKey) types.Transaction {
 	amount := 1000 * solana.LAMPORTS_PER_SOL
 	ix2, err := token.NewMintToInstruction(amount, mint, receiverATA, signerPDA, nil).ValidateAndBuild()
 	accounts := ix2.Accounts()
@@ -148,11 +148,12 @@ func (s SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicK
 		[]string{"minting-test"},
 	)
 	s.Require().NoError(err)
+
 	return solanaMcmTxMint
 }
 
 // setupTokenProgram sets up a token program with a mint and an associated token account for the receiver
-func (s SolanaTestSuite) setupTokenProgram(ctx context.Context, auth solana.PrivateKey, signerPDA solana.PublicKey, mint solana.PrivateKey) (receiverATA solana.PublicKey) {
+func (s *SolanaTestSuite) setupTokenProgram(ctx context.Context, auth solana.PrivateKey, signerPDA solana.PublicKey, mint solana.PrivateKey) (receiverATA solana.PublicKey) {
 	tokenProgram := solana.Token2022ProgramID
 	// Use CreateToken utility to get initialization instructions
 	createTokenIxs, err := tokens.CreateToken(

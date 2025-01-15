@@ -72,7 +72,6 @@ func (e *Executor) ExecuteOperation(
 	signedPDA, err := FindSignerPDA(programID, msigID)
 	if err != nil {
 		return "", err
-
 	}
 
 	// Unmarshal the AdditionalFields from the operation
