@@ -35,11 +35,9 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	s.Require().NoError(err)
 
 	validUntil := time.Now().Add(10 * time.Hour).Unix()
-	validUntilCast, err := safecast.Int64ToUint32(validUntil)
-	s.Require().NoError(err)
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
-		SetValidUntil(validUntilCast).
+		SetValidUntil(uint32(validUntil)).
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmAddress}).
@@ -85,5 +83,5 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	gotRoot, gotValidUntil, err := inspectors[s.ChainSelector].GetRoot(ctx, mcmAddress)
 	s.Require().NoError(err)
 	s.Require().Equal(common.HexToHash("0x11329486f2a7bb589320f2a8e9fad50fd5ed9ceeb3c1e2f71491d5ab848c7f60"), gotRoot)
-	s.Require().Equal(validUntilCast, gotValidUntil)
+	s.Require().Equal(validUntil, gotValidUntil)
 }
