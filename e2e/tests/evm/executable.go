@@ -364,7 +364,6 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 	grantRoleData2, err := timelockAbi.Pack("grantRole", role2, s.mcmsContract.Address())
 	s.Require().NoError(err)
-
 	// Construct 2nd proposal
 	proposal2 := mcms.Proposal{
 		BaseProposal: mcms.BaseProposal{
