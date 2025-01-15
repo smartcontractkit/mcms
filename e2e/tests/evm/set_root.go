@@ -51,7 +51,6 @@ func (s *SetRootTestSuite) SetupSuite() {
 	}
 
 	// Parse ChainID from string to int64
-
 	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, 10)
 	s.Require().True(ok, "Failed to parse chain ID")
 

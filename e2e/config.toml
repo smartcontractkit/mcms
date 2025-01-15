@@ -28,4 +28,3 @@ family = "solana"
 
 [solana_config.solana_programs]
 mcm = "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX"
-

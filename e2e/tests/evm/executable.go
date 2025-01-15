@@ -6,7 +6,6 @@ package evme2e
 import (
 	"context"
 	"math/big"
-	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -137,7 +136,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 			Version:              "v1",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			Kind:                 mcmtypes.KindProposal,
-			ValidUntil:           uint32(time.Now().Add(10 * time.Hour).Unix()),
+			ValidUntil:           2004259681,
 			Signatures:           []mcmtypes.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
@@ -262,7 +261,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 			Version:              "v1",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			Kind:                 mcmtypes.KindProposal,
-			ValidUntil:           uint32(time.Now().Add(10 * time.Hour).Unix()),
+			ValidUntil:           2004259681,
 			Signatures:           []mcmtypes.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
@@ -356,7 +355,6 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	// Check the state of the timelock contract
 	proposerCount, err := s.timelockContract.GetRoleMemberCount(&bind.CallOpts{}, role)
 	s.Require().NoError(err)
-
 	s.Require().Equal(big.NewInt(2), proposerCount)
 	proposer, err := s.timelockContract.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
 	s.Require().NoError(err)
@@ -366,13 +364,14 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 	grantRoleData2, err := timelockAbi.Pack("grantRole", role2, s.mcmsContract.Address())
 	s.Require().NoError(err)
+
 	// Construct 2nd proposal
 	proposal2 := mcms.Proposal{
 		BaseProposal: mcms.BaseProposal{
 			Version:              "v1",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
 			Kind:                 mcmtypes.KindProposal,
-			ValidUntil:           uint32(time.Now().Add(10 * time.Hour).Unix()),
+			ValidUntil:           2004259681,
 			Signatures:           []mcmtypes.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
@@ -456,7 +455,6 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	newOpCount, err = s.mcmsContract.GetOpCount(opts)
 	s.Require().NoError(err)
 	s.Require().NotNil(newOpCount)
-
 	s.Require().Equal(uint64(3), newOpCount.Uint64())
 
 	// Check the state of the timelock contract

@@ -246,6 +246,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	// Get the suggested gas price
 	gasPrice, err := s.Client.SuggestGasPrice(ctx)
 	s.Require().NoError(err)
+	gasLimit := uint64(30000)
 	to := timelockContract.Address()
 
 	pendingNonce, err := s.Client.PendingNonceAt(ctx, s.publicKey)
@@ -256,7 +257,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 		To:       &to,
 		Value:    big.NewInt(4e15), // 0.004 ETH
 		GasPrice: gasPrice.Mul(gasPrice, big.NewInt(10)),
-		Gas:      30000,
+		Gas:      gasLimit,
 	}
 	tx := types.NewTx(txData)
 	// Sign the transaction
