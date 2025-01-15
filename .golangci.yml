@@ -98,3 +98,8 @@ issues:
     - path: _test\.go
       linters:
         - unparam # No need to check for unused parameters in tests, since there are often false positives
+    - path: ^e2e/
+      linters:
+        - mnd # Exclude magic numbers rule in the e2e folder
+        - gosec # Exclude integer overflow (G115)
+        - paralleltest # Exclude requiring parallel tests
