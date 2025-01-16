@@ -36,8 +36,6 @@ func (e *Inspector) GetConfig(ctx context.Context, address string) (*types.Confi
 		return nil, err
 	}
 
-	bindings.SetProgramID(programID)
-
 	configPDA, err := FindConfigPDA(programID, instanceID)
 	if err != nil {
 		return nil, err
@@ -63,8 +61,6 @@ func (e *Inspector) GetOpCount(ctx context.Context, mcmAddress string) (uint64, 
 		return 0, err
 	}
 
-	bindings.SetProgramID(programID)
-
 	pda, err := FindExpiringRootAndOpCountPDA(programID, seed)
 	if err != nil {
 		return 0, err
@@ -84,8 +80,6 @@ func (e *Inspector) GetRoot(ctx context.Context, mcmAddress string) (common.Hash
 		return common.Hash{}, 0, err
 	}
 
-	bindings.SetProgramID(programID)
-
 	pda, err := FindExpiringRootAndOpCountPDA(programID, seed)
 	if err != nil {
 		return common.Hash{}, 0, err
@@ -104,8 +98,6 @@ func (e *Inspector) GetRootMetadata(ctx context.Context, mcmAddress string) (typ
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}
-
-	bindings.SetProgramID(programID)
 
 	pda, err := FindRootMetadataPDA(programID, seed)
 	if err != nil {
