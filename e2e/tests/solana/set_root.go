@@ -21,7 +21,7 @@ var testPDASeedSetRootTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r
 
 // SetRootSolanaTestSuite is the test suite for the SetRoot functionality
 type SetRootSolanaTestSuite struct {
-	SolanaTestSuite
+	*SolanaTestSuite
 }
 
 // SetupSuite runs before the test suite

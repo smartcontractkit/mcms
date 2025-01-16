@@ -15,7 +15,7 @@ var testPDASeedInspect = [32]byte{'t', 'e', 's', 't', '-', 'i', 'n', 's', 'p', '
 
 // InspectSolanaTestSuite is the test suite for the Inspection functionality
 type InspectSolanaTestSuite struct {
-	SolanaTestSuite
+	*SolanaTestSuite
 }
 
 // SetupSuite runs before the test suite

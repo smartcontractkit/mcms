@@ -27,7 +27,7 @@ var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 
 // ExecuteSolanaTestSuite is the test suite for the Execute functionality
 type ExecuteSolanaTestSuite struct {
-	SolanaTestSuite
+	*SolanaTestSuite
 }
 
 // SetupSuite runs before the test suite

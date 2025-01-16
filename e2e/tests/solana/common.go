@@ -153,5 +153,4 @@ func (s *SolanaTestSuite) SetupSuite() {
 	details, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, cselectors.FamilySolana)
 	s.Require().NoError(err)
 	s.ChainSelector = types.ChainSelector(details.ChainSelector)
-
 }

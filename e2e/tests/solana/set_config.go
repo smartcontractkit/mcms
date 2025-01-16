@@ -18,7 +18,7 @@ var testPDASeedSetConfigTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 
 
 // SetConfigSolanaTestSuite is the test suite for the SetConfig functionality
 type SetConfigSolanaTestSuite struct {
-	SolanaTestSuite
+	*SolanaTestSuite
 }
 
 // SetupSuite runs before the test suite

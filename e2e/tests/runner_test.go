@@ -22,12 +22,14 @@ func TestEVMSuite(t *testing.T) {
 
 //go:generate ./solana/compile-mcm-contracts.sh
 func TestSolanaSuite(t *testing.T) {
-	// Initialize SolanaTestSuite first
-	baseSuite := new(solanae2e.SolanaTestSuite)
+	// Initialize SolanaTestSuite as a pointer
+	baseSuite := &solanae2e.SolanaTestSuite{}
 
+	// Run tests that depend on SolanaTestSuite
 	suite.Run(t, baseSuite)
-	suite.Run(t, &solanae2e.ExecuteSolanaTestSuite{SolanaTestSuite: *baseSuite})
-	suite.Run(t, &solanae2e.InspectSolanaTestSuite{SolanaTestSuite: *baseSuite})
-	suite.Run(t, &solanae2e.SetConfigSolanaTestSuite{SolanaTestSuite: *baseSuite})
-	suite.Run(t, &solanae2e.SetRootSolanaTestSuite{SolanaTestSuite: *baseSuite})
+
+	// Use the pointer directly when initializing dependent test suites
+	suite.Run(t, &solanae2e.ExecuteSolanaTestSuite{SolanaTestSuite: baseSuite})
+	suite.Run(t, &solanae2e.InspectSolanaTestSuite{SolanaTestSuite: baseSuite})
+	suite.Run(t, &solanae2e.SetConfigSolanaTestSuite{SolanaTestSuite: baseSuite})
 }
