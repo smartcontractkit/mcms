@@ -29,13 +29,13 @@ func NewTimelockInspector(client ContractDeployBackend) *TimelockInspector {
 // getAddressesWithRole returns the list of addresses with the given role
 func (tm TimelockInspector) getAddressesWithRole(
 	ctx context.Context, timelock *bindings.RBACTimelock, role [32]byte,
-) ([]common.Address, error) {
+) ([]string, error) {
 	numAddresses, err := timelock.GetRoleMemberCount(&bind.CallOpts{Context: ctx}, role)
 	if err != nil {
 		return nil, err
 	}
 	// For each address index in the roles count, get the address
-	addresses := make([]common.Address, 0, numAddresses.Uint64())
+	addresses := make([]string, 0, numAddresses.Uint64())
 	for i := range numAddresses.Uint64() {
 		idx, err := safecast.Uint64ToInt64(i)
 		if err != nil {
@@ -45,14 +45,14 @@ func (tm TimelockInspector) getAddressesWithRole(
 		if err != nil {
 			return nil, err
 		}
-		addresses = append(addresses, address)
+		addresses = append(addresses, address.String())
 	}
 
 	return addresses, nil
 }
 
 // GetProposers returns the list of addresses with the proposer role
-func (tm TimelockInspector) GetProposers(ctx context.Context, address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
@@ -66,7 +66,7 @@ func (tm TimelockInspector) GetProposers(ctx context.Context, address string) ([
 }
 
 // GetExecutors returns the list of addresses with the executor role
-func (tm TimelockInspector) GetExecutors(ctx context.Context, address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetExecutors(ctx context.Context, address string) ([]string, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
@@ -80,7 +80,7 @@ func (tm TimelockInspector) GetExecutors(ctx context.Context, address string) ([
 }
 
 // GetBypassers returns the list of addresses with the bypasser role
-func (tm TimelockInspector) GetBypassers(ctx context.Context, address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
@@ -94,7 +94,7 @@ func (tm TimelockInspector) GetBypassers(ctx context.Context, address string) ([
 }
 
 // GetCancellers returns the list of addresses with the canceller role
-func (tm TimelockInspector) GetCancellers(ctx context.Context, address string) ([]common.Address, error) {
+func (tm TimelockInspector) GetCancellers(ctx context.Context, address string) ([]string, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
 	if err != nil {
 		return nil, err
