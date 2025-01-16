@@ -107,7 +107,7 @@ func (s *TimelockInspectionTestSuite) TestGetProposers() {
 	proposers, err := inspector.GetProposers(ctx, s.timelockContract.Address().Hex())
 	s.Require().NoError(err)
 	s.Require().Len(proposers, 1)
-	s.Require().Equal(s.signerAddresses[0], proposers[0])
+	s.Require().Equal(s.signerAddresses[0].Hex(), proposers[0])
 }
 
 // TestGetExecutors gets the list of executors
@@ -118,8 +118,8 @@ func (s *TimelockInspectionTestSuite) TestGetExecutors() {
 	executors, err := inspector.GetExecutors(ctx, s.timelockContract.Address().Hex())
 	s.Require().NoError(err)
 	s.Require().Len(executors, 2)
-	s.Require().Equal(s.signerAddresses[0], executors[0])
-	s.Require().Equal(s.signerAddresses[1], executors[1])
+	s.Require().Equal(s.signerAddresses[0].Hex(), executors[0])
+	s.Require().Equal(s.signerAddresses[1].Hex(), executors[1])
 }
 
 // TestGetBypassers gets the list of bypassers
@@ -131,7 +131,7 @@ func (s *TimelockInspectionTestSuite) TestGetBypassers() {
 	s.Require().NoError(err)
 	s.Require().Len(bypassers, 1) // Ensure lengths match
 	// Check that all elements of signerAddresses are in proposers
-	s.Require().Contains(bypassers, s.signerAddresses[1])
+	s.Require().Contains(bypassers, s.signerAddresses[1].Hex())
 }
 
 // TestGetCancellers gets the list of cancellers
@@ -142,8 +142,8 @@ func (s *TimelockInspectionTestSuite) TestGetCancellers() {
 	cancellers, err := inspector.GetCancellers(ctx, s.timelockContract.Address().Hex())
 	s.Require().NoError(err)
 	s.Require().Len(cancellers, 2)
-	s.Require().Equal(s.signerAddresses[0], cancellers[0])
-	s.Require().Equal(s.signerAddresses[1], cancellers[1])
+	s.Require().Equal(s.signerAddresses[0].Hex(), cancellers[0])
+	s.Require().Equal(s.signerAddresses[1].Hex(), cancellers[1])
 }
 
 // TestIsOperation tests the IsOperation method

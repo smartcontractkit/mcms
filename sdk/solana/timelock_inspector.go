@@ -3,13 +3,15 @@ package solana
 import (
 	"context"
 	"errors"
+	"fmt"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/access_controller"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 )
 
@@ -27,20 +29,40 @@ func NewTimelockInspector(client *rpc.Client) *TimelockInspector {
 	return &TimelockInspector{client: client}
 }
 
-func (t TimelockInspector) GetProposers(ctx context.Context, address string) ([]common.Address, error) {
-	panic("implement me")
+func (t TimelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
+	accessList, err := t.getRoleAccessList(ctx, address, timelock.Proposer_Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return accessList, nil
 }
 
-func (t TimelockInspector) GetExecutors(ctx context.Context, address string) ([]common.Address, error) {
-	panic("implement me")
+func (t TimelockInspector) GetExecutors(ctx context.Context, address string) ([]string, error) {
+	accessList, err := t.getRoleAccessList(ctx, address, timelock.Executor_Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return accessList, nil
 }
 
-func (t TimelockInspector) GetBypassers(ctx context.Context, address string) ([]common.Address, error) {
-	panic("implement me")
+func (t TimelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
+	accessList, err := t.getRoleAccessList(ctx, address, timelock.Bypasser_Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return accessList, nil
 }
 
-func (t TimelockInspector) GetCancellers(ctx context.Context, address string) ([]common.Address, error) {
-	panic("implement me")
+func (t TimelockInspector) GetCancellers(ctx context.Context, address string) ([]string, error) {
+	accessList, err := t.getRoleAccessList(ctx, address, timelock.Canceller_Role)
+	if err != nil {
+		return nil, err
+	}
+
+	return accessList, nil
 }
 
 func (t TimelockInspector) IsOperation(ctx context.Context, address string, opID [32]byte) (bool, error) {
@@ -76,7 +98,7 @@ func (t TimelockInspector) IsOperationReady(ctx context.Context, address string,
 		return false, err
 	}
 
-	ts, err := safeConvertUint64ToInt64(op.Timestamp)
+	ts, err := safecast.Uint64ToInt64(op.Timestamp)
 	if err != nil {
 		return false, err
 	}
@@ -104,7 +126,7 @@ func (t TimelockInspector) getOpData(ctx context.Context, address string, opID [
 		return timelock.Operation{}, err
 	}
 
-	mcm.SetProgramID(programID)
+	timelock.SetProgramID(programID)
 
 	pda, err := FindTimelockOperationPDA(programID, seed, opID)
 	if err != nil {
@@ -120,12 +142,63 @@ func (t TimelockInspector) getOpData(ctx context.Context, address string, opID [
 	return opAccount, nil
 }
 
-func safeConvertUint64ToInt64(value uint64) (int64, error) {
-	const maxInt64 = int64(^uint64(0) >> 1)
-
-	if value > uint64(maxInt64) {
-		return 0, errors.New("cannot convert uint64 to int64: value out of int64 range")
+func (t TimelockInspector) getRoleAccessList(ctx context.Context, address string, role timelock.Role) ([]string, error) {
+	programID, seed, err := ParseContractAddress(address)
+	if err != nil {
+		return nil, err
 	}
 
-	return int64(value), nil
+	timelock.SetProgramID(programID)
+
+	pda, err := FindTimelockConfigPDA(programID, seed)
+	if err != nil {
+		return nil, err
+	}
+
+	var configAccount timelock.Config
+	err = solanaCommon.GetAccountDataBorshInto(ctx, t.client, pda, rpc.CommitmentConfirmed, &configAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	controller, err := getRoleAccessController(configAccount, role)
+	if err != nil {
+		return nil, err
+	}
+
+	var ac access_controller.AccessController
+	err = solanaCommon.GetAccountDataBorshInto(
+		ctx,
+		t.client,
+		controller,
+		rpc.CommitmentConfirmed,
+		&ac,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	accessListStr := make([]string, 0, ac.AccessList.Len)
+	for _, acc := range ac.AccessList.Xs[:ac.AccessList.Len] {
+		accessListStr = append(accessListStr, acc.String())
+	}
+
+	return accessListStr, nil
+}
+
+func getRoleAccessController(config timelock.Config, role timelock.Role) (solana.PublicKey, error) {
+	switch role {
+	case timelock.Proposer_Role:
+		return config.ProposerRoleAccessController, nil
+	case timelock.Canceller_Role:
+		return config.CancellerRoleAccessController, nil
+	case timelock.Executor_Role:
+		return config.ExecutorRoleAccessController, nil
+	case timelock.Bypasser_Role:
+		return config.BypasserRoleAccessController, nil
+	case timelock.Admin_Role:
+		return solana.PublicKey{}, fmt.Errorf("not supported role: %v", role)
+	default:
+		return solana.PublicKey{}, fmt.Errorf("unknown role")
+	}
 }

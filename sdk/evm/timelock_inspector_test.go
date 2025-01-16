@@ -23,7 +23,7 @@ type roleFetchTest struct {
 	roleMembers     []common.Address
 	proposerRole    [32]byte
 	mockError       error
-	want            []common.Address
+	want            []string
 	wantErr         error
 	roleFetchType   string // Specify the role type (proposers, executors, etc.)
 }
@@ -66,10 +66,10 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 				common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
 			},
 			proposerRole: [32]byte{0x01},
-			want: []common.Address{
-				common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdef"),
-				common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
-				common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
+			want: []string{
+				"0x0000AbCDeFabcdEfaBcDeFabCDEFAbCDEfABcDeF",
+				"0x1234567890AbcdEF1234567890aBcdef12345678",
+				"0x1234567890aBcdef1234567890Abcdef56785678",
 			},
 			roleFetchType: "proposers",
 		},
@@ -91,10 +91,10 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 				common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
 			},
 			proposerRole: [32]byte{0x01},
-			want: []common.Address{
-				common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdef"),
-				common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
-				common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
+			want: []string{
+				"0x0000AbCDeFabcdEfaBcDeFabCDEFAbCDEfABcDeF",
+				"0x1234567890AbcdEF1234567890aBcdef12345678",
+				"0x1234567890aBcdef1234567890Abcdef56785678",
 			},
 			roleFetchType: "executors",
 		},
@@ -116,10 +116,10 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 				common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
 			},
 			proposerRole: [32]byte{0x01},
-			want: []common.Address{
-				common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdef"),
-				common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
-				common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
+			want: []string{
+				"0x0000AbCDeFabcdEfaBcDeFabCDEFAbCDEfABcDeF",
+				"0x1234567890AbcdEF1234567890aBcdef12345678",
+				"0x1234567890aBcdef1234567890Abcdef56785678",
 			},
 			roleFetchType: "executors",
 		},
@@ -141,10 +141,10 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 				common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
 			},
 			proposerRole: [32]byte{0x01},
-			want: []common.Address{
-				common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdef"),
-				common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
-				common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
+			want: []string{
+				"0x0000AbCDeFabcdEfaBcDeFabCDEFAbCDEfABcDeF",
+				"0x1234567890AbcdEF1234567890aBcdef12345678",
+				"0x1234567890aBcdef1234567890Abcdef56785678",
 			},
 			roleFetchType: "bypassers",
 		},
@@ -166,10 +166,10 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 				common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
 			},
 			proposerRole: [32]byte{0x01},
-			want: []common.Address{
-				common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdef"),
-				common.HexToAddress("0x1234567890abcdef1234567890abcdef12345678"),
-				common.HexToAddress("0x1234567890abcdef1234567890abcdef56785678"),
+			want: []string{
+				"0x0000AbCDeFabcdEfaBcDeFabCDEFAbCDEfABcDeF",
+				"0x1234567890AbcdEF1234567890aBcdef12345678",
+				"0x1234567890aBcdef1234567890Abcdef56785678",
 			},
 			roleFetchType: "bypassers",
 		},
@@ -205,7 +205,7 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 			}
 
 			// Select and call the appropriate role-fetching function
-			var got []common.Address
+			var got []string
 			switch tt.roleFetchType {
 			case "proposers":
 				got, err = inspector.GetProposers(ctx, tt.address)

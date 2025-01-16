@@ -7,15 +7,244 @@ import (
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/access_controller"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 )
 
+func TestTimelockInspector_GetProposers(t *testing.T) {
+	t.Parallel()
+
+	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
+	require.NoError(t, err)
+
+	config := createTimelockConfig(t)
+	controller := createAccessController(t)
+
+	tests := []struct {
+		name    string
+		setup   func(*mocks.JSONRPCClient)
+		want    []string
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, nil)
+				mockGetAccountInfo(t, mockJSONRPCClient, config.ProposerRoleAccessController, controller, nil)
+			},
+			want: []string{controller.AccessList.Xs[0].String(), controller.AccessList.Xs[1].String()},
+		},
+		{
+			name: "error: get timelock config account info rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, errors.New("rpc error"))
+			},
+			wantErr: "rpc error",
+		},
+		{
+			name: "error: get controller account info rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, nil)
+				mockGetAccountInfo(t, mockJSONRPCClient, config.ProposerRoleAccessController, controller, errors.New("rpc error"))
+			},
+			wantErr: "rpc error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			inspector, jsonRPCClient := newTestTimelockInspector(t)
+			tt.setup(jsonRPCClient)
+
+			got, err := inspector.GetProposers(context.Background(), ContractAddress(testTimelockProgramID, testPDASeed))
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestTimelockInspector_GetExecutors(t *testing.T) {
+	t.Parallel()
+
+	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
+	require.NoError(t, err)
+
+	config := createTimelockConfig(t)
+	controller := createAccessController(t)
+
+	tests := []struct {
+		name    string
+		setup   func(*mocks.JSONRPCClient)
+		want    []string
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, nil)
+				mockGetAccountInfo(t, mockJSONRPCClient, config.ExecutorRoleAccessController, controller, nil)
+			},
+			want: []string{controller.AccessList.Xs[0].String(), controller.AccessList.Xs[1].String()},
+		},
+		{
+			name: "error: get timelock config account info rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, errors.New("rpc error"))
+			},
+			wantErr: "rpc error",
+		},
+		{
+			name: "error: get controller account info rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, nil)
+				mockGetAccountInfo(t, mockJSONRPCClient, config.ExecutorRoleAccessController, controller, errors.New("rpc error"))
+			},
+			wantErr: "rpc error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			inspector, jsonRPCClient := newTestTimelockInspector(t)
+			tt.setup(jsonRPCClient)
+
+			got, err := inspector.GetExecutors(context.Background(), ContractAddress(testTimelockProgramID, testPDASeed))
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestTimelockInspector_GetBypassers(t *testing.T) {
+	t.Parallel()
+
+	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
+	require.NoError(t, err)
+
+	config := createTimelockConfig(t)
+	controller := createAccessController(t)
+
+	tests := []struct {
+		name    string
+		setup   func(*mocks.JSONRPCClient)
+		want    []string
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, nil)
+				mockGetAccountInfo(t, mockJSONRPCClient, config.BypasserRoleAccessController, controller, nil)
+			},
+			want: []string{controller.AccessList.Xs[0].String(), controller.AccessList.Xs[1].String()},
+		},
+		{
+			name: "error: get timelock config account info rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, errors.New("rpc error"))
+			},
+			wantErr: "rpc error",
+		},
+		{
+			name: "error: get controller account info rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, nil)
+				mockGetAccountInfo(t, mockJSONRPCClient, config.BypasserRoleAccessController, controller, errors.New("rpc error"))
+			},
+			wantErr: "rpc error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			inspector, jsonRPCClient := newTestTimelockInspector(t)
+			tt.setup(jsonRPCClient)
+
+			got, err := inspector.GetBypassers(context.Background(), ContractAddress(testTimelockProgramID, testPDASeed))
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestTimelockInspector_GetCancellers(t *testing.T) {
+	t.Parallel()
+
+	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
+	require.NoError(t, err)
+
+	config := createTimelockConfig(t)
+	controller := createAccessController(t)
+
+	tests := []struct {
+		name    string
+		setup   func(*mocks.JSONRPCClient)
+		want    []string
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, nil)
+				mockGetAccountInfo(t, mockJSONRPCClient, config.CancellerRoleAccessController, controller, nil)
+			},
+			want: []string{controller.AccessList.Xs[0].String(), controller.AccessList.Xs[1].String()},
+		},
+		{
+			name: "error: get timelock config account info rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, errors.New("rpc error"))
+			},
+			wantErr: "rpc error",
+		},
+		{
+			name: "error: get controller account info rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, config, nil)
+				mockGetAccountInfo(t, mockJSONRPCClient, config.CancellerRoleAccessController, controller, errors.New("rpc error"))
+			},
+			wantErr: "rpc error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			inspector, jsonRPCClient := newTestTimelockInspector(t)
+			tt.setup(jsonRPCClient)
+
+			got, err := inspector.GetCancellers(context.Background(), ContractAddress(testTimelockProgramID, testPDASeed))
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
 func TestTimelockInspector_IsOperation(t *testing.T) {
 	t.Parallel()
-	operationPDA, err := FindTimelockOperationPDA(testMCMSProgramID, testPDASeed, testOpID)
+	operationPDA, err := FindTimelockOperationPDA(testTimelockProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
 
 	operation := createTimelockOperation(t, 123)
@@ -55,7 +284,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 			inspector, jsonRPCClient := newTestTimelockInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.IsOperation(context.Background(), ContractAddress(testMCMSProgramID, testPDASeed), testOpID)
+			got, err := inspector.IsOperation(context.Background(), ContractAddress(testTimelockProgramID, testPDASeed), testOpID)
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 			} else {
@@ -68,7 +297,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 
 func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	t.Parallel()
-	operationPDA, err := FindTimelockOperationPDA(testMCMSProgramID, testPDASeed, testOpID)
+	operationPDA, err := FindTimelockOperationPDA(testTimelockProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -117,7 +346,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 			inspector, jsonRPCClient := newTestTimelockInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.IsOperationPending(context.Background(), ContractAddress(testMCMSProgramID, testPDASeed), testOpID)
+			got, err := inspector.IsOperationPending(context.Background(), ContractAddress(testTimelockProgramID, testPDASeed), testOpID)
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 			} else {
@@ -130,7 +359,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 
 func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	t.Parallel()
-	operationPDA, err := FindTimelockOperationPDA(testMCMSProgramID, testPDASeed, testOpID)
+	operationPDA, err := FindTimelockOperationPDA(testTimelockProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -234,7 +463,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 			inspector, jsonRPCClient := newTestTimelockInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.IsOperationReady(context.Background(), ContractAddress(testMCMSProgramID, testPDASeed), testOpID)
+			got, err := inspector.IsOperationReady(context.Background(), ContractAddress(testTimelockProgramID, testPDASeed), testOpID)
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 			} else {
@@ -247,7 +476,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 
 func TestIsOperationDone(t *testing.T) {
 	t.Parallel()
-	operationPDA, err := FindTimelockOperationPDA(testMCMSProgramID, testPDASeed, testOpID)
+	operationPDA, err := FindTimelockOperationPDA(testTimelockProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -288,7 +517,61 @@ func TestIsOperationDone(t *testing.T) {
 			inspector, jsonRPCClient := newTestTimelockInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.IsOperationDone(context.Background(), ContractAddress(testMCMSProgramID, testPDASeed), testOpID)
+			got, err := inspector.IsOperationDone(context.Background(), ContractAddress(testTimelockProgramID, testPDASeed), testOpID)
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestTimelockInspector_getRoleAccessController(t *testing.T) {
+	t.Parallel()
+
+	config := createTimelockConfig(t)
+
+	tests := []struct {
+		name    string
+		role    timelock.Role
+		want    solana.PublicKey
+		wantErr string
+	}{
+		{
+			name: "success: get proposer access controller",
+			role: timelock.Proposer_Role,
+			want: config.ProposerRoleAccessController,
+		},
+		{
+			name: "success: get executor access controller",
+
+			role: timelock.Executor_Role,
+			want: config.ExecutorRoleAccessController,
+		},
+		{
+			name: "success: get canceller access controller",
+			role: timelock.Canceller_Role,
+			want: config.CancellerRoleAccessController,
+		},
+		{
+			name:    "error: admin role not supported",
+			role:    timelock.Admin_Role,
+			wantErr: "not supported role: Admin",
+		},
+		{
+			name:    "error: unknown role",
+			role:    timelock.Role(100),
+			wantErr: "unknown role",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := getRoleAccessController(*config, tt.role)
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 			} else {
@@ -327,4 +610,55 @@ func createTimelockOperation(t *testing.T, timestamp uint64) *timelock.Operation
 	}
 
 	return operation
+}
+
+func createTimelockConfig(t *testing.T) *timelock.Config {
+	t.Helper()
+
+	proposerKey, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	executorKey, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	cancellerKey, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	bypasserKey, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	config := &timelock.Config{
+		TimelockId:                    [32]uint8{},
+		Owner:                         solana.PublicKey{},
+		ProposedOwner:                 solana.PublicKey{},
+		ProposerRoleAccessController:  proposerKey.PublicKey(),
+		ExecutorRoleAccessController:  executorKey.PublicKey(),
+		CancellerRoleAccessController: cancellerKey.PublicKey(),
+		BypasserRoleAccessController:  bypasserKey.PublicKey(),
+		MinDelay:                      0,
+		BlockedSelectors:              timelock.BlockedSelectors{},
+	}
+
+	return config
+}
+
+func createAccessController(t *testing.T) *access_controller.AccessController {
+	t.Helper()
+
+	pk, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	pk2, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	accessList := access_controller.AccessList{
+		Len: 2,
+		Xs:  [64]solana.PublicKey{pk.PublicKey(), pk2.PublicKey()},
+	}
+
+	ac := &access_controller.AccessController{
+		AccessList: accessList,
+	}
+
+	return ac
 }
