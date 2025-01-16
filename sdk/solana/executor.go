@@ -2,11 +2,13 @@ package solana
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"math"
 
 	"github.com/ethereum/go-ethereum/common"
-	solana "github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
@@ -37,6 +39,7 @@ func NewExecutor(client *rpc.Client, auth solana.PrivateKey, encoder *Encoder) *
 	}
 }
 
+// ExecuteOperation executes an operation on the MCMS program on the Solana chain
 func (e *Executor) ExecuteOperation(
 	ctx context.Context,
 	metadata types.ChainMetadata,
@@ -44,7 +47,70 @@ func (e *Executor) ExecuteOperation(
 	proof []common.Hash,
 	op types.Operation,
 ) (string, error) {
-	return "", fmt.Errorf("not implemented")
+	programID, msigID, err := ParseContractAddress(metadata.MCMAddress)
+	if err != nil {
+		return "", err
+	}
+	selector := uint64(e.ChainSelector)
+	byteProof := make([][32]byte, 0, len(proof))
+	for _, p := range proof {
+		byteProof = append(byteProof, p)
+	}
+
+	mcm.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
+	configPDA, err := FindConfigPDA(programID, msigID)
+	if err != nil {
+		return "", err
+	}
+	rootMetadataPDA, err := FindRootMetadataPDA(programID, msigID)
+	if err != nil {
+		return "", err
+	}
+	expiringRootAndOpCountPDA, err := FindExpiringRootAndOpCountPDA(programID, msigID)
+	if err != nil {
+		return "", err
+	}
+	signedPDA, err := FindSignerPDA(programID, msigID)
+	if err != nil {
+		return "", err
+	}
+
+	// Unmarshal the AdditionalFields from the operation
+	var additionalFields AdditionalFields
+	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
+		return "", fmt.Errorf("unable to unmarshal additional fields: %w", err)
+	}
+	toProgramID, _, err := ParseContractAddress(op.Transaction.To)
+	if errors.Is(err, ErrInvalidContractAddressFormat) {
+		var pkerr error
+		toProgramID, pkerr = solana.PublicKeyFromBase58(op.Transaction.To)
+		if pkerr != nil {
+			return "", fmt.Errorf("unable to get hash from base58 To address: %w", err)
+		}
+	}
+
+	ix := mcm.NewExecuteInstruction(
+		msigID,
+		selector,
+		uint64(nonce),
+		op.Transaction.Data,
+		byteProof,
+
+		configPDA,
+		rootMetadataPDA,
+		expiringRootAndOpCountPDA,
+		toProgramID,
+		signedPDA,
+		e.auth.PublicKey(),
+	)
+	// Append the accounts from the AdditionalFields
+	ix.AccountMetaSlice = append(ix.AccountMetaSlice, additionalFields.Accounts...)
+	signature, err := sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
+	if err != nil {
+		return "", fmt.Errorf("unable to call execute operation instruction: %w", err)
+	}
+
+	return signature, nil
 }
 
 // SetRoot sets the merkle root in the MCM contract on the Solana chain
@@ -95,10 +161,19 @@ func (e *Executor) SetRoot(
 		return "", err
 	}
 
-	setRootInstruction := mcm.NewSetRootInstruction(pdaSeed, root, validUntil,
-		e.solanaMetadata(metadata, configPDA), solanaProof(proof),
-		rootSignaturesPDA, rootMetadataPDA, seenSignedHashesPDA, expiringRootAndOpCountPDA, configPDA,
-		e.auth.PublicKey(), solana.SystemProgramID)
+	setRootInstruction := mcm.NewSetRootInstruction(
+		pdaSeed,
+		root,
+		validUntil,
+		e.solanaMetadata(metadata, configPDA),
+		solanaProof(proof),
+		rootSignaturesPDA,
+		rootMetadataPDA,
+		seenSignedHashesPDA,
+		expiringRootAndOpCountPDA,
+		configPDA,
+		e.auth.PublicKey(),
+		solana.SystemProgramID)
 	signature, err := sendAndConfirm(ctx, e.client, e.auth, setRootInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return "", fmt.Errorf("unable to set root: %w", err)
@@ -107,6 +182,8 @@ func (e *Executor) SetRoot(
 	return signature, nil
 }
 
+// preloadSignatures preloads the signatures into the MCM program by looping can calling the
+// append signatures instruction and concluding with the finalize signatures instruction.
 func (e *Executor) preloadSignatures(
 	ctx context.Context,
 	mcmName [32]byte,
@@ -143,6 +220,7 @@ func (e *Executor) preloadSignatures(
 	return nil
 }
 
+// solanaMetadata returns the root metadata input for the MCM program
 func (e *Executor) solanaMetadata(metadata types.ChainMetadata, configPDA [32]byte) mcm.RootMetadataInput {
 	return mcm.RootMetadataInput{
 		ChainId:              uint64(e.ChainSelector),
@@ -153,6 +231,7 @@ func (e *Executor) solanaMetadata(metadata types.ChainMetadata, configPDA [32]by
 	}
 }
 
+// solanaProof converts a proof coming as a slice of common.Hash to a slice of [32]byte.
 func solanaProof(proof []common.Hash) [][32]uint8 {
 	sproof := make([][32]uint8, len(proof))
 	for i := range proof {
@@ -162,6 +241,7 @@ func solanaProof(proof []common.Hash) [][32]uint8 {
 	return sproof
 }
 
+// solanaSignatures converts a slice of types.Signature to a slice of mcm.Signature
 func solanaSignatures(signatures []types.Signature) []mcm.Signature {
 	solanaSignatures := make([]mcm.Signature, len(signatures))
 	for i, signature := range signatures {

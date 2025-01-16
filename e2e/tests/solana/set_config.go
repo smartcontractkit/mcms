@@ -14,6 +14,8 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+var testPDASeedSetConfigTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'c', 'o', 'n', 'f'}
+
 func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 	// --- arrange ---
 	ctx := context.Background()
@@ -21,7 +23,7 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 	s.Require().NoError(err)
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
-	mcmAddress := mcmsSolana.ContractAddress(programID, testPDASeed)
+	mcmAddress := mcmsSolana.ContractAddress(programID, testPDASeedSetConfigTest)
 
 	testEVMAccounts := generateTestEVMAccounts(s.T(), 14)
 	config := types.Config{

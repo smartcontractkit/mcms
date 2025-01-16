@@ -22,7 +22,7 @@ func Test_parseContractAddress(t *testing.T) {
 		{
 			name:           "success",
 			address:        "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX.test-mcm",
-			wantProgramID:  testProgramID,
+			wantProgramID:  testMCMProgramID,
 			wantPDASeed:    testPDASeed,
 			wantContractID: "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX.test-mcm",
 		},

@@ -2,19 +2,23 @@ package solana
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	solana "github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
 	cselectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+const dummyPrivateKey = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
 
 func TestNewExecutor(t *testing.T) {
 	t.Parallel()
@@ -31,7 +35,151 @@ func TestNewExecutor(t *testing.T) {
 
 func TestExecutor_ExecuteOperation(t *testing.T) {
 	t.Parallel()
-	// TODO
+
+	type args struct {
+		metadata types.ChainMetadata
+		nonce    uint32
+		proof    []common.Hash
+		op       types.Operation
+	}
+	selector := cselectors.SOLANA_DEVNET.Selector
+	auth, err := solana.PrivateKeyFromBase58(dummyPrivateKey)
+	require.NoError(t, err)
+	contractID := fmt.Sprintf("%s.%s", testMCMProgramID.String(), testPDASeed)
+	data := []byte{1, 2, 3, 4}
+	ctx := context.Background()
+	accounts := []*solana.AccountMeta{}
+	tx, err := NewTransaction(testMCMProgramID.String(), data, accounts, "solana-testing", []string{})
+	require.NoError(t, err)
+	tests := []struct {
+		name string
+		args args
+
+		mockSetup func(*mocks.JSONRPCClient)
+		want      string
+		assertion assert.ErrorAssertionFunc
+		wantErr   error
+	}{
+		{
+			name: "success: ExecuteOperation",
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress: contractID,
+				},
+				nonce: 0,
+				proof: []common.Hash{
+					common.HexToHash("0x1"),
+				},
+				op: types.Operation{
+					Transaction:   tx,
+					ChainSelector: types.ChainSelector(selector),
+				},
+			},
+			mockSetup: func(m *mocks.JSONRPCClient) {
+				mockSolanaTransaction(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", nil)
+			},
+			want:      "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
+			assertion: assert.NoError,
+		},
+		{
+			name: "error: invalid contract ID provided",
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress: "bad id",
+				},
+				nonce: 0,
+				proof: []common.Hash{
+					common.HexToHash("0x1"),
+				},
+				op: types.Operation{
+					Transaction:   tx,
+					ChainSelector: types.ChainSelector(selector),
+				},
+			},
+			mockSetup: func(m *mocks.JSONRPCClient) {
+
+			},
+			want:    "",
+			wantErr: errors.New("invalid contract ID provided"),
+			assertion: func(t assert.TestingT, err error, i ...any) bool {
+				return assert.EqualError(t, err, "invalid solana contract address format: \"bad id\"")
+			},
+		},
+		{
+			name: "error: ix send failure",
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress: contractID,
+				},
+				nonce: 0,
+				proof: []common.Hash{
+					common.HexToHash("0x1"),
+				},
+				op: types.Operation{
+					Transaction:   tx,
+					ChainSelector: types.ChainSelector(selector),
+				},
+			},
+			mockSetup: func(m *mocks.JSONRPCClient) {
+				mockSolanaTransaction(t,
+					m,
+					20,
+					5,
+					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
+					errors.New("ix send failure"))
+			},
+			want:    "",
+			wantErr: errors.New("invalid contract ID provided"),
+			assertion: func(t assert.TestingT, err error, i ...any) bool {
+				return assert.EqualError(t, err, "unable to call execute operation instruction: unable to send instruction: ix send failure")
+			},
+		},
+		{
+			name: "error: invalid additional fields",
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress: contractID,
+				},
+				nonce: 0,
+				proof: []common.Hash{
+					common.HexToHash("0x1"),
+				},
+				op: types.Operation{
+					Transaction: types.Transaction{
+						AdditionalFields: []byte("bad data"),
+					},
+					ChainSelector: types.ChainSelector(selector),
+				},
+			},
+			mockSetup: func(m *mocks.JSONRPCClient) {
+
+			},
+			want:    "",
+			wantErr: errors.New("invalid contract ID provided"),
+			assertion: func(t assert.TestingT, err error, i ...any) bool {
+				return assert.EqualError(t, err, "unable to unmarshal additional fields: invalid character 'b' looking for beginning of value")
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			jsonRPCClient := mocks.NewJSONRPCClient(t)
+			encoder := NewEncoder(types.ChainSelector(selector), uint64(tt.args.nonce), false)
+			client := rpc.NewWithCustomRPCClient(jsonRPCClient)
+			tt.mockSetup(jsonRPCClient)
+			e := NewExecutor(client, auth, encoder)
+
+			got, err := e.ExecuteOperation(ctx, tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)
+			if tt.wantErr != nil {
+				tt.assertion(t, err, fmt.Sprintf("%q. Executor.ExecuteOperation()", tt.name))
+			} else {
+				require.NoError(t, err)
+				require.Equalf(t, tt.want, got, "%q. Executor.ExecuteOperation()", tt.name)
+			}
+		})
+	}
 }
 
 func TestExecutor_SetRoot(t *testing.T) {
@@ -42,7 +190,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 	auth, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
 
-	defaultMetadata := types.ChainMetadata{StartingOpCount: 100, MCMAddress: ContractAddress(testProgramID, testPDASeed)}
+	defaultMetadata := types.ChainMetadata{StartingOpCount: 100, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)}
 	defaultProof := []common.Hash{common.HexToHash("0x1"), common.HexToHash("0x2")}
 	defaultRoot := common.HexToHash("0x1234")
 	defaultValidUntil := uint32(2082758400)

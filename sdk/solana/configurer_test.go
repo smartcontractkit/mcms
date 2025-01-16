@@ -147,7 +147,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			configurer, mockJSONRPCClient := newTestConfigurer(t, auth, chainSelector)
 			tt.setup(t, configurer, mockJSONRPCClient)
 
-			got, err := configurer.SetConfig(ctx, ContractAddress(testProgramID, testPDASeed), tt.mcmConfig, clearRoot)
+			got, err := configurer.SetConfig(ctx, ContractAddress(testMCMProgramID, testPDASeed), tt.mcmConfig, clearRoot)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)

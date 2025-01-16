@@ -9,7 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	solana "github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -57,16 +57,6 @@ func (e *Encoder) HashOperation(
 		return common.Hash{}, err
 	}
 
-	additionalFields := struct {
-		RemainingAccounts []solana.AccountMeta
-	}{}
-	if len(op.Transaction.AdditionalFields) > 0 {
-		err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields)
-		if err != nil {
-			return common.Hash{}, fmt.Errorf("unable to parse operation additional fields: %w", err)
-		}
-	}
-
 	toProgramID, _, err := ParseContractAddress(op.Transaction.To)
 	if errors.Is(err, ErrInvalidContractAddressFormat) {
 		var pkerr error
@@ -75,20 +65,26 @@ func (e *Encoder) HashOperation(
 			return common.Hash{}, fmt.Errorf("unable to get hash from base58 To address: %w", err)
 		}
 	}
+	// Parse Additional fields to get the ix accounts
+	var additionalFields AdditionalFields
+	if op.Transaction.AdditionalFields != nil {
+		if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
+			return common.Hash{}, fmt.Errorf("unable to unmarshal additional fields: %w", err)
+		}
+	}
 
 	buffers := [][]byte{
 		hashBytes[:],
 		numToU64LePaddedEncoding(uint64(e.ChainSelector)),
-		configPDA[:],
+		configPDA.Bytes(),
 		numToU64LePaddedEncoding(uint64(opCount)),
-		toProgramID[:],
+		toProgramID.Bytes(),
 		numToU64LePaddedEncoding(uint64(len(op.Transaction.Data))),
 		op.Transaction.Data,
-		numToU64LePaddedEncoding(uint64(len(additionalFields.RemainingAccounts))),
+		numToU64LePaddedEncoding(uint64(len(additionalFields.Accounts))),
 	}
-
-	for _, account := range additionalFields.RemainingAccounts {
-		buffers = append(buffers, serializeAccountMeta(&account))
+	for _, account := range additionalFields.Accounts {
+		buffers = append(buffers, serializeAccountMeta(account))
 	}
 
 	return calculateHash(buffers), nil

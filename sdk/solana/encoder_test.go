@@ -4,10 +4,14 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gagliardetto/solana-go"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/types"
 )
+
+var testAccount = solana.MustPublicKeyFromBase58("4HeqEoSyfYpeC2goFLj9eHgkxV33mR5G7JYAbRsN14uQ")
+var testAccount2 = solana.MustPublicKeyFromBase58("HzwwijybRfFkQvtLyVNzTr7EVpQZkoStdr47mvaYMD4y")
 
 func TestNewEncoder(t *testing.T) {
 	t.Parallel()
@@ -22,7 +26,14 @@ func TestNewEncoder(t *testing.T) {
 
 func TestEncoder_HashOperation(t *testing.T) {
 	t.Parallel()
-
+	solanaTx, err := NewTransaction(
+		testAccount.String(),
+		[]byte("test data"),
+		[]*solana.AccountMeta{{PublicKey: testAccount2, IsSigner: true, IsWritable: false}},
+		"unit-tests",
+		[]string{"test"},
+	)
+	require.NoError(t, err)
 	tests := []struct {
 		name     string
 		txCount  uint64
@@ -38,7 +49,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 			txCount:  3,
 			override: true,
 			opCount:  2,
-			metadata: types.ChainMetadata{StartingOpCount: 123, MCMAddress: ContractAddress(testProgramID, testPDASeed)},
+			metadata: types.ChainMetadata{StartingOpCount: 123, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)},
 			op: types.Operation{
 				ChainSelector: testChainSelector,
 				Transaction: types.Transaction{
@@ -53,21 +64,33 @@ func TestEncoder_HashOperation(t *testing.T) {
 					}`),
 				},
 			},
-			want: common.HexToHash("0x405bf6d2fd25e1e7c4bb4e34b15c7dafee95cbac5c6b9ec0259b54da7cb97fd6"),
+			want: common.HexToHash("0xb8378ac2ea11c40643c828a93db1d1fb1829d19b261ea4d5f5119e28f2ad03c7"),
+		},
+		{
+			name:     "success: solana encoded tx",
+			txCount:  3,
+			override: true,
+			opCount:  1,
+			metadata: types.ChainMetadata{StartingOpCount: 123, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)},
+			op: types.Operation{
+				ChainSelector: testChainSelector,
+				Transaction:   solanaTx,
+			},
+			want: common.HexToHash("0xf41c25f49165165af155c093688ba869707285742fe9c8d089ffb4ccf185e332"),
 		},
 		{
 			name:     "success: txcount=1 override=false op-count=1 starting-op-count=0",
 			txCount:  1,
 			override: false,
 			opCount:  1,
-			metadata: types.ChainMetadata{StartingOpCount: 0, MCMAddress: ContractAddress(testProgramID, testPDASeed)},
+			metadata: types.ChainMetadata{StartingOpCount: 0, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)},
 			op: types.Operation{
 				ChainSelector: testChainSelector,
 				Transaction: types.Transaction{
 					To:   "4HeqEoSyfYpeC2goFLj9eHgkxV33mR5G7JYAbRsN14uQ",
 					Data: []byte{},
 					AdditionalFields: []byte(`{
-						"remainingAccounts": [{
+						"accounts": [{
 							"publicKey":  "EDYUM4CJzrCj5fz4PGGWDhiBTxKfzX9mtWNn8YLnNYUs",
 							"isSigner":   false,
 							"isWritable": false
@@ -82,7 +105,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 			txCount:  1,
 			override: false,
 			opCount:  1,
-			metadata: types.ChainMetadata{StartingOpCount: 0, MCMAddress: ContractAddress(testProgramID, testPDASeed)},
+			metadata: types.ChainMetadata{StartingOpCount: 0, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)},
 			op: types.Operation{
 				ChainSelector: testChainSelector,
 				Transaction: types.Transaction{
@@ -106,7 +129,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 			txCount:  1,
 			override: false,
 			opCount:  1,
-			metadata: types.ChainMetadata{StartingOpCount: 0, MCMAddress: ContractAddress(testProgramID, testPDASeed)},
+			metadata: types.ChainMetadata{StartingOpCount: 0, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)},
 			op: types.Operation{
 				ChainSelector: testChainSelector,
 				Transaction: types.Transaction{
@@ -115,14 +138,14 @@ func TestEncoder_HashOperation(t *testing.T) {
 					AdditionalFields: []byte(`invalid`),
 				},
 			},
-			wantErr: "unable to parse operation additional fields: invalid character 'i'",
+			wantErr: "unable to unmarshal additional fields: invalid character 'i' looking for beginning of value",
 		},
 		{
 			name:     "failure: invalid 'to' address",
 			txCount:  1,
 			override: false,
 			opCount:  1,
-			metadata: types.ChainMetadata{StartingOpCount: 0, MCMAddress: ContractAddress(testProgramID, testPDASeed)},
+			metadata: types.ChainMetadata{StartingOpCount: 0, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)},
 			op: types.Operation{
 				ChainSelector: testChainSelector,
 				Transaction:   types.Transaction{To: "invalid"},
@@ -162,14 +185,21 @@ func TestEncoder_HashMetadata(t *testing.T) {
 			name:     "success: txcount=2 override=true starting-op-count=123",
 			txCount:  2,
 			override: true,
-			metadata: types.ChainMetadata{StartingOpCount: 123, MCMAddress: ContractAddress(testProgramID, testPDASeed)},
+			metadata: types.ChainMetadata{StartingOpCount: 123, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)},
 			want:     common.HexToHash("0xceb06356f4b7718cdf9b585ba3725a0f4670742d7c367b4ec87b9938c7f6412a"),
+		},
+		{
+			name:     "success: test case to test matching chainlink-ccip implementation",
+			txCount:  5,
+			override: true,
+			metadata: types.ChainMetadata{StartingOpCount: 10, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)},
+			want:     common.HexToHash("0xaea0d6d8a1f2ed42a6a54473af0a0dc9dcc73442841b5e16c0872f7ef7cadabd"),
 		},
 		{
 			name:     "success: txcount=0 override=false starting-op-count=0",
 			txCount:  0,
 			override: false,
-			metadata: types.ChainMetadata{StartingOpCount: 0, MCMAddress: ContractAddress(testProgramID, testPDASeed)},
+			metadata: types.ChainMetadata{StartingOpCount: 0, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)},
 			want:     common.HexToHash("0xa6ce0700aa2f33b3ee31350d0fc8ef88fbaae48c7d3887ddb7a840a3d9bfd166"),
 		},
 		{

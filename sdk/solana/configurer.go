@@ -75,9 +75,18 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 		return "", fmt.Errorf("unable to preload signatures: %w", err)
 	}
 
-	setConfigInstruction := bindings.NewSetConfigInstruction(pdaSeed, signerGroups, groupQuorums, groupParents,
-		clearRoot, configPDA, configSignersPDA, rootMetadataPDA, expiringRootAndOpCountPDA,
-		c.auth.PublicKey(), solana.SystemProgramID)
+	setConfigInstruction := bindings.NewSetConfigInstruction(
+		pdaSeed,
+		signerGroups,
+		groupQuorums,
+		groupParents,
+		clearRoot,
+		configPDA,
+		configSignersPDA,
+		rootMetadataPDA,
+		expiringRootAndOpCountPDA,
+		c.auth.PublicKey(),
+		solana.SystemProgramID)
 	signature, err := sendAndConfirm(ctx, c.client, c.auth, setConfigInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return "", fmt.Errorf("unable to set config: %w", err)

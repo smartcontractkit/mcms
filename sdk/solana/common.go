@@ -18,23 +18,23 @@ const (
 	SignatureVThreshold = 2
 )
 
-func FindSignerPDA(programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
-	seeds := [][]byte{[]byte("multisig_signer"), pdaSeed[:]}
+func FindSignerPDA(programID solana.PublicKey, msigID PDASeed) (solana.PublicKey, error) {
+	seeds := [][]byte{[]byte("multisig_signer"), msigID[:]}
 	return findPDA(programID, seeds)
 }
 
-func FindConfigPDA(programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
-	seeds := [][]byte{[]byte("multisig_config"), pdaSeed[:]}
+func FindConfigPDA(programID solana.PublicKey, msigID PDASeed) (solana.PublicKey, error) {
+	seeds := [][]byte{[]byte("multisig_config"), msigID[:]}
 	return findPDA(programID, seeds)
 }
 
-func FindConfigSignersPDA(programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
-	seeds := [][]byte{[]byte("multisig_config_signers"), pdaSeed[:]}
+func FindConfigSignersPDA(programID solana.PublicKey, msigID PDASeed) (solana.PublicKey, error) {
+	seeds := [][]byte{[]byte("multisig_config_signers"), msigID[:]}
 	return findPDA(programID, seeds)
 }
 
-func FindRootMetadataPDA(programID solana.PublicKey, pdaSeed PDASeed) (solana.PublicKey, error) {
-	seeds := [][]byte{[]byte("root_metadata"), pdaSeed[:]}
+func FindRootMetadataPDA(programID solana.PublicKey, msigID PDASeed) (solana.PublicKey, error) {
+	seeds := [][]byte{[]byte("root_metadata"), msigID[:]}
 	return findPDA(programID, seeds)
 }
 
@@ -44,16 +44,16 @@ func FindExpiringRootAndOpCountPDA(programID solana.PublicKey, pdaSeed PDASeed) 
 }
 
 func FindRootSignaturesPDA(
-	programID solana.PublicKey, pdaSeed PDASeed, root common.Hash, validUntil uint32,
+	programID solana.PublicKey, msigID PDASeed, root common.Hash, validUntil uint32,
 ) (solana.PublicKey, error) {
-	seeds := [][]byte{[]byte("root_signatures"), pdaSeed[:], root[:], validUntilBytes(validUntil)}
+	seeds := [][]byte{[]byte("root_signatures"), msigID[:], root[:], validUntilBytes(validUntil)}
 	return findPDA(programID, seeds)
 }
 
 func FindSeenSignedHashesPDA(
-	programID solana.PublicKey, pdaSeed PDASeed, root common.Hash, validUntil uint32,
+	programID solana.PublicKey, msigID PDASeed, root common.Hash, validUntil uint32,
 ) (solana.PublicKey, error) {
-	seeds := [][]byte{[]byte("seen_signed_hashes"), pdaSeed[:], root[:], validUntilBytes(validUntil)}
+	seeds := [][]byte{[]byte("seen_signed_hashes"), msigID[:], root[:], validUntilBytes(validUntil)}
 	return findPDA(programID, seeds)
 }
 
