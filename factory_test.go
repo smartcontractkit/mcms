@@ -115,7 +115,7 @@ func Test_newTimelockConverterFromExecutor(t *testing.T) {
 			name:          "success: Solana executor",
 			chainSelector: chaintest.Chain4Selector,
 			executor:      solanasdk.NewTimelockExecutor(solanaClient, solanaAuth),
-			want:          solanasdk.NewTimelockConverter(solanaClient, solanaAuth.PublicKey()),
+			want:          solanasdk.NewTimelockConverter(solanaClient),
 		},
 		{
 			name:          "failure: unknown selector",

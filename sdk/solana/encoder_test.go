@@ -1,6 +1,7 @@
 package solana
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -29,6 +30,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 	solanaTx, err := NewTransaction(
 		testAccount.String(),
 		[]byte("test data"),
+		big.NewInt(0),
 		[]*solana.AccountMeta{{PublicKey: testAccount2, IsSigner: true, IsWritable: false}},
 		"unit-tests",
 		[]string{"test"},
