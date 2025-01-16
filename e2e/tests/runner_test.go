@@ -8,19 +8,26 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	e2e_evm "github.com/smartcontractkit/mcms/e2e/tests/evm"
-	e2e_solana "github.com/smartcontractkit/mcms/e2e/tests/solana"
+	evme2e "github.com/smartcontractkit/mcms/e2e/tests/evm"
+	solanae2e "github.com/smartcontractkit/mcms/e2e/tests/solana"
 )
 
 func TestEVMSuite(t *testing.T) {
-	suite.Run(t, new(e2e_evm.InspectionTestSuite))
-	suite.Run(t, new(e2e_evm.ExecutionTestSuite))
-	suite.Run(t, new(e2e_evm.TimelockInspectionTestSuite))
-	suite.Run(t, new(e2e_evm.SetRootTestSuite))
-	suite.Run(t, new(e2e_evm.SigningTestSuite))
+	suite.Run(t, new(evme2e.InspectionTestSuite))
+	suite.Run(t, new(evme2e.ExecutionTestSuite))
+	suite.Run(t, new(evme2e.TimelockInspectionTestSuite))
+	suite.Run(t, new(evme2e.SetRootTestSuite))
+	suite.Run(t, new(evme2e.SigningTestSuite))
 }
 
 //go:generate ./solana/compile-mcm-contracts.sh
 func TestSolanaSuite(t *testing.T) {
-	suite.Run(t, new(e2e_solana.SolanaTestSuite))
+	// Initialize SolanaTestSuite first
+	baseSuite := new(solanae2e.SolanaTestSuite)
+
+	suite.Run(t, baseSuite)
+	suite.Run(t, &solanae2e.ExecuteSolanaTestSuite{SolanaTestSuite: *baseSuite})
+	suite.Run(t, &solanae2e.InspectSolanaTestSuite{SolanaTestSuite: *baseSuite})
+	suite.Run(t, &solanae2e.SetConfigSolanaTestSuite{SolanaTestSuite: *baseSuite})
+	suite.Run(t, &solanae2e.SetRootSolanaTestSuite{SolanaTestSuite: *baseSuite})
 }

@@ -13,7 +13,19 @@ import (
 
 var testPDASeedInspect = [32]byte{'t', 'e', 's', 't', '-', 'i', 'n', 's', 'p', 'e', 'c', 't'}
 
-func (s *SolanaTestSuite) TestGetOpCount() {
+// InspectSolanaTestSuite is the test suite for the Inspection functionality
+type InspectSolanaTestSuite struct {
+	SolanaTestSuite
+}
+
+// SetupSuite runs before the test suite
+func (s *InspectSolanaTestSuite) SetupSuite() {
+	s.SolanaTestSuite.SetupSuite()
+	s.SetupMCM(testPDASeedInspect)
+}
+
+// TestGetOpCount tests the GetOpCount functionality
+func (s *InspectSolanaTestSuite) TestGetOpCount() {
 	ctx := context.Background()
 	inspector := solanasdk.NewInspector(s.SolanaClient)
 	opCount, err := inspector.GetOpCount(ctx, solanasdk.ContractAddress(s.MCMProgramID, testPDASeedInspect))
@@ -22,7 +34,8 @@ func (s *SolanaTestSuite) TestGetOpCount() {
 	s.Require().Equal(uint64(0), opCount, "Operation count does not match")
 }
 
-func (s *SolanaTestSuite) TestGetRoot() {
+// TestGetRoot tests the GetRoot functionality
+func (s *InspectSolanaTestSuite) TestGetRoot() {
 	ctx := context.Background()
 	inspector := solanasdk.NewInspector(s.SolanaClient)
 	root, validUntil, err := inspector.GetRoot(ctx, solanasdk.ContractAddress(s.MCMProgramID, testPDASeedInspect))
@@ -32,7 +45,8 @@ func (s *SolanaTestSuite) TestGetRoot() {
 	s.Require().Equal(uint32(0), validUntil, "ValidUntil does not match")
 }
 
-func (s *SolanaTestSuite) TestGetRootMetadata() {
+// TestGetRootMetadata tests the GetRootMetadata functionality
+func (s *InspectSolanaTestSuite) TestGetRootMetadata() {
 	ctx := context.Background()
 	inspector := solanasdk.NewInspector(s.SolanaClient)
 	address := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedInspect)

@@ -153,8 +153,5 @@ func (s *SolanaTestSuite) SetupSuite() {
 	details, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, cselectors.FamilySolana)
 	s.Require().NoError(err)
 	s.ChainSelector = types.ChainSelector(details.ChainSelector)
-	s.SetupMCM(testPDASeedInspect)
-	s.SetupMCM(testPDASeedSetConfigTest)
-	s.SetupMCM(testPDASeedSetRootTest)
-	s.SetupMCM(testPDASeedExec)
+
 }
