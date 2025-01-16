@@ -18,11 +18,12 @@ import (
 )
 
 var (
-	testChainSelector = types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
-	testProgramID     = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
-	testOpID          = [32]byte{1, 2, 3, 4}
-	testPDASeed       = PDASeed{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
-	testRoot          = common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000")
+	testChainSelector     = types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
+	testProgramID         = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
+	testTimelockProgramID = solana.MustPublicKeyFromBase58("LoCoNsJFuhTkSQjfdDfn3yuwqhSYoPujmviRHVCzsqn")
+	testOpID              = [32]byte{1, 2, 3, 4}
+	testPDASeed           = PDASeed{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
+	testRoot              = common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000")
 )
 
 func Test_FindSignerPDA(t *testing.T) {
@@ -76,23 +77,23 @@ func Test_FindSeenSignedHashesPDA(t *testing.T) {
 
 func Test_FindTimelockConfigPDA(t *testing.T) {
 	t.Parallel()
-	pda, err := FindTimelockConfigPDA(testProgramID, testPDASeed)
+	pda, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("27X4nnwKaRk93RamRXQSfNyuB1pBSSK1hf2ULUeL1VCp")))
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")))
 }
 
 func Test_FindTimelockOperationPDA(t *testing.T) {
 	t.Parallel()
-	pda, err := FindTimelockOperationPDA(testProgramID, testPDASeed, testOpID)
+	pda, err := FindTimelockOperationPDA(testTimelockProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("8iy9TQJB1jBBMBmwmiguZDRZpbDQNuvRCQu4cfdpgbKy")))
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("9kmDgWeckKVoW44YEp4MByUJXxxwjjxK52o1HyqSPTru")))
 }
 
 func Test_FindTimelockSignerPDA(t *testing.T) {
 	t.Parallel()
-	pda, err := FindTimelockSignerPDA(testProgramID, testPDASeed)
+	pda, err := FindTimelockSignerPDA(testTimelockProgramID, testPDASeed)
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("HAQoFdsmxUFgAfBb6u9AXvg9q1nJthWb7xMYWpvzFJfg")))
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("2g4vS5Y9g5FKoBakfNTEQcoyuPxuqgiXhribGxE1Vrsb")))
 }
 
 func Test_sendAndConfirm(t *testing.T) {
