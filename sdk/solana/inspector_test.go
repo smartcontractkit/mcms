@@ -29,7 +29,7 @@ func TestInspector_GetConfig(t *testing.T) {
 
 	ctx := context.Background()
 	chainSelector := cselectors.SOLANA_DEVNET.Selector
-	configPDA, err := FindConfigPDA(testMCMSProgramID, testPDASeed)
+	configPDA, err := FindConfigPDA(testMCMProgramID, testPDASeed)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -110,7 +110,7 @@ func TestInspector_GetConfig(t *testing.T) {
 			inspector, jsonRPCClient := newTestInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.GetConfig(ctx, ContractAddress(testMCMSProgramID, testPDASeed))
+			got, err := inspector.GetConfig(ctx, ContractAddress(testMCMProgramID, testPDASeed))
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
@@ -126,7 +126,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	opCountPDA, err := FindExpiringRootAndOpCountPDA(testMCMSProgramID, testPDASeed)
+	opCountPDA, err := FindExpiringRootAndOpCountPDA(testMCMProgramID, testPDASeed)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -162,7 +162,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 			inspector, jsonRPCClient := newTestInspector(t)
 			tt.setup(jsonRPCClient)
 
-			got, err := inspector.GetOpCount(ctx, ContractAddress(testMCMSProgramID, testPDASeed))
+			got, err := inspector.GetOpCount(ctx, ContractAddress(testMCMProgramID, testPDASeed))
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
@@ -178,7 +178,7 @@ func TestInspector_GetRoot(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	opCountPDA, err := FindExpiringRootAndOpCountPDA(testMCMSProgramID, testPDASeed)
+	opCountPDA, err := FindExpiringRootAndOpCountPDA(testMCMProgramID, testPDASeed)
 	require.NoError(t, err)
 
 	hash := common.HexToHash("0xabcdefabcdefabcdefabcdefabcdefabcdef")
@@ -222,7 +222,7 @@ func TestInspector_GetRoot(t *testing.T) {
 			inspector, jsonRPCClient := newTestInspector(t)
 			tt.setup(jsonRPCClient)
 
-			root, validUntil, err := inspector.GetRoot(ctx, ContractAddress(testMCMSProgramID, testPDASeed))
+			root, validUntil, err := inspector.GetRoot(ctx, ContractAddress(testMCMProgramID, testPDASeed))
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
@@ -239,10 +239,10 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	rootMetadataPDA, err := FindRootMetadataPDA(testMCMSProgramID, testPDASeed)
+	rootMetadataPDA, err := FindRootMetadataPDA(testMCMProgramID, testPDASeed)
 	require.NoError(t, err)
 
-	address := ContractAddress(testMCMSProgramID, testPDASeed)
+	address := ContractAddress(testMCMProgramID, testPDASeed)
 	tests := []struct {
 		name    string
 		setup   func(*mocks.JSONRPCClient)

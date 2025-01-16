@@ -5,7 +5,6 @@ package solanae2e
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -26,10 +25,12 @@ import (
 
 var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 
+// Test_Solana_Execute tests the Execute functionality by creating a mint tokens transaction and
+// executing it via the MCMS program.
 func (s *SolanaTestSuite) Test_Solana_Execute() {
 	// Get required programs and accounts
 	ctx := context.Background()
-	mcmID := fmt.Sprintf("%s.%s", s.MCMProgramID, testPDASeedExec)
+	mcmID := mcmsSolana.ContractAddress(s.MCMProgramID, testPDASeedExec)
 	signerEVMAccount := NewEVMTestAccount(s.T())
 	signerPDA, err := mcmsSolana.FindSignerPDA(s.MCMProgramID, testPDASeedExec)
 	s.Require().NoError(err)
@@ -125,6 +126,8 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().Equal(initialBalance.Value.Amount, "0")
 	s.Require().Equal(finalBalance.Value.Amount, "1000000000000")
 }
+
+// buildMintTx builds a mint transaction for the proposal
 func (s *SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicKey) types.Transaction {
 	amount := 1000 * solana.LAMPORTS_PER_SOL
 	ix2, err := token.NewMintToInstruction(amount, mint, receiverATA, signerPDA, nil).ValidateAndBuild()

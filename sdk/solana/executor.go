@@ -39,6 +39,7 @@ func NewExecutor(client *rpc.Client, auth solana.PrivateKey, encoder *Encoder) *
 	}
 }
 
+// ExecuteOperation executes an operation on the MCMS program on the Solana chain
 func (e *Executor) ExecuteOperation(
 	ctx context.Context,
 	metadata types.ChainMetadata,
@@ -181,6 +182,8 @@ func (e *Executor) SetRoot(
 	return signature, nil
 }
 
+// preloadSignatures preloads the signatures into the MCM program by looping can calling the
+// append signatures instruction and concluding with the finalize signatures instruction.
 func (e *Executor) preloadSignatures(
 	ctx context.Context,
 	mcmName [32]byte,
@@ -217,6 +220,7 @@ func (e *Executor) preloadSignatures(
 	return nil
 }
 
+// solanaMetadata returns the root metadata input for the MCM program
 func (e *Executor) solanaMetadata(metadata types.ChainMetadata, configPDA [32]byte) mcm.RootMetadataInput {
 	return mcm.RootMetadataInput{
 		ChainId:              uint64(e.ChainSelector),
@@ -227,6 +231,7 @@ func (e *Executor) solanaMetadata(metadata types.ChainMetadata, configPDA [32]by
 	}
 }
 
+// solanaProof converts a proof coming as a slice of common.Hash to a slice of [32]byte.
 func solanaProof(proof []common.Hash) [][32]uint8 {
 	sproof := make([][32]uint8, len(proof))
 	for i := range proof {
@@ -236,6 +241,7 @@ func solanaProof(proof []common.Hash) [][32]uint8 {
 	return sproof
 }
 
+// solanaSignatures converts a slice of types.Signature to a slice of mcm.Signature
 func solanaSignatures(signatures []types.Signature) []mcm.Signature {
 	solanaSignatures := make([]mcm.Signature, len(signatures))
 	for i, signature := range signatures {

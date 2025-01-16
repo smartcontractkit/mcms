@@ -45,11 +45,11 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	selector := cselectors.SOLANA_DEVNET.Selector
 	auth, err := solana.PrivateKeyFromBase58(dummyPrivateKey)
 	require.NoError(t, err)
-	contractID := fmt.Sprintf("%s.%s", testMCMSProgramID.String(), testPDASeed)
+	contractID := fmt.Sprintf("%s.%s", testMCMProgramID.String(), testPDASeed)
 	data := []byte{1, 2, 3, 4}
 	ctx := context.Background()
 	accounts := []*solana.AccountMeta{}
-	tx, err := NewTransaction(testMCMSProgramID.String(), data, accounts, "solana-testing", []string{})
+	tx, err := NewTransaction(testMCMProgramID.String(), data, accounts, "solana-testing", []string{})
 	require.NoError(t, err)
 	tests := []struct {
 		name string
@@ -190,7 +190,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 	auth, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
 
-	defaultMetadata := types.ChainMetadata{StartingOpCount: 100, MCMAddress: ContractAddress(testMCMSProgramID, testPDASeed)}
+	defaultMetadata := types.ChainMetadata{StartingOpCount: 100, MCMAddress: ContractAddress(testMCMProgramID, testPDASeed)}
 	defaultProof := []common.Hash{common.HexToHash("0x1"), common.HexToHash("0x2")}
 	defaultRoot := common.HexToHash("0x1234")
 	defaultValidUntil := uint32(2082758400)
