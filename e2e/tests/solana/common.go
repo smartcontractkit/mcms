@@ -262,7 +262,6 @@ func (s *SolanaTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	s.ChainSelector = types.ChainSelector(details.ChainSelector)
 
-	s.SetupTimelockWorker(testPDASeedTimelockInspection, 1*time.Second)
 }
 
 func (s *SolanaTestSuite) SetupTest() {
