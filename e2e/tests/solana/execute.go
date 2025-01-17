@@ -28,6 +28,7 @@ var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 // Test_Solana_Execute tests the Execute functionality by creating a mint tokens transaction and
 // executing it via the MCMS program.
 func (s *SolanaTestSuite) Test_Solana_Execute() {
+	s.SetupMCM(testPDASeedExec)
 	// Get required programs and accounts
 	ctx := context.Background()
 	mcmID := mcmsSolana.ContractAddress(s.MCMProgramID, testPDASeedExec)
