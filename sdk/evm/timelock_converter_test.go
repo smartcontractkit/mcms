@@ -1,6 +1,8 @@
 package evm
 
 import (
+	"context"
+	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -16,6 +18,7 @@ import (
 func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
 	timelockAddress := "0x1234567890123456789012345678901234567890"
 	zeroHash := common.Hash{}
 
@@ -92,6 +95,23 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			expectedError:  sdkerrors.NewInvalidTimelockOperationError("invalid"),
 			expectedOpType: "",
 		},
+		{
+			name: "Invalid additional fields",
+			op: types.BatchOperation{
+				Transactions: []types.Transaction{{
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock"},
+					To:                timelockAddress,
+					Data:              []byte("0x1234"),
+					AdditionalFields:  []byte("invalid"),
+				}},
+				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+			},
+			delay:         "1h",
+			operation:     types.TimelockActionSchedule,
+			predecessor:   zeroHash,
+			salt:          zeroHash,
+			expectedError: &json.SyntaxError{},
+		},
 	}
 
 	for _, tc := range testCases {
@@ -99,8 +119,8 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			t.Parallel()
 
 			converter := &TimelockConverter{}
-			chainOperation, operationId, err := converter.ConvertBatchToChainOperation(
-				tc.op, timelockAddress, types.MustParseDuration(tc.delay), tc.operation, tc.predecessor, tc.salt,
+			chainOperations, operationId, err := converter.ConvertBatchToChainOperation(
+				ctx, tc.op, timelockAddress, types.MustParseDuration(tc.delay), tc.operation, tc.predecessor, tc.salt,
 			)
 
 			if tc.expectedError != nil {
@@ -109,9 +129,9 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.NotEqual(t, common.Hash{}, operationId)
-				assert.Equal(t, tc.expectedOpType, chainOperation.Transaction.ContractType)
-				assert.Equal(t, timelockAddress, chainOperation.Transaction.To)
-				assert.Equal(t, tc.op.ChainSelector, chainOperation.ChainSelector)
+				assert.Len(t, chainOperations, 1)
+				assert.Equal(t, timelockAddress, chainOperations[0].Transaction.To)
+				assert.Equal(t, tc.op.ChainSelector, chainOperations[0].ChainSelector)
 			}
 		})
 	}

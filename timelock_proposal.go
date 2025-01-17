@@ -1,7 +1,9 @@
 package mcms
 
 import (
+	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"time"
 
@@ -9,6 +11,7 @@ import (
 	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -78,7 +81,10 @@ func (m *TimelockProposal) Validate() error {
 
 // Convert the proposal to an MCMS only proposal and also return all predecessors for easy access later.
 // Every transaction to be sent from the Timelock is encoded with the corresponding timelock method.
-func (m *TimelockProposal) Convert() (Proposal, []common.Hash, error) {
+func (m *TimelockProposal) Convert(
+	ctx context.Context,
+	converters map[types.ChainSelector]sdk.TimelockConverter,
+) (Proposal, []common.Hash, error) {
 	baseProposal := m.BaseProposal
 
 	// Start predecessor map with all chains pointing to the zero hash
@@ -102,18 +108,23 @@ func (m *TimelockProposal) Convert() (Proposal, []common.Hash, error) {
 		timelockAddress := m.TimelockAddresses[bop.ChainSelector]
 		predecessor := predecessors[i]
 
-		sop, operationId, err := BatchToChainOperation(
-			bop, timelockAddress, m.Delay, m.Action, predecessor, baseProposal.Salt(),
+		converter, ok := converters[bop.ChainSelector]
+		if !ok {
+			return Proposal{}, []common.Hash{}, fmt.Errorf("unable to find converter for chain selector: %d", bop.ChainSelector)
+		}
+
+		convertedOps, operationID, err := converter.ConvertBatchToChainOperation(
+			ctx, bop, timelockAddress, m.Delay, m.Action, predecessor, baseProposal.Salt(),
 		)
 		if err != nil {
 			return Proposal{}, nil, err
 		}
 
 		// Append the converted operation to the MCMS only proposal
-		result.Operations = append(result.Operations, sop)
+		result.Operations = append(result.Operations, convertedOps...)
 
 		// Update predecessor for the chain
-		predecessors[i+1] = operationId
+		predecessors[i+1] = operationID
 	}
 
 	return result, predecessors, nil
