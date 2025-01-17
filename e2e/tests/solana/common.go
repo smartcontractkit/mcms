@@ -19,7 +19,9 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/access_controller"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -95,7 +97,7 @@ func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
 
-	bindings.SetProgramID(s.MCMProgramID)
+	mcm.SetProgramID(s.MCMProgramID)
 
 	wallet, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
@@ -121,7 +123,7 @@ func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
 	err = bin.UnmarshalBorsh(&programData, data.Bytes())
 	s.Require().NoError(err)
 
-	ix, err := bindings.NewInitializeInstruction(
+	ix, err := mcm.NewInitializeInstruction(
 		uint64(s.ChainSelector),
 		pdaSeed,
 		configPDA,
@@ -137,7 +139,7 @@ func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
 	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix}, wallet, rpc.CommitmentConfirmed)
 
 	// get config and validate
-	var configAccount bindings.MultisigConfig
+	var configAccount mcm.MultisigConfig
 	err = common.GetAccountDataBorshInto(ctx, s.SolanaClient, configPDA, rpc.CommitmentConfirmed, &configAccount)
 	s.Require().NoError(err, "failed to get account data")
 
@@ -157,4 +159,21 @@ func (s *SolanaTestSuite) SetupSuite() {
 	s.SetupMCM(testPDASeedSetConfigTest)
 	s.SetupMCM(testPDASeedSetRootTest)
 	s.SetupMCM(testPDASeedExec)
+}
+
+func (s *SolanaTestSuite) SetupTest() {
+	// reset all programID to a random key
+	// this ensures all methods in the sdk correctly sets the programID itself
+	// and not rely on the global programID to be set by something else
+	key, err := solana.NewRandomPrivateKey()
+	s.Require().NoError(err)
+	mcm.SetProgramID(key.PublicKey())
+
+	key, err = solana.NewRandomPrivateKey()
+	s.Require().NoError(err)
+	timelock.SetProgramID(key.PublicKey())
+
+	key, err = solana.NewRandomPrivateKey()
+	s.Require().NoError(err)
+	access_controller.SetProgramID(key.PublicKey())
 }

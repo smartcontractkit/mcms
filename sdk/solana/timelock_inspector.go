@@ -126,8 +126,6 @@ func (t TimelockInspector) getOpData(ctx context.Context, address string, opID [
 		return timelock.Operation{}, err
 	}
 
-	timelock.SetProgramID(programID)
-
 	pda, err := FindTimelockOperationPDA(programID, seed, opID)
 	if err != nil {
 		return timelock.Operation{}, err
@@ -147,8 +145,6 @@ func (t TimelockInspector) getRoleAccessList(ctx context.Context, address string
 	if err != nil {
 		return nil, err
 	}
-
-	timelock.SetProgramID(programID)
 
 	pda, err := FindTimelockConfigPDA(programID, seed)
 	if err != nil {
