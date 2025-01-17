@@ -16,13 +16,16 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/rpc"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/access_controller"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/accesscontroller"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
+	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
@@ -88,8 +91,11 @@ type SolanaTestSuite struct {
 	suite.Suite
 	e2e.TestSetup
 
-	ChainSelector types.ChainSelector
-	MCMProgramID  solana.PublicKey
+	ChainSelector             types.ChainSelector
+	MCMProgramID              solana.PublicKey
+	TimelockWorkerProgramID   solana.PublicKey
+	AccessControllerProgramID solana.PublicKey
+	Roles                     timelockutils.RoleMap
 }
 
 // SetupMCM initializes the MCM account with the given PDA seed
@@ -147,10 +153,110 @@ func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
 	s.Require().Equal(wallet.PublicKey(), configAccount.Owner)
 }
 
+func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Duration) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	s.T().Cleanup(cancel)
+
+	timelock.SetProgramID(s.TimelockWorkerProgramID)
+	access_controller.SetProgramID(s.AccessControllerProgramID)
+
+	admin, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+
+	_, roleMap := timelockutils.TestRoleAccounts(2)
+	s.Roles = roleMap
+
+	s.Run("init access controller", func() {
+		for _, data := range roleMap {
+			initAccIxs := s.getInitAccessControllersIxs(ctx, data.AccessController.PublicKey(), admin)
+
+			testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, initAccIxs, admin, rpc.CommitmentConfirmed, common.AddSigners(data.AccessController))
+
+			var ac access_controller.AccessController
+			err = common.GetAccountDataBorshInto(ctx, s.SolanaClient, data.AccessController.PublicKey(), rpc.CommitmentConfirmed, &ac)
+			if err != nil {
+				s.Require().NoError(err, "failed to get account info")
+			}
+		}
+	})
+
+	s.Run("init timelock", func() {
+		data, accErr := s.SolanaClient.GetAccountInfoWithOpts(ctx, s.TimelockWorkerProgramID, &rpc.GetAccountInfoOpts{
+			Commitment: rpc.CommitmentConfirmed,
+		})
+		s.Require().NoError(accErr)
+
+		var programData struct {
+			DataType uint32
+			Address  solana.PublicKey
+		}
+		s.Require().NoError(bin.UnmarshalBorsh(&programData, data.Bytes()))
+
+		pda, err2 := solanasdk.FindTimelockConfigPDA(s.TimelockWorkerProgramID, pdaSeed)
+		s.Require().NoError(err2)
+
+		initTimelockIx, err3 := timelock.NewInitializeInstruction(
+			pdaSeed,
+			uint64(minDelay.Seconds()),
+			pda,
+			admin.PublicKey(),
+			solana.SystemProgramID,
+			s.TimelockWorkerProgramID,
+			programData.Address,
+			s.AccessControllerProgramID,
+			roleMap[timelock.Proposer_Role].AccessController.PublicKey(),
+			roleMap[timelock.Executor_Role].AccessController.PublicKey(),
+			roleMap[timelock.Canceller_Role].AccessController.PublicKey(),
+			roleMap[timelock.Bypasser_Role].AccessController.PublicKey(),
+		).ValidateAndBuild()
+		s.Require().NoError(err3)
+
+		testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{initTimelockIx}, admin, rpc.CommitmentConfirmed)
+
+		var configAccount timelock.Config
+		err = common.GetAccountDataBorshInto(ctx, s.SolanaClient, pda, rpc.CommitmentConfirmed, &configAccount)
+		if err != nil {
+			s.Require().NoError(err, "failed to get account info")
+		}
+
+		s.Require().Equal(admin.PublicKey(), configAccount.Owner, "Owner doesn't match")
+		s.Require().Equal(uint64(minDelay.Seconds()), configAccount.MinDelay, "MinDelay doesn't match")
+		s.Require().Equal(roleMap[timelock.Proposer_Role].AccessController.PublicKey(), configAccount.ProposerRoleAccessController, "ProposerRoleAccessController doesn't match")
+		s.Require().Equal(roleMap[timelock.Executor_Role].AccessController.PublicKey(), configAccount.ExecutorRoleAccessController, "ExecutorRoleAccessController doesn't match")
+		s.Require().Equal(roleMap[timelock.Canceller_Role].AccessController.PublicKey(), configAccount.CancellerRoleAccessController, "CancellerRoleAccessController doesn't match")
+		s.Require().Equal(roleMap[timelock.Bypasser_Role].AccessController.PublicKey(), configAccount.BypasserRoleAccessController, "BypasserRoleAccessController doesn't match")
+	})
+
+	s.Run("setup roles", func() {
+		for role, data := range roleMap {
+			addresses := make([]solana.PublicKey, 0, len(data.Accounts))
+			for _, account := range data.Accounts {
+				addresses = append(addresses, account.PublicKey())
+			}
+			batchAddAccessIxs := s.getBatchAddAccessIxs(ctx, pdaSeed,
+				data.AccessController.PublicKey(), role, addresses, admin, 10)
+			s.Require().NoError(err)
+
+			for _, ix := range batchAddAccessIxs {
+				testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix}, admin, rpc.CommitmentConfirmed)
+			}
+
+			for _, account := range data.Accounts {
+				found, err := accesscontroller.HasAccess(ctx, s.SolanaClient, data.AccessController.PublicKey(),
+					account.PublicKey(), rpc.CommitmentConfirmed)
+				s.Require().NoError(err)
+				s.Require().True(found, "Account %s not found in %s AccessList", account.PublicKey(), data.Role)
+			}
+		}
+	})
+}
+
 // SetupSuite runs before the test suite
 func (s *SolanaTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 	s.MCMProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
+	s.TimelockWorkerProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["timelock"])
+	s.AccessControllerProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["access_controller"])
 
 	details, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, cselectors.FamilySolana)
 	s.Require().NoError(err)
@@ -159,6 +265,8 @@ func (s *SolanaTestSuite) SetupSuite() {
 	s.SetupMCM(testPDASeedSetConfigTest)
 	s.SetupMCM(testPDASeedSetRootTest)
 	s.SetupMCM(testPDASeedExec)
+	s.SetupMCM(testPDASeedTimelockInspection)
+	s.SetupTimelockWorker(testPDASeedTimelockInspection, 1*time.Second)
 }
 
 func (s *SolanaTestSuite) SetupTest() {
@@ -176,4 +284,61 @@ func (s *SolanaTestSuite) SetupTest() {
 	key, err = solana.NewRandomPrivateKey()
 	s.Require().NoError(err)
 	access_controller.SetProgramID(key.PublicKey())
+}
+
+func (s *SolanaTestSuite) getInitAccessControllersIxs(ctx context.Context, roleAcAccount solana.PublicKey, authority solana.PrivateKey) []solana.Instruction {
+	ixs := []solana.Instruction{}
+
+	dataSize := uint64(8 + 32 + 32 + ((32 * 64) + 8)) // discriminator + owner + proposed owner + access_list (64 max addresses + length)
+	rentExemption, err := s.SolanaClient.GetMinimumBalanceForRentExemption(ctx, dataSize, rpc.CommitmentConfirmed)
+	s.Require().NoError(err)
+
+	createAccountInstruction, err := system.NewCreateAccountInstruction(rentExemption, dataSize,
+		s.AccessControllerProgramID, authority.PublicKey(), roleAcAccount).ValidateAndBuild()
+	s.Require().NoError(err)
+	ixs = append(ixs, createAccountInstruction)
+
+	initializeInstruction, err := access_controller.NewInitializeInstruction(roleAcAccount,
+		authority.PublicKey()).ValidateAndBuild()
+	s.Require().NoError(err)
+	ixs = append(ixs, initializeInstruction)
+
+	return ixs
+}
+
+func (s *SolanaTestSuite) getBatchAddAccessIxs(ctx context.Context, timelockID [32]byte,
+	roleAcAccount solana.PublicKey, role timelock.Role, addresses []solana.PublicKey,
+	authority solana.PrivateKey, chunkSize int) []solana.Instruction {
+	var ac access_controller.AccessController
+	err := common.GetAccountDataBorshInto(ctx, s.SolanaClient, roleAcAccount, rpc.CommitmentConfirmed, &ac)
+	s.Require().NoError(err)
+
+	ixs := []solana.Instruction{}
+	for i := 0; i < len(addresses); i += chunkSize {
+		end := i + chunkSize
+		if end > len(addresses) {
+			end = len(addresses)
+		}
+		chunk := addresses[i:end]
+		pda, err := solanasdk.FindTimelockConfigPDA(s.TimelockWorkerProgramID, timelockID)
+		s.Require().NoError(err)
+
+		ix := timelock.NewBatchAddAccessInstruction(
+			timelockID,
+			role,
+			pda,
+			s.AccessControllerProgramID,
+			roleAcAccount,
+			authority.PublicKey(),
+		)
+		for _, address := range chunk {
+			ix.Append(solana.Meta(address))
+		}
+		vIx, err := ix.ValidateAndBuild()
+		s.Require().NoError(err)
+
+		ixs = append(ixs, vIx)
+	}
+
+	return ixs
 }
