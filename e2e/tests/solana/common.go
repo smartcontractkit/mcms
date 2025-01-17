@@ -149,7 +149,6 @@ func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
 func (s *SolanaTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 	s.MCMProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
-
 	details, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, cselectors.FamilySolana)
 	s.Require().NoError(err)
 	s.ChainSelector = types.ChainSelector(details.ChainSelector)

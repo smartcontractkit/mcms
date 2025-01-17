@@ -25,20 +25,10 @@ import (
 
 var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 
-// ExecuteSolanaTestSuite is the test suite for the Execute functionality
-type ExecuteSolanaTestSuite struct {
-	*SolanaTestSuite
-}
-
-// SetupSuite runs before the test suite
-func (s *ExecuteSolanaTestSuite) SetupSuite() {
-	s.SolanaTestSuite.SetupSuite()
-	s.SetupMCM(testPDASeedExec)
-}
-
 // Test_Solana_Execute tests the Execute functionality by creating a mint tokens transaction and
 // executing it via the MCMS program.
-func (s *ExecuteSolanaTestSuite) Test_Solana_Execute() {
+func (s *SolanaTestSuite) Test_Solana_Execute() {
+	s.SetupMCM(testPDASeedExec)
 	// Get required programs and accounts
 	ctx := context.Background()
 	mcmID := mcmsSolana.ContractAddress(s.MCMProgramID, testPDASeedExec)
@@ -139,7 +129,7 @@ func (s *ExecuteSolanaTestSuite) Test_Solana_Execute() {
 }
 
 // buildMintTx builds a mint transaction for the proposal
-func (s *ExecuteSolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicKey) types.Transaction {
+func (s *SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicKey) types.Transaction {
 	amount := 1000 * solana.LAMPORTS_PER_SOL
 	ix2, err := token.NewMintToInstruction(amount, mint, receiverATA, signerPDA, nil).ValidateAndBuild()
 	accounts := ix2.Accounts()
@@ -167,7 +157,7 @@ func (s *ExecuteSolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana
 }
 
 // setupTokenProgram sets up a token program with a mint and an associated token account for the receiver
-func (s *ExecuteSolanaTestSuite) setupTokenProgram(ctx context.Context, auth solana.PrivateKey, signerPDA solana.PublicKey, mint solana.PrivateKey) (receiverATA solana.PublicKey) {
+func (s *SolanaTestSuite) setupTokenProgram(ctx context.Context, auth solana.PrivateKey, signerPDA solana.PublicKey, mint solana.PrivateKey) (receiverATA solana.PublicKey) {
 	tokenProgram := solana.Token2022ProgramID
 	// Use CreateToken utility to get initialization instructions
 	createTokenIxs, err := tokens.CreateToken(
