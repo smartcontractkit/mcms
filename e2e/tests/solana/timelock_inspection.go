@@ -5,19 +5,24 @@ package solanae2e
 
 import (
 	"context"
+	"time"
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 )
 
-var testPDASeedTimelockInspection = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'i', 'n', 's', 'p', 'e', 'c', 't'}
+var testPDASeedTimelockGetProposers = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'p', 'r', 'o', 'p', 'o', 's', 'e', 'r'}
+var testPDASeedTimelockGetExecutors = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'e', 'x', 'e', 'c'}
+var testPDASeedTimelockGetCancellers = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'c', 'a', 'n', 'c', 'e', 'l'}
+var testPDASeedTimelockGetBypassers = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'b', 'y', 'p', 'a', 's', 's'}
 
 func (s *SolanaTestSuite) TestGetProposers() {
+	s.SetupTimelockWorker(testPDASeedTimelockGetProposers, 1*time.Second)
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	proposers, err := inspector.GetProposers(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockInspection))
+	proposers, err := inspector.GetProposers(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockGetProposers))
 	s.Require().NoError(err, "Failed to get proposers")
 	s.Require().Len(proposers, 2, "Expected 2 proposers")
 
@@ -29,10 +34,11 @@ func (s *SolanaTestSuite) TestGetProposers() {
 }
 
 func (s *SolanaTestSuite) TestGetExecutors() {
+	s.SetupTimelockWorker(testPDASeedTimelockGetExecutors, 1*time.Second)
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	executors, err := inspector.GetExecutors(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockInspection))
+	executors, err := inspector.GetExecutors(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockGetExecutors))
 	s.Require().NoError(err, "Failed to get executors")
 	s.Require().Len(executors, 2, "Expected 2 executors")
 
@@ -44,10 +50,11 @@ func (s *SolanaTestSuite) TestGetExecutors() {
 }
 
 func (s *SolanaTestSuite) TestGetCancellers() {
+	s.SetupTimelockWorker(testPDASeedTimelockGetCancellers, 1*time.Second)
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	cancellers, err := inspector.GetCancellers(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockInspection))
+	cancellers, err := inspector.GetCancellers(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockGetCancellers))
 	s.Require().NoError(err, "Failed to get cancellers")
 	s.Require().Len(cancellers, 2, "Expected 2 cancellers")
 
@@ -59,10 +66,11 @@ func (s *SolanaTestSuite) TestGetCancellers() {
 }
 
 func (s *SolanaTestSuite) TestGetBypassers() {
+	s.SetupTimelockWorker(testPDASeedTimelockGetBypassers, 1*time.Second)
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	bypassers, err := inspector.GetBypassers(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockInspection))
+	bypassers, err := inspector.GetBypassers(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockGetBypassers))
 	s.Require().NoError(err, "Failed to get bypassers")
 	s.Require().Len(bypassers, 2, "Expected 2 bypassers")
 

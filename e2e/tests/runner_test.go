@@ -17,7 +17,6 @@ func TestEVMSuite(t *testing.T) {
 	suite.Run(t, new(evme2e.ExecutionTestSuite))
 	suite.Run(t, new(evme2e.TimelockInspectionTestSuite))
 	suite.Run(t, new(evme2e.SetRootTestSuite))
-
 	suite.Run(t, new(evme2e.SigningTestSuite))
 }
 
