@@ -93,7 +93,7 @@ type SolanaTestSuite struct {
 
 	ChainSelector             types.ChainSelector
 	MCMProgramID              solana.PublicKey
-	TimelockWorkerProgramID   solana.PublicKey
+	TimelockProgramID         solana.PublicKey
 	AccessControllerProgramID solana.PublicKey
 	Roles                     timelockutils.RoleMap
 }
@@ -153,11 +153,11 @@ func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
 	s.Require().Equal(wallet.PublicKey(), configAccount.Owner)
 }
 
-func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Duration) {
+func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Duration) timelockutils.RoleMap {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
 
-	timelock.SetProgramID(s.TimelockWorkerProgramID)
+	timelock.SetProgramID(s.TimelockProgramID)
 	access_controller.SetProgramID(s.AccessControllerProgramID)
 
 	admin, err := solana.PrivateKeyFromBase58(privateKey)
@@ -181,7 +181,7 @@ func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Du
 	})
 
 	s.Run("init timelock", func() {
-		data, accErr := s.SolanaClient.GetAccountInfoWithOpts(ctx, s.TimelockWorkerProgramID, &rpc.GetAccountInfoOpts{
+		data, accErr := s.SolanaClient.GetAccountInfoWithOpts(ctx, s.TimelockProgramID, &rpc.GetAccountInfoOpts{
 			Commitment: rpc.CommitmentConfirmed,
 		})
 		s.Require().NoError(accErr)
@@ -192,7 +192,7 @@ func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Du
 		}
 		s.Require().NoError(bin.UnmarshalBorsh(&programData, data.Bytes()))
 
-		pda, err2 := solanasdk.FindTimelockConfigPDA(s.TimelockWorkerProgramID, pdaSeed)
+		pda, err2 := solanasdk.FindTimelockConfigPDA(s.TimelockProgramID, pdaSeed)
 		s.Require().NoError(err2)
 
 		initTimelockIx, err3 := timelock.NewInitializeInstruction(
@@ -201,7 +201,7 @@ func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Du
 			pda,
 			admin.PublicKey(),
 			solana.SystemProgramID,
-			s.TimelockWorkerProgramID,
+			s.TimelockProgramID,
 			programData.Address,
 			s.AccessControllerProgramID,
 			roleMap[timelock.Proposer_Role].AccessController.PublicKey(),
@@ -249,13 +249,15 @@ func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Du
 			}
 		}
 	})
+
+	return roleMap
 }
 
 // SetupSuite runs before the test suite
 func (s *SolanaTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 	s.MCMProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
-	s.TimelockWorkerProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["timelock"])
+	s.TimelockProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["timelock"])
 	s.AccessControllerProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["access_controller"])
 
 	details, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, cselectors.FamilySolana)
@@ -320,7 +322,7 @@ func (s *SolanaTestSuite) getBatchAddAccessIxs(ctx context.Context, timelockID [
 			end = len(addresses)
 		}
 		chunk := addresses[i:end]
-		pda, err := solanasdk.FindTimelockConfigPDA(s.TimelockWorkerProgramID, timelockID)
+		pda, err := solanasdk.FindTimelockConfigPDA(s.TimelockProgramID, timelockID)
 		s.Require().NoError(err)
 
 		ix := timelock.NewBatchAddAccessInstruction(

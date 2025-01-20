@@ -17,7 +17,7 @@ func (s *SolanaTestSuite) TestGetProposers() {
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	proposers, err := inspector.GetProposers(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockInspection))
+	proposers, err := inspector.GetProposers(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockInspection))
 	s.Require().NoError(err, "Failed to get proposers")
 	s.Require().Len(proposers, 2, "Expected 2 proposers")
 
@@ -32,7 +32,7 @@ func (s *SolanaTestSuite) TestGetExecutors() {
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	executors, err := inspector.GetExecutors(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockInspection))
+	executors, err := inspector.GetExecutors(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockInspection))
 	s.Require().NoError(err, "Failed to get executors")
 	s.Require().Len(executors, 2, "Expected 2 executors")
 
@@ -47,7 +47,7 @@ func (s *SolanaTestSuite) TestGetCancellers() {
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	cancellers, err := inspector.GetCancellers(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockInspection))
+	cancellers, err := inspector.GetCancellers(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockInspection))
 	s.Require().NoError(err, "Failed to get cancellers")
 	s.Require().Len(cancellers, 2, "Expected 2 cancellers")
 
@@ -62,7 +62,7 @@ func (s *SolanaTestSuite) TestGetBypassers() {
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	bypassers, err := inspector.GetBypassers(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockInspection))
+	bypassers, err := inspector.GetBypassers(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockInspection))
 	s.Require().NoError(err, "Failed to get bypassers")
 	s.Require().Len(bypassers, 2, "Expected 2 bypassers")
 

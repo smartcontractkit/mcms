@@ -23,6 +23,7 @@ var (
 	testMCMProgramID      = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
 	testOpID              = [32]byte{1, 2, 3, 4}
 	testPDASeed           = PDASeed{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
+	testTimelockSeed      = PDASeed{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e'}
 	testRoot              = common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000")
 )
 
