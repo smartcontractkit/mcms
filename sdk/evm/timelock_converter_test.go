@@ -119,7 +119,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			t.Parallel()
 
 			converter := &TimelockConverter{}
-			chainOperations, operationId, err := converter.ConvertBatchToChainOperation(
+			chainOperations, operationId, err := converter.ConvertBatchToChainOperations(
 				ctx, tc.op, timelockAddress, types.MustParseDuration(tc.delay), tc.operation, tc.predecessor, tc.salt,
 			)
 

@@ -21,7 +21,7 @@ var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
 type TimelockConverter struct{}
 
-func (t *TimelockConverter) ConvertBatchToChainOperation(
+func (t *TimelockConverter) ConvertBatchToChainOperations(
 	_ context.Context,
 	bop types.BatchOperation,
 	timelockAddress string,

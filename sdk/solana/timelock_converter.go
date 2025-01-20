@@ -23,7 +23,7 @@ func NewTimelockConverter(client *rpc.Client, auth solana.PublicKey) *TimelockCo
 	return &TimelockConverter{client: client, auth: auth}
 }
 
-func (t *TimelockConverter) ConvertBatchToChainOperation(
+func (t *TimelockConverter) ConvertBatchToChainOperations(
 	ctx context.Context,
 	batchOp types.BatchOperation,
 	timelockAddress string,

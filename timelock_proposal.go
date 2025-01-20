@@ -113,7 +113,7 @@ func (m *TimelockProposal) Convert(
 			return Proposal{}, []common.Hash{}, fmt.Errorf("unable to find converter for chain selector: %d", bop.ChainSelector)
 		}
 
-		convertedOps, operationID, err := converter.ConvertBatchToChainOperation(
+		convertedOps, operationID, err := converter.ConvertBatchToChainOperations(
 			ctx, bop, timelockAddress, m.Delay, m.Action, predecessor, baseProposal.Salt(),
 		)
 		if err != nil {
