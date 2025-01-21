@@ -3,6 +3,7 @@ package mcms
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/big"
 	"testing"
 	"time"
@@ -11,6 +12,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	geth_types "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
@@ -20,6 +24,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/sdk/mocks"
+	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -115,6 +120,130 @@ func Test_NewTimelockExecutable(t *testing.T) {
 	}
 }
 
+func Test_TimelockExecutable_Execute(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	defaultProposal := func() *TimelockProposal {
+		return &TimelockProposal{
+			BaseProposal: BaseProposal{
+				Version:              "v1",
+				Kind:                 types.KindTimelockProposal,
+				Description:          "description",
+				ValidUntil:           2004259681,
+				OverridePreviousRoot: false,
+				Signatures:           []types.Signature{},
+				ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+					chaintest.Chain1Selector: {
+						StartingOpCount: 1,
+						MCMAddress:      "0x1234",
+					},
+				},
+			},
+			Action:            types.TimelockActionSchedule,
+			Delay:             types.MustParseDuration("1h"),
+			TimelockAddresses: map[types.ChainSelector]string{chaintest.Chain1Selector: "0x5678"},
+			Operations: []types.BatchOperation{{
+				ChainSelector: chaintest.Chain1Selector,
+				Transactions: []types.Transaction{{
+					To:               "0x9012",
+					AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+					Data:             common.Hex2Bytes("0x0"),
+					OperationMetadata: types.OperationMetadata{
+						ContractType: "Test contract",
+						Tags:         []string{"testTag1", "testTag2"},
+					},
+				}},
+			}},
+		}
+	}
+
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T) (*TimelockProposal, map[types.ChainSelector]sdk.TimelockExecutor)
+		index   int
+		want    string
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(t *testing.T) (*TimelockProposal, map[types.ChainSelector]sdk.TimelockExecutor) {
+				t.Helper()
+
+				executor := mocks.NewTimelockExecutor(t)
+				executor.EXPECT().
+					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return("signature", nil).Once()
+				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
+
+				return defaultProposal(), executors
+			},
+			want: "signature",
+		},
+		{
+			name: "failure: converter from executor error",
+			setup: func(t *testing.T) (*TimelockProposal, map[types.ChainSelector]sdk.TimelockExecutor) {
+				t.Helper()
+				executors := map[types.ChainSelector]sdk.TimelockExecutor{
+					types.ChainSelector(12345789): mocks.NewTimelockExecutor(t),
+				}
+
+				return defaultProposal(), executors
+			},
+			wantErr: "unable to set predecessors: unable to create converter from executor: chain family not found for selector",
+		},
+		{
+			name: "failure: convert error",
+			setup: func(t *testing.T) (*TimelockProposal, map[types.ChainSelector]sdk.TimelockExecutor) {
+				t.Helper()
+
+				solanaClient := &rpc.Client{}
+				solanaAuth, err := solana.NewRandomPrivateKey()
+				require.NoError(t, err)
+				executors := map[types.ChainSelector]sdk.TimelockExecutor{
+					chaintest.Chain4Selector: solanasdk.NewTimelockExecutor(solanaClient, solanaAuth),
+				}
+
+				return defaultProposal(), executors
+			},
+			wantErr: "unable to set predecessors: unable to find converter for chain selector",
+		},
+		{
+			name: "failure: execute error",
+			setup: func(t *testing.T) (*TimelockProposal, map[types.ChainSelector]sdk.TimelockExecutor) {
+				t.Helper()
+
+				executor := mocks.NewTimelockExecutor(t)
+				executor.EXPECT().
+					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return("", fmt.Errorf("execute error")).Once()
+				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
+
+				return defaultProposal(), executors
+			},
+			wantErr: "execute error",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			proposal, executors := tt.setup(t)
+			timelockExecutable, err := NewTimelockExecutable(proposal, executors)
+			require.NoError(t, err)
+
+			got, err := timelockExecutable.Execute(ctx, tt.index)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+		})
+	}
+}
+
 func Test_ScheduleAndExecuteProposal(t *testing.T) {
 	t.Parallel()
 
@@ -205,6 +334,10 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 		))
 	}
 
+	converters := map[types.ChainSelector]sdk.TimelockConverter{
+		chaintest.Chain1Selector: &evm.TimelockConverter{},
+	}
+
 	// Construct a proposal
 	proposal := TimelockProposal{
 		BaseProposal: BaseProposal{
@@ -235,7 +368,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	}
 
 	// convert proposal to mcms
-	mcmsProposal, predecessors, err := proposal.Convert()
+	mcmsProposal, predecessors, err := proposal.Convert(ctx, converters)
 	require.NoError(t, err)
 	mcmsProposal.UseSimulatedBackend(true)
 	tree, err := mcmsProposal.MerkleTree()

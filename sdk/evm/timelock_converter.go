@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"context"
 	"encoding/json"
 	"math/big"
 
@@ -20,14 +21,15 @@ var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
 type TimelockConverter struct{}
 
-func (t *TimelockConverter) ConvertBatchToChainOperation(
+func (t *TimelockConverter) ConvertBatchToChainOperations(
+	_ context.Context,
 	bop types.BatchOperation,
 	timelockAddress string,
 	delay types.Duration,
 	action types.TimelockAction,
 	predecessor common.Hash,
 	salt common.Hash,
-) (types.Operation, common.Hash, error) {
+) ([]types.Operation, common.Hash, error) {
 	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
 	calls := make([]bindings.RBACTimelockCall, 0)
 	tags := make([]string, 0)
@@ -35,7 +37,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperation(
 		// Unmarshal the additional fields
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return types.Operation{}, common.Hash{}, err
+			return []types.Operation{}, common.Hash{}, err
 		}
 
 		calls = append(calls, bindings.RBACTimelockCall{
@@ -48,12 +50,12 @@ func (t *TimelockConverter) ConvertBatchToChainOperation(
 
 	abi, errAbi := bindings.RBACTimelockMetaData.GetAbi()
 	if errAbi != nil {
-		return types.Operation{}, common.Hash{}, errAbi
+		return []types.Operation{}, common.Hash{}, errAbi
 	}
 
 	operationId, errHash := HashOperationBatch(calls, predecessor, salt)
 	if errHash != nil {
-		return types.Operation{}, common.Hash{}, errHash
+		return []types.Operation{}, common.Hash{}, errHash
 	}
 
 	// Encode the data based on the operation
@@ -67,11 +69,11 @@ func (t *TimelockConverter) ConvertBatchToChainOperation(
 	case types.TimelockActionBypass:
 		data, err = abi.Pack("bypasserExecuteBatch", calls)
 	default:
-		return types.Operation{}, common.Hash{}, sdkerrors.NewInvalidTimelockOperationError(string(action))
+		return []types.Operation{}, common.Hash{}, sdkerrors.NewInvalidTimelockOperationError(string(action))
 	}
 
 	if err != nil {
-		return types.Operation{}, common.Hash{}, err
+		return []types.Operation{}, common.Hash{}, err
 	}
 
 	op := types.Operation{
@@ -85,7 +87,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperation(
 		),
 	}
 
-	return op, operationId, nil
+	return []types.Operation{op}, operationId, nil
 }
 
 // HashOperationBatch replicates the hash calculation from Solidity

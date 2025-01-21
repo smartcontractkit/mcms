@@ -1,6 +1,8 @@
 package mcms
 
 import (
+	"fmt"
+
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -38,4 +40,32 @@ func newEncoder(
 	}
 
 	return encoder, nil
+}
+
+// newTimelockConverterFromExecutor returns a new TimelockConverter that can convert timelock proposals
+// for the given chain.
+func newTimelockConverterFromExecutor(
+	csel types.ChainSelector,
+	executor sdk.TimelockExecutor,
+) (sdk.TimelockConverter, error) {
+	family, err := types.GetChainSelectorFamily(csel)
+	if err != nil {
+		return nil, err
+	}
+
+	switch family {
+	case cselectors.FamilyEVM:
+		return &evm.TimelockConverter{}, nil
+
+	case cselectors.FamilySolana:
+		solanaExecutor, ok := executor.(*solana.TimelockExecutor)
+		if !ok {
+			return nil, fmt.Errorf("unable to cast sdk executor to solana TimelockExecutor")
+		}
+
+		return solana.NewTimelockConverter(solanaExecutor.Client(), solanaExecutor.AuthPublicKey()), nil
+
+	default:
+		return nil, fmt.Errorf("unsupported executor type: %T", executor)
+	}
 }
