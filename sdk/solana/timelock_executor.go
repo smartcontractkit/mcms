@@ -124,6 +124,7 @@ func (t *TimelockExecutor) Client() *rpc.Client {
 func (t *TimelockExecutor) AuthPublicKey() solana.PublicKey {
 	return t.auth.PublicKey()
 }
+
 // HashOperation hashes the operation and returns the operation ID
 func HashOperation(instructions []timelock.InstructionData, predecessor [32]byte, salt [32]byte) [32]byte {
 	var encodedData bytes.Buffer

@@ -94,7 +94,7 @@ func (s *SolanaTestSuite) TestIsOperation() {
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
 	operation, err := inspector.IsOperation(ctx,
-		solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockIsOperations), op.OperationID())
+		solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockIsOperations), op.OperationID())
 
 	s.Require().NoError(err, "Failed to check if operation exists")
 	s.Require().True(operation, "Operation should exist")
@@ -109,7 +109,7 @@ func (s *SolanaTestSuite) TestIOperationPending() {
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
 	operation, err := inspector.IsOperationPending(ctx,
-		solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockIsOperationsPending), op.OperationID())
+		solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockIsOperationsPending), op.OperationID())
 
 	s.Require().NoError(err, "Failed to check if operation is pending")
 	s.Require().True(operation, "Operation should be pending")
@@ -126,7 +126,7 @@ func (s *SolanaTestSuite) TestIsOperationReady() {
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
 	operation, err := inspector.IsOperationReady(ctx,
-		solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockIsOperationsReady), op.OperationID())
+		solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockIsOperationsReady), op.OperationID())
 
 	s.Require().NoError(err, "Failed to check if operation is ready")
 	s.Require().True(operation, "Operation should be ready")
@@ -143,7 +143,7 @@ func (s *SolanaTestSuite) TestIsOperationDone() {
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
 	operation, err := inspector.IsOperationDone(ctx,
-		solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockIsOperationsDone), op.OperationID())
+		solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockIsOperationsDone), op.OperationID())
 
 	s.Require().NoError(err, "Failed to check if operation is done")
 	s.Require().True(operation, "Operation should be done")
