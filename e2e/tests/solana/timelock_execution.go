@@ -27,7 +27,7 @@ const BatchAddAccessChunkSize = 24
 // Test_Solana_TimelockExecute tests the  timelock Execute functionality by scheduling a mint tokens transaction and
 // executing it via the timelock ExecuteBatch
 func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
-	roleMap := s.SetupTimelockWorker(testTimelockExecuteID, 1)
+	s.SetupTimelockWorker(testTimelockExecuteID, 1)
 	// Get required programs and accounts
 	ctx := context.Background()
 	timelock.SetProgramID(s.TimelockProgramID)
@@ -55,7 +55,7 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 	s.Require().NoError(err)
 
 	// Set propose roles
-	proposerAndExecutorKey := s.setProposerAndExecutor(ctx, auth, roleMap)
+	proposerAndExecutorKey := s.setProposerAndExecutor(ctx, auth, s.Roles)
 	s.Require().NotNil(proposerAndExecutorKey)
 
 	// Schedule the mint tx
@@ -64,14 +64,14 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 	mintIx := s.scheduleMintTx(ctx,
 		mint,
 		receiverATA,
-		roleMap[timelock.Proposer_Role].AccessController.PublicKey(),
+		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
 		signerPDA,
 		*proposerAndExecutorKey,
 		predecessor,
 		salt)
 
 	// --- act: call Timelock Execute ---
-	executor := mcmsSolana.NewTimelockExecutor(s.SolanaClient, *proposerAndExecutorKey, roleMap[timelock.Executor_Role].AccessController.PublicKey())
+	executor := mcmsSolana.NewTimelockExecutor(s.SolanaClient, *proposerAndExecutorKey)
 	contractID := mcmsSolana.ContractAddress(s.TimelockProgramID, testTimelockExecuteID)
 	ixData, err := mintIx.Data()
 	s.Require().NoError(err)

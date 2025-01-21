@@ -153,7 +153,7 @@ func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
 	s.Require().Equal(wallet.PublicKey(), configAccount.Owner)
 }
 
-func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Duration) timelockutils.RoleMap {
+func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
 
@@ -250,7 +250,6 @@ func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Du
 		}
 	})
 
-	return roleMap
 }
 
 // SetupSuite runs before the test suite
