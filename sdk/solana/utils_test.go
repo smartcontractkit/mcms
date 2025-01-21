@@ -153,6 +153,48 @@ func mockSolanaTransaction(
 	}).Once()
 }
 
+func mockSolanaSimulation(
+	t *testing.T, client *mocks.JSONRPCClient, lastBlockHeight uint64, slot uint64, signature string, mockError error,
+) {
+	t.Helper()
+
+	client.EXPECT().CallForInto(
+		anyContext, mock.Anything, "getRecentBlockhash", []any{rpc.M{"commitment": rpc.CommitmentConfirmed}},
+	).RunAndReturn(func(_ context.Context, output any, _ string, _ []any) error {
+		result, ok := output.(**rpc.GetRecentBlockhashResult)
+		require.True(t, ok)
+
+		*result = &rpc.GetRecentBlockhashResult{Value: &rpc.BlockhashResult{
+			Blockhash: solana.MustHashFromBase58(randomPublicKey(t).String()),
+			FeeCalculator: rpc.FeeCalculator{
+				LamportsPerSignature: 1,
+			},
+		}}
+
+		return mockError
+	}).Once()
+	if mockError != nil {
+		return
+	}
+	client.EXPECT().CallForInto(
+		anyContext, mock.Anything, "simulateTransaction", sendTransactionParams(t),
+	).RunAndReturn(func(_ context.Context, output any, _ string, _ []any) error {
+		result, ok := output.(**rpc.SimulateTransactionResponse)
+		require.True(t, ok)
+
+		*result = &rpc.SimulateTransactionResponse{
+			Value: &rpc.SimulateTransactionResult{
+				Err:           nil,
+				Logs:          nil,
+				Accounts:      nil,
+				UnitsConsumed: ptrTo(uint64(1)),
+			},
+		}
+
+		return mockError
+	}).Once()
+}
+
 var sendTransactionParams = func(t *testing.T) any {
 	t.Helper()
 

@@ -20,7 +20,7 @@ type Simulator struct {
 }
 
 // NewSimulator creates a new Solana Simulator
-func NewSimulator(client *rpc.Client, encoder *Encoder, auth solana.PrivateKey) (*Simulator, error) {
+func NewSimulator(client *rpc.Client, auth solana.PrivateKey, encoder *Encoder) (*Simulator, error) {
 	if client == nil {
 		return nil, errors.New("Simulator was created without a Solana RPC client")
 	}
