@@ -249,7 +249,6 @@ func (s *SolanaTestSuite) SetupTimelockWorker(pdaSeed [32]byte, minDelay time.Du
 			}
 		}
 	})
-
 }
 
 // SetupSuite runs before the test suite

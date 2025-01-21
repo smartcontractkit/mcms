@@ -110,12 +110,7 @@ func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation
 	// Add accounts from the operation to execute
 	ix.AccountMetaSlice = append(ix.AccountMetaSlice, additionalFields.Accounts...)
 
-	builtIx, err := ix.ValidateAndBuild()
-	if err != nil {
-		return "", fmt.Errorf("unable to validate and build instruction: %w", err)
-	}
-
-	signature, err := sendAndConfirmBuiltIx(ctx, t.client, t.auth, builtIx, rpc.CommitmentConfirmed)
+	signature, err := sendAndConfirm(ctx, t.client, t.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
 		return "", fmt.Errorf("unable to call execute operation instruction: %w", err)
 	}

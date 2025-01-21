@@ -110,7 +110,7 @@ func Test_sendAndConfirm(t *testing.T) {
 	tests := []struct {
 		name    string
 		setup   func(*mocks.JSONRPCClient)
-		builder instructionBuilder
+		builder instructionBuilder[*bindings.Instruction]
 		want    string
 		wantErr string
 	}{

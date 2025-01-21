@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 )
 
@@ -92,8 +91,8 @@ func validUntilBytes(validUntil uint32) []byte {
 	return vuBytes
 }
 
-type instructionBuilder interface {
-	ValidateAndBuild() (*bindings.Instruction, error)
+type instructionBuilder[I solana.Instruction] interface {
+	ValidateAndBuild() (I, error)
 }
 
 // sendAndConfirmBuiltIx contains the common logic for sending and confirming instructions.
@@ -121,20 +120,20 @@ func sendAndConfirmBuiltIx(
 }
 
 // sendAndConfirm handles general instructions.
-func sendAndConfirm(
+func sendAndConfirm[I solana.Instruction, B instructionBuilder[I]](
 	ctx context.Context,
 	client *rpc.Client,
 	auth solana.PrivateKey,
-	instructionBuilder instructionBuilder,
+	builder B,
 	commitmentType rpc.CommitmentType,
 ) (string, error) {
-	builtInstruction, err := instructionBuilder.ValidateAndBuild()
+	builtInstruction, err := builder.ValidateAndBuild()
 	if err != nil {
 		return "", fmt.Errorf("unable to validate and build instruction: %w", err)
 	}
 
 	// Pass the built instruction to the shared function
-	return sendAndConfirmBuiltIx(ctx, client, auth, solana.Instruction(builtInstruction), commitmentType)
+	return sendAndConfirmBuiltIx(ctx, client, auth, builtInstruction, commitmentType)
 }
 
 func chunkIndexes(numItems int, chunkSize int) [][2]int {
