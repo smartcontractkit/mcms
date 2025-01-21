@@ -336,3 +336,156 @@ func (s *SolanaTestSuite) getBatchAddAccessIxs(ctx context.Context, timelockID [
 
 	return ixs
 }
+
+func (s *SolanaTestSuite) initOperation(ctx context.Context, op timelockutils.Operation, timelockID [32]byte) {
+	admin, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+
+	ixs := s.getInitOperationIxs(timelockID, op, admin.PublicKey())
+	tx := testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, ixs, admin, rpc.CommitmentConfirmed)
+	s.Require().NotNil(tx)
+}
+
+func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockutils.Operation, authority solana.PublicKey) []solana.Instruction {
+	configPDA, err := solanasdk.FindTimelockConfigPDA(s.TimelockWorkerProgramID, timelockID)
+	s.Require().NoError(err)
+
+	operationPDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockWorkerProgramID, timelockID, op.OperationID())
+	s.Require().NoError(err)
+
+	ixs := []solana.Instruction{}
+	initOpIx, ioErr := timelock.NewInitializeOperationInstruction(
+		timelockID,
+		op.OperationID(),
+		op.Predecessor,
+		op.Salt,
+		op.IxsCountU32(),
+		operationPDA,
+		configPDA,
+		authority,
+		solana.SystemProgramID,
+	).ValidateAndBuild()
+	s.Require().NoError(ioErr)
+
+	ixs = append(ixs, initOpIx)
+
+	for _, instruction := range op.ToInstructionData() {
+		appendIxsIx, apErr := timelock.NewAppendInstructionsInstruction(
+			timelockID,
+			op.OperationID(),
+			[]timelock.InstructionData{instruction},
+			operationPDA,
+			configPDA,
+			authority,
+			solana.SystemProgramID,
+		).ValidateAndBuild()
+		s.Require().NoError(apErr)
+
+		ixs = append(ixs, appendIxsIx)
+	}
+
+	finOpIx, foErr := timelock.NewFinalizeOperationInstruction(
+		timelockID,
+		op.OperationID(),
+		operationPDA,
+		configPDA,
+		authority,
+	).ValidateAndBuild()
+	s.Require().NoError(foErr)
+
+	ixs = append(ixs, finOpIx)
+
+	return ixs
+}
+
+func (s *SolanaTestSuite) scheduleOperation(ctx context.Context, timelockID [32]byte, delay time.Duration, opID [32]byte) {
+	operationPDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockWorkerProgramID, timelockID, opID)
+	s.Require().NoError(err)
+
+	configPDA, err := solanasdk.FindTimelockConfigPDA(s.TimelockWorkerProgramID, timelockID)
+	s.Require().NoError(err)
+
+	admin, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+
+	sbix, sberr := timelock.NewScheduleBatchInstruction(
+		timelockID,
+		opID,
+		uint64(delay.Seconds()),
+		operationPDA,
+		configPDA,
+		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
+		admin.PublicKey(),
+	).ValidateAndBuild()
+	s.Require().NoError(sberr)
+
+	tx := testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{sbix}, admin, rpc.CommitmentConfirmed)
+	s.Require().NotNil(tx)
+}
+
+func (s *SolanaTestSuite) executeOperation(ctx context.Context, timelockID [32]byte, opID [32]byte) {
+	operationPDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockWorkerProgramID, timelockID, opID)
+	s.Require().NoError(err)
+
+	configPDA, err := solanasdk.FindTimelockConfigPDA(s.TimelockWorkerProgramID, timelockID)
+	s.Require().NoError(err)
+
+	signerPDA, err := solanasdk.FindTimelockSignerPDA(s.TimelockWorkerProgramID, timelockID)
+	s.Require().NoError(err)
+
+	admin, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+
+	ix := timelock.NewExecuteBatchInstruction(
+		timelockID,
+		opID,
+		operationPDA,
+		[32]byte{},
+		configPDA,
+		signerPDA,
+		s.Roles[timelock.Executor_Role].AccessController.PublicKey(),
+		admin.PublicKey(),
+	)
+
+	vIx, err := ix.ValidateAndBuild()
+	s.Require().NoError(err)
+
+	tx := testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{vIx}, admin, rpc.CommitmentConfirmed)
+	s.Require().NotNil(tx)
+}
+
+func (s *SolanaTestSuite) waitForOperationToBeReady(ctx context.Context, timelockID [32]byte, opID [32]byte) {
+	const maxAttempts = 20
+	const pollInterval = 500 * time.Millisecond
+	const timeBuffer = 2 * time.Second
+
+	opPDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockWorkerProgramID, timelockID, opID)
+	s.Require().NoError(err)
+
+	var opAccount timelock.Operation
+	err = common.GetAccountDataBorshInto(ctx, s.SolanaClient, opPDA, rpc.CommitmentConfirmed, &opAccount)
+	s.Require().NoError(err)
+
+	if opAccount.Timestamp == solanasdk.TimelockOpDoneTimestamp {
+		return
+	}
+
+	scheduledTime := time.Unix(int64(opAccount.Timestamp), 0)
+
+	// add buffer to scheduled time to ensure blockchain has advanced enough
+	scheduledTimeWithBuffer := scheduledTime.Add(timeBuffer)
+
+	for range maxAttempts {
+		currentTime, err := common.GetBlockTime(ctx, s.SolanaClient, rpc.CommitmentConfirmed)
+		s.Require().NoError(err)
+
+		if currentTime.Time().After(scheduledTimeWithBuffer) || currentTime.Time().Equal(scheduledTimeWithBuffer) {
+			return
+		}
+
+		time.Sleep(pollInterval)
+	}
+
+	s.Require().Fail("operation not ready after %d attempts (scheduled for: %v, with buffer: %v)",
+		maxAttempts, scheduledTime.UTC(), scheduledTimeWithBuffer.UTC())
+}
