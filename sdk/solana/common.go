@@ -96,7 +96,7 @@ type instructionBuilder interface {
 	ValidateAndBuild() (*bindings.Instruction, error)
 }
 
-// sharedSendAndConfirm contains the common logic for sending and confirming instructions.
+// sendAndConfirmBuiltIx contains the common logic for sending and confirming instructions.
 func sendAndConfirmBuiltIx(
 	ctx context.Context,
 	client *rpc.Client,
