@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
@@ -13,6 +14,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/sdk"
+	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -464,6 +467,8 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 	t.Parallel()
 
 	var (
+		ctx = context.Background()
+
 		validChainMetadata = map[types.ChainSelector]types.ChainMetadata{
 			chaintest.Chain1Selector: {
 				StartingOpCount: 1,
@@ -493,25 +498,29 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 				},
 			},
 		}
+
+		proposal = TimelockProposal{
+			BaseProposal: BaseProposal{
+				Version:              "v1",
+				Kind:                 types.KindTimelockProposal,
+				Description:          "description",
+				ValidUntil:           2004259681,
+				OverridePreviousRoot: false,
+				Signatures:           []types.Signature{},
+				ChainMetadata:        validChainMetadata,
+			},
+			Action:            types.TimelockActionSchedule,
+			Delay:             types.MustParseDuration("1h"),
+			TimelockAddresses: validTimelockAddresses,
+			Operations:        validBatchOps,
+		}
+
+		converters = map[types.ChainSelector]sdk.TimelockConverter{
+			chaintest.Chain1Selector: &evmsdk.TimelockConverter{},
+		}
 	)
 
-	proposal := TimelockProposal{
-		BaseProposal: BaseProposal{
-			Version:              "v1",
-			Kind:                 types.KindTimelockProposal,
-			Description:          "description",
-			ValidUntil:           2004259681,
-			OverridePreviousRoot: false,
-			Signatures:           []types.Signature{},
-			ChainMetadata:        validChainMetadata,
-		},
-		Action:            types.TimelockActionSchedule,
-		Delay:             types.MustParseDuration("1h"),
-		TimelockAddresses: validTimelockAddresses,
-		Operations:        validBatchOps,
-	}
-
-	mcmsProposal, predecessors, err := proposal.Convert()
+	mcmsProposal, predecessors, err := proposal.Convert(ctx, converters)
 	require.NoError(t, err)
 
 	assert.Equal(t, "v1", mcmsProposal.Version)

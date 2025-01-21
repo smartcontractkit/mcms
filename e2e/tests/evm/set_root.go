@@ -186,6 +186,8 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 
 // TestSetRootTimelockProposal sets the root of the MCMS contract from a timelock proposal type.
 func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
+	ctx := context.Background()
+
 	builder := mcms.NewTimelockProposalBuilder()
 	builder.
 		SetVersion("v1").
@@ -218,7 +220,11 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 		})
 	proposalTimelock, err := builder.Build()
 	s.Require().NoError(err)
-	proposal, _, err := proposalTimelock.Convert()
+
+	converters := map[mcmtypes.ChainSelector]sdk.TimelockConverter{
+		s.chainSelector: &evm.TimelockConverter{},
+	}
+	proposal, _, err := proposalTimelock.Convert(ctx, converters)
 	s.Require().NoError(err)
 
 	// Sign proposal
@@ -241,7 +247,6 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	}
 
 	// Prepare and execute simulation
-	ctx := context.Background()
 	simulator, err := evm.NewSimulator(encoder, s.Client)
 	s.Require().NoError(err, "Failed to create simulator")
 	simulators := map[mcmtypes.ChainSelector]sdk.Simulator{

@@ -28,15 +28,9 @@ func NewTimelockExecutable(
 		return nil, fmt.Errorf("TimelockExecutable can only be created from a TimelockProposal with action 'schedule'")
 	}
 
-	_, predecessors, err := proposal.Convert()
-	if err != nil {
-		return nil, err
-	}
-
 	return &TimelockExecutable{
-		proposal:     proposal,
-		executors:    executors,
-		predecessors: predecessors,
+		proposal:  proposal,
+		executors: executors,
 	}, nil
 }
 
@@ -46,6 +40,11 @@ func NewTimelockExecutable(
 // but others are not. This is not handled here. Regardless, execution
 // should not begin until all operations are ready.
 func (t *TimelockExecutable) IsReady(ctx context.Context) error {
+	err := t.setPredecessors(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to set predecessors: %w", err)
+	}
+
 	for i, op := range t.proposal.Operations {
 		cs := op.ChainSelector
 		timelock := t.proposal.TimelockAddresses[cs]
@@ -63,7 +62,13 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 }
 
 func (t *TimelockExecutable) Execute(ctx context.Context, index int) (string, error) {
+	err := t.setPredecessors(ctx)
+	if err != nil {
+		return "", fmt.Errorf("unable to set predecessors: %w", err)
+	}
+
 	op := t.proposal.Operations[index]
+
 	return t.executors[op.ChainSelector].Execute(
 		ctx,
 		op,
@@ -71,4 +76,24 @@ func (t *TimelockExecutable) Execute(ctx context.Context, index int) (string, er
 		t.predecessors[index],
 		t.proposal.Salt(),
 	)
+}
+
+func (t *TimelockExecutable) setPredecessors(ctx context.Context) error {
+	if len(t.predecessors) == 0 && len(t.executors) > 0 {
+		var err error
+		var converters = make(map[types.ChainSelector]sdk.TimelockConverter)
+		for chainSelector, executor := range t.executors {
+			converters[chainSelector], err = newTimelockConverterFromExecutor(chainSelector, executor)
+			if err != nil {
+				return fmt.Errorf("unable to create converter from executor: %w", err)
+			}
+		}
+
+		_, t.predecessors, err = t.proposal.Convert(ctx, converters)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
