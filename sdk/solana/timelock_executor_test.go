@@ -21,11 +21,9 @@ func TestNewTimelockExecutor(t *testing.T) {
 
 	client := &rpc.Client{}
 	auth := solana.MustPrivateKeyFromBase58("DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc")
-	wallet := solana.NewWallet()
-	executor := NewTimelockExecutor(client, auth, wallet.PublicKey())
+	executor := NewTimelockExecutor(client, auth)
 
 	require.NotNil(t, executor)
-	require.Equal(t, executor.roleAccessController, wallet.PublicKey())
 	require.Equal(t, executor.auth, auth)
 }
 
@@ -56,6 +54,9 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			IsWritable: false,
 		},
 	}
+	configPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testTimelockSeed)
+	require.NoError(t, err)
+	config := createTimelockConfig(t)
 	tx, err := NewTransaction(testTimelockProgramID.String(), data, accounts, "solana-testing", []string{})
 	require.NoError(t, err)
 	tests := []struct {
@@ -77,6 +78,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				timelockAddress: fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, m, configPDA, config, nil)
 				mockSolanaTransaction(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", nil)
 			},
 			want:      "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
@@ -145,6 +147,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				timelockAddress: fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, m, configPDA, config, nil)
 				mockSolanaTransaction(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", fmt.Errorf("invalid tx"))
 			},
 			wantErr: fmt.Errorf("unable to call execute operation instruction: unable to send instruction: invalid tx"),
@@ -158,10 +161,9 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			t.Parallel()
 
 			jsonRPCClient := mocks.NewJSONRPCClient(t)
-			roleAcc := solana.NewWallet()
 			client := rpc.NewWithCustomRPCClient(jsonRPCClient)
 			tt.mockSetup(jsonRPCClient)
-			e := NewTimelockExecutor(client, auth, roleAcc.PublicKey())
+			e := NewTimelockExecutor(client, auth)
 
 			got, err := e.Execute(ctx, tt.args.bop, tt.args.timelockAddress, tt.args.predecessor, tt.args.salt)
 			if tt.wantErr != nil {

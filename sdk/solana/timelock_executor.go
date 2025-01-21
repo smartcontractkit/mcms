@@ -10,6 +10,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/eth"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -21,18 +22,16 @@ var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
 // TimelockExecutor is an Executor implementation for solana chains for accessing the RBACTimelock program
 type TimelockExecutor struct {
 	TimelockInspector
-	client               *rpc.Client
-	auth                 solana.PrivateKey
-	roleAccessController solana.PublicKey
+	client *rpc.Client
+	auth   solana.PrivateKey
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor
-func NewTimelockExecutor(client *rpc.Client, auth solana.PrivateKey, roleAccessController solana.PublicKey) *TimelockExecutor {
+func NewTimelockExecutor(client *rpc.Client, auth solana.PrivateKey) *TimelockExecutor {
 	return &TimelockExecutor{
-		TimelockInspector:    *NewTimelockInspector(client),
-		client:               client,
-		auth:                 auth,
-		roleAccessController: roleAccessController,
+		TimelockInspector: *NewTimelockInspector(client),
+		client:            client,
+		auth:              auth,
 	}
 }
 
@@ -88,6 +87,15 @@ func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation
 	if err != nil {
 		return "", err
 	}
+	var configAccount timelock.Config
+	err = solanaCommon.GetAccountDataBorshInto(ctx, t.client, configPDA, rpc.CommitmentConfirmed, &configAccount)
+	if err != nil {
+		return "", err
+	}
+	controller, err := getRoleAccessController(configAccount, timelock.Executor_Role)
+	if err != nil {
+		return "", err
+	}
 
 	ix := timelock.NewExecuteBatchInstruction(
 		timelockID,
@@ -96,7 +104,7 @@ func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation
 		predBytes,
 		configPDA,
 		signerPDA,
-		t.roleAccessController,
+		controller,
 		t.auth.PublicKey())
 
 	// Add accounts from the operation to execute
