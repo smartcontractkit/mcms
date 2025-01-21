@@ -20,7 +20,8 @@ func TestNewTimelockExecutor(t *testing.T) {
 	t.Parallel()
 
 	client := &rpc.Client{}
-	auth := solana.MustPrivateKeyFromBase58("DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc")
+	auth, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
 	executor := NewTimelockExecutor(client, auth)
 
 	require.NotNil(t, executor)
