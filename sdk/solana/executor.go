@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
@@ -26,18 +25,25 @@ var _ sdk.Executor = (*Executor)(nil)
 type Executor struct {
 	*Encoder
 	*Inspector
-	client *rpc.Client
-	auth   solana.PrivateKey
+	client         *rpc.Client
+	auth           solana.PrivateKey
+	sendAndConfirm SendAndConfirmFn
 }
 
 // NewExecutor creates a new Executor for Solana chains
 func NewExecutor(client *rpc.Client, auth solana.PrivateKey, encoder *Encoder) *Executor {
 	return &Executor{
-		Encoder:   encoder,
-		Inspector: NewInspector(client),
-		client:    client,
-		auth:      auth,
+		Encoder:        encoder,
+		Inspector:      NewInspector(client),
+		client:         client,
+		auth:           auth,
+		sendAndConfirm: sendAndConfirm,
 	}
+}
+
+func (e *Executor) withSendAndConfirmFn(fn SendAndConfirmFn) *Executor {
+	e.sendAndConfirm = fn
+	return e
 }
 
 // ExecuteOperation executes an operation on the MCMS program on the Solana chain
@@ -106,7 +112,7 @@ func (e *Executor) ExecuteOperation(
 	)
 	// Append the accounts from the AdditionalFields
 	ix.AccountMetaSlice = append(ix.AccountMetaSlice, additionalFields.Accounts...)
-	signature, tx, err := sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
+	signature, tx, err := e.sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to call execute operation instruction: %w", err)
 	}
@@ -179,7 +185,7 @@ func (e *Executor) SetRoot(
 		configPDA,
 		e.auth.PublicKey(),
 		solana.SystemProgramID)
-	signature, tx, err := sendAndConfirm(ctx, e.client, e.auth, setRootInstruction, rpc.CommitmentConfirmed)
+	signature, tx, err := e.sendAndConfirm(ctx, e.client, e.auth, setRootInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to set root: %w", err)
 	}
@@ -203,7 +209,7 @@ func (e *Executor) preloadSignatures(
 ) error {
 	initSignaturesInstruction := mcm.NewInitSignaturesInstruction(mcmName, root, validUntil,
 		uint8(len(sortedSignatures)), signaturesPDA, e.auth.PublicKey(), solana.SystemProgramID) //nolint:gosec
-	_, _, err := sendAndConfirm(ctx, e.client, e.auth, initSignaturesInstruction, rpc.CommitmentConfirmed)
+	_, _, err := e.sendAndConfirm(ctx, e.client, e.auth, initSignaturesInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return fmt.Errorf("unable to initialize signatures: %w", err)
 	}
@@ -213,7 +219,7 @@ func (e *Executor) preloadSignatures(
 	for i, chunkIndex := range chunkIndexes(len(solanaSignatures), config.MaxAppendSignatureBatchSize) {
 		appendSignaturesInstruction := mcm.NewAppendSignaturesInstruction(mcmName, root, validUntil,
 			solanaSignatures[chunkIndex[0]:chunkIndex[1]], signaturesPDA, e.auth.PublicKey())
-		_, _, serr := sendAndConfirm(ctx, e.client, e.auth, appendSignaturesInstruction, rpc.CommitmentConfirmed)
+		_, _, serr := e.sendAndConfirm(ctx, e.client, e.auth, appendSignaturesInstruction, rpc.CommitmentConfirmed)
 		if serr != nil {
 			return fmt.Errorf("unable to append signatures (%d): %w", i, serr)
 		}
@@ -221,7 +227,7 @@ func (e *Executor) preloadSignatures(
 
 	finalizeSignaturesInstruction := mcm.NewFinalizeSignaturesInstruction(mcmName, root, validUntil, signaturesPDA,
 		e.auth.PublicKey())
-	_, _, err = sendAndConfirm(ctx, e.client, e.auth, finalizeSignaturesInstruction, rpc.CommitmentConfirmed)
+	_, _, err = e.sendAndConfirm(ctx, e.client, e.auth, finalizeSignaturesInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return fmt.Errorf("unable to finalize signatures: %w", err)
 	}
