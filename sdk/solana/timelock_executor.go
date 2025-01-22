@@ -92,10 +92,6 @@ func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation
 	if err != nil {
 		return "", err
 	}
-	controller, err := getRoleAccessController(configAccount, timelock.Executor_Role)
-	if err != nil {
-		return "", err
-	}
 
 	ix := timelock.NewExecuteBatchInstruction(
 		timelockID,
@@ -104,7 +100,7 @@ func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation
 		predBytes,
 		configPDA,
 		signerPDA,
-		controller,
+		configAccount.ExecutorRoleAccessController,
 		t.auth.PublicKey())
 
 	// Add accounts from the operation to execute
