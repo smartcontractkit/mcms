@@ -9,7 +9,6 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/access_controller"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
@@ -118,7 +117,7 @@ func (s *SolanaTestSuite) setProposerAndExecutor(ctx context.Context, auth solan
 		s.SolanaClient)
 	s.Require().NoError(err)
 	for _, ix := range batchAddAccessIxs {
-		testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix}, auth, config.DefaultCommitment)
+		testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix}, auth, rpc.CommitmentConfirmed)
 	}
 
 	// Add executor to the timelock program
@@ -133,7 +132,7 @@ func (s *SolanaTestSuite) setProposerAndExecutor(ctx context.Context, auth solan
 		s.SolanaClient)
 	s.Require().NoError(err)
 	for _, ix := range batchAddAccessIxs {
-		testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix}, auth, config.DefaultCommitment)
+		testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix}, auth, rpc.CommitmentConfirmed)
 	}
 
 	return &proposerAndExecutorKey.PrivateKey
@@ -224,7 +223,7 @@ func (s *SolanaTestSuite) scheduleMintTx(
 	).ValidateAndBuild()
 	s.Require().NoError(err)
 	ixs = append(ixs, finOpIx)
-	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, ixs, auth, config.DefaultCommitment)
+	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, ixs, auth, rpc.CommitmentConfirmed)
 	// Schedule the operation
 	scheduleIx, err := timelock.NewScheduleBatchInstruction(
 		testTimelockExecuteID,
