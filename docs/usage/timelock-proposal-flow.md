@@ -19,6 +19,7 @@ See the example below:
 package examples
 
 import (
+	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"log"
@@ -34,6 +35,7 @@ import (
 )
 
 func main() {
+	ctx := context.Background()
 	file, err := os.Open("proposal.json")
 	if err != nil {
 		log.Fatalf("failed to open file: %v", err)
@@ -48,16 +50,18 @@ func main() {
 	}
 
 	// 1.1 Convert to MCMS proposal
-	mcmsProposal, err := timelockProposal.Convert()
+	selector := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector)
+	convertersMap := make(map[types.ChainSelector]sdk.TimelockConverter)
+	convertersMap[selector] = &evm.TimelockConverter{}
+	mcmsProposal, _, err := timelockProposal.Convert(ctx, convertersMap)
 	if err != nil {
 		log.Fatalf("failed to open file: %v", err)
 	}
 
 	// 2. Create the signable type from the proposal
-	selector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
 	backend := backends.SimulatedBackend{}
 	inspectorsMap := make(map[types.ChainSelector]sdk.Inspector)
-	inspectorsMap[types.ChainSelector(selector)] = evm.NewInspector(backend)
+	inspectorsMap[selector] = evm.NewInspector(backend)
 	signable, err := mcms.NewSignable(&mcmsProposal, inspectorsMap)
 	if err != nil {
 		log.Fatalf("failed to open file: %v", err)
@@ -78,5 +82,4 @@ func main() {
 	mcmsProposal.AppendSignature(signature)
 	fmt.Println("Successfully created proposal:", mcmsProposal)
 }
-
 ```

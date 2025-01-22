@@ -2,6 +2,7 @@ package solana
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/gagliardetto/solana-go"
 
@@ -34,7 +35,7 @@ func NewTransaction(
 
 	marshalledAdditionalFields, err := json.Marshal(additionalFields)
 	if err != nil {
-		panic(err)
+		return types.Transaction{}, fmt.Errorf("unable to marshal additional fields: %w", err)
 	}
 
 	return types.Transaction{

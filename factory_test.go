@@ -3,13 +3,15 @@ package mcms
 import (
 	"testing"
 
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
-	"github.com/smartcontractkit/mcms/sdk/solana"
+	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
+	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -33,7 +35,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns an EVM encoder (not simulated)",
 			giveSelector: chaintest.Chain2Selector,
 			giveIsSim:    false,
-			want: &evm.Encoder{
+			want: &evmsdk.Encoder{
 				TxCount:              giveTxCount,
 				ChainSelector:        chaintest.Chain2Selector,
 				OverridePreviousRoot: false,
@@ -44,7 +46,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns an EVM encoder (simulated)",
 			giveSelector: chaintest.Chain2Selector,
 			giveIsSim:    true,
-			want: &evm.Encoder{
+			want: &evmsdk.Encoder{
 				ChainSelector:        chaintest.Chain2Selector,
 				TxCount:              giveTxCount,
 				OverridePreviousRoot: false,
@@ -55,7 +57,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns a Solana encoder (not simulated)",
 			giveSelector: chaintest.Chain4Selector,
 			giveIsSim:    false,
-			want: &solana.Encoder{
+			want: &solanasdk.Encoder{
 				TxCount:              giveTxCount,
 				ChainSelector:        chaintest.Chain4Selector,
 				OverridePreviousRoot: false,
@@ -88,4 +90,62 @@ func Test_NewEncoder(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_newTimelockConverterFromExecutor(t *testing.T) {
+	t.Parallel()
+
+	solanaClient := &rpc.Client{}
+	solanaAuth, _ := solana.NewRandomPrivateKey()
+
+	tests := []struct {
+		name          string
+		chainSelector types.ChainSelector
+		executor      sdk.TimelockExecutor
+		want          sdk.TimelockConverter
+		wantErr       string
+	}{
+		{
+			name:          "success: EVM executor",
+			chainSelector: chaintest.Chain1Selector,
+			executor:      &evmsdk.TimelockExecutor{},
+			want:          &evmsdk.TimelockConverter{},
+		},
+		{
+			name:          "success: Solana executor",
+			chainSelector: chaintest.Chain4Selector,
+			executor:      solanasdk.NewTimelockExecutor(solanaClient, solanaAuth),
+			want:          solanasdk.NewTimelockConverter(solanaClient, solanaAuth.PublicKey()),
+		},
+		{
+			name:          "failure: unknown selector",
+			chainSelector: types.ChainSelector(123456789),
+			executor:      &UnknownTimelockExecutor{},
+			wantErr:       "chain family not found for selector 123456789",
+		},
+		{
+			name:          "failure: unknown executor type",
+			chainSelector: chaintest.Chain4Selector,
+			executor:      &UnknownTimelockExecutor{},
+			wantErr:       "unable to cast sdk executor to solana TimelockExecutor",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := newTimelockConverterFromExecutor(tt.chainSelector, tt.executor)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+type UnknownTimelockExecutor struct {
+	sdk.TimelockExecutor
 }
