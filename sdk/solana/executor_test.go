@@ -200,15 +200,16 @@ func TestExecutor_SetRoot(t *testing.T) {
 	}
 
 	tests := []struct {
-		name       string
-		metadata   types.ChainMetadata
-		proof      []common.Hash
-		root       [32]byte
-		validUntil uint32
-		signatures []types.Signature
-		setup      func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient)
-		want       string
-		wantErr    string
+		name             string
+		metadata         types.ChainMetadata
+		proof            []common.Hash
+		root             [32]byte
+		validUntil       uint32
+		signatures       []types.Signature
+		setup            func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient)
+		enableSimulation bool
+		want             string
+		wantErr          string
 	}{
 		{
 			name:       "success",
@@ -232,6 +233,19 @@ func TestExecutor_SetRoot(t *testing.T) {
 					"oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo", nil)
 			},
 			want: "oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo",
+		},
+		{
+			name:       "success with simulation",
+			metadata:   defaultMetadata,
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: defaultSignatures,
+			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
+				t.Helper()
+				mockSolanaSimulateTransaction(t, mockJSONRPCClient, 50, nil, nil)
+			},
+			enableSimulation: true,
 		},
 		{
 			name:       "failure: invalid address",
@@ -347,13 +361,24 @@ func TestExecutor_SetRoot(t *testing.T) {
 			executor, mockJSONRPCClient := newTestExecutor(t, auth, chainSelector)
 			tt.setup(t, executor, mockJSONRPCClient)
 
-			got, err := executor.SetRoot(ctx, tt.metadata, tt.proof, tt.root, tt.validUntil, tt.signatures)
-
-			if tt.wantErr == "" {
+			if tt.enableSimulation {
+				err = executor.EnableSimulation(ctx, executor.client, auth, rpc.SimulateTransactionOpts{
+					Commitment: rpc.CommitmentConfirmed,
+				},
+					func() error {
+						_, err2 := executor.SetRoot(ctx, tt.metadata, tt.proof, tt.root, tt.validUntil, tt.signatures)
+						return err2
+					})
 				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(tt.want, got))
 			} else {
-				require.ErrorContains(t, err, tt.wantErr)
+				got, err := executor.SetRoot(ctx, tt.metadata, tt.proof, tt.root, tt.validUntil, tt.signatures)
+
+				if tt.wantErr == "" {
+					require.NoError(t, err)
+					require.Empty(t, cmp.Diff(tt.want, got))
+				} else {
+					require.ErrorContains(t, err, tt.wantErr)
+				}
 			}
 		})
 	}

@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 
@@ -27,6 +26,7 @@ type Executor struct {
 	*Inspector
 	client *rpc.Client
 	auth   solana.PrivateKey
+	Simulatable
 }
 
 // NewExecutor creates a new Executor for Solana chains
@@ -174,7 +174,8 @@ func (e *Executor) SetRoot(
 		configPDA,
 		e.auth.PublicKey(),
 		solana.SystemProgramID)
-	signature, err := sendAndConfirm(ctx, e.client, e.auth, setRootInstruction, rpc.CommitmentConfirmed)
+
+	signature, err := e.sendAndConfirmOrSimulate(ctx, e.client, e.auth, setRootInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return "", fmt.Errorf("unable to set root: %w", err)
 	}
@@ -194,7 +195,8 @@ func (e *Executor) preloadSignatures(
 ) error {
 	initSignaturesInstruction := mcm.NewInitSignaturesInstruction(mcmName, root, validUntil,
 		uint8(len(sortedSignatures)), signaturesPDA, e.auth.PublicKey(), solana.SystemProgramID) //nolint:gosec
-	_, err := sendAndConfirm(ctx, e.client, e.auth, initSignaturesInstruction, rpc.CommitmentConfirmed)
+
+	_, err := e.sendAndConfirmOrSimulate(ctx, e.client, e.auth, initSignaturesInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return fmt.Errorf("unable to initialize signatures: %w", err)
 	}
@@ -204,7 +206,8 @@ func (e *Executor) preloadSignatures(
 	for i, chunkIndex := range chunkIndexes(len(solanaSignatures), config.MaxAppendSignatureBatchSize) {
 		appendSignaturesInstruction := mcm.NewAppendSignaturesInstruction(mcmName, root, validUntil,
 			solanaSignatures[chunkIndex[0]:chunkIndex[1]], signaturesPDA, e.auth.PublicKey())
-		_, serr := sendAndConfirm(ctx, e.client, e.auth, appendSignaturesInstruction, rpc.CommitmentConfirmed)
+
+		_, serr := e.sendAndConfirmOrSimulate(ctx, e.client, e.auth, appendSignaturesInstruction, rpc.CommitmentConfirmed)
 		if serr != nil {
 			return fmt.Errorf("unable to append signatures (%d): %w", i, serr)
 		}
@@ -212,7 +215,8 @@ func (e *Executor) preloadSignatures(
 
 	finalizeSignaturesInstruction := mcm.NewFinalizeSignaturesInstruction(mcmName, root, validUntil, signaturesPDA,
 		e.auth.PublicKey())
-	_, err = sendAndConfirm(ctx, e.client, e.auth, finalizeSignaturesInstruction, rpc.CommitmentConfirmed)
+
+	_, err = e.sendAndConfirmOrSimulate(ctx, e.client, e.auth, finalizeSignaturesInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return fmt.Errorf("unable to finalize signatures: %w", err)
 	}
