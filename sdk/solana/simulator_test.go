@@ -2,6 +2,7 @@ package solana
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
@@ -27,6 +28,15 @@ func TestNewSimulator(t *testing.T) {
 	simulator, err := NewSimulator(client, auth, encoder)
 	require.NoError(t, err)
 	require.NotNil(t, simulator)
+	// test with nil client
+	simulator, err = NewSimulator(nil, auth, encoder)
+	require.EqualError(t, err, "Simulator was created without a Solana RPC client")
+	require.Nil(t, simulator)
+
+	// test with nil encoder
+	simulator, err = NewSimulator(client, auth, nil)
+	require.EqualError(t, err, "Simulator was created without an encoder")
+	require.Nil(t, simulator)
 }
 
 func TestSimulator_SimulateOperation(t *testing.T) {
@@ -77,6 +87,46 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 
 			assertion: assert.NoError,
 		},
+		{
+			name: "error: invalid additional fields",
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress: contractID,
+				},
+				ctx: ctx,
+				op: types.Operation{
+					Transaction: types.Transaction{
+						AdditionalFields: []byte("invalid"),
+					},
+					ChainSelector: types.ChainSelector(selector),
+				},
+			},
+			mockSetup: func(m *mocks.JSONRPCClient) {},
+			wantErr:   fmt.Errorf("unable to unmarshal additional fields: invalid character 'i' looking for beginning of value"),
+			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.EqualError(t, err, "unable to unmarshal additional fields: invalid character 'i' looking for beginning of value")
+			},
+		},
+		{
+			name: "error: block hash fetch failed",
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress: contractID,
+				},
+				ctx: ctx,
+				op: types.Operation{
+					Transaction:   tx,
+					ChainSelector: types.ChainSelector(selector),
+				},
+			},
+			mockSetup: func(m *mocks.JSONRPCClient) {
+				mockSolanaSimulation(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", errors.New("failed to simulate"))
+			},
+			wantErr: errors.New("failed to simulate"),
+			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.EqualError(t, err, "unable to get recent blockhash: failed to simulate")
+			},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -89,9 +139,8 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 			sim, err := NewSimulator(client, auth, encoder)
 			require.NoError(t, err)
 			err = sim.SimulateOperation(ctx, tt.args.metadata, tt.args.op)
-			require.NoError(t, err)
 			if tt.wantErr != nil {
-				tt.assertion(t, err, fmt.Sprintf("%q. Simulator.SimulateOperation()", tt.name))
+				tt.assertion(t, err, tt.wantErr)
 			} else {
 				require.NoError(t, err)
 
