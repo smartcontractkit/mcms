@@ -43,7 +43,6 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
-		ctx      context.Context
 		metadata types.ChainMetadata
 		op       types.Operation
 	}
@@ -61,6 +60,7 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 	data, err := ix.Data()
 	require.NoError(t, err)
 	tx, err := NewTransaction(solana.SystemProgramID.String(), data, ix.Accounts(), "solana-testing", []string{})
+	require.NoError(t, err)
 	tests := []struct {
 		name string
 		args args
@@ -75,7 +75,6 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 				metadata: types.ChainMetadata{
 					MCMAddress: contractID,
 				},
-				ctx: ctx,
 				op: types.Operation{
 					Transaction:   tx,
 					ChainSelector: types.ChainSelector(selector),
@@ -93,7 +92,7 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 				metadata: types.ChainMetadata{
 					MCMAddress: contractID,
 				},
-				ctx: ctx,
+
 				op: types.Operation{
 					Transaction: types.Transaction{
 						AdditionalFields: []byte("invalid"),
@@ -103,7 +102,7 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {},
 			wantErr:   fmt.Errorf("unable to unmarshal additional fields: invalid character 'i' looking for beginning of value"),
-			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
+			assertion: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.EqualError(t, err, "unable to unmarshal additional fields: invalid character 'i' looking for beginning of value")
 			},
 		},
@@ -113,7 +112,7 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 				metadata: types.ChainMetadata{
 					MCMAddress: contractID,
 				},
-				ctx: ctx,
+
 				op: types.Operation{
 					Transaction:   tx,
 					ChainSelector: types.ChainSelector(selector),
@@ -123,7 +122,7 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 				mockSolanaSimulation(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", errors.New("failed to simulate"))
 			},
 			wantErr: errors.New("failed to simulate"),
-			assertion: func(t assert.TestingT, err error, i ...interface{}) bool {
+			assertion: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.EqualError(t, err, "unable to get recent blockhash: failed to simulate")
 			},
 		},
@@ -143,7 +142,6 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 				tt.assertion(t, err, tt.wantErr)
 			} else {
 				require.NoError(t, err)
-
 			}
 		})
 	}

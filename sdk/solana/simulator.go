@@ -51,7 +51,8 @@ func (s *Simulator) SimulateSetRoot(
 
 func (s *Simulator) SimulateOperation(
 	ctx context.Context,
-	metadata types.ChainMetadata,
+	// We don't need the metadata for simulating on solana, since the RPC client already know what chain we are on.
+	_ types.ChainMetadata,
 	op types.Operation,
 ) error {
 	// Parse the inner instruction from the operation
@@ -69,12 +70,10 @@ func (s *Simulator) SimulateOperation(
 		}
 	}
 
-	// Build the inner instruction
-	accounts := additionalFields.Accounts
-	accounts = append(accounts, solana.Meta(s.auth.PublicKey()).SIGNER())
+	// Build the instruction
 	innerInstruction := solana.NewInstruction(
 		toProgramID,
-		accounts,
+		additionalFields.Accounts,
 		op.Transaction.Data,
 	)
 	recentBlockHash, err := s.client.GetRecentBlockhash(ctx, rpc.CommitmentConfirmed)
@@ -86,9 +85,22 @@ func (s *Simulator) SimulateOperation(
 	tx, err := solana.NewTransaction(
 		[]solana.Instruction{innerInstruction},
 		recentBlockHash.Value.Blockhash,
+		solana.TransactionPayer(s.auth.PublicKey()),
 	)
 	if err != nil {
 		return fmt.Errorf("unable to create transaction: %w", err)
+	}
+	_, err = tx.Sign(
+		func(key solana.PublicKey) *solana.PrivateKey {
+			if s.auth.PublicKey().Equals(key) {
+				return &s.auth
+			}
+
+			return nil
+		},
+	)
+	if err != nil {
+		return fmt.Errorf("unable to sign transaction: %w", err)
 	}
 
 	// Simulate the transaction
