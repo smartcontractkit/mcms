@@ -8,3 +8,9 @@ const (
 	// KindTimelockProposal is a proposal type for the MCMS contract with RBACTimelock.
 	KindTimelockProposal ProposalKind = "TimelockProposal"
 )
+
+// StringToProposalKind converts a string to a ProposalKind.
+var StringToProposalKind = map[string]ProposalKind{
+	"Proposal":         KindProposal,
+	"TimelockProposal": KindTimelockProposal,
+}

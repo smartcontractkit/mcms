@@ -3,9 +3,11 @@ package mcms
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"maps"
+	"os"
 	"slices"
 	"strings"
 	"time"
@@ -22,6 +24,31 @@ import (
 )
 
 const SignMsgABI = `[{"type":"bytes32"},{"type":"uint32"}]`
+
+type ProposalInterface interface {
+	AppendSignature(signature types.Signature)
+	Validate() error
+}
+
+func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInterface, error) {
+	// Open the file
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Ensure the file is closed when done
+	defer file.Close()
+
+	switch proposalType {
+	case types.KindProposal:
+		return NewProposal(file)
+	case types.KindTimelockProposal:
+		return NewTimelockProposal(file)
+	default:
+		return nil, errors.New("unknown proposal type")
+	}
+}
 
 // BaseProposal is the base struct for all MCMS proposals, contains shared fields for all proposal types.
 type BaseProposal struct {
