@@ -21,7 +21,7 @@ var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
 
 // TimelockExecutor is an Executor implementation for solana chains for accessing the RBACTimelock program
 type TimelockExecutor struct {
-	TimelockInspector
+	*TimelockInspector
 	client *rpc.Client
 	auth   solana.PrivateKey
 }
@@ -29,7 +29,7 @@ type TimelockExecutor struct {
 // NewTimelockExecutor creates a new TimelockExecutor
 func NewTimelockExecutor(client *rpc.Client, auth solana.PrivateKey) *TimelockExecutor {
 	return &TimelockExecutor{
-		TimelockInspector: *NewTimelockInspector(client),
+		TimelockInspector: NewTimelockInspector(client),
 		client:            client,
 		auth:              auth,
 	}

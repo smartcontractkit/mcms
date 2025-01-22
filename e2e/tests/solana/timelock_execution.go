@@ -5,7 +5,6 @@ package solanae2e
 
 import (
 	"context"
-	"time"
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/token"
@@ -27,13 +26,13 @@ const BatchAddAccessChunkSize = 24
 // Test_Solana_TimelockExecute tests the timelock Execute functionality by scheduling a mint tokens transaction and
 // executing it via the timelock ExecuteBatch
 func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
-	s.SetupTimelockWorker(testTimelockExecuteID, 1)
+	s.SetupTimelock(testTimelockExecuteID, 1)
 	// Get required programs and accounts
 	ctx := context.Background()
 	timelock.SetProgramID(s.TimelockProgramID)
 	access_controller.SetProgramID(s.AccessControllerProgramID)
 
-	// Fund the signer PDA account
+	// Fund the auth private key
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 
@@ -61,7 +60,7 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 	// Schedule the mint tx
 	var predecessor [32]byte
 	salt := [32]byte{123}
-	mintIx := s.scheduleMintTx(ctx,
+	mintIx, operationID := s.scheduleMintTx(ctx,
 		mint,
 		receiverATA,
 		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
@@ -83,8 +82,8 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 		Transactions:  []types.Transaction{solanaTx},
 		ChainSelector: s.ChainSelector,
 	}
-	// --- Wait for 2 seconds to allow for the operation to be ready ---
-	time.Sleep(2 * time.Second)
+	// --- Wait for the operation to be ready ---
+	s.waitForOperationToBeReady(ctx, testTimelockExecuteID, operationID)
 	signature, err := executor.Execute(ctx, batchOp, contractID, predecessor, salt)
 	s.Require().NoError(err)
 	s.Require().NotEqual(signature, "")
@@ -153,9 +152,10 @@ func (s *SolanaTestSuite) scheduleMintTx(
 	// and not the deployer account.
 	authPublicKey solana.PublicKey,
 	auth solana.PrivateKey, // The account to sign the init, append schedule instructions.
-	predecessor, salt [32]byte) (instruction *token.Instruction) {
+	predecessor, salt [32]byte) (instruction *token.Instruction, operationID [32]byte) {
 	amount := 1000 * solana.LAMPORTS_PER_SOL
 	mintIx, err := token.NewMintToInstruction(amount, mint, receiverATA, authPublicKey, nil).ValidateAndBuild()
+	s.Require().NoError(err)
 	for _, acc := range mintIx.Accounts() {
 		if acc.PublicKey == authPublicKey {
 			acc.IsSigner = false
@@ -179,7 +179,7 @@ func (s *SolanaTestSuite) scheduleMintTx(
 		IsWritable: false,
 	})
 	opInstructions := []timelock.InstructionData{{Data: ixData, ProgramId: solana.Token2022ProgramID, Accounts: accounts}}
-	operationID := mcmsSolana.HashOperation(opInstructions, predecessor, salt)
+	operationID = mcmsSolana.HashOperation(opInstructions, predecessor, salt)
 	operationPDA, err := mcmsSolana.FindTimelockOperationPDA(s.TimelockProgramID, testTimelockExecuteID, operationID)
 	s.Require().NoError(err)
 	configPDA, err := mcmsSolana.FindTimelockConfigPDA(s.TimelockProgramID, testTimelockExecuteID)
@@ -236,7 +236,7 @@ func (s *SolanaTestSuite) scheduleMintTx(
 		auth.PublicKey(),
 	).ValidateAndBuild()
 	s.Require().NoError(err)
-	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{scheduleIx}, auth, config.DefaultCommitment)
+	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{scheduleIx}, auth, rpc.CommitmentConfirmed)
 
-	return mintIx
+	return mintIx, operationID
 }
