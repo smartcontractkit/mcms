@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 )
 
@@ -92,29 +91,24 @@ func validUntilBytes(validUntil uint32) []byte {
 	return vuBytes
 }
 
-type instructionBuilder interface {
-	ValidateAndBuild() (*bindings.Instruction, error)
+type instructionBuilder[I solana.Instruction] interface {
+	ValidateAndBuild() (I, error)
 }
 
-func sendAndConfirm[B instructionBuilder](
+// sendAndConfirmBuiltIx contains the common logic for sending and confirming instructions.
+func sendAndConfirmBuiltIx(
 	ctx context.Context,
 	client *rpc.Client,
 	auth solana.PrivateKey,
-	instructionBuilder B,
+	builtInstruction solana.Instruction,
 	commitmentType rpc.CommitmentType,
 ) (string, error) {
-	builtInstruction, err := instructionBuilder.ValidateAndBuild()
-	if err != nil {
-		return "", fmt.Errorf("unable to validate and build instruction: %w", err)
-	}
-
-	result, err := solanaCommon.SendAndConfirm(ctx, client, []solana.Instruction{builtInstruction}, auth,
-		commitmentType)
+	result, err := solanaCommon.SendAndConfirm(ctx, client, []solana.Instruction{builtInstruction}, auth, commitmentType)
 	if err != nil {
 		return "", fmt.Errorf("unable to send instruction: %w", err)
 	}
 	if result.Transaction == nil {
-		return "", fmt.Errorf("nil transacion in instruction result")
+		return "", fmt.Errorf("nil transaction in instruction result")
 	}
 
 	transaction, err := result.Transaction.GetTransaction()
@@ -123,6 +117,23 @@ func sendAndConfirm[B instructionBuilder](
 	}
 
 	return transaction.Signatures[0].String(), nil
+}
+
+// sendAndConfirm handles general instructions.
+func sendAndConfirm[I solana.Instruction, B instructionBuilder[I]](
+	ctx context.Context,
+	client *rpc.Client,
+	auth solana.PrivateKey,
+	builder B,
+	commitmentType rpc.CommitmentType,
+) (string, error) {
+	builtInstruction, err := builder.ValidateAndBuild()
+	if err != nil {
+		return "", fmt.Errorf("unable to validate and build instruction: %w", err)
+	}
+
+	// Pass the built instruction to the shared function
+	return sendAndConfirmBuiltIx(ctx, client, auth, builtInstruction, commitmentType)
 }
 
 func chunkIndexes(numItems int, chunkSize int) [][2]int {
