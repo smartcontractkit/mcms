@@ -346,7 +346,8 @@ func (s *SolanaTestSuite) initOperation(ctx context.Context, op timelockutils.Op
 func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockutils.Operation, authority solana.PublicKey) []solana.Instruction {
 	configPDA, err := solanasdk.FindTimelockConfigPDA(s.TimelockProgramID, timelockID)
 	s.Require().NoError(err)
-
+	operationPDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockProgramID, timelockID, op.OperationID())
+	s.Require().NoError(err)
 	ixs := []solana.Instruction{}
 	initOpIx, ioErr := timelock.NewInitializeOperationInstruction(
 		timelockID,
@@ -354,7 +355,7 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 		op.Predecessor,
 		op.Salt,
 		op.IxsCountU32(),
-		op.OperationPDA(),
+		operationPDA,
 		configPDA,
 		authority,
 		solana.SystemProgramID,
@@ -368,7 +369,7 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 			timelockID,
 			op.OperationID(),
 			[]timelock.InstructionData{instruction},
-			op.OperationPDA(),
+			operationPDA,
 			configPDA,
 			authority,
 			solana.SystemProgramID,
@@ -377,12 +378,10 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 
 		ixs = append(ixs, appendIxsIx)
 	}
-	opID := op.OperationID()
-	opPDA := op.OperationPDA()
 	finOpIx, foErr := timelock.NewFinalizeOperationInstruction(
 		timelockID,
-		opID,
-		opPDA,
+		op.OperationID(),
+		operationPDA,
 		configPDA,
 		authority,
 	).ValidateAndBuild()
