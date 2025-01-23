@@ -21,7 +21,7 @@ type TimelockProposal struct {
 	BaseProposal
 
 	Action            types.TimelockAction           `json:"action" validate:"required,oneof=schedule cancel bypass"`
-	Delay             types.Duration                 `json:"delay" validate:"required_if=Action schedule"`
+	Delay             types.Duration                 `json:"delay"`
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
 	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1,dive"`
 }
