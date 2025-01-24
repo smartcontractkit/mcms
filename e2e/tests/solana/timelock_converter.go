@@ -102,7 +102,6 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
-			// SetAction(types.TimelockActionSchedule).
 			SetDelay(types.NewDuration(1*time.Second)).
 			AddTimelockAddress(s.ChainSelector, timelockAddress).
 			AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmAddress}).
