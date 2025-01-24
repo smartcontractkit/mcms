@@ -94,6 +94,71 @@ func Test_NewTimelockProposal(t *testing.T) {
 			},
 		},
 		{
+			name: "success: valid with 0 delay",
+			give: `{
+				"version": "v1",
+				"kind": "TimelockProposal",
+				"validUntil": 2004259681,
+				"chainMetadata": {
+					"16015286601757825753": {
+						"mcmAddress": "0x0000000000000000000000000000000000000000",
+						"startingOpCount": 0
+					}
+				},
+				"description": "Test proposal",
+				"overridePreviousRoot": false,
+				"action": "schedule",
+				"delay": "0s",
+				"timelockAddresses": {
+					"16015286601757825753": "0x01"
+				},
+				"operations": [
+					{
+						"chainSelector": 16015286601757825753,
+						"transactions": [
+							{
+								"to": "0x0000000000000000000000000000000000000000",
+								"additionalFields": {"value": 0},
+								"data": "ZGF0YQ=="
+							}
+						]
+					}
+				]
+			}`,
+			want: TimelockProposal{
+				BaseProposal: BaseProposal{
+					Version:     "v1",
+					Kind:        types.KindTimelockProposal,
+					ValidUntil:  2004259681,
+					Description: "Test proposal",
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						chaintest.Chain2Selector: {
+							StartingOpCount: 0,
+							MCMAddress:      "0x0000000000000000000000000000000000000000",
+						},
+					},
+					OverridePreviousRoot: false,
+				},
+				Action: types.TimelockActionSchedule,
+				Delay:  types.MustParseDuration("0s"),
+				TimelockAddresses: map[types.ChainSelector]string{
+					chaintest.Chain2Selector: "0x01",
+				},
+				Operations: []types.BatchOperation{
+					{
+						ChainSelector: chaintest.Chain2Selector,
+						Transactions: []types.Transaction{
+							{
+								To:               "0x0000000000000000000000000000000000000000",
+								AdditionalFields: []byte(`{"value": 0}`),
+								Data:             []byte("data"),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
 			name:    "failure: could not unmarshal JSON",
 			give:    `invalid`,
 			wantErr: "invalid character 'i' looking for beginning of value",
@@ -314,16 +379,6 @@ func Test_TimelockProposal_Validate(t *testing.T) {
 				"Key: 'TimelockProposal.BaseProposal.Version' Error:Field validation for 'Version' failed on the 'oneof' tag",
 				"Key: 'TimelockProposal.BaseProposal.Kind' Error:Field validation for 'Kind' failed on the 'oneof' tag",
 				"Key: 'TimelockProposal.Action' Error:Field validation for 'Action' failed on the 'oneof' tag",
-			},
-		},
-		{
-			name: "required_if validation",
-			giveFunc: func(p *TimelockProposal) {
-				p.Action = "schedule"
-				p.Delay = types.Duration{}
-			},
-			wantErrs: []string{
-				"Key: 'TimelockProposal.Delay' Error:Field validation for 'Delay' failed on the 'required_if' tag",
 			},
 		},
 		{
