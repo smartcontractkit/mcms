@@ -137,7 +137,7 @@ func (s *SimulatedChain) SetMCMSConfig(
 	}
 
 	transformer := evm.ConfigTransformer{}
-	bindConfig, err := transformer.ToChainConfig(*cfg)
+	bindConfig, err := transformer.ToChainConfig(*cfg, nil)
 	require.NoError(t, err)
 
 	signerAddrs := make([]common.Address, len(bindConfig.Signers))

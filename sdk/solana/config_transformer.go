@@ -1,17 +1,29 @@
 package solana
 
 import (
-	"fmt"
-
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gagliardetto/solana-go"
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 
+	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
+type AdditionalConfig struct {
+	ChainID    uint64
+	MultisigID [32]uint8
+	// Current Owner of the multisig ID
+	Owner solana.PublicKey
+	// Proposed Owner of the program when calling transfer_ownership
+	ProposedOwner solana.PublicKey
+}
+
+const maxUint8Value = 255
+
 type ConfigTransformer struct{}
 
-func NewConfigTransformer() *ConfigTransformer {
+func NewConfigTransformer(chainID uint64, msigID [32]uint8, owner solana.PublicKey) *ConfigTransformer {
 	return &ConfigTransformer{}
 }
 
@@ -52,8 +64,38 @@ func (e *ConfigTransformer) ToConfig(
 }
 
 // ToChainConfig converts a chain-agnostic types.Config to an Solana ManyChainMultiSigConfig
-func (e *ConfigTransformer) ToChainConfig(
-	cfg types.Config,
-) (bindings.MultisigConfig, error) {
-	return bindings.MultisigConfig{}, fmt.Errorf("sdk.solana.ConfigTransformer.ToChainConfig not implemented")
+func (e *ConfigTransformer) ToChainConfig(cfg types.Config, solanaConfig AdditionalConfig) (bindings.MultisigConfig, error) {
+	// Populate additional Configs
+	result := bindings.MultisigConfig{
+		ChainId:       solanaConfig.ChainID,
+		MultisigId:    solanaConfig.MultisigID,
+		Owner:         solanaConfig.Owner,
+		ProposedOwner: solanaConfig.ProposedOwner,
+	}
+	// Populate the signers: we can reuse the evm implementation here as the signers structure is the same
+	groupQuorums, groupParents, signerAddrs, signerGroups, err := evm.ExtractSetConfigInputs(&cfg)
+	if err != nil {
+		return bindings.MultisigConfig{}, err
+	}
+	// Check the length of signerAddresses up-front
+	if len(signerAddrs) > maxUint8Value {
+		return bindings.MultisigConfig{}, sdkerrors.NewTooManySignersError(uint64(len(signerAddrs)))
+	}
+	// Set the signers
+	bindSigners := make([]bindings.McmSigner, len(signerAddrs))
+	idx := uint8(0)
+	for i, signerAddr := range signerAddrs {
+		bindSigners[i] = bindings.McmSigner{
+			EvmAddress: signerAddr,
+			Group:      signerGroups[i],
+			Index:      idx,
+		}
+		idx += 1
+	}
+	result.Signers = bindSigners
+	// Set group quorums and group parents.
+	result.GroupQuorums = groupQuorums
+	result.GroupParents = groupParents
+
+	return result, nil
 }

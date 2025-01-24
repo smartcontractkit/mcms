@@ -250,7 +250,7 @@ func Test_SetConfigInputs(t *testing.T) {
 			t.Parallel()
 
 			transformer := ConfigTransformer{}
-			got, err := transformer.ToChainConfig(tt.giveConfig)
+			got, err := transformer.ToChainConfig(tt.giveConfig, nil)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
