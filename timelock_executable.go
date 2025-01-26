@@ -73,10 +73,16 @@ func (t *TimelockExecutable) Execute(ctx context.Context, index int, callProxyAd
 
 	op := t.proposal.Operations[index]
 
+	// Get target contract
+	execAddress := callProxyAddress
+	if execAddress == "" {
+		execAddress = t.proposal.TimelockAddresses[op.ChainSelector]
+	}
+
 	return t.executors[op.ChainSelector].Execute(
 		ctx,
 		op,
-		t.proposal.TimelockAddresses[op.ChainSelector],
+		execAddress,
 		t.predecessors[index],
 		t.proposal.Salt(),
 	)
