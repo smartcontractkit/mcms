@@ -222,7 +222,7 @@ func Test_Proposal_Validate(t *testing.T) {
 		{
 			name: "valid",
 			giveFunc: func(*Proposal) {
-				// NOOP: All fields are valid
+				// NOOP: All  are valid
 			},
 		},
 		{

@@ -30,6 +30,8 @@ func NewTimelockExecutor(client ContractDeployBackend, auth *bind.TransactOpts) 
 	}
 }
 
+// NOTE: a CallProxy can be used to execute the calls by replacing the
+// timelock address with the proxy address.
 func (t *TimelockExecutor) Execute(
 	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
 ) (string, error) {

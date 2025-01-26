@@ -61,7 +61,11 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 	return nil
 }
 
-func (t *TimelockExecutable) Execute(ctx context.Context, index int) (string, error) {
+// Execute executes the operation at the given index.
+// Includes an optional callProxyAddress to execute the calls through a proxy.
+// If the callProxyAddress is empty string, the calls will be executed directly
+// to the timelock.
+func (t *TimelockExecutable) Execute(ctx context.Context, index int, callProxyAddress string) (string, error) {
 	err := t.setPredecessors(ctx)
 	if err != nil {
 		return "", fmt.Errorf("unable to set predecessors: %w", err)
