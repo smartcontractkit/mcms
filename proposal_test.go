@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"math"
+	"os"
 	"strings"
 	"testing"
 
@@ -209,6 +210,51 @@ func Test_WriteProposal(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestLoadProposal(t *testing.T) {
+	t.Run("valid file path with KindProposal", func(t *testing.T) {
+		filePath := "testdata/valid_proposal.txt"
+		os.WriteFile(filePath, []byte("sample data"), 0644)
+		defer os.Remove(filePath)
+
+		proposal, err := LoadProposal(types.KindProposal, filePath)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, proposal)
+	})
+
+	t.Run("valid file path with KindTimelockProposal", func(t *testing.T) {
+		filePath := "testdata/valid_timelock_proposal.txt"
+		os.WriteFile(filePath, []byte("sample data"), 0644)
+		defer os.Remove(filePath)
+
+		proposal, err := LoadProposal(types.KindTimelockProposal, filePath)
+
+		assert.NoError(t, err)
+		assert.NotNil(t, proposal)
+	})
+
+	t.Run("unknown proposal type", func(t *testing.T) {
+		filePath := "testdata/valid_proposal.txt"
+		os.WriteFile(filePath, []byte("sample data"), 0644)
+		defer os.Remove(filePath)
+
+		proposal, err := LoadProposal(types.ProposalKind("unknown"), filePath)
+
+		assert.Error(t, err)
+		assert.Nil(t, proposal)
+		assert.Equal(t, "unknown proposal type", err.Error())
+	})
+
+	t.Run("invalid file path", func(t *testing.T) {
+		filePath := "invalid_path.txt"
+
+		proposal, err := LoadProposal(types.KindProposal, filePath)
+
+		assert.Error(t, err)
+		assert.Nil(t, proposal)
+	})
 }
 
 func Test_Proposal_Validate(t *testing.T) {

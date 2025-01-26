@@ -31,19 +31,26 @@ type ProposalInterface interface {
 }
 
 func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInterface, error) {
-	// Open the file
-	file, err := os.Open(filePath)
-	if err != nil {
-		return nil, err
-	}
-
-	// Ensure the file is closed when done
-	defer file.Close()
-
 	switch proposalType {
 	case types.KindProposal:
+		// Open the file
+		file, err := os.Open(filePath)
+		if err != nil {
+			return nil, err
+		}
+
+		// Ensure the file is closed when done
+		defer file.Close()
 		return NewProposal(file)
 	case types.KindTimelockProposal:
+		// Open the file
+		file, err := os.Open(filePath)
+		if err != nil {
+			return nil, err
+		}
+
+		// Ensure the file is closed when done
+		defer file.Close()
 		return NewTimelockProposal(file)
 	default:
 		return nil, errors.New("unknown proposal type")
