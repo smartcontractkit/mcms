@@ -24,22 +24,22 @@ func (_m *Configurer) EXPECT() *Configurer_Expecter {
 }
 
 // SetConfig provides a mock function with given fields: ctx, mcmAddr, cfg, clearRoot
-func (_m *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (string, error) {
+func (_m *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (types.MinedTransaction, error) {
 	ret := _m.Called(ctx, mcmAddr, cfg, clearRoot)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetConfig")
 	}
 
-	var r0 string
+	var r0 types.MinedTransaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, *types.Config, bool) (string, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, *types.Config, bool) (types.MinedTransaction, error)); ok {
 		return rf(ctx, mcmAddr, cfg, clearRoot)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, *types.Config, bool) string); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, *types.Config, bool) types.MinedTransaction); ok {
 		r0 = rf(ctx, mcmAddr, cfg, clearRoot)
 	} else {
-		r0 = ret.Get(0).(string)
+		r0 = ret.Get(0).(types.MinedTransaction)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, *types.Config, bool) error); ok {
@@ -72,12 +72,12 @@ func (_c *Configurer_SetConfig_Call) Run(run func(ctx context.Context, mcmAddr s
 	return _c
 }
 
-func (_c *Configurer_SetConfig_Call) Return(_a0 string, _a1 error) *Configurer_SetConfig_Call {
+func (_c *Configurer_SetConfig_Call) Return(_a0 types.MinedTransaction, _a1 error) *Configurer_SetConfig_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Configurer_SetConfig_Call) RunAndReturn(run func(context.Context, string, *types.Config, bool) (string, error)) *Configurer_SetConfig_Call {
+func (_c *Configurer_SetConfig_Call) RunAndReturn(run func(context.Context, string, *types.Config, bool) (types.MinedTransaction, error)) *Configurer_SetConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -3,7 +3,10 @@
 package mocks
 
 import (
+	context "context"
+
 	common "github.com/ethereum/go-ethereum/common"
+
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/smartcontractkit/mcms/types"
@@ -22,36 +25,38 @@ func (_m *TimelockConverter) EXPECT() *TimelockConverter_Expecter {
 	return &TimelockConverter_Expecter{mock: &_m.Mock}
 }
 
-// ConvertBatchToChainOperation provides a mock function with given fields: bop, timelockAddress, delay, action, predecessor, salt
-func (_m *TimelockConverter) ConvertBatchToChainOperation(bop types.BatchOperation, timelockAddress string, delay types.Duration, action types.TimelockAction, predecessor common.Hash, salt common.Hash) (types.Operation, common.Hash, error) {
-	ret := _m.Called(bop, timelockAddress, delay, action, predecessor, salt)
+// ConvertBatchToChainOperations provides a mock function with given fields: ctx, bop, timelockAddress, delay, action, predecessor, salt
+func (_m *TimelockConverter) ConvertBatchToChainOperations(ctx context.Context, bop types.BatchOperation, timelockAddress string, delay types.Duration, action types.TimelockAction, predecessor common.Hash, salt common.Hash) ([]types.Operation, common.Hash, error) {
+	ret := _m.Called(ctx, bop, timelockAddress, delay, action, predecessor, salt)
 
 	if len(ret) == 0 {
-		panic("no return value specified for ConvertBatchToChainOperation")
+		panic("no return value specified for ConvertBatchToChainOperations")
 	}
 
-	var r0 types.Operation
+	var r0 []types.Operation
 	var r1 common.Hash
 	var r2 error
-	if rf, ok := ret.Get(0).(func(types.BatchOperation, string, types.Duration, types.TimelockAction, common.Hash, common.Hash) (types.Operation, common.Hash, error)); ok {
-		return rf(bop, timelockAddress, delay, action, predecessor, salt)
+	if rf, ok := ret.Get(0).(func(context.Context, types.BatchOperation, string, types.Duration, types.TimelockAction, common.Hash, common.Hash) ([]types.Operation, common.Hash, error)); ok {
+		return rf(ctx, bop, timelockAddress, delay, action, predecessor, salt)
 	}
-	if rf, ok := ret.Get(0).(func(types.BatchOperation, string, types.Duration, types.TimelockAction, common.Hash, common.Hash) types.Operation); ok {
-		r0 = rf(bop, timelockAddress, delay, action, predecessor, salt)
+	if rf, ok := ret.Get(0).(func(context.Context, types.BatchOperation, string, types.Duration, types.TimelockAction, common.Hash, common.Hash) []types.Operation); ok {
+		r0 = rf(ctx, bop, timelockAddress, delay, action, predecessor, salt)
 	} else {
-		r0 = ret.Get(0).(types.Operation)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]types.Operation)
+		}
 	}
 
-	if rf, ok := ret.Get(1).(func(types.BatchOperation, string, types.Duration, types.TimelockAction, common.Hash, common.Hash) common.Hash); ok {
-		r1 = rf(bop, timelockAddress, delay, action, predecessor, salt)
+	if rf, ok := ret.Get(1).(func(context.Context, types.BatchOperation, string, types.Duration, types.TimelockAction, common.Hash, common.Hash) common.Hash); ok {
+		r1 = rf(ctx, bop, timelockAddress, delay, action, predecessor, salt)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(common.Hash)
 		}
 	}
 
-	if rf, ok := ret.Get(2).(func(types.BatchOperation, string, types.Duration, types.TimelockAction, common.Hash, common.Hash) error); ok {
-		r2 = rf(bop, timelockAddress, delay, action, predecessor, salt)
+	if rf, ok := ret.Get(2).(func(context.Context, types.BatchOperation, string, types.Duration, types.TimelockAction, common.Hash, common.Hash) error); ok {
+		r2 = rf(ctx, bop, timelockAddress, delay, action, predecessor, salt)
 	} else {
 		r2 = ret.Error(2)
 	}
@@ -59,35 +64,36 @@ func (_m *TimelockConverter) ConvertBatchToChainOperation(bop types.BatchOperati
 	return r0, r1, r2
 }
 
-// TimelockConverter_ConvertBatchToChainOperation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConvertBatchToChainOperation'
-type TimelockConverter_ConvertBatchToChainOperation_Call struct {
+// TimelockConverter_ConvertBatchToChainOperations_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ConvertBatchToChainOperations'
+type TimelockConverter_ConvertBatchToChainOperations_Call struct {
 	*mock.Call
 }
 
-// ConvertBatchToChainOperation is a helper method to define mock.On call
+// ConvertBatchToChainOperations is a helper method to define mock.On call
+//   - ctx context.Context
 //   - bop types.BatchOperation
 //   - timelockAddress string
 //   - delay types.Duration
 //   - action types.TimelockAction
 //   - predecessor common.Hash
 //   - salt common.Hash
-func (_e *TimelockConverter_Expecter) ConvertBatchToChainOperation(bop interface{}, timelockAddress interface{}, delay interface{}, action interface{}, predecessor interface{}, salt interface{}) *TimelockConverter_ConvertBatchToChainOperation_Call {
-	return &TimelockConverter_ConvertBatchToChainOperation_Call{Call: _e.mock.On("ConvertBatchToChainOperation", bop, timelockAddress, delay, action, predecessor, salt)}
+func (_e *TimelockConverter_Expecter) ConvertBatchToChainOperations(ctx interface{}, bop interface{}, timelockAddress interface{}, delay interface{}, action interface{}, predecessor interface{}, salt interface{}) *TimelockConverter_ConvertBatchToChainOperations_Call {
+	return &TimelockConverter_ConvertBatchToChainOperations_Call{Call: _e.mock.On("ConvertBatchToChainOperations", ctx, bop, timelockAddress, delay, action, predecessor, salt)}
 }
 
-func (_c *TimelockConverter_ConvertBatchToChainOperation_Call) Run(run func(bop types.BatchOperation, timelockAddress string, delay types.Duration, action types.TimelockAction, predecessor common.Hash, salt common.Hash)) *TimelockConverter_ConvertBatchToChainOperation_Call {
+func (_c *TimelockConverter_ConvertBatchToChainOperations_Call) Run(run func(ctx context.Context, bop types.BatchOperation, timelockAddress string, delay types.Duration, action types.TimelockAction, predecessor common.Hash, salt common.Hash)) *TimelockConverter_ConvertBatchToChainOperations_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(types.BatchOperation), args[1].(string), args[2].(types.Duration), args[3].(types.TimelockAction), args[4].(common.Hash), args[5].(common.Hash))
+		run(args[0].(context.Context), args[1].(types.BatchOperation), args[2].(string), args[3].(types.Duration), args[4].(types.TimelockAction), args[5].(common.Hash), args[6].(common.Hash))
 	})
 	return _c
 }
 
-func (_c *TimelockConverter_ConvertBatchToChainOperation_Call) Return(_a0 types.Operation, _a1 common.Hash, _a2 error) *TimelockConverter_ConvertBatchToChainOperation_Call {
+func (_c *TimelockConverter_ConvertBatchToChainOperations_Call) Return(_a0 []types.Operation, _a1 common.Hash, _a2 error) *TimelockConverter_ConvertBatchToChainOperations_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *TimelockConverter_ConvertBatchToChainOperation_Call) RunAndReturn(run func(types.BatchOperation, string, types.Duration, types.TimelockAction, common.Hash, common.Hash) (types.Operation, common.Hash, error)) *TimelockConverter_ConvertBatchToChainOperation_Call {
+func (_c *TimelockConverter_ConvertBatchToChainOperations_Call) RunAndReturn(run func(context.Context, types.BatchOperation, string, types.Duration, types.TimelockAction, common.Hash, common.Hash) ([]types.Operation, common.Hash, error)) *TimelockConverter_ConvertBatchToChainOperations_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -61,10 +61,10 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 	return nil
 }
 
-func (t *TimelockExecutable) Execute(ctx context.Context, index int) (string, error) {
+func (t *TimelockExecutable) Execute(ctx context.Context, index int) (types.MinedTransaction, error) {
 	err := t.setPredecessors(ctx)
 	if err != nil {
-		return "", fmt.Errorf("unable to set predecessors: %w", err)
+		return types.MinedTransaction{}, fmt.Errorf("unable to set predecessors: %w", err)
 	}
 
 	op := t.proposal.Operations[index]

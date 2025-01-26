@@ -32,10 +32,10 @@ func NewTimelockExecutor(client ContractDeployBackend, auth *bind.TransactOpts) 
 
 func (t *TimelockExecutor) Execute(
 	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
-) (string, error) {
+) (types.MinedTransaction, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(timelockAddress), t.client)
 	if err != nil {
-		return "", err
+		return types.MinedTransaction{}, err
 	}
 
 	calls := make([]bindings.RBACTimelockCall, len(bop.Transactions))
@@ -43,7 +43,7 @@ func (t *TimelockExecutor) Execute(
 		// Unmarshal the AdditionalFields from the operation
 		var additionalFields AdditionalFields
 		if err = json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return "", err
+			return types.MinedTransaction{}, err
 		}
 
 		calls[i] = bindings.RBACTimelockCall{
@@ -58,8 +58,11 @@ func (t *TimelockExecutor) Execute(
 
 	tx, err := timelock.ExecuteBatch(&opts, calls, predecessor, salt)
 	if err != nil {
-		return "", err
+		return types.MinedTransaction{}, err
 	}
 
-	return tx.Hash().Hex(), nil
+	return types.MinedTransaction{
+		Hash: tx.Hash().Hex(),
+		Tx:   tx,
+	}, nil
 }
