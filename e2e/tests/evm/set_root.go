@@ -175,9 +175,9 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	s.Require().NoError(err)
 
 	// Call SetRoot
-	txHash, err := executable.SetRoot(ctx, s.chainSelector)
+	tx, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
+	s.Require().NotEmpty(tx.Hash)
 
 	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.Client, common.HexToHash(txHash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
@@ -260,11 +260,11 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	executable, err := mcms.NewExecutable(&proposal, executorsMap)
 	s.Require().NoError(err)
 	// Call SetRoot
-	txHash, err := executable.SetRoot(ctx, s.chainSelector)
+	tx, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
+	s.Require().NotEmpty(tx.Hash)
 	// Check receipt
-	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }

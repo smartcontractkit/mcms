@@ -171,7 +171,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				tt.assertion(t, err, fmt.Sprintf("%q. Executor.ExecuteOperation()", tt.name))
 			} else {
 				require.NoError(t, err)
-				require.Equalf(t, tt.want, got, "%q. Executor.ExecuteOperation()", tt.name)
+				require.Equalf(t, tt.want, got.Hash, "%q. Executor.ExecuteOperation()", tt.name)
 			}
 		})
 	}

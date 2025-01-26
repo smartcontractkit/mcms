@@ -173,7 +173,9 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return("signature", nil).Once()
+					Return(types.MinedTransaction{
+						Hash: "signature",
+					}, nil).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
 				return defaultProposal(), executors
@@ -216,7 +218,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return("", fmt.Errorf("execute error")).Once()
+					Return(types.MinedTransaction{}, fmt.Errorf("execute error")).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
 				return defaultProposal(), executors
@@ -236,7 +238,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Equal(t, tt.want, got)
+				require.Equal(t, tt.want, got.Hash)
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}
@@ -410,9 +412,9 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
+	tx, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
-	require.NotEmpty(t, txHash)
+	require.NotEmpty(t, tx.Hash)
 	sim.Backend.Commit()
 
 	// Validate Contract State and verify root was set
@@ -424,13 +426,13 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	// Execute the proposal
 	var receipt *geth_types.Receipt
 	for i := range proposal.Operations {
-		txHash, err = executable.Execute(ctx, i)
+		tx, err = executable.Execute(ctx, i)
 		require.NoError(t, err)
-		require.NotEmpty(t, txHash)
+		require.NotEmpty(t, tx.Hash)
 		sim.Backend.Commit()
 
 		// Wait for the transaction to be mined
-		receipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+		receipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(tx.Hash))
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 		require.Equal(t, geth_types.ReceiptStatusSuccessful, receipt.Status)

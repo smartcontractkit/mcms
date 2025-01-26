@@ -41,7 +41,7 @@ func main() {
   backend := backends.SimulatedBackend{}
   auth := &bind.TransactOpts{}
   configurer := evm.NewConfigurer(backend, auth)
-  txHash, err := configurer.SetConfig(mcmsContractAddr, &config, false)
+  tx, err := configurer.SetConfig(mcmsContractAddr, &config, false)
   if err != nil {
     log.Fatalf("failed to set config: %v", err)
   }
