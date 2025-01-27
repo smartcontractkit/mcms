@@ -173,7 +173,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(types.MinedTransaction{
+					Return(types.TransactionResult{
 						Hash: "signature",
 					}, nil).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
@@ -218,7 +218,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(types.MinedTransaction{}, fmt.Errorf("execute error")).Once()
+					Return(types.TransactionResult{}, fmt.Errorf("execute error")).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
 				return defaultProposal(), executors

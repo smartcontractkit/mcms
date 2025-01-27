@@ -1,9 +1,9 @@
 package types
 
-// MinedTransaction represents a generic blockchain transaction.
+// TransactionResult represents a generic blockchain transaction.
 // It contains the hash of the transaction and the transaction itself.
 // Users of this struct should cast the transaction to the appropriate type.
-type MinedTransaction struct {
+type TransactionResult struct {
 	Hash string `json:"hash"`
 	Tx   any    `json:"tx"`
 }

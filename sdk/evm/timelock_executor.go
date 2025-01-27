@@ -34,10 +34,10 @@ func NewTimelockExecutor(client ContractDeployBackend, auth *bind.TransactOpts) 
 // timelock address with the proxy address.
 func (t *TimelockExecutor) Execute(
 	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
-) (types.MinedTransaction, error) {
+) (types.TransactionResult, error) {
 	timelock, err := bindings.NewRBACTimelock(common.HexToAddress(timelockAddress), t.client)
 	if err != nil {
-		return types.MinedTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	calls := make([]bindings.RBACTimelockCall, len(bop.Transactions))
@@ -45,7 +45,7 @@ func (t *TimelockExecutor) Execute(
 		// Unmarshal the AdditionalFields from the operation
 		var additionalFields AdditionalFields
 		if err = json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return types.MinedTransaction{}, err
+			return types.TransactionResult{}, err
 		}
 
 		calls[i] = bindings.RBACTimelockCall{
@@ -60,10 +60,10 @@ func (t *TimelockExecutor) Execute(
 
 	tx, err := timelock.ExecuteBatch(&opts, calls, predecessor, salt)
 	if err != nil {
-		return types.MinedTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
-	return types.MinedTransaction{
+	return types.TransactionResult{
 		Hash: tx.Hash().Hex(),
 		Tx:   tx,
 	}, nil

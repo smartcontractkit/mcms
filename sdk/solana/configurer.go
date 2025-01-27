@@ -34,19 +34,19 @@ func NewConfigurer(client *rpc.Client, auth solana.PrivateKey, chainSelector typ
 }
 
 // SetConfig sets the configuration for the MCM contract on the Solana chain.
-func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *types.Config, clearRoot bool) (types.MinedTransaction, error) {
+func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
 	programID, pdaSeed, err := ParseContractAddress(mcmAddress)
 	if err != nil {
-		return types.MinedTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	groupQuorums, groupParents, signerAddresses, signerGroups, err := evmsdk.ExtractSetConfigInputs(cfg)
 	if err != nil {
-		return types.MinedTransaction{}, fmt.Errorf("unable to extract set config inputs: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}
 
 	if len(signerAddresses) > config.MaxNumSigners {
-		return types.MinedTransaction{}, fmt.Errorf("too many signers (max %d)", config.MaxNumSigners)
+		return types.TransactionResult{}, fmt.Errorf("too many signers (max %d)", config.MaxNumSigners)
 	}
 
 	// FIXME: global variables are bad, mmkay?
@@ -55,24 +55,24 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 
 	configPDA, err := FindConfigPDA(programID, pdaSeed)
 	if err != nil {
-		return types.MinedTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 	rootMetadataPDA, err := FindRootMetadataPDA(programID, pdaSeed)
 	if err != nil {
-		return types.MinedTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 	expiringRootAndOpCountPDA, err := FindExpiringRootAndOpCountPDA(programID, pdaSeed)
 	if err != nil {
-		return types.MinedTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 	configSignersPDA, err := FindConfigSignersPDA(programID, pdaSeed)
 	if err != nil {
-		return types.MinedTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	err = c.preloadSigners(ctx, pdaSeed, solanaSignerAddresses(signerAddresses), configPDA, configSignersPDA)
 	if err != nil {
-		return types.MinedTransaction{}, fmt.Errorf("unable to preload signatures: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to preload signatures: %w", err)
 	}
 
 	setConfigInstruction := bindings.NewSetConfigInstruction(
@@ -89,10 +89,10 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 		solana.SystemProgramID)
 	signature, err := sendAndConfirm(ctx, c.client, c.auth, setConfigInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
-		return types.MinedTransaction{}, fmt.Errorf("unable to set config: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to set config: %w", err)
 	}
 
-	return types.MinedTransaction{
+	return types.TransactionResult{
 		Hash: signature,
 		Tx:   setConfigInstruction,
 	}, nil

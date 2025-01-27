@@ -29,15 +29,15 @@ func NewConfigurer(client ContractDeployBackend, auth *bind.TransactOpts,
 }
 
 // SetConfig sets the configuration for the MCM contract on the EVM chain.
-func (c *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (types.MinedTransaction, error) {
+func (c *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddr), c.client)
 	if err != nil {
-		return types.MinedTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	groupQuorums, groupParents, signerAddrs, signerGroups, err := ExtractSetConfigInputs(cfg)
 	if err != nil {
-		return types.MinedTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	opts := *c.auth
@@ -52,10 +52,10 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.C
 		clearRoot,
 	)
 	if err != nil {
-		return types.MinedTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
-	return types.MinedTransaction{
+	return types.TransactionResult{
 		Hash: tx.Hash().Hex(),
 		Tx:   tx,
 	}, nil
