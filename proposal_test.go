@@ -214,6 +214,7 @@ func Test_WriteProposal(t *testing.T) {
 }
 
 func TestLoadProposal(t *testing.T) {
+	t.Parallel()
 	t.Run("valid file path with KindProposal", func(t *testing.T) {
 		tempFile, err := os.CreateTemp("", "valid_proposal.txt")
 		require.NoError(t, err)
