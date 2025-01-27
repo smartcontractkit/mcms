@@ -312,7 +312,7 @@ func Test_ScheduleAndCancelProposal(t *testing.T) {
 	}
 }
 
-func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
+func scheduleGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash, delay types.Duration) (evmsim.SimulatedChain, *bindings.ManyChainMultiSig, *bindings.RBACTimelock, TimelockProposal, []common.Hash) {
 	t.Helper()
 
 	sim := evmsim.NewSimulatedChain(t, 1)
@@ -368,10 +368,6 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 		))
 	}
 
-	converters := map[types.ChainSelector]sdk.TimelockConverter{
-		chaintest.Chain1Selector: &evm.TimelockConverter{},
-	}
-
 	// Construct a proposal
 	proposal := TimelockProposal{
 		BaseProposal: BaseProposal{
@@ -395,10 +391,20 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 			},
 		},
 		Action: types.TimelockActionSchedule,
-		Delay:  types.MustParseDuration("5s"),
+		Delay:  delay,
 		TimelockAddresses: map[types.ChainSelector]string{
 			chaintest.Chain1Selector: timelockC.Address().Hex(),
 		},
+	}
+
+	return sim, mcmC, timelockC, proposal, targetRoles
+}
+
+func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
+	sim, mcmC, timelockC, proposal, targetRoles := scheduleGrantRolesProposal(t, ctx, targetRoles, types.MustParseDuration("5s"))
+
+	converters := map[types.ChainSelector]sdk.TimelockConverter{
+		chaintest.Chain1Selector: &evm.TimelockConverter{},
 	}
 
 	// convert proposal to mcms
@@ -545,92 +551,10 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 }
 
 func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
-	t.Helper()
-
-	sim := evmsim.NewSimulatedChain(t, 1)
-	mcmC, _ := sim.DeployMCMContract(t, sim.Signers[0])
-	sim.SetMCMSConfig(t, sim.Signers[0], mcmC)
-
-	// Deploy a timelock contract for testing
-	timelockC, _ := sim.DeployRBACTimelock(t, sim.Signers[0], sim.Signers[0].Address(t),
-		[]common.Address{mcmC.Address()},
-		[]common.Address{mcmC.Address(), sim.Signers[0].Address(t)},
-		[]common.Address{mcmC.Address()},
-		[]common.Address{mcmC.Address()},
-	)
-
-	// Give timelock admin permissions
-	_, err := timelockC.GrantRole(sim.Signers[0].NewTransactOpts(t), adminRole, timelockC.Address())
-	require.NoError(t, err)
-	sim.Backend.Commit()
-
-	// renounce admin role
-	_, err = timelockC.RenounceRole(sim.Signers[0].NewTransactOpts(t), adminRole, sim.Signers[0].Address(t))
-	require.NoError(t, err)
-	sim.Backend.Commit()
-
-	// Construct example transactions
-	grantRoleDatas := make([][]byte, 0)
-	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
-	var grantRoleData []byte
-	for _, role := range targetRoles {
-		require.NoError(t, err)
-		grantRoleData, err = timelockAbi.Pack("grantRole", role, sim.Signers[0].Address(t))
-		require.NoError(t, err)
-		grantRoleDatas = append(grantRoleDatas, grantRoleData)
-	}
-
-	// Validate Contract State and verify role does not exist
-	var hasRole bool
-	for _, role := range targetRoles {
-		hasRole, err = timelockC.HasRole(&bind.CallOpts{}, role, sim.Signers[0].Address(t))
-		require.NoError(t, err)
-		require.False(t, hasRole)
-	}
-
-	// Construct transactions
-	transactions := make([]types.Transaction, 0)
-	for _, data := range grantRoleDatas {
-		transactions = append(transactions, evm.NewOperation(
-			timelockC.Address(),
-			data,
-			big.NewInt(0),
-			"RBACTimelock",
-			[]string{"RBACTimelock", "GrantRole"},
-		))
-	}
+	sim, mcmC, timelockC, proposal, targetRoles := scheduleGrantRolesProposal(t, ctx, targetRoles, types.MustParseDuration("5m"))
 
 	converters := map[types.ChainSelector]sdk.TimelockConverter{
 		chaintest.Chain1Selector: &evm.TimelockConverter{},
-	}
-
-	// Construct a proposal
-	proposal := TimelockProposal{
-		BaseProposal: BaseProposal{
-			Version:              "v1",
-			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-			Kind:                 types.KindProposal,
-			ValidUntil:           2004259681,
-			Signatures:           []types.Signature{},
-			OverridePreviousRoot: false,
-			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
-				chaintest.Chain1Selector: {
-					StartingOpCount: 0,
-					MCMAddress:      mcmC.Address().Hex(),
-				},
-			},
-		},
-		Operations: []types.BatchOperation{
-			{
-				ChainSelector: chaintest.Chain1Selector,
-				Transactions:  transactions,
-			},
-		},
-		Action: types.TimelockActionSchedule,
-		Delay:  types.MustParseDuration("5m"),
-		TimelockAddresses: map[types.ChainSelector]string{
-			chaintest.Chain1Selector: timelockC.Address().Hex(),
-		},
 	}
 
 	// convert proposal to mcms
