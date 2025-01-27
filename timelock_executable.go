@@ -61,7 +61,11 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 	return nil
 }
 
-func (t *TimelockExecutable) Execute(ctx context.Context, index int) (types.MinedTransaction, error) {
+// Execute executes the operation at the given index.
+// Includes an optional callProxyAddress to execute the calls through a proxy.
+// If the callProxyAddress is empty string, the calls will be executed directly
+// to the timelock.
+func (t *TimelockExecutable) Execute(ctx context.Context, index int, callProxyAddress string) (types.MinedTransaction, error) {
 	err := t.setPredecessors(ctx)
 	if err != nil {
 		return types.MinedTransaction{}, fmt.Errorf("unable to set predecessors: %w", err)
@@ -69,10 +73,16 @@ func (t *TimelockExecutable) Execute(ctx context.Context, index int) (types.Mine
 
 	op := t.proposal.Operations[index]
 
+	// Get target contract
+	execAddress := callProxyAddress
+	if execAddress == "" {
+		execAddress = t.proposal.TimelockAddresses[op.ChainSelector]
+	}
+
 	return t.executors[op.ChainSelector].Execute(
 		ctx,
 		op,
-		t.proposal.TimelockAddresses[op.ChainSelector],
+		execAddress,
 		t.predecessors[index],
 		t.proposal.Salt(),
 	)
