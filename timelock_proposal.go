@@ -53,15 +53,15 @@ func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
 // We need the salt to be unique in case you use an identical operation again
 // on the same chain across two different proposals. Predecessor protects against
 // duplicates within the same proposal
-func (p *TimelockProposal) Salt() [32]byte {
-	if p.SaltOverride != nil {
-		return *p.SaltOverride
+func (m *TimelockProposal) Salt() [32]byte {
+	if m.SaltOverride != nil {
+		return *m.SaltOverride
 	}
 
 	// If the proposal doesn't have a salt, we create one from the
 	// valid until timestamp.
 	var salt [32]byte
-	binary.BigEndian.PutUint32(salt[:], p.ValidUntil)
+	binary.BigEndian.PutUint32(salt[:], m.ValidUntil)
 
 	return salt
 }
