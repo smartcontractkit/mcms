@@ -626,7 +626,7 @@ func TestProposal_WithoutSaltOverride(t *testing.T) {
 		AddOperation(types.BatchOperation{
 			ChainSelector: chaintest.Chain1Selector,
 			Transactions: []types.Transaction{
-				types.Transaction{
+				{
 					To:               TestAddress,
 					AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 					Data:             common.Hex2Bytes("0x1"),
