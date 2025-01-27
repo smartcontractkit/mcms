@@ -216,6 +216,8 @@ func Test_WriteProposal(t *testing.T) {
 func TestLoadProposal(t *testing.T) {
 	t.Parallel()
 	t.Run("valid file path with KindProposal", func(t *testing.T) {
+		t.Parallel()
+
 		tempFile, err := os.CreateTemp("", "valid_proposal.txt")
 		require.NoError(t, err)
 
@@ -230,6 +232,8 @@ func TestLoadProposal(t *testing.T) {
 	})
 
 	t.Run("valid file path with KindTimelockProposal", func(t *testing.T) {
+		t.Parallel()
+
 		tempFile, err := os.CreateTemp("", "valid_timelock_proposal.txt")
 		require.NoError(t, err)
 
@@ -244,6 +248,8 @@ func TestLoadProposal(t *testing.T) {
 	})
 
 	t.Run("unknown proposal type", func(t *testing.T) {
+		t.Parallel()
+
 		filePath := "testdata/valid_proposal.txt"
 		err := os.WriteFile(filePath, []byte(ValidProposal), 0644)
 		require.NoError(t, err)
@@ -257,6 +263,8 @@ func TestLoadProposal(t *testing.T) {
 	})
 
 	t.Run("invalid file path", func(t *testing.T) {
+		t.Parallel()
+
 		filePath := "invalid_path.txt"
 
 		proposal, err := LoadProposal(types.KindProposal, filePath)
