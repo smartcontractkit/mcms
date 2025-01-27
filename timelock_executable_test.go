@@ -278,7 +278,41 @@ func Test_ScheduleAndExecuteProposal(t *testing.T) {
 	}
 }
 
-func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
+func Test_ScheduleAndCancelProposal(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	tests := []struct {
+		name        string
+		targetRoles []common.Hash
+		wantErr     bool
+		wantErrMsg  string
+	}{
+		{
+			name:        "valid schedule and cancel proposal with one tx and one op",
+			targetRoles: []common.Hash{proposerRole},
+			wantErr:     false,
+			wantErrMsg:  "",
+		},
+		{
+			name:        "valid schedule and cancel proposal with one tx and three ops",
+			targetRoles: []common.Hash{proposerRole, bypasserRole, cancellerRole},
+			wantErr:     false,
+			wantErrMsg:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			scheduleAndCancelGrantRolesProposal(t, ctx, tt.targetRoles)
+		})
+	}
+}
+
+func scheduleGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash, delay types.Duration) (evmsim.SimulatedChain, *bindings.ManyChainMultiSig, *bindings.RBACTimelock, TimelockProposal, []common.Hash) {
 	t.Helper()
 
 	sim := evmsim.NewSimulatedChain(t, 1)
@@ -334,10 +368,6 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 		))
 	}
 
-	converters := map[types.ChainSelector]sdk.TimelockConverter{
-		chaintest.Chain1Selector: &evm.TimelockConverter{},
-	}
-
 	// Construct a proposal
 	proposal := TimelockProposal{
 		BaseProposal: BaseProposal{
@@ -361,10 +391,22 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 			},
 		},
 		Action: types.TimelockActionSchedule,
-		Delay:  types.MustParseDuration("5s"),
+		Delay:  delay,
 		TimelockAddresses: map[types.ChainSelector]string{
 			chaintest.Chain1Selector: timelockC.Address().Hex(),
 		},
+	}
+
+	return sim, mcmC, timelockC, proposal, targetRoles
+}
+
+func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
+	t.Helper()
+
+	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, ctx, targetRoles, types.MustParseDuration("5s"))
+
+	converters := map[types.ChainSelector]sdk.TimelockConverter{
+		chaintest.Chain1Selector: &evm.TimelockConverter{},
 	}
 
 	// convert proposal to mcms
@@ -507,5 +549,225 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 		newRoleOwner, err := timelockC.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(1))
 		require.NoError(t, err)
 		require.Equal(t, sim.Signers[0].Address(t).Hex(), newRoleOwner.Hex())
+	}
+}
+
+func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
+	t.Helper()
+
+	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, ctx, targetRoles, types.MustParseDuration("5m"))
+
+	converters := map[types.ChainSelector]sdk.TimelockConverter{
+		chaintest.Chain1Selector: &evm.TimelockConverter{},
+	}
+
+	// convert proposal to mcms
+	mcmsProposal, predecessors, err := proposal.Convert(ctx, converters)
+	require.NoError(t, err)
+	mcmsProposal.UseSimulatedBackend(true)
+	tree, err := mcmsProposal.MerkleTree()
+	require.NoError(t, err)
+
+	// Gen caller map for easy access
+	inspectors := map[types.ChainSelector]sdk.Inspector{
+		chaintest.Chain1Selector: evm.NewInspector(sim.Backend.Client()),
+	}
+
+	// Construct executor
+	signable, err := NewSignable(&mcmsProposal, inspectors)
+	require.NoError(t, err)
+	require.NotNil(t, signable)
+
+	_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[0].PrivateKey))
+	require.NoError(t, err)
+
+	// Validate the signatures
+	quorumMet, err := signable.ValidateSignatures(ctx)
+	require.NoError(t, err)
+	require.True(t, quorumMet)
+
+	// Construct encoders
+	encoders, err := mcmsProposal.GetEncoders()
+	require.NoError(t, err)
+
+	// Construct executors
+	executors := map[types.ChainSelector]sdk.Executor{
+		chaintest.Chain1Selector: evm.NewExecutor(
+			encoders[chaintest.Chain1Selector].(*evm.Encoder),
+			sim.Backend.Client(),
+			sim.Signers[0].NewTransactOpts(t),
+		),
+	}
+
+	// Construct executable
+	executable, err := NewExecutable(&mcmsProposal, executors)
+	require.NoError(t, err)
+
+	// SetRoot on the contract
+	txHash, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
+	require.NoError(t, err)
+	require.NotEmpty(t, txHash)
+	sim.Backend.Commit()
+
+	// Validate Contract State and verify root was set
+	root, err := mcmC.GetRoot(&bind.CallOpts{})
+	require.NoError(t, err)
+	require.Equal(t, root.Root, [32]byte(tree.Root.Bytes()))
+	require.Equal(t, root.ValidUntil, proposal.ValidUntil)
+
+	// Execute the proposal
+	var receipt *geth_types.Receipt
+	for i := range proposal.Operations {
+		txHash, err = executable.Execute(ctx, i)
+		require.NoError(t, err)
+		require.NotEmpty(t, txHash)
+		sim.Backend.Commit()
+
+		// Wait for the transaction to be mined
+		receipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+		require.NoError(t, err)
+		require.NotNil(t, receipt)
+		require.Equal(t, geth_types.ReceiptStatusSuccessful, receipt.Status)
+	}
+
+	// Check the state of the MCMS contract
+	newOpCount, err := mcmC.GetOpCount(&bind.CallOpts{})
+	require.NoError(t, err)
+	require.NotNil(t, newOpCount)
+	require.Equal(t, uint64(1), newOpCount.Uint64())
+
+	// Construct executors
+	tExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
+		chaintest.Chain1Selector: evm.NewTimelockExecutor(
+			sim.Backend.Client(),
+			sim.Signers[0].NewTransactOpts(t),
+		),
+	}
+
+	// Create new executable
+	tExecutable, err := NewTimelockExecutable(&proposal, tExecutors)
+	require.NoError(t, err)
+
+	for i := range predecessors {
+		if i == 0 {
+			continue
+		}
+
+		var isOperation, isOperationPending, isOperationReady bool
+		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.True(t, isOperation)
+		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.True(t, isOperationPending)
+		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.False(t, isOperationReady)
+	}
+
+	// Check IsReady function fails
+	err = tExecutable.IsReady(ctx)
+	require.Error(t, err)
+
+	// Construct cancel proposal
+	cancelProposal := proposal
+	cancelProposal.ChainMetadata[chaintest.Chain1Selector] = types.ChainMetadata{
+		StartingOpCount: 1,
+		MCMAddress:      mcmC.Address().Hex(),
+	}
+	cancelProposal.Action = types.TimelockActionCancel
+
+	// TODO: in practice ValidUntil would need to be updated here, but we set a validUntil
+	// far enough in the future that it doesn't matter for this test.
+
+	// convert cancelProposal to mcms
+	cancelMcmsProposal, _, err := cancelProposal.Convert(ctx, converters)
+	require.NoError(t, err)
+	cancelMcmsProposal.UseSimulatedBackend(true)
+	// cancelTree, err := cancelMcmsProposal.MerkleTree()
+	require.NoError(t, err)
+
+	// Construct executor
+	cancelSignable, err := NewSignable(&cancelMcmsProposal, inspectors)
+	require.NoError(t, err)
+	require.NotNil(t, cancelSignable)
+
+	_, err = cancelSignable.SignAndAppend(NewPrivateKeySigner(sim.Signers[0].PrivateKey))
+	require.NoError(t, err)
+
+	// Validate the signatures
+	cancelQuorumMet, err := cancelSignable.ValidateSignatures(ctx)
+	require.NoError(t, err)
+	require.True(t, cancelQuorumMet)
+
+	// Construct encoders
+	cancelEncoders, err := cancelMcmsProposal.GetEncoders()
+	require.NoError(t, err)
+
+	// Construct executors
+	cancelExecutors := map[types.ChainSelector]sdk.Executor{
+		chaintest.Chain1Selector: evm.NewExecutor(
+			cancelEncoders[chaintest.Chain1Selector].(*evm.Encoder),
+			sim.Backend.Client(),
+			sim.Signers[0].NewTransactOpts(t),
+		),
+	}
+
+	// Construct executable
+	cancelExecutable, err := NewExecutable(&cancelMcmsProposal, cancelExecutors)
+	require.NoError(t, err)
+
+	// SetRoot on the contract
+	txHash, err = cancelExecutable.SetRoot(ctx, chaintest.Chain1Selector)
+	require.NoError(t, err)
+	require.NotEmpty(t, txHash)
+	sim.Backend.Commit()
+
+	cancelReceipt, err := testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+	require.NoError(t, err)
+	require.NotNil(t, cancelReceipt)
+	require.Equal(t, geth_types.ReceiptStatusSuccessful, cancelReceipt.Status)
+
+	// Validate Contract State and verify root was set
+	cancelRoot, err := mcmC.GetRoot(&bind.CallOpts{})
+	require.NoError(t, err)
+	// require.Equal(t, cancelRoot.Root, [32]byte(cancelTree.Root.Bytes()))
+	require.Equal(t, cancelRoot.ValidUntil, cancelProposal.ValidUntil)
+
+	// Execute the cancelProposal
+	for i := range cancelProposal.Operations {
+		txHash, err = cancelExecutable.Execute(ctx, i)
+		require.NoError(t, err)
+		require.NotEmpty(t, txHash)
+		sim.Backend.Commit()
+
+		// Wait for the transaction to be mined
+		cancelReceipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+		require.NoError(t, err)
+		require.NotNil(t, cancelReceipt)
+		require.Equal(t, geth_types.ReceiptStatusSuccessful, cancelReceipt.Status)
+	}
+
+	// Check the state of the MCMS contract
+	newOpCount, err = mcmC.GetOpCount(&bind.CallOpts{})
+	require.NoError(t, err)
+	require.NotNil(t, newOpCount)
+	require.Equal(t, uint64(2), newOpCount.Uint64())
+
+	for i := range predecessors {
+		if i == 0 {
+			continue
+		}
+
+		var isOperation, isOperationPending, isOperationReady bool
+		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.False(t, isOperation)
+		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.False(t, isOperationPending)
+		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.False(t, isOperationReady)
 	}
 }
