@@ -219,10 +219,10 @@ func TestLoadProposal(t *testing.T) {
 		t.Parallel()
 
 		tempFile, err := os.CreateTemp("", "valid_proposal.txt")
-		require.NoError(t, err)
+		assert.Error(t, err)
 
 		err = os.WriteFile(tempFile.Name(), []byte(ValidProposal), 0644)
-		require.NoError(t, err)
+		assert.Error(t, err)
 		defer os.Remove(tempFile.Name())
 
 		proposal, err := LoadProposal(types.KindProposal, tempFile.Name())
@@ -235,10 +235,10 @@ func TestLoadProposal(t *testing.T) {
 		t.Parallel()
 
 		tempFile, err := os.CreateTemp("", "valid_timelock_proposal.txt")
-		require.NoError(t, err)
+		assert.Error(t, err)
 
 		err = os.WriteFile(tempFile.Name(), []byte(ValidTimelockProposal), 0644)
-		require.NoError(t, err)
+		assert.Error(t, err)
 		defer os.Remove(tempFile.Name())
 
 		proposal, err := LoadProposal(types.KindTimelockProposal, tempFile.Name())
@@ -252,7 +252,7 @@ func TestLoadProposal(t *testing.T) {
 
 		filePath := "testdata/valid_proposal.txt"
 		err := os.WriteFile(filePath, []byte(ValidProposal), 0644)
-		require.NoError(t, err)
+		assert.Error(t, err)
 		defer os.Remove(filePath)
 
 		proposal, err := LoadProposal(types.ProposalKind("unknown"), filePath)
