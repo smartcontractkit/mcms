@@ -78,7 +78,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 
 	op := types.Operation{
 		ChainSelector: bop.ChainSelector,
-		Transaction: NewOperation(
+		Transaction: NewTransaction(
 			common.HexToAddress(timelockAddress),
 			data,
 			big.NewInt(0),

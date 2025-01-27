@@ -149,7 +149,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 		Operations: []mcmtypes.Operation{
 			{
 				ChainSelector: s.chainSelector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					common.HexToAddress(s.timelockContract.Address().Hex()),
 					grantRoleData,
 					big.NewInt(0),
@@ -274,7 +274,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		Operations: []mcmtypes.Operation{
 			{
 				ChainSelector: s.chainSelector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					common.HexToAddress(s.timelockContract.Address().Hex()),
 					grantRoleData,
 					big.NewInt(0),
@@ -384,7 +384,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		Operations: []mcmtypes.Operation{
 			{
 				ChainSelector: s.chainSelector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					common.HexToAddress(s.timelockContract.Address().Hex()),
 					grantRoleData2,
 					big.NewInt(0),

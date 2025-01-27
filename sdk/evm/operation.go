@@ -23,7 +23,7 @@ func (f AdditionalFields) Validate() error {
 	return nil
 }
 
-func NewOperation(
+func NewTransaction(
 	to common.Address,
 	data []byte,
 	value *big.Int,

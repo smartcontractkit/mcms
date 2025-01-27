@@ -325,7 +325,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	// Construct transactions
 	transactions := make([]types.Transaction, 0)
 	for _, data := range grantRoleDatas {
-		transactions = append(transactions, evm.NewOperation(
+		transactions = append(transactions, evm.NewTransaction(
 			timelockC.Address(),
 			data,
 			big.NewInt(0),
