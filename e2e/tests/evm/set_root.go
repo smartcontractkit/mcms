@@ -179,7 +179,7 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	s.Require().NoError(err)
 	s.Require().NotEmpty(tx.Hash)
 
-	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.Client, common.HexToHash(txHash))
+	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.Client, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }
