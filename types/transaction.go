@@ -4,6 +4,6 @@ package types
 // It contains the hash of the transaction and the transaction itself.
 // Users of this struct should cast the transaction to the appropriate type.
 type MinedTransaction struct {
-	Hash string      `json:"hash"`
-	Tx   interface{} `json:"tx"`
+	Hash string `json:"hash"`
+	Tx   any    `json:"tx"`
 }
