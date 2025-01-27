@@ -173,7 +173,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(types.TransactionResult{
+					Return(types.NativeTransaction{
 						Hash: "signature",
 					}, nil).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
@@ -218,7 +218,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-					Return(types.TransactionResult{}, fmt.Errorf("execute error")).Once()
+					Return(types.NativeTransaction{}, fmt.Errorf("execute error")).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
 				return defaultProposal(), executors
@@ -620,13 +620,13 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	// Execute the proposal
 	var receipt *geth_types.Receipt
 	for i := range proposal.Operations {
-		txHash, err = executable.Execute(ctx, i)
+		tx, err := executable.Execute(ctx, i)
 		require.NoError(t, err)
 		require.NotEmpty(t, txHash)
 		sim.Backend.Commit()
 
 		// Wait for the transaction to be mined
-		receipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+		receipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(tx.Hash))
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 		require.Equal(t, geth_types.ReceiptStatusSuccessful, receipt.Status)
@@ -720,12 +720,12 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err = cancelExecutable.SetRoot(ctx, chaintest.Chain1Selector)
+	tx, err := cancelExecutable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
 
-	cancelReceipt, err := testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+	cancelReceipt, err := testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(tx.Hash))
 	require.NoError(t, err)
 	require.NotNil(t, cancelReceipt)
 	require.Equal(t, geth_types.ReceiptStatusSuccessful, cancelReceipt.Status)
@@ -738,13 +738,13 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 
 	// Execute the cancelProposal
 	for i := range cancelProposal.Operations {
-		txHash, err = cancelExecutable.Execute(ctx, i)
+		tx, err = cancelExecutable.Execute(ctx, i)
 		require.NoError(t, err)
 		require.NotEmpty(t, txHash)
 		sim.Backend.Commit()
 
 		// Wait for the transaction to be mined
-		cancelReceipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+		cancelReceipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(tx.Hash))
 		require.NoError(t, err)
 		require.NotNil(t, cancelReceipt)
 		require.Equal(t, geth_types.ReceiptStatusSuccessful, cancelReceipt.Status)

@@ -26,22 +26,22 @@ func (_m *Executor) EXPECT() *Executor_Expecter {
 }
 
 // ExecuteOperation provides a mock function with given fields: ctx, metadata, nonce, proof, op
-func (_m *Executor) ExecuteOperation(ctx context.Context, metadata types.ChainMetadata, nonce uint32, proof []common.Hash, op types.Operation) (types.TransactionResult, error) {
+func (_m *Executor) ExecuteOperation(ctx context.Context, metadata types.ChainMetadata, nonce uint32, proof []common.Hash, op types.Operation) (types.NativeTransaction, error) {
 	ret := _m.Called(ctx, metadata, nonce, proof, op)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ExecuteOperation")
 	}
 
-	var r0 types.TransactionResult
+	var r0 types.NativeTransaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) (types.TransactionResult, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) (types.NativeTransaction, error)); ok {
 		return rf(ctx, metadata, nonce, proof, op)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) types.TransactionResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) types.NativeTransaction); ok {
 		r0 = rf(ctx, metadata, nonce, proof, op)
 	} else {
-		r0 = ret.Get(0).(types.TransactionResult)
+		r0 = ret.Get(0).(types.NativeTransaction)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) error); ok {
@@ -75,12 +75,12 @@ func (_c *Executor_ExecuteOperation_Call) Run(run func(ctx context.Context, meta
 	return _c
 }
 
-func (_c *Executor_ExecuteOperation_Call) Return(_a0 types.TransactionResult, _a1 error) *Executor_ExecuteOperation_Call {
+func (_c *Executor_ExecuteOperation_Call) Return(_a0 types.NativeTransaction, _a1 error) *Executor_ExecuteOperation_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Executor_ExecuteOperation_Call) RunAndReturn(run func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) (types.TransactionResult, error)) *Executor_ExecuteOperation_Call {
+func (_c *Executor_ExecuteOperation_Call) RunAndReturn(run func(context.Context, types.ChainMetadata, uint32, []common.Hash, types.Operation) (types.NativeTransaction, error)) *Executor_ExecuteOperation_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -443,22 +443,22 @@ func (_c *Executor_HashOperation_Call) RunAndReturn(run func(uint32, types.Chain
 }
 
 // SetRoot provides a mock function with given fields: ctx, metadata, proof, root, validUntil, sortedSignatures
-func (_m *Executor) SetRoot(ctx context.Context, metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature) (types.TransactionResult, error) {
+func (_m *Executor) SetRoot(ctx context.Context, metadata types.ChainMetadata, proof []common.Hash, root [32]byte, validUntil uint32, sortedSignatures []types.Signature) (types.NativeTransaction, error) {
 	ret := _m.Called(ctx, metadata, proof, root, validUntil, sortedSignatures)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetRoot")
 	}
 
-	var r0 types.TransactionResult
+	var r0 types.NativeTransaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) (types.TransactionResult, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) (types.NativeTransaction, error)); ok {
 		return rf(ctx, metadata, proof, root, validUntil, sortedSignatures)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) types.TransactionResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) types.NativeTransaction); ok {
 		r0 = rf(ctx, metadata, proof, root, validUntil, sortedSignatures)
 	} else {
-		r0 = ret.Get(0).(types.TransactionResult)
+		r0 = ret.Get(0).(types.NativeTransaction)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) error); ok {
@@ -493,12 +493,12 @@ func (_c *Executor_SetRoot_Call) Run(run func(ctx context.Context, metadata type
 	return _c
 }
 
-func (_c *Executor_SetRoot_Call) Return(_a0 types.TransactionResult, _a1 error) *Executor_SetRoot_Call {
+func (_c *Executor_SetRoot_Call) Return(_a0 types.NativeTransaction, _a1 error) *Executor_SetRoot_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Executor_SetRoot_Call) RunAndReturn(run func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) (types.TransactionResult, error)) *Executor_SetRoot_Call {
+func (_c *Executor_SetRoot_Call) RunAndReturn(run func(context.Context, types.ChainMetadata, []common.Hash, [32]byte, uint32, []types.Signature) (types.NativeTransaction, error)) *Executor_SetRoot_Call {
 	_c.Call.Return(run)
 	return _c
 }

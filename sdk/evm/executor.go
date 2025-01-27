@@ -33,19 +33,19 @@ func (e *Executor) ExecuteOperation(
 	nonce uint32,
 	proof []common.Hash,
 	op types.Operation,
-) (types.TransactionResult, error) {
+) (types.NativeTransaction, error) {
 	if e.Encoder == nil {
-		return types.TransactionResult{}, errors.New("Executor was created without an encoder")
+		return types.NativeTransaction{}, errors.New("Executor was created without an encoder")
 	}
 
 	bindOp, err := e.ToGethOperation(nonce, metadata, op)
 	if err != nil {
-		return types.TransactionResult{}, err
+		return types.NativeTransaction{}, err
 	}
 
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
-		return types.TransactionResult{}, err
+		return types.NativeTransaction{}, err
 	}
 
 	opts := *e.auth
@@ -53,10 +53,10 @@ func (e *Executor) ExecuteOperation(
 
 	tx, err := mcmsC.Execute(&opts, bindOp, transformHashes(proof))
 	if err != nil {
-		return types.TransactionResult{}, err
+		return types.NativeTransaction{}, err
 	}
 
-	return types.TransactionResult{
+	return types.NativeTransaction{
 		Hash: tx.Hash().Hex(),
 		Tx:   tx,
 	}, err
@@ -69,19 +69,19 @@ func (e *Executor) SetRoot(
 	root [32]byte,
 	validUntil uint32,
 	sortedSignatures []types.Signature,
-) (types.TransactionResult, error) {
+) (types.NativeTransaction, error) {
 	if e.Encoder == nil {
-		return types.TransactionResult{}, errors.New("Executor was created without an encoder")
+		return types.NativeTransaction{}, errors.New("Executor was created without an encoder")
 	}
 
 	bindMeta, err := e.ToGethRootMetadata(metadata)
 	if err != nil {
-		return types.TransactionResult{}, err
+		return types.NativeTransaction{}, err
 	}
 
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
-		return types.TransactionResult{}, err
+		return types.NativeTransaction{}, err
 	}
 
 	opts := *e.auth
@@ -96,10 +96,10 @@ func (e *Executor) SetRoot(
 		transformSignatures(sortedSignatures),
 	)
 	if err != nil {
-		return types.TransactionResult{}, err
+		return types.NativeTransaction{}, err
 	}
 
-	return types.TransactionResult{
+	return types.NativeTransaction{
 		Hash: tx.Hash().Hex(),
 		Tx:   tx,
 	}, err

@@ -65,10 +65,10 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 // Includes an optional callProxyAddress to execute the calls through a proxy.
 // If the callProxyAddress is empty string, the calls will be executed directly
 // to the timelock.
-func (t *TimelockExecutable) Execute(ctx context.Context, index int, callProxyAddress string) (types.TransactionResult, error) {
+func (t *TimelockExecutable) Execute(ctx context.Context, index int, callProxyAddress string) (types.NativeTransaction, error) {
 	err := t.setPredecessors(ctx)
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("unable to set predecessors: %w", err)
+		return types.NativeTransaction{}, fmt.Errorf("unable to set predecessors: %w", err)
 	}
 
 	op := t.proposal.Operations[index]

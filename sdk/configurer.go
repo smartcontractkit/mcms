@@ -7,5 +7,5 @@ import (
 )
 
 type Configurer interface {
-	SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error)
+	SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (types.NativeTransaction, error)
 }

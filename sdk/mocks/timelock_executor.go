@@ -26,22 +26,22 @@ func (_m *TimelockExecutor) EXPECT() *TimelockExecutor_Expecter {
 }
 
 // Execute provides a mock function with given fields: ctx, bop, timelockAddress, predecessor, salt
-func (_m *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash) (types.TransactionResult, error) {
+func (_m *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash) (types.NativeTransaction, error) {
 	ret := _m.Called(ctx, bop, timelockAddress, predecessor, salt)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Execute")
 	}
 
-	var r0 types.TransactionResult
+	var r0 types.NativeTransaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) (types.TransactionResult, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) (types.NativeTransaction, error)); ok {
 		return rf(ctx, bop, timelockAddress, predecessor, salt)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) types.TransactionResult); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) types.NativeTransaction); ok {
 		r0 = rf(ctx, bop, timelockAddress, predecessor, salt)
 	} else {
-		r0 = ret.Get(0).(types.TransactionResult)
+		r0 = ret.Get(0).(types.NativeTransaction)
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) error); ok {
@@ -75,12 +75,12 @@ func (_c *TimelockExecutor_Execute_Call) Run(run func(ctx context.Context, bop t
 	return _c
 }
 
-func (_c *TimelockExecutor_Execute_Call) Return(_a0 types.TransactionResult, _a1 error) *TimelockExecutor_Execute_Call {
+func (_c *TimelockExecutor_Execute_Call) Return(_a0 types.NativeTransaction, _a1 error) *TimelockExecutor_Execute_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *TimelockExecutor_Execute_Call) RunAndReturn(run func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) (types.TransactionResult, error)) *TimelockExecutor_Execute_Call {
+func (_c *TimelockExecutor_Execute_Call) RunAndReturn(run func(context.Context, types.BatchOperation, string, common.Hash, common.Hash) (types.NativeTransaction, error)) *TimelockExecutor_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }
