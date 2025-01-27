@@ -40,6 +40,7 @@ func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInt
 
 		// Ensure the file is closed when done
 		defer file.Close()
+
 		return NewProposal(file)
 	case types.KindTimelockProposal:
 		// Open the file
@@ -50,6 +51,7 @@ func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInt
 
 		// Ensure the file is closed when done
 		defer file.Close()
+
 		return NewTimelockProposal(file)
 	default:
 		return nil, errors.New("unknown proposal type")
