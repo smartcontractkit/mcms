@@ -32,6 +32,7 @@ type BaseProposal struct {
 	OverridePreviousRoot bool                                        `json:"overridePreviousRoot"`
 	ChainMetadata        map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata" validate:"required,min=1"`
 	Description          string                                      `json:"description"`
+	SaltOverride         *common.Hash                                `json:"salt,omitempty"`
 
 	// This field is passed to SDK implementations to indicate whether the proposal is being run
 	// against a simulated environment. This is only used for testing purposes.
@@ -48,6 +49,12 @@ func (p *BaseProposal) AppendSignature(signature types.Signature) {
 // on the same chain across two different proposals. Predecessor protects against
 // duplicates within the same proposal
 func (p *BaseProposal) Salt() [32]byte {
+	if p.SaltOverride != nil {
+		return *p.SaltOverride
+	}
+
+	// If the proposal doesn't have a salt, we create one from the
+	// valid until timestamp.
 	var salt [32]byte
 	binary.BigEndian.PutUint32(salt[:], p.ValidUntil)
 
