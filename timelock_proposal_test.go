@@ -587,3 +587,56 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 	assert.Len(t, mcmsProposal.Operations, 1)
 	assert.Len(t, predecessors, 2)
 }
+
+func TestProposal_WithSaltOverride(t *testing.T) {
+	t.Parallel()
+	builder := NewTimelockProposalBuilder()
+	builder.SetVersion("v1").
+		SetAction(types.TimelockActionSchedule).
+		SetValidUntil(2552083725).
+		AddTimelockAddress(chaintest.Chain1Selector, "0x01").
+		AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
+		AddOperation(types.BatchOperation{
+			ChainSelector: chaintest.Chain1Selector,
+			Transactions: []types.Transaction{
+				types.Transaction{
+					To:               TestAddress,
+					AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+					Data:             common.Hex2Bytes("0x1"),
+				},
+			},
+		})
+	proposal, err := builder.Build()
+	require.NoError(t, err)
+	salt := common.HexToHash("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+	proposal.SaltOverride = &salt
+	assert.Equal(t, salt, *proposal.SaltOverride)
+	saltBytes := proposal.Salt()
+	assert.Equal(t, salt, common.BytesToHash(saltBytes[:]))
+}
+
+func TestProposal_WithoutSaltOverride(t *testing.T) {
+	t.Parallel()
+	builder := NewTimelockProposalBuilder()
+	builder.SetVersion("v1").
+		SetAction(types.TimelockActionSchedule).
+		SetValidUntil(2552083725).
+		AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
+		AddTimelockAddress(chaintest.Chain1Selector, "0x01").
+		AddOperation(types.BatchOperation{
+			ChainSelector: chaintest.Chain1Selector,
+			Transactions: []types.Transaction{
+				types.Transaction{
+					To:               TestAddress,
+					AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+					Data:             common.Hex2Bytes("0x1"),
+				},
+			},
+		})
+	proposal, err := builder.Build()
+	require.NoError(t, err)
+	assert.Nil(t, proposal.SaltOverride)
+	saltBytes := proposal.Salt()
+	assert.NotNil(t, saltBytes)
+	assert.NotEqual(t, common.Hash{}, saltBytes)
+}

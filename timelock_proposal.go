@@ -2,6 +2,7 @@ package mcms
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -24,6 +25,7 @@ type TimelockProposal struct {
 	Delay             types.Duration                 `json:"delay"`
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
 	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1,dive"`
+	SaltOverride      *common.Hash                   `json:"salt,omitempty"`
 }
 
 // NewTimelockProposal unmarshal data from the reader to JSON and returns a new TimelockProposal.
@@ -45,6 +47,23 @@ func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
 	enc.SetIndent("", "  ")
 
 	return enc.Encode(p)
+}
+
+// Salt returns a unique salt for the proposal.
+// We need the salt to be unique in case you use an identical operation again
+// on the same chain across two different proposals. Predecessor protects against
+// duplicates within the same proposal
+func (p *TimelockProposal) Salt() [32]byte {
+	if p.SaltOverride != nil {
+		return *p.SaltOverride
+	}
+
+	// If the proposal doesn't have a salt, we create one from the
+	// valid until timestamp.
+	var salt [32]byte
+	binary.BigEndian.PutUint32(salt[:], p.ValidUntil)
+
+	return salt
 }
 
 func (m *TimelockProposal) Validate() error {
@@ -114,7 +133,7 @@ func (m *TimelockProposal) Convert(
 		}
 
 		convertedOps, operationID, err := converter.ConvertBatchToChainOperations(
-			ctx, bop, timelockAddress, m.Delay, m.Action, predecessor, baseProposal.Salt(),
+			ctx, bop, timelockAddress, m.Delay, m.Action, predecessor, m.Salt(),
 		)
 		if err != nil {
 			return Proposal{}, nil, err
