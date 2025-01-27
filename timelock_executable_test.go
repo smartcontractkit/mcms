@@ -401,7 +401,9 @@ func scheduleGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles [
 }
 
 func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
-	sim, mcmC, timelockC, proposal, targetRoles := scheduleGrantRolesProposal(t, ctx, targetRoles, types.MustParseDuration("5s"))
+	t.Helper()
+
+	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, ctx, targetRoles, types.MustParseDuration("5s"))
 
 	converters := map[types.ChainSelector]sdk.TimelockConverter{
 		chaintest.Chain1Selector: &evm.TimelockConverter{},
@@ -551,7 +553,9 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 }
 
 func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
-	sim, mcmC, timelockC, proposal, targetRoles := scheduleGrantRolesProposal(t, ctx, targetRoles, types.MustParseDuration("5m"))
+	t.Helper()
+
+	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, ctx, targetRoles, types.MustParseDuration("5m"))
 
 	converters := map[types.ChainSelector]sdk.TimelockConverter{
 		chaintest.Chain1Selector: &evm.TimelockConverter{},
@@ -665,7 +669,6 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	err = tExecutable.IsReady(ctx)
 	require.Error(t, err)
 
-	//// BREAK: Cancel the proposal here
 	// Construct cancel proposal
 	cancelProposal := proposal
 	cancelProposal.ChainMetadata[chaintest.Chain1Selector] = types.ChainMetadata{
