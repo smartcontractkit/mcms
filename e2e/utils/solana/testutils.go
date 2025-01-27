@@ -23,7 +23,7 @@ func FundAccounts(
 
 	var sigs = make([]solana.Signature, 0, len(accounts))
 	for _, v := range accounts {
-		sig, err := solanaGoClient.RequestAirdrop(ctx, v, solAmount*solana.LAMPORTS_PER_SOL, rpc.CommitmentFinalized)
+		sig, err := solanaGoClient.RequestAirdrop(ctx, v, solAmount*solana.LAMPORTS_PER_SOL, rpc.CommitmentConfirmed)
 		require.NoError(t, err)
 		sigs = append(sigs, sig)
 	}
@@ -47,7 +47,7 @@ func FundAccounts(
 
 			unconfirmedTxCount := 0
 			for _, res := range statusRes.Value {
-				if res == nil || res.ConfirmationStatus == rpc.ConfirmationStatusProcessed || res.ConfirmationStatus == rpc.ConfirmationStatusConfirmed {
+				if res == nil || res.ConfirmationStatus == rpc.ConfirmationStatusProcessed {
 					unconfirmedTxCount++
 				}
 			}
