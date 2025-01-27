@@ -21,7 +21,25 @@ import (
 )
 
 var (
-	TestAddress = "0x1234567890abcdef"
+	TestAddress   = "0x1234567890abcdef"
+	ValidProposal = `{
+		"version": "v1",
+		"kind": "Proposal",
+		"validUntil": 2004259681,
+		"chainMetadata": {
+			"3379446385462418246": {}
+		},
+		"operations": [
+			{
+				"chainSelector": 3379446385462418246,
+				"transaction": {
+					"to": "0xsomeaddress",
+					"data": "EjM=",
+					"additionalFields": {"value": 0}
+				}
+			}
+		]
+	}`
 )
 
 func Test_BaseProposal_AppendSignature(t *testing.T) {
@@ -49,24 +67,7 @@ func Test_NewProposal(t *testing.T) {
 	}{
 		{
 			name: "success: initializes a proposal from an io.Reader",
-			give: `{
-				"version": "v1",
-				"kind": "Proposal",
-				"validUntil": 2004259681,
-				"chainMetadata": {
-					"3379446385462418246": {}
-				},
-				"operations": [
-					{
-						"chainSelector": 3379446385462418246,
-						"transaction": {
-							"to": "0xsomeaddress",
-							"data": "EjM=",
-							"additionalFields": {"value": 0}
-						}
-					}
-				]
-			}`,
+			give: ValidProposal,
 			want: Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "v1",
@@ -214,22 +215,26 @@ func Test_WriteProposal(t *testing.T) {
 
 func TestLoadProposal(t *testing.T) {
 	t.Run("valid file path with KindProposal", func(t *testing.T) {
-		filePath := "testdata/valid_proposal.txt"
-		os.WriteFile(filePath, []byte("sample data"), 0644)
-		defer os.Remove(filePath)
+		tempFile, err := os.CreateTemp("", "valid_proposal.txt")
+		require.NoError(t, err)
 
-		proposal, err := LoadProposal(types.KindProposal, filePath)
+		os.WriteFile(tempFile.Name(), []byte(ValidProposal), 0644)
+		defer os.Remove(tempFile.Name())
+
+		proposal, err := LoadProposal(types.KindProposal, tempFile.Name())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, proposal)
 	})
 
 	t.Run("valid file path with KindTimelockProposal", func(t *testing.T) {
-		filePath := "testdata/valid_timelock_proposal.txt"
-		os.WriteFile(filePath, []byte("sample data"), 0644)
-		defer os.Remove(filePath)
+		tempFile, err := os.CreateTemp("", "valid_timelock_proposal.txt")
+		require.NoError(t, err)
 
-		proposal, err := LoadProposal(types.KindTimelockProposal, filePath)
+		os.WriteFile(tempFile.Name(), []byte(ValidTimelockProposal), 0644)
+		defer os.Remove(tempFile.Name())
+
+		proposal, err := LoadProposal(types.KindTimelockProposal, tempFile.Name())
 
 		assert.NoError(t, err)
 		assert.NotNil(t, proposal)
@@ -237,7 +242,7 @@ func TestLoadProposal(t *testing.T) {
 
 	t.Run("unknown proposal type", func(t *testing.T) {
 		filePath := "testdata/valid_proposal.txt"
-		os.WriteFile(filePath, []byte("sample data"), 0644)
+		os.WriteFile(filePath, []byte(ValidProposal), 0644)
 		defer os.Remove(filePath)
 
 		proposal, err := LoadProposal(types.ProposalKind("unknown"), filePath)

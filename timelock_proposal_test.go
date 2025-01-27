@@ -19,6 +19,37 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+var ValidTimelockProposal = `{
+	"version": "v1",
+	"kind": "TimelockProposal",
+	"validUntil": 2004259681,
+	"chainMetadata": {
+		"16015286601757825753": {
+			"mcmAddress": "0x0000000000000000000000000000000000000000",
+			"startingOpCount": 0
+		}
+	},
+	"description": "Test proposal",
+	"overridePreviousRoot": false,
+	"action": "schedule",
+	"delay": "1h",
+	"timelockAddresses": {
+		"16015286601757825753": "0x01"
+	},
+	"operations": [
+		{
+			"chainSelector": 16015286601757825753,
+			"transactions": [
+				{
+					"to": "0x0000000000000000000000000000000000000000",
+					"additionalFields": {"value": 0},
+					"data": "ZGF0YQ=="
+				}
+			]
+		}
+	]
+}`
+
 func Test_NewTimelockProposal(t *testing.T) {
 	t.Parallel()
 
@@ -30,36 +61,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 	}{
 		{
 			name: "success: initializes a proposal from an io.Reader",
-			give: `{
-				"version": "v1",
-				"kind": "TimelockProposal",
-				"validUntil": 2004259681,
-				"chainMetadata": {
-					"16015286601757825753": {
-						"mcmAddress": "0x0000000000000000000000000000000000000000",
-						"startingOpCount": 0
-					}
-				},
-				"description": "Test proposal",
-				"overridePreviousRoot": false,
-				"action": "schedule",
-				"delay": "1h",
-				"timelockAddresses": {
-					"16015286601757825753": "0x01"
-				},
-				"operations": [
-					{
-						"chainSelector": 16015286601757825753,
-						"transactions": [
-							{
-								"to": "0x0000000000000000000000000000000000000000",
-								"additionalFields": {"value": 0},
-								"data": "ZGF0YQ=="
-							}
-						]
-					}
-				]
-			}`,
+			give: ValidTimelockProposal,
 			want: TimelockProposal{
 				BaseProposal: BaseProposal{
 					Version:     "v1",
