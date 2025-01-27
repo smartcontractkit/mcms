@@ -735,3 +735,48 @@ func Test_Proposal_TransactionNonces(t *testing.T) {
 		})
 	}
 }
+
+func TestProposal_WithSaltOverride(t *testing.T) {
+	t.Parallel()
+	builder := NewProposalBuilder()
+	builder.SetVersion("v1").
+		SetValidUntil(2552083725).
+		AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
+		AddOperation(types.Operation{
+			ChainSelector: chaintest.Chain1Selector,
+			Transaction: types.Transaction{
+				To:               TestAddress,
+				AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+				Data:             common.Hex2Bytes("0x1"),
+			},
+		})
+	proposal, err := builder.Build()
+	require.NoError(t, err)
+	salt := common.HexToHash("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+	proposal.SaltOverride = &salt
+	assert.Equal(t, salt, *proposal.SaltOverride)
+	saltBytes := proposal.Salt()
+	assert.Equal(t, salt, common.BytesToHash(saltBytes[:]))
+}
+
+func TestProposal_WithoutSaltOverride(t *testing.T) {
+	t.Parallel()
+	builder := NewProposalBuilder()
+	builder.SetVersion("v1").
+		SetValidUntil(2552083725).
+		AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
+		AddOperation(types.Operation{
+			ChainSelector: chaintest.Chain1Selector,
+			Transaction: types.Transaction{
+				To:               TestAddress,
+				AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+				Data:             common.Hex2Bytes("0x1"),
+			},
+		})
+	proposal, err := builder.Build()
+	require.NoError(t, err)
+	assert.Nil(t, proposal.SaltOverride)
+	saltBytes := proposal.Salt()
+	assert.NotNil(t, saltBytes)
+	assert.NotEqual(t, common.Hash{}, saltBytes)
+}
