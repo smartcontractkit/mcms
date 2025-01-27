@@ -232,7 +232,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 			timelockExecutable, err := NewTimelockExecutable(proposal, executors)
 			require.NoError(t, err)
 
-			got, err := timelockExecutable.Execute(ctx, tt.index)
+			got, err := timelockExecutable.Execute(ctx, tt.index, "")
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
@@ -526,7 +526,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	require.NoError(t, err)
 
 	// Execute the proposal
-	_, err = tExecutable.Execute(ctx, 0)
+	_, err = tExecutable.Execute(ctx, 0, "")
 	require.NoError(t, err)
 	sim.Backend.Commit()
 
