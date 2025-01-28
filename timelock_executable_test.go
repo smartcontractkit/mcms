@@ -621,8 +621,9 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 
 	// Execute the proposal
 	var receipt *geth_types.Receipt
+	var tx types.TransactionResult
 	for i := range proposal.Operations {
-		tx, err := executable.Execute(ctx, i)
+		tx, err = executable.Execute(ctx, i)
 		require.NoError(t, err)
 		require.NotEmpty(t, txHash)
 		sim.Backend.Commit()
@@ -722,7 +723,7 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	tx, err := cancelExecutable.SetRoot(ctx, chaintest.Chain1Selector)
+	tx, err = cancelExecutable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
