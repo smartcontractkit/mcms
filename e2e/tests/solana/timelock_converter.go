@@ -416,14 +416,14 @@ func (s *SolanaTestSuite) executeTimelockProposal(
 	timelockExecutable, err := mcms.NewTimelockExecutable(timelockProposal, timelockExecutors)
 	s.Require().NoError(err)
 
-	signature, err := timelockExecutable.Execute(ctx, 0, "")
+	tx, err := timelockExecutable.Execute(ctx, 0, "")
 	s.Require().NoError(err)
-	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, signature), "Called `empty`")
-	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, signature), "Called `u8_instruction_data`")
+	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `empty`")
+	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `u8_instruction_data`")
 
-	signature, err = timelockExecutable.Execute(ctx, 1, "")
+	tx, err = timelockExecutable.Execute(ctx, 1, "")
 	s.Require().NoError(err)
-	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, signature), "Called `account_mut`")
+	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `account_mut`")
 }
 
 func newRandomAccount(t *testing.T) (solana.PrivateKey, solana.PublicKey) { //nolint:unused
