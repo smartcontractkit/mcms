@@ -105,6 +105,7 @@ func (m *TimelockProposal) Convert(
 	converters map[types.ChainSelector]sdk.TimelockConverter,
 ) (Proposal, []common.Hash, error) {
 	baseProposal := m.BaseProposal
+	baseProposal.Kind = types.KindProposal
 
 	// Start predecessor map with all chains pointing to the zero hash
 	predecessors := make([]common.Hash, len(m.Operations)+1)
@@ -132,8 +133,13 @@ func (m *TimelockProposal) Convert(
 			return Proposal{}, []common.Hash{}, fmt.Errorf("unable to find converter for chain selector: %d", bop.ChainSelector)
 		}
 
+		chainMetadata, ok := m.ChainMetadata[bop.ChainSelector]
+		if !ok {
+			return Proposal{}, []common.Hash{}, fmt.Errorf("unable to find chain metadata for chain selector: %d", bop.ChainSelector)
+		}
+
 		convertedOps, operationID, err := converter.ConvertBatchToChainOperations(
-			ctx, bop, timelockAddress, m.Delay, m.Action, predecessor, m.Salt(),
+			ctx, bop, timelockAddress, chainMetadata.MCMAddress, m.Delay, m.Action, predecessor, m.Salt(),
 		)
 		if err != nil {
 			return Proposal{}, nil, err
