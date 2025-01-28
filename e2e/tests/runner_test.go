@@ -6,6 +6,7 @@ package e2e_test
 import (
 	"testing"
 
+	"github.com/smartcontractkit/mcms/e2e/tests/aptos"
 	"github.com/stretchr/testify/suite"
 
 	evme2e "github.com/smartcontractkit/mcms/e2e/tests/evm"
@@ -23,4 +24,8 @@ func TestEVMSuite(t *testing.T) {
 //go:generate ./solana/compile-mcm-contracts.sh
 func TestSolanaSuite(t *testing.T) {
 	suite.Run(t, new(solanae2e.SolanaTestSuite))
+}
+
+func TestAptosSuite(t *testing.T) {
+	suite.Run(t, new(aptos.AptosTestSuite))
 }

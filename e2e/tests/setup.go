@@ -2,6 +2,7 @@ package e2e
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -9,10 +10,13 @@ import (
 	"sync"
 	"testing"
 
+	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/ws"
 	"github.com/joho/godotenv"
+	"github.com/stretchr/testify/require"
+
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 )
@@ -29,6 +33,7 @@ var (
 type Config struct {
 	BlockchainA *blockchain.Input `toml:"evm_config"`
 	SolanaChain *blockchain.Input `toml:"solana_config"`
+	AptosChain  *blockchain.Input `toml:"aptos_config"`
 	Settings    struct {
 		PrivateKeys []string `toml:"private_keys"`
 	} `toml:"settings"`
@@ -39,8 +44,10 @@ type TestSetup struct {
 	Client           *ethclient.Client
 	SolanaClient     *rpc.Client
 	SolanaWSClient   *ws.Client
+	AptosRPCClient   *aptos.NodeClient
 	Blockchain       *blockchain.Output
 	SolanaBlockchain *blockchain.Output
+	AptosBlockchain  *blockchain.Output
 	Config
 }
 
@@ -124,12 +131,34 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			}
 		}
 
+		var (
+			aptosClient           *aptos.NodeClient
+			aptosBlockchainOutput *blockchain.Output
+		)
+		if in.AptosChain != nil {
+			aptosBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.AptosChain)
+			require.NoError(t, err, "Failed to initialize Aptos blockchain")
+
+			nodeUrl := fmt.Sprintf("%v/v1", aptosBlockchainOutput.Nodes[0].HostHTTPUrl)
+
+			aptosClient, err = aptos.NewNodeClient(nodeUrl, 0)
+			require.NoError(t, err, "Failed to initialize Aptos RPC client")
+
+			// Test liveness, will also fetch ChainID
+			t.Logf("Initialized Aptos RPC client @ %s", nodeUrl)
+			info, err := aptosClient.Info()
+			require.NoError(t, err, "Failed to get Aptos node info")
+			require.NotZero(t, info.LedgerVersionStr)
+		}
+
 		sharedSetup = &TestSetup{
 			Client:           ethClient,
 			SolanaClient:     solanaClient,
 			SolanaWSClient:   solanaWsClient,
+			AptosRPCClient:   aptosClient,
 			Blockchain:       ethBlockChainOutput,
 			SolanaBlockchain: solanaBlockChainOutput,
+			AptosBlockchain:  aptosBlockchainOutput,
 			Config:           *in,
 		}
 	})

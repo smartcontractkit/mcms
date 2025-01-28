@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -36,6 +37,12 @@ func newEncoder(
 			txCount,
 			overridePreviousRoot,
 			// isSim,
+		)
+	case cselectors.FamilyAptos:
+		encoder = aptos.NewEncoder(
+			csel,
+			txCount,
+			overridePreviousRoot,
 		)
 	}
 
