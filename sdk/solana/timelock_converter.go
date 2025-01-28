@@ -255,7 +255,7 @@ func scheduleBatchInstructions(
 	instruction, err := bindings.NewInitializeOperationInstruction(pdaSeed, operationID, predecessor, salt,
 		numInstructions, operationPDA, configPDA, mcmSignerPDA, solana.SystemProgramID).ValidateAndBuild()
 	if err != nil {
-		return []solana.Instruction{}, fmt.Errorf("unable to build IniitializeOperation instruction: %w", err)
+		return []solana.Instruction{}, fmt.Errorf("unable to build InitializeOperation instruction: %w", err)
 	}
 	instructions = append(instructions, instruction)
 
