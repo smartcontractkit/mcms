@@ -87,8 +87,10 @@ func Test_ConfigTransformer_ToChainConfig(t *testing.T) {
 		signer2 = common.HexToAddress("0x2")
 	)
 	testOwner, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
 	proposedOwner, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
+
 	tests := []struct {
 		name             string
 		give             types.Config
@@ -127,10 +129,12 @@ func Test_ConfigTransformer_ToChainConfig(t *testing.T) {
 				},
 			},
 			assert: func(t *testing.T, got bindings.MultisigConfig) {
+				t.Helper()
+
 				assert.Equal(t, [32]uint8{1, 1}, got.GroupQuorums)
 				assert.Equal(t, [32]uint8{0, 0}, got.GroupParents)
-				assert.Equal(t, got.ChainId, uint64(0))
-				assert.Equal(t, got.MultisigId, [32]uint8{})
+				assert.Equal(t, uint64(0), got.ChainId)
+				assert.Equal(t, [32]uint8{}, got.MultisigId)
 				assert.Equal(t, got.Owner, testOwner.PublicKey())
 				assert.Equal(t, got.ProposedOwner, proposedOwner.PublicKey())
 			},
