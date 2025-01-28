@@ -7,6 +7,7 @@ import (
 	evmCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 
@@ -94,6 +95,7 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 
 	return types.TransactionResult{
 		Hash:           signature,
+		ChainFamily:    chain_selectors.FamilySolana,
 		RawTransaction: setConfigInstruction,
 	}, nil
 }

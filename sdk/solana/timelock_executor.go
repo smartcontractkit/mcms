@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -94,6 +95,8 @@ func (e *TimelockExecutor) Execute(
 	}
 
 	return types.TransactionResult{
-		Hash: signature,
+		Hash:           signature,
+		ChainFamily:    chain_selectors.FamilySolana,
+		RawTransaction: instruction,
 	}, nil
 }

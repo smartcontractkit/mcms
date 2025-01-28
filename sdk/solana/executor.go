@@ -11,6 +11,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 
@@ -112,6 +113,7 @@ func (e *Executor) ExecuteOperation(
 
 	return types.TransactionResult{
 		Hash:           signature,
+		ChainFamily:    chain_selectors.FamilySolana,
 		RawTransaction: ix,
 	}, nil
 }
@@ -184,6 +186,7 @@ func (e *Executor) SetRoot(
 
 	return types.TransactionResult{
 		Hash:           signature,
+		ChainFamily:    chain_selectors.FamilySolana,
 		RawTransaction: setRootInstruction,
 	}, nil
 }
