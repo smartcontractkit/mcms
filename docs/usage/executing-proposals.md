@@ -61,7 +61,7 @@ func main() {
     types.ChainSelector(evmSelector):    evmExecutor,
     types.ChainSelector(solanaSelector): solanaExecutor,
   }
-  // Step 3: Create the chain MCMS proposal evmExecutor
+  // Step 3: Create the chain MCMS proposal  executor
   executable, err := mcms.NewExecutable(proposal, executorsMap)
   if err != nil {
     log.Fatalf("Error opening proposal file: %v", err)
