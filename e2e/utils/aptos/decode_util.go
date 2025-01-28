@@ -60,7 +60,7 @@ func DecodeAptosJsonValue(from []any, to ...any) error {
 	return nil
 }
 
-func hexStringHook(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+func hexStringHook(f reflect.Type, t reflect.Type, data any) (any, error) {
 	if f.Kind() != reflect.String {
 		return data, nil
 	}
@@ -126,7 +126,7 @@ func hexStringHook(f reflect.Type, t reflect.Type, data interface{}) (interface{
 	return nil, fmt.Errorf("unsupported target type for hex string conversion: %v (%v) (from: %v)", t.Kind(), t.String(), str)
 }
 
-func numericStringHook(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+func numericStringHook(f reflect.Type, t reflect.Type, data any) (any, error) {
 	if f.Kind() != reflect.String {
 		return data, nil
 	}
@@ -181,7 +181,7 @@ func numericStringHook(f reflect.Type, t reflect.Type, data interface{}) (interf
 	return nil, fmt.Errorf("unsupported target type for numeric string conversion: %v", t.Kind())
 }
 
-func booleanHook(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+func booleanHook(f reflect.Type, t reflect.Type, data any) (any, error) {
 	if f.Kind() != reflect.Bool {
 		return data, nil
 	}
@@ -213,7 +213,7 @@ func booleanHook(f reflect.Type, t reflect.Type, data interface{}) (interface{},
 	return nil, fmt.Errorf("unsupported target type for boolean conversion: %v", t.Kind())
 }
 
-func arrayHook(f reflect.Type, t reflect.Type, data interface{}) (interface{}, error) {
+func arrayHook(f reflect.Type, t reflect.Type, data any) (any, error) {
 	fKind := f.Kind()
 	if fKind != reflect.Slice && fKind != reflect.Array {
 		return data, nil
