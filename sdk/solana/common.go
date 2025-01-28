@@ -95,14 +95,18 @@ type instructionBuilder[I solana.Instruction] interface {
 	ValidateAndBuild() (I, error)
 }
 
-// sendAndConfirmBuiltIx contains the common logic for sending and confirming instructions.
-func sendAndConfirmBuiltIx(
+func sendAndConfirm[I solana.Instruction](
 	ctx context.Context,
 	client *rpc.Client,
 	auth solana.PrivateKey,
-	builtInstruction solana.Instruction,
+	builder instructionBuilder[I],
 	commitmentType rpc.CommitmentType,
 ) (string, error) {
+	builtInstruction, err := builder.ValidateAndBuild()
+	if err != nil {
+		return "", fmt.Errorf("unable to validate and build instruction: %w", err)
+	}
+
 	result, err := solanaCommon.SendAndConfirm(ctx, client, []solana.Instruction{builtInstruction}, auth, commitmentType)
 	if err != nil {
 		return "", fmt.Errorf("unable to send instruction: %w", err)
@@ -117,23 +121,6 @@ func sendAndConfirmBuiltIx(
 	}
 
 	return transaction.Signatures[0].String(), nil
-}
-
-// sendAndConfirm handles general instructions.
-func sendAndConfirm[I solana.Instruction, B instructionBuilder[I]](
-	ctx context.Context,
-	client *rpc.Client,
-	auth solana.PrivateKey,
-	builder B,
-	commitmentType rpc.CommitmentType,
-) (string, error) {
-	builtInstruction, err := builder.ValidateAndBuild()
-	if err != nil {
-		return "", fmt.Errorf("unable to validate and build instruction: %w", err)
-	}
-
-	// Pass the built instruction to the shared function
-	return sendAndConfirmBuiltIx(ctx, client, auth, builtInstruction, commitmentType)
 }
 
 func chunkIndexes(numItems int, chunkSize int) [][2]int {

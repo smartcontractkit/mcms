@@ -75,7 +75,7 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 	s.Require().NoError(err)
 	accounts := mintIx.Accounts()
 	accounts = append(accounts, &solana.AccountMeta{PublicKey: solana.Token2022ProgramID, IsSigner: false, IsWritable: false})
-	solanaTx, err := mcmsSolana.NewTransaction(solana.Token2022ProgramID.String(), ixData, accounts, "Token", []string{})
+	solanaTx, err := mcmsSolana.NewTransaction(solana.Token2022ProgramID.String(), ixData, nil, accounts, "Token", []string{})
 	s.Require().NoError(err)
 	batchOp := types.BatchOperation{
 		Transactions:  []types.Transaction{solanaTx},
@@ -178,7 +178,8 @@ func (s *SolanaTestSuite) scheduleMintTx(
 		IsWritable: false,
 	})
 	opInstructions := []timelock.InstructionData{{Data: ixData, ProgramId: solana.Token2022ProgramID, Accounts: accounts}}
-	operationID = mcmsSolana.HashOperation(opInstructions, predecessor, salt)
+	operationID, err = mcmsSolana.HashOperation(opInstructions, predecessor, salt)
+	s.Require().NoError(err)
 	operationPDA, err := mcmsSolana.FindTimelockOperationPDA(s.TimelockProgramID, testTimelockExecuteID, operationID)
 	s.Require().NoError(err)
 	configPDA, err := mcmsSolana.FindTimelockConfigPDA(s.TimelockProgramID, testTimelockExecuteID)

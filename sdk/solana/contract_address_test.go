@@ -39,7 +39,7 @@ func Test_parseContractAddress(t *testing.T) {
 		{
 			name:    "failure: invalid program id",
 			address: "invalid-program-id.pda-seed",
-			wantErr: "unable to parse solana program id: decode: invalid base58 digit",
+			wantErr: "unable to parse base58 solana program id: decode: invalid base58 digit",
 		},
 	}
 	for _, tt := range tests {

@@ -63,7 +63,7 @@ func newTimelockConverterFromExecutor(
 			return nil, fmt.Errorf("unable to cast sdk executor to solana TimelockExecutor")
 		}
 
-		return solana.NewTimelockConverter(solanaExecutor.Client(), solanaExecutor.AuthPublicKey()), nil
+		return solana.NewTimelockConverter(solanaExecutor.Client()), nil
 
 	default:
 		return nil, fmt.Errorf("unsupported executor type: %T", executor)

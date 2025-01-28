@@ -12,7 +12,7 @@ import (
 )
 
 const timeout = 30 * time.Second
-const pollInterval = 100 * time.Millisecond
+const pollInterval = 50 * time.Millisecond
 
 // FundAccounts funds the given accounts with 100 SOL each.
 // It waits for the transactions to be confirmed.

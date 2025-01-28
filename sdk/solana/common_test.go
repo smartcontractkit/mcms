@@ -21,6 +21,7 @@ var (
 	testChainSelector     = types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
 	testTimelockProgramID = solana.MustPublicKeyFromBase58("LoCoNsJFuhTkSQjfdDfn3yuwqhSYoPujmviRHVCzsqn")
 	testMCMProgramID      = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
+	testCPIStubProgramID  = solana.MustPublicKeyFromBase58("4HeqEoSyfYpeC2goFLj9eHgkxV33mR5G7JYAbRsN14uQ")
 	testOpID              = [32]byte{1, 2, 3, 4}
 	testPDASeed           = PDASeed{'t', 'e', 's', 't', '-', 'm', 'c', 'm'}
 	testTimelockSeed      = PDASeed{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e'}

@@ -25,6 +25,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	_ context.Context,
 	bop types.BatchOperation,
 	timelockAddress string,
+	mcmAddress string,
 	delay types.Duration,
 	action types.TimelockAction,
 	predecessor common.Hash,
