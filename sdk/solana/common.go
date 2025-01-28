@@ -107,26 +107,26 @@ func sendAndConfirm[I solana.Instruction](
 	auth solana.PrivateKey,
 	builder instructionBuilder[I],
 	commitmentType rpc.CommitmentType,
-) (string, error) {
+) (string, *rpc.GetTransactionResult, error) {
 	builtInstruction, err := builder.ValidateAndBuild()
 	if err != nil {
-		return "", fmt.Errorf("unable to validate and build instruction: %w", err)
+		return "", nil, fmt.Errorf("unable to validate and build instruction: %w", err)
 	}
 
 	result, err := solanaCommon.SendAndConfirm(ctx, client, []solana.Instruction{builtInstruction}, auth, commitmentType)
 	if err != nil {
-		return "", fmt.Errorf("unable to send instruction: %w", err)
+		return "", nil, fmt.Errorf("unable to send instruction: %w", err)
 	}
 	if result.Transaction == nil {
-		return "", fmt.Errorf("nil transaction in instruction result")
+		return "", nil, fmt.Errorf("nil transaction in instruction result")
 	}
 
 	transaction, err := result.Transaction.GetTransaction()
 	if err != nil {
-		return "", fmt.Errorf("unable to get transaction from instruction result: %w", err)
+		return "", nil, fmt.Errorf("unable to get transaction from instruction result: %w", err)
 	}
 
-	return transaction.Signatures[0].String(), nil
+	return transaction.Signatures[0].String(), result, nil
 }
 
 func chunkIndexes(numItems int, chunkSize int) [][2]int {

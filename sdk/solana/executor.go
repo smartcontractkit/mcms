@@ -106,7 +106,7 @@ func (e *Executor) ExecuteOperation(
 	)
 	// Append the accounts from the AdditionalFields
 	ix.AccountMetaSlice = append(ix.AccountMetaSlice, additionalFields.Accounts...)
-	signature, err := sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
+	signature, tx, err := sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to call execute operation instruction: %w", err)
 	}
@@ -114,7 +114,7 @@ func (e *Executor) ExecuteOperation(
 	return types.TransactionResult{
 		Hash:           signature,
 		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: ix,
+		RawTransaction: tx,
 	}, nil
 }
 
@@ -179,7 +179,7 @@ func (e *Executor) SetRoot(
 		configPDA,
 		e.auth.PublicKey(),
 		solana.SystemProgramID)
-	signature, err := sendAndConfirm(ctx, e.client, e.auth, setRootInstruction, rpc.CommitmentConfirmed)
+	signature, tx, err := sendAndConfirm(ctx, e.client, e.auth, setRootInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to set root: %w", err)
 	}
@@ -187,7 +187,7 @@ func (e *Executor) SetRoot(
 	return types.TransactionResult{
 		Hash:           signature,
 		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: setRootInstruction,
+		RawTransaction: tx,
 	}, nil
 }
 
@@ -203,7 +203,7 @@ func (e *Executor) preloadSignatures(
 ) error {
 	initSignaturesInstruction := mcm.NewInitSignaturesInstruction(mcmName, root, validUntil,
 		uint8(len(sortedSignatures)), signaturesPDA, e.auth.PublicKey(), solana.SystemProgramID) //nolint:gosec
-	_, err := sendAndConfirm(ctx, e.client, e.auth, initSignaturesInstruction, rpc.CommitmentConfirmed)
+	_, _, err := sendAndConfirm(ctx, e.client, e.auth, initSignaturesInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return fmt.Errorf("unable to initialize signatures: %w", err)
 	}
@@ -213,7 +213,7 @@ func (e *Executor) preloadSignatures(
 	for i, chunkIndex := range chunkIndexes(len(solanaSignatures), config.MaxAppendSignatureBatchSize) {
 		appendSignaturesInstruction := mcm.NewAppendSignaturesInstruction(mcmName, root, validUntil,
 			solanaSignatures[chunkIndex[0]:chunkIndex[1]], signaturesPDA, e.auth.PublicKey())
-		_, serr := sendAndConfirm(ctx, e.client, e.auth, appendSignaturesInstruction, rpc.CommitmentConfirmed)
+		_, _, serr := sendAndConfirm(ctx, e.client, e.auth, appendSignaturesInstruction, rpc.CommitmentConfirmed)
 		if serr != nil {
 			return fmt.Errorf("unable to append signatures (%d): %w", i, serr)
 		}
@@ -221,7 +221,7 @@ func (e *Executor) preloadSignatures(
 
 	finalizeSignaturesInstruction := mcm.NewFinalizeSignaturesInstruction(mcmName, root, validUntil, signaturesPDA,
 		e.auth.PublicKey())
-	_, err = sendAndConfirm(ctx, e.client, e.auth, finalizeSignaturesInstruction, rpc.CommitmentConfirmed)
+	_, _, err = sendAndConfirm(ctx, e.client, e.auth, finalizeSignaturesInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return fmt.Errorf("unable to finalize signatures: %w", err)
 	}

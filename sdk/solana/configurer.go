@@ -88,7 +88,7 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 		expiringRootAndOpCountPDA,
 		c.auth.PublicKey(),
 		solana.SystemProgramID)
-	signature, err := sendAndConfirm(ctx, c.client, c.auth, setConfigInstruction, rpc.CommitmentConfirmed)
+	signature, tx, err := sendAndConfirm(ctx, c.client, c.auth, setConfigInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to set config: %w", err)
 	}
@@ -96,7 +96,7 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 	return types.TransactionResult{
 		Hash:           signature,
 		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: setConfigInstruction,
+		RawTransaction: tx,
 	}, nil
 }
 
@@ -109,7 +109,7 @@ func (c *Configurer) preloadSigners(
 ) error {
 	initSignersInstruction := bindings.NewInitSignersInstruction(mcmName, uint8(len(signerAddresses)), configPDA, //nolint:gosec
 		configSignersPDA, c.auth.PublicKey(), solana.SystemProgramID)
-	_, err := sendAndConfirm(ctx, c.client, c.auth, initSignersInstruction, rpc.CommitmentConfirmed)
+	_, _, err := sendAndConfirm(ctx, c.client, c.auth, initSignersInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return fmt.Errorf("unable to initialize signers: %w", err)
 	}
@@ -117,7 +117,7 @@ func (c *Configurer) preloadSigners(
 	for i, chunkIndex := range chunkIndexes(len(signerAddresses), config.MaxAppendSignerBatchSize) {
 		appendSignersInstructions := bindings.NewAppendSignersInstruction(mcmName,
 			signerAddresses[chunkIndex[0]:chunkIndex[1]], configPDA, configSignersPDA, c.auth.PublicKey())
-		_, aerr := sendAndConfirm(ctx, c.client, c.auth, appendSignersInstructions, rpc.CommitmentConfirmed)
+		_, _, aerr := sendAndConfirm(ctx, c.client, c.auth, appendSignersInstructions, rpc.CommitmentConfirmed)
 		if aerr != nil {
 			return fmt.Errorf("unable to append signers (%d): %w", i, aerr)
 		}
@@ -125,7 +125,7 @@ func (c *Configurer) preloadSigners(
 
 	finalizeSignersInstruction := bindings.NewFinalizeSignersInstruction(mcmName, configPDA, configSignersPDA,
 		c.auth.PublicKey())
-	_, err = sendAndConfirm(ctx, c.client, c.auth, finalizeSignersInstruction, rpc.CommitmentConfirmed)
+	_, _, err = sendAndConfirm(ctx, c.client, c.auth, finalizeSignersInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return fmt.Errorf("unable to finalize signers: %w", err)
 	}

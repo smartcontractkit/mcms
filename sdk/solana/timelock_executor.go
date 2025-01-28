@@ -89,7 +89,7 @@ func (e *TimelockExecutor) Execute(
 		predecessorOperationPDA, configPDA, signerPDA, config.ExecutorRoleAccessController, e.auth.PublicKey())
 	instruction.AccountMetaSlice = append(instruction.AccountMetaSlice, accounts...)
 
-	signature, err := sendAndConfirm(ctx, e.client, e.auth, instruction, rpc.CommitmentConfirmed)
+	signature, tx, err := sendAndConfirm(ctx, e.client, e.auth, instruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to call execute operation instruction: %w", err)
 	}
@@ -97,6 +97,6 @@ func (e *TimelockExecutor) Execute(
 	return types.TransactionResult{
 		Hash:           signature,
 		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: instruction,
+		RawTransaction: tx,
 	}, nil
 }

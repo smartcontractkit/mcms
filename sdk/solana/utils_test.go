@@ -81,7 +81,8 @@ func mockGetBlockTime(
 }
 
 func mockSolanaTransaction(
-	t *testing.T, client *mocks.JSONRPCClient, lastBlockHeight uint64, slot uint64, signature string, mockError error,
+	t *testing.T, client *mocks.JSONRPCClient, lastBlockHeight uint64, slot uint64, signature string,
+	blockTime *solana.UnixTimeSeconds, mockError error,
 ) {
 	t.Helper()
 
@@ -141,10 +142,14 @@ func mockSolanaTransaction(
 		}`))
 		require.NoError(t, err)
 
+		if blockTime == nil {
+			blockTime = ptrTo(solana.UnixTimeSeconds(time.Now().Unix()))
+		}
+
 		*result = &rpc.GetTransactionResult{
 			Version:     1,
 			Slot:        slot,
-			BlockTime:   ptrTo(solana.UnixTimeSeconds(time.Now().Unix())),
+			BlockTime:   blockTime,
 			Transaction: &transactionEnvelope,
 			Meta:        &rpc.TransactionMeta{},
 		}

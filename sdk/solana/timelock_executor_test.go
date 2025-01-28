@@ -79,7 +79,8 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {
 				mockGetAccountInfo(t, m, configPDA, config, nil)
-				mockSolanaTransaction(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", nil)
+				mockSolanaTransaction(t, m, 20, 5,
+					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", nil, nil)
 			},
 			want:      "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
 			assertion: assert.NoError,
@@ -159,7 +160,9 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {
 				mockGetAccountInfo(t, m, configPDA, config, nil)
-				mockSolanaTransaction(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", fmt.Errorf("invalid tx"))
+				mockSolanaTransaction(t, m, 20, 5,
+					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
+					nil, fmt.Errorf("invalid tx"))
 			},
 			assertion: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.EqualError(t, err, "unable to call execute operation instruction: unable to send instruction: invalid tx")
