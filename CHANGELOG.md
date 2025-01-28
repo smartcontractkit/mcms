@@ -1,5 +1,43 @@
 # @smartcontractkit/mcms
 
+## 0.6.0
+
+### Minor Changes
+
+- [#256](https://github.com/smartcontractkit/mcms/pull/256) [`45c6a2e`](https://github.com/smartcontractkit/mcms/commit/45c6a2edfa1cd641860dcb3f87c0a32a3bbda636) Thanks [@akhilchainani](https://github.com/akhilchainani)! - Allow callProxy execute capability
+
+- [#245](https://github.com/smartcontractkit/mcms/pull/245) [`7a5944e`](https://github.com/smartcontractkit/mcms/commit/7a5944e1940df6a327ea07eec0c41f0211580133) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - Add context and Converter map TimelockConverter.Convert params
+
+- [#231](https://github.com/smartcontractkit/mcms/pull/231) [`a8447e1`](https://github.com/smartcontractkit/mcms/commit/a8447e1727147fe21ff7f2b8186ceeebeef47a23) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - feat(solana): timelock inspection - operation statuses check
+
+- [#242](https://github.com/smartcontractkit/mcms/pull/242) [`c610826`](https://github.com/smartcontractkit/mcms/commit/c610826d34826e36eabe91e067a6d194398d6564) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - Add TimelockProposal.Convert for solana
+
+- [#238](https://github.com/smartcontractkit/mcms/pull/238) [`abde70c`](https://github.com/smartcontractkit/mcms/commit/abde70ca21a206e6bf452d54e98805d896cd76b5) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - feat(solana): implement get roles for timelock inspection
+
+- [#236](https://github.com/smartcontractkit/mcms/pull/236) [`150a1f6`](https://github.com/smartcontractkit/mcms/commit/150a1f6fac2ec450a377ae5e818f5d196a257a9e) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - Use string for inspector return type
+
+- [#209](https://github.com/smartcontractkit/mcms/pull/209) [`a71dd79`](https://github.com/smartcontractkit/mcms/commit/a71dd79442551bdb757b94263d48b9ef7aa2b3b8) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - Add the `Configurer` component and `SetConfig` call to the Solana SDK.
+
+- [#223](https://github.com/smartcontractkit/mcms/pull/223) [`4adb968`](https://github.com/smartcontractkit/mcms/commit/4adb96870c0a3daac98095656d0fea0753367b0d) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - Add a "context" parameter to all APIs that interact with a blockchain.
+
+- [#227](https://github.com/smartcontractkit/mcms/pull/227) [`21d8809`](https://github.com/smartcontractkit/mcms/commit/21d8809c0a5e8048562804a9c1198367a4eabff1) Thanks [@ecPablo](https://github.com/ecPablo)! - Adds Execute functionality to solana SDK
+
+- [#248](https://github.com/smartcontractkit/mcms/pull/248) [`e153c75`](https://github.com/smartcontractkit/mcms/commit/e153c751aa3f048be66a8687ea5f039c147491d4) Thanks [@ecPablo](https://github.com/ecPablo)! - Timelock execute batch on solana SDK.
+
+- [#211](https://github.com/smartcontractkit/mcms/pull/211) [`be76399`](https://github.com/smartcontractkit/mcms/commit/be76399a414053345b0b6e8e5b1eff951a3efd7e) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - feat(solana): support get opdata, root and root metadata
+
+### Patch Changes
+
+- [#215](https://github.com/smartcontractkit/mcms/pull/215) [`9f39403`](https://github.com/smartcontractkit/mcms/commit/9f394035272baa4f2fcfb33d626486ba113841d7) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - Add the `Executor` component and `SetRoot` call to the Solana SDK.
+
+- [#259](https://github.com/smartcontractkit/mcms/pull/259) [`a4bc13b`](https://github.com/smartcontractkit/mcms/commit/a4bc13b9f8d58fc29f8acb6475929ee757f3588f) Thanks [@anirudhwarrier](https://github.com/anirudhwarrier)! - usbwallet: fix ledger access for latest firmware and add Ledger Flex
+
+- [#225](https://github.com/smartcontractkit/mcms/pull/225) [`7c9cd3d`](https://github.com/smartcontractkit/mcms/commit/7c9cd3d08c4a04cb1dd596b643976a9b96807149) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - Add PDA finders and ContractAddress parser to the Solana SDK
+
+- [#258](https://github.com/smartcontractkit/mcms/pull/258) [`a11a0ee`](https://github.com/smartcontractkit/mcms/commit/a11a0eea5d7321adfabeea0c42131d80a535e0b3) Thanks [@akhilchainani](https://github.com/akhilchainani)! - non-breaking change to allow a salt override to proposals
+
+- [#228](https://github.com/smartcontractkit/mcms/pull/228) [`b953973`](https://github.com/smartcontractkit/mcms/commit/b953973f62b2c2876f55cb050541a3f990cc1ea7) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - fix(solana): setProgramID on inspection methods
+
 ## 0.5.0
 
 ### Minor Changes
