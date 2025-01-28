@@ -23,7 +23,7 @@ const maxUint8Value = 255
 
 type ConfigTransformer struct{}
 
-func NewConfigTransformer(chainID uint64, msigID [32]uint8, owner solana.PublicKey) *ConfigTransformer {
+func NewConfigTransformer() *ConfigTransformer {
 	return &ConfigTransformer{}
 }
 

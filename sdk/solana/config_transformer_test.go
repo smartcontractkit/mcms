@@ -86,23 +86,34 @@ func Test_ConfigTransformer_ToChainConfig(t *testing.T) {
 		signer1 = common.HexToAddress("0x1")
 		signer2 = common.HexToAddress("0x2")
 	)
-
+	testOwner, err := solana.NewRandomPrivateKey()
+	proposedOwner, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
 	tests := []struct {
-		name    string
-		give    types.Config
-		want    bindings.MultisigConfig
-		wantErr string
-		assert  func(t *testing.T, got bindings.MultisigConfig)
+		name             string
+		give             types.Config
+		want             bindings.MultisigConfig
+		additionalConfig AdditionalConfig
+		wantErr          string
+		assert           func(t *testing.T, got bindings.MultisigConfig)
 	}{
 		{
 			name: "success: converts binding config to config",
 			want: bindings.MultisigConfig{
-				GroupQuorums: [32]uint8{1, 1},
-				GroupParents: [32]uint8{0, 0},
+				GroupQuorums:  [32]uint8{1, 1},
+				GroupParents:  [32]uint8{0, 0},
+				Owner:         testOwner.PublicKey(),
+				ProposedOwner: proposedOwner.PublicKey(),
 				Signers: []bindings.McmSigner{
 					{EvmAddress: signer1, Group: 0, Index: 0},
 					{EvmAddress: signer2, Group: 1, Index: 1},
 				},
+			},
+			additionalConfig: AdditionalConfig{
+				ChainID:       0,
+				MultisigID:    [32]uint8{},
+				Owner:         testOwner.PublicKey(),
+				ProposedOwner: proposedOwner.PublicKey(),
 			},
 			give: types.Config{
 				Quorum:  1,
@@ -115,6 +126,14 @@ func Test_ConfigTransformer_ToChainConfig(t *testing.T) {
 					},
 				},
 			},
+			assert: func(t *testing.T, got bindings.MultisigConfig) {
+				assert.Equal(t, [32]uint8{1, 1}, got.GroupQuorums)
+				assert.Equal(t, [32]uint8{0, 0}, got.GroupParents)
+				assert.Equal(t, got.ChainId, uint64(0))
+				assert.Equal(t, got.MultisigId, [32]uint8{})
+				assert.Equal(t, got.Owner, testOwner.PublicKey())
+				assert.Equal(t, got.ProposedOwner, proposedOwner.PublicKey())
+			},
 		},
 	}
 
@@ -123,12 +142,7 @@ func Test_ConfigTransformer_ToChainConfig(t *testing.T) {
 			t.Parallel()
 
 			transformer := ConfigTransformer{}
-			got, err := transformer.ToChainConfig(tt.give, AdditionalConfig{
-				ChainID:       0,
-				MultisigID:    [32]uint8{},
-				Owner:         solana.PublicKey{},
-				ProposedOwner: solana.PublicKey{},
-			})
+			got, err := transformer.ToChainConfig(tt.give, tt.additionalConfig)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

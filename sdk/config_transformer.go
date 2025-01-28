@@ -6,6 +6,7 @@ import (
 
 // ConfigTransformer is the interface used to create the configuration of an MCMS contract.
 // R in this case is the chain-specific struct that is used to configure the contract.
+// C is the chain-specific additional configuration that is required to configure the contract.
 // the interface allows conversion between the chain-specific struct and the chain-agnostic.
 type ConfigTransformer[R any, C any] interface {
 	// ToChainConfig converts the chain agnostic config to the chain-specific config
