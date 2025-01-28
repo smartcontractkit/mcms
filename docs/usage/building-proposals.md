@@ -266,14 +266,18 @@ Use the `evm.NewTransaction` helper to build EVM specific transaction.
 
 ```go
 // Create an evm specific tx for the proposal operation
-tx := evm.NewTransaction(common.Address{},
+tx := evm.NewTransaction(
+common.Address{},
 []byte("data bytes of the transaction"),
-5, // Value in GWEI 
+5, // Value in GWEI
 "MyEVMContractType",
-[]string{"tag1", "tag2"})
+[]string{"tag1", "tag2"},
+)
 
-op := builder.AddOperation(types.Operation{ChainSelector: selector, Transaction: tx})
-
+op := builder.AddOperation(types.Operation{
+ChainSelector: selector,
+Transaction:   tx,
+})
 ```
 
 ### Solana Operations
@@ -290,11 +294,13 @@ IsWritable: true,
 }
 }
 
-tx := solana.NewTransaction("programIDGoesHere",
+tx := solana.NewTransaction(
+"programIDGoesHere",
 []byte("data bytes of the instruction"),
 accounts,
 "MySolanaContractType",
-[]string{"tag1", "tag2"})
+[]string{"tag1", "tag2"}
+)
 
 op := builder.AddOperation(types.Operation{ChainSelector: selector, Transaction: tx})
 
