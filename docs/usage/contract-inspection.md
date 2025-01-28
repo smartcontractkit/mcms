@@ -7,7 +7,7 @@ You can use the chain specific SDKs to inspect the state of your MCMS and timelo
   - [Timelock Inspection](#example-evm-timelock-inspection)
 - [Solana](#solana)
   - [MCMS Inspection](#example-solana-mcms-inspection)
-  - [MCMS Inspection](#example-solana-timelock-inspection)
+  - [Timelock Inspection](#example-solana-timelock-inspection)
 
 ## EVM
 
