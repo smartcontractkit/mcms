@@ -194,7 +194,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 	require.NotNil(t, tx)
 	require.NotEmpty(t, tx.Hash)
-	require.NotNil(t, tx.Tx)
+	require.NotNil(t, tx.RawTransaction)
 	sim.Backend.Commit()
 
 	// Validate Contract State and verify root was set
@@ -208,7 +208,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 	require.NoError(t, err)
 	require.NotNil(t, tx)
 	require.NotEmpty(t, tx.Hash)
-	require.NotNil(t, tx.Tx)
+	require.NotNil(t, tx.RawTransaction)
 	sim.Backend.Commit()
 
 	// Check the state of the MCMS contract
@@ -322,7 +322,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 	require.NotNil(t, tx)
 	require.NotEmpty(t, tx.Hash)
-	require.NotNil(t, tx.Tx)
+	require.NotNil(t, tx.RawTransaction)
 	sim.Backend.Commit()
 
 	// Validate Contract State and verify root was set
@@ -335,7 +335,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	tx, err = executable.Execute(ctx, 0)
 	require.NoError(t, err)
 	require.NotNil(t, tx)
-	require.NotNil(t, tx.Tx)
+	require.NotNil(t, tx.RawTransaction)
 	require.NotEqual(t, "", tx.Hash)
 	sim.Backend.Commit()
 
@@ -456,7 +456,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 	tx, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotNil(t, tx)
-	require.NotNil(t, tx.Tx)
+	require.NotNil(t, tx.RawTransaction)
 	require.NotEmpty(t, tx.Hash)
 	sim.Backend.Commit()
 
@@ -472,7 +472,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		tx, err = executable.Execute(ctx, i)
 		require.NoError(t, err)
 		require.NotNil(t, tx)
-		require.NotNil(t, tx.Tx)
+		require.NotNil(t, tx.RawTransaction)
 		require.NotEqual(t, "", tx.Hash)
 
 		sim.Backend.Commit()
@@ -600,7 +600,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 	tx, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotNil(t, tx)
-	require.NotNil(t, tx.Tx)
+	require.NotNil(t, tx.RawTransaction)
 	require.NotEmpty(t, tx.Hash)
 
 	sim.Backend.Commit()
@@ -617,7 +617,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		tx, err = executable.Execute(ctx, i)
 		require.NoError(t, err)
 		require.NotNil(t, tx)
-		require.NotNil(t, tx.Tx)
+		require.NotNil(t, tx.RawTransaction)
 		require.NotEqual(t, "", tx.Hash)
 
 		sim.Backend.Commit()

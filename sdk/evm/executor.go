@@ -33,19 +33,19 @@ func (e *Executor) ExecuteOperation(
 	nonce uint32,
 	proof []common.Hash,
 	op types.Operation,
-) (types.NativeTransaction, error) {
+) (types.TransactionResult, error) {
 	if e.Encoder == nil {
-		return types.NativeTransaction{}, errors.New("Executor was created without an encoder")
+		return types.TransactionResult{}, errors.New("Executor was created without an encoder")
 	}
 
 	bindOp, err := e.ToGethOperation(nonce, metadata, op)
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	opts := *e.auth
@@ -53,12 +53,12 @@ func (e *Executor) ExecuteOperation(
 
 	tx, err := mcmsC.Execute(&opts, bindOp, transformHashes(proof))
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
-	return types.NativeTransaction{
-		Hash: tx.Hash().Hex(),
-		Tx:   tx,
+	return types.TransactionResult{
+		Hash:           tx.Hash().Hex(),
+		RawTransaction: tx,
 	}, err
 }
 
@@ -69,19 +69,19 @@ func (e *Executor) SetRoot(
 	root [32]byte,
 	validUntil uint32,
 	sortedSignatures []types.Signature,
-) (types.NativeTransaction, error) {
+) (types.TransactionResult, error) {
 	if e.Encoder == nil {
-		return types.NativeTransaction{}, errors.New("Executor was created without an encoder")
+		return types.TransactionResult{}, errors.New("Executor was created without an encoder")
 	}
 
 	bindMeta, err := e.ToGethRootMetadata(metadata)
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	opts := *e.auth
@@ -96,11 +96,11 @@ func (e *Executor) SetRoot(
 		transformSignatures(sortedSignatures),
 	)
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
-	return types.NativeTransaction{
-		Hash: tx.Hash().Hex(),
-		Tx:   tx,
+	return types.TransactionResult{
+		Hash:           tx.Hash().Hex(),
+		RawTransaction: tx,
 	}, err
 }

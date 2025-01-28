@@ -1,9 +1,18 @@
 package types
 
-// NativeTransaction represents a generic blockchain transaction.
+// TransactionResult represents a generic blockchain transaction.
 // It contains the hash of the transaction and the transaction itself.
 // Users of this struct should cast the transaction to the appropriate type.
-type NativeTransaction struct {
-	Hash string `json:"hash"`
-	Tx   any    `json:"tx"`
+type TransactionResult struct {
+	Hash           string `json:"hash"`
+	ChainFamily    string `json:"chainFamily"`
+	RawTransaction any    `json:"tx"`
+}
+
+func NewTransactionResult(hash string, tx any, cf string) TransactionResult {
+	return TransactionResult{
+		Hash:           hash,
+		ChainFamily:    cf,
+		RawTransaction: tx,
+	}
 }

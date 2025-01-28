@@ -36,10 +36,10 @@ func NewTimelockExecutor(client *rpc.Client, auth solana.PrivateKey) *TimelockEx
 }
 
 // Execute runs ExecuteBatch ix for each transaction in the BatchOperation
-func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash) (types.NativeTransaction, error) {
+func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash) (types.TransactionResult, error) {
 	programID, timelockID, err := ParseContractAddress(timelockAddress)
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 	timelock.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
 
@@ -49,7 +49,7 @@ func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation
 		// Unmarshal the AdditionalFields from the operation
 
 		if err = json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return types.NativeTransaction{}, err
+			return types.TransactionResult{}, err
 		}
 		accounts := make([]timelock.InstructionAccount, len(additionalFields.Accounts))
 		for i, acc := range additionalFields.Accounts {
@@ -62,7 +62,7 @@ func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation
 		var toProgramID solana.PublicKey
 		toProgramID, err = solana.PublicKeyFromBase58(tx.To)
 		if err != nil {
-			return types.NativeTransaction{}, fmt.Errorf("unable to get hash from base58 To address: %w", err)
+			return types.TransactionResult{}, fmt.Errorf("unable to get hash from base58 To address: %w", err)
 		}
 		ixs[i] = timelock.InstructionData{
 			Data:      tx.Data,
@@ -76,21 +76,21 @@ func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation
 	operationID := HashOperation(ixs, predBytes, salt)
 	operationPDA, err := FindTimelockOperationPDA(programID, timelockID, operationID)
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	configPDA, err := FindTimelockConfigPDA(programID, timelockID)
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 	signerPDA, err := FindTimelockSignerPDA(programID, timelockID)
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 	var configAccount timelock.Config
 	err = solanaCommon.GetAccountDataBorshInto(ctx, t.client, configPDA, rpc.CommitmentConfirmed, &configAccount)
 	if err != nil {
-		return types.NativeTransaction{}, err
+		return types.TransactionResult{}, err
 	}
 
 	ix := timelock.NewExecuteBatchInstruction(
@@ -108,10 +108,10 @@ func (t *TimelockExecutor) Execute(ctx context.Context, bop types.BatchOperation
 
 	signature, err := sendAndConfirm(ctx, t.client, t.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
-		return types.NativeTransaction{}, fmt.Errorf("unable to call execute operation instruction: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to call execute operation instruction: %w", err)
 	}
 
-	return types.NativeTransaction{
+	return types.TransactionResult{
 		Hash: signature,
 	}, nil
 }

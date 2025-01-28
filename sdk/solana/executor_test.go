@@ -177,7 +177,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.NotNil(t, got)
-				require.NotNil(t, got.Tx)
+				require.NotNil(t, got.RawTransaction)
 				require.Equalf(t, tt.want, got.Hash, "%q. Executor.ExecuteOperation()", tt.name)
 			}
 		})
@@ -354,7 +354,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 			if tt.wantErr == "" {
 				require.NoError(t, err)
 				require.NotNil(t, got)
-				require.NotNil(t, got.Tx)
+				require.NotNil(t, got.RawTransaction)
 				require.Empty(t, cmp.Diff(tt.want, got.Hash))
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
