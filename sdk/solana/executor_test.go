@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -49,7 +50,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	data := []byte{1, 2, 3, 4}
 	ctx := context.Background()
 	accounts := []*solana.AccountMeta{}
-	tx, err := NewTransaction(testMCMProgramID.String(), data, accounts, "solana-testing", []string{})
+	tx, err := NewTransaction(testMCMProgramID.String(), data, big.NewInt(0), accounts, "solana-testing", []string{})
 	require.NoError(t, err)
 	tests := []struct {
 		name string

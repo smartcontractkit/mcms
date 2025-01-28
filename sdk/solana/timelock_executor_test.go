@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"fmt"
+	"math/big"
 	"testing"
 
 	"github.com/gagliardetto/solana-go"
@@ -28,7 +29,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	require.Equal(t, executor.auth, auth)
 }
 
-func TestTimelockExecutor_Execute(t *testing.T) {
+func Test_TimelockExecutor_Execute(t *testing.T) {
 	t.Parallel()
 
 	type args struct {
@@ -58,16 +59,14 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 	configPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testTimelockSeed)
 	require.NoError(t, err)
 	config := createTimelockConfig(t)
-	tx, err := NewTransaction(testTimelockProgramID.String(), data, accounts, "solana-testing", []string{})
+	tx, err := NewTransaction(testTimelockProgramID.String(), data, big.NewInt(0), accounts, "solana-testing", []string{})
 	require.NoError(t, err)
 	tests := []struct {
-		name string
-		args args
-
+		name      string
+		args      args
 		mockSetup func(*mocks.JSONRPCClient)
 		want      string
 		assertion assert.ErrorAssertionFunc
-		wantErr   error
 	}{
 		{
 			name: "success: ExecuteOperation",
@@ -95,10 +94,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				timelockAddress: "bad ...format",
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {},
-			wantErr:   fmt.Errorf("invalid solana contract address format: \"bad ...format\""),
-			assertion: func(t assert.TestingT, err error, i ...any) bool {
-				return assert.EqualError(t, err, "invalid solana contract address format: \"bad ...format\"")
-			},
+			assertion: assertErrorEquals("invalid solana contract address format: \"bad ...format\""),
 		},
 		{
 			name: "error: invalid additional fields",
@@ -106,7 +102,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				bop: types.BatchOperation{
 					Transactions: []types.Transaction{{
 						Data:             bytes.Repeat([]byte{1}, 100),
-						To:               fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
+						To:               ContractAddress(testTimelockProgramID, testTimelockSeed),
 						AdditionalFields: []byte(`invalid JSON`),
 					}},
 					ChainSelector: types.ChainSelector(selector),
@@ -114,10 +110,10 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				timelockAddress: fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {},
-			wantErr:   fmt.Errorf("invalid character 'i' looking for beginning of value"),
-			assertion: func(t assert.TestingT, err error, i ...any) bool {
-				return assert.EqualError(t, err, "invalid character 'i' looking for beginning of value")
-			},
+			assertion: assertErrorEquals("unable to get InstructionData from batch operation: " +
+				"unable to unmarshal additional fields: " +
+				"invalid character 'i' looking for beginning of value\n" +
+				"invalid JSON"),
 		},
 		{
 			name: "error: invalid To program field",
@@ -133,10 +129,24 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				timelockAddress: fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {},
-			wantErr:   fmt.Errorf("unable to get hash from base58 To address: decode: invalid base58 digit ('l')"),
-			assertion: func(t assert.TestingT, err error, i ...any) bool {
-				return assert.EqualError(t, err, "unable to get hash from base58 To address: decode: invalid base58 digit ('l')")
+			assertion: assertErrorEquals("unable to get InstructionData from batch operation: " +
+				"unable to parse program id from To field: " +
+				"unable to parse base58 solana program id: " +
+				"decode: invalid base58 digit ('l')"),
+		},
+		{
+			name: "error: GetAccountInfo fails",
+			args: args{
+				bop: types.BatchOperation{
+					Transactions:  []types.Transaction{tx},
+					ChainSelector: types.ChainSelector(selector),
+				},
+				timelockAddress: fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
 			},
+			mockSetup: func(m *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, m, configPDA, config, fmt.Errorf("GetAccountInfo error"))
+			},
+			assertion: assertErrorEquals("unable to read config pda: GetAccountInfo error"),
 		},
 		{
 			name: "error: send tx error",
@@ -151,7 +161,6 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				mockGetAccountInfo(t, m, configPDA, config, nil)
 				mockSolanaTransaction(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", fmt.Errorf("invalid tx"))
 			},
-			wantErr: fmt.Errorf("unable to call execute operation instruction: unable to send instruction: invalid tx"),
 			assertion: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.EqualError(t, err, "unable to call execute operation instruction: unable to send instruction: invalid tx")
 			},
@@ -167,12 +176,15 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			e := NewTimelockExecutor(client, auth)
 
 			got, err := e.Execute(ctx, tt.args.bop, tt.args.timelockAddress, tt.args.predecessor, tt.args.salt)
-			if tt.wantErr != nil {
-				tt.assertion(t, err, fmt.Sprintf("%q. Executor.ExecuteOperation()", tt.name))
-			} else {
-				require.NoError(t, err)
-				require.Equalf(t, tt.want, got.Hash, "%q. Executor.ExecuteOperation()", tt.name)
-			}
+
+			tt.assertion(t, err, fmt.Sprintf("%q. Executor.ExecuteOperation()", tt.name))
+			assert.Equalf(t, tt.want, got.Hash, "%q. Executor.ExecuteOperation()", tt.name)
 		})
+	}
+}
+
+func assertErrorEquals(message string) func(t assert.TestingT, err error, i ...any) bool {
+	return func(t assert.TestingT, err error, i ...any) bool {
+		return assert.EqualError(t, err, message)
 	}
 }

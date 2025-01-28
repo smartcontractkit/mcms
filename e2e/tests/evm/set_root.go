@@ -221,10 +221,9 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	proposalTimelock, err := builder.Build()
 	s.Require().NoError(err)
 
-	converters := map[mcmtypes.ChainSelector]sdk.TimelockConverter{
+	proposal, _, err := proposalTimelock.Convert(ctx, map[mcmtypes.ChainSelector]sdk.TimelockConverter{
 		s.chainSelector: &evm.TimelockConverter{},
-	}
-	proposal, _, err := proposalTimelock.Convert(ctx, converters)
+	})
 	s.Require().NoError(err)
 
 	// Sign proposal

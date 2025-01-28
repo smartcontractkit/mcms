@@ -5,6 +5,7 @@ package solanae2e
 
 import (
 	"context"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -147,6 +148,7 @@ func (s *SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.Public
 	// Build the mcms transaction for the proposal
 	solanaMcmTxMint, err := mcmsSolana.NewTransaction(solana.Token2022ProgramID.String(),
 		ix2Bytes,
+		big.NewInt(0),
 		ix2.Accounts(),
 		"Token",
 		[]string{"minting-test"},

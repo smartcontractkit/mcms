@@ -14,10 +14,10 @@ PROJECT_ROOT="$(dirname "$(realpath "$0")")/../../.."
 PROGRAM_DIR="chains/solana/contracts/target/deploy"
 DEST_DIR="${PROJECT_ROOT}/e2e/artifacts/solana"
 TEMP_DIR=$(mktemp -d)
-COMMIT_HASH="6d06ece7bc00c911827a5c1faefeb9f8279fc88e" # 14 Jan 2025
+COMMIT_HASH="8a6f4c66925828b35d290510d5a18a5b76a40f33" # 22 Jan 2025
 
 # Programs to build
-PROGRAMS=("mcm" "timelock" "access-controller")
+PROGRAMS=("mcm" "timelock" "access-controller" "external-program-cpi-stub")
 
 cd "${PROJECT_ROOT}"
 
