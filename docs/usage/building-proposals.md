@@ -278,7 +278,7 @@ op := builder.AddOperation(types.Operation{ChainSelector: selector, Transaction:
 
 ### Solana Operations
 
-Use the `evm.NewTransaction` helper to build EVM specific transaction.
+Use the `solana.NewTransaction` helper to build Solana specific transaction.
 
 ```go
 // Create a solana specific tx for the proposal operation
