@@ -77,7 +77,8 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				},
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {
-				mockSolanaTransaction(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", nil)
+				mockSolanaTransaction(t, m, 20, 5,
+					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", nil, nil)
 			},
 			want:      "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
 			assertion: assert.NoError,
@@ -127,6 +128,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					20,
 					5,
 					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
+					nil,
 					errors.New("ix send failure"))
 			},
 			want:    "",
@@ -226,13 +228,13 @@ func TestExecutor_SetRoot(t *testing.T) {
 				// TODO: extract/decode payload in transaction data and test values
 				// 4 transactions: init-signatures, append-signatures, finalize-signatures, set-root
 				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
-					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil)
+					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil, nil)
 				mockSolanaTransaction(t, mockJSONRPCClient, 51, 61,
-					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr", nil)
+					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr", nil, nil)
 				mockSolanaTransaction(t, mockJSONRPCClient, 52, 62,
-					"GHR9z23oUJnS2aV5HZ9zEpUpEe4qoBLFMzuBjNA3xJcQuc6JjDmuUq2VVmxqwPeFzfs8V7nfjqc1wRviEb82bRu", nil)
+					"GHR9z23oUJnS2aV5HZ9zEpUpEe4qoBLFMzuBjNA3xJcQuc6JjDmuUq2VVmxqwPeFzfs8V7nfjqc1wRviEb82bRu", nil, nil)
 				mockSolanaTransaction(t, mockJSONRPCClient, 53, 63,
-					"oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo", nil)
+					"oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo", nil, nil)
 			},
 			want: "oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo",
 		},
@@ -269,7 +271,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 				// init-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
 					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v",
-					fmt.Errorf("initialize signatures error"))
+					nil, fmt.Errorf("initialize signatures error"))
 			},
 			wantErr: "unable to initialize signatures: unable to send instruction: initialize signatures error",
 		},
@@ -285,12 +287,12 @@ func TestExecutor_SetRoot(t *testing.T) {
 
 				// init-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
-					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil)
+					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil, nil)
 
 				// append-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
 					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr",
-					fmt.Errorf("append signatures error"))
+					nil, fmt.Errorf("append signatures error"))
 			},
 			wantErr: "unable to append signatures (0): unable to send instruction: append signatures error",
 		},
@@ -306,14 +308,14 @@ func TestExecutor_SetRoot(t *testing.T) {
 
 				// init-signatures + append-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
-					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil)
+					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil, nil)
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
-					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr", nil)
+					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr", nil, nil)
 
 				// finalize-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 52, 62,
 					"GHR9z23oUJnS2aV5HZ9zEpUpEe4qoBLFMzuBjNA3xJcQuc6JjDmuUq2VVmxqwPeFzfs8V7nfjqc1wRviEb82bRu",
-					fmt.Errorf("finalize signatures error"))
+					nil, fmt.Errorf("finalize signatures error"))
 			},
 			wantErr: "unable to finalize signatures: unable to send instruction: finalize signatures error",
 		},
@@ -329,16 +331,16 @@ func TestExecutor_SetRoot(t *testing.T) {
 
 				// init-signatures + append-signatures + finalize-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
-					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil)
+					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil, nil)
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
-					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr", nil)
+					"3DqeyZzb7PJmQ31M1qdXfP7iACr5AiEXcKeLUNmVvDoYM23JJK5ZvermxsDy8eiQKzpagc69MKRtrpzK7tRcLGgr", nil, nil)
 				mockSolanaTransaction(t, mockJSONRPCClient, 52, 62,
-					"GHR9z23oUJnS2aV5HZ9zEpUpEe4qoBLFMzuBjNA3xJcQuc6JjDmuUq2VVmxqwPeFzfs8V7nfjqc1wRviEb82bRu", nil)
+					"GHR9z23oUJnS2aV5HZ9zEpUpEe4qoBLFMzuBjNA3xJcQuc6JjDmuUq2VVmxqwPeFzfs8V7nfjqc1wRviEb82bRu", nil, nil)
 
 				// set-root
 				mockSolanaTransaction(t, mockJSONRPCClient, 53, 63,
 					"oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo",
-					fmt.Errorf("set root error"))
+					nil, fmt.Errorf("set root error"))
 			},
 			wantErr: "unable to set root: unable to send instruction: set root error",
 		},
