@@ -1,5 +1,23 @@
 # @smartcontractkit/mcms
 
+## 0.7.0
+
+### Minor Changes
+
+- [#255](https://github.com/smartcontractkit/mcms/pull/255) [`e38816f`](https://github.com/smartcontractkit/mcms/commit/e38816f21105e33692a21775fb0e7dcafbd34b95) Thanks [@ecPablo](https://github.com/ecPablo)! - Add config transformer functionality for solana.
+
+- [#257](https://github.com/smartcontractkit/mcms/pull/257) [`31f1e09`](https://github.com/smartcontractkit/mcms/commit/31f1e0946a6cef6f1943ea62089c911817ca1e0d) Thanks [@akhilchainani](https://github.com/akhilchainani)! - Return generic transaction object instead of just hash
+
+### Patch Changes
+
+- [#270](https://github.com/smartcontractkit/mcms/pull/270) [`d6d880c`](https://github.com/smartcontractkit/mcms/commit/d6d880c3e8588494677252d1beda490f1455ac92) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - fix: incorporate timelock converter breaking api changes for scheduled operations
+
+- [#264](https://github.com/smartcontractkit/mcms/pull/264) [`8849c73`](https://github.com/smartcontractkit/mcms/commit/8849c73b095b5c3df881f65fadeddc8c599e72db) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - fix(executor): callproxy as config
+
+- [#216](https://github.com/smartcontractkit/mcms/pull/216) [`a481d17`](https://github.com/smartcontractkit/mcms/commit/a481d174ca83eb11aa6b7b4aff1497ec4fb39da6) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - Fix assignment of `GroupSigners` in `ConfigTransformer.ToConfig()`
+
+- [#268](https://github.com/smartcontractkit/mcms/pull/268) [`d28b0df`](https://github.com/smartcontractkit/mcms/commit/d28b0df6b2dcb9796469dac3387524062c69c383) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - Return the solana.rpc.GetTransactionResult struct as the raw transaction of the Solana SDK.
+
 ## 0.6.0
 
 ### Minor Changes
