@@ -22,7 +22,7 @@ var testPDASeedSetRootTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r
 // Test_Solana_SetRoot tests the SetRoot functionality by setting a root on the MCM program
 // and doing the preload signers setup.
 func (s *SolanaTestSuite) Test_Solana_SetRoot() {
-	s.SetupMCM(testPDASeedSetRootTest)
+	InitializeMCMProgram(s.T(), s.SolanaClient, s.MCMProgramID, testPDASeedSetRootTest, uint64(s.ChainSelector))
 	// --- arrange ---
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
@@ -57,7 +57,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*solanasdk.Encoder)
-	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: solanasdk.NewExecutor(s.SolanaClient, auth, encoder)}
+	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: solanasdk.NewExecutor(encoder, s.SolanaClient, auth)}
 	inspectors := map[types.ChainSelector]sdk.Inspector{s.ChainSelector: solanasdk.NewInspector(s.SolanaClient)}
 
 	// sign proposal

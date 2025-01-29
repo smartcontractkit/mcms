@@ -29,7 +29,7 @@ func TestNewExecutor(t *testing.T) {
 	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
 	encoder := NewEncoder(chainSelector, 1, false)
 
-	executor := NewExecutor(client, auth, encoder)
+	executor := NewExecutor(encoder, client, auth)
 
 	require.NotNil(t, executor)
 }
@@ -170,7 +170,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			encoder := NewEncoder(types.ChainSelector(selector), uint64(tt.args.nonce), false)
 			client := rpc.NewWithCustomRPCClient(jsonRPCClient)
 			tt.mockSetup(jsonRPCClient)
-			e := NewExecutor(client, auth, encoder)
+			e := NewExecutor(encoder, client, auth)
 
 			got, err := e.ExecuteOperation(ctx, tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)
 			if tt.wantErr != nil {
@@ -369,5 +369,5 @@ func newTestExecutor(t *testing.T, auth solana.PrivateKey, chainSelector types.C
 	client := rpc.NewWithCustomRPCClient(mockJSONRPCClient)
 	encoder := NewEncoder(chainSelector, 1, false)
 
-	return NewExecutor(client, auth, encoder), mockJSONRPCClient
+	return NewExecutor(encoder, client, auth), mockJSONRPCClient
 }

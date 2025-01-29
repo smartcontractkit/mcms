@@ -130,59 +130,58 @@ func (s *SolanaTestSuite) SetupTest() {
 	access_controller.SetProgramID(key.PublicKey())
 }
 
-// SetupMCM initializes the MCM account with the given PDA seed
-func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
+// InitializeMCMProgram public helper to initialize the MCM program
+func InitializeMCMProgram(t *testing.T, solanaClient *rpc.Client, programID solana.PublicKey, pdaSeed [32]byte, chainSelector uint64) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	s.T().Cleanup(cancel)
+	t.Cleanup(cancel)
 
-	mcm.SetProgramID(s.MCMProgramID)
-
+	mcm.SetProgramID(programID)
 	wallet, err := solana.PrivateKeyFromBase58(privateKey)
-	s.Require().NoError(err)
+	require.NoError(t, err)
 
-	configPDA, err := solanasdk.FindConfigPDA(s.MCMProgramID, pdaSeed)
-	s.Require().NoError(err)
-	rootMetadataPDA, err := solanasdk.FindRootMetadataPDA(s.MCMProgramID, pdaSeed)
-	s.Require().NoError(err)
-	expiringRootAndOpCountPDA, err := solanasdk.FindExpiringRootAndOpCountPDA(s.MCMProgramID, pdaSeed)
-	s.Require().NoError(err)
+	configPDA, err := solanasdk.FindConfigPDA(programID, pdaSeed)
+	require.NoError(t, err)
+	rootMetadataPDA, err := solanasdk.FindRootMetadataPDA(programID, pdaSeed)
+	require.NoError(t, err)
+	expiringRootAndOpCountPDA, err := solanasdk.FindExpiringRootAndOpCountPDA(programID, pdaSeed)
+	require.NoError(t, err)
 
 	// get program data account
-	data, err := s.SolanaClient.GetAccountInfoWithOpts(ctx, s.MCMProgramID, &rpc.GetAccountInfoOpts{
+	data, err := solanaClient.GetAccountInfoWithOpts(ctx, programID, &rpc.GetAccountInfoOpts{
 		Commitment: rpc.CommitmentConfirmed,
 	})
-	s.Require().NoError(err)
-
+	require.NoError(t, err)
 	// decode program data
+
 	var programData struct {
 		DataType uint32
 		Address  solana.PublicKey
 	}
 	err = bin.UnmarshalBorsh(&programData, data.Bytes())
-	s.Require().NoError(err)
+	require.NoError(t, err)
 
 	ix, err := mcm.NewInitializeInstruction(
-		uint64(s.ChainSelector),
+		chainSelector,
 		pdaSeed,
 		configPDA,
 		wallet.PublicKey(),
 		solana.SystemProgramID,
-		s.MCMProgramID,
+		programID,
 		programData.Address,
 		rootMetadataPDA,
 		expiringRootAndOpCountPDA,
 	).ValidateAndBuild()
-	s.Require().NoError(err)
+	require.NoError(t, err)
 
-	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix}, wallet, rpc.CommitmentConfirmed)
+	testutils.SendAndConfirm(ctx, t, solanaClient, []solana.Instruction{ix}, wallet, rpc.CommitmentConfirmed)
 
 	// get config and validate
 	var configAccount mcm.MultisigConfig
-	err = common.GetAccountDataBorshInto(ctx, s.SolanaClient, configPDA, rpc.CommitmentConfirmed, &configAccount)
-	s.Require().NoError(err, "failed to get account data")
+	err = common.GetAccountDataBorshInto(ctx, solanaClient, configPDA, rpc.CommitmentConfirmed, &configAccount)
+	require.NoError(t, err)
 
-	s.Require().Equal(uint64(s.ChainSelector), configAccount.ChainId)
-	s.Require().Equal(wallet.PublicKey(), configAccount.Owner)
+	require.Equal(t, chainSelector, configAccount.ChainId)
+	require.Equal(t, wallet.PublicKey(), configAccount.Owner)
 }
 
 func (s *SolanaTestSuite) SetupTimelock(pdaSeed [32]byte, minDelay time.Duration) {

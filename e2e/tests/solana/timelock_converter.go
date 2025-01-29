@@ -39,7 +39,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	wallet, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 
-	s.SetupMCM(testPDASeedTimelockConverter)
+	InitializeMCMProgram(s.T(), s.SolanaClient, s.MCMProgramID, testPDASeedTimelockConverter, uint64(s.ChainSelector))
 	s.SetupTimelock(testPDASeedTimelockConverter, 1*time.Second)
 	s.SetupCPIStub(testPDASeedTimelockConverter)
 
@@ -402,7 +402,7 @@ func (s *SolanaTestSuite) executeConvertedProposal(
 	encoders, err := gotProposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*solanasdk.Encoder)
-	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: solanasdk.NewExecutor(s.SolanaClient, wallet, encoder)}
+	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: solanasdk.NewExecutor(encoder, s.SolanaClient, wallet)}
 	executable, err := mcms.NewExecutable(&gotProposal, executors)
 	s.Require().NoError(err)
 

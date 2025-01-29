@@ -27,5 +27,8 @@ tasks:
 
   ledger:
     desc: "Run ledger signing test"
+    env:
+      RUN_LEDGER_SUITE: true
+      CTF_CONFIGS: "{{ .CTF_CONFIGS | default \"../config.toml\" }}"
     cmds:
-      - go test -tags=ledger {{.CLI_ARGS}} ./e2e/ledger
+      -  go test -tags=e2e -v {{.CLI_ARGS}} ./e2e/ledger
