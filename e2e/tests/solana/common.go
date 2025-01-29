@@ -131,9 +131,8 @@ func (s *SolanaTestSuite) SetupTest() {
 }
 
 // InitializeMCMProgram public helper to initialize the MCM program
-func InitializeMCMProgram(t *testing.T, solanaClient *rpc.Client, programID solana.PublicKey, pdaSeed [32]byte, chainSelector uint64) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	t.Cleanup(cancel)
+func InitializeMCMProgram(ctx context.Context, t *testing.T, solanaClient *rpc.Client, programID solana.PublicKey, pdaSeed [32]byte, chainSelector uint64) {
+	t.Helper()
 
 	mcm.SetProgramID(programID)
 	wallet, err := solana.PrivateKeyFromBase58(privateKey)

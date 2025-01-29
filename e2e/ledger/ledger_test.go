@@ -43,8 +43,6 @@ func TestManualLedgerSigningSuite(t *testing.T) {
 // ManualLedgerSigningTestSuite tests the manual ledger signing functionality
 type ManualLedgerSigningTestSuite struct {
 	suite.Suite
-	mcmsContractEVM     *bindings.ManyChainMultiSig
-	deployerKey         common.Address
 	auth                *bind.TransactOpts
 	chainSelectorEVM    types.ChainSelector
 	chainSelectorSolana types.ChainSelector
@@ -56,6 +54,7 @@ func (s *ManualLedgerSigningTestSuite) deployMCMContractEVM(ctx context.Context)
 	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, 10)
 	privateKeyHex := s.Settings.PrivateKeys[0]
 	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
+	s.Require().NoError(err, "Failed to parse private key")
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	s.Require().NoError(err, "Failed to create transactor")
 	s.auth = auth
@@ -69,6 +68,7 @@ func (s *ManualLedgerSigningTestSuite) deployMCMContractEVM(ctx context.Context)
 	receipt, err := bind.WaitMined(ctx, s.Client, tx)
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(gethTypes.ReceiptStatusSuccessful, receipt.Status)
+
 	return mcmsAddress, instance
 }
 
@@ -78,7 +78,6 @@ func (s *ManualLedgerSigningTestSuite) setRootEVM(ctx context.Context,
 	proposal *mcms.Proposal,
 	instance *bindings.ManyChainMultiSig,
 	executorsMap map[types.ChainSelector]sdk.Executor) {
-
 	// Set configurations
 	signerGroups := []uint8{0}   // One groups: Group 0
 	groupQuorums := [32]uint8{1} // Quorum 1 for group 0
@@ -89,7 +88,7 @@ func (s *ManualLedgerSigningTestSuite) setRootEVM(ctx context.Context,
 	// Set config
 	tx, err := instance.SetConfig(s.auth, signers, signerGroups, groupQuorums, groupParents, clearRoot)
 	s.Require().NoError(err, "Failed to set contract configuration")
-	receipt, err := bind.WaitMined(context.Background(), s.Client, tx)
+	receipt, err := bind.WaitMined(ctx, s.Client, tx)
 	s.Require().NoError(err, "Failed to mine configuration transaction")
 	s.Require().Equal(gethTypes.ReceiptStatusSuccessful, receipt.Status)
 
@@ -114,6 +113,7 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 	executorsMap map[types.ChainSelector]sdk.Executor) {
 	var MCMProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
 	solanae2e.InitializeMCMProgram(
+		ctx,
 		s.T(),
 		s.SolanaClient,
 		MCMProgramID,

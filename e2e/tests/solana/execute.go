@@ -29,9 +29,10 @@ var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 // Test_Solana_Execute tests the Execute functionality by creating a mint tokens transaction and
 // executing it via the MCMS program.
 func (s *SolanaTestSuite) Test_Solana_Execute() {
-	InitializeMCMProgram(s.T(), s.SolanaClient, s.MCMProgramID, testPDASeedExec, uint64(s.ChainSelector))
-	// Get required programs and accounts
 	ctx := context.Background()
+	InitializeMCMProgram(ctx, s.T(), s.SolanaClient, s.MCMProgramID, testPDASeedExec, uint64(s.ChainSelector))
+	// Get required programs and accounts
+
 	mcmID := mcmsSolana.ContractAddress(s.MCMProgramID, testPDASeedExec)
 	signerEVMAccount := NewEVMTestAccount(s.T())
 	signerPDA, err := mcmsSolana.FindSignerPDA(s.MCMProgramID, testPDASeedExec)
