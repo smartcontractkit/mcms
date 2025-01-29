@@ -5,6 +5,7 @@ package solanae2e
 
 import (
 	"context"
+	"math/big"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -106,13 +107,13 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 	signature, err := executable.SetRoot(ctx, s.ChainSelector)
 	s.Require().NoError(err)
-	_, err = solana.SignatureFromBase58(signature)
+	_, err = solana.SignatureFromBase58(signature.Hash)
 	s.Require().NoError(err)
 
 	// --- act: call Execute ---
 	signature, err = executable.Execute(ctx, 0)
 	s.Require().NoError(err)
-	_, err = solana.SignatureFromBase58(signature)
+	_, err = solana.SignatureFromBase58(signature.Hash)
 	s.Require().NoError(err)
 
 	// --- assert balances
@@ -147,6 +148,7 @@ func (s *SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.Public
 	// Build the mcms transaction for the proposal
 	solanaMcmTxMint, err := mcmsSolana.NewTransaction(solana.Token2022ProgramID.String(),
 		ix2Bytes,
+		big.NewInt(0),
 		ix2.Accounts(),
 		"Token",
 		[]string{"minting-test"},

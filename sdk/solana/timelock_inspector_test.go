@@ -595,15 +595,11 @@ func newTestTimelockInspector(t *testing.T) (*TimelockInspector, *mocks.JSONRPCC
 func createTimelockOperation(t *testing.T, timestamp uint64) *timelock.Operation {
 	t.Helper()
 
-	pk, err := solana.NewRandomPrivateKey()
-	require.NoError(t, err)
-
 	operation := &timelock.Operation{
 		Timestamp:         timestamp,
 		Id:                [32]uint8{},
 		Predecessor:       [32]uint8{},
 		Salt:              [32]uint8{},
-		Authority:         pk.PublicKey(),
 		IsFinalized:       false,
 		TotalInstructions: 5,
 		Instructions:      nil,

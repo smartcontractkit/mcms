@@ -7,6 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -14,15 +16,14 @@ import (
 
 var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
 
-// Executor is an Executor implementation for Solana chains, allowing for the execution of
-// operations on the MCMS contract
+// TimelockExecutor is an Executor implementation for solana chains for accessing the RBACTimelock program
 type TimelockExecutor struct {
 	*TimelockInspector
 	client *rpc.Client
 	auth   solana.PrivateKey
 }
 
-// NewTimelockExecutor creates a new TimelockExecutor for Solana chains
+// NewTimelockExecutor creates a new TimelockExecutor
 func NewTimelockExecutor(client *rpc.Client, auth solana.PrivateKey) *TimelockExecutor {
 	return &TimelockExecutor{
 		TimelockInspector: NewTimelockInspector(client),
@@ -35,12 +36,67 @@ func (e *TimelockExecutor) Client() *rpc.Client {
 	return e.client
 }
 
-func (e *TimelockExecutor) AuthPublicKey() solana.PublicKey {
-	return e.auth.PublicKey()
-}
-
+// Execute runs the ExecuteBatch instruction for each transaction in the BatchOperation
 func (e *TimelockExecutor) Execute(
 	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
-) (string, error) {
-	return "", fmt.Errorf("not implemented")
+) (types.TransactionResult, error) {
+	programID, timelockID, err := ParseContractAddress(timelockAddress)
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
+	bindings.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
+
+	instructionsData, err := getInstructionDataFromBatchOperation(bop)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to get InstructionData from batch operation: %w", err)
+	}
+	accounts, err := getAccountsFromBatchOperation(bop)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to get accounts from batch operation: %w", err)
+	}
+
+	operationID, err := HashOperation(instructionsData, predecessor, salt)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to compute operation id: %w", err)
+	}
+
+	operationPDA, err := FindTimelockOperationPDA(programID, timelockID, operationID)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to find timelock operation pda: %w", err)
+	}
+	configPDA, err := FindTimelockConfigPDA(programID, timelockID)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to find timelock config pda: %w", err)
+	}
+	signerPDA, err := FindTimelockSignerPDA(programID, timelockID)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to find timelock signer pda: %w", err)
+	}
+	config, err := getTimelockConfig(ctx, e.client, configPDA)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to read config pda: %w", err)
+	}
+
+	var predecessorOperationPDA solana.PublicKey
+	if (predecessor != common.Hash{}) {
+		predecessorOperationPDA, err = FindTimelockOperationPDA(programID, timelockID, predecessor)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("unable to find timelock predecessor operation pda: %w", err)
+		}
+	}
+
+	instruction := bindings.NewExecuteBatchInstruction(timelockID, operationID, operationPDA,
+		predecessorOperationPDA, configPDA, signerPDA, config.ExecutorRoleAccessController, e.auth.PublicKey())
+	instruction.AccountMetaSlice = append(instruction.AccountMetaSlice, accounts...)
+
+	signature, tx, err := sendAndConfirm(ctx, e.client, e.auth, instruction, rpc.CommitmentConfirmed)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to call execute operation instruction: %w", err)
+	}
+
+	return types.TransactionResult{
+		Hash:           signature,
+		ChainFamily:    chain_selectors.FamilySolana,
+		RawTransaction: tx,
+	}, nil
 }

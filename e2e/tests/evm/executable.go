@@ -149,7 +149,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 		Operations: []mcmtypes.Operation{
 			{
 				ChainSelector: s.chainSelector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					common.HexToAddress(s.timelockContract.Address().Hex()),
 					grantRoleData,
 					big.NewInt(0),
@@ -202,11 +202,11 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NoError(err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(ctx, s.chainSelector)
+	tx, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
+	s.Require().NotEmpty(tx.Hash)
 
-	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -216,11 +216,11 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().Equal(root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	txHash, err = executable.Execute(ctx, 0)
+	tx, err = executable.Execute(ctx, 0)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
+	s.Require().NotEmpty(tx.Hash)
 
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -274,7 +274,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		Operations: []mcmtypes.Operation{
 			{
 				ChainSelector: s.chainSelector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					common.HexToAddress(s.timelockContract.Address().Hex()),
 					grantRoleData,
 					big.NewInt(0),
@@ -324,11 +324,11 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(ctx, s.chainSelector)
+	tx, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
+	s.Require().NotEmpty(tx.Hash)
 
-	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -338,11 +338,11 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().Equal(root.ValidUntil, proposal.ValidUntil)
 
 	// Execute the proposal
-	txHash, err = executable.Execute(ctx, 0)
+	tx, err = executable.Execute(ctx, 0)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
+	s.Require().NotEmpty(tx.Hash)
 
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -384,7 +384,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		Operations: []mcmtypes.Operation{
 			{
 				ChainSelector: s.chainSelector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					common.HexToAddress(s.timelockContract.Address().Hex()),
 					grantRoleData2,
 					big.NewInt(0),
@@ -426,11 +426,11 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 
 	// SetRoot on the contract
-	txHash, err = executable2.SetRoot(ctx, s.chainSelector)
+	tx, err = executable2.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
+	s.Require().NotEmpty(tx.Hash)
 
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -443,11 +443,11 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().Equal(root.ValidUntil, proposal2.ValidUntil)
 
 	// Execute the proposal
-	txHash, err = executable2.Execute(ctx, 0)
+	tx, err = executable2.Execute(ctx, 0)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
+	s.Require().NotEmpty(tx.Hash)
 
-	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 

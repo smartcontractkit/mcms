@@ -61,18 +61,45 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 	return nil
 }
 
-func (t *TimelockExecutable) Execute(ctx context.Context, index int) (string, error) {
+type Option func(*executeOptions)
+
+type executeOptions struct {
+	callProxy string
+}
+
+func WithCallProxy(address string) Option {
+	return func(opts *executeOptions) {
+		opts.callProxy = address
+	}
+}
+
+// Execute executes the operation at the given index.
+// Includes an option to set callProxy to execute the calls through a proxy.
+// If the callProxy is not set, the calls will be executed directly
+// to the timelock.
+func (t *TimelockExecutable) Execute(ctx context.Context, index int, opts ...Option) (types.TransactionResult, error) {
+	execOpts := &executeOptions{}
+	for _, opt := range opts {
+		opt(execOpts)
+	}
+
 	err := t.setPredecessors(ctx)
 	if err != nil {
-		return "", fmt.Errorf("unable to set predecessors: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to set predecessors: %w", err)
 	}
 
 	op := t.proposal.Operations[index]
 
+	// Get target contract
+	execAddress := execOpts.callProxy
+	if len(execAddress) == 0 {
+		execAddress = t.proposal.TimelockAddresses[op.ChainSelector]
+	}
+
 	return t.executors[op.ChainSelector].Execute(
 		ctx,
 		op,
-		t.proposal.TimelockAddresses[op.ChainSelector],
+		execAddress,
 		t.predecessors[index],
 		t.proposal.Salt(),
 	)

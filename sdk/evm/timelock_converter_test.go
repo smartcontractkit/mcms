@@ -20,6 +20,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 
 	ctx := context.Background()
 	timelockAddress := "0x1234567890123456789012345678901234567890"
+	mcmAddress := "0x9876543210987654321098765432109876543210"
 	zeroHash := common.Hash{}
 
 	testCases := []struct {
@@ -36,7 +37,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Schedule operation",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{
-					NewOperation(
+					NewTransaction(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -57,7 +58,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Cancel operation",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{
-					NewOperation(
+					NewTransaction(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -78,7 +79,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Invalid operation",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{
-					NewOperation(
+					NewTransaction(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -119,8 +120,8 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			t.Parallel()
 
 			converter := &TimelockConverter{}
-			chainOperations, operationId, err := converter.ConvertBatchToChainOperations(
-				ctx, tc.op, timelockAddress, types.MustParseDuration(tc.delay), tc.operation, tc.predecessor, tc.salt,
+			chainOperations, operationID, err := converter.ConvertBatchToChainOperations(
+				ctx, tc.op, timelockAddress, mcmAddress, types.MustParseDuration(tc.delay), tc.operation, tc.predecessor, tc.salt,
 			)
 
 			if tc.expectedError != nil {
@@ -128,7 +129,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 				assert.IsType(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)
-				assert.NotEqual(t, common.Hash{}, operationId)
+				assert.NotEqual(t, common.Hash{}, operationID)
 				assert.Len(t, chainOperations, 1)
 				assert.Equal(t, timelockAddress, chainOperations[0].Transaction.To)
 				assert.Equal(t, tc.op.ChainSelector, chainOperations[0].ChainSelector)

@@ -156,16 +156,16 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			configurer := evm.NewConfigurer(client, tt.auth)
 
 			// Call SetConfig
-			txHash, err := configurer.SetConfig(ctx, tt.mcmAddr, tt.cfg, tt.clearRoot)
+			tx, err := configurer.SetConfig(ctx, tt.mcmAddr, tt.cfg, tt.clearRoot)
 
 			// Assert the results
 			if tt.wantErr != nil {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr.Error())
-				assert.Equal(t, "", txHash)
+				assert.Equal(t, "", tx.Hash)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tt.want, txHash)
+				assert.Equal(t, tt.want, tx.Hash)
 			}
 		})
 	}

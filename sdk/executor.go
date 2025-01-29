@@ -15,16 +15,16 @@ type Executor interface {
 	Inspector
 	Encoder
 
-	// Returns a string of the transaction hash
+	// ExecuteOperation Returns a string of the transaction hash
 	ExecuteOperation(
 		ctx context.Context,
 		metadata types.ChainMetadata,
 		nonce uint32,
 		proof []common.Hash,
 		op types.Operation,
-	) (string, error)
+	) (types.TransactionResult, error)
 
-	// Returns a string of the transaction hash
+	// SetRoot Returns a string of the transaction hash
 	SetRoot(
 		ctx context.Context,
 		metadata types.ChainMetadata,
@@ -32,5 +32,5 @@ type Executor interface {
 		root [32]byte,
 		validUntil uint32,
 		sortedSignatures []types.Signature,
-	) (string, error)
+	) (types.TransactionResult, error)
 }

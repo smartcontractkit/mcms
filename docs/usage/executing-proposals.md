@@ -6,20 +6,25 @@ Here is an example of how to run SetRoot and Execute on a signed proposal.
 package examples
 
 import (
+  "context"
   "log"
   "os"
 
   "github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
+  "github.com/gagliardetto/solana-go"
+  "github.com/gagliardetto/solana-go/rpc"
   chain_selectors "github.com/smartcontractkit/chain-selectors"
 
   "github.com/smartcontractkit/mcms"
   "github.com/smartcontractkit/mcms/sdk"
   "github.com/smartcontractkit/mcms/sdk/evm"
+  mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
   "github.com/smartcontractkit/mcms/types"
 )
 
 func main() {
   // Step 1: Load the Proposal
+  ctx := context.Background()
   file, err := os.Open("proposal.json")
   if err != nil {
     log.Fatalf("Error opening proposal file: %v", err)
@@ -33,29 +38,53 @@ func main() {
   }
 
   // Step 2: Initialize the Chain Family Executors
-  selector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
+  evmSelector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
+  solanaSelector := chain_selectors.SOLANA_DEVNET.Selector
+
+  // EVM executor
   backend := backends.SimulatedBackend{}
-  executor := evm.NewExecutor(evm.NewEncoder(selector, 0, false, false), backend, nil)
-  executorsMap := map[types.ChainSelector]sdk.Executor{
-    types.ChainSelector(selector): executor,
+  evmExecutor := evm.NewExecutor(evm.NewEncoder(types.ChainSelector(evmSelector), 0, false, false), backend, nil)
+
+  // Solana executor
+  client := rpc.New("https://api.devnet.solana.com")
+  solanaKey, err := solana.NewRandomPrivateKey()
+  if err != nil {
+    log.Fatalf("Error creating solana key: %v", err)
+    return
   }
-  // Step 3: Create the chain MCMS proposal executor
+
+  encoder := mcmsSolana.NewEncoder(types.ChainSelector(solanaSelector), 0, false)
+  solanaExecutor := mcmsSolana.NewExecutor(client, solanaKey, encoder)
+
+  // Build executors map
+  executorsMap := map[types.ChainSelector]sdk.Executor{
+    types.ChainSelector(evmSelector):    evmExecutor,
+    types.ChainSelector(solanaSelector): solanaExecutor,
+  }
+  // Step 3: Create the chain MCMS proposal  executor
   executable, err := mcms.NewExecutable(proposal, executorsMap)
   if err != nil {
     log.Fatalf("Error opening proposal file: %v", err)
   }
 
   // Step 4: SetRoot of a proposal
-  _, err = executable.SetRoot(types.ChainSelector(selector))
+  // On EVM
+  _, err = executable.SetRoot(ctx, types.ChainSelector(evmSelector))
   if err != nil {
-    log.Fatalf("Error opening proposal file: %v", err)
+    log.Fatalf("Error calling set root: %v", err)
+  }
+  // On Solana
+  _, err = executable.SetRoot(ctx, types.ChainSelector(solanaSelector))
+  if err != nil {
+    log.Fatalf("Error calling set root: %v", err)
   }
 
   // Step 5: Execute the first operation of the proposal.
-  _, err = executable.Execute(0)
+  _, err = executable.Execute(ctx, 0)
   if err != nil {
-    log.Fatalf("Error opening proposal file: %v", err)
+    log.Fatalf("Error calling execute: %v", err)
   }
+
 }
 
 

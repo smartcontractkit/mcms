@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"math"
+	"os"
 	"strings"
 	"testing"
 
@@ -20,7 +21,25 @@ import (
 )
 
 var (
-	TestAddress = "0x1234567890abcdef"
+	TestAddress   = "0x1234567890abcdef"
+	ValidProposal = `{
+		"version": "v1",
+		"kind": "Proposal",
+		"validUntil": 2004259681,
+		"chainMetadata": {
+			"3379446385462418246": {}
+		},
+		"operations": [
+			{
+				"chainSelector": 3379446385462418246,
+				"transaction": {
+					"to": "0xsomeaddress",
+					"data": "EjM=",
+					"additionalFields": {"value": 0}
+				}
+			}
+		]
+	}`
 )
 
 func Test_BaseProposal_AppendSignature(t *testing.T) {
@@ -48,24 +67,7 @@ func Test_NewProposal(t *testing.T) {
 	}{
 		{
 			name: "success: initializes a proposal from an io.Reader",
-			give: `{
-				"version": "v1",
-				"kind": "Proposal",
-				"validUntil": 2004259681,
-				"chainMetadata": {
-					"3379446385462418246": {}
-				},
-				"operations": [
-					{
-						"chainSelector": 3379446385462418246,
-						"transaction": {
-							"to": "0xsomeaddress",
-							"data": "EjM=",
-							"additionalFields": {"value": 0}
-						}
-					}
-				]
-			}`,
+			give: ValidProposal,
 			want: Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "v1",
@@ -211,6 +213,67 @@ func Test_WriteProposal(t *testing.T) {
 	}
 }
 
+func TestLoadProposal(t *testing.T) {
+	t.Parallel()
+	t.Run("valid file path with KindProposal", func(t *testing.T) {
+		t.Parallel()
+
+		tempFile, err := os.CreateTemp("", "valid_proposal.txt")
+		require.NoError(t, err)
+
+		err = os.WriteFile(tempFile.Name(), []byte(ValidProposal), 0600)
+		require.NoError(t, err)
+		defer os.Remove(tempFile.Name())
+
+		proposal, err := LoadProposal(types.KindProposal, tempFile.Name())
+
+		require.NoError(t, err)
+		assert.NotNil(t, proposal)
+	})
+
+	t.Run("valid file path with KindTimelockProposal", func(t *testing.T) {
+		t.Parallel()
+
+		tempFile, err := os.CreateTemp("", "valid_timelock_proposal.txt")
+		require.NoError(t, err)
+
+		err = os.WriteFile(tempFile.Name(), []byte(ValidTimelockProposal), 0600)
+		require.NoError(t, err)
+		defer os.Remove(tempFile.Name())
+
+		proposal, err := LoadProposal(types.KindTimelockProposal, tempFile.Name())
+
+		require.NoError(t, err)
+		assert.NotNil(t, proposal)
+	})
+
+	t.Run("unknown proposal type", func(t *testing.T) {
+		t.Parallel()
+
+		filePath := "testdata/valid_proposal.txt"
+		err := os.WriteFile(filePath, []byte(ValidProposal), 0600)
+		require.Error(t, err)
+		defer os.Remove(filePath)
+
+		proposal, err := LoadProposal(types.ProposalKind("unknown"), filePath)
+
+		require.Error(t, err)
+		assert.Nil(t, proposal)
+		assert.Equal(t, "unknown proposal type", err.Error())
+	})
+
+	t.Run("invalid file path", func(t *testing.T) {
+		t.Parallel()
+
+		filePath := "invalid_path.txt"
+
+		proposal, err := LoadProposal(types.KindProposal, filePath)
+
+		require.Error(t, err)
+		assert.Nil(t, proposal)
+	})
+}
+
 func Test_Proposal_Validate(t *testing.T) {
 	t.Parallel()
 
@@ -222,7 +285,7 @@ func Test_Proposal_Validate(t *testing.T) {
 		{
 			name: "valid",
 			giveFunc: func(*Proposal) {
-				// NOOP: All fields are valid
+				// NOOP: All  are valid
 			},
 		},
 		{

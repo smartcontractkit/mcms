@@ -3,6 +3,7 @@ package solana
 import (
 	"encoding/json"
 	"fmt"
+	"math/big"
 
 	"github.com/gagliardetto/solana-go"
 
@@ -11,6 +12,7 @@ import (
 
 type AdditionalFields struct {
 	Accounts []*solana.AccountMeta `json:"accounts" validate:"required"`
+	Value    *big.Int              `json:"value" validate:"omitempty"`
 }
 
 // Validate ensures the solana-specific fields are correct
@@ -21,6 +23,7 @@ func (f AdditionalFields) Validate() error {
 func NewTransaction(
 	contractID string,
 	data []byte,
+	value *big.Int,
 	accounts []*solana.AccountMeta,
 	contractType string,
 	tags []string,
@@ -29,11 +32,8 @@ func NewTransaction(
 	if err != nil {
 		return types.Transaction{}, err
 	}
-	additionalFields := AdditionalFields{
-		Accounts: accounts,
-	}
 
-	marshalledAdditionalFields, err := json.Marshal(additionalFields)
+	marshalledAdditionalFields, err := json.Marshal(AdditionalFields{Accounts: accounts, Value: value})
 	if err != nil {
 		return types.Transaction{}, fmt.Errorf("unable to marshal additional fields: %w", err)
 	}
@@ -47,4 +47,24 @@ func NewTransaction(
 			Tags:         tags,
 		},
 	}, nil
+}
+
+func NewTransactionFromInstruction(
+	instruction solana.Instruction,
+	contractType string,
+	tags []string,
+) (types.Transaction, error) {
+	data, err := instruction.Data()
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("unable to get instruction data: %w", err)
+	}
+
+	// ensure PDAs don't have the "IsSigner" flag
+	for _, account := range instruction.Accounts() {
+		if account != nil && !solana.IsOnCurve(account.PublicKey[:]) {
+			account.IsSigner = false
+		}
+	}
+
+	return NewTransaction(instruction.ProgramID().String(), data, nil, instruction.Accounts(), contractType, tags)
 }

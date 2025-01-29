@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 )
 
@@ -69,6 +68,12 @@ func FindTimelockOperationPDA(
 	return findPDA(programID, seeds)
 }
 
+func FindTimelockBypasserOperationPDA(
+	programID solana.PublicKey, timelockID PDASeed, opID [32]byte) (solana.PublicKey, error) {
+	seeds := [][]byte{[]byte("timelock_bypasser_operation"), timelockID[:], opID[:]}
+	return findPDA(programID, seeds)
+}
+
 func FindTimelockSignerPDA(
 	programID solana.PublicKey, timelockID PDASeed) (solana.PublicKey, error) {
 	seeds := [][]byte{[]byte("timelock_signer"), timelockID[:]}
@@ -92,37 +97,36 @@ func validUntilBytes(validUntil uint32) []byte {
 	return vuBytes
 }
 
-type instructionBuilder interface {
-	ValidateAndBuild() (*bindings.Instruction, error)
+type instructionBuilder[I solana.Instruction] interface {
+	ValidateAndBuild() (I, error)
 }
 
-func sendAndConfirm[B instructionBuilder](
+func sendAndConfirm[I solana.Instruction](
 	ctx context.Context,
 	client *rpc.Client,
 	auth solana.PrivateKey,
-	instructionBuilder B,
+	builder instructionBuilder[I],
 	commitmentType rpc.CommitmentType,
-) (string, error) {
-	builtInstruction, err := instructionBuilder.ValidateAndBuild()
+) (string, *rpc.GetTransactionResult, error) {
+	builtInstruction, err := builder.ValidateAndBuild()
 	if err != nil {
-		return "", fmt.Errorf("unable to validate and build instruction: %w", err)
+		return "", nil, fmt.Errorf("unable to validate and build instruction: %w", err)
 	}
 
-	result, err := solanaCommon.SendAndConfirm(ctx, client, []solana.Instruction{builtInstruction}, auth,
-		commitmentType)
+	result, err := solanaCommon.SendAndConfirm(ctx, client, []solana.Instruction{builtInstruction}, auth, commitmentType)
 	if err != nil {
-		return "", fmt.Errorf("unable to send instruction: %w", err)
+		return "", nil, fmt.Errorf("unable to send instruction: %w", err)
 	}
 	if result.Transaction == nil {
-		return "", fmt.Errorf("nil transacion in instruction result")
+		return "", nil, fmt.Errorf("nil transaction in instruction result")
 	}
 
 	transaction, err := result.Transaction.GetTransaction()
 	if err != nil {
-		return "", fmt.Errorf("unable to get transaction from instruction result: %w", err)
+		return "", nil, fmt.Errorf("unable to get transaction from instruction result: %w", err)
 	}
 
-	return transaction.Signatures[0].String(), nil
+	return transaction.Signatures[0].String(), result, nil
 }
 
 func chunkIndexes(numItems int, chunkSize int) [][2]int {

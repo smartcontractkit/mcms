@@ -36,7 +36,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 			name: "success: hash operation",
 			giveOp: types.Operation{
 				ChainSelector: chaintest.Chain1Selector,
-				Transaction: NewOperation(
+				Transaction: NewTransaction(
 					common.HexToAddress("0x2"),
 					[]byte("data"),
 					new(big.Int).SetUint64(1000000000000000000),
@@ -147,7 +147,7 @@ func TestEncoder_ToGethOperation(t *testing.T) {
 			giveSelector: chaintest.Chain1Selector,
 			giveOp: types.Operation{
 				ChainSelector: chainSelector,
-				Transaction: NewOperation(
+				Transaction: NewTransaction(
 					common.HexToAddress("0x2"),
 					[]byte("data"),
 					new(big.Int).SetUint64(1000000000000000000),

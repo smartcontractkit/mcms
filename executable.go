@@ -53,22 +53,22 @@ func NewExecutable(
 	}, nil
 }
 
-func (e *Executable) SetRoot(ctx context.Context, chainSelector types.ChainSelector) (string, error) {
+func (e *Executable) SetRoot(ctx context.Context, chainSelector types.ChainSelector) (types.TransactionResult, error) {
 	metadata := e.proposal.ChainMetadata[chainSelector]
 
 	metadataHash, err := e.encoders[chainSelector].HashMetadata(metadata)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	proof, err := e.tree.GetProof(metadataHash)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	hash, err := e.proposal.SigningHash()
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	// Sort signatures by recovered address
@@ -90,24 +90,24 @@ func (e *Executable) SetRoot(ctx context.Context, chainSelector types.ChainSelec
 	)
 }
 
-func (e *Executable) Execute(ctx context.Context, index int) (string, error) {
+func (e *Executable) Execute(ctx context.Context, index int) (types.TransactionResult, error) {
 	op := e.proposal.Operations[index]
 	chainSelector := op.ChainSelector
 	metadata := e.proposal.ChainMetadata[chainSelector]
 
 	txNonce, err := safecast.Uint64ToUint32(e.txNonces[index])
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	operationHash, err := e.encoders[chainSelector].HashOperation(txNonce, metadata, op)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	proof, err := e.tree.GetProof(operationHash)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	return e.executors[chainSelector].ExecuteOperation(

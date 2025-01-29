@@ -79,7 +79,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	s.Require().NoError(err)
 
 	// --- assert ---
-	_, err = solana.SignatureFromBase58(signature)
+	_, err = solana.SignatureFromBase58(signature.Hash)
 	s.Require().NoError(err)
 
 	gotRoot, gotValidUntil, err := inspectors[s.ChainSelector].GetRoot(ctx, mcmAddress)

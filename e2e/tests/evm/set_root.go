@@ -175,11 +175,11 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	s.Require().NoError(err)
 
 	// Call SetRoot
-	txHash, err := executable.SetRoot(ctx, s.chainSelector)
+	tx, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
+	s.Require().NotEmpty(tx.Hash)
 
-	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.Client, common.HexToHash(txHash))
+	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.Client, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }
@@ -221,10 +221,9 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	proposalTimelock, err := builder.Build()
 	s.Require().NoError(err)
 
-	converters := map[mcmtypes.ChainSelector]sdk.TimelockConverter{
+	proposal, _, err := proposalTimelock.Convert(ctx, map[mcmtypes.ChainSelector]sdk.TimelockConverter{
 		s.chainSelector: &evm.TimelockConverter{},
-	}
-	proposal, _, err := proposalTimelock.Convert(ctx, converters)
+	})
 	s.Require().NoError(err)
 
 	// Sign proposal
@@ -260,11 +259,11 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	executable, err := mcms.NewExecutable(&proposal, executorsMap)
 	s.Require().NoError(err)
 	// Call SetRoot
-	txHash, err := executable.SetRoot(ctx, s.chainSelector)
+	tx, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
+	s.Require().NotEmpty(tx.Hash)
 	// Check receipt
-	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(txHash))
+	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }

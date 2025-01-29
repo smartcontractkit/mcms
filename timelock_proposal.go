@@ -2,6 +2,7 @@ package mcms
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -21,9 +22,10 @@ type TimelockProposal struct {
 	BaseProposal
 
 	Action            types.TimelockAction           `json:"action" validate:"required,oneof=schedule cancel bypass"`
-	Delay             types.Duration                 `json:"delay" validate:"required_if=Action schedule"`
+	Delay             types.Duration                 `json:"delay"`
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
 	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1,dive"`
+	SaltOverride      *common.Hash                   `json:"salt,omitempty"`
 }
 
 // NewTimelockProposal unmarshal data from the reader to JSON and returns a new TimelockProposal.
@@ -45,6 +47,23 @@ func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
 	enc.SetIndent("", "  ")
 
 	return enc.Encode(p)
+}
+
+// Salt returns a unique salt for the proposal.
+// We need the salt to be unique in case you use an identical operation again
+// on the same chain across two different proposals. Predecessor protects against
+// duplicates within the same proposal
+func (m *TimelockProposal) Salt() [32]byte {
+	if m.SaltOverride != nil {
+		return *m.SaltOverride
+	}
+
+	// If the proposal doesn't have a salt, we create one from the
+	// valid until timestamp.
+	var salt [32]byte
+	binary.BigEndian.PutUint32(salt[:], m.ValidUntil)
+
+	return salt
 }
 
 func (m *TimelockProposal) Validate() error {
@@ -86,6 +105,7 @@ func (m *TimelockProposal) Convert(
 	converters map[types.ChainSelector]sdk.TimelockConverter,
 ) (Proposal, []common.Hash, error) {
 	baseProposal := m.BaseProposal
+	baseProposal.Kind = types.KindProposal
 
 	// Start predecessor map with all chains pointing to the zero hash
 	predecessors := make([]common.Hash, len(m.Operations)+1)
@@ -113,8 +133,13 @@ func (m *TimelockProposal) Convert(
 			return Proposal{}, []common.Hash{}, fmt.Errorf("unable to find converter for chain selector: %d", bop.ChainSelector)
 		}
 
+		chainMetadata, ok := m.ChainMetadata[bop.ChainSelector]
+		if !ok {
+			return Proposal{}, []common.Hash{}, fmt.Errorf("unable to find chain metadata for chain selector: %d", bop.ChainSelector)
+		}
+
 		convertedOps, operationID, err := converter.ConvertBatchToChainOperations(
-			ctx, bop, timelockAddress, m.Delay, m.Action, predecessor, baseProposal.Salt(),
+			ctx, bop, timelockAddress, chainMetadata.MCMAddress, m.Delay, m.Action, predecessor, m.Salt(),
 		)
 		if err != nil {
 			return Proposal{}, nil, err

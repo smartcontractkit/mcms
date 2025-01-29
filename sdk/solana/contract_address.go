@@ -11,7 +11,7 @@ import (
 
 type PDASeed [32]byte
 
-var ErrInvalidContractAddressFormat error = errors.New("invalid solana contract address format")
+var ErrInvalidContractAddressFormat = errors.New("invalid solana contract address format")
 
 // ContractAddress returns a string representation of a solana contract id
 // which is a combination of the program id and the seed <PROGRAM_ID>.<SEED>
@@ -21,14 +21,14 @@ func ContractAddress(programID solana.PublicKey, pdaSeed PDASeed) string {
 
 func ParseContractAddress(address string) (solana.PublicKey, PDASeed, error) {
 	const numParts = 2
-	parts := strings.SplitN(address, ".", numParts)
+	parts := strings.Split(address, ".")
 	if len(parts) != numParts {
 		return solana.PublicKey{}, PDASeed{}, fmt.Errorf("%w: %q", ErrInvalidContractAddressFormat, address)
 	}
 
 	programID, err := solana.PublicKeyFromBase58(parts[0])
 	if err != nil {
-		return solana.PublicKey{}, PDASeed{}, fmt.Errorf("unable to parse solana program id: %w", err)
+		return solana.PublicKey{}, PDASeed{}, fmt.Errorf("unable to parse base58 solana program id: %w", err)
 	}
 
 	allSeedBytes := []byte(parts[1])
@@ -40,4 +40,16 @@ func ParseContractAddress(address string) (solana.PublicKey, PDASeed, error) {
 	copy(pdaSeed[:], []byte(parts[1])[:])
 
 	return programID, pdaSeed, nil
+}
+
+func ParseProgramID(addressOrProgramID string) (solana.PublicKey, error) {
+	toProgramID, _, err := ParseContractAddress(addressOrProgramID)
+	if errors.Is(err, ErrInvalidContractAddressFormat) {
+		toProgramID, err = solana.PublicKeyFromBase58(addressOrProgramID)
+		if err != nil {
+			return solana.PublicKey{}, fmt.Errorf("unable to parse base58 solana program id: %w", err)
+		}
+	}
+
+	return toProgramID, err
 }

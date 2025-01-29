@@ -19,6 +19,37 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+var ValidTimelockProposal = `{
+	"version": "v1",
+	"kind": "TimelockProposal",
+	"validUntil": 2004259681,
+	"chainMetadata": {
+		"16015286601757825753": {
+			"mcmAddress": "0x0000000000000000000000000000000000000000",
+			"startingOpCount": 0
+		}
+	},
+	"description": "Test proposal",
+	"overridePreviousRoot": false,
+	"action": "schedule",
+	"delay": "1h",
+	"timelockAddresses": {
+		"16015286601757825753": "0x01"
+	},
+	"operations": [
+		{
+			"chainSelector": 16015286601757825753,
+			"transactions": [
+				{
+					"to": "0x0000000000000000000000000000000000000000",
+					"additionalFields": {"value": 0},
+					"data": "ZGF0YQ=="
+				}
+			]
+		}
+	]
+}`
+
 func Test_NewTimelockProposal(t *testing.T) {
 	t.Parallel()
 
@@ -30,6 +61,42 @@ func Test_NewTimelockProposal(t *testing.T) {
 	}{
 		{
 			name: "success: initializes a proposal from an io.Reader",
+			give: ValidTimelockProposal,
+			want: TimelockProposal{
+				BaseProposal: BaseProposal{
+					Version:     "v1",
+					Kind:        types.KindTimelockProposal,
+					ValidUntil:  2004259681,
+					Description: "Test proposal",
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						chaintest.Chain2Selector: {
+							StartingOpCount: 0,
+							MCMAddress:      "0x0000000000000000000000000000000000000000",
+						},
+					},
+					OverridePreviousRoot: false,
+				},
+				Action: types.TimelockActionSchedule,
+				Delay:  types.MustParseDuration("1h"),
+				TimelockAddresses: map[types.ChainSelector]string{
+					chaintest.Chain2Selector: "0x01",
+				},
+				Operations: []types.BatchOperation{
+					{
+						ChainSelector: chaintest.Chain2Selector,
+						Transactions: []types.Transaction{
+							{
+								To:               "0x0000000000000000000000000000000000000000",
+								AdditionalFields: []byte(`{"value": 0}`),
+								Data:             []byte("data"),
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "success: valid with 0 delay",
 			give: `{
 				"version": "v1",
 				"kind": "TimelockProposal",
@@ -43,7 +110,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 				"description": "Test proposal",
 				"overridePreviousRoot": false,
 				"action": "schedule",
-				"delay": "1h",
+				"delay": "0s",
 				"timelockAddresses": {
 					"16015286601757825753": "0x01"
 				},
@@ -75,7 +142,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 					OverridePreviousRoot: false,
 				},
 				Action: types.TimelockActionSchedule,
-				Delay:  types.MustParseDuration("1h"),
+				Delay:  types.MustParseDuration("0s"),
 				TimelockAddresses: map[types.ChainSelector]string{
 					chaintest.Chain2Selector: "0x01",
 				},
@@ -317,16 +384,6 @@ func Test_TimelockProposal_Validate(t *testing.T) {
 			},
 		},
 		{
-			name: "required_if validation",
-			giveFunc: func(p *TimelockProposal) {
-				p.Action = "schedule"
-				p.Delay = types.Duration{}
-			},
-			wantErrs: []string{
-				"Key: 'TimelockProposal.Delay' Error:Field validation for 'Delay' failed on the 'required_if' tag",
-			},
-		},
-		{
 			name: "invalid kind: must be TimelockProposal",
 			giveFunc: func(p *TimelockProposal) {
 				p.Kind = types.KindProposal
@@ -531,4 +588,57 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 	assert.Equal(t, "description", mcmsProposal.Description)
 	assert.Len(t, mcmsProposal.Operations, 1)
 	assert.Len(t, predecessors, 2)
+}
+
+func TestProposal_WithSaltOverride(t *testing.T) {
+	t.Parallel()
+	builder := NewTimelockProposalBuilder()
+	builder.SetVersion("v1").
+		SetAction(types.TimelockActionSchedule).
+		SetValidUntil(2552083725).
+		AddTimelockAddress(chaintest.Chain1Selector, "0x01").
+		AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
+		AddOperation(types.BatchOperation{
+			ChainSelector: chaintest.Chain1Selector,
+			Transactions: []types.Transaction{
+				{
+					To:               TestAddress,
+					AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+					Data:             common.Hex2Bytes("0x1"),
+				},
+			},
+		})
+	proposal, err := builder.Build()
+	require.NoError(t, err)
+	salt := common.HexToHash("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef")
+	proposal.SaltOverride = &salt
+	assert.Equal(t, salt, *proposal.SaltOverride)
+	saltBytes := proposal.Salt()
+	assert.Equal(t, salt, common.BytesToHash(saltBytes[:]))
+}
+
+func TestProposal_WithoutSaltOverride(t *testing.T) {
+	t.Parallel()
+	builder := NewTimelockProposalBuilder()
+	builder.SetVersion("v1").
+		SetAction(types.TimelockActionSchedule).
+		SetValidUntil(2552083725).
+		AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
+		AddTimelockAddress(chaintest.Chain1Selector, "0x01").
+		AddOperation(types.BatchOperation{
+			ChainSelector: chaintest.Chain1Selector,
+			Transactions: []types.Transaction{
+				{
+					To:               TestAddress,
+					AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+					Data:             common.Hex2Bytes("0x1"),
+				},
+			},
+		})
+	proposal, err := builder.Build()
+	require.NoError(t, err)
+	assert.Nil(t, proposal.SaltOverride)
+	saltBytes := proposal.Salt()
+	assert.NotNil(t, saltBytes)
+	assert.NotEqual(t, common.Hash{}, saltBytes)
 }

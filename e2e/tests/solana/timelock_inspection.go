@@ -7,6 +7,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/gagliardetto/solana-go"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
 
@@ -23,11 +24,11 @@ var testPDASeedTimelockIsOperationsReady = [32]byte{'t', 'e', 's', 't', '-', 't'
 var testPDASeedTimelockIsOperationsDone = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'd', 'o', 'n', 'e'}
 
 func (s *SolanaTestSuite) TestGetProposers() {
-	s.SetupTimelockWorker(testPDASeedTimelockGetProposers, 1*time.Second)
+	s.SetupTimelock(testPDASeedTimelockGetProposers, 1*time.Second)
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	proposers, err := inspector.GetProposers(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockGetProposers))
+	proposers, err := inspector.GetProposers(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockGetProposers))
 	s.Require().NoError(err, "Failed to get proposers")
 	s.Require().Len(proposers, 2, "Expected 2 proposers")
 
@@ -39,11 +40,11 @@ func (s *SolanaTestSuite) TestGetProposers() {
 }
 
 func (s *SolanaTestSuite) TestGetExecutors() {
-	s.SetupTimelockWorker(testPDASeedTimelockGetExecutors, 1*time.Second)
+	s.SetupTimelock(testPDASeedTimelockGetExecutors, 1*time.Second)
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	executors, err := inspector.GetExecutors(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockGetExecutors))
+	executors, err := inspector.GetExecutors(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockGetExecutors))
 	s.Require().NoError(err, "Failed to get executors")
 	s.Require().Len(executors, 2, "Expected 2 executors")
 
@@ -55,11 +56,11 @@ func (s *SolanaTestSuite) TestGetExecutors() {
 }
 
 func (s *SolanaTestSuite) TestGetCancellers() {
-	s.SetupTimelockWorker(testPDASeedTimelockGetCancellers, 1*time.Second)
+	s.SetupTimelock(testPDASeedTimelockGetCancellers, 1*time.Second)
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	cancellers, err := inspector.GetCancellers(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockGetCancellers))
+	cancellers, err := inspector.GetCancellers(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockGetCancellers))
 	s.Require().NoError(err, "Failed to get cancellers")
 	s.Require().Len(cancellers, 2, "Expected 2 cancellers")
 
@@ -71,11 +72,11 @@ func (s *SolanaTestSuite) TestGetCancellers() {
 }
 
 func (s *SolanaTestSuite) TestGetBypassers() {
-	s.SetupTimelockWorker(testPDASeedTimelockGetBypassers, 1*time.Second)
+	s.SetupTimelock(testPDASeedTimelockGetBypassers, 1*time.Second)
 	ctx := context.Background()
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
-	bypassers, err := inspector.GetBypassers(ctx, solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockGetBypassers))
+	bypassers, err := inspector.GetBypassers(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockGetBypassers))
 	s.Require().NoError(err, "Failed to get bypassers")
 	s.Require().Len(bypassers, 2, "Expected 2 bypassers")
 
@@ -88,13 +89,15 @@ func (s *SolanaTestSuite) TestGetBypassers() {
 
 func (s *SolanaTestSuite) TestIsOperation() {
 	ctx := context.Background()
-	s.SetupTimelockWorker(testPDASeedTimelockIsOperations, 1*time.Second)
+	admin, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+	s.SetupTimelock(testPDASeedTimelockIsOperations, 1*time.Second)
 	op := s.createOperation(testPDASeedTimelockIsOperations)
-	s.initOperation(ctx, op, testPDASeedTimelockIsOperations)
+	s.initOperation(ctx, op, testPDASeedTimelockIsOperations, admin)
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
 	operation, err := inspector.IsOperation(ctx,
-		solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockIsOperations), op.OperationID())
+		solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockIsOperations), op.OperationID())
 
 	s.Require().NoError(err, "Failed to check if operation exists")
 	s.Require().True(operation, "Operation should exist")
@@ -102,14 +105,16 @@ func (s *SolanaTestSuite) TestIsOperation() {
 
 func (s *SolanaTestSuite) TestIOperationPending() {
 	ctx := context.Background()
-	s.SetupTimelockWorker(testPDASeedTimelockIsOperationsPending, 1*time.Second)
+	admin, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+	s.SetupTimelock(testPDASeedTimelockIsOperationsPending, 1*time.Second)
 	op := s.createOperation(testPDASeedTimelockIsOperationsPending)
-	s.initOperation(ctx, op, testPDASeedTimelockIsOperationsPending)
+	s.initOperation(ctx, op, testPDASeedTimelockIsOperationsPending, admin)
 	s.scheduleOperation(ctx, testPDASeedTimelockIsOperationsPending, 1*time.Second, op.OperationID())
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
 	operation, err := inspector.IsOperationPending(ctx,
-		solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockIsOperationsPending), op.OperationID())
+		solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockIsOperationsPending), op.OperationID())
 
 	s.Require().NoError(err, "Failed to check if operation is pending")
 	s.Require().True(operation, "Operation should be pending")
@@ -117,16 +122,18 @@ func (s *SolanaTestSuite) TestIOperationPending() {
 
 func (s *SolanaTestSuite) TestIsOperationReady() {
 	ctx := context.Background()
-	s.SetupTimelockWorker(testPDASeedTimelockIsOperationsReady, 1*time.Second)
+	admin, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+	s.SetupTimelock(testPDASeedTimelockIsOperationsReady, 1*time.Second)
 	op := s.createOperation(testPDASeedTimelockIsOperationsReady)
-	s.initOperation(ctx, op, testPDASeedTimelockIsOperationsReady)
+	s.initOperation(ctx, op, testPDASeedTimelockIsOperationsReady, admin)
 	s.scheduleOperation(ctx, testPDASeedTimelockIsOperationsReady, 1*time.Second, op.OperationID())
 
 	s.waitForOperationToBeReady(ctx, testPDASeedTimelockIsOperationsReady, op.OperationID())
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
 	operation, err := inspector.IsOperationReady(ctx,
-		solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockIsOperationsReady), op.OperationID())
+		solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockIsOperationsReady), op.OperationID())
 
 	s.Require().NoError(err, "Failed to check if operation is ready")
 	s.Require().True(operation, "Operation should be ready")
@@ -134,16 +141,18 @@ func (s *SolanaTestSuite) TestIsOperationReady() {
 
 func (s *SolanaTestSuite) TestIsOperationDone() {
 	ctx := context.Background()
-	s.SetupTimelockWorker(testPDASeedTimelockIsOperationsDone, 1*time.Second)
+	admin, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+	s.SetupTimelock(testPDASeedTimelockIsOperationsDone, 1*time.Second)
 	op := s.createOperation(testPDASeedTimelockIsOperationsDone)
-	s.initOperation(ctx, op, testPDASeedTimelockIsOperationsDone)
+	s.initOperation(ctx, op, testPDASeedTimelockIsOperationsDone, admin)
 	s.scheduleOperation(ctx, testPDASeedTimelockIsOperationsDone, 1*time.Second, op.OperationID())
 	s.waitForOperationToBeReady(ctx, testPDASeedTimelockIsOperationsDone, op.OperationID())
 	s.executeOperation(ctx, testPDASeedTimelockIsOperationsDone, op.OperationID())
 
 	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
 	operation, err := inspector.IsOperationDone(ctx,
-		solanasdk.ContractAddress(s.TimelockWorkerProgramID, testPDASeedTimelockIsOperationsDone), op.OperationID())
+		solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockIsOperationsDone), op.OperationID())
 
 	s.Require().NoError(err, "Failed to check if operation is done")
 	s.Require().True(operation, "Operation should be done")
