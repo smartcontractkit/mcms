@@ -135,7 +135,7 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 	s.Require().NoError(err)
 
 	// --- assert ---
-	_, err = solana.SignatureFromBase58(signature)
+	_, err = solana.SignatureFromBase58(signature.Hash)
 	s.Require().NoError(err)
 }
 
