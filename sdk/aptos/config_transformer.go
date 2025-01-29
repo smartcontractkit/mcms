@@ -2,6 +2,7 @@ package aptos
 
 import (
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
@@ -14,6 +15,7 @@ type ConfigTransformer struct {
 func NewConfigTransformer() *ConfigTransformer { return &ConfigTransformer{} }
 
 // The Aptos API returns theses as snake_case which isn't recognized by mapstructure library
+// TODO: Use custom MatchName field in DecoderConfig to re-use existing structs?
 
 type ManyChainMultiSigConfig struct {
 	GroupParents [32]uint8 `mapstructure:"group_parents"`

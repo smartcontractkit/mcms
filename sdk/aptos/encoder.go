@@ -1,6 +1,7 @@
 package aptos
 
 import (
+	"bytes"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
@@ -9,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/types"
@@ -46,6 +48,8 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 			ReceivedChainID: e.ChainSelector,
 		}
 	}
+	// TODO Remove this once we've added chainID 4 to chain-selectors
+	chainID = 4
 	multisigAddress := aptos.AccountAddress{}
 	if err := multisigAddress.ParseStringRelaxed(metadata.MCMAddress); err != nil {
 		return common.Hash{}, fmt.Errorf("unable to parse Aptos contract address: %w", err)
@@ -67,7 +71,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 	preImage = append(preImage, toAddress[:]...)
 	preImage = append(preImage, common.LeftPadBytes([]byte(additionalFields.ModuleName), 64)...)
 	preImage = append(preImage, common.LeftPadBytes([]byte(additionalFields.Function), 64)...)
-	preImage = append(preImage, common.RightPadBytes(op.Transaction.Data, (len(op.Transaction.Data)/32+1)*32)...)
+	preImage = append(preImage, []byte(append(op.Transaction.Data, bytes.Repeat([]byte{0}, 32-len(op.Transaction.Data)%32)...))...) // Right pad to 32-byte increment
 
 	return crypto.Keccak256Hash(preImage), nil
 }
@@ -79,6 +83,8 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 			ReceivedChainID: e.ChainSelector,
 		}
 	}
+	// TODO Remove this once we've added chainID 4 to chain-selectors
+	chainID = 4
 	multisigAddress := aptos.AccountAddress{}
 	if err := multisigAddress.ParseStringRelaxed(metadata.MCMAddress); err != nil {
 		return common.Hash{}, fmt.Errorf("unable to parse Aptos contract address: %w", err)
