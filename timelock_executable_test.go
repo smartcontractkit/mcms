@@ -164,6 +164,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 		index   int
 		want    string
 		wantErr string
+		option  Option
 	}{
 		{
 			name: "success",
@@ -172,13 +173,29 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
-					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Execute(ctx, mock.Anything, "0x5678", mock.Anything, mock.Anything).
 					Return("signature", nil).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
 				return defaultProposal(), executors
 			},
 			want: "signature",
+		},
+		{
+			name: "success with callproxy",
+			setup: func(t *testing.T) (*TimelockProposal, map[types.ChainSelector]sdk.TimelockExecutor) {
+				t.Helper()
+
+				executor := mocks.NewTimelockExecutor(t)
+				executor.EXPECT().
+					Execute(ctx, mock.Anything, "0xABCD", mock.Anything, mock.Anything).
+					Return("signature", nil).Once()
+				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
+
+				return defaultProposal(), executors
+			},
+			option: WithCallProxy("0xABCD"),
+			want:   "signature",
 		},
 		{
 			name: "failure: converter from executor error",
@@ -215,7 +232,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
-					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Execute(ctx, mock.Anything, "0x5678", mock.Anything, mock.Anything).
 					Return("", fmt.Errorf("execute error")).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
@@ -232,7 +249,12 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 			timelockExecutable, err := NewTimelockExecutable(proposal, executors)
 			require.NoError(t, err)
 
-			got, err := timelockExecutable.Execute(ctx, tt.index, "")
+			var got string
+			if tt.option != nil {
+				got, err = timelockExecutable.Execute(ctx, tt.index, tt.option)
+			} else {
+				got, err = timelockExecutable.Execute(ctx, tt.index)
+			}
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
@@ -526,7 +548,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	require.NoError(t, err)
 
 	// Execute the proposal
-	_, err = tExecutable.Execute(ctx, 0, "")
+	_, err = tExecutable.Execute(ctx, 0)
 	require.NoError(t, err)
 	sim.Backend.Commit()
 
