@@ -253,7 +253,9 @@ func scheduleBatchInstructions(
 
 	// initialize
 	instruction, err := bindings.NewInitializeOperationInstruction(pdaSeed, operationID, predecessor, salt,
-		numInstructions, operationPDA, configPDA, mcmSignerPDA, solana.SystemProgramID).ValidateAndBuild()
+		numInstructions, operationPDA, configPDA,
+		proposerAccessController,
+		mcmSignerPDA, solana.SystemProgramID).ValidateAndBuild()
 	if err != nil {
 		return []solana.Instruction{}, fmt.Errorf("unable to build InitializeOperation instruction: %w", err)
 	}
@@ -263,7 +265,9 @@ func scheduleBatchInstructions(
 	for i := range instructionsData {
 		// FIXME: InstructionData should have slices of data no bigger than 1232 bytes
 		instruction, err = bindings.NewAppendInstructionsInstruction(pdaSeed, operationID,
-			[]bindings.InstructionData{instructionsData[i]}, operationPDA, configPDA, mcmSignerPDA,
+			[]bindings.InstructionData{instructionsData[i]}, operationPDA, configPDA,
+			proposerAccessController,
+			mcmSignerPDA,
 			solana.SystemProgramID).ValidateAndBuild()
 		if err != nil {
 			return []solana.Instruction{}, fmt.Errorf("unable to build AppendInstruction instruction: %w", err)
@@ -273,7 +277,7 @@ func scheduleBatchInstructions(
 
 	// finalize
 	instruction, err = bindings.NewFinalizeOperationInstruction(pdaSeed, operationID,
-		operationPDA, configPDA, mcmSignerPDA).ValidateAndBuild()
+		operationPDA, configPDA, proposerAccessController, mcmSignerPDA).ValidateAndBuild()
 	if err != nil {
 		return []solana.Instruction{}, fmt.Errorf("unable to build FinializeOperation instruction: %w", err)
 	}
