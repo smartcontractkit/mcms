@@ -65,6 +65,10 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to find timelock operation pda: %w", err)
 	}
+	operationBypasserPDA, err := FindTimelockBypasserOperationPDA(timelockProgramID, timelockPDASeed, operationID)
+	if err != nil {
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to find timelock bypasser operation pda: %w", err)
+	}
 	configPDA, err := FindTimelockConfigPDA(timelockProgramID, timelockPDASeed)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to find timelock config pda: %w", err)
@@ -94,7 +98,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 			operationPDA, configPDA, mcmSignerPDA)
 	case types.TimelockActionBypass:
 		instructions, err = bypassInstructions(timelockPDASeed, operationID, config.BypasserRoleAccessController,
-			operationPDA, configPDA, signerPDA, mcmSignerPDA)
+			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData) //nolint:gosec
 	default:
 		err = fmt.Errorf("invalid timelock operation: %s", string(action))
 	}
@@ -309,14 +313,64 @@ func cancelInstructions(
 func bypassInstructions(
 	pdaSeed PDASeed, operationID [32]byte, bypassAccessController, operationPDA, configPDA, signerPDA,
 	mcmSignerPDA solana.PublicKey,
+	salt [32]byte,
+	numInstructions uint32, instructionsData []bindings.InstructionData,
 ) ([]solana.Instruction, error) {
+	instructions := make([]solana.Instruction, 0, numInstructions)
+	initOpIx, ioErr := bindings.NewInitializeBypasserOperationInstruction(
+		pdaSeed,
+		operationID,
+		salt,
+		numInstructions,
+		operationPDA,
+		configPDA,
+		bypassAccessController,
+		mcmSignerPDA,
+		solana.SystemProgramID,
+	).ValidateAndBuild()
+	if ioErr != nil {
+		return nil, fmt.Errorf("failed to build initialize bypasser operation instruction: %w", ioErr)
+	}
+	instructions = append(instructions, initOpIx)
+
+	for _, instruction := range instructionsData {
+		appendIxsIx, apErr := bindings.NewAppendBypasserInstructionsInstruction(
+			pdaSeed,
+			operationID,
+			[]bindings.InstructionData{instruction}, // this should be a slice of instruction within 1232 bytes
+			operationPDA,
+			configPDA,
+			bypassAccessController,
+			mcmSignerPDA,
+			solana.SystemProgramID, // for reallocation
+		).ValidateAndBuild()
+		if apErr != nil {
+			return nil, fmt.Errorf("failed to build append bypasser instructions instruction: %w", apErr)
+		}
+		instructions = append(instructions, appendIxsIx)
+	}
+
+	finOpIx, foErr := bindings.NewFinalizeBypasserOperationInstruction(
+		pdaSeed,
+		operationID,
+		operationPDA,
+		configPDA,
+		bypassAccessController,
+		mcmSignerPDA,
+	).ValidateAndBuild()
+	if foErr != nil {
+		return nil, fmt.Errorf("failed to build finalize bypasser operation instruction: %w", foErr)
+	}
+	instructions = append(instructions, finOpIx)
+
 	instruction, err := bindings.NewBypasserExecuteBatchInstruction(pdaSeed, operationID, operationPDA,
 		configPDA, signerPDA, bypassAccessController, mcmSignerPDA).ValidateAndBuild()
 	if err != nil {
 		return []solana.Instruction{}, fmt.Errorf("unable to build BypasserExecuteBatch instruction: %w", err)
 	}
+	instructions = append(instructions, instruction)
 
-	return []solana.Instruction{instruction}, nil
+	return instructions, nil
 }
 
 // https://dev.to/chigbeef_77/bool-int-but-stupid-in-go-3jb3

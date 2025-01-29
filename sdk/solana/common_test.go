@@ -91,6 +91,13 @@ func Test_FindTimelockOperationPDA(t *testing.T) {
 	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("9kmDgWeckKVoW44YEp4MByUJXxxwjjxK52o1HyqSPTru")))
 }
 
+func Test_FindTimelockBypasserOperationPDA(t *testing.T) {
+	t.Parallel()
+	pda, err := FindTimelockBypasserOperationPDA(testTimelockProgramID, testPDASeed, testOpID)
+	require.NoError(t, err)
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("5mDicsfmjcDDUuaMkrBvWVf9fgDGmA9ahUdebSAM1Aid")))
+}
+
 func Test_FindTimelockSignerPDA(t *testing.T) {
 	t.Parallel()
 	pda, err := FindTimelockSignerPDA(testTimelockProgramID, testPDASeed)

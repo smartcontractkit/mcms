@@ -68,6 +68,12 @@ func FindTimelockOperationPDA(
 	return findPDA(programID, seeds)
 }
 
+func FindTimelockBypasserOperationPDA(
+	programID solana.PublicKey, timelockID PDASeed, opID [32]byte) (solana.PublicKey, error) {
+	seeds := [][]byte{[]byte("timelock_bypasser_operation"), timelockID[:], opID[:]}
+	return findPDA(programID, seeds)
+}
+
 func FindTimelockSignerPDA(
 	programID solana.PublicKey, timelockID PDASeed) (solana.PublicKey, error) {
 	seeds := [][]byte{[]byte("timelock_signer"), timelockID[:]}
