@@ -47,9 +47,11 @@ func (e *ConfigTransformer) ToConfig(
 		}
 	}
 
-	for i, parent := range bindConfig.GroupParents {
+	// link the group signers; this assumes a group's parent always has a lower index
+	for i := 31; i >= 0; i-- {
+		parent := bindConfig.GroupParents[i]
 		if i > 0 && groups[i].Quorum > 0 {
-			groups[parent].GroupSigners = append(groups[parent].GroupSigners, groups[i])
+			groups[parent].GroupSigners = append([]types.Config{groups[i]}, groups[parent].GroupSigners...)
 		}
 	}
 

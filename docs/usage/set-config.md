@@ -6,13 +6,18 @@ You can use the `Configurer` of each chain family's SDK to set the config of the
 package main
 
 import (
+  "context"
   "log"
 
   "github.com/ethereum/go-ethereum/accounts/abi/bind"
   "github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
   "github.com/ethereum/go-ethereum/common"
+  "github.com/gagliardetto/solana-go"
+  rpc2 "github.com/gagliardetto/solana-go/rpc"
+  chain_selectors "github.com/smartcontractkit/chain-selectors"
 
   "github.com/smartcontractkit/mcms/sdk/evm"
+  mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
   "github.com/smartcontractkit/mcms/types"
 )
 
@@ -37,14 +42,30 @@ func main() {
       },
     },
   }
+  ctx := context.Background()
+
+  // On EVM
+  solanaSelector := chain_selectors.SOLANA_DEVNET.Selector
   mcmsContractAddr := "0x123"
   backend := backends.SimulatedBackend{}
   auth := &bind.TransactOpts{}
-  configurer := evm.NewConfigurer(backend, auth)
-  txHash, err := configurer.SetConfig(mcmsContractAddr, &config, false)
+  configurerEVM := evm.NewConfigurer(backend, auth)
+  txHash, err := configurerEVM.SetConfig(ctx, mcmsContractAddr, &config, false)
   if err != nil {
     log.Fatalf("failed to set config: %v", err)
   }
-  log.Printf("set config tx hash: %s\n", txHash)
+  log.Printf("set config evm tx hash: %s\n", txHash)
+
+  // On Solana
+  mcmsContractID := "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX"
+  rpc := rpc2.New("https://api.devnet.solana.com")
+  wallet := solana.NewWallet()
+  configurerSolana := mcmsSolana.NewConfigurer(rpc, wallet.PrivateKey, types.ChainSelector(solanaSelector))
+  txHash, err = configurerSolana.SetConfig(ctx, mcmsContractID, &config, false)
+  if err != nil {
+    log.Fatalf("failed to set config: %v", err)
+  }
+  log.Printf("set config solana tx hash: %s\n", txHash)
 }
+
 ```
