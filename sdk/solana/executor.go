@@ -11,6 +11,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 
@@ -46,10 +47,10 @@ func (e *Executor) ExecuteOperation(
 	nonce uint32,
 	proof []common.Hash,
 	op types.Operation,
-) (string, error) {
+) (types.TransactionResult, error) {
 	programID, msigID, err := ParseContractAddress(metadata.MCMAddress)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	selector := uint64(e.ChainSelector)
 	byteProof := make([][32]byte, 0, len(proof))
@@ -60,32 +61,32 @@ func (e *Executor) ExecuteOperation(
 	mcm.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
 	configPDA, err := FindConfigPDA(programID, msigID)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	rootMetadataPDA, err := FindRootMetadataPDA(programID, msigID)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	expiringRootAndOpCountPDA, err := FindExpiringRootAndOpCountPDA(programID, msigID)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	signedPDA, err := FindSignerPDA(programID, msigID)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	// Unmarshal the AdditionalFields from the operation
 	var additionalFields AdditionalFields
 	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
-		return "", fmt.Errorf("unable to unmarshal additional fields: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to unmarshal additional fields: %w", err)
 	}
 	toProgramID, _, err := ParseContractAddress(op.Transaction.To)
 	if errors.Is(err, ErrInvalidContractAddressFormat) {
 		var pkerr error
 		toProgramID, pkerr = solana.PublicKeyFromBase58(op.Transaction.To)
 		if pkerr != nil {
-			return "", fmt.Errorf("unable to get hash from base58 To address: %w", err)
+			return types.TransactionResult{}, fmt.Errorf("unable to get hash from base58 To address: %w", err)
 		}
 	}
 
@@ -107,10 +108,14 @@ func (e *Executor) ExecuteOperation(
 	ix.AccountMetaSlice = append(ix.AccountMetaSlice, additionalFields.Accounts...)
 	signature, err := sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
-		return "", fmt.Errorf("unable to call execute operation instruction: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to call execute operation instruction: %w", err)
 	}
 
-	return signature, nil
+	return types.TransactionResult{
+		Hash:           signature,
+		ChainFamily:    chain_selectors.FamilySolana,
+		RawTransaction: ix,
+	}, nil
 }
 
 // SetRoot sets the merkle root in the MCM contract on the Solana chain
@@ -121,14 +126,14 @@ func (e *Executor) SetRoot(
 	root [32]byte,
 	validUntil uint32,
 	sortedSignatures []types.Signature,
-) (string, error) {
+) (types.TransactionResult, error) {
 	programID, pdaSeed, err := ParseContractAddress(metadata.MCMAddress)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	if len(sortedSignatures) > math.MaxUint8 {
-		return "", fmt.Errorf("too many signatures (max %d)", math.MaxUint8)
+		return types.TransactionResult{}, fmt.Errorf("too many signatures (max %d)", math.MaxUint8)
 	}
 
 	// FIXME: global variables are bad, mmkay?
@@ -137,28 +142,28 @@ func (e *Executor) SetRoot(
 
 	configPDA, err := FindConfigPDA(programID, pdaSeed)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	rootMetadataPDA, err := FindRootMetadataPDA(programID, pdaSeed)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	expiringRootAndOpCountPDA, err := FindExpiringRootAndOpCountPDA(programID, pdaSeed)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	rootSignaturesPDA, err := FindRootSignaturesPDA(programID, pdaSeed, root, validUntil)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	seenSignedHashesPDA, err := FindSeenSignedHashesPDA(programID, pdaSeed, root, validUntil)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	err = e.preloadSignatures(ctx, pdaSeed, root, validUntil, sortedSignatures, rootSignaturesPDA)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	setRootInstruction := mcm.NewSetRootInstruction(
@@ -176,10 +181,14 @@ func (e *Executor) SetRoot(
 		solana.SystemProgramID)
 	signature, err := sendAndConfirm(ctx, e.client, e.auth, setRootInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
-		return "", fmt.Errorf("unable to set root: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to set root: %w", err)
 	}
 
-	return signature, nil
+	return types.TransactionResult{
+		Hash:           signature,
+		ChainFamily:    chain_selectors.FamilySolana,
+		RawTransaction: setRootInstruction,
+	}, nil
 }
 
 // preloadSignatures preloads the signatures into the MCM program by looping can calling the

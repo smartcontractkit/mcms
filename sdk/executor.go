@@ -22,7 +22,7 @@ type Executor interface {
 		nonce uint32,
 		proof []common.Hash,
 		op types.Operation,
-	) (string, error)
+	) (types.TransactionResult, error)
 
 	// SetRoot Returns a string of the transaction hash
 	SetRoot(
@@ -32,5 +32,5 @@ type Executor interface {
 		root [32]byte,
 		validUntil uint32,
 		sortedSignatures []types.Signature,
-	) (string, error)
+	) (types.TransactionResult, error)
 }

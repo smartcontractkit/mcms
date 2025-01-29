@@ -178,7 +178,7 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 			got, err := e.Execute(ctx, tt.args.bop, tt.args.timelockAddress, tt.args.predecessor, tt.args.salt)
 
 			tt.assertion(t, err, fmt.Sprintf("%q. Executor.ExecuteOperation()", tt.name))
-			assert.Equalf(t, tt.want, got, "%q. Executor.ExecuteOperation()", tt.name)
+			assert.Equalf(t, tt.want, got.Hash, "%q. Executor.ExecuteOperation()", tt.name)
 		})
 	}
 }

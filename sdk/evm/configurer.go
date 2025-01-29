@@ -6,6 +6,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
@@ -29,15 +31,15 @@ func NewConfigurer(client ContractDeployBackend, auth *bind.TransactOpts,
 }
 
 // SetConfig sets the configuration for the MCM contract on the EVM chain.
-func (c *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (string, error) {
+func (c *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(mcmAddr), c.client)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	groupQuorums, groupParents, signerAddrs, signerGroups, err := ExtractSetConfigInputs(cfg)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	opts := *c.auth
@@ -52,8 +54,12 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.C
 		clearRoot,
 	)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
-	return tx.Hash().Hex(), nil
+	return types.TransactionResult{
+		Hash:           tx.Hash().Hex(),
+		ChainFamily:    chain_selectors.FamilyEVM,
+		RawTransaction: tx,
+	}, nil
 }

@@ -183,9 +183,9 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			}
 
 			executor := evm.NewExecutor(tt.encoder, client, tt.auth)
-			txHash, err := executor.ExecuteOperation(ctx, tt.metadata, tt.nonce, tt.proof, tt.op)
+			tx, err := executor.ExecuteOperation(ctx, tt.metadata, tt.nonce, tt.proof, tt.op)
 
-			assert.Equal(t, tt.wantTxHash, txHash)
+			assert.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
@@ -335,13 +335,13 @@ func TestExecutor_SetRoot(t *testing.T) {
 			}
 
 			executor := evm.NewExecutor(tt.encoder, client, tt.auth)
-			txHash, err := executor.SetRoot(ctx, tt.metadata,
+			tx, err := executor.SetRoot(ctx, tt.metadata,
 				tt.proof,
 				tt.root,
 				tt.validUntil,
 				tt.sortedSignatures)
 
-			assert.Equal(t, tt.wantTxHash, txHash)
+			assert.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {

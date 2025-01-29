@@ -77,7 +77,7 @@ func WithCallProxy(address string) Option {
 // Includes an option to set callProxy to execute the calls through a proxy.
 // If the callProxy is not set, the calls will be executed directly
 // to the timelock.
-func (t *TimelockExecutable) Execute(ctx context.Context, index int, opts ...Option) (string, error) {
+func (t *TimelockExecutable) Execute(ctx context.Context, index int, opts ...Option) (types.TransactionResult, error) {
 	execOpts := &executeOptions{}
 	for _, opt := range opts {
 		opt(execOpts)
@@ -85,7 +85,7 @@ func (t *TimelockExecutable) Execute(ctx context.Context, index int, opts ...Opt
 
 	err := t.setPredecessors(ctx)
 	if err != nil {
-		return "", fmt.Errorf("unable to set predecessors: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to set predecessors: %w", err)
 	}
 
 	op := t.proposal.Operations[index]

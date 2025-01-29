@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -38,49 +39,49 @@ func (e *TimelockExecutor) Client() *rpc.Client {
 // Execute runs the ExecuteBatch instruction for each transaction in the BatchOperation
 func (e *TimelockExecutor) Execute(
 	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
-) (string, error) {
+) (types.TransactionResult, error) {
 	programID, timelockID, err := ParseContractAddress(timelockAddress)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	bindings.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
 
 	instructionsData, err := getInstructionDataFromBatchOperation(bop)
 	if err != nil {
-		return "", fmt.Errorf("unable to get InstructionData from batch operation: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to get InstructionData from batch operation: %w", err)
 	}
 	accounts, err := getAccountsFromBatchOperation(bop)
 	if err != nil {
-		return "", fmt.Errorf("unable to get accounts from batch operation: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to get accounts from batch operation: %w", err)
 	}
 
 	operationID, err := HashOperation(instructionsData, predecessor, salt)
 	if err != nil {
-		return "", fmt.Errorf("unable to compute operation id: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to compute operation id: %w", err)
 	}
 
 	operationPDA, err := FindTimelockOperationPDA(programID, timelockID, operationID)
 	if err != nil {
-		return "", fmt.Errorf("unable to find timelock operation pda: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to find timelock operation pda: %w", err)
 	}
 	configPDA, err := FindTimelockConfigPDA(programID, timelockID)
 	if err != nil {
-		return "", fmt.Errorf("unable to find timelock config pda: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to find timelock config pda: %w", err)
 	}
 	signerPDA, err := FindTimelockSignerPDA(programID, timelockID)
 	if err != nil {
-		return "", fmt.Errorf("unable to find timelock signer pda: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to find timelock signer pda: %w", err)
 	}
 	config, err := getTimelockConfig(ctx, e.client, configPDA)
 	if err != nil {
-		return "", fmt.Errorf("unable to read config pda: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to read config pda: %w", err)
 	}
 
 	var predecessorOperationPDA solana.PublicKey
 	if (predecessor != common.Hash{}) {
 		predecessorOperationPDA, err = FindTimelockOperationPDA(programID, timelockID, predecessor)
 		if err != nil {
-			return "", fmt.Errorf("unable to find timelock predecessor operation pda: %w", err)
+			return types.TransactionResult{}, fmt.Errorf("unable to find timelock predecessor operation pda: %w", err)
 		}
 	}
 
@@ -90,8 +91,12 @@ func (e *TimelockExecutor) Execute(
 
 	signature, err := sendAndConfirm(ctx, e.client, e.auth, instruction, rpc.CommitmentConfirmed)
 	if err != nil {
-		return "", fmt.Errorf("unable to call execute operation instruction: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to call execute operation instruction: %w", err)
 	}
 
-	return signature, nil
+	return types.TransactionResult{
+		Hash:           signature,
+		ChainFamily:    chain_selectors.FamilySolana,
+		RawTransaction: instruction,
+	}, nil
 }
