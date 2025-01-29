@@ -131,9 +131,9 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			}
 
 			executor := NewTimelockExecutor(client, test.auth)
-			txHash, err := executor.Execute(ctx, test.bop, test.timelockAddress, test.predecessor, test.salt)
+			tx, err := executor.Execute(ctx, test.bop, test.timelockAddress, test.predecessor, test.salt)
 
-			assert.Equal(t, test.wantTxHash, txHash)
+			assert.Equal(t, test.wantTxHash, tx.Hash)
 			if test.wantErr != nil {
 				assert.EqualError(t, err, test.wantErr.Error())
 			} else {

@@ -108,13 +108,13 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 	signature, err := executable.SetRoot(ctx, s.ChainSelector)
 	s.Require().NoError(err)
-	_, err = solana.SignatureFromBase58(signature)
+	_, err = solana.SignatureFromBase58(signature.Hash)
 	s.Require().NoError(err)
 
 	// --- act: call Execute ---
 	signature, err = executable.Execute(ctx, 0)
 	s.Require().NoError(err)
-	_, err = solana.SignatureFromBase58(signature)
+	_, err = solana.SignatureFromBase58(signature.Hash)
 	s.Require().NoError(err)
 
 	// --- assert balances

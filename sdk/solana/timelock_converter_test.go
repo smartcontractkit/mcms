@@ -80,6 +80,9 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 	proposerAC, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
 
+	bypasserAC, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
 	tests := []struct {
 		name            string
 		batchOp         types.BatchOperation
@@ -254,16 +257,91 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			salt:            defaultSalt,
 			wantOperations: []types.Operation{
 				{
+					// initialize
+					ChainSelector: chaintest.Chain4Selector,
+					Transaction: types.Transaction{
+						To:   testTimelockProgramID.String(),
+						Data: base64Decode(t, "OhswzBPFPxp0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAECAAAA"),
+						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+							{PublicKey: solana.MPK("5kA68ZDhLguQqxoEraVvdSYzR43JddUZXEm8SCdCEQfh"), IsWritable: true},
+							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
+							{PublicKey: solana.MPK(bypasserAC.PublicKey().String())},
+							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
+							{PublicKey: solana.MPK("11111111111111111111111111111111")},
+						}}),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "RBACTimelock",
+							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
+						},
+					},
+				},
+				{
+					// append first operation
+					ChainSelector: chaintest.Chain4Selector,
+					Transaction: types.Transaction{
+						To:   testTimelockProgramID.String(),
+						Data: base64Decode(t, "f0QI0mrVGdd0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AQAAAOy/SwEm9OHsR3Iyhg37tMCACi9OJO1mbYf2EdbL8BdlBgAAADB4MTIzNAIAAABzrkiHQ+JGjN94Ifr0hyI7xbfT2AUTMNwqcY6ldOvyZQEBkKcZjjIczPUeb2jNRtBAfOQA/tDFWu7x9HDKmqHFfGAAAQ=="),
+						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+							{PublicKey: solana.MPK("5kA68ZDhLguQqxoEraVvdSYzR43JddUZXEm8SCdCEQfh"), IsWritable: true},
+							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
+							{PublicKey: solana.MPK(bypasserAC.PublicKey().String())},
+							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
+							{PublicKey: solana.MPK("11111111111111111111111111111111")},
+						}}),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "RBACTimelock",
+							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
+						},
+					},
+				},
+				{
+					// append second operation
+					ChainSelector: chaintest.Chain4Selector,
+					Transaction: types.Transaction{
+						To:   testTimelockProgramID.String(),
+						Data: base64Decode(t, "f0QI0mrVGdd0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AQAAAA0THF/kMtia7NQl9/Z+bKF0Ggj7DNa/3WxLGpQ1QAaIBgAAADB4NTY3OAAAAAA="),
+						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+							{PublicKey: solana.MPK("5kA68ZDhLguQqxoEraVvdSYzR43JddUZXEm8SCdCEQfh"), IsWritable: true},
+							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
+							{PublicKey: solana.MPK(bypasserAC.PublicKey().String())},
+							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
+							{PublicKey: solana.MPK("11111111111111111111111111111111")},
+						}}),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "RBACTimelock",
+							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
+						},
+					},
+				},
+				{
+					// finalize
+					ChainSelector: chaintest.Chain4Selector,
+					Transaction: types.Transaction{
+						To:   testTimelockProgramID.String(),
+						Data: base64Decode(t, "LTfGM3wYqfp0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/"),
+						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+							{PublicKey: solana.MPK("5kA68ZDhLguQqxoEraVvdSYzR43JddUZXEm8SCdCEQfh"), IsWritable: true},
+							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
+							{PublicKey: solana.MPK(bypasserAC.PublicKey().String())},
+							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
+						}}),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "RBACTimelock",
+							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
+						},
+					},
+				},
+				{
 					// schedule batch
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
 						Data: base64Decode(t, "Wj5CBuOuHsJ0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/"),
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
-							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
+							{PublicKey: solana.MPK("5kA68ZDhLguQqxoEraVvdSYzR43JddUZXEm8SCdCEQfh"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
 							{PublicKey: solana.MPK("2g4vS5Y9g5FKoBakfNTEQcoyuPxuqgiXhribGxE1Vrsb")},
-							{PublicKey: solana.MPK("11111111111111111111111111111111")},
+							{PublicKey: solana.MPK(bypasserAC.PublicKey().String())},
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 						}}),
 						OperationMetadata: types.OperationMetadata{
@@ -276,7 +354,9 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			wantPredecessor: common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 			setup: func(t *testing.T, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
-				config := &bindings.Config{}
+				config := &bindings.Config{
+					BypasserRoleAccessController: bypasserAC.PublicKey(),
+				}
 				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, config, nil)
 			},
 		},

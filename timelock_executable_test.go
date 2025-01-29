@@ -17,6 +17,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/internal/testutils/evmsim"
@@ -174,7 +176,10 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, "0x5678", mock.Anything, mock.Anything).
-					Return("signature", nil).Once()
+					Return(types.TransactionResult{
+						Hash:        "signature",
+						ChainFamily: chain_selectors.FamilyEVM,
+					}, nil).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
 				return defaultProposal(), executors
@@ -189,7 +194,10 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, "0xABCD", mock.Anything, mock.Anything).
-					Return("signature", nil).Once()
+					Return(types.TransactionResult{
+						Hash:        "signature",
+						ChainFamily: chain_selectors.FamilyEVM,
+					}, nil).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
 				return defaultProposal(), executors
@@ -233,7 +241,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, "0x5678", mock.Anything, mock.Anything).
-					Return("", fmt.Errorf("execute error")).Once()
+					Return(types.TransactionResult{}, fmt.Errorf("execute error")).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
 				return defaultProposal(), executors
@@ -249,7 +257,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 			timelockExecutable, err := NewTimelockExecutable(proposal, executors)
 			require.NoError(t, err)
 
-			var got string
+			var got types.TransactionResult
 			if tt.option != nil {
 				got, err = timelockExecutable.Execute(ctx, tt.index, tt.option)
 			} else {
@@ -258,7 +266,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Equal(t, tt.want, got)
+				require.Equal(t, tt.want, got.Hash)
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}
@@ -474,9 +482,9 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
+	tx, err := executable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
-	require.NotEmpty(t, txHash)
+	require.NotEmpty(t, tx.Hash)
 	sim.Backend.Commit()
 
 	// Validate Contract State and verify root was set
@@ -488,13 +496,13 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	// Execute the proposal
 	var receipt *geth_types.Receipt
 	for i := range proposal.Operations {
-		txHash, err = executable.Execute(ctx, i)
+		tx, err = executable.Execute(ctx, i)
 		require.NoError(t, err)
-		require.NotEmpty(t, txHash)
+		require.NotEmpty(t, tx.Hash)
 		sim.Backend.Commit()
 
 		// Wait for the transaction to be mined
-		receipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+		receipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(tx.Hash))
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 		require.Equal(t, geth_types.ReceiptStatusSuccessful, receipt.Status)
@@ -639,14 +647,15 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 
 	// Execute the proposal
 	var receipt *geth_types.Receipt
+	var tx types.TransactionResult
 	for i := range proposal.Operations {
-		txHash, err = executable.Execute(ctx, i)
+		tx, err = executable.Execute(ctx, i)
 		require.NoError(t, err)
 		require.NotEmpty(t, txHash)
 		sim.Backend.Commit()
 
 		// Wait for the transaction to be mined
-		receipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+		receipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(tx.Hash))
 		require.NoError(t, err)
 		require.NotNil(t, receipt)
 		require.Equal(t, geth_types.ReceiptStatusSuccessful, receipt.Status)
@@ -740,12 +749,12 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	require.NoError(t, err)
 
 	// SetRoot on the contract
-	txHash, err = cancelExecutable.SetRoot(ctx, chaintest.Chain1Selector)
+	tx, err = cancelExecutable.SetRoot(ctx, chaintest.Chain1Selector)
 	require.NoError(t, err)
 	require.NotEmpty(t, txHash)
 	sim.Backend.Commit()
 
-	cancelReceipt, err := testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+	cancelReceipt, err := testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(tx.Hash))
 	require.NoError(t, err)
 	require.NotNil(t, cancelReceipt)
 	require.Equal(t, geth_types.ReceiptStatusSuccessful, cancelReceipt.Status)
@@ -758,13 +767,13 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 
 	// Execute the cancelProposal
 	for i := range cancelProposal.Operations {
-		txHash, err = cancelExecutable.Execute(ctx, i)
+		tx, err = cancelExecutable.Execute(ctx, i)
 		require.NoError(t, err)
 		require.NotEmpty(t, txHash)
 		sim.Backend.Commit()
 
 		// Wait for the transaction to be mined
-		cancelReceipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(txHash))
+		cancelReceipt, err = testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(tx.Hash))
 		require.NoError(t, err)
 		require.NotNil(t, cancelReceipt)
 		require.Equal(t, geth_types.ReceiptStatusSuccessful, cancelReceipt.Status)

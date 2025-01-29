@@ -151,7 +151,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(tt.want, got))
+				require.Empty(t, cmp.Diff(tt.want, got.Hash))
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}

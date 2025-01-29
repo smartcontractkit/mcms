@@ -50,22 +50,22 @@ func main() {
   backend := backends.SimulatedBackend{}
   auth := &bind.TransactOpts{}
   configurerEVM := evm.NewConfigurer(backend, auth)
-  txHash, err := configurerEVM.SetConfig(ctx, mcmsContractAddr, &config, false)
+  tx, err := configurerEVM.SetConfig(ctx, mcmsContractAddr, &config, false)
   if err != nil {
     log.Fatalf("failed to set config: %v", err)
   }
-  log.Printf("set config evm tx hash: %s\n", txHash)
+  log.Printf("set config evm tx hash: %s\n", tx.Hash)
 
   // On Solana
   mcmsContractID := "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX"
   rpc := rpc2.New("https://api.devnet.solana.com")
   wallet := solana.NewWallet()
   configurerSolana := mcmsSolana.NewConfigurer(rpc, wallet.PrivateKey, types.ChainSelector(solanaSelector))
-  txHash, err = configurerSolana.SetConfig(ctx, mcmsContractID, &config, false)
+  tx, err = configurerSolana.SetConfig(ctx, mcmsContractID, &config, false)
   if err != nil {
     log.Fatalf("failed to set config: %v", err)
   }
-  log.Printf("set config solana tx hash: %s\n", txHash)
+  log.Printf("set config solana tx hash: %s\n", tx.Hash)
 }
 
 ```

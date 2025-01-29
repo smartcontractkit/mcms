@@ -7,6 +7,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -33,19 +35,19 @@ func (e *Executor) ExecuteOperation(
 	nonce uint32,
 	proof []common.Hash,
 	op types.Operation,
-) (string, error) {
+) (types.TransactionResult, error) {
 	if e.Encoder == nil {
-		return "", errors.New("Executor was created without an encoder")
+		return types.TransactionResult{}, errors.New("Executor was created without an encoder")
 	}
 
 	bindOp, err := e.ToGethOperation(nonce, metadata, op)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	opts := *e.auth
@@ -53,10 +55,14 @@ func (e *Executor) ExecuteOperation(
 
 	tx, err := mcmsC.Execute(&opts, bindOp, transformHashes(proof))
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
-	return tx.Hash().Hex(), err
+	return types.TransactionResult{
+		Hash:           tx.Hash().Hex(),
+		ChainFamily:    chain_selectors.FamilyEVM,
+		RawTransaction: tx,
+	}, err
 }
 
 func (e *Executor) SetRoot(
@@ -66,19 +72,19 @@ func (e *Executor) SetRoot(
 	root [32]byte,
 	validUntil uint32,
 	sortedSignatures []types.Signature,
-) (string, error) {
+) (types.TransactionResult, error) {
 	if e.Encoder == nil {
-		return "", errors.New("Executor was created without an encoder")
+		return types.TransactionResult{}, errors.New("Executor was created without an encoder")
 	}
 
 	bindMeta, err := e.ToGethRootMetadata(metadata)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
 	opts := *e.auth
@@ -93,8 +99,12 @@ func (e *Executor) SetRoot(
 		transformSignatures(sortedSignatures),
 	)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 
-	return tx.Hash().Hex(), err
+	return types.TransactionResult{
+		Hash:           tx.Hash().Hex(),
+		ChainFamily:    chain_selectors.FamilyEVM,
+		RawTransaction: tx,
+	}, err
 }
