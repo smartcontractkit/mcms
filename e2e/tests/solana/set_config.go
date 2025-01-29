@@ -45,18 +45,16 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 					testEVMAccounts[6].Address,
 					testEVMAccounts[7].Address,
 				},
-				GroupSigners: []types.Config{},
-				// FIXME: needs https://github.com/smartcontractkit/mcms/pull/216
-				// GroupSigners: []types.Config{
-				// 	{
-				// 		Quorum: 1,
-				// 		Signers: []common.Address{
-				// 			testEVMAccounts[8].Address,
-				// 			testEVMAccounts[9].Address,
-				// 		},
-				// 		GroupSigners: []types.Config{},
-				// 	},
-				// },
+				GroupSigners: []types.Config{
+					{
+						Quorum: 1,
+						Signers: []common.Address{
+							testEVMAccounts[8].Address,
+							testEVMAccounts[9].Address,
+						},
+						GroupSigners: []types.Config{},
+					},
+				},
 			},
 			{
 				Quorum: 3,

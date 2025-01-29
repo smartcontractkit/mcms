@@ -15,7 +15,7 @@ type Executor interface {
 	Inspector
 	Encoder
 
-	// Returns a string of the transaction hash
+	// ExecuteOperation Returns a string of the transaction hash
 	ExecuteOperation(
 		ctx context.Context,
 		metadata types.ChainMetadata,
@@ -24,7 +24,7 @@ type Executor interface {
 		op types.Operation,
 	) (types.TransactionResult, error)
 
-	// Returns a string of the transaction hash
+	// SetRoot Returns a string of the transaction hash
 	SetRoot(
 		ctx context.Context,
 		metadata types.ChainMetadata,

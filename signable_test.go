@@ -131,7 +131,7 @@ func TestSignable_SingleChainSingleSignerSingleTX_Success(t *testing.T) {
 		Operations: []types.Operation{
 			{
 				ChainSelector: chaintest.Chain1Selector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -197,7 +197,7 @@ func TestSignable_SingleChainMultipleSignerSingleTX_Success(t *testing.T) {
 		Operations: []types.Operation{
 			{
 				ChainSelector: chaintest.Chain1Selector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -258,7 +258,7 @@ func TestSignable_SingleChainSingleSignerMultipleTX_Success(t *testing.T) {
 		require.NoError(t, perr)
 		operations[i] = types.Operation{
 			ChainSelector: chaintest.Chain1Selector,
-			Transaction: evm.NewOperation(
+			Transaction: evm.NewTransaction(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -334,7 +334,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_Success(t *testing.T) {
 		require.NoError(t, perr)
 		operations[i] = types.Operation{
 			ChainSelector: chaintest.Chain1Selector,
-			Transaction: evm.NewOperation(
+			Transaction: evm.NewTransaction(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -413,7 +413,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 		require.NoError(t, perr)
 		operations[i] = types.Operation{
 			ChainSelector: chaintest.Chain1Selector,
-			Transaction: evm.NewOperation(
+			Transaction: evm.NewTransaction(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -498,7 +498,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 
 		operations[i] = types.Operation{
 			ChainSelector: chaintest.Chain1Selector,
-			Transaction: evm.NewOperation(
+			Transaction: evm.NewTransaction(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -578,7 +578,7 @@ func Test_Signable_Sign(t *testing.T) {
 		Operations: []types.Operation{
 			{
 				ChainSelector: chaintest.Chain1Selector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					common.HexToAddress("0x02"),
 					[]byte("0x0000000"), // Use some random data since it doesn't matter
 					big.NewInt(0),
@@ -672,7 +672,7 @@ func Test_SignAndAppend(t *testing.T) {
 		Operations: []types.Operation{
 			{
 				ChainSelector: chaintest.Chain1Selector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					common.HexToAddress("0x02"),
 					[]byte("0x0000000"), // Use some random data since it doesn't matter
 					big.NewInt(0),
@@ -857,7 +857,7 @@ func Test_Signable_Simulate(t *testing.T) {
 	operations := []types.Operation{
 		{
 			ChainSelector: chaintest.Chain1Selector,
-			Transaction: evm.NewOperation(
+			Transaction: evm.NewTransaction(
 				common.HexToAddress("0x02"),
 				[]byte("0x0000000"), // Use some random data since it doesn't matter
 				big.NewInt(0),
@@ -867,7 +867,7 @@ func Test_Signable_Simulate(t *testing.T) {
 		},
 		{
 			ChainSelector: chaintest.Chain2Selector,
-			Transaction: evm.NewOperation(
+			Transaction: evm.NewTransaction(
 				common.HexToAddress("0x02"),
 				[]byte("0x0000000"), // Use some random data since it doesn't matter
 				big.NewInt(0),

@@ -119,6 +119,8 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		timelockProposal, err := timelockProposalBuilder().SetAction(types.TimelockActionSchedule).Build()
 		s.Require().NoError(err)
 
+		proposerAC := s.Roles[timelock.Proposer_Role].AccessController.PublicKey()
+
 		// build expected output Proposal
 		wantProposal, err := mcms.NewProposalBuilder().
 			SetValidUntil(uint32(validUntil)).
@@ -135,6 +137,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 					Accounts: []*solana.AccountMeta{
 						{PublicKey: operation1PDA, IsWritable: true},
 						{PublicKey: configPDA},
+						{PublicKey: proposerAC},
 						{PublicKey: mcmSignerPDA, IsWritable: true},
 						{PublicKey: solana.SystemProgramID},
 					},
@@ -149,6 +152,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 					Accounts: []*solana.AccountMeta{
 						{PublicKey: operation1PDA, IsWritable: true},
 						{PublicKey: configPDA},
+						{PublicKey: proposerAC},
 						{PublicKey: mcmSignerPDA, IsWritable: true},
 						{PublicKey: solana.SystemProgramID},
 					},
@@ -163,6 +167,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 					Accounts: []*solana.AccountMeta{
 						{PublicKey: operation1PDA, IsWritable: true},
 						{PublicKey: configPDA},
+						{PublicKey: proposerAC},
 						{PublicKey: mcmSignerPDA, IsWritable: true},
 						{PublicKey: solana.SystemProgramID},
 					},
@@ -177,6 +182,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 					Accounts: []*solana.AccountMeta{
 						{PublicKey: operation1PDA, IsWritable: true},
 						{PublicKey: configPDA},
+						{PublicKey: proposerAC},
 						{PublicKey: mcmSignerPDA, IsWritable: true},
 					},
 				}),
@@ -190,7 +196,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 					Accounts: []*solana.AccountMeta{
 						{PublicKey: operation1PDA, IsWritable: true},
 						{PublicKey: configPDA},
-						{PublicKey: s.Roles[timelock.Proposer_Role].AccessController.PublicKey()},
+						{PublicKey: proposerAC},
 						{PublicKey: mcmSignerPDA, IsWritable: true},
 					},
 				}),
@@ -204,6 +210,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 					Accounts: []*solana.AccountMeta{
 						{PublicKey: operation2PDA, IsWritable: true},
 						{PublicKey: configPDA},
+						{PublicKey: proposerAC},
 						{PublicKey: mcmSignerPDA, IsWritable: true},
 						{PublicKey: solana.SystemProgramID},
 					},
@@ -218,6 +225,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 					Accounts: []*solana.AccountMeta{
 						{PublicKey: operation2PDA, IsWritable: true},
 						{PublicKey: configPDA},
+						{PublicKey: proposerAC},
 						{PublicKey: mcmSignerPDA, IsWritable: true},
 						{PublicKey: solana.SystemProgramID},
 					},
@@ -232,6 +240,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 					Accounts: []*solana.AccountMeta{
 						{PublicKey: operation2PDA, IsWritable: true},
 						{PublicKey: configPDA},
+						{PublicKey: proposerAC},
 						{PublicKey: mcmSignerPDA, IsWritable: true},
 					},
 				}),
@@ -245,7 +254,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 					Accounts: []*solana.AccountMeta{
 						{PublicKey: operation2PDA, IsWritable: true},
 						{PublicKey: configPDA},
-						{PublicKey: s.Roles[timelock.Proposer_Role].AccessController.PublicKey()},
+						{PublicKey: proposerAC},
 						{PublicKey: mcmSignerPDA, IsWritable: true},
 					},
 				}),
@@ -416,12 +425,12 @@ func (s *SolanaTestSuite) executeTimelockProposal(
 	timelockExecutable, err := mcms.NewTimelockExecutable(timelockProposal, timelockExecutors)
 	s.Require().NoError(err)
 
-	tx, err := timelockExecutable.Execute(ctx, 0, "")
+	tx, err := timelockExecutable.Execute(ctx, 0)
 	s.Require().NoError(err)
 	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `empty`")
 	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `u8_instruction_data`")
 
-	tx, err = timelockExecutable.Execute(ctx, 1, "")
+	tx, err = timelockExecutable.Execute(ctx, 1)
 	s.Require().NoError(err)
 	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `account_mut`")
 }

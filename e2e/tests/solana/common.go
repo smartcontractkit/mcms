@@ -376,6 +376,9 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 	s.Require().NoError(err)
 	operationPDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockProgramID, timelockID, op.OperationID())
 	s.Require().NoError(err)
+
+	proposerAC := s.Roles[timelock.Proposer_Role].AccessController.PublicKey()
+
 	ixs := []solana.Instruction{}
 	initOpIx, ioErr := timelock.NewInitializeOperationInstruction(
 		timelockID,
@@ -385,6 +388,7 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 		op.IxsCountU32(),
 		operationPDA,
 		configPDA,
+		proposerAC,
 		authority,
 		solana.SystemProgramID,
 	).ValidateAndBuild()
@@ -399,6 +403,7 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 			[]timelock.InstructionData{instruction},
 			operationPDA,
 			configPDA,
+			proposerAC,
 			authority,
 			solana.SystemProgramID,
 		).ValidateAndBuild()
@@ -411,6 +416,7 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 		op.OperationID(),
 		operationPDA,
 		configPDA,
+		proposerAC,
 		authority,
 	).ValidateAndBuild()
 	s.Require().NoError(foErr)

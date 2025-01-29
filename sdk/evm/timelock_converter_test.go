@@ -37,7 +37,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Schedule operation",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{
-					NewOperation(
+					NewTransaction(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -58,7 +58,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Cancel operation",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{
-					NewOperation(
+					NewTransaction(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),
@@ -79,7 +79,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Invalid operation",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{
-					NewOperation(
+					NewTransaction(
 						common.HexToAddress("0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef"),
 						[]byte("data"),
 						big.NewInt(1000),

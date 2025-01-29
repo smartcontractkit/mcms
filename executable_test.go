@@ -139,7 +139,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerSingleTX_Success(t *testing.
 		Operations: []types.Operation{
 			{
 				ChainSelector: chaintest.Chain1Selector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -264,7 +264,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 		Operations: []types.Operation{
 			{
 				ChainSelector: chaintest.Chain1Selector,
-				Transaction: evm.NewOperation(
+				Transaction: evm.NewTransaction(
 					timelockC.Address(),
 					grantRoleData,
 					big.NewInt(0),
@@ -384,7 +384,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 
 		operations[i] = types.Operation{
 			ChainSelector: chaintest.Chain1Selector,
-			Transaction: evm.NewOperation(
+			Transaction: evm.NewTransaction(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),
@@ -525,7 +525,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		require.NoError(t, perr)
 		operations[i] = types.Operation{
 			ChainSelector: chaintest.Chain1Selector,
-			Transaction: evm.NewOperation(
+			Transaction: evm.NewTransaction(
 				timelockC.Address(),
 				data,
 				big.NewInt(0),

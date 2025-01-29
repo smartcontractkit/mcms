@@ -8,10 +8,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+var _ sdk.ConfigTransformer[bindings.ManyChainMultiSigConfig, any] = (*ConfigTransformer)(nil)
 
 const maxUint8Value = 255
 
@@ -44,9 +47,11 @@ func (e *ConfigTransformer) ToConfig(
 		}
 	}
 
-	for i, parent := range bindConfig.GroupParents {
+	// link the group signers; this assumes a group's parent always has a lower index
+	for i := 31; i >= 0; i-- {
+		parent := bindConfig.GroupParents[i]
 		if i > 0 && groups[i].Quorum > 0 {
-			groups[parent].GroupSigners = append(groups[parent].GroupSigners, groups[i])
+			groups[parent].GroupSigners = append([]types.Config{groups[i]}, groups[parent].GroupSigners...)
 		}
 	}
 
@@ -60,6 +65,7 @@ func (e *ConfigTransformer) ToConfig(
 // ToChainConfig converts a chain-agnostic types.Config to an EVM ManyChainMultiSigConfig
 func (e *ConfigTransformer) ToChainConfig(
 	cfg types.Config,
+	_ any,
 ) (bindings.ManyChainMultiSigConfig, error) {
 	var bindConfig bindings.ManyChainMultiSigConfig
 
@@ -92,6 +98,13 @@ func (e *ConfigTransformer) ToChainConfig(
 	}, nil
 }
 
+// ExtractSetConfigInputs flattens a nested `*types.Config` into:
+//  1. groupQuorums: [32]uint8 where each index i holds the quorum for group i (zero-padded).
+//  2. groupParents: [32]uint8 where each index i holds the parent group’s index (or a sentinel).
+//  3. orderedSignerAddresses: a sorted slice of all signer addresses.
+//  4. orderedSignerGroups: a parallel slice of group indices for each signer.
+//
+// Returns an error if the structure cannot be flattened (e.g., too many groups).
 func ExtractSetConfigInputs(
 	group *types.Config,
 ) ([32]uint8, [32]uint8, []common.Address, []uint8, error) {

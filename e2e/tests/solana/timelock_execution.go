@@ -184,6 +184,9 @@ func (s *SolanaTestSuite) scheduleMintTx(
 	s.Require().NoError(err)
 	configPDA, err := mcmsSolana.FindTimelockConfigPDA(s.TimelockProgramID, testTimelockExecuteID)
 	s.Require().NoError(err)
+
+	proposerAC := s.Roles[timelock.Proposer_Role].AccessController.PublicKey()
+
 	// Preload and Init Operation
 	ixs := []solana.Instruction{}
 	initOpIx, err := timelock.NewInitializeOperationInstruction(
@@ -194,6 +197,7 @@ func (s *SolanaTestSuite) scheduleMintTx(
 		uint32(len(opInstructions)),
 		operationPDA,
 		configPDA,
+		proposerAC,
 		auth.PublicKey(),
 		solana.SystemProgramID,
 	).ValidateAndBuild()
@@ -208,6 +212,7 @@ func (s *SolanaTestSuite) scheduleMintTx(
 			[]timelock.InstructionData{ix}, // this should be a slice of instruction within 1232 bytes
 			operationPDA,
 			configPDA,
+			proposerAC,
 			auth.PublicKey(),
 			solana.SystemProgramID,
 		).ValidateAndBuild()
@@ -220,6 +225,7 @@ func (s *SolanaTestSuite) scheduleMintTx(
 		operationID,
 		operationPDA,
 		configPDA,
+		proposerAC,
 		auth.PublicKey(),
 	).ValidateAndBuild()
 	s.Require().NoError(err)

@@ -166,6 +166,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 		index   int
 		want    string
 		wantErr string
+		option  Option
 	}{
 		{
 			name: "success",
@@ -174,7 +175,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
-					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Execute(ctx, mock.Anything, "0x5678", mock.Anything, mock.Anything).
 					Return(types.TransactionResult{
 						Hash:        "signature",
 						ChainFamily: chain_selectors.FamilyEVM,
@@ -184,6 +185,25 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				return defaultProposal(), executors
 			},
 			want: "signature",
+		},
+		{
+			name: "success with callproxy",
+			setup: func(t *testing.T) (*TimelockProposal, map[types.ChainSelector]sdk.TimelockExecutor) {
+				t.Helper()
+
+				executor := mocks.NewTimelockExecutor(t)
+				executor.EXPECT().
+					Execute(ctx, mock.Anything, "0xABCD", mock.Anything, mock.Anything).
+					Return(types.TransactionResult{
+						Hash:        "signature",
+						ChainFamily: chain_selectors.FamilyEVM,
+					}, nil).Once()
+				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
+
+				return defaultProposal(), executors
+			},
+			option: WithCallProxy("0xABCD"),
+			want:   "signature",
 		},
 		{
 			name: "failure: converter from executor error",
@@ -220,7 +240,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
-					Execute(ctx, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Execute(ctx, mock.Anything, "0x5678", mock.Anything, mock.Anything).
 					Return(types.TransactionResult{}, fmt.Errorf("execute error")).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
@@ -237,7 +257,12 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 			timelockExecutable, err := NewTimelockExecutable(proposal, executors)
 			require.NoError(t, err)
 
-			got, err := timelockExecutable.Execute(ctx, tt.index, "")
+			var got types.TransactionResult
+			if tt.option != nil {
+				got, err = timelockExecutable.Execute(ctx, tt.index, tt.option)
+			} else {
+				got, err = timelockExecutable.Execute(ctx, tt.index)
+			}
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
@@ -364,7 +389,7 @@ func scheduleGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles [
 	// Construct transactions
 	transactions := make([]types.Transaction, 0)
 	for _, data := range grantRoleDatas {
-		transactions = append(transactions, evm.NewOperation(
+		transactions = append(transactions, evm.NewTransaction(
 			timelockC.Address(),
 			data,
 			big.NewInt(0),
@@ -531,7 +556,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	require.NoError(t, err)
 
 	// Execute the proposal
-	_, err = tExecutable.Execute(ctx, 0, "")
+	_, err = tExecutable.Execute(ctx, 0)
 	require.NoError(t, err)
 	sim.Backend.Commit()
 
