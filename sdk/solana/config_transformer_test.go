@@ -4,9 +4,11 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/gagliardetto/solana-go"
 	"github.com/google/go-cmp/cmp"
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
 
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -154,6 +156,160 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				require.Empty(t, cmp.Diff(tt.want, got))
+			}
+		})
+	}
+}
+
+func Test_ConfigTransformer_ToChainConfig(t *testing.T) {
+	t.Parallel()
+
+	var (
+		signer1 = common.HexToAddress("0x1")
+		signer2 = common.HexToAddress("0x2")
+		signer3 = common.HexToAddress("0x3")
+		signer4 = common.HexToAddress("0x4")
+	)
+	testOwner, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+	proposedOwner, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name             string
+		give             types.Config
+		want             bindings.MultisigConfig
+		additionalConfig AdditionalConfig
+		wantErr          string
+		assert           func(t *testing.T, got bindings.MultisigConfig)
+	}{
+		{
+			name: "success: converts binding config to config",
+			want: bindings.MultisigConfig{
+				GroupQuorums:  [32]uint8{1, 1},
+				GroupParents:  [32]uint8{0, 0},
+				Owner:         testOwner.PublicKey(),
+				ProposedOwner: proposedOwner.PublicKey(),
+				Signers: []bindings.McmSigner{
+					{EvmAddress: signer1, Group: 0, Index: 0},
+					{EvmAddress: signer2, Group: 1, Index: 1},
+				},
+			},
+			additionalConfig: AdditionalConfig{
+				ChainID:       0,
+				MultisigID:    [32]uint8{},
+				Owner:         testOwner.PublicKey(),
+				ProposedOwner: proposedOwner.PublicKey(),
+			},
+			give: types.Config{
+				Quorum:  1,
+				Signers: []common.Address{signer1},
+				GroupSigners: []types.Config{
+					{
+						Quorum:       1,
+						Signers:      []common.Address{signer2},
+						GroupSigners: []types.Config{},
+					},
+				},
+			},
+			assert: func(t *testing.T, got bindings.MultisigConfig) {
+				t.Helper()
+
+				assert.Equal(t, [32]uint8{1, 1}, got.GroupQuorums)
+				assert.Equal(t, [32]uint8{0, 0}, got.GroupParents)
+				assert.Equal(t, uint64(0), got.ChainId)
+				assert.Equal(t, [32]uint8{}, got.MultisigId)
+				assert.Equal(t, got.Owner, testOwner.PublicKey())
+				assert.Equal(t, got.ProposedOwner, proposedOwner.PublicKey())
+			},
+		},
+		{
+			name: "success: nested config",
+			give: types.Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1}, // group 0 signers
+				GroupSigners: []types.Config{
+					{
+						Quorum:  1,
+						Signers: []common.Address{signer2}, // group 1 signers
+						GroupSigners: []types.Config{
+							{
+								Quorum:  2,
+								Signers: []common.Address{signer3, signer4}, // group 2 signers
+							},
+						},
+					},
+				},
+			},
+			want: bindings.MultisigConfig{
+				Owner:         testOwner.PublicKey(),
+				ProposedOwner: proposedOwner.PublicKey(),
+				ChainId:       1,
+				MultisigId:    [32]uint8{},
+				GroupQuorums: [32]uint8{
+					2, // group 0
+					1, // group 1
+					2, // group 2
+				},
+				GroupParents: [32]uint8{
+					0, // group 0's parent => 0 by convention (no parent)
+					0, // group 1's parent => group 0
+					1, // group 2's parent => group 1
+				},
+				Signers: []bindings.McmSigner{
+					{EvmAddress: signer1, Group: 0, Index: 0},
+					{EvmAddress: signer2, Group: 1, Index: 1},
+					{EvmAddress: signer3, Group: 2, Index: 2},
+					{EvmAddress: signer4, Group: 2, Index: 3},
+				},
+			},
+			additionalConfig: AdditionalConfig{
+				ChainID:       1,
+				MultisigID:    [32]uint8{},
+				Owner:         testOwner.PublicKey(),
+				ProposedOwner: proposedOwner.PublicKey(),
+			},
+			assert: func(t *testing.T, got bindings.MultisigConfig) {
+				t.Helper()
+
+				require.Empty(t, cmp.Diff(got, bindings.MultisigConfig{
+					Owner:         testOwner.PublicKey(),
+					ProposedOwner: proposedOwner.PublicKey(),
+					ChainId:       1,
+					MultisigId:    [32]uint8{},
+					GroupQuorums: [32]uint8{
+						2, // group 0
+						1, // group 1
+						2, // group 2
+					},
+					GroupParents: [32]uint8{
+						0, // group 0
+						0, // group 1 has parent group 0
+						1, // group 2 has parent group 1
+					},
+					Signers: []bindings.McmSigner{
+						{EvmAddress: signer1, Group: 0, Index: 0},
+						{EvmAddress: signer2, Group: 1, Index: 1},
+						{EvmAddress: signer3, Group: 2, Index: 2},
+						{EvmAddress: signer4, Group: 2, Index: 3},
+					},
+				}))
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			transformer := ConfigTransformer{}
+			got, err := transformer.ToChainConfig(tt.give, tt.additionalConfig)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
 			}
 		})
 	}
