@@ -17,6 +17,7 @@ require (
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.5
 	github.com/spf13/cast v1.7.1
 	github.com/stretchr/testify v1.10.0
+	github.com/test-go/testify v1.1.4
 	golang.org/x/tools v0.29.0
 )
 
