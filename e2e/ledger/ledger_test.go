@@ -137,7 +137,7 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 
 	chainDetailsEVM, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.BlockchainA.Out.Family)
 	s.Require().NoError(err)
-	chainDetailsSolana, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, cselectors.FamilySolana)
+	chainDetailsSolana, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, s.Config.SolanaChain.Out.Family)
 	s.Require().NoError(err)
 
 	s.chainSelectorEVM = types.ChainSelector(chainDetailsEVM.ChainSelector)
