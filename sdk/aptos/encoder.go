@@ -49,7 +49,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		}
 	}
 	// TODO Remove this once we've added chainID 4 to chain-selectors
-	chainID = 4
+	// chainID = 4
 	multisigAddress := aptos.AccountAddress{}
 	if err := multisigAddress.ParseStringRelaxed(metadata.MCMAddress); err != nil {
 		return common.Hash{}, fmt.Errorf("unable to parse Aptos contract address: %w", err)
@@ -84,7 +84,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		}
 	}
 	// TODO Remove this once we've added chainID 4 to chain-selectors
-	chainID = 4
+	// chainID = 4
 	multisigAddress := aptos.AccountAddress{}
 	if err := multisigAddress.ParseStringRelaxed(metadata.MCMAddress); err != nil {
 		return common.Hash{}, fmt.Errorf("unable to parse Aptos contract address: %w", err)

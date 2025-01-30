@@ -60,7 +60,7 @@ func (e Executor) ExecuteOperation(
 		}
 	}
 	// TODO Remove this once we've added chainID 4 to chain-selectors
-	chainID = 4
+	// chainID = 4
 	chainIDBig := (&big.Int{}).SetUint64(chainID)
 
 	payload, err := aptosutil.BuildTransactionPayload(
@@ -133,7 +133,7 @@ func (e Executor) SetRoot(
 		}
 	}
 	// TODO Remove this once we've added chainID 4 to chain-selectors
-	chainID = 4
+	// chainID = 4
 	chainIDBig := (&big.Int{}).SetUint64(chainID)
 
 	signatures := encodeSignatures(sortedSignatures)

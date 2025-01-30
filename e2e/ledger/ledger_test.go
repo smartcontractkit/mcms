@@ -9,12 +9,12 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts"
-	"github.com/ethereum/go-ethereum/accounts/usbwallet"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/usbwallet"
 	"github.com/smartcontractkit/mcms/types"
 )
 
