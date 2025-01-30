@@ -18,10 +18,9 @@ var testPDASeedSetConfigTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 
 
 // Test_Solana_SetConfig tests the SetConfig functionality by setting a config on the MCM program
 func (s *SolanaTestSuite) Test_Solana_SetConfig() {
-	ctx := context.Background()
-	InitializeMCMProgram(ctx, s.T(), s.SolanaClient, s.MCMProgramID, testPDASeedSetConfigTest, uint64(s.ChainSelector))
 	// --- arrange ---
-
+	ctx := context.Background()
+	s.SetupMCM(testPDASeedSetConfigTest)
 	programID, err := solana.PublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
 	s.Require().NoError(err)
 	auth, err := solana.PrivateKeyFromBase58(privateKey)

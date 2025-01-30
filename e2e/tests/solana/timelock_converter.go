@@ -39,7 +39,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	wallet, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 
-	InitializeMCMProgram(ctx, s.T(), s.SolanaClient, s.MCMProgramID, testPDASeedTimelockConverter, uint64(s.ChainSelector))
+	s.SetupMCM(testPDASeedTimelockConverter)
 	s.SetupTimelock(testPDASeedTimelockConverter, 1*time.Second)
 	s.SetupCPIStub(testPDASeedTimelockConverter)
 

@@ -43,7 +43,8 @@ func TestManualLedgerSigningSuite(t *testing.T) {
 // ManualLedgerSigningTestSuite tests the manual ledger signing functionality
 type ManualLedgerSigningTestSuite struct {
 	suite.Suite
-	auth                *bind.TransactOpts
+	authEVM             *bind.TransactOpts
+	authSolana          solana.PrivateKey
 	chainSelectorEVM    types.ChainSelector
 	chainSelectorSolana types.ChainSelector
 	e2e.TestSetup
@@ -57,11 +58,11 @@ func (s *ManualLedgerSigningTestSuite) deployMCMContractEVM(ctx context.Context)
 	s.Require().NoError(err, "Failed to parse private key")
 	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
 	s.Require().NoError(err, "Failed to create transactor")
-	s.auth = auth
+	s.authEVM = auth
 
 	// Deploy MCMS contract
 	s.Require().True(ok, "Failed to parse chain ID")
-	mcmsAddress, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.Client)
+	mcmsAddress, tx, instance, err := bindings.DeployManyChainMultiSig(s.authEVM, s.Client)
 	s.Require().NoError(err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
@@ -71,46 +72,7 @@ func (s *ManualLedgerSigningTestSuite) deployMCMContractEVM(ctx context.Context)
 
 	return mcmsAddress, instance
 }
-
-// setRootEVM initializes and MCMS contract and calls set root on it
-func (s *ManualLedgerSigningTestSuite) setRootEVM(ctx context.Context,
-	ledgerAccount common.Address,
-	proposal *mcms.Proposal,
-	instance *bindings.ManyChainMultiSig,
-	executorsMap map[types.ChainSelector]sdk.Executor) {
-	// Set configurations
-	signerGroups := []uint8{0}   // One groups: Group 0
-	groupQuorums := [32]uint8{1} // Quorum 1 for group 0
-	groupParents := [32]uint8{0} // Group 0 is its own parent
-	signers := []common.Address{ledgerAccount}
-	clearRoot := true
-
-	// Set config
-	tx, err := instance.SetConfig(s.auth, signers, signerGroups, groupQuorums, groupParents, clearRoot)
-	s.Require().NoError(err, "Failed to set contract configuration")
-	receipt, err := bind.WaitMined(ctx, s.Client, tx)
-	s.Require().NoError(err, "Failed to mine configuration transaction")
-	s.Require().Equal(gethTypes.ReceiptStatusSuccessful, receipt.Status)
-
-	// Set Root
-	executable, err := mcms.NewExecutable(proposal, executorsMap)
-	s.Require().NoError(err)
-	txHash, err := executable.SetRoot(ctx, s.chainSelectorEVM)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(txHash)
-}
-
-const privateKeyLedger = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
-
-var mcmInstanceSeed = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r', 'o', 'o', 't', 'l', 'e', 'd', 'g', 'e', 'r'}
-
-// setRootSolana initializes and MCMS contract and calls set root on it
-func (s *ManualLedgerSigningTestSuite) setRootSolana(
-	ctx context.Context,
-	ledgerAccount common.Address,
-	proposal *mcms.Proposal,
-	auth solana.PrivateKey,
-	executorsMap map[types.ChainSelector]sdk.Executor) {
+func (s *ManualLedgerSigningTestSuite) initializeMCMSolana(ctx context.Context) {
 	var MCMProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
 	solanae2e.InitializeMCMProgram(
 		ctx,
@@ -120,11 +82,39 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 		mcmInstanceSeed,
 		uint64(s.chainSelectorSolana),
 	)
+}
 
-	// set config
-	mcmAddress := solanamcms.ContractAddress(MCMProgramID, mcmInstanceSeed)
+// setRootEVM initializes and MCMS contract and calls set root on it
+func (s *ManualLedgerSigningTestSuite) setRootEVM(
+	ctx context.Context,
+	ledgerAccount common.Address,
+	proposal *mcms.Proposal,
+	instance *bindings.ManyChainMultiSig,
+	executorsMap map[types.ChainSelector]sdk.Executor,
+) {
 	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{ledgerAccount}}
-	configurer := solanamcms.NewConfigurer(s.SolanaClient, auth, s.chainSelectorSolana)
+	// Set config
+	configurer := evm.NewConfigurer(s.Client, s.authEVM)
+	tx, err := configurer.SetConfig(ctx, instance.Address().Hex(), &mcmConfig, true)
+	s.Require().NoError(err, "Failed to set contract configuration")
+	_, err = bind.WaitMined(ctx, s.Client, tx.RawTransaction.(*gethTypes.Transaction))
+}
+
+const privateKeyLedger = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
+
+var mcmInstanceSeed = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r', 'o', 'o', 't', 'l', 'e', 'd', 'g', 'e', 'r'}
+
+// setRootSolana initializes and MCMS contract and calls set root on it
+func (s *ManualLedgerSigningTestSuite) setRootSolana(
+	ctx context.Context,
+	mcmProgramID solana.PublicKey,
+	ledgerAccount common.Address,
+	proposal *mcms.Proposal,
+	executorsMap map[types.ChainSelector]sdk.Executor) {
+	// set config
+	mcmAddress := solanamcms.ContractAddress(mcmProgramID, mcmInstanceSeed)
+	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{ledgerAccount}}
+	configurer := solanamcms.NewConfigurer(s.SolanaClient, s.authSolana, s.chainSelectorSolana)
 	_, err := configurer.SetConfig(ctx, mcmAddress, &mcmConfig, true)
 	s.Require().NoError(err)
 
@@ -143,10 +133,6 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	t := s.T()
 	s.TestSetup = *e2e.InitializeSharedTestSetup(t)
-	var runLedgerSuite = os.Getenv("RUN_LEDGER_SUITE") == "true"
-	if !runLedgerSuite {
-		s.T().Skip("Skipping LedgerSuite. Set RUN_LEDGER_SUITE=true to run it.")
-	}
 	ctx := context.Background()
 
 	chainDetailsEVM, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.BlockchainA.Out.Family)
@@ -200,12 +186,17 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 		}
 	}(file)
 	require.NoError(t, err)
+	// Deploy and initialize solana and EVM MCMs
 	mcmsAddressEVM, mcmInstanceEVM := s.deployMCMContractEVM(ctx)
+	s.initializeMCMSolana(ctx)
 	proposal, err := mcms.NewProposal(file)
-	MCMProgramID := solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
-	contractIDSolana := solanamcms.ContractAddress(MCMProgramID, mcmInstanceSeed)
+	require.NoError(t, err, "Failed to parse proposal")
+	t.Log("Proposal loaded successfully.")
 
-	// Set MCMS Address
+	// Set MCMS Addresses
+	mcmProgramID := solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
+	contractIDSolana := solanamcms.ContractAddress(mcmProgramID, mcmInstanceSeed)
+
 	proposal.ChainMetadata[s.chainSelectorEVM] = types.ChainMetadata{
 		MCMAddress:      mcmsAddressEVM.String(),
 		StartingOpCount: 0,
@@ -214,8 +205,6 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 		MCMAddress:      contractIDSolana,
 		StartingOpCount: 0,
 	}
-	require.NoError(t, err, "Failed to parse proposal")
-	t.Log("Proposal loaded successfully.")
 
 	// Step 3: Create a Signable instance
 	t.Log("Creating Signable instance...")
@@ -227,9 +216,10 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	s.Require().NoError(err)
 	authSolana, err := solana.PrivateKeyFromBase58(privateKeyLedger)
 	s.Require().NoError(err)
+	s.authSolana = authSolana
 	encoderEVM := encoders[s.chainSelectorEVM].(*evm.Encoder)
 	encoderSolana := encoders[s.chainSelectorSolana].(*solanamcms.Encoder)
-	executorEVM := evm.NewExecutor(encoderEVM, s.Client, s.auth)
+	executorEVM := evm.NewExecutor(encoderEVM, s.Client, s.authEVM)
 	executorSolana := solanamcms.NewExecutor(encoderSolana, s.SolanaClient, authSolana)
 	executorsMap := map[types.ChainSelector]sdk.Executor{
 		s.chainSelectorEVM:    executorEVM,
@@ -263,5 +253,5 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 
 	// Step 7: Call Set Root to verify signature
 	s.setRootEVM(ctx, account.Address, proposal, mcmInstanceEVM, executorsMap)
-	s.setRootSolana(ctx, account.Address, proposal, authSolana, executorsMap)
+	s.setRootSolana(ctx, mcmProgramID, account.Address, proposal, executorsMap)
 }

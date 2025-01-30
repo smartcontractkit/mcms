@@ -30,9 +30,9 @@ var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 // executing it via the MCMS program.
 func (s *SolanaTestSuite) Test_Solana_Execute() {
 	ctx := context.Background()
-	InitializeMCMProgram(ctx, s.T(), s.SolanaClient, s.MCMProgramID, testPDASeedExec, uint64(s.ChainSelector))
-	// Get required programs and accounts
+	s.SetupMCM(testPDASeedExec)
 
+	// Get required programs and accounts
 	mcmID := mcmsSolana.ContractAddress(s.MCMProgramID, testPDASeedExec)
 	signerEVMAccount := NewEVMTestAccount(s.T())
 	signerPDA, err := mcmsSolana.FindSignerPDA(s.MCMProgramID, testPDASeedExec)

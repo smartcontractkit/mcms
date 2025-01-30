@@ -182,6 +182,12 @@ func InitializeMCMProgram(ctx context.Context, t *testing.T, solanaClient *rpc.C
 	require.Equal(t, chainSelector, configAccount.ChainId)
 	require.Equal(t, wallet.PublicKey(), configAccount.Owner)
 }
+func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	s.T().Cleanup(cancel)
+
+	InitializeMCMProgram(ctx, s.T(), s.SolanaClient, s.MCMProgramID, pdaSeed, uint64(s.ChainSelector))
+}
 
 func (s *SolanaTestSuite) SetupTimelock(pdaSeed [32]byte, minDelay time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
