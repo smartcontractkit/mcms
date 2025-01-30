@@ -8,8 +8,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	aptosutil "github.com/smartcontractkit/mcms/e2e/utils/aptos"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+var _ sdk.Inspector = &Inspector{}
 
 type Inspector struct {
 	ConfigTransformer

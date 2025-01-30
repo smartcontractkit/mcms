@@ -11,9 +11,12 @@ import (
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	aptosutil "github.com/smartcontractkit/mcms/e2e/utils/aptos"
+	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+var _ sdk.Executor = &Executor{}
 
 type Executor struct {
 	*Encoder
@@ -37,22 +40,22 @@ func (e Executor) ExecuteOperation(
 	nonce uint32,
 	proof []common.Hash,
 	op types.Operation,
-) (string, error) {
+) (types.TransactionResult, error) {
 	var mcmsAddress aptos.AccountAddress
 	if err := mcmsAddress.ParseStringRelaxed(metadata.MCMAddress); err != nil {
-		return "", fmt.Errorf("failed to parse mcm address: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to parse mcm address: %w", err)
 	}
 	var toAddress aptos.AccountAddress
 	if err := toAddress.ParseStringRelaxed(op.Transaction.To); err != nil {
-		return "", fmt.Errorf("failed to parse to address: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to parse to address: %w", err)
 	}
 	var additionalFields AdditionalFields
 	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
-		return "", fmt.Errorf("failed to unmarshal additional fields: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 	}
 	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
-		return "", &sdkerrors.InvalidChainIDError{
+		return types.TransactionResult{}, &sdkerrors.InvalidChainIDError{
 			ReceivedChainID: e.ChainSelector,
 		}
 	}
@@ -85,11 +88,11 @@ func (e Executor) ExecuteOperation(
 		},
 	)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	data, err := aptosutil.BuildSignSubmitAndWaitForTransaction(e.client, e.auth, payload)
 	if err != nil {
-		return "", fmt.Errorf("setting root on Aptos mcms contract: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("setting root on Aptos mcms contract: %w", err)
 	}
 
 	found := false
@@ -102,9 +105,13 @@ func (e Executor) ExecuteOperation(
 		}
 	}
 	if !found {
-		return "", fmt.Errorf("unable to find config event on Aptos mcms contract")
+		return types.TransactionResult{}, fmt.Errorf("unable to find config event on Aptos mcms contract")
 	}
-	return data.Hash, nil
+	return types.TransactionResult{
+		Hash:           data.Hash,
+		ChainFamily:    chain_selectors.FamilyAptos,
+		RawTransaction: data,
+	}, nil
 }
 
 func (e Executor) SetRoot(
@@ -114,14 +121,14 @@ func (e Executor) SetRoot(
 	root [32]byte,
 	validUntil uint32,
 	sortedSignatures []types.Signature,
-) (string, error) {
+) (types.TransactionResult, error) {
 	var mcmsAddress aptos.AccountAddress
 	if err := mcmsAddress.ParseStringRelaxed(metadata.MCMAddress); err != nil {
-		return "", fmt.Errorf("failed to parse mcm address: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to parse mcm address: %w", err)
 	}
 	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
-		return "", &sdkerrors.InvalidChainIDError{
+		return types.TransactionResult{}, &sdkerrors.InvalidChainIDError{
 			ReceivedChainID: e.ChainSelector,
 		}
 	}
@@ -158,11 +165,11 @@ func (e Executor) SetRoot(
 		},
 	)
 	if err != nil {
-		return "", err
+		return types.TransactionResult{}, err
 	}
 	data, err := aptosutil.BuildSignSubmitAndWaitForTransaction(e.client, e.auth, payload)
 	if err != nil {
-		return "", fmt.Errorf("setting root on Aptos mcms contract: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("setting root on Aptos mcms contract: %w", err)
 	}
 
 	found := false
@@ -175,9 +182,13 @@ func (e Executor) SetRoot(
 		}
 	}
 	if !found {
-		return "", fmt.Errorf("unable to find config event on Aptos mcms contract")
+		return types.TransactionResult{}, fmt.Errorf("unable to find config event on Aptos mcms contract")
 	}
-	return data.Hash, nil
+	return types.TransactionResult{
+		Hash:           data.Hash,
+		ChainFamily:    chain_selectors.FamilyAptos,
+		RawTransaction: data,
+	}, nil
 }
 
 func encodeSignatures(signatures []types.Signature) [][]byte {

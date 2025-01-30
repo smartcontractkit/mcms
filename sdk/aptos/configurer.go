@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aptos-labs/aptos-go-sdk"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	aptosutil "github.com/smartcontractkit/mcms/e2e/utils/aptos"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -26,14 +27,14 @@ func NewConfigurer(client *aptos.NodeClient, auth *aptos.Account) *Configurer {
 	}
 }
 
-func (c Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (string, error) {
+func (c Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
 	groupQuorum, groupParents, signerAddresses, signerGroups, err := evm.ExtractSetConfigInputs(cfg)
 	if err != nil {
-		return "", fmt.Errorf("unable to extract set config inputs: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}
 	// TODO this is a const in the mcms.move contract (MAX_NUM_SIGNERS), make it available somewhere
 	if len(signerAddresses) > 200 {
-		return "", fmt.Errorf("too many signers (max 200)")
+		return types.TransactionResult{}, fmt.Errorf("too many signers (max 200)")
 	}
 
 	// Configure contract
@@ -56,11 +57,11 @@ func (c Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Co
 		},
 	)
 	if err != nil {
-		return "", fmt.Errorf("unable to build mcms::set_config payload: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("unable to build mcms::set_config payload: %w", err)
 	}
 	data, err := aptosutil.BuildSignSubmitAndWaitForTransaction(c.client, c.auth, payload)
 	if err != nil {
-		return "", fmt.Errorf("setting config on Aptos mcms contract: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err)
 	}
 
 	found := false
@@ -74,8 +75,12 @@ func (c Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Co
 		}
 	}
 	if !found {
-		return "", fmt.Errorf("unable to find config event on Aptos mcms contract")
+		return types.TransactionResult{}, fmt.Errorf("unable to find config event on Aptos mcms contract")
 	}
 
-	return data.Hash, nil
+	return types.TransactionResult{
+		Hash:           data.Hash,
+		ChainFamily:    chain_selectors.FamilyAptos,
+		RawTransaction: data,
+	}, nil
 }

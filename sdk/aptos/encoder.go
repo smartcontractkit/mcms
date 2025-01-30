@@ -21,7 +21,7 @@ var (
 	mcmDomainSeparatorMetadata = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_APTOS"))
 )
 
-var _ sdk.Encoder = (*Encoder)(nil)
+var _ sdk.Encoder = &Encoder{}
 
 type Encoder struct {
 	ChainSelector        types.ChainSelector

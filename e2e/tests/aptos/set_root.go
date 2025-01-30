@@ -130,7 +130,7 @@ func (a *AptosTestSuite) Test_Aptos_SetRoot() {
 	txHash, err := executable.SetRoot(context.Background(), a.ChainSelector)
 	a.Require().NoError(err)
 
-	a.T().Logf("✅ SetRoot in tx: %s", txHash)
+	a.T().Logf("✅ SetRoot in tx: %s", txHash.Hash)
 
 	// Assert
 	tree, _ := proposal.MerkleTree()

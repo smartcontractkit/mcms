@@ -22,7 +22,7 @@ tasks:
   e2e:aptos:
     desc: "Run Aptos e2e tests"
     env:
-      CTF_CONFIGS: "{{ .CTF_CONFIGS | default \"../config.toml\" }}"
+      CTF_CONFIGS: "{{ .CTF_CONFIGS | default \"../config-aptos.toml\" }}"
     cmds:
       - CTF_CONFIGS=$CTF_CONFIGS go test -tags=e2e -test.run TestAptosSuite {{.CLI_ARGS}} ./e2e/tests...
 
