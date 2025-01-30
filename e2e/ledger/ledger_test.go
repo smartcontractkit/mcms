@@ -98,6 +98,7 @@ func (s *ManualLedgerSigningTestSuite) setRootEVM(
 	tx, err := configurer.SetConfig(ctx, instance.Address().Hex(), &mcmConfig, true)
 	s.Require().NoError(err, "Failed to set contract configuration")
 	_, err = bind.WaitMined(ctx, s.Client, tx.RawTransaction.(*gethTypes.Transaction))
+	s.Require().NoError(err, "Failed to mine set config transaction")
 }
 
 const privateKeyLedger = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
