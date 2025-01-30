@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -149,6 +150,7 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			info, err := aptosClient.Info()
 			require.NoError(t, err, "Failed to get Aptos node info")
 			require.NotZero(t, info.LedgerVersionStr)
+			in.AptosChain.ChainID = strconv.FormatUint(uint64(info.ChainId), 10)
 		}
 
 		sharedSetup = &TestSetup{

@@ -29,11 +29,9 @@ type AptosTestSuite struct {
 func (a *AptosTestSuite) SetupSuite() {
 	a.TestSetup = *e2e.InitializeSharedTestSetup(a.T())
 
-	// TODO Add more selectors for aptos
-	// details, err := cselectors.GetChainDetailsByChainIDAndFamily(a.AptosChain.ChainID, cselectors.FamilyAptos)
-	// a.Require().NoError(err)
-	// a.ChainSelector = types.ChainSelector(details.ChainSelector)
-	a.ChainSelector = types.ChainSelector(cselectors.APTOS_TESTNET.Selector)
+	details, err := cselectors.GetChainDetailsByChainIDAndFamily(a.AptosChain.ChainID, cselectors.FamilyAptos)
+	a.Require().NoError(err)
+	a.ChainSelector = types.ChainSelector(details.ChainSelector)
 
 	// Set up deployer account, it's automatically funded by CTF when setting up the Aptos chain
 	// Instead of using (*Ed25519PrivateKey).FromHex directly, parse manually to pass the strict=false flag
