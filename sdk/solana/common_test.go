@@ -10,7 +10,9 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
+	cpiStubBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/external_program_cpi_stub"
+	mcmBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
+	timelockBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
@@ -112,24 +114,58 @@ func Test_sendAndConfirm(t *testing.T) {
 	commitmentType := rpc.CommitmentConfirmed
 	auth, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
-	configPDA, err := FindConfigPDA(testMCMProgramID, testPDASeed)
+	mcmConfigPDA, err := FindConfigPDA(testMCMProgramID, testPDASeed)
+	require.NoError(t, err)
+	timelockConfigPDA, err := FindConfigPDA(testTimelockProgramID, testPDASeed)
 	require.NoError(t, err)
 
 	tests := []struct {
-		name    string
-		setup   func(*mocks.JSONRPCClient)
-		builder instructionBuilder[*bindings.Instruction]
-		want    string
-		wantErr string
+		name            string
+		setup           func(*mocks.JSONRPCClient)
+		builder         any
+		wantSignature   string
+		wantTransaction *rpc.GetTransactionResult
+		wantErr         string
 	}{
 		{
-			name:    "success",
-			builder: bindings.NewAcceptOwnershipInstruction(testPDASeed, configPDA, auth.PublicKey()),
+			name:    "success: mcm instruction",
+			builder: mcmBindings.NewAcceptOwnershipInstruction(testPDASeed, mcmConfigPDA, auth.PublicKey()),
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
-					"KCXrjxMUkZ8mYmYB8uTKyCzHuAEHFwgRy7McRsrSPA9MndPjkPtsc2zA82ZKh9mBxB41REzghVMCTGLuNqWkzhp", nil)
+					"KCXrjxMUkZ8mYmYB8uTKyCzHuAEHFwgRy7McRsrSPA9MndPjkPtsc2zA82ZKh9mBxB41REzghVMCTGLuNqWkzhp",
+					ptrTo(solana.UnixTimeSeconds(1735689600)), nil)
 			},
-			want: "KCXrjxMUkZ8mYmYB8uTKyCzHuAEHFwgRy7McRsrSPA9MndPjkPtsc2zA82ZKh9mBxB41REzghVMCTGLuNqWkzhp",
+			wantSignature: "KCXrjxMUkZ8mYmYB8uTKyCzHuAEHFwgRy7McRsrSPA9MndPjkPtsc2zA82ZKh9mBxB41REzghVMCTGLuNqWkzhp",
+			wantTransaction: &rpc.GetTransactionResult{
+				Slot:        20,
+				BlockTime:   ptrTo(solana.UnixTimeSeconds(1735689600)),
+				Transaction: buildTransactionEnvelope(t, "KCXrjxMUkZ8mYmYB8uTKyCzHuAEHFwgRy7McRsrSPA9MndPjkPtsc2zA82ZKh9mBxB41REzghVMCTGLuNqWkzhp"),
+				Meta:        &rpc.TransactionMeta{},
+				Version:     1,
+			},
+		},
+		{
+			name:    "success: timelock instruction",
+			builder: timelockBindings.NewAcceptOwnershipInstruction(testPDASeed, timelockConfigPDA, auth.PublicKey()),
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockSolanaTransaction(t, mockJSONRPCClient, 10, 30,
+					"3GfwA3NeeTATEUoSjySsLGfhDX2NAhbfzrcPqEofE6fYbyRtxHXQTcprmxC8wfenck624UXXkd2NHNeBU6Qe7z3t",
+					ptrTo(solana.UnixTimeSeconds(1735689600)), nil)
+			},
+			wantSignature: "3GfwA3NeeTATEUoSjySsLGfhDX2NAhbfzrcPqEofE6fYbyRtxHXQTcprmxC8wfenck624UXXkd2NHNeBU6Qe7z3t",
+			wantTransaction: &rpc.GetTransactionResult{
+				Slot:        30,
+				BlockTime:   ptrTo(solana.UnixTimeSeconds(1735689600)),
+				Transaction: buildTransactionEnvelope(t, "3GfwA3NeeTATEUoSjySsLGfhDX2NAhbfzrcPqEofE6fYbyRtxHXQTcprmxC8wfenck624UXXkd2NHNeBU6Qe7z3t"),
+				Meta:        &rpc.TransactionMeta{},
+				Version:     1,
+			},
+		},
+		{
+			name:    "failure: unsupported instruction builder error ",
+			builder: cpiStubBindings.NewEmptyInstruction(),
+			setup:   func(mockJSONRPCClient *mocks.JSONRPCClient) {},
+			wantErr: "unable to validate and build instruction: unsupported instruction builder: ",
 		},
 		{
 			name:    "failure: ValidateAndBuild error ",
@@ -139,11 +175,11 @@ func Test_sendAndConfirm(t *testing.T) {
 		},
 		{
 			name:    "failure: sendAndConfirm error ",
-			builder: bindings.NewAcceptOwnershipInstruction(testPDASeed, configPDA, auth.PublicKey()),
+			builder: mcmBindings.NewAcceptOwnershipInstruction(testPDASeed, mcmConfigPDA, auth.PublicKey()),
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
 					"NyH6sKKEbAMjxzG9qLTcwd1yEmv46Z94XmH5Pp9AXJps8EofvpPdUn5bp7rzKnztWmxskBiVRnp4DwaHujhHvFh",
-					fmt.Errorf("send and confirm error"))
+					nil, fmt.Errorf("send and confirm error"))
 			},
 			wantErr: "unable to send instruction: send and confirm error",
 		},
@@ -156,12 +192,15 @@ func Test_sendAndConfirm(t *testing.T) {
 			client := rpc.NewWithCustomRPCClient(mockJSONRPCClient)
 			tt.setup(mockJSONRPCClient)
 
-			got, err := sendAndConfirm(ctx, client, auth, tt.builder, commitmentType)
+			gotSignature, gotTransaction, err := sendAndConfirm(ctx, client, auth, tt.builder, commitmentType)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Equal(t, tt.want, got)
+				require.Equal(t, tt.wantSignature, gotSignature)
+				require.Equal(t, tt.wantTransaction, gotTransaction)
 			} else {
+				require.Empty(t, gotSignature)
+				require.Nil(t, gotTransaction)
 				require.ErrorContains(t, err, tt.wantErr)
 			}
 		})
@@ -172,6 +211,19 @@ func Test_sendAndConfirm(t *testing.T) {
 
 type invalidTestInstruction struct{}
 
-func (*invalidTestInstruction) ValidateAndBuild() (*bindings.Instruction, error) {
+func (*invalidTestInstruction) ValidateAndBuild() (*mcmBindings.Instruction, error) {
 	return nil, fmt.Errorf("validate and build error ")
+}
+
+func buildTransactionEnvelope(t *testing.T, signature string) *rpc.TransactionResultEnvelope {
+	t.Helper()
+
+	var transactionEnvelope rpc.TransactionResultEnvelope
+	err := transactionEnvelope.UnmarshalJSON([]byte(`{
+		"signatures": ["` + signature + `"],
+		"message": {}
+	}`))
+	require.NoError(t, err)
+
+	return &transactionEnvelope
 }

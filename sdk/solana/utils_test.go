@@ -81,7 +81,8 @@ func mockGetBlockTime(
 }
 
 func mockSolanaTransaction(
-	t *testing.T, client *mocks.JSONRPCClient, lastBlockHeight uint64, slot uint64, signature string, mockError error,
+	t *testing.T, client *mocks.JSONRPCClient, lastBlockHeight uint64, slot uint64, signature string,
+	blockTime *solana.UnixTimeSeconds, mockError error,
 ) {
 	t.Helper()
 
@@ -141,16 +142,60 @@ func mockSolanaTransaction(
 		}`))
 		require.NoError(t, err)
 
+		if blockTime == nil {
+			blockTime = ptrTo(solana.UnixTimeSeconds(time.Now().Unix()))
+		}
+
 		*result = &rpc.GetTransactionResult{
 			Version:     1,
 			Slot:        slot,
-			BlockTime:   ptrTo(solana.UnixTimeSeconds(time.Now().Unix())),
+			BlockTime:   blockTime,
 			Transaction: &transactionEnvelope,
 			Meta:        &rpc.TransactionMeta{},
 		}
 
 		return nil
 	}).Once()
+}
+
+func mockSolanaSimulateTransaction(
+	t *testing.T, client *mocks.JSONRPCClient, lastBlockHeight uint64, mockBlockHashRPCError error,
+	mockSimulateTransactionError error,
+) {
+	t.Helper()
+
+	client.EXPECT().CallForInto(
+		anyContext, mock.Anything, "getLatestBlockhash", []any{rpc.M{"commitment": rpc.CommitmentFinalized}},
+	).RunAndReturn(func(_ context.Context, output any, _ string, _ []any) error {
+		result, ok := output.(**rpc.GetLatestBlockhashResult)
+		require.True(t, ok)
+
+		*result = &rpc.GetLatestBlockhashResult{Value: &rpc.LatestBlockhashResult{
+			Blockhash:            solana.MustHashFromBase58(randomPublicKey(t).String()),
+			LastValidBlockHeight: lastBlockHeight,
+		}}
+
+		return mockBlockHashRPCError
+	})
+	if mockBlockHashRPCError != nil {
+		return
+	}
+
+	client.EXPECT().CallForInto(
+		anyContext, mock.Anything, "simulateTransaction", mock.Anything,
+	).RunAndReturn(func(_ context.Context, output any, _ string, _ []any) error {
+		result, ok := output.(**rpc.SimulateTransactionResponse)
+		require.True(t, ok)
+
+		*result = &rpc.SimulateTransactionResponse{
+			Value: &rpc.SimulateTransactionResult{
+				Err:  mockSimulateTransactionError,
+				Logs: []string{"Transaction simulation successful"},
+			},
+		}
+
+		return nil
+	})
 }
 
 var sendTransactionParams = func(t *testing.T) any {
