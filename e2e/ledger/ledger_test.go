@@ -18,7 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gagliardetto/solana-go"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/smartcontractkit/mcms"
@@ -72,7 +71,7 @@ func (s *ManualLedgerSigningTestSuite) deployMCMContractEVM(ctx context.Context)
 
 	return mcmsAddress, instance
 }
-func (s *ManualLedgerSigningTestSuite) initializeMCMSolana(ctx context.Context) {
+func (s *ManualLedgerSigningTestSuite) initializeMCMSolana(ctx context.Context) (solana.PublicKey, string) {
 	var MCMProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
 	solanae2e.InitializeMCMProgram(
 		ctx,
@@ -82,6 +81,11 @@ func (s *ManualLedgerSigningTestSuite) initializeMCMSolana(ctx context.Context) 
 		mcmInstanceSeed,
 		uint64(s.chainSelectorSolana),
 	)
+
+	programID := solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
+	contractAddress := solanamcms.ContractAddress(programID, mcmInstanceSeed)
+
+	return programID, contractAddress
 }
 
 // setRootEVM initializes and MCMS contract and calls set root on it
@@ -93,12 +97,20 @@ func (s *ManualLedgerSigningTestSuite) setRootEVM(
 	executorsMap map[types.ChainSelector]sdk.Executor,
 ) {
 	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{ledgerAccount}}
-	// Set config
+
+	// set config
 	configurer := evm.NewConfigurer(s.Client, s.authEVM)
 	tx, err := configurer.SetConfig(ctx, instance.Address().Hex(), &mcmConfig, true)
 	s.Require().NoError(err, "Failed to set contract configuration")
 	_, err = bind.WaitMined(ctx, s.Client, tx.RawTransaction.(*gethTypes.Transaction))
 	s.Require().NoError(err, "Failed to mine set config transaction")
+
+	// set root
+	executable, err := mcms.NewExecutable(proposal, executorsMap)
+	s.Require().NoError(err)
+	tx, err = executable.SetRoot(ctx, s.chainSelectorEVM)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(tx.Hash)
 }
 
 const privateKeyLedger = "DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc"
@@ -122,47 +134,47 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 	// set root
 	executable, err := mcms.NewExecutable(proposal, executorsMap)
 	s.Require().NoError(err)
-	signature, err := executable.SetRoot(ctx, s.chainSelectorSolana)
+	tx, err := executable.SetRoot(ctx, s.chainSelectorSolana)
 	s.Require().NoError(err)
 
 	// --- assert ---
-	_, err = solana.SignatureFromBase58(signature.Hash)
+	_, err = solana.SignatureFromBase58(tx.Hash)
 	s.Require().NoError(err)
 }
 
 // This test uses real ledger connected device. Remember to connect, unlock it and open ethereum app.
 func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
-	t := s.T()
-	s.TestSetup = *e2e.InitializeSharedTestSetup(t)
-	ctx := context.Background()
+	s.T().Log("Starting manual Ledger signing test...")
 
-	chainDetailsEVM, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.BlockchainA.Out.Family)
+	ctx := context.Background()
+	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
+
+	chainDetailsEVM, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)
-	chainDetailsSolana, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, s.Config.SolanaChain.Out.Family)
+	chainDetailsSolana, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, s.SolanaChain.Out.Family)
 	s.Require().NoError(err)
 
 	s.chainSelectorEVM = types.ChainSelector(chainDetailsEVM.ChainSelector)
 	s.chainSelectorSolana = types.ChainSelector(chainDetailsSolana.ChainSelector)
-	t.Log("Starting manual Ledger signing test...")
 
 	// Step 1: Detect and connect to the Ledger device
-	t.Log("Checking for connected Ledger devices...")
+	s.T().Log("Checking for connected Ledger devices...")
 	ledgerHub, err := usbwallet.NewLedgerHub()
-	require.NoError(t, err, "Failed to initialize Ledger Hub")
+	s.Require().NoError(err, "Failed to initialize Ledger Hub")
 
 	wallets := ledgerHub.Wallets()
-	require.NotEmpty(t, wallets, "No Ledger devices found. Please connect your Ledger and unlock it.")
+	s.Require().NotEmpty(wallets, "No Ledger devices found. Please connect your Ledger and unlock it.")
 
 	// Use the first available wallet
 	wallet := wallets[0]
-	t.Logf("Found Ledger device: %s\n", wallet.URL().Path)
+	s.T().Logf("Found Ledger device: %s\n", wallet.URL().Path)
 
 	// Open the wallet
-	t.Log("Opening Ledger wallet...")
+	s.T().Log("Opening Ledger wallet...")
 	err = wallet.Open("")
-	require.NoError(t, err, "Failed to open Ledger wallet")
+	s.Require().NoError(err, "Failed to open Ledger wallet")
 
-	t.Log("Ledger wallet opened successfully.")
+	s.T().Log("Ledger wallet opened successfully.")
 
 	// Define the derivation path
 	derivationPath := accounts.DefaultBaseDerivationPath
@@ -172,32 +184,28 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	if err != nil {
 		log.Fatalf("Failed to derive account: %v", err)
 	}
-	t.Logf("Derived account: %s\n", account.Address.Hex())
+	s.T().Logf("Derived account: %s\n", account.Address.Hex())
 	accountPublicKey := account.Address.Hex()
 	wallet.Close()
 
-	// Step 2: Load a proposal from a fixture
-	t.Log("Loading proposal from fixture...")
-	file, err := testutils.ReadFixture("proposal-testing.json")
-	require.NoError(t, err, "Failed to read fixture") // Check immediately after ReadFixture
-	defer func(file *os.File) {
-		if file != nil {
-			err = file.Close()
-			require.NoError(t, err, "Failed to close file")
-		}
-	}(file)
-	require.NoError(t, err)
-	// Deploy and initialize solana and EVM MCMs
+	// Step 2: Deploy and initialize solana and EVM MCMs
 	mcmsAddressEVM, mcmInstanceEVM := s.deployMCMContractEVM(ctx)
-	s.initializeMCMSolana(ctx)
+	mcmProgramID, contractIDSolana := s.initializeMCMSolana(ctx)
+
+	// Step 3: Load a proposal from a fixture
+	s.T().Log("Loading proposal from fixture...")
+	file, err := testutils.ReadFixture("proposal-testing.json")
+	s.Require().NoError(err, "Failed to read fixture") // Check immediately after ReadFixture
+	defer func(file *os.File) {
+		s.Require().NotNil(file)
+		err = file.Close()
+		s.Require().NoError(err, "Failed to close file")
+	}(file)
+	s.Require().NoError(err)
+
 	proposal, err := mcms.NewProposal(file)
-	require.NoError(t, err, "Failed to parse proposal")
-	t.Log("Proposal loaded successfully.")
-
-	// Set MCMS Addresses
-	mcmProgramID := solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
-	contractIDSolana := solanamcms.ContractAddress(mcmProgramID, mcmInstanceSeed)
-
+	s.Require().NoError(err, "Failed to parse proposal")
+	s.T().Log("Proposal loaded successfully.")
 	proposal.ChainMetadata[s.chainSelectorEVM] = types.ChainMetadata{
 		MCMAddress:      mcmsAddressEVM.String(),
 		StartingOpCount: 0,
@@ -207,8 +215,8 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 		StartingOpCount: 0,
 	}
 
-	// Step 3: Create a Signable instance
-	t.Log("Creating Signable instance...")
+	// Step 4: Create a Signable instance
+	s.T().Log("Creating Signable instance...")
 	inspectors := map[types.ChainSelector]sdk.Inspector{
 		s.chainSelectorEVM:    evm.NewInspector(s.Client),
 		s.chainSelectorSolana: solanamcms.NewInspector(s.SolanaClient),
@@ -227,30 +235,29 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 		s.chainSelectorSolana: executorSolana,
 	}
 	signable, err := mcms.NewSignable(proposal, inspectors)
-	require.NoError(t, err, "Failed to create Signable instance")
-	t.Log("Signable instance created successfully.")
+	s.Require().NoError(err, "Failed to create Signable instance")
+	s.T().Log("Signable instance created successfully.")
 
-	// Step 4: Create a LedgerSigner
-	t.Log("Creating LedgerSigner...")
+	// Step 5: Create a LedgerSigner and sign the proposal
+	s.T().Log("Creating LedgerSigner...")
 	ledgerSigner := mcms.NewLedgerSigner(derivationPath)
 
-	// Step 5: Sign the proposal
-	t.Log("Signing the proposal...")
+	s.T().Log("Signing the proposal...")
 	signature, err := signable.SignAndAppend(ledgerSigner)
-	require.NoError(t, err, "Failed to sign proposal with Ledger")
-	t.Log("Proposal signed successfully.")
-	t.Logf("Signature: R=%s, S=%s, V=%d\n", signature.R.Hex(), signature.S.Hex(), signature.V)
+	s.Require().NoError(err, "Failed to sign proposal with Ledger")
+	s.T().Log("Proposal signed successfully.")
+	s.T().Logf("Signature: R=%s, S=%s, V=%d\n", signature.R.Hex(), signature.S.Hex(), signature.V)
 
 	// Step 6: Validate the signature
-	t.Log("Validating the signature...")
+	s.T().Log("Validating the signature...")
 	hash, err := proposal.SigningHash()
-	require.NoError(t, err, "Failed to compute proposal hash")
+	s.Require().NoError(err, "Failed to compute proposal hash")
 
 	recoveredAddr, err := signature.Recover(hash)
-	require.NoError(t, err, "Failed to recover signer address")
+	s.Require().NoError(err, "Failed to recover signer address")
 
-	require.Equal(t, accountPublicKey, recoveredAddr.Hex(), "Signature verification failed")
-	t.Logf("Signature verified successfully. Signed by: %s\n", recoveredAddr.Hex())
+	s.Require().Equal(accountPublicKey, recoveredAddr.Hex(), "Signature verification failed")
+	s.T().Logf("Signature verified successfully. Signed by: %s\n", recoveredAddr.Hex())
 
 	// Step 7: Call Set Root to verify signature
 	s.setRootEVM(ctx, account.Address, proposal, mcmInstanceEVM, executorsMap)
