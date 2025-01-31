@@ -29,7 +29,16 @@ type TimelockProposal struct {
 }
 
 // NewTimelockProposal unmarshal data from the reader to JSON and returns a new TimelockProposal.
-func NewTimelockProposal(r io.Reader) (*TimelockProposal, error) {
+// The predecessors parameter is a list of readers that contain the predecessors
+// for the proposal for configuring operations counts, which makes the following
+// assumptions:
+//   - The order of the predecessors array is the order in which the proposals are
+//     intended to be executed.
+//   - The op counts for the first proposal are meant to be the starting op for the
+//     full set of proposals.
+//   - The op counts for all other proposals except the first are ignored
+//   - all proposals are configured correctly and need no additional modifications
+func NewTimelockProposal(r io.Reader, predecessors []io.Reader) (*TimelockProposal, error) {
 	var p TimelockProposal
 	if err := json.NewDecoder(r).Decode(&p); err != nil {
 		return nil, err
@@ -37,6 +46,38 @@ func NewTimelockProposal(r io.Reader) (*TimelockProposal, error) {
 
 	if err := p.Validate(); err != nil {
 		return nil, err
+	}
+
+	predecessorProposals := make([]TimelockProposal, len(predecessors))
+	for i, pred := range predecessors {
+		if err := json.NewDecoder(pred).Decode(&predecessorProposals[i]); err != nil {
+			return nil, err
+		}
+
+		if err := predecessorProposals[i].Validate(); err != nil {
+			return nil, err
+		}
+	}
+
+	// Set the transaction counts for each chain selector
+	startingOpCounts := make(map[types.ChainSelector]uint64)
+	for _, pred := range predecessorProposals {
+		for chainSelector, count := range pred.TransactionCounts() {
+			if _, ok := startingOpCounts[chainSelector]; !ok {
+				startingOpCounts[chainSelector] = pred.ChainMetadata[chainSelector].StartingOpCount
+			}
+
+			startingOpCounts[chainSelector] += count
+		}
+	}
+
+	// Set the starting op count for each chain selector in the new proposal
+	for chainSelector, chainMetadata := range p.ChainMetadata {
+		if count, ok := startingOpCounts[chainSelector]; ok {
+			chainMetadata.StartingOpCount = count
+		}
+
+		p.ChainMetadata[chainSelector] = chainMetadata
 	}
 
 	return &p, nil
@@ -47,6 +88,16 @@ func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
 	enc.SetIndent("", "  ")
 
 	return enc.Encode(p)
+}
+
+// TransactionCounts returns the number of transactions for each chain in the proposal
+func (m *TimelockProposal) TransactionCounts() map[types.ChainSelector]uint64 {
+	counts := make(map[types.ChainSelector]uint64)
+	for _, op := range m.Operations {
+		counts[op.ChainSelector] += uint64(len(op.Transactions))
+	}
+
+	return counts
 }
 
 // Salt returns a unique salt for the proposal.

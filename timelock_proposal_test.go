@@ -202,7 +202,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 
 			give := strings.NewReader(tt.give)
 
-			got, err := NewTimelockProposal(give)
+			got, err := NewTimelockProposal(give, []io.Reader{}) // TODO: predecessors
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

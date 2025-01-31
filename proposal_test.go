@@ -113,7 +113,7 @@ func Test_NewProposal(t *testing.T) {
 
 			give := strings.NewReader(tt.give)
 
-			fileProposal, err := NewProposal(give)
+			fileProposal, err := NewProposal(give, []io.Reader{}) // TOOD: predecessors
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

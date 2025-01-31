@@ -41,7 +41,7 @@ func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInt
 		// Ensure the file is closed when done
 		defer file.Close()
 
-		return NewProposal(file)
+		return NewProposal(file, []io.Reader{}) // TODO: inject predecessors
 	case types.KindTimelockProposal:
 		// Open the file
 		file, err := os.Open(filePath)
@@ -52,7 +52,7 @@ func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInt
 		// Ensure the file is closed when done
 		defer file.Close()
 
-		return NewTimelockProposal(file)
+		return NewTimelockProposal(file, []io.Reader{}) // TODO: inject predecessors
 	default:
 		return nil, errors.New("unknown proposal type")
 	}
@@ -87,8 +87,17 @@ type Proposal struct {
 	Operations []types.Operation `json:"operations" validate:"required,min=1,dive"`
 }
 
-// NewProposal unmarshal data from the reader to JSON and returns a new Proposal.
-func NewProposal(reader io.Reader) (*Proposal, error) {
+// NewProposal unmarshals data from the reader to JSON and returns a new Proposal.
+// The predecessors parameter is a list of readers that contain the predecessors
+// for the proposal for configuring operations counts, which makes the following
+// assumptions:
+//   - The order of the predecessors array is the order in which the proposals are
+//     intended to be executed.
+//   - The op counts for the first proposal are meant to be the starting op for the
+//     full set of proposals.
+//   - The op counts for all other proposals except the first are ignored
+//   - all proposals are configured correctly and need no additional modifications
+func NewProposal(reader io.Reader, predecessors []io.Reader) (*Proposal, error) {
 	var p Proposal
 	if err := json.NewDecoder(reader).Decode(&p); err != nil {
 		return nil, err
@@ -96,6 +105,38 @@ func NewProposal(reader io.Reader) (*Proposal, error) {
 
 	if err := p.Validate(); err != nil {
 		return nil, err
+	}
+
+	predecessorProposals := make([]Proposal, len(predecessors))
+	for i, pred := range predecessors {
+		if err := json.NewDecoder(pred).Decode(&predecessorProposals[i]); err != nil {
+			return nil, err
+		}
+
+		if err := predecessorProposals[i].Validate(); err != nil {
+			return nil, err
+		}
+	}
+
+	// Set the transaction counts for each chain selector
+	startingOpCounts := make(map[types.ChainSelector]uint64)
+	for _, pred := range predecessorProposals {
+		for chainSelector, count := range pred.TransactionCounts() {
+			if _, ok := startingOpCounts[chainSelector]; !ok {
+				startingOpCounts[chainSelector] = pred.ChainMetadata[chainSelector].StartingOpCount
+			}
+
+			startingOpCounts[chainSelector] += count
+		}
+	}
+
+	// Set the starting op count for each chain selector in the new proposal
+	for chainSelector, chainMetadata := range p.ChainMetadata {
+		if count, ok := startingOpCounts[chainSelector]; ok {
+			chainMetadata.StartingOpCount = count
+		}
+
+		p.ChainMetadata[chainSelector] = chainMetadata
 	}
 
 	return &p, nil
