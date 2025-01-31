@@ -56,18 +56,54 @@ func Test_BaseProposal_AppendSignature(t *testing.T) {
 	assert.Equal(t, []types.Signature{signature}, proposal.Signatures)
 }
 
+func Test_BaseProposal_GetChainMetadata(t *testing.T) {
+	t.Parallel()
+
+	chainMetadata := map[types.ChainSelector]types.ChainMetadata{
+		chaintest.Chain1Selector: {},
+	}
+
+	proposal := BaseProposal{
+		ChainMetadata: chainMetadata,
+	}
+
+	assert.Equal(t, chainMetadata, proposal.ChainMetadatas())
+}
+
+func Test_BaseProposal_SetChainMetadata(t *testing.T) {
+	t.Parallel()
+
+	proposal := BaseProposal{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
+	}
+
+	md, ok := proposal.ChainMetadata[chaintest.Chain1Selector]
+	assert.False(t, ok)
+	assert.Empty(t, md)
+
+	proposal.SetChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{
+		StartingOpCount: 0,
+		MCMAddress:      "",
+	})
+
+	assert.Equal(t, uint64(0), proposal.ChainMetadata[chaintest.Chain1Selector].StartingOpCount)
+	assert.Equal(t, "", proposal.ChainMetadata[chaintest.Chain1Selector].MCMAddress)
+}
+
 func Test_NewProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		give    string
-		want    Proposal
-		wantErr string
+		name             string
+		give             string
+		givePredecessors []string
+		want             Proposal
+		wantErr          string
 	}{
 		{
-			name: "success: initializes a proposal from an io.Reader",
-			give: ValidProposal,
+			name:             "success: initializes a proposal from an io.Reader",
+			give:             ValidProposal,
+			givePredecessors: []string{},
 			want: Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "v1",
@@ -90,9 +126,10 @@ func Test_NewProposal(t *testing.T) {
 			},
 		},
 		{
-			name:    "failure: could not unmarshal JSON",
-			give:    `invalid`,
-			wantErr: "invalid character 'i' looking for beginning of value",
+			name:             "failure: could not unmarshal JSON",
+			give:             `invalid`,
+			givePredecessors: []string{},
+			wantErr:          "invalid character 'i' looking for beginning of value",
 		},
 		{
 			name: "failure: invalid proposal",
@@ -103,7 +140,8 @@ func Test_NewProposal(t *testing.T) {
 				"chainMetadata": {},
 				"operations": []
 			}`,
-			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
+			givePredecessors: []string{},
+			wantErr:          "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
 		},
 	}
 
@@ -112,8 +150,12 @@ func Test_NewProposal(t *testing.T) {
 			t.Parallel()
 
 			give := strings.NewReader(tt.give)
+			givePredecessors := []io.Reader{}
+			for _, p := range tt.givePredecessors {
+				givePredecessors = append(givePredecessors, strings.NewReader(p))
+			}
 
-			fileProposal, err := NewProposal(give, []io.Reader{}) // TODO: predecessors
+			fileProposal, err := NewProposal(give, givePredecessors)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
