@@ -41,9 +41,9 @@ func NewExecutor(encoder *Encoder, client *rpc.Client, auth solana.PrivateKey) *
 	}
 }
 
-func (e *Executor) withSendAndConfirmFn(fn SendAndConfirmFn) *Executor {
+func (e Executor) withSendAndConfirmFn(fn SendAndConfirmFn) *Executor {
 	e.sendAndConfirm = fn
-	return e
+	return &e
 }
 
 // ExecuteOperation executes an operation on the MCMS program on the Solana chain

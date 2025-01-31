@@ -6,6 +6,7 @@ package solanae2e
 import (
 	"context"
 	"math/big"
+	"slices"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -88,7 +89,8 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*mcmsSolana.Encoder)
-	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: mcmsSolana.NewExecutor(encoder, s.SolanaClient, auth)}
+	executor := mcmsSolana.NewExecutor(encoder, s.SolanaClient, auth)
+	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: executor}
 	inspectors := map[types.ChainSelector]sdk.Inspector{s.ChainSelector: mcmsSolana.NewInspector(s.SolanaClient)}
 
 	// sign proposal
@@ -101,6 +103,34 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	// set config
 	configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.ChainSelector)
 	_, err = configurer.SetConfig(ctx, mcmID, &mcmConfig, true)
+	s.Require().NoError(err)
+
+	// simulate SetRoot
+	metadata := proposal.ChainMetadata[s.ChainSelector]
+	metadataHash, err := encoder.HashMetadata(metadata)
+	s.Require().NoError(err)
+
+	tree, err := proposal.MerkleTree()
+	s.Require().NoError(err)
+
+	proof, err := tree.GetProof(metadataHash)
+	s.Require().NoError(err)
+
+	hash, err := proposal.SigningHash()
+	s.Require().NoError(err)
+
+	// Sort signatures by recovered address
+	sortedSignatures := slices.Clone(proposal.Signatures) // Clone so we don't modify the original
+	slices.SortFunc(sortedSignatures, func(a, b types.Signature) int {
+		recoveredSignerA, _ := a.Recover(hash)
+		recoveredSignerB, _ := b.Recover(hash)
+
+		return recoveredSignerA.Cmp(recoveredSignerB)
+	})
+
+	simulator := mcmsSolana.NewSimulator(executor)
+	err = simulator.SimulateSetRoot(ctx, "", metadata,
+		proof, [32]byte(tree.Root.Bytes()), proposal.ValidUntil, sortedSignatures)
 	s.Require().NoError(err)
 
 	// call SetRoot
