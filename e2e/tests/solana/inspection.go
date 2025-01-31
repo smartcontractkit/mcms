@@ -17,8 +17,9 @@ var testPDASeedGetRootMeta = [32]byte{'t', 'e', 's', 't', '-', 'g', 'e', 't', 'm
 
 // TestGetOpCount tests the GetOpCount functionality
 func (s *SolanaTestSuite) TestGetOpCount() {
-	s.SetupMCM(testPDASeedGetOpCount)
 	ctx := context.Background()
+	s.SetupMCM(testPDASeedGetOpCount)
+
 	inspector := solanasdk.NewInspector(s.SolanaClient)
 	opCount, err := inspector.GetOpCount(ctx, solanasdk.ContractAddress(s.MCMProgramID, testPDASeedGetOpCount))
 
@@ -28,8 +29,9 @@ func (s *SolanaTestSuite) TestGetOpCount() {
 
 // TestGetRoot tests the GetRoot functionality
 func (s *SolanaTestSuite) TestGetRoot() {
-	s.SetupMCM(testPDASeedGetRoot)
 	ctx := context.Background()
+	s.SetupMCM(testPDASeedGetRoot)
+
 	inspector := solanasdk.NewInspector(s.SolanaClient)
 	root, validUntil, err := inspector.GetRoot(ctx, solanasdk.ContractAddress(s.MCMProgramID, testPDASeedGetRoot))
 
@@ -40,8 +42,9 @@ func (s *SolanaTestSuite) TestGetRoot() {
 
 // TestGetRootMetadata tests the GetRootMetadata functionality
 func (s *SolanaTestSuite) TestGetRootMetadata() {
-	s.SetupMCM(testPDASeedGetRootMeta)
 	ctx := context.Background()
+	s.SetupMCM(testPDASeedGetRootMeta)
+
 	inspector := solanasdk.NewInspector(s.SolanaClient)
 	address := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedGetRootMeta)
 	metadata, err := inspector.GetRootMetadata(ctx, address)
