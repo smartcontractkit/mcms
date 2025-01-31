@@ -28,6 +28,8 @@ type TimelockProposal struct {
 	SaltOverride      *common.Hash                   `json:"salt,omitempty"`
 }
 
+var _ ProposalInterface = (*TimelockProposal)(nil)
+
 // NewTimelockProposal unmarshal data from the reader to JSON and returns a new TimelockProposal.
 // The predecessors parameter is a list of readers that contain the predecessors
 // for the proposal for configuring operations counts, which makes the following
@@ -39,48 +41,7 @@ type TimelockProposal struct {
 //   - The op counts for all other proposals except the first are ignored
 //   - all proposals are configured correctly and need no additional modifications
 func NewTimelockProposal(r io.Reader, predecessors []io.Reader) (*TimelockProposal, error) {
-	var p TimelockProposal
-	if err := json.NewDecoder(r).Decode(&p); err != nil {
-		return nil, err
-	}
-
-	if err := p.Validate(); err != nil {
-		return nil, err
-	}
-
-	predecessorProposals := make([]TimelockProposal, len(predecessors))
-	for i, pred := range predecessors {
-		if err := json.NewDecoder(pred).Decode(&predecessorProposals[i]); err != nil {
-			return nil, err
-		}
-
-		if err := predecessorProposals[i].Validate(); err != nil {
-			return nil, err
-		}
-	}
-
-	// Set the transaction counts for each chain selector
-	startingOpCounts := make(map[types.ChainSelector]uint64)
-	for _, pred := range predecessorProposals {
-		for chainSelector, count := range pred.TransactionCounts() {
-			if _, ok := startingOpCounts[chainSelector]; !ok {
-				startingOpCounts[chainSelector] = pred.ChainMetadata[chainSelector].StartingOpCount
-			}
-
-			startingOpCounts[chainSelector] += count
-		}
-	}
-
-	// Set the starting op count for each chain selector in the new proposal
-	for chainSelector, chainMetadata := range p.ChainMetadata {
-		if count, ok := startingOpCounts[chainSelector]; ok {
-			chainMetadata.StartingOpCount = count
-		}
-
-		p.ChainMetadata[chainSelector] = chainMetadata
-	}
-
-	return &p, nil
+	return newProposal[*TimelockProposal](r, predecessors)
 }
 
 func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {

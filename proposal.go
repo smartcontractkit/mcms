@@ -26,6 +26,9 @@ const SignMsgABI = `[{"type":"bytes32"},{"type":"uint32"}]`
 
 type ProposalInterface interface {
 	AppendSignature(signature types.Signature)
+	TransactionCounts() map[types.ChainSelector]uint64
+	ChainMetadatas() map[types.ChainSelector]types.ChainMetadata
+	SetChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata)
 	Validate() error
 }
 
@@ -78,6 +81,16 @@ func (p *BaseProposal) AppendSignature(signature types.Signature) {
 	p.Signatures = append(p.Signatures, signature)
 }
 
+// ChainMetadata returns the chain metadata for the proposal.
+func (p *BaseProposal) ChainMetadatas() map[types.ChainSelector]types.ChainMetadata {
+	return p.ChainMetadata
+}
+
+// SetChainMetadata sets the chain metadata for a given chain selector.
+func (p *BaseProposal) SetChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata) {
+	p.ChainMetadata[chainSelector] = metadata
+}
+
 // Proposal is a struct where the target contract is an MCMS contract
 // with no forwarder contracts. This type does not support any type of atomic contract
 // call batching, as the MCMS contract natively doesn't support batching
@@ -86,6 +99,8 @@ type Proposal struct {
 
 	Operations []types.Operation `json:"operations" validate:"required,min=1,dive"`
 }
+
+var _ ProposalInterface = (*Proposal)(nil)
 
 // NewProposal unmarshals data from the reader to JSON and returns a new Proposal.
 // The predecessors parameter is a list of readers that contain the predecessors
@@ -98,48 +113,7 @@ type Proposal struct {
 //   - The op counts for all other proposals except the first are ignored
 //   - all proposals are configured correctly and need no additional modifications
 func NewProposal(reader io.Reader, predecessors []io.Reader) (*Proposal, error) {
-	var p Proposal
-	if err := json.NewDecoder(reader).Decode(&p); err != nil {
-		return nil, err
-	}
-
-	if err := p.Validate(); err != nil {
-		return nil, err
-	}
-
-	predecessorProposals := make([]Proposal, len(predecessors))
-	for i, pred := range predecessors {
-		if err := json.NewDecoder(pred).Decode(&predecessorProposals[i]); err != nil {
-			return nil, err
-		}
-
-		if err := predecessorProposals[i].Validate(); err != nil {
-			return nil, err
-		}
-	}
-
-	// Set the transaction counts for each chain selector
-	startingOpCounts := make(map[types.ChainSelector]uint64)
-	for _, pred := range predecessorProposals {
-		for chainSelector, count := range pred.TransactionCounts() {
-			if _, ok := startingOpCounts[chainSelector]; !ok {
-				startingOpCounts[chainSelector] = pred.ChainMetadata[chainSelector].StartingOpCount
-			}
-
-			startingOpCounts[chainSelector] += count
-		}
-	}
-
-	// Set the starting op count for each chain selector in the new proposal
-	for chainSelector, chainMetadata := range p.ChainMetadata {
-		if count, ok := startingOpCounts[chainSelector]; ok {
-			chainMetadata.StartingOpCount = count
-		}
-
-		p.ChainMetadata[chainSelector] = chainMetadata
-	}
-
-	return &p, nil
+	return newProposal[*Proposal](reader, predecessors)
 }
 
 // WriteProposal marshals the proposal to JSON and writes it to the provided writer.
