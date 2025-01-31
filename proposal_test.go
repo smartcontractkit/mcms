@@ -27,7 +27,10 @@ var (
 		"kind": "Proposal",
 		"validUntil": 2004259681,
 		"chainMetadata": {
-			"3379446385462418246": {}
+			"3379446385462418246": {
+				"startingOpCount": 0,
+				"mcmAddress": ""
+			}
 		},
 		"operations": [
 			{
@@ -111,6 +114,62 @@ func Test_NewProposal(t *testing.T) {
 					ValidUntil: 2004259681,
 					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 						chaintest.Chain1Selector: {},
+					},
+				},
+				Operations: []types.Operation{
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transaction: types.Transaction{
+							To:               "0xsomeaddress",
+							Data:             []byte{0x12, 0x33},              // Representing "0x123" as bytes
+							AdditionalFields: json.RawMessage(`{"value": 0}`), // JSON-encoded `{"value": 0}`
+						},
+					},
+				},
+			},
+		},
+		{
+			name:             "success: initializes a proposal with 1 predecessor proposals",
+			give:             ValidProposal,
+			givePredecessors: []string{ValidProposal},
+			want: Proposal{
+				BaseProposal: BaseProposal{
+					Version:    "v1",
+					Kind:       types.KindProposal,
+					ValidUntil: 2004259681,
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						chaintest.Chain1Selector: {
+							StartingOpCount: 1,
+							MCMAddress:      "",
+						},
+					},
+				},
+				Operations: []types.Operation{
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transaction: types.Transaction{
+							To:               "0xsomeaddress",
+							Data:             []byte{0x12, 0x33},              // Representing "0x123" as bytes
+							AdditionalFields: json.RawMessage(`{"value": 0}`), // JSON-encoded `{"value": 0}`
+						},
+					},
+				},
+			},
+		},
+		{
+			name:             "success: initializes a proposal with 2 predecessor proposals",
+			give:             ValidProposal,
+			givePredecessors: []string{ValidProposal, ValidProposal},
+			want: Proposal{
+				BaseProposal: BaseProposal{
+					Version:    "v1",
+					Kind:       types.KindProposal,
+					ValidUntil: 2004259681,
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						chaintest.Chain1Selector: {
+							StartingOpCount: 2,
+							MCMAddress:      "",
+						},
 					},
 				},
 				Operations: []types.Operation{
