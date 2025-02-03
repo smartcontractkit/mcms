@@ -810,3 +810,139 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 		}
 	}
 }
+
+func Test_TimelockExecutable_GetChainSpecificIndex(t *testing.T) {
+	t.Parallel()
+
+	// We'll create a helper function for generating a minimal proposal
+	// that won't fail validation. It includes multiple operations across
+	// different chain selectors.
+	defaultProposal := func() *TimelockProposal {
+		// A minimal transaction for each operation
+		tx := types.Transaction{
+			To:               "0x1234",
+			AdditionalFields: json.RawMessage([]byte(`{"value":0}`)),
+			Data:             common.Hex2Bytes("0x"),
+			OperationMetadata: types.OperationMetadata{
+				ContractType: "TestContract",
+				Tags:         []string{"tag1"},
+			},
+		}
+
+		// We'll set up 6 operations across 3 different chain selectors
+		operations := []types.BatchOperation{
+			{ // index 0 => chain1
+				ChainSelector: chaintest.Chain1Selector,
+				Transactions:  []types.Transaction{tx},
+			},
+			{ // index 1 => chain2
+				ChainSelector: chaintest.Chain2Selector,
+				Transactions:  []types.Transaction{tx},
+			},
+			{ // index 2 => chain1
+				ChainSelector: chaintest.Chain1Selector,
+				Transactions:  []types.Transaction{tx},
+			},
+			{ // index 3 => chain3
+				ChainSelector: chaintest.Chain3Selector,
+				Transactions:  []types.Transaction{tx},
+			},
+			{ // index 4 => chain1
+				ChainSelector: chaintest.Chain1Selector,
+				Transactions:  []types.Transaction{tx},
+			},
+			{ // index 5 => chain2
+				ChainSelector: chaintest.Chain2Selector,
+				Transactions:  []types.Transaction{tx},
+			},
+		}
+
+		return &TimelockProposal{
+			BaseProposal: BaseProposal{
+				Version:    "v1",
+				Kind:       types.KindTimelockProposal, // Must match for NewTimelockExecutable
+				ValidUntil: 2004259681,                 // Some future time
+				ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+					chaintest.Chain1Selector: {
+						StartingOpCount: 0,
+						MCMAddress:      "0xAAAA",
+					},
+					chaintest.Chain2Selector: {
+						StartingOpCount: 0,
+						MCMAddress:      "0xBBBB",
+					},
+					chaintest.Chain3Selector: {
+						StartingOpCount: 0,
+						MCMAddress:      "0xCCCC",
+					},
+				},
+				Signatures: []types.Signature{},
+			},
+			Action: types.TimelockActionSchedule, // Must be "schedule" for NewTimelockExecutable
+			Delay:  types.MustParseDuration("1h"),
+			TimelockAddresses: map[types.ChainSelector]string{
+				chaintest.Chain1Selector: "0x1111",
+				chaintest.Chain2Selector: "0x2222",
+				chaintest.Chain3Selector: "0x3333",
+			},
+			Operations: operations,
+		}
+	}
+
+	t.Run("chain-specific indexing across multiple chains", func(t *testing.T) {
+		proposal := defaultProposal()
+
+		// We don't actually need executors to test GetChainSpecificIndex,
+		// so we'll pass an empty map. (Or nil is fine too.)
+		executors := map[types.ChainSelector]sdk.TimelockExecutor{}
+
+		// Create TimelockExecutable
+		tlExecutable, err := NewTimelockExecutable(proposal, executors)
+		require.NoError(t, err)
+
+		// Each test-case checks the chain-specific index for a given global index
+		testCases := []struct {
+			name        string
+			globalIndex int
+			want        int
+		}{
+			{
+				name:        "0th op, chain1 => 1st on that chain",
+				globalIndex: 0,
+				want:        1,
+			},
+			{
+				name:        "1st op, chain2 => 1st on that chain",
+				globalIndex: 1,
+				want:        1,
+			},
+			{
+				name:        "2nd op, chain1 => 2nd on that chain",
+				globalIndex: 2,
+				want:        2,
+			},
+			{
+				name:        "3rd op, chain3 => 1st on that chain",
+				globalIndex: 3,
+				want:        1,
+			},
+			{
+				name:        "4th op, chain1 => 3rd on that chain",
+				globalIndex: 4,
+				want:        3,
+			},
+			{
+				name:        "5th op, chain2 => 2nd on that chain",
+				globalIndex: 5,
+				want:        2,
+			},
+		}
+
+		for _, tc := range testCases {
+			t.Run(tc.name, func(t *testing.T) {
+				got := tlExecutable.GetChainSpecificIndex(tc.globalIndex)
+				require.Equal(t, tc.want, got)
+			})
+		}
+	})
+}

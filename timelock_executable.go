@@ -73,6 +73,19 @@ func WithCallProxy(address string) Option {
 	}
 }
 
+// GetChainSpecificIndex gets the index of the operation in the context of the given chain.
+func (t *TimelockExecutable) GetChainSpecificIndex(index int) int {
+	op := t.proposal.Operations[index]
+	chainSelector := op.ChainSelector
+	chainSpecificIndex := 0
+	for i, op := range t.proposal.Operations {
+		if op.ChainSelector == chainSelector && i <= index {
+			chainSpecificIndex++
+		}
+	}
+	return chainSpecificIndex
+}
+
 // Execute executes the operation at the given index.
 // Includes an option to set callProxy to execute the calls through a proxy.
 // If the callProxy is not set, the calls will be executed directly
@@ -95,12 +108,12 @@ func (t *TimelockExecutable) Execute(ctx context.Context, index int, opts ...Opt
 	if len(execAddress) == 0 {
 		execAddress = t.proposal.TimelockAddresses[op.ChainSelector]
 	}
-
+	chainSpecificIndex := t.GetChainSpecificIndex(index)
 	return t.executors[op.ChainSelector].Execute(
 		ctx,
 		op,
 		execAddress,
-		t.predecessors[op.ChainSelector][index],
+		t.predecessors[op.ChainSelector][chainSpecificIndex],
 		t.proposal.Salt(),
 	)
 }
