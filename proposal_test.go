@@ -27,7 +27,10 @@ var (
 		"kind": "Proposal",
 		"validUntil": 2004259681,
 		"chainMetadata": {
-			"3379446385462418246": {}
+			"3379446385462418246": {
+				"startingOpCount": 0,
+				"mcmAddress": ""
+			}
 		},
 		"operations": [
 			{
@@ -56,18 +59,54 @@ func Test_BaseProposal_AppendSignature(t *testing.T) {
 	assert.Equal(t, []types.Signature{signature}, proposal.Signatures)
 }
 
+func Test_BaseProposal_GetChainMetadata(t *testing.T) {
+	t.Parallel()
+
+	chainMetadata := map[types.ChainSelector]types.ChainMetadata{
+		chaintest.Chain1Selector: {},
+	}
+
+	proposal := BaseProposal{
+		ChainMetadata: chainMetadata,
+	}
+
+	assert.Equal(t, chainMetadata, proposal.ChainMetadatas())
+}
+
+func Test_BaseProposal_SetChainMetadata(t *testing.T) {
+	t.Parallel()
+
+	proposal := BaseProposal{
+		ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
+	}
+
+	md, ok := proposal.ChainMetadata[chaintest.Chain1Selector]
+	assert.False(t, ok)
+	assert.Empty(t, md)
+
+	proposal.setChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{
+		StartingOpCount: 0,
+		MCMAddress:      "",
+	})
+
+	assert.Equal(t, uint64(0), proposal.ChainMetadata[chaintest.Chain1Selector].StartingOpCount)
+	assert.Equal(t, "", proposal.ChainMetadata[chaintest.Chain1Selector].MCMAddress)
+}
+
 func Test_NewProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name    string
-		give    string
-		want    Proposal
-		wantErr string
+		name             string
+		give             string
+		givePredecessors []string
+		want             Proposal
+		wantErr          string
 	}{
 		{
-			name: "success: initializes a proposal from an io.Reader",
-			give: ValidProposal,
+			name:             "success: initializes a proposal from an io.Reader",
+			give:             ValidProposal,
+			givePredecessors: []string{},
 			want: Proposal{
 				BaseProposal: BaseProposal{
 					Version:    "v1",
@@ -90,9 +129,66 @@ func Test_NewProposal(t *testing.T) {
 			},
 		},
 		{
-			name:    "failure: could not unmarshal JSON",
-			give:    `invalid`,
-			wantErr: "invalid character 'i' looking for beginning of value",
+			name:             "success: initializes a proposal with 1 predecessor proposals",
+			give:             ValidProposal,
+			givePredecessors: []string{ValidProposal},
+			want: Proposal{
+				BaseProposal: BaseProposal{
+					Version:    "v1",
+					Kind:       types.KindProposal,
+					ValidUntil: 2004259681,
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						chaintest.Chain1Selector: {
+							StartingOpCount: 1,
+							MCMAddress:      "",
+						},
+					},
+				},
+				Operations: []types.Operation{
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transaction: types.Transaction{
+							To:               "0xsomeaddress",
+							Data:             []byte{0x12, 0x33},              // Representing "0x123" as bytes
+							AdditionalFields: json.RawMessage(`{"value": 0}`), // JSON-encoded `{"value": 0}`
+						},
+					},
+				},
+			},
+		},
+		{
+			name:             "success: initializes a proposal with 2 predecessor proposals",
+			give:             ValidProposal,
+			givePredecessors: []string{ValidProposal, ValidProposal},
+			want: Proposal{
+				BaseProposal: BaseProposal{
+					Version:    "v1",
+					Kind:       types.KindProposal,
+					ValidUntil: 2004259681,
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+						chaintest.Chain1Selector: {
+							StartingOpCount: 2,
+							MCMAddress:      "",
+						},
+					},
+				},
+				Operations: []types.Operation{
+					{
+						ChainSelector: chaintest.Chain1Selector,
+						Transaction: types.Transaction{
+							To:               "0xsomeaddress",
+							Data:             []byte{0x12, 0x33},              // Representing "0x123" as bytes
+							AdditionalFields: json.RawMessage(`{"value": 0}`), // JSON-encoded `{"value": 0}`
+						},
+					},
+				},
+			},
+		},
+		{
+			name:             "failure: could not unmarshal JSON",
+			give:             `invalid`,
+			givePredecessors: []string{},
+			wantErr:          "failed to decode and validate target proposal: failed to decode proposal: invalid character 'i' looking for beginning of value",
 		},
 		{
 			name: "failure: invalid proposal",
@@ -103,7 +199,8 @@ func Test_NewProposal(t *testing.T) {
 				"chainMetadata": {},
 				"operations": []
 			}`,
-			wantErr: "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
+			givePredecessors: []string{},
+			wantErr:          "failed to decode and validate target proposal: failed to validate proposal: Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
 		},
 	}
 
@@ -112,8 +209,12 @@ func Test_NewProposal(t *testing.T) {
 			t.Parallel()
 
 			give := strings.NewReader(tt.give)
+			givePredecessors := []io.Reader{}
+			for _, p := range tt.givePredecessors {
+				givePredecessors = append(givePredecessors, strings.NewReader(p))
+			}
 
-			fileProposal, err := NewProposal(give)
+			fileProposal, err := NewProposal(give, givePredecessors)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

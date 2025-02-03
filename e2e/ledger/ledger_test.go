@@ -5,6 +5,7 @@ package ledger
 
 import (
 	"context"
+	"io"
 	"log"
 	"math/big"
 	"os"
@@ -203,7 +204,7 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	}(file)
 	s.Require().NoError(err)
 
-	proposal, err := mcms.NewProposal(file)
+	proposal, err := mcms.NewProposal(file, []io.Reader{})
 	s.Require().NoError(err, "Failed to parse proposal")
 	s.T().Log("Proposal loaded successfully.")
 	proposal.ChainMetadata[s.chainSelectorEVM] = types.ChainMetadata{

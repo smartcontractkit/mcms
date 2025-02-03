@@ -26,6 +26,9 @@ const SignMsgABI = `[{"type":"bytes32"},{"type":"uint32"}]`
 
 type ProposalInterface interface {
 	AppendSignature(signature types.Signature)
+	TransactionCounts() map[types.ChainSelector]uint64
+	ChainMetadatas() map[types.ChainSelector]types.ChainMetadata
+	setChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata)
 	Validate() error
 }
 
@@ -41,7 +44,7 @@ func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInt
 		// Ensure the file is closed when done
 		defer file.Close()
 
-		return NewProposal(file)
+		return NewProposal(file, []io.Reader{}) // TODO: inject predecessors
 	case types.KindTimelockProposal:
 		// Open the file
 		file, err := os.Open(filePath)
@@ -52,7 +55,7 @@ func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInt
 		// Ensure the file is closed when done
 		defer file.Close()
 
-		return NewTimelockProposal(file)
+		return NewTimelockProposal(file, []io.Reader{}) // TODO: inject predecessors
 	default:
 		return nil, errors.New("unknown proposal type")
 	}
@@ -78,6 +81,21 @@ func (p *BaseProposal) AppendSignature(signature types.Signature) {
 	p.Signatures = append(p.Signatures, signature)
 }
 
+// ChainMetadata returns the chain metadata for the proposal.
+func (p *BaseProposal) ChainMetadatas() map[types.ChainSelector]types.ChainMetadata {
+	cmCopy := make(map[types.ChainSelector]types.ChainMetadata, len(p.ChainMetadata))
+	for k, v := range p.ChainMetadata {
+		cmCopy[k] = v
+	}
+
+	return cmCopy
+}
+
+// SetChainMetadata sets the chain metadata for a given chain selector.
+func (p *BaseProposal) setChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata) {
+	p.ChainMetadata[chainSelector] = metadata
+}
+
 // Proposal is a struct where the target contract is an MCMS contract
 // with no forwarder contracts. This type does not support any type of atomic contract
 // call batching, as the MCMS contract natively doesn't support batching
@@ -87,18 +105,20 @@ type Proposal struct {
 	Operations []types.Operation `json:"operations" validate:"required,min=1,dive"`
 }
 
-// NewProposal unmarshal data from the reader to JSON and returns a new Proposal.
-func NewProposal(reader io.Reader) (*Proposal, error) {
-	var p Proposal
-	if err := json.NewDecoder(reader).Decode(&p); err != nil {
-		return nil, err
-	}
+var _ ProposalInterface = (*Proposal)(nil)
 
-	if err := p.Validate(); err != nil {
-		return nil, err
-	}
-
-	return &p, nil
+// NewProposal unmarshals data from the reader to JSON and returns a new Proposal.
+// The predecessors parameter is a list of readers that contain the predecessors
+// for the proposal for configuring operations counts, which makes the following
+// assumptions:
+//   - The order of the predecessors array is the order in which the proposals are
+//     intended to be executed.
+//   - The op counts for the first proposal are meant to be the starting op for the
+//     full set of proposals.
+//   - The op counts for all other proposals except the first are ignored
+//   - all proposals are configured correctly and need no additional modifications
+func NewProposal(reader io.Reader, predecessors []io.Reader) (*Proposal, error) {
+	return newProposal[*Proposal](reader, predecessors)
 }
 
 // WriteProposal marshals the proposal to JSON and writes it to the provided writer.
