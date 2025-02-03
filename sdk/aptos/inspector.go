@@ -71,6 +71,7 @@ func (i Inspector) GetOpCount(ctx context.Context, mcmAddr string) (uint64, erro
 	if err := aptosutil.DecodeAptosJsonValue(data, &opcount); err != nil {
 		return 0, fmt.Errorf("decode: mcms::get_op_count: %w", err)
 	}
+
 	return opcount, nil
 }
 
@@ -97,6 +98,7 @@ func (i Inspector) GetRoot(ctx context.Context, mcmAddr string) (common.Hash, ui
 	if err := aptosutil.DecodeAptosJsonValue(data, &hash, &validUntil); err != nil {
 		return common.Hash{}, 0, fmt.Errorf("decode: mcms::get_root: %w", err)
 	}
+
 	return common.BytesToHash(hash), validUntil, nil
 }
 
@@ -122,6 +124,7 @@ func (i Inspector) GetRootMetadata(ctx context.Context, mcmAddr string) (types.C
 	if err := aptosutil.DecodeAptosJsonValue(data, &metadata); err != nil {
 		return types.ChainMetadata{}, fmt.Errorf("decode: mcms::get_root_metadata: %w", err)
 	}
+
 	return types.ChainMetadata{
 		StartingOpCount: metadata.PreOpCount,
 		MCMAddress:      metadata.Multisig,

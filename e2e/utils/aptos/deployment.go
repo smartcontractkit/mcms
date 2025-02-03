@@ -8,17 +8,18 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 )
 
-func replaceAddress(s string, old, new string) (string, error) {
-	old, new = strings.TrimPrefix(old, "0x"), strings.TrimPrefix(new, "0x")
+func replaceAddress(s string, oldStr, newStr string) (string, error) {
+	oldStr, newStr = strings.TrimPrefix(oldStr, "0x"), strings.TrimPrefix(newStr, "0x")
 	repl := strings.ReplaceAll(
 		strings.ToLower(s),
-		strings.ToLower(old),
-		strings.ToLower(new),
+		strings.ToLower(oldStr),
+		strings.ToLower(newStr),
 	)
 	res, err := aptos.ParseHex(repl)
 	if err != nil {
 		return "", err
 	}
+
 	return aptos.BytesToHex(res), nil
 }
 
@@ -30,6 +31,7 @@ func replaceAddresses(s string, replacements map[string]string) (string, error) 
 			return "", err
 		}
 	}
+
 	return s, nil
 }
 
@@ -58,6 +60,7 @@ func ObjectCodeDeploymentPublish(metadataHex string, bytecodeHex []string, addre
 			return nil, fmt.Errorf("failed to parse hex bytecode: %w", err)
 		}
 	}
+
 	return BuildTransactionPayload(
 		"0x1::object_code_deployment::publish",
 		nil,
@@ -73,6 +76,7 @@ func CalculateNextObjectCodeDeploymentAddress(address aptos.AccountAddress, curr
 	sequenceBytes, _ := bcs.SerializeU64(currSeq + 1)
 	domainSeparatorBytes, _ := bcs.SerializeBytes([]byte("aptos_framework::object_code_deployment"))
 	seedBytes := append(domainSeparatorBytes, sequenceBytes...)
+
 	return address.NamedObjectAddress(seedBytes)
 }
 
@@ -85,5 +89,6 @@ func NextObjectCodeDeploymentAddress(client *aptos.NodeClient, account aptos.Acc
 	if err != nil {
 		return aptos.AccountAddress{}, fmt.Errorf("failed to get sequence number: %w", err)
 	}
+
 	return CalculateNextObjectCodeDeploymentAddress(account, sequence), nil
 }

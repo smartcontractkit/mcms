@@ -9,7 +9,8 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/chain-selectors"
+
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
@@ -41,6 +42,7 @@ func NewEncoder(
 	}
 }
 
+//nolint:mnd // Padding to 32 and 64 bytes respectively
 func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
 	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
@@ -69,11 +71,12 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 	preImage = append(preImage, toAddress[:]...)
 	preImage = append(preImage, common.LeftPadBytes([]byte(additionalFields.ModuleName), 64)...)
 	preImage = append(preImage, common.LeftPadBytes([]byte(additionalFields.Function), 64)...)
-	preImage = append(preImage, []byte(append(op.Transaction.Data, bytes.Repeat([]byte{0}, 32-len(op.Transaction.Data)%32)...))...) // Right pad to 32-byte increment
+	preImage = append(preImage, append(op.Transaction.Data, bytes.Repeat([]byte{0}, 32-len(op.Transaction.Data)%32)...)...) // Right pad to 32-byte increment
 
 	return crypto.Keccak256Hash(preImage), nil
 }
 
+//nolint:mnd // Padding to 32 and 64 bytes respectively
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
 	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {

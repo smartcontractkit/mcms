@@ -1,3 +1,4 @@
+//nolint:nlreturn,exhaustive
 package aptos
 
 import (
@@ -214,8 +215,8 @@ func serializeArg(argVal any, argType aptos.TypeTag, serializer *bcs.Serializer)
 			return nil
 		}
 		if v, ok := argVal.(string); ok {
-			if big, ok := big.NewInt(0).SetString(v, 10); ok {
-				serializer.U128(*big)
+			if bi, ok := big.NewInt(0).SetString(v, 10); ok {
+				serializer.U128(*bi)
 				return nil
 			}
 		}
@@ -235,8 +236,8 @@ func serializeArg(argVal any, argType aptos.TypeTag, serializer *bcs.Serializer)
 			return nil
 		}
 		if v, ok := argVal.(string); ok {
-			if big, ok := big.NewInt(0).SetString(v, 10); ok {
-				serializer.U256(*big)
+			if bi, ok := big.NewInt(0).SetString(v, 10); ok {
+				serializer.U256(*bi)
 				return nil
 			}
 		}
@@ -277,7 +278,7 @@ func serializeArg(argVal any, argType aptos.TypeTag, serializer *bcs.Serializer)
 		}
 		length := rv.Len()
 		serializer.Uleb128(uint32(length))
-		for i := 0; i < length; i++ {
+		for i := range length {
 			if err := serializeArg(rv.Index(i).Interface(), itemType, serializer); err != nil {
 				return err
 			}

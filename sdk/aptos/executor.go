@@ -8,12 +8,18 @@ import (
 
 	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
+
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	aptosutil "github.com/smartcontractkit/mcms/e2e/utils/aptos"
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/types"
+)
+
+const (
+	SignatureVOffset    = 27
+	SignatureVThreshold = 2
 )
 
 var _ sdk.Executor = &Executor{}
@@ -105,6 +111,7 @@ func (e Executor) ExecuteOperation(
 	if !found {
 		return types.TransactionResult{}, fmt.Errorf("unable to find config event on Aptos mcms contract")
 	}
+
 	return types.TransactionResult{
 		Hash:           data.Hash,
 		ChainFamily:    chain_selectors.FamilyAptos,
@@ -180,6 +187,7 @@ func (e Executor) SetRoot(
 	if !found {
 		return types.TransactionResult{}, fmt.Errorf("unable to find config event on Aptos mcms contract")
 	}
+
 	return types.TransactionResult{
 		Hash:           data.Hash,
 		ChainFamily:    chain_selectors.FamilyAptos,
@@ -191,11 +199,12 @@ func encodeSignatures(signatures []types.Signature) [][]byte {
 	sigs := make([][]byte, len(signatures))
 	for i, signature := range signatures {
 		sigs[i] = append(signature.R.Bytes(), signature.S.Bytes()...)
-		if signature.V <= 4 {
-			sigs[i] = append(sigs[i], signature.V+27)
+		if signature.V <= SignatureVThreshold {
+			sigs[i] = append(sigs[i], signature.V+SignatureVOffset)
 		} else {
 			sigs[i] = append(sigs[i], signature.V)
 		}
 	}
+
 	return sigs
 }

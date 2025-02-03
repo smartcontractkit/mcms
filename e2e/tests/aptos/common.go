@@ -5,14 +5,14 @@ package aptos
 import (
 	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/aptos-labs/aptos-go-sdk/crypto"
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/suite"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	aptosutil "github.com/smartcontractkit/mcms/e2e/utils/aptos"
 	"github.com/smartcontractkit/mcms/types"
-
-	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 )
 
 type AptosTestSuite struct {
@@ -65,6 +65,7 @@ func (a *AptosTestSuite) deployMCM() {
 		placeholderMCMSAddress: objectAddress.StringLong(),
 		placeholderMCMSOwner:   a.deployerAccount.Address.StringLong(),
 	})
+	a.Require().NoError(err)
 
 	data, err := aptosutil.BuildSignSubmitAndWaitForTransaction(a.TestSetup.AptosRPCClient, a.deployerAccount, payload)
 	a.Require().NoError(err)
@@ -105,6 +106,7 @@ func (a *AptosTestSuite) deployMCMUser() {
 		placeholderMCMSUser:    objectAddress.StringLong(),
 		placeholderMCMSAddress: a.MCMContract.StringLong(),
 	})
+	a.Require().NoError(err)
 	data, err := aptosutil.BuildSignSubmitAndWaitForTransaction(a.TestSetup.AptosRPCClient, a.deployerAccount, payload)
 	a.Require().NoError(err)
 

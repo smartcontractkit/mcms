@@ -6,9 +6,9 @@ package e2e_test
 import (
 	"testing"
 
-	"github.com/smartcontractkit/mcms/e2e/tests/aptos"
 	"github.com/stretchr/testify/suite"
 
+	aptose2e "github.com/smartcontractkit/mcms/e2e/tests/aptos"
 	evme2e "github.com/smartcontractkit/mcms/e2e/tests/evm"
 	solanae2e "github.com/smartcontractkit/mcms/e2e/tests/solana"
 )
@@ -27,5 +27,5 @@ func TestSolanaSuite(t *testing.T) {
 }
 
 func TestAptosSuite(t *testing.T) {
-	suite.Run(t, new(aptos.AptosTestSuite))
+	suite.Run(t, new(aptose2e.AptosTestSuite))
 }

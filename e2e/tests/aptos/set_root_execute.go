@@ -72,7 +72,8 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 		ser.WriteBytes(arg2)
 	})
 	a.Require().NoError(err)
-	callOneAdditionalFields, _ := json.Marshal(additionalFields)
+	callOneAdditionalFields, err := json.Marshal(additionalFields)
+	a.Require().NoError(err)
 	proposalBuilder.AddOperation(types.Operation{
 		ChainSelector: a.ChainSelector,
 		Transaction: types.Transaction{
@@ -92,7 +93,8 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 		ser.U128(*arg4)
 	})
 	a.Require().NoError(err)
-	callTwoAdditionalFields, _ := json.Marshal(additionalFields)
+	callTwoAdditionalFields, err := json.Marshal(additionalFields)
+	a.Require().NoError(err)
 	proposalBuilder.AddOperation(types.Operation{
 		ChainSelector: a.ChainSelector,
 		Transaction: types.Transaction{
@@ -149,7 +151,8 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 	// Execute
 	for i := range proposal.Operations {
 		a.T().Logf("Executing operation: %v", i)
-		txOutput, err := executable.Execute(context.Background(), i)
+		var txOutput types.TransactionResult
+		txOutput, err = executable.Execute(context.Background(), i)
 		a.Require().NoError(err)
 		a.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
 
@@ -159,10 +162,10 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 		// Assert
 
 		// Check that op count has increased on the mcms contract
-		opCount, err := inspector.GetOpCount(context.Background(), a.MCMContract.StringLong())
+		var opCount uint64
+		opCount, err = inspector.GetOpCount(context.Background(), a.MCMContract.StringLong())
 		a.Require().NoError(err)
 		a.Require().EqualValues(opCount, i+1)
-
 	}
 
 	// Check that arguments have been stored in the MCMUser contract

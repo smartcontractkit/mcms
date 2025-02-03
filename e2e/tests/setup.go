@@ -120,7 +120,8 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			}
 
 			// Test the connection by checking the health of the RPC node
-			health, err := solanaClient.GetHealth(ctx)
+			var health string
+			health, err = solanaClient.GetHealth(ctx)
 			if err != nil {
 				t.Fatalf("Failed to connect to Solana RPC: %v", err)
 			}

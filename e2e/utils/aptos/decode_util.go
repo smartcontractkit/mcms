@@ -1,3 +1,4 @@
+//nolint:nlreturn,exhaustive
 package aptos
 
 import (
@@ -235,7 +236,7 @@ func arrayHook(f reflect.Type, t reflect.Type, data any) (any, error) {
 	sourceSlice := reflect.ValueOf(data)
 	targetSlice := reflect.MakeSlice(t, sourceSlice.Len(), sourceSlice.Cap())
 
-	for i := 0; i < sourceSlice.Len(); i++ {
+	for i := range sourceSlice.Len() {
 		sourceElem := sourceSlice.Index(i).Interface()
 		targetElem := reflect.New(t.Elem()).Interface()
 

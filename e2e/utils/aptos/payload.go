@@ -23,6 +23,7 @@ func BuildSignSubmitAndWaitForTransaction(client *aptos.NodeClient, sender *apto
 	if !data.Success {
 		return nil, fmt.Errorf("transaction failed: %s", data.VmStatus)
 	}
+
 	return data, nil
 }
 
@@ -42,17 +43,15 @@ func BuildTransactionPayload(function string, typeArgs, paramTypes []string, par
 	moduleName := functionTokens[1]
 	functionName := functionTokens[2]
 
-	var (
-		typeTags []aptos.TypeTag
-		args     [][]byte
-	)
+	typeTags := make([]aptos.TypeTag, len(typeArgs))
+	args := make([][]byte, len(paramTypes))
 
-	for _, arg := range typeArgs {
+	for i, arg := range typeArgs {
 		typeTag, err := CreateTypeTag(arg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse type argument %q: %w", arg, err)
 		}
-		typeTags = append(typeTags, typeTag)
+		typeTags[i] = typeTag
 	}
 	for i := range paramTypes {
 		typeName := paramTypes[i]
@@ -67,7 +66,7 @@ func BuildTransactionPayload(function string, typeArgs, paramTypes []string, par
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize value #%v %q: %w", i, typeValue, err)
 		}
-		args = append(args, bcsValue)
+		args[i] = bcsValue
 	}
 
 	return &aptos.TransactionPayload{Payload: &aptos.EntryFunction{
@@ -98,17 +97,15 @@ func BuildViewPayload(function string, typeArgs, paramTypes []string, paramValue
 	moduleName := functionTokens[1]
 	functionName := functionTokens[2]
 
-	var (
-		typeTags []aptos.TypeTag
-		args     [][]byte
-	)
+	typeTags := make([]aptos.TypeTag, len(typeArgs))
+	args := make([][]byte, len(paramTypes))
 
-	for _, arg := range typeArgs {
+	for i, arg := range typeArgs {
 		typeTag, err := CreateTypeTag(arg)
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse type argument %q: %w", arg, err)
 		}
-		typeTags = append(typeTags, typeTag)
+		typeTags[i] = typeTag
 	}
 	for i := range paramTypes {
 		typeName := paramTypes[i]
@@ -123,7 +120,7 @@ func BuildViewPayload(function string, typeArgs, paramTypes []string, paramValue
 		if err != nil {
 			return nil, fmt.Errorf("failed to serialize value #%v %q: %w", i, typeValue, err)
 		}
-		args = append(args, bcsValue)
+		args[i] = bcsValue
 	}
 
 	return &aptos.ViewPayload{

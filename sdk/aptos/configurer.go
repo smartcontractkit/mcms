@@ -5,12 +5,18 @@ import (
 	"fmt"
 
 	"github.com/aptos-labs/aptos-go-sdk"
+
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	aptosutil "github.com/smartcontractkit/mcms/e2e/utils/aptos"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
+)
+
+const (
+	// TODO this is a const in the mcms.move contract (MAX_NUM_SIGNERS), make it available somewhere
+	MAX_NUM_SIGNERS = 200
 )
 
 var _ sdk.Configurer = &Configurer{}
@@ -32,9 +38,8 @@ func (c Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Co
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}
-	// TODO this is a const in the mcms.move contract (MAX_NUM_SIGNERS), make it available somewhere
-	if len(signerAddresses) > 200 {
-		return types.TransactionResult{}, fmt.Errorf("too many signers (max 200)")
+	if len(signerAddresses) > MAX_NUM_SIGNERS {
+		return types.TransactionResult{}, fmt.Errorf("too many signers (max %v)", MAX_NUM_SIGNERS)
 	}
 
 	// Configure contract

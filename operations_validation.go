@@ -6,9 +6,9 @@ import (
 	"math/big"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/mcms/sdk/aptos"
 
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )

@@ -50,5 +50,6 @@ func (e *ConfigTransformer) ToConfig(config ManyChainMultiSigConfig) (*types.Con
 			Group: signer.Group,
 		})
 	}
+
 	return e.evmTransformer.ToConfig(evmConfig)
 }
