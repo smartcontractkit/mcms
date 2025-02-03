@@ -8,6 +8,9 @@
     "3379446385462418246": {
       "startingOpCount": 0,
       "mcmAddress": "0x123"
+    },
+    "16423721717087811551": {
+      "mcmAddress": "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX.mcms-instance-1"
     }
   },
   "description": "proposal for e2e tests",
@@ -15,12 +18,28 @@
     {
       "chainSelector": 3379446385462418246,
       "transaction": {
-        "contractType": "some-contract",
+        "contractType": "some-evm-contract",
         "tags": null,
         "to": "0x1c",
         "data": "MHgw",
         "additionalFields": {
           "value": 100
+        }
+      }
+    },
+    {
+      "chainSelector": 16423721717087811551,
+      "transaction": {
+        "contractType": "some-solana-program",
+        "tags": null,
+        "to": "4HeqEoSyfYpeC2goFLj9eHgkxV33mR5G7JYAbRsN14uQ",
+        "data": "D2DZq3wEcfN0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAFF3oPhB0oSxY3h5BmiszWNGktjysKAxcPliXCS0aGa3AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6QyuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAA=",
+        "additionalFields": {
+          "accounts": [
+            {
+              "PublicKey": "4HeqEoSyfYpeC2goFLj9eHgkxV33mR5G7JYAbRsN14uQ"
+            }
+          ]
         }
       }
     }

@@ -59,7 +59,7 @@ func (s *SolanaTestSuite) TestSimulator_SimulateSetRoot() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*solanasdk.Encoder)
-	executor := solanasdk.NewExecutor(s.SolanaClient, auth, encoder)
+	executor := solanasdk.NewExecutor(encoder, s.SolanaClient, auth)
 	inspectors := map[types.ChainSelector]sdk.Inspector{s.ChainSelector: solanasdk.NewInspector(s.SolanaClient)}
 
 	// sign proposal

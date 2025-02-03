@@ -512,7 +512,7 @@ func (s *SolanaTestSuite) executeConvertedProposal(
 	encoders, err := gotProposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*solanasdk.Encoder)
-	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: solanasdk.NewExecutor(s.SolanaClient, wallet, encoder)}
+	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: solanasdk.NewExecutor(encoder, s.SolanaClient, wallet)}
 	executable, err := mcms.NewExecutable(&gotProposal, executors)
 	s.Require().NoError(err)
 

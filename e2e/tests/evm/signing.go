@@ -62,8 +62,8 @@ func (s *SigningTestSuite) TestReadAndSign() {
 	)
 	s.Require().NoError(err)
 	expected := mcmtypes.Signature{
-		R: common.HexToHash("0x51c12e8721bf27f35a0006b3e3ebd0dac111c4bb62dce7b0bd7a3475b2f708a5"),
-		S: common.HexToHash("0x28f29f2a32f4cd9322883fa252742894cc2796a6fbe9cdabd0c6d996eed452f9"),
+		R: common.HexToHash("0x1ed7807767b09344df63797fa4986ce092730813922ce01563062cf51728ac34"),
+		S: common.HexToHash("0x556721244f77182c1130a5ee8d78ac7067cef52662dbb57b4132c6ec567ecbc8"),
 		V: 0,
 	}
 	s.Require().Equal(expected, signature)

@@ -176,7 +176,7 @@ func mockSolanaSimulateTransaction(
 		}}
 
 		return mockBlockHashRPCError
-	})
+	}).Once()
 	if mockBlockHashRPCError != nil {
 		return
 	}
@@ -195,7 +195,7 @@ func mockSolanaSimulateTransaction(
 		}
 
 		return nil
-	})
+	}).Once()
 }
 
 var sendTransactionParams = func(t *testing.T) any {

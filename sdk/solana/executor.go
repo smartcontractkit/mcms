@@ -31,7 +31,7 @@ type Executor struct {
 }
 
 // NewExecutor creates a new Executor for Solana chains
-func NewExecutor(client *rpc.Client, auth solana.PrivateKey, encoder *Encoder) *Executor {
+func NewExecutor(encoder *Encoder, client *rpc.Client, auth solana.PrivateKey) *Executor {
 	return &Executor{
 		Encoder:        encoder,
 		Inspector:      NewInspector(client),
@@ -41,9 +41,9 @@ func NewExecutor(client *rpc.Client, auth solana.PrivateKey, encoder *Encoder) *
 	}
 }
 
-func (e *Executor) withSendAndConfirmFn(fn SendAndConfirmFn) *Executor {
+func (e Executor) withSendAndConfirmFn(fn SendAndConfirmFn) *Executor {
 	e.sendAndConfirm = fn
-	return e
+	return &e
 }
 
 // ExecuteOperation executes an operation on the MCMS program on the Solana chain
