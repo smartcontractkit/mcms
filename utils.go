@@ -42,12 +42,12 @@ func decodeAndValidateProposal[T ProposalInterface](reader io.Reader) (T, error)
 	// Decode the proposal
 	var proposal T
 	if err := json.NewDecoder(reader).Decode(&proposal); err != nil {
-		return proposal, err
+		return proposal, fmt.Errorf("failed to decode proposal: %w", err)
 	}
 
 	// Validate the proposal
 	if err := proposal.Validate(); err != nil {
-		return proposal, err
+		return proposal, fmt.Errorf("failed to validate proposal: %w", err)
 	}
 
 	return proposal, nil
