@@ -188,7 +188,7 @@ func Test_NewProposal(t *testing.T) {
 			name:             "failure: could not unmarshal JSON",
 			give:             `invalid`,
 			givePredecessors: []string{},
-			wantErr:          "invalid character 'i' looking for beginning of value",
+			wantErr:          "failed to decode and validate target proposal: invalid character 'i' looking for beginning of value",
 		},
 		{
 			name: "failure: invalid proposal",
@@ -200,7 +200,7 @@ func Test_NewProposal(t *testing.T) {
 				"operations": []
 			}`,
 			givePredecessors: []string{},
-			wantErr:          "Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
+			wantErr:          "failed to decode and validate target proposal: Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
 		},
 	}
 

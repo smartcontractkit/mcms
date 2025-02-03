@@ -2,6 +2,7 @@ package mcms
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -55,18 +56,17 @@ func decodeAndValidateProposal[T ProposalInterface](reader io.Reader) (T, error)
 func newProposal[T ProposalInterface](r io.Reader, predecessors []io.Reader) (T, error) {
 	p, err := decodeAndValidateProposal[T](r)
 	if err != nil {
-		return p, err
+		return p, fmt.Errorf("failed to decode and validate target proposal: %w", err)
 	}
 
 	predecessorProposals := make([]T, len(predecessors))
 	for i, pred := range predecessors {
-		if err := json.NewDecoder(pred).Decode(&predecessorProposals[i]); err != nil {
-			return p, err
+		predObj, err := decodeAndValidateProposal[T](pred)
+		if err != nil {
+			return p, fmt.Errorf("failed to decode and validate predecessor proposal %d: %w", i, err)
 		}
 
-		if err := predecessorProposals[i].Validate(); err != nil {
-			return p, err
-		}
+		predecessorProposals[i] = predObj
 	}
 
 	startingOpCounts := generateQueuedProposalStartingOpCounts(predecessorProposals)
