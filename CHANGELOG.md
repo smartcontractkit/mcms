@@ -1,5 +1,19 @@
 # @smartcontractkit/mcms
 
+## 0.8.0
+
+### Minor Changes
+
+- [#276](https://github.com/smartcontractkit/mcms/pull/276) [`27b77d5`](https://github.com/smartcontractkit/mcms/commit/27b77d5143e48bafc2cb1d1bac6b75389728adc3) Thanks [@akhilchainani](https://github.com/akhilchainani)! - Update constructors to add predecessor proposals for queuing
+
+- [#254](https://github.com/smartcontractkit/mcms/pull/254) [`aad56bd`](https://github.com/smartcontractkit/mcms/commit/aad56bd4a49f703dd9580a6ba0d25abae573cc95) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat(solana): add setRoot simulator
+
+- [#279](https://github.com/smartcontractkit/mcms/pull/279) [`3287f3c`](https://github.com/smartcontractkit/mcms/commit/3287f3cf49636f017ef70e88cad68ae4ba535654) Thanks [@ecPablo](https://github.com/ecPablo)! - Fix bug with multichain timelock execution with predecessors calculation
+
+### Patch Changes
+
+- [#274](https://github.com/smartcontractkit/mcms/pull/274) [`28d52c3`](https://github.com/smartcontractkit/mcms/commit/28d52c329b039b6fc94a9e3394b24c564a2e0d5c) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - fix(solana): fix simulator side effect bug
+
 ## 0.7.0
 
 ### Minor Changes
