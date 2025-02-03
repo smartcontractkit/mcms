@@ -28,7 +28,7 @@ type ProposalInterface interface {
 	AppendSignature(signature types.Signature)
 	TransactionCounts() map[types.ChainSelector]uint64
 	ChainMetadatas() map[types.ChainSelector]types.ChainMetadata
-	SetChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata)
+	setChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata)
 	Validate() error
 }
 
@@ -87,7 +87,7 @@ func (p *BaseProposal) ChainMetadatas() map[types.ChainSelector]types.ChainMetad
 }
 
 // SetChainMetadata sets the chain metadata for a given chain selector.
-func (p *BaseProposal) SetChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata) {
+func (p *BaseProposal) setChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata) {
 	p.ChainMetadata[chainSelector] = metadata
 }
 

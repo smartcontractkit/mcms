@@ -77,7 +77,7 @@ func newProposal[T ProposalInterface](r io.Reader, predecessors []io.Reader) (T,
 			chainMetadata.StartingOpCount = count
 		}
 
-		p.SetChainMetadata(chainSelector, chainMetadata)
+		p.setChainMetadata(chainSelector, chainMetadata)
 	}
 
 	return p, nil

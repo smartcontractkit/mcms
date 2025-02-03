@@ -241,7 +241,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 			name:             "failure: could not unmarshal JSON",
 			give:             `invalid`,
 			givePredecessors: []string{},
-			wantErr:          "failed to decode and validate target proposal: invalid character 'i' looking for beginning of value",
+			wantErr:          "failed to decode and validate target proposal: failed to decode proposal: invalid character 'i' looking for beginning of value",
 		},
 		{
 			name: "failure: invalid proposal",
@@ -271,7 +271,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 				]
 			}`,
 			givePredecessors: []string{},
-			wantErr:          "failed to decode and validate target proposal: Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
+			wantErr:          "failed to decode and validate target proposal: failed to validate proposal: Key: 'TimelockProposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag",
 		},
 	}
 

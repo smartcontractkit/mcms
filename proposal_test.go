@@ -84,7 +84,7 @@ func Test_BaseProposal_SetChainMetadata(t *testing.T) {
 	assert.False(t, ok)
 	assert.Empty(t, md)
 
-	proposal.SetChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{
+	proposal.setChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{
 		StartingOpCount: 0,
 		MCMAddress:      "",
 	})
@@ -188,7 +188,7 @@ func Test_NewProposal(t *testing.T) {
 			name:             "failure: could not unmarshal JSON",
 			give:             `invalid`,
 			givePredecessors: []string{},
-			wantErr:          "failed to decode and validate target proposal: invalid character 'i' looking for beginning of value",
+			wantErr:          "failed to decode and validate target proposal: failed to decode proposal: invalid character 'i' looking for beginning of value",
 		},
 		{
 			name: "failure: invalid proposal",
@@ -200,7 +200,7 @@ func Test_NewProposal(t *testing.T) {
 				"operations": []
 			}`,
 			givePredecessors: []string{},
-			wantErr:          "failed to decode and validate target proposal: Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
+			wantErr:          "failed to decode and validate target proposal: failed to validate proposal: Key: 'Proposal.BaseProposal.ChainMetadata' Error:Field validation for 'ChainMetadata' failed on the 'min' tag\nKey: 'Proposal.Operations' Error:Field validation for 'Operations' failed on the 'min' tag",
 		},
 	}
 
