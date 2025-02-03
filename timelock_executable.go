@@ -15,7 +15,7 @@ import (
 // for scheduled calls
 type TimelockExecutable struct {
 	proposal     *TimelockProposal
-	predecessors []common.Hash
+	predecessors map[types.ChainSelector][]common.Hash
 	executors    map[types.ChainSelector]sdk.TimelockExecutor
 }
 
@@ -48,7 +48,7 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 	for i, op := range t.proposal.Operations {
 		cs := op.ChainSelector
 		timelock := t.proposal.TimelockAddresses[cs]
-		isOpReady, err := t.executors[cs].IsOperationReady(ctx, timelock, t.predecessors[i+1])
+		isOpReady, err := t.executors[cs].IsOperationReady(ctx, timelock, t.predecessors[cs][i+1])
 		if err != nil {
 			return err
 		}
@@ -100,7 +100,7 @@ func (t *TimelockExecutable) Execute(ctx context.Context, index int, opts ...Opt
 		ctx,
 		op,
 		execAddress,
-		t.predecessors[index],
+		t.predecessors[op.ChainSelector][index],
 		t.proposal.Salt(),
 	)
 }

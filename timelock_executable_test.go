@@ -532,13 +532,13 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 		}
 
 		var isOperation, isOperationPending, isOperationReady bool
-		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
+		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[chaintest.Chain1Selector][i])
 		require.NoError(t, err)
 		require.True(t, isOperation)
-		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
+		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[chaintest.Chain1Selector][i])
 		require.NoError(t, err)
 		require.True(t, isOperationPending)
-		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
+		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[chaintest.Chain1Selector][i])
 		require.NoError(t, err)
 		require.False(t, isOperationReady)
 	}
@@ -566,7 +566,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 			continue
 		}
 
-		isOperationDone, err := timelockC.IsOperationDone(&bind.CallOpts{}, predecessors[i])
+		isOperationDone, err := timelockC.IsOperationDone(&bind.CallOpts{}, predecessors[chaintest.Chain1Selector][i])
 		require.NoError(t, err)
 		require.True(t, isOperationDone)
 	}
@@ -685,13 +685,13 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 		}
 
 		var isOperation, isOperationPending, isOperationReady bool
-		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
+		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[chaintest.Chain1Selector][i])
 		require.NoError(t, err)
 		require.True(t, isOperation)
-		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
+		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[chaintest.Chain1Selector][i])
 		require.NoError(t, err)
 		require.True(t, isOperationPending)
-		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
+		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[chaintest.Chain1Selector][i])
 		require.NoError(t, err)
 		require.False(t, isOperationReady)
 	}
@@ -791,13 +791,13 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 		}
 
 		var isOperation, isOperationPending, isOperationReady bool
-		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
+		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[chaintest.Chain1Selector][i])
 		require.NoError(t, err)
 		require.False(t, isOperation)
-		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
+		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[chaintest.Chain1Selector][i])
 		require.NoError(t, err)
 		require.False(t, isOperationPending)
-		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
+		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[chaintest.Chain1Selector][i])
 		require.NoError(t, err)
 		require.False(t, isOperationReady)
 	}
