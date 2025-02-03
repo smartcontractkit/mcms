@@ -83,7 +83,11 @@ func (p *BaseProposal) AppendSignature(signature types.Signature) {
 
 // ChainMetadata returns the chain metadata for the proposal.
 func (p *BaseProposal) ChainMetadatas() map[types.ChainSelector]types.ChainMetadata {
-	return p.ChainMetadata
+	copy := make(map[types.ChainSelector]types.ChainMetadata, len(p.ChainMetadata))
+	for k, v := range p.ChainMetadata {
+		copy[k] = v
+	}
+	return copy
 }
 
 // SetChainMetadata sets the chain metadata for a given chain selector.
