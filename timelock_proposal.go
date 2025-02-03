@@ -98,24 +98,12 @@ func (m *TimelockProposal) Validate() error {
 	return nil
 }
 
-func getNumOperationsForChain(ops []types.BatchOperation, chain types.ChainSelector) int {
-	count := 0
-	for _, op := range ops {
-		if op.ChainSelector == chain {
-			count++
-		}
-	}
-
-	return count
-}
-
 // Convert the proposal to an MCMS only proposal and also return all predecessors for easy access later.
 // Every transaction to be sent from the Timelock is encoded with the corresponding timelock method.
 func (m *TimelockProposal) Convert(
 	ctx context.Context,
 	converters map[types.ChainSelector]sdk.TimelockConverter,
 ) (Proposal, []common.Hash, error) {
-
 	// 1) Clone the base proposal, update the kind, etc.
 	baseProposal := m.BaseProposal
 	baseProposal.Kind = types.KindProposal

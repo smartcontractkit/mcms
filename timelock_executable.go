@@ -43,9 +43,11 @@ func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.B
 	timelockAddr, ok := t.proposal.TimelockAddresses[selector]
 	if !ok {
 		return common.Hash{}, fmt.Errorf("timelock address not found for chain selector %v", selector)
-
 	}
 	chainMetadata, ok := t.proposal.ChainMetadata[selector]
+	if !ok {
+		return common.Hash{}, fmt.Errorf("chain metadata not found for chain selector %v", selector)
+	}
 	_, operationID, err := converter.ConvertBatchToChainOperations(
 		ctx,
 		bop,
@@ -58,10 +60,9 @@ func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.B
 	)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("unable to convert batch to chain operations: %w", err)
-
 	}
-	return operationID, nil
 
+	return operationID, nil
 }
 
 // IsReady checks if ALL the operations in the proposal are ready
