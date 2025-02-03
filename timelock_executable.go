@@ -94,7 +94,7 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 			return err
 		}
 		if !isReady {
-			return &OperationNotReadyError{GlobalIndex: globalIndex}
+			return &OperationNotReadyError{OpIndex: globalIndex}
 		}
 	}
 

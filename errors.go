@@ -11,12 +11,12 @@ import (
 
 // OperationNotReadyError is returned when an operation is not yet ready.
 type OperationNotReadyError struct {
-	GlobalIndex int
+	OpIndex int
 }
 
 // Error implements the error interface.
 func (e *OperationNotReadyError) Error() string {
-	return fmt.Sprintf("operation %d is not ready", e.GlobalIndex)
+	return fmt.Sprintf("operation %d is not ready", e.OpIndex)
 }
 
 // InvalidProposalKindError is returned when an invalid proposal kind is provided.
