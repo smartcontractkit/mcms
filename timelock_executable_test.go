@@ -440,7 +440,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	}
 
 	// convert proposal to mcms
-	mcmsProposal, predecessorsPerChain, err := proposal.Convert(ctx, converters)
+	mcmsProposal, predecessors, err := proposal.Convert(ctx, converters)
 	require.NoError(t, err)
 	mcmsProposal.UseSimulatedBackend(true)
 	tree, err := mcmsProposal.MerkleTree()
@@ -526,22 +526,20 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	tExecutable, err := NewTimelockExecutable(&proposal, tExecutors)
 	require.NoError(t, err)
 
-	for _, predecessors := range predecessorsPerChain {
-		for i := range predecessors {
-			if i == 0 {
-				continue
-			}
-			var isOperation, isOperationPending, isOperationReady bool
-			isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
-			require.NoError(t, err)
-			require.True(t, isOperation)
-			isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
-			require.NoError(t, err)
-			require.True(t, isOperationPending)
-			isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
-			require.NoError(t, err)
-			require.False(t, isOperationReady)
+	for i := range predecessors {
+		if i == 0 || predecessors[i] == ZERO_HASH {
+			continue
 		}
+		var isOperation, isOperationPending, isOperationReady bool
+		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.True(t, isOperation)
+		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.True(t, isOperationPending)
+		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.False(t, isOperationReady)
 	}
 
 	// Check IsReady function fails
@@ -557,22 +555,16 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	require.NoError(t, err)
 
 	// Execute the proposal
-	_, err = tExecutable.Execute(ctx, 0)
+	idx := 0
+	_, err = tExecutable.Execute(ctx, idx)
 	require.NoError(t, err)
 	sim.Backend.Commit()
-
+	opID, err := tExecutable.GetOpID(ctx, idx, proposal.Operations[idx], proposal.Operations[idx].ChainSelector)
+	require.NoError(t, err)
 	// Check that the operation is done
-	for _, predecessors := range predecessorsPerChain {
-		for i := range predecessors {
-			if i == 0 {
-				continue
-			}
-			isOperationDone, err := timelockC.IsOperationDone(&bind.CallOpts{}, predecessors[i])
-			require.NoError(t, err)
-			require.True(t, isOperationDone)
-		}
-
-	}
+	isOperationDone, err := timelockC.IsOperationDone(&bind.CallOpts{}, opID)
+	require.NoError(t, err)
+	require.True(t, isOperationDone)
 
 	// Check the state of the timelock contract
 	for _, role := range targetRoles {
@@ -595,7 +587,7 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	}
 
 	// convert proposal to mcms
-	mcmsProposal, predecessorsPerChain, err := proposal.Convert(ctx, converters)
+	mcmsProposal, predecessors, err := proposal.Convert(ctx, converters)
 	require.NoError(t, err)
 	mcmsProposal.UseSimulatedBackend(true)
 	tree, err := mcmsProposal.MerkleTree()
@@ -682,24 +674,21 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	tExecutable, err := NewTimelockExecutable(&proposal, tExecutors)
 	require.NoError(t, err)
 
-	for _, predecessors := range predecessorsPerChain {
-		for i := range predecessors {
-			if i == 0 {
-				continue
-			}
-
-			var isOperation, isOperationPending, isOperationReady bool
-			isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
-			require.NoError(t, err)
-			require.True(t, isOperation)
-			isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
-			require.NoError(t, err)
-			require.True(t, isOperationPending)
-			isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
-			require.NoError(t, err)
-			require.False(t, isOperationReady)
+	for i := range predecessors {
+		if i == 0 || predecessors[i] == ZERO_HASH {
+			continue
 		}
 
+		var isOperation, isOperationPending, isOperationReady bool
+		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.True(t, isOperation)
+		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.True(t, isOperationPending)
+		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.False(t, isOperationReady)
 	}
 
 	// Check IsReady function fails
@@ -791,23 +780,21 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	require.NotNil(t, newOpCount)
 	require.Equal(t, uint64(2), newOpCount.Uint64())
 
-	for _, predecessors := range predecessorsPerChain {
-		for i := range predecessors {
-			if i == 0 {
-				continue
-			}
-
-			var isOperation, isOperationPending, isOperationReady bool
-			isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
-			require.NoError(t, err)
-			require.False(t, isOperation)
-			isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
-			require.NoError(t, err)
-			require.False(t, isOperationPending)
-			isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
-			require.NoError(t, err)
-			require.False(t, isOperationReady)
+	for i := range predecessors {
+		if i == 0 {
+			continue
 		}
+
+		var isOperation, isOperationPending, isOperationReady bool
+		isOperation, err = timelockC.IsOperation(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.False(t, isOperation)
+		isOperationPending, err = timelockC.IsOperationPending(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.False(t, isOperationPending)
+		isOperationReady, err = timelockC.IsOperationReady(&bind.CallOpts{}, predecessors[i])
+		require.NoError(t, err)
+		require.False(t, isOperationReady)
 	}
 }
 
@@ -890,6 +877,8 @@ func Test_TimelockExecutable_GetChainSpecificIndex(t *testing.T) {
 	}
 
 	t.Run("chain-specific indexing across multiple chains", func(t *testing.T) {
+		t.Parallel()
+
 		proposal := defaultProposal()
 
 		// We don't actually need executors to test GetChainSpecificIndex,
@@ -940,6 +929,8 @@ func Test_TimelockExecutable_GetChainSpecificIndex(t *testing.T) {
 
 		for _, tc := range testCases {
 			t.Run(tc.name, func(t *testing.T) {
+				t.Parallel()
+
 				got := tlExecutable.GetChainSpecificIndex(tc.globalIndex)
 				require.Equal(t, tc.want, got)
 			})

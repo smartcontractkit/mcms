@@ -15,7 +15,7 @@ import (
 // for scheduled calls
 type TimelockExecutable struct {
 	proposal     *TimelockProposal
-	predecessors map[types.ChainSelector][]common.Hash
+	predecessors []common.Hash
 	executors    map[types.ChainSelector]sdk.TimelockExecutor
 }
 
@@ -33,6 +33,36 @@ func NewTimelockExecutable(
 		executors: executors,
 	}, nil
 }
+func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.BatchOperation, selector types.ChainSelector) (common.Hash, error) {
+	// Convert the batch operation
+	executor := t.executors[selector]
+	converter, err := newTimelockConverterFromExecutor(selector, executor)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("unable to create converter from executor: %w", err)
+	}
+	timelockAddr, ok := t.proposal.TimelockAddresses[selector]
+	if !ok {
+		return common.Hash{}, fmt.Errorf("timelock address not found for chain selector %v", selector)
+
+	}
+	chainMetadata, ok := t.proposal.ChainMetadata[selector]
+	_, operationID, err := converter.ConvertBatchToChainOperations(
+		ctx,
+		bop,
+		timelockAddr,
+		chainMetadata.MCMAddress,
+		t.proposal.Delay,
+		t.proposal.Action,
+		t.predecessors[opIdx],
+		t.proposal.Salt(),
+	)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("unable to convert batch to chain operations: %w", err)
+
+	}
+	return operationID, nil
+
+}
 
 // IsReady checks if ALL the operations in the proposal are ready
 // for execution.
@@ -40,21 +70,30 @@ func NewTimelockExecutable(
 // but others are not. This is not handled here. Regardless, execution
 // should not begin until all operations are ready.
 func (t *TimelockExecutable) IsReady(ctx context.Context) error {
+	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
+	// (one array per chain). The 0th element is zero-hash, the 1st is the
+	// operationID for that chain's 1st operation, etc.
 	err := t.setPredecessors(ctx)
 	if err != nil {
 		return fmt.Errorf("unable to set predecessors: %w", err)
 	}
 
-	for i, op := range t.proposal.Operations {
+	// Check readiness for each global operation in the proposal
+	for globalIndex, op := range t.proposal.Operations {
 		cs := op.ChainSelector
 		timelock := t.proposal.TimelockAddresses[cs]
-		isOpReady, err := t.executors[cs].IsOperationReady(ctx, timelock, t.predecessors[cs][i+1])
+
+		operationID, err := t.GetOpID(ctx, globalIndex, op, cs)
+		if err != nil {
+			return fmt.Errorf("unable to get operation ID: %w", err)
+		}
+
+		isReady, err := t.executors[cs].IsOperationReady(ctx, timelock, operationID)
 		if err != nil {
 			return err
 		}
-
-		if !isOpReady {
-			return fmt.Errorf("operation %d is not ready", i)
+		if !isReady {
+			return fmt.Errorf("operation %d is not ready", globalIndex)
 		}
 	}
 
@@ -83,6 +122,7 @@ func (t *TimelockExecutable) GetChainSpecificIndex(index int) int {
 			chainSpecificIndex++
 		}
 	}
+
 	return chainSpecificIndex
 }
 
@@ -108,12 +148,12 @@ func (t *TimelockExecutable) Execute(ctx context.Context, index int, opts ...Opt
 	if len(execAddress) == 0 {
 		execAddress = t.proposal.TimelockAddresses[op.ChainSelector]
 	}
-	chainSpecificIndex := t.GetChainSpecificIndex(index)
+
 	return t.executors[op.ChainSelector].Execute(
 		ctx,
 		op,
 		execAddress,
-		t.predecessors[op.ChainSelector][chainSpecificIndex],
+		t.predecessors[index],
 		t.proposal.Salt(),
 	)
 }

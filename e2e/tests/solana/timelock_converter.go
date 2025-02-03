@@ -272,7 +272,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, operation1ID, operation2ID}, gotPredecessors)
+		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, operation1ID}, gotPredecessors)
 		s.Require().Empty(cmp.Diff(toJSONString(s.T(), wantProposal), toJSONString(s.T(), &gotProposal)))
 
 		// TODO(gustavogama-cll): remove this; should refactor and use as base of a "full workflow" e2e test
@@ -328,7 +328,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, operation1ID, operation2ID}, gotPredecessors)
+		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, operation1ID}, gotPredecessors)
 		s.Require().Empty(cmp.Diff(toJSONString(s.T(), wantProposal), toJSONString(s.T(), &gotProposal)))
 	})
 
@@ -486,7 +486,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, operation1ID, operation2ID}, gotPredecessors)
+		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, operation1ID}, gotPredecessors)
 		s.Require().Empty(cmp.Diff(toJSONString(s.T(), wantProposal), toJSONString(s.T(), &gotProposal)))
 	})
 }
