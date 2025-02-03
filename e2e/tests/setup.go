@@ -28,6 +28,7 @@ var (
 // Config defines the blockchain configuration
 type Config struct {
 	BlockchainA *blockchain.Input `toml:"evm_config"`
+	BlockchainB *blockchain.Input `toml:"evm_config_b"`
 	SolanaChain *blockchain.Input `toml:"solana_config"`
 	Settings    struct {
 		PrivateKeys []string `toml:"private_keys"`
@@ -37,9 +38,9 @@ type Config struct {
 // TestSetup holds common setup for E2E test suites
 type TestSetup struct {
 	Client           *ethclient.Client
+	ClientB          *ethclient.Client
 	SolanaClient     *rpc.Client
 	SolanaWSClient   *ws.Client
-	Blockchain       *blockchain.Output
 	SolanaBlockchain *blockchain.Output
 	Config
 }
@@ -48,8 +49,10 @@ type TestSetup struct {
 func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 	t.Helper()
 
-	var ethClient *ethclient.Client
-	var ethBlockChainOutput *blockchain.Output
+	var ethClientA *ethclient.Client
+	var ethClientB *ethclient.Client
+	var ethBlockChainOutputA *blockchain.Output
+	var ethBlockChainOutputB *blockchain.Output
 	setupOnce.Do(func() {
 		ctx := context.Background()
 		in, err := framework.Load[Config](t)
@@ -77,15 +80,28 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 				t.Logf("Loaded %d private keys from config", len(in.Settings.PrivateKeys))
 			}
 
-			// Initialize the blockchain
-			ethBlockChainOutput, err = blockchain.NewBlockchainNetwork(in.BlockchainA)
+			// Initialize the blockchain A
+			ethBlockChainOutputA, err = blockchain.NewBlockchainNetwork(in.BlockchainA)
 			if err != nil {
 				t.Fatalf("Failed to initialize blockchain network: %v", err)
 			}
 
-			// Initialize Ethereum client
-			wsURL := ethBlockChainOutput.Nodes[0].HostWSUrl
-			ethClient, err = ethclient.DialContext(context.Background(), wsURL)
+			// Initialize the blockchain B
+			ethBlockChainOutputB, err = blockchain.NewBlockchainNetwork(in.BlockchainB)
+			if err != nil {
+				t.Fatalf("Failed to initialize blockchain network: %v", err)
+			}
+
+			// Initialize Ethereum client A
+			wsURLA := ethBlockChainOutputA.Nodes[0].HostWSUrl
+			ethClientA, err = ethclient.DialContext(context.Background(), wsURLA)
+			if err != nil {
+				t.Fatalf("Failed to initialize Ethereum client: %v", err)
+			}
+
+			// Initialize Ethereum client B
+			wsURLB := ethBlockChainOutputB.Nodes[0].HostWSUrl
+			ethClientB, err = ethclient.DialContext(context.Background(), wsURLB)
 			if err != nil {
 				t.Fatalf("Failed to initialize Ethereum client: %v", err)
 			}
@@ -125,10 +141,10 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 		}
 
 		sharedSetup = &TestSetup{
-			Client:           ethClient,
+			Client:           ethClientA,
+			ClientB:          ethClientB,
 			SolanaClient:     solanaClient,
 			SolanaWSClient:   solanaWsClient,
-			Blockchain:       ethBlockChainOutput,
 			SolanaBlockchain: solanaBlockChainOutput,
 			Config:           *in,
 		}
