@@ -152,7 +152,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 				ChainSelector: testChainSelector,
 				Transaction:   types.Transaction{To: "invalid"},
 			},
-			wantErr: "unable to get hash from base58 To address: invalid solana contract address format: \"invalid\"",
+			wantErr: "unable to prase program id from To field: unable to parse base58 solana program id: decode: invalid base58 digit ('l')",
 		},
 	}
 	for _, tt := range tests {
