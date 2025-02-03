@@ -116,42 +116,66 @@ func (m *TimelockProposal) Convert(
 	ctx context.Context,
 	converters map[types.ChainSelector]sdk.TimelockConverter,
 ) (Proposal, []common.Hash, error) {
+	// 1) Clone the base proposal, update the kind, etc.
 	baseProposal := m.BaseProposal
 	baseProposal.Kind = types.KindProposal
 
-	// Start predecessor map with all chains pointing to the zero hash
-	predecessors := make([]common.Hash, len(m.Operations)+1)
-	predecessors[0] = ZERO_HASH
+	// 2) Initialize the global predecessors slice
+	predecessors := make([]common.Hash, len(m.Operations))
 
-	// Convert chain metadata
-	baseProposal.ChainMetadata = make(map[types.ChainSelector]types.ChainMetadata)
+	// 3) Keep track of the last operation ID per chain
+	lastOpID := make(map[types.ChainSelector]common.Hash)
+	// Initialize them to ZERO_HASH
+	for sel := range m.ChainMetadata {
+		lastOpID[sel] = ZERO_HASH
+	}
+
+	// 4) Rebuild chainMetadata in baseProposal
+	chainMetadataMap := make(map[types.ChainSelector]types.ChainMetadata)
 	for chain, metadata := range m.ChainMetadata {
-		baseProposal.ChainMetadata[chain] = types.ChainMetadata{
+		chainMetadataMap[chain] = types.ChainMetadata{
 			StartingOpCount: metadata.StartingOpCount,
 			MCMAddress:      metadata.MCMAddress,
 		}
 	}
+	baseProposal.ChainMetadata = chainMetadataMap
 
-	// Convert transactions into timelock wrapped transactions using the helper function
+	// 5) We’ll build the final MCMS-only proposal
 	result := Proposal{
 		BaseProposal: baseProposal,
 	}
+
+	// 6) Loop through operations in *global* order
 	for i, bop := range m.Operations {
-		timelockAddress := m.TimelockAddresses[bop.ChainSelector]
-		predecessor := predecessors[i]
+		chainSelector := bop.ChainSelector
 
-		converter, ok := converters[bop.ChainSelector]
+		// If the chain isn't in converters, bail out
+		converter, ok := converters[chainSelector]
 		if !ok {
-			return Proposal{}, []common.Hash{}, fmt.Errorf("unable to find converter for chain selector: %d", bop.ChainSelector)
+			return Proposal{}, nil, fmt.Errorf("unable to find converter for chain selector %d", chainSelector)
 		}
 
-		chainMetadata, ok := m.ChainMetadata[bop.ChainSelector]
+		chainMetadata, ok := m.ChainMetadata[chainSelector]
 		if !ok {
-			return Proposal{}, []common.Hash{}, fmt.Errorf("unable to find chain metadata for chain selector: %d", bop.ChainSelector)
+			return Proposal{}, nil, fmt.Errorf("missing chain metadata for chainSelector %d", chainSelector)
 		}
 
+		// The predecessor for this op is the lastOpID for its chain
+		predecessor := lastOpID[chainSelector]
+		predecessors[i] = predecessor
+
+		timelockAddr := m.TimelockAddresses[chainSelector]
+
+		// Convert the batch operation
 		convertedOps, operationID, err := converter.ConvertBatchToChainOperations(
-			ctx, bop, timelockAddress, chainMetadata.MCMAddress, m.Delay, m.Action, predecessor, m.Salt(),
+			ctx,
+			bop,
+			timelockAddr,
+			chainMetadata.MCMAddress,
+			m.Delay,
+			m.Action,
+			predecessor,
+			m.Salt(),
 		)
 		if err != nil {
 			return Proposal{}, nil, err
@@ -160,10 +184,11 @@ func (m *TimelockProposal) Convert(
 		// Append the converted operation to the MCMS only proposal
 		result.Operations = append(result.Operations, convertedOps...)
 
-		// Update predecessor for the chain
-		predecessors[i+1] = operationID
+		// Update lastOpID for that chain
+		lastOpID[chainSelector] = operationID
 	}
 
+	// 7) Return the MCMS-only proposal + the single slice of predecessors
 	return result, predecessors, nil
 }
 

@@ -614,16 +614,41 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 				StartingOpCount: 1,
 				MCMAddress:      "0x123",
 			},
+			chaintest.Chain2Selector: {
+				StartingOpCount: 1,
+				MCMAddress:      "0x456",
+			},
 		}
 
 		validTimelockAddresses = map[types.ChainSelector]string{
 			chaintest.Chain1Selector: "0x123",
+			chaintest.Chain2Selector: "0x456",
 		}
 
-		validTx = types.Transaction{
+		validTx1 = types.Transaction{
 			To:               "0x123",
 			AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
 			Data:             common.Hex2Bytes("0x"),
+			OperationMetadata: types.OperationMetadata{
+				ContractType: "Sample contract",
+				Tags:         []string{"tag1", "tag2"},
+			},
+		}
+
+		validTx2 = types.Transaction{
+			To:               "0x123",
+			AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+			Data:             common.Hex2Bytes("0x1"),
+			OperationMetadata: types.OperationMetadata{
+				ContractType: "Sample contract",
+				Tags:         []string{"tag1", "tag2"},
+			},
+		}
+
+		validTx3 = types.Transaction{
+			To:               "0x123",
+			AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+			Data:             common.Hex2Bytes("0x2"),
 			OperationMetadata: types.OperationMetadata{
 				ContractType: "Sample contract",
 				Tags:         []string{"tag1", "tag2"},
@@ -634,7 +659,19 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 			{
 				ChainSelector: chaintest.Chain1Selector,
 				Transactions: []types.Transaction{
-					validTx,
+					validTx1,
+				},
+			},
+			{
+				ChainSelector: chaintest.Chain2Selector,
+				Transactions: []types.Transaction{
+					validTx2,
+				},
+			},
+			{
+				ChainSelector: chaintest.Chain2Selector,
+				Transactions: []types.Transaction{
+					validTx3,
 				},
 			},
 		}
@@ -657,20 +694,25 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 
 		converters = map[types.ChainSelector]sdk.TimelockConverter{
 			chaintest.Chain1Selector: &evmsdk.TimelockConverter{},
+			chaintest.Chain2Selector: &evmsdk.TimelockConverter{},
 		}
 	)
 
 	mcmsProposal, predecessors, err := proposal.Convert(ctx, converters)
 	require.NoError(t, err)
 
-	assert.Equal(t, "v1", mcmsProposal.Version)
-	assert.Equal(t, uint32(2004259681), mcmsProposal.ValidUntil)
-	assert.Equal(t, []types.Signature{}, mcmsProposal.Signatures)
-	assert.False(t, mcmsProposal.OverridePreviousRoot)
-	assert.Equal(t, validChainMetadata, mcmsProposal.ChainMetadata)
-	assert.Equal(t, "description", mcmsProposal.Description)
-	assert.Len(t, mcmsProposal.Operations, 1)
-	assert.Len(t, predecessors, 2)
+	require.Equal(t, "v1", mcmsProposal.Version)
+	require.Equal(t, uint32(2004259681), mcmsProposal.ValidUntil)
+	require.Equal(t, []types.Signature{}, mcmsProposal.Signatures)
+	require.False(t, mcmsProposal.OverridePreviousRoot)
+	require.Equal(t, validChainMetadata, mcmsProposal.ChainMetadata)
+	require.Equal(t, "description", mcmsProposal.Description)
+	require.Len(t, mcmsProposal.Operations, 3)
+
+	require.Len(t, predecessors, 3)
+	require.Equal(t, predecessors[0], ZERO_HASH)
+	require.Equal(t, predecessors[1], ZERO_HASH)
+	require.NotEqual(t, predecessors[2], ZERO_HASH)
 }
 
 func TestProposal_WithSaltOverride(t *testing.T) {

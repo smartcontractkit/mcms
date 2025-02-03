@@ -9,6 +9,16 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// OperationNotReadyError is returned when an operation is not yet ready.
+type OperationNotReadyError struct {
+	OpIndex int
+}
+
+// Error implements the error interface.
+func (e *OperationNotReadyError) Error() string {
+	return fmt.Sprintf("operation %d is not ready", e.OpIndex)
+}
+
 // InvalidProposalKindError is returned when an invalid proposal kind is provided.
 type InvalidProposalKindError struct {
 	ProvidedKind types.ProposalKind
