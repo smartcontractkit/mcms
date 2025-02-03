@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"os"
 	"testing"
 	"time"
 
@@ -26,19 +27,20 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-const (
-	deployerKey = "ed25519-priv-0x1234"
-)
-
 var (
+	// Place private key into envvar, e.g. PRIVATE_KEY=ed25519-priv-0x12345
+	deployerKey   = os.Getenv("PRIVATE_KEY")
 	chainSelector = types.ChainSelector(chain_selectors.APTOS_TESTNET.Selector)
 )
 
+// This test will deploy the necessary contracts and configure them.
+// It will print the proposal to stdout, copy and paste it into the proposal constant below before proceeding with the next step.
 func TestAptosLedgerSetup(t *testing.T) {
 	// Signers in each group need to be sorted alphabetically
 	config := &types.Config{
 		Quorum: 1,
 		Signers: []common.Address{
+			// Add your Ledger address here
 			common.HexToAddress("0x84d9CB2835DBF54Be56948fDf133d14A46859690"),
 		},
 		GroupSigners: nil,
@@ -134,6 +136,9 @@ const proposal =
 }
 `
 
+// This test will take the proposal above and try to use your Ledger to sign it.
+// The Ledger needs to be unlocked and the Ethereum app opened.
+// It will print the signed proposal - copy and paste it above before proceeding with the next step.
 func TestManualLedgerSigning(t *testing.T) { //nolint:paralleltest
 	t.Log("Starting manual Ledger signing test...")
 
@@ -211,6 +216,8 @@ func TestManualLedgerSigning(t *testing.T) { //nolint:paralleltest
 	fmt.Println(buff.String())
 }
 
+// This test will take the signed proposal from above and set root on the MCMS contract as well as
+// execute all operations.
 func TestAptosSetRootExecute(t *testing.T) {
 	testnetClient, err := aptos.NewNodeClient("https://api.testnet.aptoslabs.com/v1", 0)
 	require.NoError(t, err)

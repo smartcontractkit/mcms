@@ -166,12 +166,21 @@ func numericStringHook(f reflect.Type, t reflect.Type, data any) (any, error) {
 			return nil, fmt.Errorf("value %f overflows %v", val, t)
 		}
 		return reflect.ValueOf(val).Convert(t).Interface(), nil
+	case reflect.Struct:
+		if t == reflect.TypeOf(big.Int{}) {
+			bi := big.Int{}
+			_, ok := bi.SetString(str, 10)
+			if !ok {
+				return nil, fmt.Errorf("failed to pase string as big.Int: %s", str)
+			}
+			return bi, nil
+		}
 	case reflect.Ptr:
 		if t == reflect.TypeOf((*big.Int)(nil)) {
 			bi := new(big.Int)
 			_, ok := bi.SetString(str, 10)
 			if !ok {
-				return nil, fmt.Errorf("failed to parse string as big.Int: %s", str)
+				return nil, fmt.Errorf("failed to parse string as *big.Int: %s", str)
 			}
 			return bi, nil
 		}

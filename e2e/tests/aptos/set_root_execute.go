@@ -6,28 +6,25 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/json"
-	"fmt"
 	"math/big"
 	"slices"
 	"time"
 
+	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms"
+	aptosutil "github.com/smartcontractkit/mcms/e2e/utils/aptos"
 	"github.com/smartcontractkit/mcms/sdk"
 	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func (a *AptosTestSuite) Test_Aptos_SetRoot() {
-
+func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 	a.deployMCM()
 	a.deployMCMUser()
-
-	fmt.Println("MCMS Contract: ", a.MCMContract.StringLong())
-	fmt.Println("MCMSUser Contract: ", a.MCMSUserContract.StringLong())
 
 	// Set config on contract
 	signers := [2]common.Address{}
@@ -47,6 +44,12 @@ func (a *AptosTestSuite) Test_Aptos_SetRoot() {
 	_, err := configurer.SetConfig(context.Background(), a.MCMContract.StringLong(), config, false)
 	a.Require().NoError(err, "setting config on Aptos mcms contract failed")
 
+	// Arguments to call MCMUser contract with
+	arg1 := "helloworld"
+	arg2 := []byte{5, 4, 3, 2, 1}
+	arg3 := a.deployerAccount.Address
+	arg4 := big.NewInt(42)
+
 	// Build proposal
 	validUntil := time.Now().Add(time.Hour * 24).Unix()
 	proposalBuilder := mcms.NewProposalBuilder().
@@ -65,8 +68,8 @@ func (a *AptosTestSuite) Test_Aptos_SetRoot() {
 		Function:   "function_one",
 	}
 	callOneParamBytes, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		ser.WriteString("helloworld")
-		ser.WriteBytes([]byte{5, 4, 3, 2, 1})
+		ser.WriteString(arg1)
+		ser.WriteBytes(arg2)
 	})
 	a.Require().NoError(err)
 	callOneAdditionalFields, _ := json.Marshal(additionalFields)
@@ -85,8 +88,8 @@ func (a *AptosTestSuite) Test_Aptos_SetRoot() {
 		Function:   "function_two",
 	}
 	callTwoParamBytes, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		ser.FixedBytes(a.deployerAccount.Address[:])
-		ser.U128(*big.NewInt(42))
+		ser.FixedBytes(arg3[:])
+		ser.U128(*arg4)
 	})
 	a.Require().NoError(err)
 	callTwoAdditionalFields, _ := json.Marshal(additionalFields)
@@ -131,8 +134,10 @@ func (a *AptosTestSuite) Test_Aptos_SetRoot() {
 
 	txHash, err := executable.SetRoot(context.Background(), a.ChainSelector)
 	a.Require().NoError(err)
-
 	a.T().Logf("✅ SetRoot in tx: %s", txHash.Hash)
+
+	_, err = a.AptosRPCClient.WaitForTransaction(txHash.Hash)
+	a.Require().NoError(err)
 
 	// Assert
 	tree, _ := proposal.MerkleTree()
@@ -140,4 +145,42 @@ func (a *AptosTestSuite) Test_Aptos_SetRoot() {
 	a.Require().NoError(err)
 	a.Require().Equal(uint32(validUntil), gotValidUntil)
 	a.Require().Equal(tree.Root, gotHash)
+
+	// Execute
+	for i := range proposal.Operations {
+		a.T().Logf("Executing operation: %v", i)
+		txOutput, err := executable.Execute(context.Background(), i)
+		a.Require().NoError(err)
+		a.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
+
+		_, err = a.AptosRPCClient.WaitForTransaction(txOutput.Hash)
+		a.Require().NoError(err)
+
+		// Assert
+
+		// Check that op count has increased on the mcms contract
+		opCount, err := inspector.GetOpCount(context.Background(), a.MCMContract.StringLong())
+		a.Require().NoError(err)
+		a.Require().EqualValues(opCount, i+1)
+
+	}
+
+	// Check that arguments have been stored in the MCMUser contract
+	data, err := a.AptosRPCClient.AccountResource(a.MCMSUserContract, a.MCMSUserContract.StringLong()+"::mcms_user::UserData")
+	a.Require().NoError(err)
+
+	userData := struct {
+		Invocations int
+		A           string
+		B           []byte
+		C           aptos.AccountAddress
+		D           *big.Int
+	}{}
+	err = aptosutil.DecodeAptosJsonValue([]any{data["data"]}, &userData)
+	a.Require().NoError(err)
+	a.Require().Equal(2, userData.Invocations)
+	a.Require().Equal(arg1, userData.A)
+	a.Require().Equal(arg2, userData.B)
+	a.Require().Equal(arg3, userData.C)
+	a.Require().Equal(arg4, userData.D)
 }
