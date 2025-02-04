@@ -1,5 +1,15 @@
 # @smartcontractkit/mcms
 
+## 0.9.0
+
+### Minor Changes
+
+- [#277](https://github.com/smartcontractkit/mcms/pull/277) [`cb6ea80`](https://github.com/smartcontractkit/mcms/commit/cb6ea802d44766ac03043cc1308565b3880f6d7c) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - feat(solana): simulate executor operation mcms
+
+### Patch Changes
+
+- [#284](https://github.com/smartcontractkit/mcms/pull/284) [`78adad0`](https://github.com/smartcontractkit/mcms/commit/78adad0bb5ad8bbe6e92d757269418504195cf90) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - fix(deps): downgrade geth 1.14.13 -> 1.14.11
+
 ## 0.8.0
 
 ### Minor Changes
