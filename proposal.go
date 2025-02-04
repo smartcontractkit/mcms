@@ -29,6 +29,7 @@ type ProposalInterface interface {
 	TransactionCounts() map[types.ChainSelector]uint64
 	ChainMetadatas() map[types.ChainSelector]types.ChainMetadata
 	setChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata)
+	ProposalKind() types.ProposalKind
 	Validate() error
 }
 
@@ -94,6 +95,11 @@ func (p *BaseProposal) ChainMetadatas() map[types.ChainSelector]types.ChainMetad
 // SetChainMetadata sets the chain metadata for a given chain selector.
 func (p *BaseProposal) setChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata) {
 	p.ChainMetadata[chainSelector] = metadata
+}
+
+// Kind returns the proposal kind.
+func (p *BaseProposal) ProposalKind() types.ProposalKind {
+	return p.Kind
 }
 
 // Proposal is a struct where the target contract is an MCMS contract

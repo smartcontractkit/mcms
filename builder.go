@@ -47,6 +47,29 @@ func (b *BaseProposalBuilder[T]) SetChainMetadata(metadata map[types.ChainSelect
 	return b.builder
 }
 
+// SetPredecessors sets the predecessors of the BaseProposal.
+func (b *BaseProposalBuilder[T]) SetPredecessors(predecessors []ProposalInterface) T {
+	for _, pred := range predecessors {
+		if pred.ProposalKind() != types.KindProposal {
+			panic("predecessors must be of kind Proposal")
+		}
+	}
+
+	// Generate the starting op counts for each chain selector
+	startingOpCounts := generateQueuedProposalStartingOpCounts(predecessors)
+
+	// Set the starting op count for each chain selector in the new proposal
+	for chainSelector, chainMetadata := range b.baseProposal.ChainMetadatas() {
+		if count, ok := startingOpCounts[chainSelector]; ok {
+			chainMetadata.StartingOpCount = count
+		}
+
+		b.baseProposal.setChainMetadata(chainSelector, chainMetadata)
+	}
+
+	return b.builder
+}
+
 // SetDescription sets the description of the BaseProposal.
 func (b *BaseProposalBuilder[T]) SetDescription(description string) T {
 	b.baseProposal.Description = description

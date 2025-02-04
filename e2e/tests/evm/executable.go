@@ -465,3 +465,6 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 	s.Require().Equal(s.mcmsContract.Address().Hex(), proposer.Hex())
 }
+
+// TestExecuteProposalMultipleParallel executes 2 proposals to check if proposals can be signed in
+// parallel and executed sequentially
