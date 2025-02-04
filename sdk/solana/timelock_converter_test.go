@@ -116,7 +116,7 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
 							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
-							{PublicKey: solana.MPK(proposerAC.PublicKey().String())},
+							{PublicKey: proposerAC.PublicKey()},
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
@@ -135,7 +135,7 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
 							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
-							{PublicKey: solana.MPK(proposerAC.PublicKey().String())},
+							{PublicKey: proposerAC.PublicKey()},
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
@@ -154,7 +154,7 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
 							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
-							{PublicKey: solana.MPK(proposerAC.PublicKey().String())},
+							{PublicKey: proposerAC.PublicKey()},
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
@@ -173,7 +173,7 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
 							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
-							{PublicKey: solana.MPK(proposerAC.PublicKey().String())},
+							{PublicKey: proposerAC.PublicKey()},
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 						}}),
 						OperationMetadata: types.OperationMetadata{
@@ -191,7 +191,7 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
 							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
-							{PublicKey: solana.MPK(proposerAC.PublicKey().String())},
+							{PublicKey: proposerAC.PublicKey()},
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 						}}),
 						OperationMetadata: types.OperationMetadata{

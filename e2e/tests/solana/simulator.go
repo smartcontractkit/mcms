@@ -11,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/system"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -107,5 +108,41 @@ func (s *SolanaTestSuite) TestSimulator_SimulateSetRoot() {
 			s.T().Log("  " + log)
 		}
 	}
+	s.Require().NoError(err)
+}
+
+func (s *SolanaTestSuite) TestSimulator_SimulateOperation() {
+	ctx := context.Background()
+
+	recipientAddress, err := solana.NewRandomPrivateKey()
+	s.Require().NoError(err)
+
+	auth, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+
+	encoder := solanasdk.NewEncoder(s.ChainSelector, 1, false)
+	executor := solanasdk.NewExecutor(encoder, s.SolanaClient, auth)
+	simulator := solanasdk.NewSimulator(executor)
+
+	ix, err := system.NewTransferInstruction(
+		1*solana.LAMPORTS_PER_SOL,
+		auth.PublicKey(),
+		recipientAddress.PublicKey()).ValidateAndBuild()
+	s.Require().NoError(err)
+
+	ixData, err := ix.Data()
+	s.Require().NoError(err)
+
+	tx, err := solanasdk.NewTransaction(solana.SystemProgramID.String(), ixData, nil, ix.Accounts(), "System", []string{})
+	s.Require().NoError(err)
+
+	op := types.Operation{
+		Transaction:   tx,
+		ChainSelector: s.ChainSelector,
+	}
+	metadata := types.ChainMetadata{
+		MCMAddress: s.MCMProgramID.String(),
+	}
+	err = simulator.SimulateOperation(ctx, metadata, op)
 	s.Require().NoError(err)
 }
