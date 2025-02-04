@@ -62,11 +62,11 @@ func (s *ManualLedgerSigningTestSuite) deployMCMContractEVM(ctx context.Context)
 
 	// Deploy MCMS contract
 	s.Require().True(ok, "Failed to parse chain ID")
-	mcmsAddress, tx, instance, err := bindings.DeployManyChainMultiSig(s.authEVM, s.Client)
+	mcmsAddress, tx, instance, err := bindings.DeployManyChainMultiSig(s.authEVM, s.ClientA)
 	s.Require().NoError(err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(ctx, s.Client, tx)
+	receipt, err := bind.WaitMined(ctx, s.ClientA, tx)
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(gethTypes.ReceiptStatusSuccessful, receipt.Status)
 
@@ -100,10 +100,10 @@ func (s *ManualLedgerSigningTestSuite) setRootEVM(
 	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{ledgerAccount}}
 
 	// set config
-	configurer := evm.NewConfigurer(s.Client, s.authEVM)
+	configurer := evm.NewConfigurer(s.ClientA, s.authEVM)
 	tx, err := configurer.SetConfig(ctx, instance.Address().Hex(), &mcmConfig, true)
 	s.Require().NoError(err, "Failed to set contract configuration")
-	_, err = bind.WaitMined(ctx, s.Client, tx.RawTransaction.(*gethTypes.Transaction))
+	_, err = bind.WaitMined(ctx, s.ClientA, tx.RawTransaction.(*gethTypes.Transaction))
 	s.Require().NoError(err, "Failed to mine set config transaction")
 
 	// set root
@@ -219,7 +219,7 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	// Step 4: Create a Signable instance
 	s.T().Log("Creating Signable instance...")
 	inspectors := map[types.ChainSelector]sdk.Inspector{
-		s.chainSelectorEVM:    evm.NewInspector(s.Client),
+		s.chainSelectorEVM:    evm.NewInspector(s.ClientA),
 		s.chainSelectorSolana: solanamcms.NewInspector(s.SolanaClient),
 	}
 	encoders, err := proposal.GetEncoders()
@@ -229,7 +229,7 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	s.authSolana = authSolana
 	encoderEVM := encoders[s.chainSelectorEVM].(*evm.Encoder)
 	encoderSolana := encoders[s.chainSelectorSolana].(*solanamcms.Encoder)
-	executorEVM := evm.NewExecutor(encoderEVM, s.Client, s.authEVM)
+	executorEVM := evm.NewExecutor(encoderEVM, s.ClientA, s.authEVM)
 	executorSolana := solanamcms.NewExecutor(encoderSolana, s.SolanaClient, authSolana)
 	executorsMap := map[types.ChainSelector]sdk.Executor{
 		s.chainSelectorEVM:    executorEVM,

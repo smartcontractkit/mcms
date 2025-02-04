@@ -27,7 +27,7 @@ var (
 
 // Config defines the blockchain configuration
 type Config struct {
-	BlockchainA *blockchain.Input `toml:"evm_config"`
+	BlockchainA *blockchain.Input `toml:"evm_config_a"`
 	BlockchainB *blockchain.Input `toml:"evm_config_b"`
 	SolanaChain *blockchain.Input `toml:"solana_config"`
 	Settings    struct {
@@ -37,7 +37,7 @@ type Config struct {
 
 // TestSetup holds common setup for E2E test suites
 type TestSetup struct {
-	Client           *ethclient.Client
+	ClientA          *ethclient.Client
 	ClientB          *ethclient.Client
 	SolanaClient     *rpc.Client
 	SolanaWSClient   *ws.Client
@@ -141,7 +141,7 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 		}
 
 		sharedSetup = &TestSetup{
-			Client:           ethClientA,
+			ClientA:          ethClientA,
 			ClientB:          ethClientB,
 			SolanaClient:     solanaClient,
 			SolanaWSClient:   solanaWsClient,
