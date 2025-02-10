@@ -3,7 +3,6 @@ package solana
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math"
 
@@ -87,13 +86,9 @@ func (e *Executor) ExecuteOperation(
 	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to unmarshal additional fields: %w", err)
 	}
-	toProgramID, _, err := ParseContractAddress(op.Transaction.To)
-	if errors.Is(err, ErrInvalidContractAddressFormat) {
-		var pkerr error
-		toProgramID, pkerr = solana.PublicKeyFromBase58(op.Transaction.To)
-		if pkerr != nil {
-			return types.TransactionResult{}, fmt.Errorf("unable to get hash from base58 To address: %w", err)
-		}
+	toProgramID, err := ParseProgramID(op.Transaction.To)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to prase program id from To field: %w", err)
 	}
 
 	ix := mcm.NewExecuteInstruction(

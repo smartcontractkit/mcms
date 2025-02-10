@@ -22,6 +22,7 @@ package main
 import (
   "log"
   "os"
+  "io"
 
   "github.com/smartcontractkit/mcms"
 )
@@ -35,7 +36,7 @@ func main() {
   defer file.Close()
 
   // Create the proposal from the JSON data
-  proposal, err := mcms.NewProposal(file)
+  proposal, err := mcms.NewProposal(file, []io.Reader{})
   if err != nil {
     log.Fatalf("Error creating proposal: %v", err)
   }
@@ -45,6 +46,46 @@ func main() {
 ```
 
 For the JSON structure of the proposal please check the [MCMS Proposal Format Doc.](/key-concepts/mcm-proposal.md)
+
+### Build Proposal Given Staged but Non-Executed Predecessor Proposals
+
+In scenarios where a proposal is generated with the assumption that multiple proposals are executed beforehand, you can enable proposals to be signed in parallel with a pre-determined execution order. This can be achieved by passing a list of files as the second argument in the Proposal constructor, as shown below:
+
+```go
+package main
+
+import (
+  "log"
+  "os"
+  "io"
+
+  "github.com/smartcontractkit/mcms"
+)
+
+func main() {
+  // Open the JSON file for the new proposal
+  file, err := os.Open("proposal.json")
+  if err != nil {
+    log.Fatalf("Error opening file: %v", err)
+  }
+  defer file.Close()
+
+  // Open the JSON file for the predecessor proposal
+  preFile, err := os.Open("pre-proposal.json")
+  if err != nil {
+    log.Fatalf("Error opening predecessor file: %v", err)
+  }
+  defer preFile.Close()
+
+  // Create the proposal from the JSON data
+  proposal, err := mcms.NewProposal(file, []io.Reader{preFile})
+  if err != nil {
+    log.Fatalf("Error creating proposal: %v", err)
+  }
+
+  log.Printf("Successfully created proposal: %+v", proposal)
+}
+```
 
 ## 2. Programmatic Build
 

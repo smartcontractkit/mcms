@@ -68,11 +68,11 @@ func (s *SetRootTestSuite) SetupSuite() {
 
 // deployMCMSContract is a helper to deploy the MCMS contract with the required configuration for the test.
 func (s *SetRootTestSuite) deployMCMSContract() *bindings.ManyChainMultiSig {
-	_, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.Client)
+	_, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.ClientA)
 	s.Require().NoError(err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(context.Background(), s.Client, tx)
+	receipt, err := bind.WaitMined(context.Background(), s.ClientA, tx)
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -84,7 +84,7 @@ func (s *SetRootTestSuite) deployMCMSContract() *bindings.ManyChainMultiSig {
 
 	tx, err = instance.SetConfig(s.auth, s.signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
 	s.Require().NoError(err, "Failed to set contract configuration")
-	receipt, err = bind.WaitMined(context.Background(), s.Client, tx)
+	receipt, err = bind.WaitMined(context.Background(), s.ClientA, tx)
 	s.Require().NoError(err, "Failed to mine configuration transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -95,7 +95,7 @@ func (s *SetRootTestSuite) deployMCMSContract() *bindings.ManyChainMultiSig {
 func (s *SetRootTestSuite) deployTimelockContract(mcmsAddress string) *bindings.RBACTimelock {
 	_, tx, instance, err := bindings.DeployRBACTimelock(
 		s.auth,
-		s.Client,
+		s.ClientA,
 		big.NewInt(0),
 		common.HexToAddress(mcmsAddress),
 		[]common.Address{},
@@ -106,7 +106,7 @@ func (s *SetRootTestSuite) deployTimelockContract(mcmsAddress string) *bindings.
 	s.Require().NoError(err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(context.Background(), s.Client, tx)
+	receipt, err := bind.WaitMined(context.Background(), s.ClientA, tx)
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -139,7 +139,7 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 
 	// Sign the proposal
 	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
-		s.chainSelector: evm.NewInspector(s.Client),
+		s.chainSelector: evm.NewInspector(s.ClientA),
 	}
 	signable, err := mcms.NewSignable(proposal, inspectors)
 	s.Require().NoError(err)
@@ -157,7 +157,7 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*evm.Encoder)
 
-	executor := evm.NewExecutor(encoder, s.Client, s.auth)
+	executor := evm.NewExecutor(encoder, s.ClientA, s.auth)
 	executorsMap := map[mcmtypes.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
 	}
@@ -165,7 +165,7 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	s.Require().NoError(err)
 
 	// Prepare and execute simulation
-	simulator, err := evm.NewSimulator(encoder, s.Client)
+	simulator, err := evm.NewSimulator(encoder, s.ClientA)
 	s.Require().NoError(err, "Failed to create simulator")
 	simulators := map[mcmtypes.ChainSelector]sdk.Simulator{
 		s.chainSelector: simulator,
@@ -179,7 +179,7 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	s.Require().NoError(err)
 	s.Require().NotEmpty(tx.Hash)
 
-	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.Client, common.HexToHash(tx.Hash))
+	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.ClientA, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }
@@ -228,7 +228,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 
 	// Sign proposal
 	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
-		s.chainSelector: evm.NewInspector(s.Client),
+		s.chainSelector: evm.NewInspector(s.ClientA),
 	}
 	signable, err := mcms.NewSignable(&proposal, inspectors)
 	s.Require().NoError(err)
@@ -240,13 +240,13 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*evm.Encoder)
 
-	executor := evm.NewExecutor(encoder, s.Client, s.auth)
+	executor := evm.NewExecutor(encoder, s.ClientA, s.auth)
 	executorsMap := map[mcmtypes.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
 	}
 
 	// Prepare and execute simulation
-	simulator, err := evm.NewSimulator(encoder, s.Client)
+	simulator, err := evm.NewSimulator(encoder, s.ClientA)
 	s.Require().NoError(err, "Failed to create simulator")
 	simulators := map[mcmtypes.ChainSelector]sdk.Simulator{
 		s.chainSelector: simulator,
@@ -263,7 +263,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	s.Require().NoError(err)
 	s.Require().NotEmpty(tx.Hash)
 	// Check receipt
-	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.Client, common.HexToHash(tx.Hash))
+	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.ClientA, common.HexToHash(tx.Hash))
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }

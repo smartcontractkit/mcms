@@ -2,6 +2,7 @@ package solana
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -45,13 +46,21 @@ func (s *Simulator) SimulateSetRoot(
 func (s *Simulator) SimulateOperation(
 	ctx context.Context, metadata types.ChainMetadata, operation types.Operation,
 ) error {
-	s.instructions = []solana.Instruction{}
-	nonce := uint32(0)
-	proof := []common.Hash{}
-	_, err := s.executor.ExecuteOperation(ctx, metadata, nonce, proof, operation)
-	if err != nil {
-		return err
+	var additionalFields AdditionalFields
+	if err := json.Unmarshal(operation.Transaction.AdditionalFields, &additionalFields); err != nil {
+		return fmt.Errorf("unable to unmarshal additional fields: %w", err)
 	}
+
+	toProgramID, err := ParseProgramID(operation.Transaction.To)
+	if err != nil {
+		return fmt.Errorf("unable to prase program id from To field: %w", err)
+	}
+
+	s.instructions = append(s.instructions, solana.NewInstruction(
+		toProgramID,
+		additionalFields.Accounts,
+		operation.Transaction.Data,
+	))
 
 	return s.simulate(ctx)
 }

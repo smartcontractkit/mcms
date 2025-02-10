@@ -57,11 +57,11 @@ func (s *InspectionTestSuite) SetupSuite() {
 
 // deployContract is a helper to deploy the contract
 func (s *InspectionTestSuite) deployContract() string {
-	address, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.Client)
+	address, tx, instance, err := bindings.DeployManyChainMultiSig(s.auth, s.ClientA)
 	s.Require().NoError(err, "Failed to deploy contract")
 
 	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(context.Background(), s.Client, tx)
+	receipt, err := bind.WaitMined(context.Background(), s.ClientA, tx)
 	s.Require().NoError(err, "Failed to mine deployment transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -73,7 +73,7 @@ func (s *InspectionTestSuite) deployContract() string {
 
 	tx, err = instance.SetConfig(s.auth, s.signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
 	s.Require().NoError(err, "Failed to set contract configuration")
-	receipt, err = bind.WaitMined(context.Background(), s.Client, tx)
+	receipt, err = bind.WaitMined(context.Background(), s.ClientA, tx)
 	s.Require().NoError(err, "Failed to mine configuration transaction")
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
@@ -84,7 +84,7 @@ func (s *InspectionTestSuite) deployContract() string {
 func (s *InspectionTestSuite) TestGetConfig() {
 	ctx := context.Background()
 
-	inspector := evm.NewInspector(s.Client)
+	inspector := evm.NewInspector(s.ClientA)
 	config, err := inspector.GetConfig(ctx, s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get contract configuration")
@@ -103,7 +103,7 @@ func (s *InspectionTestSuite) TestGetConfig() {
 func (s *InspectionTestSuite) TestGetOpCount() {
 	ctx := context.Background()
 
-	inspector := evm.NewInspector(s.Client)
+	inspector := evm.NewInspector(s.ClientA)
 	opCount, err := inspector.GetOpCount(ctx, s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get op count")
@@ -114,7 +114,7 @@ func (s *InspectionTestSuite) TestGetOpCount() {
 func (s *InspectionTestSuite) TestGetRoot() {
 	ctx := context.Background()
 
-	inspector := evm.NewInspector(s.Client)
+	inspector := evm.NewInspector(s.ClientA)
 	root, validUntil, err := inspector.GetRoot(ctx, s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get root from contract")
@@ -126,7 +126,7 @@ func (s *InspectionTestSuite) TestGetRoot() {
 func (s *InspectionTestSuite) TestGetRootMetadata() {
 	ctx := context.Background()
 
-	inspector := evm.NewInspector(s.Client)
+	inspector := evm.NewInspector(s.ClientA)
 	metadata, err := inspector.GetRootMetadata(ctx, s.contractAddress)
 
 	s.Require().NoError(err, "Failed to get root metadata from contract")

@@ -10,11 +10,39 @@ set -euo pipefail
 
 REPO_URL="https://github.com/smartcontractkit/chainlink-ccip"
 REPO_DIR="chainlink-ccip"
-PROJECT_ROOT="$(dirname "$(realpath "$0")")/../../.."
+
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+if [[ -z "${PROJECT_ROOT}" ]]; then
+  echo "Error: This script must be run within a Git repository."
+  exit 1
+fi
+
+GO_MOD_FILE="${PROJECT_ROOT}/go.mod"
+if [[ ! -f "$GO_MOD_FILE" ]]; then
+  echo "Error: go.mod file not found in the current directory."
+  exit 1
+fi
+
 PROGRAM_DIR="chains/solana/contracts/target/deploy"
 DEST_DIR="${PROJECT_ROOT}/e2e/artifacts/solana"
 TEMP_DIR=$(mktemp -d)
-COMMIT_HASH="bdbfcc588847d70817333487a9883e94c39a332e" # 29 Jan 2025
+
+# Parse the go.mod file for the specific entry
+MOD_ENTRY=$(grep -E 'github\.com/smartcontractkit/chainlink-ccip/chains/solana\s+v[0-9]+\.[0-9]+\.[0-9]+-[0-9]+-[a-f0-9]+' "$GO_MOD_FILE")
+if [[ -z "$MOD_ENTRY" ]]; then
+  echo "Error: Could not find the required entry in go.mod."
+  exit 1
+fi
+
+# Extract repo URL and pseudo-version
+PSEUDO_VERSION=$(echo "$MOD_ENTRY" | awk '{print $2}')
+
+# Extract commit SHA from pseudo-version (last 12 characters)
+COMMIT_HASH=$(echo "$PSEUDO_VERSION" | grep -oE '[a-f0-9]{12}$')
+if [[ -z "$COMMIT_HASH" ]]; then
+  echo "Error: Could not extract commit SHA from pseudo-version: $PSEUDO_VERSION"
+  exit 1
+fi
 
 # Programs to build
 PROGRAMS=("mcm" "timelock" "access-controller" "external-program-cpi-stub")

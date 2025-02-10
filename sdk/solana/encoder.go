@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/binary"
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -57,14 +56,11 @@ func (e *Encoder) HashOperation(
 		return common.Hash{}, err
 	}
 
-	toProgramID, _, err := ParseContractAddress(op.Transaction.To)
-	if errors.Is(err, ErrInvalidContractAddressFormat) {
-		var pkerr error
-		toProgramID, pkerr = solana.PublicKeyFromBase58(op.Transaction.To)
-		if pkerr != nil {
-			return common.Hash{}, fmt.Errorf("unable to get hash from base58 To address: %w", err)
-		}
+	toProgramID, err := ParseProgramID(op.Transaction.To)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("unable to prase program id from To field: %w", err)
 	}
+
 	// Parse Additional fields to get the ix accounts
 	var additionalFields AdditionalFields
 	if op.Transaction.AdditionalFields != nil {
