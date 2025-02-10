@@ -177,7 +177,7 @@ func TestManualLedgerSigning(t *testing.T) { //nolint:paralleltest
 	t.Log("Loading proposal...")
 	buff := bytes.NewBufferString(proposal)
 
-	proposal, err := mcms.NewProposal(buff)
+	proposal, err := mcms.NewProposal(buff, nil)
 	require.NoError(t, err, "Failed to parse proposal")
 	t.Log("Proposal loaded successfully.")
 
@@ -227,7 +227,7 @@ func TestAptosSetRootExecute(t *testing.T) {
 	deployerAccount, _ := aptos.NewAccountFromSigner(deployer)
 
 	buff := bytes.NewBufferString(proposal)
-	proposal, err := mcms.NewProposal(buff)
+	proposal, err := mcms.NewProposal(buff, nil)
 	require.NoError(t, err, "Failed to parse proposal")
 
 	encoders, err := proposal.GetEncoders()

@@ -27,11 +27,11 @@ var _ sdk.Executor = &Executor{}
 type Executor struct {
 	*Encoder
 	*Inspector
-	client *aptos.NodeClient
-	auth   *aptos.Account
+	client aptos.AptosRpcClient
+	auth   aptos.TransactionSigner
 }
 
-func NewExecutor(client *aptos.NodeClient, auth *aptos.Account, encoder *Encoder) *Executor {
+func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder) *Executor {
 	return &Executor{
 		Encoder:   encoder,
 		Inspector: NewInspector(client),
@@ -177,7 +177,7 @@ func (e Executor) SetRoot(
 
 	found := false
 	for _, event := range data.Events {
-		if event.Type == mcmsAddress.StringLong()+"::mcms::NewRoot" {
+		if event.Type == mcmsAddress.String()+"::mcms::NewRoot" {
 			if root, ok := event.Data["root"]; ok {
 				_ = root
 				found = true

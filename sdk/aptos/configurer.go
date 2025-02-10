@@ -22,11 +22,11 @@ const (
 var _ sdk.Configurer = &Configurer{}
 
 type Configurer struct {
-	client *aptos.NodeClient
-	auth   *aptos.Account
+	client aptos.AptosRpcClient
+	auth   aptos.TransactionSigner
 }
 
-func NewConfigurer(client *aptos.NodeClient, auth *aptos.Account) *Configurer {
+func NewConfigurer(client aptos.AptosRpcClient, auth aptos.TransactionSigner) *Configurer {
 	return &Configurer{
 		client: client,
 		auth:   auth,
@@ -69,9 +69,12 @@ func (c Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Co
 		return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err)
 	}
 
+	var mcmsAddress aptos.AccountAddress
+	mcmsAddress.ParseStringRelaxed(mcmAddr)
+
 	found := false
 	for _, event := range data.Events {
-		if event.Type == mcmAddr+"::mcms::ConfigSet" {
+		if event.Type == mcmsAddress.String()+"::mcms::ConfigSet" {
 			if config, ok := event.Data["config"]; ok {
 				_ = config
 				// e.Logger.Debugw("✅ Set config on MCMS contract", "config", config)

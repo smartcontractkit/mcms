@@ -6,12 +6,11 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"encoding/json"
-	"math/big"
+	"fmt"
 	"slices"
 	"time"
 
 	"github.com/aptos-labs/aptos-go-sdk"
-	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -22,9 +21,8 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
+func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
 	a.deployMCM()
-	a.deployMCMUser()
 
 	// Set config on contract
 	signers := [2]common.Address{}
@@ -36,6 +34,7 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 	slices.SortFunc(signers[:], func(a, b common.Address) int {
 		return a.Cmp(b)
 	})
+	a.T().Logf("Signers: %v", signers)
 	config := &types.Config{
 		Quorum:  2,
 		Signers: []common.Address{signers[0], signers[1]},
@@ -44,18 +43,23 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 	_, err := configurer.SetConfig(context.Background(), a.MCMContract.StringLong(), config, false)
 	a.Require().NoError(err, "setting config on Aptos mcms contract failed")
 
-	// Arguments to call MCMUser contract with
-	arg1 := "helloworld"
-	arg2 := []byte{5, 4, 3, 2, 1}
-	arg3 := a.deployerAccount.AccountAddress()
-	arg4 := big.NewInt(42)
+	// Initiate ownership transfer
+	payload, err := aptosutil.BuildTransactionPayload(
+		a.MCMContract.StringLong()+"::mcms::transfer_ownership_to_self",
+		nil,
+		nil,
+		nil,
+	)
+	a.Require().NoError(err)
+	_, err = aptosutil.BuildSignSubmitAndWaitForTransaction(a.AptosRPCClient, a.deployerAccount, payload)
+	a.Require().NoError(err)
 
 	// Build proposal
 	validUntil := time.Now().Add(time.Hour * 24).Unix()
 	proposalBuilder := mcms.NewProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(uint32(validUntil)).
-		SetDescription("Test proposal with two signers on Aptos").
+		SetDescription("Test accepting ownership of the contract itself").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(a.ChainSelector, types.ChainMetadata{
 			StartingOpCount: 0,
@@ -64,43 +68,17 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 
 	// Call 1
 	additionalFields := aptossdk.AdditionalFields{
-		ModuleName: "mcms_user",
-		Function:   "function_one",
+		ModuleName: "mcms",
+		Function:   "accept_ownership",
 	}
-	callOneParamBytes, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		ser.WriteString(arg1)
-		ser.WriteBytes(arg2)
-	})
-	a.Require().NoError(err)
 	callOneAdditionalFields, err := json.Marshal(additionalFields)
 	a.Require().NoError(err)
 	proposalBuilder.AddOperation(types.Operation{
 		ChainSelector: a.ChainSelector,
 		Transaction: types.Transaction{
-			To:               a.MCMSUserContract.StringLong(),
-			Data:             callOneParamBytes,
+			To:               a.MCMContract.StringLong(),
+			Data:             []byte{},
 			AdditionalFields: callOneAdditionalFields,
-		},
-	})
-
-	// Call 2
-	additionalFields = aptossdk.AdditionalFields{
-		ModuleName: "mcms_user",
-		Function:   "function_two",
-	}
-	callTwoParamBytes, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		ser.FixedBytes(arg3[:])
-		ser.U128(*arg4)
-	})
-	a.Require().NoError(err)
-	callTwoAdditionalFields, err := json.Marshal(additionalFields)
-	a.Require().NoError(err)
-	proposalBuilder.AddOperation(types.Operation{
-		ChainSelector: a.ChainSelector,
-		Transaction: types.Transaction{
-			To:               a.MCMSUserContract.StringLong(),
-			Data:             callTwoParamBytes,
-			AdditionalFields: callTwoAdditionalFields,
 		},
 	})
 
@@ -168,22 +146,14 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 		a.Require().EqualValues(opCount, i+1)
 	}
 
-	// Check that arguments have been stored in the MCMUser contract
-	data, err := a.AptosRPCClient.AccountResource(a.MCMSUserContract, a.MCMSUserContract.StringLong()+"::mcms_user::UserData")
+	// Check that ownership has been transferred
+	viewPayload, err := aptosutil.BuildViewPayload(a.MCMContract.StringLong()+"::mcms::owner", nil, nil, nil)
+	a.Require().NoError(err)
+	data, err := a.AptosRPCClient.View(viewPayload)
 	a.Require().NoError(err)
 
-	userData := struct {
-		Invocations int
-		A           string
-		B           []byte
-		C           aptos.AccountAddress
-		D           *big.Int
-	}{}
-	err = aptosutil.DecodeAptosJsonValue([]any{data["data"]}, &userData)
-	a.Require().NoError(err)
-	a.Require().Equal(2, userData.Invocations)
-	a.Require().Equal(arg1, userData.A)
-	a.Require().Equal(arg2, userData.B)
-	a.Require().Equal(arg3, userData.C)
-	a.Require().Equal(arg4, userData.D)
+	var owner aptos.AccountAddress
+	err = aptosutil.DecodeAptosJsonValue(data, &owner)
+
+	fmt.Println("MCMS contract owner:", owner.StringLong())
 }

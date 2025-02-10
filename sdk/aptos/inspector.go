@@ -16,10 +16,10 @@ var _ sdk.Inspector = &Inspector{}
 
 type Inspector struct {
 	ConfigTransformer
-	client *aptos.NodeClient
+	client aptos.AptosRpcClient
 }
 
-func NewInspector(client *aptos.NodeClient) *Inspector {
+func NewInspector(client aptos.AptosRpcClient) *Inspector {
 	return &Inspector{client: client}
 }
 

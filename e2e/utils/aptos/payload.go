@@ -8,7 +8,7 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk/api"
 )
 
-func BuildSignSubmitAndWaitForTransaction(client *aptos.NodeClient, sender *aptos.Account, payload *aptos.TransactionPayload) (*api.UserTransaction, error) {
+func BuildSignSubmitAndWaitForTransaction(client aptos.AptosRpcClient, sender aptos.TransactionSigner, payload *aptos.TransactionPayload) (*api.UserTransaction, error) {
 	if payload == nil {
 		return nil, fmt.Errorf("payload required")
 	}

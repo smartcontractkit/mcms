@@ -92,3 +92,37 @@ func NextObjectCodeDeploymentAddress(client *aptos.NodeClient, account aptos.Acc
 
 	return CalculateNextObjectCodeDeploymentAddress(account, sequence), nil
 }
+
+// CreateResourceAccountAndPublishPackage calls 0x1::resource_account::create_resource_account_and_publish_package
+// https://github.com/aptos-labs/aptos-core/blob/8d5d045ede6dae476482b2b9c3a80893c521eaa5/aptos-move/framework/aptos-framework/sources/resource_account.move#L124
+func CreateResourceAccountAndPublishPackage(seed string, metadataHex string, bytecodeHex []string, addresses map[string]string) (*aptos.TransactionPayload, error) {
+	metadataHex, err := replaceAddresses(metadataHex, addresses)
+	if err != nil {
+		return nil, err
+	}
+	for i, s := range bytecodeHex {
+		// Modifies the slice, possibly copy first
+		bytecodeHex[i], err = replaceAddresses(s, addresses)
+		if err != nil {
+			return nil, err
+		}
+	}
+	metadata, err := aptos.ParseHex(metadataHex)
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse hex metadata: %w", err)
+	}
+	bytecode := make([][]byte, len(bytecodeHex))
+	for i, hex := range bytecodeHex {
+		bytecode[i], err = aptos.ParseHex(hex)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse hex bytecode: %w", err)
+		}
+	}
+
+	return BuildTransactionPayload(
+		"0x1::resource_account::create_resource_account_and_publish_package",
+		nil,
+		[]string{"vector<u8>", "vector<u8>", "vector<vector<u8>>"},
+		[]any{seed, metadata, bytecode},
+	)
+}
