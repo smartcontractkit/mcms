@@ -5,6 +5,7 @@ go 1.23.3
 toolchain go1.23.4
 
 require (
+	github.com/aptos-labs/aptos-go-sdk v1.5.0
 	github.com/ethereum/go-ethereum v1.14.11
 	github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/solana-go v1.12.0
@@ -12,7 +13,8 @@ require (
 	github.com/google/go-cmp v0.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
-	github.com/smartcontractkit/chain-selectors v1.0.36
+	github.com/mitchellh/mapstructure v1.5.0
+	github.com/smartcontractkit/chain-selectors v1.0.38
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250128193522-bdbfcc588847
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.7
 	github.com/spf13/cast v1.7.1
@@ -23,7 +25,7 @@ require (
 
 require (
 	dario.cat/mergo v1.0.1 // indirect
-	filippo.io/edwards25519 v1.0.0-rc.1 // indirect
+	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/AdaLogics/go-fuzz-headers v0.0.0-20230811130428-ced1acdcaa24 // indirect
 	github.com/Azure/go-ansiterm v0.0.0-20230124172434-306776ec8161 // indirect
 	github.com/DataDog/zstd v1.5.2 // indirect
@@ -59,6 +61,7 @@ require (
 	github.com/cockroachdb/pebble v1.1.2 // indirect
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
+	github.com/coder/websocket v1.8.12 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
 	github.com/consensys/gnark-crypto v0.12.1 // indirect
 	github.com/containerd/log v0.1.0 // indirect
@@ -97,6 +100,8 @@ require (
 	github.com/gorilla/rpc v1.2.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect
 	github.com/hashicorp/go-bexpr v0.1.10 // indirect
+	github.com/hasura/go-graphql-client v0.13.1 // indirect
+	github.com/hdevalence/ed25519consensus v0.2.0 // indirect
 	github.com/holiman/billy v0.0.0-20240216141850-2abb0c79d3c4 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
 	github.com/holiman/uint256 v1.3.1 // indirect
@@ -114,7 +119,6 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
-	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/pointerstructure v1.2.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
@@ -175,18 +179,19 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/ratelimit v0.2.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/crypto v0.32.0 // indirect
+	golang.org/x/crypto v0.33.0 // indirect
 	golang.org/x/exp v0.0.0-20241210194714-1829a127f884 // indirect
 	golang.org/x/net v0.34.0 // indirect
-	golang.org/x/sync v0.10.0 // indirect
-	golang.org/x/sys v0.29.0 // indirect
-	golang.org/x/term v0.28.0 // indirect
-	golang.org/x/text v0.21.0 // indirect
+	golang.org/x/sync v0.11.0 // indirect
+	golang.org/x/sys v0.30.0 // indirect
+	golang.org/x/term v0.29.0 // indirect
+	golang.org/x/text v0.22.0 // indirect
 	golang.org/x/time v0.6.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20240903143218-8af14fe29dc1 // indirect
 	google.golang.org/protobuf v1.35.1 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+	nhooyr.io/websocket v1.8.11 // indirect
 	rsc.io/tmplfunc v0.0.3 // indirect
 )

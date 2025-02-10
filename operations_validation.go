@@ -8,6 +8,7 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -36,6 +37,12 @@ func ValidateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 		validator = fields
 	case cselectors.FamilySolana:
 		fields := evm.AdditionalFields{Value: big.NewInt(0)}
+		validator = fields
+	case cselectors.FamilyAptos:
+		fields := aptos.AdditionalFields{}
+		if err := json.Unmarshal(additionalFields, &fields); err != nil {
+			return fmt.Errorf("failed to unmarshal Aptos additional fields: %w", err)
+		}
 		validator = fields
 	}
 
