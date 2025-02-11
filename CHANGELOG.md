@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.10.0
+
+### Minor Changes
+
+- [#289](https://github.com/smartcontractkit/mcms/pull/289) [`1eeb56a`](https://github.com/smartcontractkit/mcms/commit/1eeb56aee88fb4e13d155892bdd2ea381c04b61d) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - Address latest breaking change (new Operation Enums and Chunk based instructions for timelock converter)
+
 ## 0.9.0
 
 ### Minor Changes
