@@ -400,11 +400,12 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 
 	ixs = append(ixs, initOpIx)
 
-	for _, instruction := range op.ToInstructionData() {
-		appendIxsIx, apErr := timelock.NewAppendInstructionsInstruction(
+	for i, instruction := range op.ToInstructionData() {
+		initIx, apErr := timelock.NewInitializeInstructionInstruction(
 			timelockID,
 			op.OperationID(),
-			[]timelock.InstructionData{instruction},
+			instruction.ProgramId,
+			instruction.Accounts,
 			operationPDA,
 			configPDA,
 			proposerAC,
@@ -413,7 +414,34 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 		).ValidateAndBuild()
 		s.Require().NoError(apErr)
 
-		ixs = append(ixs, appendIxsIx)
+		ixs = append(ixs, initIx)
+
+		rawData := instruction.Data
+		offset := 0
+
+		for offset < len(rawData) {
+			end := offset + solanasdk.AppendIxDataChunkSize
+			if end > len(rawData) {
+				end = len(rawData)
+			}
+			chunk := rawData[offset:end]
+
+			appendIx, err := timelock.NewAppendInstructionDataInstruction(
+				timelockID,
+				op.OperationID(),
+				uint32(i), // which instruction index we are chunking
+				chunk,     // partial data
+				operationPDA,
+				configPDA,
+				proposerAC,
+				authority,
+				solana.SystemProgramID,
+			).ValidateAndBuild()
+			s.Require().NoError(err)
+			ixs = append(ixs, appendIx)
+
+			offset = end
+		}
 	}
 	finOpIx, foErr := timelock.NewFinalizeOperationInstruction(
 		timelockID,
@@ -498,7 +526,7 @@ func (s *SolanaTestSuite) waitForOperationToBeReady(ctx context.Context, timeloc
 	err = common.GetAccountDataBorshInto(ctx, s.SolanaClient, opPDA, rpc.CommitmentConfirmed, &opAccount)
 	s.Require().NoError(err)
 
-	if opAccount.Timestamp == solanasdk.TimelockOpDoneTimestamp {
+	if opAccount.State == timelock.Done_OperationState {
 		return
 	}
 

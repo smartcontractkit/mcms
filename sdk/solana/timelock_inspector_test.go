@@ -247,7 +247,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 	operationPDA, err := FindTimelockOperationPDA(testTimelockProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
 
-	operation := createTimelockOperation(t, 123)
+	operation := createTimelockOperation(t, timelock.Scheduled_OperationState)
 
 	tests := []struct {
 		name    string
@@ -309,7 +309,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 		{
 			name: "operation is pending",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 123)
+				operation := createTimelockOperation(t, timelock.Scheduled_OperationState)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 			},
 			want: true,
@@ -317,15 +317,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 		{
 			name: "operation is done - not pending",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, TimelockOpDoneTimestamp)
-				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
-			},
-			want: false,
-		},
-		{
-			name: "invalid timestamp",
-			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 0)
+				operation := createTimelockOperation(t, timelock.Done_OperationState)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 			},
 			want: false,
@@ -333,7 +325,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 		{
 			name: "error: rpc error",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, TimelockOpDoneTimestamp)
+				operation := createTimelockOperation(t, timelock.Scheduled_OperationState)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, errors.New("rpc error"))
 			},
 			wantErr: "rpc error",
@@ -371,7 +363,8 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 		{
 			name: "operation is ready - timestamp same as block time",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 3)
+				operation := createTimelockOperation(t, timelock.Scheduled_OperationState)
+				operation.Timestamp = 3
 				blockTime := solana.UnixTimeSeconds(3)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 				mockGetBlockTime(t, mockJSONRPCClient, 1, &blockTime, nil, nil)
@@ -381,7 +374,8 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 		{
 			name: "operation is ready - timestamp less than block time",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 2)
+				operation := createTimelockOperation(t, timelock.Scheduled_OperationState)
+				operation.Timestamp = 2
 				blockTime := solana.UnixTimeSeconds(3)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 				mockGetBlockTime(t, mockJSONRPCClient, 1, &blockTime, nil, nil)
@@ -389,19 +383,9 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 			want: true,
 		},
 		{
-			name: "operation is not ready - timestamp less than done",
-			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 0)
-				blockTime := solana.UnixTimeSeconds(3)
-				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
-				mockGetBlockTime(t, mockJSONRPCClient, 1, &blockTime, nil, nil)
-			},
-			want: false,
-		},
-		{
 			name: "operation is not ready - operation is done",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 1) // timestamp is 1/done
+				operation := createTimelockOperation(t, timelock.Done_OperationState)
 				blockTime := solana.UnixTimeSeconds(3)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 				mockGetBlockTime(t, mockJSONRPCClient, 1, &blockTime, nil, nil)
@@ -411,7 +395,8 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 		{
 			name: "operation is not ready - timestamp more than block time",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 5) // timestamp > block time
+				operation := createTimelockOperation(t, timelock.Done_OperationState)
+				operation.Timestamp = 5
 				blockTime := solana.UnixTimeSeconds(1)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 				mockGetBlockTime(t, mockJSONRPCClient, 1, &blockTime, nil, nil)
@@ -421,7 +406,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 		{
 			name: "error: GetAccount rpc error",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 1)
+				operation := createTimelockOperation(t, timelock.Scheduled_OperationState)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, errors.New("rpc error"))
 			},
 			wantErr: "rpc error",
@@ -429,7 +414,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 		{
 			name: "error: GetBlockHeight rpc error",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 1)
+				operation := createTimelockOperation(t, timelock.Scheduled_OperationState)
 				blockTime := solana.UnixTimeSeconds(0)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 				mockGetBlockTime(t, mockJSONRPCClient, 1, &blockTime, errors.New("rpc error"), nil)
@@ -439,7 +424,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 		{
 			name: "error: GetBlockTime rpc error",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 1)
+				operation := createTimelockOperation(t, timelock.Scheduled_OperationState)
 				blockTime := solana.UnixTimeSeconds(0)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 				mockGetBlockTime(t, mockJSONRPCClient, 1, &blockTime, nil, errors.New("rpc error"))
@@ -449,7 +434,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 		{
 			name: "error: blocktime is nil",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 1)
+				operation := createTimelockOperation(t, timelock.Scheduled_OperationState)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 				mockGetBlockTime(t, mockJSONRPCClient, 1, nil, nil, nil)
 			},
@@ -488,7 +473,7 @@ func TestIsOperationDone(t *testing.T) {
 		{
 			name: "operation is done",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, TimelockOpDoneTimestamp)
+				operation := createTimelockOperation(t, timelock.Done_OperationState)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 			},
 			want: true,
@@ -496,7 +481,7 @@ func TestIsOperationDone(t *testing.T) {
 		{
 			name: "operation is not done",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 0)
+				operation := createTimelockOperation(t, timelock.Scheduled_OperationState)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 			},
 			want: false,
@@ -504,7 +489,7 @@ func TestIsOperationDone(t *testing.T) {
 		{
 			name: "error: rpc error",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				operation := createTimelockOperation(t, 0)
+				operation := createTimelockOperation(t, timelock.Done_OperationState)
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, errors.New("rpc error"))
 			},
 			wantErr: "rpc error",
@@ -592,17 +577,17 @@ func newTestTimelockInspector(t *testing.T) (*TimelockInspector, *mocks.JSONRPCC
 	return inspector, jsonRPCClient
 }
 
-func createTimelockOperation(t *testing.T, timestamp uint64) *timelock.Operation {
+func createTimelockOperation(t *testing.T, state timelock.OperationState) *timelock.Operation {
 	t.Helper()
 
 	operation := &timelock.Operation{
-		Timestamp:         timestamp,
+		Timestamp:         0,
 		Id:                [32]uint8{},
 		Predecessor:       [32]uint8{},
 		Salt:              [32]uint8{},
-		IsFinalized:       false,
 		TotalInstructions: 5,
 		Instructions:      nil,
+		State:             state,
 	}
 
 	return operation

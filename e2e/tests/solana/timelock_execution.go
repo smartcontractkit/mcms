@@ -203,13 +203,13 @@ func (s *SolanaTestSuite) scheduleMintTx(
 	).ValidateAndBuild()
 	s.Require().NoError(err)
 	ixs = append(ixs, initOpIx)
-	// Append the ix
 
-	for _, ix := range opInstructions {
-		appendIx, errAppend := timelock.NewAppendInstructionsInstruction(
+	for i, ixData := range opInstructions {
+		initializeIx, errAppend := timelock.NewInitializeInstructionInstruction(
 			testTimelockExecuteID,
 			operationID,
-			[]timelock.InstructionData{ix}, // this should be a slice of instruction within 1232 bytes
+			ixData.ProgramId,
+			ixData.Accounts,
 			operationPDA,
 			configPDA,
 			proposerAC,
@@ -217,7 +217,33 @@ func (s *SolanaTestSuite) scheduleMintTx(
 			solana.SystemProgramID,
 		).ValidateAndBuild()
 		s.Require().NoError(errAppend)
-		ixs = append(ixs, appendIx)
+		ixs = append(ixs, initializeIx)
+
+		rawData := ixData.Data
+		offset := 0
+
+		for offset < len(rawData) {
+			end := offset + mcmsSolana.AppendIxDataChunkSize
+			if end > len(rawData) {
+				end = len(rawData)
+			}
+			chunk := rawData[offset:end]
+
+			appendIx, appendErr := timelock.NewAppendInstructionDataInstruction(
+				testTimelockExecuteID,
+				operationID,
+				uint32(i), // which instruction index we are chunking
+				chunk,     // partial data
+				operationPDA,
+				configPDA,
+				proposerAC,
+				auth.PublicKey(),
+				solana.SystemProgramID,
+			).ValidateAndBuild()
+			s.Require().NoError(appendErr)
+			ixs = append(ixs, appendIx)
+			offset = end
+		}
 	}
 	// Finalize Operation
 	finOpIx, err := timelock.NewFinalizeOperationInstruction(
