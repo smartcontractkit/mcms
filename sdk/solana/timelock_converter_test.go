@@ -108,7 +108,7 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			salt:            defaultSalt,
 			wantOperations: []types.Operation{
 				{
-					// initialize
+					// initialize operation
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -127,11 +127,11 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 					},
 				},
 				{
-					// append first operation
+					// initialize first instruction
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
-						Data: base64Decode(t, "OjqJenMzkIZ0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AQAAAOy/SwEm9OHsR3Iyhg37tMCACi9OJO1mbYf2EdbL8BdlBgAAADB4MTIzNAIAAABzrkiHQ+JGjN94Ifr0hyI7xbfT2AUTMNwqcY6ldOvyZQEBkKcZjjIczPUeb2jNRtBAfOQA/tDFWu7x9HDKmqHFfGAAAQ=="),
+						Data: base64Decode(t, "w+bVh5CUjlV0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/7L9LASb04exHcjKGDfu0wIAKL04k7WZth/YR1svwF2UCAAAAc65Ih0PiRozfeCH69IciO8W309gFEzDcKnGOpXTr8mUBAZCnGY4yHMz1Hm9ozUbQQHzkAP7QxVru8fRwypqhxXxgAAE="),
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
 							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
@@ -146,11 +146,49 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 					},
 				},
 				{
-					// append second operation
+					// append first instruction data
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
-						Data: base64Decode(t, "OjqJenMzkIZ0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AQAAAA0THF/kMtia7NQl9/Z+bKF0Ggj7DNa/3WxLGpQ1QAaIBgAAADB4NTY3OAAAAAA="),
+						Data: base64Decode(t, "TE1mg4gMLQV0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AAAAAAYAAAAweDEyMzQ="),
+						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
+							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
+							{PublicKey: proposerAC.PublicKey()},
+							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
+							{PublicKey: solana.MPK("11111111111111111111111111111111")},
+						}}),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "RBACTimelock",
+							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
+						},
+					},
+				},
+				{
+					// initialize second instruction
+					ChainSelector: chaintest.Chain4Selector,
+					Transaction: types.Transaction{
+						To:   testTimelockProgramID.String(),
+						Data: base64Decode(t, "w+bVh5CUjlV0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/DRMcX+Qy2Jrs1CX39n5soXQaCPsM1r/dbEsalDVABogAAAAA"),
+						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
+							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
+							{PublicKey: proposerAC.PublicKey()},
+							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
+							{PublicKey: solana.MPK("11111111111111111111111111111111")},
+						}}),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "RBACTimelock",
+							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
+						},
+					},
+				},
+				{
+					// append second instruction data
+					ChainSelector: chaintest.Chain4Selector,
+					Transaction: types.Transaction{
+						To:   testTimelockProgramID.String(),
+						Data: base64Decode(t, "TE1mg4gMLQV0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AQAAAAYAAAAweDU2Nzg="),
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
 							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
@@ -276,11 +314,11 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 					},
 				},
 				{
-					// append first operation
+					// initialize first instruction
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
-						Data: base64Decode(t, "f0QI0mrVGdd0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AQAAAOy/SwEm9OHsR3Iyhg37tMCACi9OJO1mbYf2EdbL8BdlBgAAADB4MTIzNAIAAABzrkiHQ+JGjN94Ifr0hyI7xbfT2AUTMNwqcY6ldOvyZQEBkKcZjjIczPUeb2jNRtBAfOQA/tDFWu7x9HDKmqHFfGAAAQ=="),
+						Data: base64Decode(t, "MhHNrK+Mwyd0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/7L9LASb04exHcjKGDfu0wIAKL04k7WZth/YR1svwF2UCAAAAc65Ih0PiRozfeCH69IciO8W309gFEzDcKnGOpXTr8mUBAZCnGY4yHMz1Hm9ozUbQQHzkAP7QxVru8fRwypqhxXxgAAE="),
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
 							{PublicKey: solana.MPK("5kA68ZDhLguQqxoEraVvdSYzR43JddUZXEm8SCdCEQfh"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
@@ -295,11 +333,49 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 					},
 				},
 				{
-					// append second operation
+					// append first instruction
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
-						Data: base64Decode(t, "f0QI0mrVGdd0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AQAAAA0THF/kMtia7NQl9/Z+bKF0Ggj7DNa/3WxLGpQ1QAaIBgAAADB4NTY3OAAAAAA="),
+						Data: base64Decode(t, "uOiX3m9118V0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AAAAAAYAAAAweDEyMzQ="),
+						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+							{PublicKey: solana.MPK("5kA68ZDhLguQqxoEraVvdSYzR43JddUZXEm8SCdCEQfh"), IsWritable: true},
+							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
+							{PublicKey: solana.MPK(bypasserAC.PublicKey().String())},
+							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
+							{PublicKey: solana.MPK("11111111111111111111111111111111")},
+						}}),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "RBACTimelock",
+							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
+						},
+					},
+				},
+				{
+					// initialize second instruction
+					ChainSelector: chaintest.Chain4Selector,
+					Transaction: types.Transaction{
+						To:   testTimelockProgramID.String(),
+						Data: base64Decode(t, "MhHNrK+Mwyd0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/DRMcX+Qy2Jrs1CX39n5soXQaCPsM1r/dbEsalDVABogAAAAA"),
+						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+							{PublicKey: solana.MPK("5kA68ZDhLguQqxoEraVvdSYzR43JddUZXEm8SCdCEQfh"), IsWritable: true},
+							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
+							{PublicKey: solana.MPK(bypasserAC.PublicKey().String())},
+							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
+							{PublicKey: solana.MPK("11111111111111111111111111111111")},
+						}}),
+						OperationMetadata: types.OperationMetadata{
+							ContractType: "RBACTimelock",
+							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
+						},
+					},
+				},
+				{
+					// append second instruction
+					ChainSelector: chaintest.Chain4Selector,
+					Transaction: types.Transaction{
+						To:   testTimelockProgramID.String(),
+						Data: base64Decode(t, "uOiX3m9118V0ZXN0LW1jbQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOzNziC5jaIAHmroyBw0o6rhzkqnV4l5BvFaLyVxMtx/AQAAAAYAAAAweDU2Nzg="),
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
 							{PublicKey: solana.MPK("5kA68ZDhLguQqxoEraVvdSYzR43JddUZXEm8SCdCEQfh"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},

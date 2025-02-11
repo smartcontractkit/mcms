@@ -19,6 +19,10 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// AppendIxDataChunkSize number is derived from chainlink-ccip
+// https://github.com/smartcontractkit/chainlink-ccip/blob/main/chains/solana/contracts/tests/config/timelock_config.go#L20
+const AppendIxDataChunkSize = 491
+
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
 type TimelockConverter struct {
@@ -265,21 +269,53 @@ func scheduleBatchInstructions(
 	}
 	instructions = append(instructions, instruction)
 
-	// append
-	for i := range instructionsData {
-		// FIXME: InstructionData should have slices of data no bigger than 1232 bytes
-		instruction, err = bindings.NewAppendInstructionsInstruction(pdaSeed, operationID,
-			[]bindings.InstructionData{instructionsData[i]}, operationPDA, configPDA,
+	for i, ixData := range instructionsData {
+		initIx, initializeErr := bindings.NewInitializeInstructionInstruction(
+			pdaSeed, operationID,
+			ixData.ProgramId,
+			ixData.Accounts,
+			operationPDA,
+			configPDA,
 			proposerAccessController,
 			mcmSignerPDA,
-			solana.SystemProgramID).ValidateAndBuild()
-		if err != nil {
-			return []solana.Instruction{}, fmt.Errorf("unable to build AppendInstruction instruction: %w", err)
+			solana.SystemProgramID,
+		).ValidateAndBuild()
+		if initializeErr != nil {
+			return []solana.Instruction{}, fmt.Errorf("unable to build InitializeInstruction instruction (ixIndex=%d): %w", i, initializeErr)
 		}
-		instructions = append(instructions, instruction)
+		instructions = append(instructions, initIx)
+
+		rawData := ixData.Data
+		offset := 0
+
+		for offset < len(rawData) {
+			end := offset + AppendIxDataChunkSize
+			if end > len(rawData) {
+				end = len(rawData)
+			}
+			chunk := rawData[offset:end]
+
+			appendIx, appendErr := bindings.NewAppendInstructionDataInstruction(
+				pdaSeed,
+				operationID,
+				//nolint:gosec
+				uint32(i), // which instruction index we are chunking
+				chunk,     // partial data
+				operationPDA,
+				configPDA,
+				proposerAccessController,
+				mcmSignerPDA,
+				solana.SystemProgramID,
+			).ValidateAndBuild()
+			if appendErr != nil {
+				return nil, fmt.Errorf("unable to build AppendInstructionData instruction (ixIndex=%d): %w", i, appendErr)
+			}
+			instructions = append(instructions, appendIx)
+
+			offset = end
+		}
 	}
 
-	// finalize
 	instruction, err = bindings.NewFinalizeOperationInstruction(pdaSeed, operationID,
 		operationPDA, configPDA, proposerAccessController, mcmSignerPDA).ValidateAndBuild()
 	if err != nil {
@@ -329,15 +365,16 @@ func bypassInstructions(
 		solana.SystemProgramID,
 	).ValidateAndBuild()
 	if ioErr != nil {
-		return nil, fmt.Errorf("failed to build initialize bypasser operation instruction: %w", ioErr)
+		return nil, fmt.Errorf("unable to build InitializeBypasserOperation instruction: %w", ioErr)
 	}
 	instructions = append(instructions, initOpIx)
 
-	for _, instruction := range instructionsData {
-		appendIxsIx, apErr := bindings.NewAppendBypasserInstructionsInstruction(
+	for i, instruction := range instructionsData {
+		initIx, apErr := bindings.NewInitializeBypasserInstructionInstruction(
 			pdaSeed,
 			operationID,
-			[]bindings.InstructionData{instruction}, // this should be a slice of instruction within 1232 bytes
+			instruction.ProgramId, // ProgramId
+			instruction.Accounts,  //
 			operationPDA,
 			configPDA,
 			bypassAccessController,
@@ -345,9 +382,39 @@ func bypassInstructions(
 			solana.SystemProgramID, // for reallocation
 		).ValidateAndBuild()
 		if apErr != nil {
-			return nil, fmt.Errorf("failed to build append bypasser instructions instruction: %w", apErr)
+			return nil, fmt.Errorf("unable to build InitializeBypasserInstruction instruction (ixIndex=%d): %w", i, apErr)
 		}
-		instructions = append(instructions, appendIxsIx)
+		instructions = append(instructions, initIx)
+
+		rawData := instruction.Data
+		offset := 0
+
+		for offset < len(rawData) {
+			end := offset + AppendIxDataChunkSize
+			if end > len(rawData) {
+				end = len(rawData)
+			}
+			chunk := rawData[offset:end]
+
+			appendIx, appendErr := bindings.NewAppendBypasserInstructionDataInstruction(
+				pdaSeed,
+				operationID,
+				//nolint:gosec
+				uint32(i), // which instruction index we are chunking
+				chunk,     // partial data
+				operationPDA,
+				configPDA,
+				bypassAccessController,
+				mcmSignerPDA,
+				solana.SystemProgramID, // for reallocation
+			).ValidateAndBuild()
+			if appendErr != nil {
+				return nil, fmt.Errorf("unable to build AppendBypasserInstruction instruction (ixIndex=%d): %w", i, appendErr)
+			}
+			instructions = append(instructions, appendIx)
+
+			offset = end
+		}
 	}
 
 	finOpIx, foErr := bindings.NewFinalizeBypasserOperationInstruction(
