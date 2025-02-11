@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.10.1
+
+### Patch Changes
+
+- [#291](https://github.com/smartcontractkit/mcms/pull/291) [`f76ce79`](https://github.com/smartcontractkit/mcms/commit/f76ce79b354e3f50fa00e1d7653990013f6a2955) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - retrigger publishing due to previous failure
+
 ## 0.10.0
 
 ### Minor Changes
