@@ -75,7 +75,7 @@ jobs:
 
           # goreleaser inputs
           goreleaser-args: "--config .goreleaser.yml"
-          goreleaser-version: 'latest'
+          goreleaser-version: 'v2.6.1-pro'
           goreleaser-dist: goreleaser-pro
           goreleaser-key: ${{ secrets.GORELEASER_KEY }}
 
