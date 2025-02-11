@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.11.0
+
+### Minor Changes
+
+- [#295](https://github.com/smartcontractkit/mcms/pull/295) [`29afd9d`](https://github.com/smartcontractkit/mcms/commit/29afd9da94f27be613771f393139d3cb8f1d7ab1) Thanks [@akhilchainani](https://github.com/akhilchainani)! - Add additional isReady helpers to API
+
 ## 0.10.1
 
 ### Patch Changes
