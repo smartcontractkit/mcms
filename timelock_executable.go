@@ -82,7 +82,7 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 
 	// Check readiness for each global operation in the proposal
 	for globalIndex := range t.proposal.Operations {
-		err := t.isOperationReady(ctx, globalIndex)
+		err := t.IsOperationReady(ctx, globalIndex)
 		if err != nil {
 			return err
 		}
@@ -104,7 +104,7 @@ func (t *TimelockExecutable) IsChainReady(ctx context.Context, chainSelector typ
 	// Check readiness for each global operation in the proposal
 	for globalIndex, op := range t.proposal.Operations {
 		if op.ChainSelector == chainSelector {
-			err := t.isOperationReady(ctx, globalIndex)
+			err := t.IsOperationReady(ctx, globalIndex)
 			if err != nil {
 				return err
 			}
@@ -114,7 +114,7 @@ func (t *TimelockExecutable) IsChainReady(ctx context.Context, chainSelector typ
 	return nil
 }
 
-func (t *TimelockExecutable) isOperationReady(ctx context.Context, idx int) error {
+func (t *TimelockExecutable) IsOperationReady(ctx context.Context, idx int) error {
 	op := t.proposal.Operations[idx]
 
 	cs := op.ChainSelector
