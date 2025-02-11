@@ -546,6 +546,12 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	err = tExecutable.IsReady(ctx)
 	require.Error(t, err)
 
+	// Check IsChainReady function fails
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainReady(ctx, chainSelector)
+		require.Error(t, err)
+	}
+
 	// sleep for 5 seconds and then mine a block
 	require.NoError(t, sim.Backend.AdjustTime(5*time.Second))
 	sim.Backend.Commit() // Note < 1.14 geth needs a commit after adjusting time.
@@ -553,6 +559,12 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	// Check that the operation is now ready
 	err = tExecutable.IsReady(ctx)
 	require.NoError(t, err)
+
+	// Check IsChainReady function succeeds
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainReady(ctx, chainSelector)
+		require.NoError(t, err)
+	}
 
 	// Execute the proposal
 	idx := 0

@@ -81,22 +81,56 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 	}
 
 	// Check readiness for each global operation in the proposal
-	for globalIndex, op := range t.proposal.Operations {
-		cs := op.ChainSelector
-		timelock := t.proposal.TimelockAddresses[cs]
-
-		operationID, err := t.GetOpID(ctx, globalIndex, op, cs)
-		if err != nil {
-			return fmt.Errorf("unable to get operation ID: %w", err)
-		}
-
-		isReady, err := t.executors[cs].IsOperationReady(ctx, timelock, operationID)
+	for globalIndex := range t.proposal.Operations {
+		err := t.IsOperationReady(ctx, globalIndex)
 		if err != nil {
 			return err
 		}
-		if !isReady {
-			return &OperationNotReadyError{OpIndex: globalIndex}
+	}
+
+	return nil
+}
+
+// IsChainReady checks if the chain is ready for execution.
+func (t *TimelockExecutable) IsChainReady(ctx context.Context, chainSelector types.ChainSelector) error {
+	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
+	// (one array per chain). The 0th element is zero-hash, the 1st is the
+	// operationID for that chain's 1st operation, etc.
+	err := t.setPredecessors(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to set predecessors: %w", err)
+	}
+
+	// Check readiness for each global operation in the proposal
+	for globalIndex, op := range t.proposal.Operations {
+		if op.ChainSelector == chainSelector {
+			err := t.IsOperationReady(ctx, globalIndex)
+			if err != nil {
+				return err
+			}
 		}
+	}
+
+	return nil
+}
+
+func (t *TimelockExecutable) IsOperationReady(ctx context.Context, idx int) error {
+	op := t.proposal.Operations[idx]
+
+	cs := op.ChainSelector
+	timelock := t.proposal.TimelockAddresses[cs]
+
+	operationID, err := t.GetOpID(ctx, idx, op, cs)
+	if err != nil {
+		return fmt.Errorf("unable to get operation ID: %w", err)
+	}
+
+	isReady, err := t.executors[cs].IsOperationReady(ctx, timelock, operationID)
+	if err != nil {
+		return err
+	}
+	if !isReady {
+		return &OperationNotReadyError{OpIndex: idx}
 	}
 
 	return nil
