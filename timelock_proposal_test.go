@@ -285,7 +285,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 				givePredecessors = append(givePredecessors, strings.NewReader(p))
 			}
 
-			got, err := NewTimelockProposal(give, givePredecessors)
+			got, err := NewTimelockProposal(give, WithPredecessors(givePredecessors))
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

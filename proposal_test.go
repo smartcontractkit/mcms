@@ -214,7 +214,7 @@ func Test_NewProposal(t *testing.T) {
 				givePredecessors = append(givePredecessors, strings.NewReader(p))
 			}
 
-			fileProposal, err := NewProposal(give, givePredecessors)
+			fileProposal, err := NewProposal(give, WithPredecessors(givePredecessors))
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
