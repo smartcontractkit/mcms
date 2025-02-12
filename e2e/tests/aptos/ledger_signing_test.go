@@ -61,7 +61,7 @@ func TestAptosLedgerSetup(t *testing.T) {
 	suite.deployMCMUser()
 
 	configurer := aptossdk.NewConfigurer(suite.AptosRPCClient, suite.deployerAccount)
-	_, err = configurer.SetConfig(context.Background(), suite.MCMContract.StringLong(), config, true)
+	_, err = configurer.SetConfig(context.Background(), suite.MCMContract.Address.StringLong(), config, true)
 	suite.Require().NoError(err, "setting config on Aptos mcms contract")
 
 	// Build proposal
@@ -73,7 +73,7 @@ func TestAptosLedgerSetup(t *testing.T) {
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(suite.ChainSelector, types.ChainMetadata{
 			StartingOpCount: 0,
-			MCMAddress:      suite.MCMContract.StringLong(),
+			MCMAddress:      suite.MCMContract.Address.StringLong(),
 		})
 
 	// Call 1
@@ -101,8 +101,9 @@ func TestAptosLedgerSetup(t *testing.T) {
 		ModuleName: "mcms_user",
 		Function:   "function_two",
 	}
+	addr := suite.deployerAccount.AccountAddress()
 	callTwoParamBytes, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		ser.FixedBytes(suite.deployerAccount.Address[:])
+		ser.FixedBytes(addr[:])
 		ser.U128(*big.NewInt(42))
 	})
 	suite.Require().NoError(err)

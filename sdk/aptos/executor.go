@@ -7,11 +7,14 @@ import (
 	"math/big"
 
 	"github.com/aptos-labs/aptos-go-sdk"
+	"github.com/aptos-labs/aptos-go-sdk/api"
 	"github.com/ethereum/go-ethereum/common"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/bind"
+	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/mcms"
+	module_mcms "github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/mcms/mcms"
 
-	aptosutil "github.com/smartcontractkit/mcms/e2e/utils/aptos"
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/types"
@@ -20,6 +23,8 @@ import (
 const (
 	SignatureVOffset    = 27
 	SignatureVThreshold = 2
+
+	ChunkSizeBytes = 100_000
 )
 
 var _ sdk.Executor = &Executor{}
@@ -67,55 +72,88 @@ func (e Executor) ExecuteOperation(
 	}
 	chainIDBig := (&big.Int{}).SetUint64(chainID)
 
-	payload, err := aptosutil.BuildTransactionPayload(
-		metadata.MCMAddress+"::mcms::execute",
-		nil,
-		[]string{
-			"u256",
-			"address",
-			"u64",
-			"address",
-			"0x1::string::String",
-			"0x1::string::String",
-			"vector<u8>",
-			"vector<vector<u8>>",
-		},
-		[]any{
-			chainIDBig,
-			mcmsAddress,
-			uint64(nonce),
-			toAddress,
-			additionalFields.ModuleName,
-			additionalFields.Function,
-			op.Transaction.Data,
-			proof,
-		},
-	)
-	if err != nil {
-		return types.TransactionResult{}, err
-	}
-	data, err := aptosutil.BuildSignSubmitAndWaitForTransaction(e.client, e.auth, payload)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("setting root on Aptos mcms contract: %w", err)
-	}
+	mcmsC := mcms.Bind(mcmsAddress, e.client)
+	opts := &bind.TransactOpts{Signer: e.auth}
 
-	found := false
-	for _, event := range data.Events {
-		if event.Type == mcmsAddress.StringLong()+"::mcms::OpExecuted" {
-			if nonce, ok := event.Data["nonce"]; ok {
-				_ = nonce
-				found = true
+	var tx *api.PendingTransaction
+	if len(op.Transaction.Data) <= ChunkSizeBytes {
+		tx, err = mcmsC.MCMS.Execute(
+			opts,
+			module_mcms.Op{
+				ChainId:    *chainIDBig,
+				Multisig:   mcmsAddress,
+				Nonce:      uint64(nonce),
+				To:         toAddress,
+				ModuleName: additionalFields.ModuleName,
+				Function:   additionalFields.Function,
+				Data:       op.Transaction.Data,
+			},
+			proof,
+		)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("executing operation on Aptos mcms contract: %w", err)
+		}
+	} else {
+		fmt.Println("Data is too large to execute in a single transaction, splitting into chunks")
+		fmt.Println("Data length:", len(op.Transaction.Data))
+		fmt.Println("Chunk size:", ChunkSizeBytes)
+		// Split the data into chunks
+		var chunks [][]byte
+		for i := 0; i < len(op.Transaction.Data); i += ChunkSizeBytes {
+			end := i + ChunkSizeBytes
+			if end > len(op.Transaction.Data) {
+				end = len(op.Transaction.Data)
+			}
+			chunks = append(chunks, op.Transaction.Data[i:end])
+		}
+		if len(chunks) == 0 {
+			chunks = append(chunks, []byte{})
+		}
+		fmt.Println("Number of chunks:", len(chunks))
+		for i, chunk := range chunks {
+			if i == len(chunks)-1 {
+				// Last chunk needs to call StageDataAndExecute
+				// Also, add the proof to this last call
+				maxGas := uint64(2_000_000)
+				opts.MaxGasAmount = &maxGas
+				tx, err = mcmsC.MCMSExecutor.StageDataAndExecute(
+					opts,
+					module_mcms.Op{
+						ChainId:    *chainIDBig,
+						Multisig:   mcmsAddress,
+						Nonce:      uint64(nonce),
+						To:         toAddress,
+						ModuleName: additionalFields.ModuleName,
+						Function:   additionalFields.Function,
+						Data:       chunk,
+					},
+					proof,
+				)
+				if err != nil {
+					return types.TransactionResult{}, fmt.Errorf("executing data chunk %v of %v on Aptos mcms contract: %w", i, len(chunks), err)
+				}
+				break
+			}
+			// All other chunks will be staged and executed with the last chunk
+			tx, err := mcmsC.MCMSExecutor.StageData(
+				opts,
+				chunk,
+				nil,
+			)
+			if err != nil {
+				return types.TransactionResult{}, fmt.Errorf("staging data chunk %v of %v on Aptos mcms contract: %w", i, len(chunks), err)
+			}
+			_, err = e.client.WaitForTransaction(tx.Hash)
+			if err != nil {
+				return types.TransactionResult{}, fmt.Errorf("waiting for data chunk %v of %v on Aptos mcms contract: %w", i, len(chunks), err)
 			}
 		}
 	}
-	if !found {
-		return types.TransactionResult{}, fmt.Errorf("unable to find config event on Aptos mcms contract")
-	}
 
 	return types.TransactionResult{
-		Hash:           data.Hash,
+		Hash:           tx.Hash,
 		ChainFamily:    chain_selectors.FamilyAptos,
-		RawTransaction: data,
+		RawTransaction: tx,
 	}, nil
 }
 
@@ -141,57 +179,31 @@ func (e Executor) SetRoot(
 
 	signatures := encodeSignatures(sortedSignatures)
 
-	payload, err := aptosutil.BuildTransactionPayload(
-		metadata.MCMAddress+"::mcms::set_root",
-		nil,
-		[]string{
-			"vector<u8>",
-			"u64",
-			"u256",
-			"address",
-			"u64",
-			"u64",
-			"bool",
-			"vector<vector<u8>>",
-			"vector<vector<u8>>",
+	mcmsC := mcms.Bind(mcmsAddress, e.client)
+	opts := &bind.TransactOpts{Signer: e.auth}
+
+	tx, err := mcmsC.MCMS.SetRoot(
+		opts,
+		root,
+		uint64(validUntil),
+		module_mcms.RootMetadata{
+			ChainId:              *chainIDBig,
+			Multisig:             mcmsAddress,
+			PreOpCount:           metadata.StartingOpCount,
+			PostOpCount:          metadata.StartingOpCount + e.TxCount,
+			OverridePreviousRoot: e.OverridePreviousRoot,
 		},
-		[]any{
-			root,
-			uint64(validUntil),
-			chainIDBig,
-			mcmsAddress,
-			metadata.StartingOpCount,
-			metadata.StartingOpCount + e.TxCount,
-			e.OverridePreviousRoot,
-			proof,
-			signatures,
-		},
+		proof,
+		signatures,
 	)
-	if err != nil {
-		return types.TransactionResult{}, err
-	}
-	data, err := aptosutil.BuildSignSubmitAndWaitForTransaction(e.client, e.auth, payload)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("setting root on Aptos mcms contract: %w", err)
 	}
 
-	found := false
-	for _, event := range data.Events {
-		if event.Type == mcmsAddress.String()+"::mcms::NewRoot" {
-			if root, ok := event.Data["root"]; ok {
-				_ = root
-				found = true
-			}
-		}
-	}
-	if !found {
-		return types.TransactionResult{}, fmt.Errorf("unable to find config event on Aptos mcms contract")
-	}
-
 	return types.TransactionResult{
-		Hash:           data.Hash,
+		Hash:           tx.Hash,
 		ChainFamily:    chain_selectors.FamilyAptos,
-		RawTransaction: data,
+		RawTransaction: tx,
 	}, nil
 }
 

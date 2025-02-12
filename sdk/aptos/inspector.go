@@ -7,7 +7,7 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
 
-	aptosutil "github.com/smartcontractkit/mcms/e2e/utils/aptos"
+	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -24,109 +24,53 @@ func NewInspector(client aptos.AptosRpcClient) *Inspector {
 }
 
 func (i Inspector) GetConfig(ctx context.Context, mcmAddr string) (*types.Config, error) {
-	payload, err := aptosutil.BuildViewPayload(
-		mcmAddr+"::mcms::get_config",
-		nil,
-		nil,
-		nil,
-	)
+	mcmsAddress := aptos.AccountAddress{}
+	_ = mcmsAddress.ParseStringRelaxed(mcmAddr)
+	mcmsC := mcms.Bind(mcmsAddress, i.client)
+	config, err := mcmsC.MCMS.GetConfig(nil)
 	if err != nil {
-		return nil, err
-	}
-	data, err := i.client.View(payload)
-	if err != nil {
-		return nil, fmt.Errorf("read: mcms::get_config: %w", err)
+		return nil, fmt.Errorf("get config: %w", err)
 	}
 
-	var (
-		response ManyChainMultiSigConfig
-	)
-
-	if err := aptosutil.DecodeAptosJsonValue(data, &response); err != nil {
-		return nil, fmt.Errorf("decode: mcms::get_config: %w", err)
-	}
-
-	return i.ToConfig(response)
+	return i.ToConfig(config)
 }
 
 func (i Inspector) GetOpCount(ctx context.Context, mcmAddr string) (uint64, error) {
-	payload, err := aptosutil.BuildViewPayload(
-		mcmAddr+"::mcms::get_op_count",
-		nil,
-		nil,
-		nil,
-	)
+	mcmsAddress := aptos.AccountAddress{}
+	_ = mcmsAddress.ParseStringRelaxed(mcmAddr)
+	mcmsC := mcms.Bind(mcmsAddress, i.client)
+	opCount, err := mcmsC.MCMS.GetOpCount(nil)
 	if err != nil {
-		return 0, err
-	}
-	data, err := i.client.View(payload)
-	if err != nil {
-		return 0, fmt.Errorf("read: mcms::get_op_count: %w", err)
+		return 0, fmt.Errorf("get op count: %w", err)
 	}
 
-	var (
-		opcount uint64
-	)
-
-	if err := aptosutil.DecodeAptosJsonValue(data, &opcount); err != nil {
-		return 0, fmt.Errorf("decode: mcms::get_op_count: %w", err)
-	}
-
-	return opcount, nil
+	return opCount, nil
 }
 
 func (i Inspector) GetRoot(ctx context.Context, mcmAddr string) (common.Hash, uint32, error) {
-	payload, err := aptosutil.BuildViewPayload(
-		mcmAddr+"::mcms::get_root",
-		nil,
-		nil,
-		nil,
-	)
+	mcmsAddress := aptos.AccountAddress{}
+	_ = mcmsAddress.ParseStringRelaxed(mcmAddr)
+	mcmsC := mcms.Bind(mcmsAddress, i.client)
+	root, validUntil, err := mcmsC.MCMS.GetRoot(nil)
 	if err != nil {
-		return common.Hash{}, 0, err
-	}
-	data, err := i.client.View(payload)
-	if err != nil {
-		return common.Hash{}, 0, fmt.Errorf("read: mcms::get_root: %w", err)
+		return common.Hash{}, 0, fmt.Errorf("get root: %w", err)
 	}
 
-	var (
-		hash       []byte
-		validUntil uint32
-	)
-
-	if err := aptosutil.DecodeAptosJsonValue(data, &hash, &validUntil); err != nil {
-		return common.Hash{}, 0, fmt.Errorf("decode: mcms::get_root: %w", err)
-	}
-
-	return common.BytesToHash(hash), validUntil, nil
+	return root, uint32(validUntil), nil
 }
 
 func (i Inspector) GetRootMetadata(ctx context.Context, mcmAddr string) (types.ChainMetadata, error) {
-	payload, err := aptosutil.BuildViewPayload(
-		mcmAddr+"::mcms::get_root_metadata",
-		nil,
-		nil,
-		nil,
-	)
-	if err != nil {
-		return types.ChainMetadata{}, err
-	}
-	data, err := i.client.View(payload)
-	if err != nil {
-		return types.ChainMetadata{}, fmt.Errorf("read: mcms::get_root_metadata: %w", err)
-	}
+	mcmsAddress := aptos.AccountAddress{}
+	_ = mcmsAddress.ParseStringRelaxed(mcmAddr)
+	mcmsC := mcms.Bind(mcmsAddress, i.client)
 
-	var (
-		metadata ManyChainMultiSigRootMetadata
-	)
-
-	if err := aptosutil.DecodeAptosJsonValue(data, &metadata); err != nil {
-		return types.ChainMetadata{}, fmt.Errorf("decode: mcms::get_root_metadata: %w", err)
+	rootMetadata, err := mcmsC.MCMS.GetRootMetadata(nil)
+	if err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("get root metadata: %w", err)
 	}
 
 	return types.ChainMetadata{
-		StartingOpCount: metadata.PreOpCount,
-		MCMAddress:      metadata.Multisig,
+		StartingOpCount: rootMetadata.PreOpCount,
+		MCMAddress:      rootMetadata.Multisig.StringLong(),
 	}, nil
 }
