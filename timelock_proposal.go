@@ -31,17 +31,13 @@ type TimelockProposal struct {
 var _ ProposalInterface = (*TimelockProposal)(nil)
 
 // NewTimelockProposal unmarshal data from the reader to JSON and returns a new TimelockProposal.
-// The predecessors parameter is a list of readers that contain the predecessors
-// for the proposal for configuring operations counts, which makes the following
-// assumptions:
-//   - The order of the predecessors array is the order in which the proposals are
-//     intended to be executed.
-//   - The op counts for the first proposal are meant to be the starting op for the
-//     full set of proposals.
-//   - The op counts for all other proposals except the first are ignored
-//   - all proposals are configured correctly and need no additional modifications
-func NewTimelockProposal(r io.Reader, predecessors []io.Reader) (*TimelockProposal, error) {
-	return newProposal[*TimelockProposal](r, predecessors)
+func NewTimelockProposal(r io.Reader, opts ...ProposalOption) (*TimelockProposal, error) {
+	options := &proposalOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	return newProposal[*TimelockProposal](r, options.predecessors)
 }
 
 func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
