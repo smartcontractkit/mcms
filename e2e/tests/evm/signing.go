@@ -49,7 +49,7 @@ func (s *SigningTestSuite) TestReadAndSign() {
 		}
 	}(file)
 	s.Require().NoError(err)
-	proposal, err := mcms.NewProposal(file, []io.Reader{})
+	proposal, err := mcms.NewProposal(file)
 	s.Require().NoError(err)
 	s.Require().NotNil(proposal)
 	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
@@ -81,7 +81,7 @@ func (s *SigningTestSuite) TestReadAndSign() {
 	_, err = tmpFile.Seek(0, io.SeekStart)
 	s.Require().NoError(err, "Failed to reset file pointer to the start")
 
-	writtenProposal, err := mcms.NewProposal(tmpFile, []io.Reader{})
+	writtenProposal, err := mcms.NewProposal(tmpFile)
 	s.Require().NoError(err)
 
 	// Validate the appended signature

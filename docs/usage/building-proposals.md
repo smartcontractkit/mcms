@@ -36,7 +36,7 @@ func main() {
   defer file.Close()
 
   // Create the proposal from the JSON data
-  proposal, err := mcms.NewProposal(file, []io.Reader{})
+  proposal, err := mcms.NewProposal(file)
   if err != nil {
     log.Fatalf("Error creating proposal: %v", err)
   }
@@ -49,7 +49,9 @@ For the JSON structure of the proposal please check the [MCMS Proposal Format Do
 
 ### Build Proposal Given Staged but Non-Executed Predecessor Proposals
 
-In scenarios where a proposal is generated with the assumption that multiple proposals are executed beforehand, you can enable proposals to be signed in parallel with a pre-determined execution order. This can be achieved by passing a list of files as the second argument in the Proposal constructor, as shown below:
+In scenarios where a proposal is generated with the assumption that multiple proposals are executed beforehand, 
+you can enable proposals to be signed in parallel with a pre-determined execution order. This can be achieved
+by passing a list of files using the `WithPredecessors` functional option, as shown below:
 
 ```go
 package main
@@ -78,7 +80,7 @@ func main() {
   defer preFile.Close()
 
   // Create the proposal from the JSON data
-  proposal, err := mcms.NewProposal(file, []io.Reader{preFile})
+  proposal, err := mcms.NewProposal(file, mcms.WithPredecessors([]io.Reader{preFile}))
   if err != nil {
     log.Fatalf("Error creating proposal: %v", err)
   }
