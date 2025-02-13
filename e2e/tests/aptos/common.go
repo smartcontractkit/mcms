@@ -59,7 +59,7 @@ func (a *AptosTestSuite) SetupSuite() {
 }
 
 func (a *AptosTestSuite) deployMCM() {
-	addr, tx, mcmsContract, err := mcms.Deploy(a.deployerAccount, a.TestSetup.AptosRPCClient)
+	addr, tx, mcmsContract, err := mcms.DeployToResourceAccount(a.deployerAccount, a.TestSetup.AptosRPCClient)
 	a.Require().NoError(err)
 	data, err := a.TestSetup.AptosRPCClient.WaitForTransaction(tx.Hash)
 	a.Require().NoError(err)

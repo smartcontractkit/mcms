@@ -9,15 +9,12 @@ import (
 	"slices"
 	"time"
 
-	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/ccip"
-	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/compile"
 	module_mcms "github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/mcms_large_packages"
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
@@ -58,14 +55,11 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 	a.T().Logf("✅ SetConfig in tx: %s", result.Hash)
 
 	// Initiate ownership transfer
-	tx, err := a.MCMContract.MCMS.TransferOwnershipToSelf(opts)
+	tx, err := a.MCMContract.MCMSAccount.TransferOwnershipToSelf(opts)
 	a.Require().NoError(err)
 	_, err = a.AptosRPCClient.WaitForTransaction(tx.Hash)
 	a.Require().NoError(err)
 	a.T().Logf("🚀 TransferOwnershipToSelf in tx: %s", tx.Hash)
-
-	// Need to store the address of the large packages contract
-	var preregisteredObjectAddress aptos.AccountAddress
 
 	// Build first proposal
 	{
@@ -81,7 +75,7 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 			})
 
 		// Call 1 - accept ownership
-		module, function, _, args, err := a.MCMContract.MCMS.EncodeAcceptOwnership()
+		module, function, _, args, err := a.MCMContract.MCMSAccount.EncodeAcceptOwnership()
 		a.Require().NoError(err)
 		additionalFields := aptossdk.AdditionalFields{
 			ModuleName: module.Name,
@@ -95,27 +89,6 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 				To:               a.MCMContract.Address.StringLong(),
 				Data:             module_mcms.ArgsToData(args),
 				AdditionalFields: callOneAdditionalFields,
-			},
-		})
-
-		// Call 2 - deploy mcms_large_packages to preregistered object
-		var compiledPackage compile.CompiledPackage
-		compiledPackage, preregisteredObjectAddress, err = mcms_large_packages.Compile(ccip.DefaultSeed, a.MCMContract.Address)
-		a.Require().NoError(err)
-		a.T().Logf("Deploying user contract to: %v", preregisteredObjectAddress.StringLong())
-		module, function, _, args, err = a.MCMContract.MCMS.EncodeOwnedObjectPublish([]byte(ccip.DefaultSeed), compiledPackage.Metadata, compiledPackage.Bytecode)
-		a.Require().NoError(err)
-		additionalFields = aptossdk.AdditionalFields{
-			ModuleName: module.Name,
-			Function:   function,
-		}
-		deployAdditionalFields, err := json.Marshal(additionalFields)
-		proposalBuilder.AddOperation(types.Operation{
-			ChainSelector: a.ChainSelector,
-			Transaction: types.Transaction{
-				To:               a.MCMContract.Address.StringLong(),
-				Data:             module_mcms.ArgsToData(args),
-				AdditionalFields: deployAdditionalFields,
 			},
 		})
 
@@ -151,7 +124,7 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 
 		data, err := a.AptosRPCClient.WaitForTransaction(txHash.Hash)
 		a.Require().NoError(err)
-		a.Require().True(data.Success, "SetRoot failed")
+		a.Require().True(data.Success, "SetRoot failed: %v", data.VmStatus)
 
 		// Assert
 		tree, _ := proposal.MerkleTree()
@@ -170,7 +143,7 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 
 			data, err = a.AptosRPCClient.WaitForTransaction(txOutput.Hash)
 			a.Require().NoError(err)
-			a.Require().True(data.Success, "Execution failed")
+			a.Require().True(data.Success, "Execution failed: %v", data.VmStatus)
 
 			// Assert
 
@@ -182,7 +155,7 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 		}
 
 		// Check that ownership has been transferred
-		owner, err := a.MCMContract.MCMS.Owner(nil)
+		owner, err := a.MCMContract.MCMSAccount.Owner(nil)
 		a.Require().NoError(err)
 		a.Require().Equal(a.MCMContract.Address.StringLong(), owner.StringLong())
 
@@ -192,6 +165,15 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 	// Second proposal - deploy CCIP
 
 	{
+		// Calculate addresses of the owner and the object
+		ccipOwnerAddress, err := a.MCMContract.MCMSRegistry.GetNewCodeObjectOwnerAddress(nil, ccip.DefaultSeed)
+		a.Require().NoError(err)
+		ccipObjectAddress, err := a.MCMContract.MCMSRegistry.GetNewCodeObjectAddress(nil, ccip.DefaultSeed)
+		a.Require().NoError(err)
+
+		a.T().Logf("CCIP owner address: %v", ccipOwnerAddress.StringLong())
+		a.T().Logf("CCIP object address: %v", ccipObjectAddress.StringLong())
+
 		startingOpCount, err := inspector.GetOpCount(context.Background(), a.MCMContract.Address.StringLong())
 		a.Require().NoError(err)
 		validUntil := time.Now().Add(time.Hour * 24).Unix()
@@ -206,20 +188,20 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 			})
 
 		// Compile CCIP
-
-		ccipPayload, err := ccip.Compile(ccip.DefaultSeed, a.MCMContract.Address)
+		ccipPayload, err := ccip.Compile(ccipObjectAddress)
 		a.Require().NoError(err)
 
 		// Create chunks
 		chunks, err := bind.CreateChunks(ccipPayload, bind.CHUNK_SIZE_IN_BYTES)
 		a.Require().NoError(err)
+		a.T().Logf("Will deploy CCIP in %v chunks...", len(chunks))
 
-		// Stage chunks with mcms_large_packages and execute with the last one
-		mcmsLargePackagesContract := mcms_large_packages.Bind(preregisteredObjectAddress, nil)
+		// Stage chunks with mcms_deployer module and execute with the last one
 		for i, chunk := range chunks {
+			a.T().Logf("Adding chunk %v...", i)
 			if i == len(chunks)-1 {
 				// Last chunk stages the remaining data and executes
-				module, function, _, args, err := mcmsLargePackagesContract.LargePackages.EncodeStageCodeChunkAndPublishToAccount(chunk.Metadata, chunk.CodeIndices, chunk.Chunks)
+				module, function, _, args, err := a.MCMContract.MCMSDeployer.EncodeStageCodeChunkAndPublishToObject(chunk.Metadata, chunk.CodeIndices, chunk.Chunks, ccip.DefaultSeed)
 				a.Require().NoError(err)
 				additionalFields := aptossdk.AdditionalFields{
 					ModuleName: module.Name,
@@ -230,14 +212,14 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 				proposalBuilder.AddOperation(types.Operation{
 					ChainSelector: a.ChainSelector,
 					Transaction: types.Transaction{
-						To:               preregisteredObjectAddress.StringLong(),
+						To:               a.MCMContract.Address.StringLong(),
 						Data:             module_mcms.ArgsToData(args),
 						AdditionalFields: afBytes,
 					},
 				})
 				break
 			}
-			module, function, _, args, err := mcmsLargePackagesContract.LargePackages.EncodeStageCodeChunk(chunk.Metadata, chunk.CodeIndices, chunk.Chunks)
+			module, function, _, args, err := a.MCMContract.MCMSDeployer.EncodeStageCodeChunk(chunk.Metadata, chunk.CodeIndices, chunk.Chunks)
 			a.Require().NoError(err)
 			additionalFields := aptossdk.AdditionalFields{
 				ModuleName: module.Name,
@@ -248,7 +230,7 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 			proposalBuilder.AddOperation(types.Operation{
 				ChainSelector: a.ChainSelector,
 				Transaction: types.Transaction{
-					To:               preregisteredObjectAddress.StringLong(),
+					To:               a.MCMContract.Address.StringLong(),
 					Data:             module_mcms.ArgsToData(args),
 					AdditionalFields: afBytes,
 				},
@@ -283,11 +265,11 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 
 		txHash, err := executable.SetRoot(context.Background(), a.ChainSelector)
 		a.Require().NoError(err)
-		a.T().Logf("✅ SetRoot in tx: %s", txHash.Hash)
 
 		data, err := a.AptosRPCClient.WaitForTransaction(txHash.Hash)
 		a.Require().NoError(err)
-		a.Require().True(data.Success, "SetRoot failed")
+		a.Require().True(data.Success, "SetRoot failed: %v", data.VmStatus)
+		a.T().Logf("✅ SetRoot in tx: %s", txHash.Hash)
 
 		// Execute
 		for i := range proposal.Operations {
@@ -295,11 +277,11 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 			var txOutput types.TransactionResult
 			txOutput, err = executable.Execute(context.Background(), i)
 			a.Require().NoError(err)
-			a.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
 
 			data, err := a.AptosRPCClient.WaitForTransaction(txOutput.Hash)
 			a.Require().NoError(err)
-			a.Require().True(data.Success, "Execution failed")
+			a.Require().True(data.Success, "Execution failed: %v", data.VmStatus)
+			a.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
 
 			// Assert
 

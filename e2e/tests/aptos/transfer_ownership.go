@@ -50,7 +50,7 @@ func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
 	a.T().Logf("✅ SetConfig in tx: %s", result.Hash)
 
 	// Initiate ownership transfer
-	tx, err := a.MCMContract.MCMS.TransferOwnershipToSelf(opts)
+	tx, err := a.MCMContract.MCMSAccount.TransferOwnershipToSelf(opts)
 	a.Require().NoError(err)
 	_, err = a.AptosRPCClient.WaitForTransaction(tx.Hash)
 	a.Require().NoError(err)
@@ -69,7 +69,7 @@ func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
 		})
 
 	// Call 1
-	module, function, _, args, err := a.MCMContract.MCMS.EncodeAcceptOwnership()
+	module, function, _, args, err := a.MCMContract.MCMSAccount.EncodeAcceptOwnership()
 	a.Require().NoError(err)
 
 	additionalFields := aptossdk.AdditionalFields{
@@ -152,7 +152,7 @@ func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
 	}
 
 	// Check that ownership has been transferred
-	owner, err := a.MCMContract.MCMS.Owner(nil)
+	owner, err := a.MCMContract.MCMSAccount.Owner(nil)
 	a.Require().NoError(err)
 	a.Require().Equal(a.MCMContract.Address.StringLong(), owner.StringLong())
 
