@@ -16,7 +16,7 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@7a4d99cb349ea8f25195d2390d157942031f8a57
+        uses: smartcontractkit/.github/actions/ci-lint-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-go@0.3.1
         with:
           golangci-lint-version: v1.61.0
           # grafana inputs
@@ -34,7 +34,7 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@7a4d99cb349ea8f25195d2390d157942031f8a57
+        uses: smartcontractkit/.github/actions/ci-lint-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-go@0.3.1
         with:
           golangci-lint-version: v1.62.0
           golangci-lint-args: --build-tags="e2e"
@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Linting Misc (yaml + sh files)
-        uses: smartcontractkit/.github/actions/ci-lint-misc@7a4d99cb349ea8f25195d2390d157942031f8a57
+        uses: smartcontractkit/.github/actions/ci-lint-misc@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-misc@0.1.4
         with:
           # grafana inputs
           metrics-job-name: ci-lint-misc
@@ -65,7 +65,7 @@ jobs:
       actions: read
     steps:
       - name: Build and test
-        uses: smartcontractkit/.github/actions/ci-test-go@7a4d99cb349ea8f25195d2390d157942031f8a57
+        uses: smartcontractkit/.github/actions/ci-test-go@3835daadbcefcae06d12dc42a405a856c980d2cc # ci-test-go@0.3.4
         with:
           go-test-cmd: go test -coverprofile=coverage.txt $(go list ./...)
           use-go-cache: true
@@ -90,7 +90,7 @@ jobs:
         with:
             version: 1.18.10
       - name: Build and test
-        uses: smartcontractkit/.github/actions/ci-test-go@7a4d99cb349ea8f25195d2390d157942031f8a57
+        uses: smartcontractkit/.github/actions/ci-test-go@3835daadbcefcae06d12dc42a405a856c980d2cc # ci-test-go@0.3.4
         with:
           go-test-cmd: go generate -tags=e2e ./e2e/... && CTF_CONFIGS=../config.toml go test -tags=e2e -v ./e2e/tests/...
           use-go-cache: true
@@ -107,7 +107,7 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Scanning with Sonarqube
-        uses: smartcontractkit/.github/actions/ci-sonarqube-go@5f4a9c9c3407dd499a1ebbc658a45b9beb9bf675
+        uses: smartcontractkit/.github/actions/ci-sonarqube-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-sonarqube-go@0.3.1
         with:
           # sonarqube inputs
           sonar-token: ${{ secrets.SONAR_TOKEN }}
