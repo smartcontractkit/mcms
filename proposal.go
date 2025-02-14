@@ -44,7 +44,7 @@ func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInt
 		// Ensure the file is closed when done
 		defer file.Close()
 
-		return NewProposal(file, []io.Reader{}) // TODO: inject predecessors
+		return NewProposal(file)
 	case types.KindTimelockProposal:
 		// Open the file
 		file, err := os.Open(filePath)
@@ -55,7 +55,7 @@ func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInt
 		// Ensure the file is closed when done
 		defer file.Close()
 
-		return NewTimelockProposal(file, []io.Reader{}) // TODO: inject predecessors
+		return NewTimelockProposal(file)
 	default:
 		return nil, errors.New("unknown proposal type")
 	}
@@ -107,9 +107,14 @@ type Proposal struct {
 
 var _ ProposalInterface = (*Proposal)(nil)
 
-// NewProposal unmarshals data from the reader to JSON and returns a new Proposal.
-// The predecessors parameter is a list of readers that contain the predecessors
-// for the proposal for configuring operations counts, which makes the following
+type ProposalOption func(*proposalOptions)
+
+type proposalOptions struct {
+	predecessors []io.Reader
+}
+
+// WithPredecessors is an option that allows the user to specify a list of
+// that contain the predecessors for the proposal for configuring operations counts, which makes the following
 // assumptions:
 //   - The order of the predecessors array is the order in which the proposals are
 //     intended to be executed.
@@ -117,8 +122,23 @@ var _ ProposalInterface = (*Proposal)(nil)
 //     full set of proposals.
 //   - The op counts for all other proposals except the first are ignored
 //   - all proposals are configured correctly and need no additional modifications
-func NewProposal(reader io.Reader, predecessors []io.Reader) (*Proposal, error) {
-	return newProposal[*Proposal](reader, predecessors)
+func WithPredecessors(predecessors []io.Reader) ProposalOption {
+	return func(opts *proposalOptions) {
+		opts.predecessors = predecessors
+		if opts.predecessors == nil {
+			opts.predecessors = []io.Reader{}
+		}
+	}
+}
+
+// NewProposal unmarshals data from the reader to JSON and returns a new Proposal.
+func NewProposal(reader io.Reader, opts ...ProposalOption) (*Proposal, error) {
+	options := &proposalOptions{}
+	for _, opt := range opts {
+		opt(options)
+	}
+
+	return newProposal[*Proposal](reader, options.predecessors)
 }
 
 // WriteProposal marshals the proposal to JSON and writes it to the provided writer.

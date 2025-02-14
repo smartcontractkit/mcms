@@ -17,8 +17,6 @@ import (
 
 var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 
-var TimelockOpDoneTimestamp = uint64(1)
-
 // TimelockInspector is an Inspector implementation for Solana chains for accessing the RBACTimelock contract
 type TimelockInspector struct {
 	client *rpc.Client
@@ -65,6 +63,11 @@ func (t TimelockInspector) GetCancellers(ctx context.Context, address string) ([
 	return accessList, nil
 }
 
+// ---------------------
+// Implementation of these IsOperations are based on the rust implementation at
+// https://github.com/smartcontractkit/chainlink-ccip/blob/main/chains/solana/contracts/programs/timelock/src/state/operation.rs#L33
+// ---------------------
+
 func (t TimelockInspector) IsOperation(ctx context.Context, address string, opID [32]byte) (bool, error) {
 	_, err := t.getOpData(ctx, address, opID)
 	if err != nil {
@@ -84,7 +87,7 @@ func (t TimelockInspector) IsOperationPending(ctx context.Context, address strin
 		return false, err
 	}
 
-	return op.Timestamp > TimelockOpDoneTimestamp, nil
+	return op.State == timelock.Scheduled_OperationState, nil
 }
 
 func (t TimelockInspector) IsOperationReady(ctx context.Context, address string, opID [32]byte) (bool, error) {
@@ -108,7 +111,7 @@ func (t TimelockInspector) IsOperationReady(ctx context.Context, address string,
 		return false, errors.New("failed to get block time: nil value")
 	}
 
-	return op.Timestamp > TimelockOpDoneTimestamp && ts <= int64(*blockTime), nil
+	return op.State == timelock.Scheduled_OperationState && ts <= int64(*blockTime), nil
 }
 
 func (t TimelockInspector) IsOperationDone(ctx context.Context, address string, opID [32]byte) (bool, error) {
@@ -117,7 +120,7 @@ func (t TimelockInspector) IsOperationDone(ctx context.Context, address string, 
 		return false, err
 	}
 
-	return op.Timestamp == TimelockOpDoneTimestamp, nil
+	return op.State == timelock.Done_OperationState, nil
 }
 
 func (t TimelockInspector) getOpData(ctx context.Context, address string, opID [32]byte) (timelock.Operation, error) {

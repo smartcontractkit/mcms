@@ -1,5 +1,23 @@
 # @smartcontractkit/mcms
 
+## 0.11.0
+
+### Minor Changes
+
+- [#295](https://github.com/smartcontractkit/mcms/pull/295) [`29afd9d`](https://github.com/smartcontractkit/mcms/commit/29afd9da94f27be613771f393139d3cb8f1d7ab1) Thanks [@akhilchainani](https://github.com/akhilchainani)! - Add additional isReady helpers to API
+
+## 0.10.1
+
+### Patch Changes
+
+- [#291](https://github.com/smartcontractkit/mcms/pull/291) [`f76ce79`](https://github.com/smartcontractkit/mcms/commit/f76ce79b354e3f50fa00e1d7653990013f6a2955) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - retrigger publishing due to previous failure
+
+## 0.10.0
+
+### Minor Changes
+
+- [#289](https://github.com/smartcontractkit/mcms/pull/289) [`1eeb56a`](https://github.com/smartcontractkit/mcms/commit/1eeb56aee88fb4e13d155892bdd2ea381c04b61d) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - Address latest breaking change (new Operation Enums and Chunk based instructions for timelock converter)
+
 ## 0.9.0
 
 ### Minor Changes
