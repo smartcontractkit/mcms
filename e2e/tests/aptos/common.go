@@ -4,6 +4,7 @@ package aptos
 
 import (
 	"os"
+	"time"
 
 	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/aptos-labs/aptos-go-sdk/crypto"
@@ -59,7 +60,8 @@ func (a *AptosTestSuite) SetupSuite() {
 }
 
 func (a *AptosTestSuite) deployMCM() {
-	addr, tx, mcmsContract, err := mcms.DeployToResourceAccount(a.deployerAccount, a.TestSetup.AptosRPCClient)
+	mcmsSeed := mcms.DefaultSeed + time.Now().String()
+	addr, tx, mcmsContract, err := mcms.DeployToResourceAccount(a.deployerAccount, a.TestSetup.AptosRPCClient, mcmsSeed)
 	a.Require().NoError(err)
 	data, err := a.TestSetup.AptosRPCClient.WaitForTransaction(tx.Hash)
 	a.Require().NoError(err)
