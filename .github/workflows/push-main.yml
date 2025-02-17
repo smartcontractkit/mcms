@@ -58,7 +58,7 @@ jobs:
       actions: read
     steps:
       - name: ci-test
-        uses: smartcontractkit/.github/actions/ci-test-go@3835daadbcefcae06d12dc42a405a856c980d2cc # ci-test-go@0.3.4
+        uses: smartcontractkit/.github/actions/ci-test-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-test-go@0.3.4
         with:
           go-test-cmd: go test -coverprofile=coverage.txt $(go list ./...)
           use-go-cache: true
@@ -83,7 +83,7 @@ jobs:
         with:
           version: 1.18.10
       - name: Build and test
-        uses: smartcontractkit/.github/actions/ci-test-go@3835daadbcefcae06d12dc42a405a856c980d2cc # ci-test-go@0.3.4
+        uses: smartcontractkit/.github/actions/ci-test-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-test-go@0.3.4
         with:
           go-test-cmd: go generate -tags=e2e ./e2e/... && CTF_CONFIGS=../config.toml go test -tags=e2e -v ./e2e/tests/...
           use-go-cache: true
