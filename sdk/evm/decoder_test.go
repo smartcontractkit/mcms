@@ -59,7 +59,7 @@ func TestDecoder(t *testing.T) {
 			t.Parallel()
 
 			d := NewDecoder()
-			got, err := d.Decode(tt.give, tt.contractInterfaces)
+			got, err := d.Decode(tt.give.Transaction, tt.contractInterfaces)
 			if tt.wantErr != "" {
 				assert.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)

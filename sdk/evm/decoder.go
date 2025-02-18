@@ -16,8 +16,8 @@ func NewDecoder() *Decoder {
 	return &Decoder{}
 }
 
-func (d *Decoder) Decode(op types.Operation, contractInterfaces string) (sdk.DecodedOperation, error) {
-	return ParseFunctionCall(contractInterfaces, op.Transaction.Data)
+func (d *Decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.DecodedOperation, error) {
+	return ParseFunctionCall(contractInterfaces, tx.Data)
 }
 
 // ParseFunctionCall parses a full data payload (with function selector at the front of it) and a full contract ABI
