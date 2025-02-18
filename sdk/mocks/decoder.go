@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	sdk "github.com/smartcontractkit/mcms/sdk"
 	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/smartcontractkit/mcms/types"
@@ -21,39 +22,34 @@ func (_m *Decoder) EXPECT() *Decoder_Expecter {
 	return &Decoder_Expecter{mock: &_m.Mock}
 }
 
-// Decode provides a mock function with given fields: op, abi
-func (_m *Decoder) Decode(op types.Operation, abi string) (string, string, error) {
-	ret := _m.Called(op, abi)
+// Decode provides a mock function with given fields: op, contractInterfaces
+func (_m *Decoder) Decode(op types.Operation, contractInterfaces string) (sdk.DecodedOperation, error) {
+	ret := _m.Called(op, contractInterfaces)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Decode")
 	}
 
-	var r0 string
-	var r1 string
-	var r2 error
-	if rf, ok := ret.Get(0).(func(types.Operation, string) (string, string, error)); ok {
-		return rf(op, abi)
+	var r0 sdk.DecodedOperation
+	var r1 error
+	if rf, ok := ret.Get(0).(func(types.Operation, string) (sdk.DecodedOperation, error)); ok {
+		return rf(op, contractInterfaces)
 	}
-	if rf, ok := ret.Get(0).(func(types.Operation, string) string); ok {
-		r0 = rf(op, abi)
+	if rf, ok := ret.Get(0).(func(types.Operation, string) sdk.DecodedOperation); ok {
+		r0 = rf(op, contractInterfaces)
 	} else {
-		r0 = ret.Get(0).(string)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(sdk.DecodedOperation)
+		}
 	}
 
-	if rf, ok := ret.Get(1).(func(types.Operation, string) string); ok {
-		r1 = rf(op, abi)
+	if rf, ok := ret.Get(1).(func(types.Operation, string) error); ok {
+		r1 = rf(op, contractInterfaces)
 	} else {
-		r1 = ret.Get(1).(string)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(types.Operation, string) error); ok {
-		r2 = rf(op, abi)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
 // Decoder_Decode_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Decode'
@@ -63,24 +59,24 @@ type Decoder_Decode_Call struct {
 
 // Decode is a helper method to define mock.On call
 //   - op types.Operation
-//   - abi string
-func (_e *Decoder_Expecter) Decode(op interface{}, abi interface{}) *Decoder_Decode_Call {
-	return &Decoder_Decode_Call{Call: _e.mock.On("Decode", op, abi)}
+//   - contractInterfaces string
+func (_e *Decoder_Expecter) Decode(op interface{}, contractInterfaces interface{}) *Decoder_Decode_Call {
+	return &Decoder_Decode_Call{Call: _e.mock.On("Decode", op, contractInterfaces)}
 }
 
-func (_c *Decoder_Decode_Call) Run(run func(op types.Operation, abi string)) *Decoder_Decode_Call {
+func (_c *Decoder_Decode_Call) Run(run func(op types.Operation, contractInterfaces string)) *Decoder_Decode_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(types.Operation), args[1].(string))
 	})
 	return _c
 }
 
-func (_c *Decoder_Decode_Call) Return(methodName string, args string, err error) *Decoder_Decode_Call {
-	_c.Call.Return(methodName, args, err)
+func (_c *Decoder_Decode_Call) Return(_a0 sdk.DecodedOperation, _a1 error) *Decoder_Decode_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *Decoder_Decode_Call) RunAndReturn(run func(types.Operation, string) (string, string, error)) *Decoder_Decode_Call {
+func (_c *Decoder_Decode_Call) RunAndReturn(run func(types.Operation, string) (sdk.DecodedOperation, error)) *Decoder_Decode_Call {
 	_c.Call.Return(run)
 	return _c
 }
