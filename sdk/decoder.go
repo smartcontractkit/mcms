@@ -6,13 +6,22 @@ import (
 
 type DecodedOperation interface {
 	MethodName() string
-	Args() []any    // TODO: this maybe should be a generic type
-	String() string // human readable representation
+	Args() []any
+
+	// String returns a human readable representation of the decoded operation.
+	//
+	// The first return value is the method name.
+	// The second return value is a string representation of the input arguments.
+	// The third return value is an error if there was an issue generating the string.
+	String() (string, string, error)
 }
 
 // Decoder decodes the transaction data of chain operations.
 //
 // This is only required if the chain supports decoding.
 type Decoder interface {
-	Decode(op types.Operation, abi string) (DecodedOperation, error)
+	// Decode decodes the transaction data of a chain operation.
+	//
+	// contractInterfaces is the ABI of the contract that the operation is interacting with.
+	Decode(op types.Operation, contractInterfaces string) (DecodedOperation, error)
 }

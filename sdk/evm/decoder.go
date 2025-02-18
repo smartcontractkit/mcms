@@ -35,7 +35,7 @@ func (d *DecodedOperation) String() (string, string, error) {
 		inputMap[key.Name] = d.InputArgs[i]
 	}
 
-	byteMap, err := json.Marshal(inputMap)
+	byteMap, err := json.MarshalIndent(inputMap, "", "  ")
 	if err != nil {
 		return "", "", err
 	}
@@ -48,8 +48,8 @@ type Decoder struct {
 
 var _ sdk.Decoder = &Decoder{}
 
-func (d *Decoder) Decode(op types.Operation, abi string) (sdk.DecodedOperation, error) {
-	return ParseFunctionCall(abi, op.Transaction.Data)
+func (d *Decoder) Decode(op types.Operation, contractInterfaces string) (sdk.DecodedOperation, error) {
+	return ParseFunctionCall(contractInterfaces, op.Transaction.Data)
 }
 
 // ParseFunctionCall parses a full data payload (with function selector at the front of it) and a full contract ABI
