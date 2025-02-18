@@ -51,6 +51,16 @@ func TestNewDecodedOperation(t *testing.T) {
 				assert.Equal(t, tt.functionName, got.FunctionName)
 				assert.Equal(t, tt.inputKeys, got.InputKeys)
 				assert.Equal(t, tt.inputArgs, got.InputArgs)
+
+				// Test member functions
+				assert.Equal(t, tt.functionName, got.MethodName())
+				assert.Equal(t, tt.inputKeys, got.Keys())
+				assert.Equal(t, tt.inputArgs, got.Args())
+
+				// Test String()
+				fn, _, err := got.String()
+				assert.NoError(t, err)
+				assert.Equal(t, tt.functionName, fn)
 			}
 		})
 	}
