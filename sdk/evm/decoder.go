@@ -10,8 +10,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-type Decoder struct {
-}
+type Decoder struct{}
 
 var _ sdk.Decoder = &Decoder{}
 
@@ -46,9 +45,14 @@ func ParseFunctionCall(fullAbi string, data []byte) (*DecodedOperation, error) {
 		return &DecodedOperation{}, err
 	}
 
+	methodKeys := make([]string, len(method.Inputs))
+	for i, input := range method.Inputs {
+		methodKeys[i] = input.Name
+	}
+
 	return &DecodedOperation{
 		FunctionName: method.Name,
-		InputKeys:    method.Inputs,
+		InputKeys:    methodKeys,
 		InputArgs:    inputs,
 	}, nil
 }

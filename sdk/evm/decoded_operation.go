@@ -2,21 +2,37 @@ package evm
 
 import (
 	"encoding/json"
+	"fmt"
 
-	geth_abi "github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/smartcontractkit/mcms/sdk"
 )
 
 type DecodedOperation struct {
 	FunctionName string
 	InputArgs    []any
-	InputKeys    geth_abi.Arguments
+	InputKeys    []string
 }
 
 var _ sdk.DecodedOperation = &DecodedOperation{}
 
+func NewDecodedOperation(functionName string, inputKeys []string, inputArgs []any) (*DecodedOperation, error) {
+	if len(inputKeys) != len(inputArgs) {
+		return nil, fmt.Errorf("input keys and input args must have the same length")
+	}
+
+	return &DecodedOperation{
+		FunctionName: functionName,
+		InputKeys:    inputKeys,
+		InputArgs:    inputArgs,
+	}, nil
+}
+
 func (d *DecodedOperation) MethodName() string {
 	return d.FunctionName
+}
+
+func (d *DecodedOperation) Keys() []string {
+	return d.InputKeys
 }
 
 func (d *DecodedOperation) Args() []any {
@@ -29,7 +45,7 @@ func (d *DecodedOperation) String() (string, string, error) {
 	// e.g. {"key1": "value1", "key2": "value2"}
 	inputMap := make(map[string]any)
 	for i, key := range d.InputKeys {
-		inputMap[key.Name] = d.InputArgs[i]
+		inputMap[key] = d.InputArgs[i]
 	}
 
 	byteMap, err := json.MarshalIndent(inputMap, "", "  ")
