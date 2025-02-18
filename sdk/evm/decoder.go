@@ -1,11 +1,9 @@
 package evm
 
 import (
-	"encoding/json"
 	"strings"
 
 	geth_abi "github.com/ethereum/go-ethereum/accounts/abi"
-	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -13,6 +11,10 @@ import (
 type Decoder struct{}
 
 var _ sdk.Decoder = &Decoder{}
+
+func NewDecoder() *Decoder {
+	return &Decoder{}
+}
 
 func (d *Decoder) Decode(op types.Operation, contractInterfaces string) (sdk.DecodedOperation, error) {
 	return ParseFunctionCall(contractInterfaces, op.Transaction.Data)
@@ -33,18 +35,13 @@ func ParseFunctionCall(fullAbi string, data []byte) (*DecodedOperation, error) {
 		return &DecodedOperation{}, err
 	}
 
-	// Marshal the method's inputs
-	byteInputs, err := json.Marshal(method.Inputs)
+	// Unpack the data
+	inputs, err := method.Inputs.UnpackValues(data[4:])
 	if err != nil {
 		return &DecodedOperation{}, err
 	}
 
-	// Decode the data using the method's input types
-	inputs, err := abi.ABIDecode(string(byteInputs), data[4:])
-	if err != nil {
-		return &DecodedOperation{}, err
-	}
-
+	// Get the keys of the inputs
 	methodKeys := make([]string, len(method.Inputs))
 	for i, input := range method.Inputs {
 		methodKeys[i] = input.Name
