@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -57,9 +58,12 @@ func TestNewDecodedOperation(t *testing.T) {
 				assert.Equal(t, tt.inputArgs, got.Args())
 
 				// Test String()
-				fn, _, err := got.String()
+				fn, inputs, err := got.String()
 				assert.NoError(t, err)
 				assert.Equal(t, tt.functionName, fn)
+				for i := range tt.inputKeys {
+					assert.Contains(t, inputs, fmt.Sprintf(`"%s": "%v"`, tt.inputKeys[i], tt.inputArgs[i]))
+				}
 			}
 		})
 	}
