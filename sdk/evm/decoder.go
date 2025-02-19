@@ -4,6 +4,7 @@ import (
 	"strings"
 
 	geth_abi "github.com/ethereum/go-ethereum/accounts/abi"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )

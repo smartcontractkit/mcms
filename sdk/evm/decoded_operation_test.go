@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestNewDecodedOperation(t *testing.T) {
@@ -44,10 +45,10 @@ func TestNewDecodedOperation(t *testing.T) {
 
 			got, err := NewDecodedOperation(tt.functionName, tt.inputKeys, tt.inputArgs)
 			if tt.wantErr != "" {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.functionName, got.FunctionName)
 				assert.Equal(t, tt.inputKeys, got.InputKeys)
 				assert.Equal(t, tt.inputArgs, got.InputArgs)
@@ -59,7 +60,7 @@ func TestNewDecodedOperation(t *testing.T) {
 
 				// Test String()
 				fn, inputs, err := got.String()
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.functionName, fn)
 				for i := range tt.inputKeys {
 					assert.Contains(t, inputs, fmt.Sprintf(`"%s": "%v"`, tt.inputKeys[i], tt.inputArgs[i]))

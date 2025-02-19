@@ -6,10 +6,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	"github.com/smartcontractkit/mcms/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestDecoder(t *testing.T) {
@@ -47,7 +48,7 @@ func TestDecoder(t *testing.T) {
 			want: &DecodedOperation{
 				FunctionName: "grantRole",
 				InputKeys:    []string{"role", "account"},
-				InputArgs:    []interface{}{[32]byte(exampleRole.Bytes()), common.HexToAddress("0x0000000000000000000000000000000000000123")},
+				InputArgs:    []any{[32]byte(exampleRole.Bytes()), common.HexToAddress("0x0000000000000000000000000000000000000123")},
 			},
 			wantErr: "",
 		},
