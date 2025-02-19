@@ -6,10 +6,11 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	"github.com/smartcontractkit/mcms/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestDecoder(t *testing.T) {
@@ -17,7 +18,7 @@ func TestDecoder(t *testing.T) {
 
 	// Get ABI
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	exampleRole := crypto.Keccak256Hash([]byte("EXAMPLE_ROLE"))
 
 	// Grant role data
@@ -47,24 +48,23 @@ func TestDecoder(t *testing.T) {
 			want: &DecodedOperation{
 				FunctionName: "grantRole",
 				InputKeys:    []string{"role", "account"},
-				InputArgs:    []interface{}{[32]byte(exampleRole.Bytes()), common.HexToAddress("0x0000000000000000000000000000000000000123")},
+				InputArgs:    []any{[32]byte(exampleRole.Bytes()), common.HexToAddress("0x0000000000000000000000000000000000000123")},
 			},
 			wantErr: "",
 		},
 	}
 
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
 			d := NewDecoder()
 			got, err := d.Decode(tt.give.Transaction, tt.contractInterfaces)
 			if tt.wantErr != "" {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})

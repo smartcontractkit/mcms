@@ -2,7 +2,7 @@ package sdk
 
 type DecodedOperation interface {
 	MethodName() string // MethodName returns the name of the method.
-	Keys() []string     // InputNames returns the names of the input arguments.
+	Keys() []string     // Keys returns the names of the input arguments.
 	Args() []any        // Args returns the values input arguments.
 
 	// String returns a human readable representation of the decoded operation.
