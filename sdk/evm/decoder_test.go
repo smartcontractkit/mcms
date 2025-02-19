@@ -18,7 +18,7 @@ func TestDecoder(t *testing.T) {
 
 	// Get ABI
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	exampleRole := crypto.Keccak256Hash([]byte("EXAMPLE_ROLE"))
 
 	// Grant role data
@@ -61,10 +61,10 @@ func TestDecoder(t *testing.T) {
 			d := NewDecoder()
 			got, err := d.Decode(tt.give.Transaction, tt.contractInterfaces)
 			if tt.wantErr != "" {
-				assert.Error(t, err)
+				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
 			}
 		})
