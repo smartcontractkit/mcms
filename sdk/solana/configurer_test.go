@@ -6,10 +6,13 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	ag_binary "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	cselectors "github.com/smartcontractkit/chain-selectors"
+	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
@@ -21,11 +24,34 @@ func Test_NewConfigurer(t *testing.T) {
 
 	client := &rpc.Client{}
 	auth := solana.MustPrivateKeyFromBase58("DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc")
+	instructionAuth := solana.MPK("7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV")
 	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
 
-	configurer := NewConfigurer(client, auth, chainSelector)
+	tests := []struct {
+		name                string
+		giveInstructionAuth solana.PublicKey
+		wantInstructionAuth solana.PublicKey
+	}{
+		{
+			name: "implicit instruction authority",
+			giveInstructionAuth: solana.PublicKey{},
+			wantInstructionAuth: auth.PublicKey(),
+		},
+		{
+			name: "explicit instruction authority",
+			giveInstructionAuth: instructionAuth,
+			wantInstructionAuth: instructionAuth,
+		},
+	}
 
-	require.NotNil(t, configurer)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			configurer := NewConfigurer(client, auth, tt.giveInstructionAuth, chainSelector)
+
+			require.NotNil(t, configurer)
+			require.Equal(t, configurer.instructionsAuth, tt.wantInstructionAuth)
+		})
+	}
 }
 
 func TestConfigurer_SetConfig(t *testing.T) {
@@ -39,15 +65,20 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	clearRoot := false
 
 	tests := []struct {
-		name      string
-		mcmConfig *types.Config
-		setup     func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient)
-		want      string
-		wantErr   string
+		name             string
+		auth             solana.PrivateKey
+		instructionAuth  solana.PublicKey
+		mcmConfig        *types.Config
+		setup            func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient)
+		wantHash         string
+		wantInstructions []solana.Instruction
+		wantErr          string
 	}{
 		{
-			name:      "success",
-			mcmConfig: defaultMcmConfig,
+			name:            "success - send instructions",
+			auth:            auth,
+			instructionAuth: solana.PublicKey{},
+			mcmConfig:       defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
 
@@ -62,17 +93,41 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				mockSolanaTransaction(t, mockJSONRPCClient, 13, 23,
 					"52f3VmvW7m9uTQu3PtyibgxnAvEuXDmm9umuHherGjS4pzRR7QXRDKnZhh6b95P7pQxzTgvE1muMNKYEY7YWsS3G", nil, nil)
 			},
-			want: "52f3VmvW7m9uTQu3PtyibgxnAvEuXDmm9umuHherGjS4pzRR7QXRDKnZhh6b95P7pQxzTgvE1muMNKYEY7YWsS3G",
+			wantHash: "52f3VmvW7m9uTQu3PtyibgxnAvEuXDmm9umuHherGjS4pzRR7QXRDKnZhh6b95P7pQxzTgvE1muMNKYEY7YWsS3G",
+			wantInstructions: []solana.Instruction{
+				bindings.NewInitSignersInstructionBuilder().Build(),
+				bindings.NewAppendSignersInstructionBuilder().Build(),
+				bindings.NewFinalizeSignersInstructionBuilder().Build(),
+				bindings.NewSetConfigInstructionBuilder().Build(),
+			},
 		},
 		{
-			name:      "failure: too many signers",
-			mcmConfig: &types.Config{Quorum: 1, Signers: generateSigners(t, 181)},
-			setup:     func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
-			wantErr:   "too many signers (max 180)",
+			name:            "success - do not send instructions",
+			auth:            nil,
+			instructionAuth: auth.PublicKey(),
+			mcmConfig:       defaultMcmConfig,
+			setup:           func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
+			wantHash:        "",
+			wantInstructions: []solana.Instruction{
+				bindings.NewInitSignersInstructionBuilder().Build(),
+				bindings.NewAppendSignersInstructionBuilder().Build(),
+				bindings.NewFinalizeSignersInstructionBuilder().Build(),
+				bindings.NewSetConfigInstructionBuilder().Build(),
+			},
 		},
 		{
-			name:      "failure: initialize signers error",
-			mcmConfig: defaultMcmConfig,
+			name:            "failure: too many signers",
+			auth:            auth,
+			instructionAuth: solana.PublicKey{},
+			mcmConfig:       &types.Config{Quorum: 1, Signers: generateSigners(t, 181)},
+			setup:           func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
+			wantErr:         "too many signers (max 180)",
+		},
+		{
+			name:            "failure: initialize signers error",
+			auth:            auth,
+			instructionAuth: solana.PublicKey{},
+			mcmConfig:       defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
 
@@ -80,11 +135,13 @@ func TestConfigurer_SetConfig(t *testing.T) {
 					"4PQcRHQJT4cRQZooAhZMAP9ZXJsAka9DeKvXeYvXAvPpHb4Qkc5rmTSHDA2SZSh9aKPBguBx4kmcyHHbkytoAiRr",
 					nil, fmt.Errorf("initialize signers error"))
 			},
-			wantErr: "unable to initialize signers: unable to send instruction: initialize signers error",
+			wantErr: "unable to set config: unable to send instruction 0 - initSigners: unable to send instruction: initialize signers error",
 		},
 		{
-			name:      "failure: append signers error",
-			mcmConfig: defaultMcmConfig,
+			name:            "failure: append signers error",
+			auth:            auth,
+			instructionAuth: solana.PublicKey{},
+			mcmConfig:       defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
 
@@ -97,11 +154,13 @@ func TestConfigurer_SetConfig(t *testing.T) {
 					"7D9XEYRnCn1D5JFrrYMPUaHfog7Vnj5rbPdj7kbULa4hKq7GsnA7Q8KNQfLEgfCawBsW4dcH2MQAp4km1dnjr6V",
 					nil, fmt.Errorf("append signers error"))
 			},
-			wantErr: "unable to append signers (0): unable to send instruction: append signers error",
+			wantErr: "unable to set config: unable to send instruction 1 - appendSigners0: unable to send instruction: append signers error",
 		},
 		{
-			name:      "failure: finalize signers error",
-			mcmConfig: defaultMcmConfig,
+			name:            "failure: finalize signers error",
+			auth:            auth,
+			instructionAuth: solana.PublicKey{},
+			mcmConfig:       defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
 
@@ -116,11 +175,13 @@ func TestConfigurer_SetConfig(t *testing.T) {
 					"2iEeniu3QUgXNsjau8r7fZ7XLb2g1F3q9VJJKvRyyFz4hHgVvhGkLgSUdmRumfXKWv8spJ9ihudGFyPZsPGdp4Ya",
 					nil, fmt.Errorf("finalize signers error"))
 			},
-			wantErr: "unable to finalize signers: unable to send instruction: finalize signers error",
+			wantErr: "unable to set config: unable to send instruction 2 - finalizeSigners: unable to send instruction: finalize signers error",
 		},
 		{
-			name:      "failure: set config error",
-			mcmConfig: &types.Config{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x1")}},
+			name:            "failure: set config error",
+			auth:            auth,
+			instructionAuth: solana.PublicKey{},
+			mcmConfig:       &types.Config{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x1")}},
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
 
@@ -137,21 +198,23 @@ func TestConfigurer_SetConfig(t *testing.T) {
 					"52f3VmvW7m9uTQu3PtyibgxnAvEuXDmm9umuHherGjS4pzRR7QXRDKnZhh6b95P7pQxzTgvE1muMNKYEY7YWsS3G",
 					nil, fmt.Errorf("set config error"))
 			},
-			wantErr: "unable to set config: unable to send instruction: set config error",
+			wantErr: "unable to set config: unable to send instruction 3 - setConfig: unable to send instruction: set config error",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			configurer, mockJSONRPCClient := newTestConfigurer(t, auth, chainSelector)
+			configurer, mockJSONRPCClient := newTestConfigurer(t, tt.auth, tt.instructionAuth, chainSelector)
 			tt.setup(t, configurer, mockJSONRPCClient)
 
 			got, err := configurer.SetConfig(ctx, ContractAddress(testMCMProgramID, testPDASeed), tt.mcmConfig, clearRoot)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(tt.want, got.Hash))
+				require.Empty(t, cmp.Diff(tt.wantHash, got.Hash))
+				require.Empty(t, cmp.Diff(tt.wantInstructions, got.RawTransaction.([]solana.Instruction),
+					cmpopts.IgnoreFields(ag_binary.BaseVariant{}, "Impl")))
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}
@@ -161,11 +224,13 @@ func TestConfigurer_SetConfig(t *testing.T) {
 
 // ----- helpers -----
 
-func newTestConfigurer(t *testing.T, auth solana.PrivateKey, chainSelector types.ChainSelector) (*Configurer, *mocks.JSONRPCClient) {
+func newTestConfigurer(
+	t *testing.T, auth solana.PrivateKey, instructionAuth solana.PublicKey, chainSelector types.ChainSelector,
+) (*Configurer, *mocks.JSONRPCClient) {
 	t.Helper()
 
 	mockJSONRPCClient := mocks.NewJSONRPCClient(t)
 	client := rpc.NewWithCustomRPCClient(mockJSONRPCClient)
 
-	return NewConfigurer(client, auth, chainSelector), mockJSONRPCClient
+	return NewConfigurer(client, auth, instructionAuth, chainSelector), mockJSONRPCClient
 }

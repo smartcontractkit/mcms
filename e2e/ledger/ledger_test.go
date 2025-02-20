@@ -127,7 +127,7 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 	// set config
 	mcmAddress := solanamcms.ContractAddress(mcmProgramID, mcmInstanceSeed)
 	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{ledgerAccount}}
-	configurer := solanamcms.NewConfigurer(s.SolanaClient, s.authSolana, s.chainSelectorSolana)
+	configurer := solanamcms.NewConfigurer(s.SolanaClient, s.authSolana, solana.PublicKey{}, s.chainSelectorSolana)
 	_, err := configurer.SetConfig(ctx, mcmAddress, &mcmConfig, true)
 	s.Require().NoError(err)
 

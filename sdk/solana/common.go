@@ -153,7 +153,18 @@ func sendAndConfirm(
 		return "", nil, fmt.Errorf("unable to validate and build instruction: %w", err)
 	}
 
-	result, err := solanaCommon.SendAndConfirm(ctx, client, []solana.Instruction{instruction}, auth, commitmentType)
+	return sendAndConfirmInstructions(ctx, client, auth, []solana.Instruction{instruction}, commitmentType)
+}
+
+// sendAndConfirm contains the default logic for sending and confirming instructions.
+func sendAndConfirmInstructions(
+	ctx context.Context,
+	client *rpc.Client,
+	auth solana.PrivateKey,
+	instructions []solana.Instruction,
+	commitmentType rpc.CommitmentType,
+) (string, *rpc.GetTransactionResult, error) {
+	result, err := solanaCommon.SendAndConfirm(ctx, client, instructions, auth, commitmentType)
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to send instruction: %w", err)
 	}

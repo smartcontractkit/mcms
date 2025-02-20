@@ -109,7 +109,7 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 
 	// set config
-	configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.ChainSelector)
+	configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, solana.PublicKey{}, s.ChainSelector)
 	_, err = configurer.SetConfig(ctx, mcmID, &mcmConfig, true)
 	s.Require().NoError(err)
 

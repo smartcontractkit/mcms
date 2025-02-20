@@ -70,7 +70,7 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 	}
 
 	// --- act ---
-	configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.ChainSelector)
+	configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, solana.PublicKey{}, s.ChainSelector)
 	signature, err := configurer.SetConfig(ctx, mcmAddress, &config, true)
 	s.Require().NoError(err)
 	_, err = solana.SignatureFromBase58(signature.Hash)
