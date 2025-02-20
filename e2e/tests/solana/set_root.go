@@ -76,7 +76,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	s.Require().NoError(err)
 
 	// set config
-	configurer := solanasdk.NewConfigurer(s.SolanaClient, auth, solana.PublicKey{}, s.ChainSelector)
+	configurer := solanasdk.NewConfigurer(s.SolanaClient, auth, s.ChainSelector)
 	_, err = configurer.SetConfig(ctx, mcmAddress, &mcmConfig, true)
 	s.Require().NoError(err)
 

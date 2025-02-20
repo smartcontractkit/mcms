@@ -593,7 +593,7 @@ func (s *SolanaTestSuite) executeConvertedProposal(
 	// set config
 	signerEVMAccount := NewEVMTestAccount(s.T())
 	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{signerEVMAccount.Address}}
-	configurer := solanasdk.NewConfigurer(s.SolanaClient, wallet, solana.PublicKey{}, s.ChainSelector)
+	configurer := solanasdk.NewConfigurer(s.SolanaClient, wallet, s.ChainSelector)
 	_, err := configurer.SetConfig(ctx, mcmAddress, &mcmConfig, true)
 	s.Require().NoError(err)
 

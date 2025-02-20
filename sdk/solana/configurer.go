@@ -29,9 +29,10 @@ type Configurer struct {
 
 // NewConfigurer creates a new Configurer for Solana chains.
 func NewConfigurer(
-	client *rpc.Client, auth solana.PrivateKey, instructionsAuth solana.PublicKey, chainSelector types.ChainSelector,
+	client *rpc.Client, auth solana.PrivateKey, chainSelector types.ChainSelector, options ...configurerOption,
 ) *Configurer {
-	if instructionsAuth.IsZero() {
+	instructionsAuth := solana.PublicKey{}
+	if len(auth) > 0 {
 		instructionsAuth = auth.PublicKey()
 	}
 
@@ -41,8 +42,19 @@ func NewConfigurer(
 		instructionsAuth: instructionsAuth,
 		chainSelector:    chainSelector,
 	}
+	for _, opt := range options {
+		opt(configurer)
+	}
 
 	return configurer
+}
+
+type configurerOption func(*Configurer)
+
+func WithInstructionAuth(authPublicKey solana.PublicKey) configurerOption {
+	return func(c *Configurer) {
+		c.instructionsAuth = authPublicKey
+	}
 }
 
 // SetConfig sets the configuration for the MCM contract on the Solana chain.
@@ -123,7 +135,7 @@ func (c *Configurer) preloadSigners(
 	configPDA solana.PublicKey,
 	configSignersPDA solana.PublicKey,
 ) error {
-	err := c.addInstruction("initSigners", bindings.NewInitSignersInstruction(mcmName, uint8(len(signerAddresses)),
+	err := c.addInstruction("initSigners", bindings.NewInitSignersInstruction(mcmName, uint8(len(signerAddresses)), //nolint:gosec
 		configPDA, configSignersPDA, c.instructionsAuth, solana.SystemProgramID))
 	if err != nil {
 		return err
@@ -180,6 +192,7 @@ func (c *instructionCollection) addInstruction(label string, instructionBuilder 
 	}
 
 	c.instructions = append(c.instructions, labeledInstruction{instruction, label})
+
 	return nil
 }
 
