@@ -38,6 +38,8 @@ func validateChainMetadata(metadata types.ChainMetadata, csel types.ChainSelecto
 	switch chainFamily {
 	case cselectors.FamilySolana:
 		return solana.ValidateChainMetadata(metadata)
+	case cselectors.FamilyEVM:
+		return nil
 	default:
 		return fmt.Errorf("unsupported chain family: %s", chainFamily)
 	}
