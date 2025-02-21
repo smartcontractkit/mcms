@@ -93,7 +93,7 @@ func (m *TimelockProposal) Validate() error {
 
 		for _, tx := range op.Transactions {
 			// Chain specific validations.
-			if err := ValidateAdditionalFields(tx.AdditionalFields, op.ChainSelector); err != nil {
+			if err := validateAdditionalFields(tx.AdditionalFields, op.ChainSelector); err != nil {
 				return err
 			}
 		}

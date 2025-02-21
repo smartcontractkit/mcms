@@ -1,10 +1,13 @@
 package solana
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/types"
@@ -34,8 +37,22 @@ func (f AdditionalFieldsMetadata) Validate() error {
 	return nil
 }
 
-// NewSolanaChainMetadata creates a new ChainMetadata instance for Solana chains
-func NewSolanaChainMetadata(
+func ValidateChainMetadata(metadata types.ChainMetadata) error {
+	var additionalFields AdditionalFieldsMetadata
+	if err := json.Unmarshal(metadata.AdditionalFields, &additionalFields); err != nil {
+		return fmt.Errorf("unable to unmarshal additional fields: %w", err)
+	}
+
+	if err := additionalFields.Validate(); err != nil {
+		return fmt.Errorf("additional fields are invalid: %w", err)
+	}
+
+	return nil
+
+}
+
+// NewChainMetadata creates a new ChainMetadata instance for Solana chains
+func NewChainMetadata(
 	startingOpCount uint64,
 	mcmProgramID solana.PublicKey,
 	mcmInstanceSeed PDASeed,
@@ -58,4 +75,30 @@ func NewSolanaChainMetadata(
 		MCMAddress:       contractID,
 		AdditionalFields: additionalFieldsJSON,
 	}, nil
+}
+
+// NewChainMetadataFromTimelock creates a new ChainMetadata from and RPC client
+// useful when access controller accounts are not available for the client
+func NewChainMetadataFromTimelock(
+	ctx context.Context,
+	client *rpc.Client,
+	startingOpCount uint64,
+	mcmProgramID solana.PublicKey,
+	mcmSeed PDASeed,
+	timelockProgramID solana.PublicKey,
+	timelockSeed PDASeed,
+) (types.ChainMetadata, error) {
+	configPDA, err := FindTimelockConfigPDA(timelockProgramID, timelockSeed)
+	if err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("unable to find timelock config pda: %w", err)
+	}
+
+	config, err := GetTimelockConfig(ctx, client, configPDA)
+	if err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("unable to read timelock config pda: %w", err)
+	}
+
+	return NewChainMetadata(startingOpCount, mcmProgramID, mcmSeed,
+		config.ProposerRoleAccessController, config.CancellerRoleAccessController,
+		config.BypasserRoleAccessController)
 }

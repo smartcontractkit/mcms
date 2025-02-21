@@ -17,8 +17,6 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
-	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
-
 	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/external_program_cpi_stub"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 	"github.com/stretchr/testify/require"
@@ -101,11 +99,8 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	operation2BypasserPDA, err := solanasdk.FindTimelockBypasserOperationPDA(s.TimelockProgramID, testPDASeedTimelockConverter, operation2ID)
 	s.Require().NoError(err)
 
-	// build base timelock proposal
-	var config timelock.Config
-	err = solanaCommon.GetAccountDataBorshInto(ctx, s.SolanaClient, configPDA, rpc.CommitmentConfirmed, &config)
 	s.Require().NoError(err)
-	metadata, err := solanasdk.NewSolanaChainMetadata(
+	metadata, err := solanasdk.NewChainMetadata(
 		0,
 		s.MCMProgramID,
 		testPDASeedTimelockConverter,

@@ -34,13 +34,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
-	//metadata, err := solanasdk.NewSolanaChainMetadata(
-	//	0,
-	//	s.MCMProgramID,
-	//	testPDASeedTimelockConverter,
-	//	s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
-	//	s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
-	//	s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
+
 	validUntil := time.Now().Add(10 * time.Hour).Unix()
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").

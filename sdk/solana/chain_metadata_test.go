@@ -59,7 +59,7 @@ func TestNewSolanaChainMetadata(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			metadata, err := NewSolanaChainMetadata(tc.startingOpCount, tc.mcmProgramID, tc.mcmInstanceSeed, tc.proposerKey, tc.cancellerKey, tc.bypasserKey)
+			metadata, err := NewChainMetadata(tc.startingOpCount, tc.mcmProgramID, tc.mcmInstanceSeed, tc.proposerKey, tc.cancellerKey, tc.bypasserKey)
 			if tc.wantErr != "" {
 				require.EqualError(t, err, tc.wantErr)
 				return
