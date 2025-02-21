@@ -16,7 +16,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestValidateAdditionalFieldsMetadata(t *testing.T) {
+func TestValidateChainMetadata(t *testing.T) {
 	t.Parallel()
 
 	// Create a valid Solana metadata instance.

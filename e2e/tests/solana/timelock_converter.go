@@ -134,13 +134,6 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		proposerAC := s.Roles[timelock.Proposer_Role].AccessController.PublicKey()
 
 		// build expected output Proposal
-		metadata, err := solanasdk.NewChainMetadata(
-			0,
-			s.MCMProgramID,
-			testPDASeedTimelockConverter,
-			s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
-			s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
-			s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
 		wantProposal, err := mcms.NewProposalBuilder().
 			SetValidUntil(uint32(validUntil)).
 			SetDescription("proposal to test the timelock proposal converter").
@@ -345,13 +338,6 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// build expected output Proposal
-		metadata, err = solanasdk.NewChainMetadata(
-			0,
-			s.MCMProgramID,
-			testPDASeedTimelockConverter,
-			s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
-			s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
-			s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
 		s.Require().NoError(err)
 		wantProposal, err := mcms.NewProposalBuilder().
 			SetValidUntil(uint32(validUntil)).
@@ -406,13 +392,6 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		bypasserAC := s.Roles[timelock.Bypasser_Role].AccessController.PublicKey()
 
 		// build expected output Proposal
-		metadata, err = solanasdk.NewChainMetadata(
-			0,
-			s.MCMProgramID,
-			testPDASeedTimelockConverter,
-			s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
-			s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
-			s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
 		s.Require().NoError(err)
 		wantProposal, err := mcms.NewProposalBuilder().
 			SetValidUntil(uint32(validUntil)).
