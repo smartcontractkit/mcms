@@ -6,11 +6,13 @@ import (
 	"math/big"
 	"testing"
 
+	solana2 "github.com/gagliardetto/solana-go"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -28,7 +30,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 	invalidEVMFieldsJSON, err := json.Marshal(invalidEVMFields)
 	require.NoError(t, err)
 
-	validSolanaFields := evm.AdditionalFields{Value: big.NewInt(2)}
+	validSolanaFields := solana.AdditionalFields{Accounts: []*solana2.AccountMeta{{
+		PublicKey: solana2.NewWallet().PublicKey(),
+	}}}
 	validSolanaFieldsJSON, err := json.Marshal(validSolanaFields)
 	require.NoError(t, err)
 

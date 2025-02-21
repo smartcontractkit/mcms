@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/gagliardetto/solana-go"
+	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -17,6 +18,11 @@ type AdditionalFields struct {
 
 // Validate ensures the solana-specific fields are correct
 func (f AdditionalFields) Validate() error {
+	var validate = validator.New()
+	if err := validate.Struct(f); err != nil {
+		return err
+	}
+
 	return nil
 }
 

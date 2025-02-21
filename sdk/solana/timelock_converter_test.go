@@ -4,39 +4,22 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
-	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
-
-func Test_NewTimelockConverter(t *testing.T) {
-	t.Parallel()
-
-	client := &rpc.Client{}
-
-	converter := NewTimelockConverter(client)
-
-	require.NotNil(t, converter)
-	require.Equal(t, client, converter.client)
-}
 
 func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	configPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
-	require.NoError(t, err)
 	defaultTimelockAddress := ContractAddress(testTimelockProgramID, testPDASeed)
 	defaultMCMAddress := ContractAddress(testMCMProgramID, testPDASeed)
 	defaultDelay := types.NewDuration(10 * time.Second)
@@ -83,8 +66,23 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 	bypasserAC, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
 
+	cancellerAC, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	additionalFieldsMeta := AdditionalFieldsMetadata{
+		ProposerRoleAccessController:  proposerAC.PublicKey(),
+		CancellerRoleAccessController: cancellerAC.PublicKey(),
+		BypasserRoleAccessController:  bypasserAC.PublicKey(),
+	}
+	additionalFieldsMetaBytes, err := json.Marshal(additionalFieldsMeta)
+	require.NoError(t, err)
+	metadata := types.ChainMetadata{
+		MCMAddress:       defaultMCMAddress,
+		AdditionalFields: additionalFieldsMetaBytes,
+	}
 	tests := []struct {
 		name            string
+		metadata        types.ChainMetadata
 		batchOp         types.BatchOperation
 		timelockAddress string
 		mcmAddress      string
@@ -95,10 +93,10 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 		wantOperations  []types.Operation
 		wantPredecessor common.Hash
 		wantErr         string
-		setup           func(t *testing.T, mockJSONRPCClient *mocks.JSONRPCClient)
 	}{
 		{
 			name:            "success: schedule action",
+			metadata:        metadata,
 			batchOp:         defaultBatchOperation(),
 			timelockAddress: defaultTimelockAddress,
 			mcmAddress:      defaultMCMAddress,
@@ -240,16 +238,10 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 			},
 			wantPredecessor: common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
-			setup: func(t *testing.T, mockJSONRPCClient *mocks.JSONRPCClient) {
-				t.Helper()
-				config := &bindings.Config{
-					ProposerRoleAccessController: proposerAC.PublicKey(),
-				}
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, config, nil)
-			},
 		},
 		{
 			name:            "success: cancel action",
+			metadata:        metadata,
 			batchOp:         defaultBatchOperation(),
 			timelockAddress: defaultTimelockAddress,
 			mcmAddress:      defaultMCMAddress,
@@ -267,7 +259,7 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 						AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
 							{PublicKey: solana.MPK("3x12f1G4bt9j7rsBfLE7rZQ5hXoHuHdjtUr2UKW8gjQp"), IsWritable: true},
 							{PublicKey: solana.MPK("GYWcPzXkdzY9DJLcbFs67phqyYzmJxeEKSTtqEoo8oKz")},
-							{PublicKey: solana.MPK("11111111111111111111111111111111")},
+							{PublicKey: cancellerAC.PublicKey()},
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 						}}),
 						OperationMetadata: types.OperationMetadata{
@@ -278,14 +270,10 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 			},
 			wantPredecessor: common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
-			setup: func(t *testing.T, mockJSONRPCClient *mocks.JSONRPCClient) {
-				t.Helper()
-				config := &bindings.Config{}
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, config, nil)
-			},
 		},
 		{
 			name:            "success: bypass action",
+			metadata:        metadata,
 			batchOp:         defaultBatchOperation(),
 			timelockAddress: defaultTimelockAddress,
 			mcmAddress:      defaultMCMAddress,
@@ -428,16 +416,10 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 			},
 			wantPredecessor: common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
-			setup: func(t *testing.T, mockJSONRPCClient *mocks.JSONRPCClient) {
-				t.Helper()
-				config := &bindings.Config{
-					BypasserRoleAccessController: bypasserAC.PublicKey(),
-				}
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, config, nil)
-			},
 		},
 		{
 			name:            "failure: invalid Timelock address",
+			metadata:        metadata,
 			batchOp:         defaultBatchOperation(),
 			timelockAddress: "invalid-address",
 			mcmAddress:      defaultMCMAddress,
@@ -449,6 +431,7 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 		},
 		{
 			name:            "failure: invalid MCM address",
+			metadata:        metadata,
 			batchOp:         defaultBatchOperation(),
 			timelockAddress: defaultTimelockAddress,
 			mcmAddress:      "invalid-address",
@@ -460,6 +443,7 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 		},
 		{
 			name:            "failure: invalid To address",
+			metadata:        metadata,
 			timelockAddress: defaultTimelockAddress,
 			mcmAddress:      defaultMCMAddress,
 			delay:           defaultDelay,
@@ -473,22 +457,8 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			}(defaultBatchOperation()),
 		},
 		{
-			name:            "failure: GetAccountInfo error",
-			batchOp:         defaultBatchOperation(),
-			timelockAddress: defaultTimelockAddress,
-			mcmAddress:      defaultMCMAddress,
-			delay:           defaultDelay,
-			action:          types.TimelockActionSchedule,
-			predecessor:     common.Hash{},
-			salt:            defaultSalt,
-			wantErr:         "unable to read timelock config pda: GetAccountInfo error",
-			setup: func(t *testing.T, mockJSONRPCClient *mocks.JSONRPCClient) {
-				t.Helper()
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, &bindings.Config{}, fmt.Errorf("GetAccountInfo error"))
-			},
-		},
-		{
 			name:            "failure: invalid action",
+			metadata:        metadata,
 			batchOp:         defaultBatchOperation(),
 			timelockAddress: defaultTimelockAddress,
 			mcmAddress:      defaultMCMAddress,
@@ -497,23 +467,24 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			predecessor:     common.Hash{},
 			salt:            defaultSalt,
 			wantErr:         "unable to build invalid-action instruction: invalid timelock operation: invalid-action",
-			setup: func(t *testing.T, mockJSONRPCClient *mocks.JSONRPCClient) {
-				t.Helper()
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, &bindings.Config{}, nil)
-			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			converter, mockJSONRPCClient := newTestTimelockConverter(t)
-			if tt.setup != nil {
-				tt.setup(t, mockJSONRPCClient)
-			}
+			converter := TimelockConverter{}
 
-			operations, predecessors, err := converter.ConvertBatchToChainOperations(ctx, tt.batchOp, tt.timelockAddress,
-				tt.mcmAddress, tt.delay, tt.action, tt.predecessor, tt.salt)
+			operations, predecessors, err := converter.ConvertBatchToChainOperations(ctx,
+				tt.metadata,
+				tt.batchOp,
+				tt.timelockAddress,
+				tt.mcmAddress,
+				tt.delay,
+				tt.action,
+				tt.predecessor,
+				tt.salt,
+			)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
@@ -527,17 +498,6 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 }
 
 // ----- helpers -----
-
-func newTestTimelockConverter(t *testing.T) (*TimelockConverter, *mocks.JSONRPCClient) {
-	t.Helper()
-
-	mockJSONRPCClient := mocks.NewJSONRPCClient(t)
-	client := rpc.NewWithCustomRPCClient(mockJSONRPCClient)
-	converter := NewTimelockConverter(client)
-
-	return converter, mockJSONRPCClient
-}
-
 func toJSON(t *testing.T, payload any) []byte {
 	t.Helper()
 	marshalled, err := json.Marshal(&payload)

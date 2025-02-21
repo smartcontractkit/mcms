@@ -156,6 +156,17 @@ func (p *Proposal) Validate() error {
 		return err
 	}
 
+	// Validate chain metadata for each chain selector
+	// Should only be needed for timelock proposals (specifically solana proposals),
+	// but this might change as new chain families are added
+	if p.Kind == types.KindTimelockProposal {
+		for chainSelector, metadata := range p.ChainMetadata {
+			if err := ValidateAdditionalFieldsMetadata(metadata.AdditionalFields, chainSelector); err != nil {
+				return err
+			}
+		}
+	}
+
 	// Validate all chains in operations have an entry in chain metadata
 	for _, op := range p.Operations {
 		if _, ok := p.ChainMetadata[op.ChainSelector]; !ok {

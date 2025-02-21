@@ -3,17 +3,15 @@ package mcms
 import (
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func ValidateAdditionalFields(additionalFields json.RawMessage, csel types.ChainSelector) error {
+func ValidateAdditionalFieldsMetadata(additionalFields json.RawMessage, csel types.ChainSelector) error {
 	chainFamily, err := types.GetChainSelectorFamily(csel)
 	if err != nil {
 		return err
@@ -21,23 +19,13 @@ func ValidateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 
 	var validator sdk.Validator
 
+	// For now only solana contains additional metadata fields. EVM just needs the address
 	switch chainFamily {
-	case cselectors.FamilyEVM:
-		// Unmarshal and validate for EVM
-		fields := evm.AdditionalFields{
-			Value: big.NewInt(0),
-		}
-		if len(additionalFields) != 0 {
-			if err := json.Unmarshal(additionalFields, &fields); err != nil {
-				return fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
-			}
-		}
-		validator = fields
 	case cselectors.FamilySolana:
-		fields := solana.AdditionalFields{Value: big.NewInt(0)}
+		fields := solana.AdditionalFieldsMetadata{}
 		if len(additionalFields) != 0 {
 			if err := json.Unmarshal(additionalFields, &fields); err != nil {
-				return fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
+				return fmt.Errorf("failed to unmarshal Solana additional fields: %w", err)
 			}
 		}
 		validator = fields
