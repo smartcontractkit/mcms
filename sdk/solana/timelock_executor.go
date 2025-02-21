@@ -95,8 +95,8 @@ func (e *TimelockExecutor) Execute(
 	}
 
 	return types.TransactionResult{
-		Hash:           signature,
-		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: tx,
+		Hash:        signature,
+		ChainFamily: chain_selectors.FamilySolana,
+		RawData:     tx,
 	}, nil
 }

@@ -24,27 +24,26 @@ func Test_NewConfigurer(t *testing.T) {
 
 	client := &rpc.Client{}
 	auth := solana.MustPrivateKeyFromBase58("DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc")
-	instructionAuth := solana.MPK("7EcDhSYGxXyscszYEp35KHN8vvw3svAuLKTzXwCFLtV")
 	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
 
 	tests := []struct {
 		name                string
 		constructorFn       func() *Configurer
-		wantInstructionAuth solana.PublicKey
+		wantSkipTransaction bool
 	}{
 		{
-			name: "implicit instruction authority",
+			name: "standard args",
 			constructorFn: func() *Configurer {
 				return NewConfigurer(client, auth, chainSelector)
 			},
-			wantInstructionAuth: auth.PublicKey(),
+			wantSkipTransaction: false,
 		},
 		{
-			name: "explicit instruction authority",
+			name: "skip transaction option",
 			constructorFn: func() *Configurer {
-				return NewConfigurer(client, auth, chainSelector, WithInstructionAuth(instructionAuth))
+				return NewConfigurer(client, auth, chainSelector, SkipTransaction())
 			},
-			wantInstructionAuth: instructionAuth,
+			wantSkipTransaction: true,
 		},
 	}
 
@@ -54,7 +53,7 @@ func Test_NewConfigurer(t *testing.T) {
 			configurer := tt.constructorFn()
 
 			require.NotNil(t, configurer)
-			require.Equal(t, tt.wantInstructionAuth, configurer.instructionsAuth)
+			require.Equal(t, tt.wantSkipTransaction, configurer.skipTransaction)
 		})
 	}
 }
@@ -107,8 +106,8 @@ func TestConfigurer_SetConfig(t *testing.T) {
 		},
 		{
 			name:      "success - do not send instructions",
-			auth:      nil,
-			options:   []configurerOption{WithInstructionAuth(auth.PublicKey())},
+			auth:      auth,
+			options:   []configurerOption{SkipTransaction()},
 			mcmConfig: defaultMcmConfig,
 			setup:     func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
 			wantHash:  "",
@@ -212,7 +211,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			if tt.wantErr == "" {
 				require.NoError(t, err)
 				require.Empty(t, cmp.Diff(tt.wantHash, got.Hash))
-				require.Empty(t, cmp.Diff(tt.wantInstructions, got.RawTransaction.([]solana.Instruction),
+				require.Empty(t, cmp.Diff(tt.wantInstructions, got.RawData.([]solana.Instruction),
 					cmpopts.IgnoreFields(ag_binary.BaseVariant{}, "Impl")))
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
@@ -231,6 +230,5 @@ func newTestConfigurer(
 	mockJSONRPCClient := mocks.NewJSONRPCClient(t)
 	client := rpc.NewWithCustomRPCClient(mockJSONRPCClient)
 
-	fmt.Printf("AAAAAAAAAAAAAA %v\n", len(options))
 	return NewConfigurer(client, auth, chainSelector, options...), mockJSONRPCClient
 }
