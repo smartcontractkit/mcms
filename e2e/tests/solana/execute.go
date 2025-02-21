@@ -16,12 +16,14 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/tokens"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
+	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -72,12 +74,19 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 
 	// Create the proposal
 	s.Require().NoError(err)
+	metadata, err := solanasdk.NewChainMetadata(
+		0,
+		s.MCMProgramID,
+		testPDASeedExec,
+		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
+		s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
+		s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(uint32(time.Now().Add(10*time.Hour).Unix())).
 		SetDescription("proposal to test Execute with a token distribution").
 		SetOverridePreviousRoot(true).
-		AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmID}).
+		AddChainMetadata(s.ChainSelector, metadata).
 		AddOperation(types.Operation{
 			ChainSelector: s.ChainSelector,
 			Transaction:   solanaMcmTxMint,
@@ -106,7 +115,7 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 
 	// simulate SetRoot
-	metadata := proposal.ChainMetadata[s.ChainSelector]
+	metadata = proposal.ChainMetadata[s.ChainSelector]
 	metadataHash, err := encoder.HashMetadata(metadata)
 	s.Require().NoError(err)
 

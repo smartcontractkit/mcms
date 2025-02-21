@@ -129,10 +129,7 @@ func (m *TimelockProposal) Convert(
 	// 4) Rebuild chainMetadata in baseProposal
 	chainMetadataMap := make(map[types.ChainSelector]types.ChainMetadata)
 	for chain, metadata := range m.ChainMetadata {
-		chainMetadataMap[chain] = types.ChainMetadata{
-			StartingOpCount: metadata.StartingOpCount,
-			MCMAddress:      metadata.MCMAddress,
-		}
+		chainMetadataMap[chain] = metadata
 	}
 	baseProposal.ChainMetadata = chainMetadataMap
 

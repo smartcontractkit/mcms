@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -43,13 +44,19 @@ func (s *SolanaTestSuite) TestSimulator_SimulateSetRoot() {
 		[]string{"test"},
 	)
 	s.Require().NoError(err)
-
+	metadata, err := solanasdk.NewChainMetadata(
+		0,
+		s.MCMProgramID,
+		testPDASeedSetRootSimulateTest,
+		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
+		s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
+		s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(uint32(validUntil)).
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
-		AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmAddress}).
+		AddChainMetadata(s.ChainSelector, metadata).
 		AddOperation(types.Operation{
 			ChainSelector: s.ChainSelector,
 			Transaction:   solanaTx,
@@ -76,7 +83,7 @@ func (s *SolanaTestSuite) TestSimulator_SimulateSetRoot() {
 	s.Require().NoError(err)
 
 	// simulate set root
-	metadata := proposal.ChainMetadata[s.ChainSelector]
+	metadata = proposal.ChainMetadata[s.ChainSelector]
 	metadataHash, err := encoder.HashMetadata(metadata)
 	s.Require().NoError(err)
 
