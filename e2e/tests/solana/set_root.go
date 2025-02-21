@@ -10,7 +10,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -35,26 +34,26 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
-	metadata, err := solanasdk.NewSolanaChainMetadata(
-		0,
-		s.MCMProgramID,
-		testPDASeedTimelockConverter,
-		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
-		s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
-		s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
+	//metadata, err := solanasdk.NewSolanaChainMetadata(
+	//	0,
+	//	s.MCMProgramID,
+	//	testPDASeedTimelockConverter,
+	//	s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
+	//	s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
+	//	s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
 	validUntil := time.Now().Add(10 * time.Hour).Unix()
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(uint32(validUntil)).
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
-		AddChainMetadata(s.ChainSelector, metadata).
+		AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmAddress}).
 		AddOperation(types.Operation{
 			ChainSelector: s.ChainSelector,
 			Transaction: types.Transaction{
 				To:               recipientAddress,
 				Data:             []byte("0x"),
-				AdditionalFields: json.RawMessage(`{"value": 0}`), // FIXME: not used right now; check with jonghyeon.park
+				AdditionalFields: json.RawMessage(`{"value": 0, "accounts": []}`), // FIXME: not used right now; check with jonghyeon.park
 			},
 		}).
 		Build()
