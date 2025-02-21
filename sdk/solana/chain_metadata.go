@@ -48,7 +48,6 @@ func ValidateChainMetadata(metadata types.ChainMetadata) error {
 	}
 
 	return nil
-
 }
 
 // NewChainMetadata creates a new ChainMetadata instance for Solana chains

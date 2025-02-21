@@ -165,7 +165,7 @@ func (m *TimelockProposal) Convert(
 		// Convert the batch operation
 		convertedOps, operationID, err := converter.ConvertBatchToChainOperations(
 			ctx,
-			m.ChainMetadata[chainSelector],
+			chainMetadata,
 			bop,
 			timelockAddr,
 			chainMetadata.MCMAddress,

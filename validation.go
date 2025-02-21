@@ -24,6 +24,7 @@ func validateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 	case cselectors.FamilySolana:
 		return solana.ValidateAdditionalFields(additionalFields)
 	}
+
 	return nil
 }
 
