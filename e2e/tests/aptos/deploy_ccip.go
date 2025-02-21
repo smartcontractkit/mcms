@@ -86,7 +86,7 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 		proposalBuilder.AddOperation(types.Operation{
 			ChainSelector: a.ChainSelector,
 			Transaction: types.Transaction{
-				To:               a.MCMContract.Address.StringLong(),
+				To:               module.Address.StringLong(),
 				Data:             module_mcms.ArgsToData(args),
 				AdditionalFields: callOneAdditionalFields,
 			},
@@ -192,7 +192,7 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 		a.Require().NoError(err)
 
 		// Create chunks
-		chunks, err := bind.CreateChunks(ccipPayload, bind.CHUNK_SIZE_IN_BYTES)
+		chunks, err := bind.CreateChunks(ccipPayload, bind.ChunkSizeInBytes)
 		a.Require().NoError(err)
 		a.T().Logf("Will deploy CCIP in %v chunks...", len(chunks))
 

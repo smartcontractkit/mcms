@@ -80,7 +80,7 @@ func (e Executor) ExecuteOperation(
 		tx, err = mcmsC.MCMS.Execute(
 			opts,
 			module_mcms.Op{
-				ChainId:    *chainIDBig,
+				ChainId:    chainIDBig,
 				Multisig:   mcmsAddress,
 				Nonce:      uint64(nonce),
 				To:         toAddress,
@@ -119,7 +119,7 @@ func (e Executor) ExecuteOperation(
 				tx, err = mcmsC.MCMSExecutor.StageDataAndExecute(
 					opts,
 					module_mcms.Op{
-						ChainId:    *chainIDBig,
+						ChainId:    chainIDBig,
 						Multisig:   mcmsAddress,
 						Nonce:      uint64(nonce),
 						To:         toAddress,
@@ -187,7 +187,7 @@ func (e Executor) SetRoot(
 		root,
 		uint64(validUntil),
 		module_mcms.RootMetadata{
-			ChainId:              *chainIDBig,
+			ChainId:              chainIDBig,
 			Multisig:             mcmsAddress,
 			PreOpCount:           metadata.StartingOpCount,
 			PostOpCount:          metadata.StartingOpCount + e.TxCount,
