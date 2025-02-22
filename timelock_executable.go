@@ -51,6 +51,7 @@ func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.B
 	}
 	_, operationID, err := converter.ConvertBatchToChainOperations(
 		ctx,
+		chainMetadata,
 		bop,
 		timelockAddr,
 		chainMetadata.MCMAddress,

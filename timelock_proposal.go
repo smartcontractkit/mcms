@@ -93,7 +93,7 @@ func (m *TimelockProposal) Validate() error {
 
 		for _, tx := range op.Transactions {
 			// Chain specific validations.
-			if err := ValidateAdditionalFields(tx.AdditionalFields, op.ChainSelector); err != nil {
+			if err := validateAdditionalFields(tx.AdditionalFields, op.ChainSelector); err != nil {
 				return err
 			}
 		}
@@ -129,10 +129,7 @@ func (m *TimelockProposal) Convert(
 	// 4) Rebuild chainMetadata in baseProposal
 	chainMetadataMap := make(map[types.ChainSelector]types.ChainMetadata)
 	for chain, metadata := range m.ChainMetadata {
-		chainMetadataMap[chain] = types.ChainMetadata{
-			StartingOpCount: metadata.StartingOpCount,
-			MCMAddress:      metadata.MCMAddress,
-		}
+		chainMetadataMap[chain] = metadata
 	}
 	baseProposal.ChainMetadata = chainMetadataMap
 
@@ -165,6 +162,7 @@ func (m *TimelockProposal) Convert(
 		// Convert the batch operation
 		convertedOps, operationID, err := converter.ConvertBatchToChainOperations(
 			ctx,
+			chainMetadata,
 			bop,
 			timelockAddr,
 			chainMetadata.MCMAddress,

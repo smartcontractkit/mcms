@@ -115,19 +115,13 @@ func Test_newTimelockConverterFromExecutor(t *testing.T) {
 			name:          "success: Solana executor",
 			chainSelector: chaintest.Chain4Selector,
 			executor:      solanasdk.NewTimelockExecutor(solanaClient, solanaAuth),
-			want:          solanasdk.NewTimelockConverter(solanaClient),
+			want:          &solanasdk.TimelockConverter{},
 		},
 		{
 			name:          "failure: unknown selector",
 			chainSelector: types.ChainSelector(123456789),
 			executor:      &UnknownTimelockExecutor{},
 			wantErr:       "chain family not found for selector 123456789",
-		},
-		{
-			name:          "failure: unknown executor type",
-			chainSelector: chaintest.Chain4Selector,
-			executor:      &UnknownTimelockExecutor{},
-			wantErr:       "unable to cast sdk executor to solana TimelockExecutor",
 		},
 	}
 	for _, tt := range tests {
