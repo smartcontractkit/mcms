@@ -17,6 +17,8 @@ import (
 )
 
 func TestNewChainMetadataFromTimelock(t *testing.T) {
+	t.Parallel()
+
 	type params struct {
 		startingOpCount uint64
 		mcmProgramID    solana.PublicKey
@@ -25,6 +27,7 @@ func TestNewChainMetadataFromTimelock(t *testing.T) {
 		timelockSeed    PDASeed
 	}
 	timelockProgramID, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
 	timelockSeed := PDASeed([32]byte{1, 2, 3, 4})
 	configPDA, err := FindTimelockConfigPDA(timelockProgramID.PublicKey(), timelockSeed)
 	require.NoError(t, err)
@@ -65,6 +68,8 @@ func TestNewChainMetadataFromTimelock(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			jsonRpc := mocks.NewJSONRPCClient(t)
 			tt.setupMock(jsonRpc)
 			client := rpc.NewWithCustomRPCClient(jsonRpc)
@@ -89,6 +94,8 @@ func TestNewChainMetadataFromTimelock(t *testing.T) {
 	}
 }
 func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
+	t.Parallel()
+
 	// Create valid public keys for testing.
 	validPK1, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
@@ -143,6 +150,8 @@ func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			err := tt.fields.Validate()
 			if tt.expectedErr == nil {
 				require.NoError(t, err, "expected no error but got one")
@@ -155,6 +164,8 @@ func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
 }
 
 func TestValidateChainMetadata(t *testing.T) {
+	t.Parallel()
+
 	// Create some public keys for testing.
 	zeroPK := solana.PublicKey{} // zero value public key
 

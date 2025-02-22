@@ -51,6 +51,7 @@ func (s *SolanaTestSuite) TestSimulator_SimulateSetRoot() {
 		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
 		s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
 		s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
+	s.Require().NoError(err)
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(uint32(validUntil)).

@@ -43,6 +43,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
 		s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
 		s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
+	s.Require().NoError(err)
 	validUntil := time.Now().Add(10 * time.Hour).Unix()
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").

@@ -23,7 +23,6 @@ import (
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
-	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -73,14 +72,14 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	solanaMcmTxMint := s.buildMintTx(mint, receiverATA, signerPDA)
 
 	// Create the proposal
-	s.Require().NoError(err)
-	metadata, err := solanasdk.NewChainMetadata(
+	metadata, err := mcmsSolana.NewChainMetadata(
 		0,
 		s.MCMProgramID,
 		testPDASeedExec,
 		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
 		s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
 		s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
+	s.Require().NoError(err)
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(uint32(time.Now().Add(10*time.Hour).Unix())).
