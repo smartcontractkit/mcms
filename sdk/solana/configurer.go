@@ -28,6 +28,11 @@ type Configurer struct {
 }
 
 // NewConfigurer creates a new Configurer for Solana chains.
+//
+// options:
+//
+//	WithDoNotSendInstructionsOnChain: when selected, the Configurer instance will not
+//		send the Solana instructions to the blockchain.
 func NewConfigurer(
 	client *rpc.Client, auth solana.PrivateKey, chainSelector types.ChainSelector, options ...configurerOption,
 ) *Configurer {
@@ -53,7 +58,15 @@ func WithDoNotSendInstructionsOnChain() configurerOption {
 }
 
 // SetConfig sets the configuration for the MCM contract on the Solana chain.
-func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
+//
+// The list of instructions needed to set the configuration is returned in the
+// `RawData` field. And if the instructions were sent on chain (which they are
+// unless the `WithDoNotSendInstructionsOnChain` option was selected in the
+// constructor), the signature of the last instruction is returned in the
+// `Hash` field.
+func (c *Configurer) SetConfig(
+	ctx context.Context, mcmAddress string, cfg *types.Config, clearRoot bool,
+) (types.TransactionResult, error) {
 	programID, pdaSeed, err := ParseContractAddress(mcmAddress)
 	if err != nil {
 		return types.TransactionResult{}, err
