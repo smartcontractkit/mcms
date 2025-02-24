@@ -28,10 +28,20 @@ func NewTimelockExecutable(
 		return nil, fmt.Errorf("TimelockExecutable can only be created from a TimelockProposal with action 'schedule'")
 	}
 
-	return &TimelockExecutable{
+	te := &TimelockExecutable{
 		proposal:  proposal,
 		executors: executors,
-	}, nil
+	}
+
+	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
+	// (one array per chain). The 0th element is zero-hash, the 1st is the
+	// operationID for that chain's 1st operation, etc.
+	err := te.setPredecessors(context.Background())
+	if err != nil {
+		return nil, fmt.Errorf("unable to set predecessors: %w", err)
+	}
+
+	return te, nil
 }
 
 func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.BatchOperation, selector types.ChainSelector) (common.Hash, error) {
@@ -72,14 +82,6 @@ func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.B
 // but others are not. This is not handled here. Regardless, execution
 // should not begin until all operations are ready.
 func (t *TimelockExecutable) IsReady(ctx context.Context) error {
-	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
-	// (one array per chain). The 0th element is zero-hash, the 1st is the
-	// operationID for that chain's 1st operation, etc.
-	err := t.setPredecessors(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to set predecessors: %w", err)
-	}
-
 	// Check readiness for each global operation in the proposal
 	for globalIndex := range t.proposal.Operations {
 		err := t.IsOperationReady(ctx, globalIndex)
@@ -93,14 +95,6 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 
 // IsChainReady checks if the chain is ready for execution.
 func (t *TimelockExecutable) IsChainReady(ctx context.Context, chainSelector types.ChainSelector) error {
-	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
-	// (one array per chain). The 0th element is zero-hash, the 1st is the
-	// operationID for that chain's 1st operation, etc.
-	err := t.setPredecessors(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to set predecessors: %w", err)
-	}
-
 	// Check readiness for each global operation in the proposal
 	for globalIndex, op := range t.proposal.Operations {
 		if op.ChainSelector == chainSelector {
@@ -115,14 +109,6 @@ func (t *TimelockExecutable) IsChainReady(ctx context.Context, chainSelector typ
 }
 
 func (t *TimelockExecutable) IsOperationReady(ctx context.Context, idx int) error {
-	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
-	// (one array per chain). The 0th element is zero-hash, the 1st is the
-	// operationID for that chain's 1st operation, etc.
-	err := t.setPredecessors(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to set predecessors: %w", err)
-	}
-
 	op := t.proposal.Operations[idx]
 
 	cs := op.ChainSelector
@@ -178,11 +164,6 @@ func (t *TimelockExecutable) Execute(ctx context.Context, index int, opts ...Opt
 	execOpts := &executeOptions{}
 	for _, opt := range opts {
 		opt(execOpts)
-	}
-
-	err := t.setPredecessors(ctx)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("unable to set predecessors: %w", err)
 	}
 
 	op := t.proposal.Operations[index]
