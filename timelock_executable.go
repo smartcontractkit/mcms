@@ -36,8 +36,7 @@ func NewTimelockExecutable(
 
 func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.BatchOperation, selector types.ChainSelector) (common.Hash, error) {
 	// Convert the batch operation
-	executor := t.executors[selector]
-	converter, err := newTimelockConverterFromExecutor(selector, executor)
+	converter, err := newTimelockConverter(selector)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("unable to create converter from executor: %w", err)
 	}
@@ -199,8 +198,8 @@ func (t *TimelockExecutable) setPredecessors(ctx context.Context) error {
 	if len(t.predecessors) == 0 && len(t.executors) > 0 {
 		var err error
 		var converters = make(map[types.ChainSelector]sdk.TimelockConverter)
-		for chainSelector, executor := range t.executors {
-			converters[chainSelector], err = newTimelockConverterFromExecutor(chainSelector, executor)
+		for chainSelector := range t.executors {
+			converters[chainSelector], err = newTimelockConverter(chainSelector)
 			if err != nil {
 				return fmt.Errorf("unable to create converter from executor: %w", err)
 			}

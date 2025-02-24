@@ -99,7 +99,6 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	operation2BypasserPDA, err := solanasdk.FindTimelockBypasserOperationPDA(s.TimelockProgramID, testPDASeedTimelockConverter, operation2ID)
 	s.Require().NoError(err)
 
-	s.Require().NoError(err)
 	metadata, err := solanasdk.NewChainMetadata(
 		0,
 		s.MCMProgramID,
@@ -338,7 +337,6 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// build expected output Proposal
-		s.Require().NoError(err)
 		wantProposal, err := mcms.NewProposalBuilder().
 			SetValidUntil(uint32(validUntil)).
 			SetDescription("proposal to test the timelock proposal converter").
@@ -392,7 +390,6 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		bypasserAC := s.Roles[timelock.Bypasser_Role].AccessController.PublicKey()
 
 		// build expected output Proposal
-		s.Require().NoError(err)
 		wantProposal, err := mcms.NewProposalBuilder().
 			SetValidUntil(uint32(validUntil)).
 			SetDescription("proposal to test the timelock proposal converter").
