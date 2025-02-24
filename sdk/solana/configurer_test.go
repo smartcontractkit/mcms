@@ -41,7 +41,7 @@ func Test_NewConfigurer(t *testing.T) {
 		{
 			name: "skip transaction option",
 			constructorFn: func() *Configurer {
-				return NewConfigurer(client, auth, chainSelector, SkipTransaction())
+				return NewConfigurer(client, auth, chainSelector, WithDoNotSendInstructionsOnChain())
 			},
 			wantSkipTransaction: true,
 		},
@@ -53,7 +53,7 @@ func Test_NewConfigurer(t *testing.T) {
 			configurer := tt.constructorFn()
 
 			require.NotNil(t, configurer)
-			require.Equal(t, tt.wantSkipTransaction, configurer.skipTransaction)
+			require.Equal(t, tt.wantSkipTransaction, configurer.skipSend)
 		})
 	}
 }
@@ -107,7 +107,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 		{
 			name:      "success - do not send instructions",
 			auth:      auth,
-			options:   []configurerOption{SkipTransaction()},
+			options:   []configurerOption{WithDoNotSendInstructionsOnChain()},
 			mcmConfig: defaultMcmConfig,
 			setup:     func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
 			wantHash:  "",

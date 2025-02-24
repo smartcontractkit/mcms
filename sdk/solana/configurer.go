@@ -21,10 +21,10 @@ var _ sdk.Configurer = &Configurer{}
 // Configurer configures the MCM contract for Solana chains.
 type Configurer struct {
 	instructionCollection
-	chainSelector   types.ChainSelector
-	client          *rpc.Client
-	auth            solana.PrivateKey
-	skipTransaction bool
+	chainSelector types.ChainSelector
+	client        *rpc.Client
+	auth          solana.PrivateKey
+	skipSend      bool
 }
 
 // NewConfigurer creates a new Configurer for Solana chains.
@@ -32,10 +32,10 @@ func NewConfigurer(
 	client *rpc.Client, auth solana.PrivateKey, chainSelector types.ChainSelector, options ...configurerOption,
 ) *Configurer {
 	configurer := &Configurer{
-		client:          client,
-		auth:            auth,
-		chainSelector:   chainSelector,
-		skipTransaction: false,
+		client:        client,
+		auth:          auth,
+		chainSelector: chainSelector,
+		skipSend:      false,
 	}
 	for _, opt := range options {
 		opt(configurer)
@@ -46,9 +46,9 @@ func NewConfigurer(
 
 type configurerOption func(*Configurer)
 
-func SkipTransaction() configurerOption {
+func WithDoNotSendInstructionsOnChain() configurerOption {
 	return func(c *Configurer) {
-		c.skipTransaction = true
+		c.skipSend = true
 	}
 }
 
@@ -114,7 +114,7 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 	}
 
 	var signature string
-	if !c.skipTransaction {
+	if !c.skipSend {
 		signature, err = c.sendInstructions(ctx, c.client, c.auth)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("unable to set config: %w", err)
