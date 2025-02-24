@@ -8,6 +8,7 @@ import (
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/google/go-cmp/cmp"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/assert"
@@ -26,37 +27,47 @@ func TestNewChainMetadataFromTimelock(t *testing.T) {
 		timelock        solana.PublicKey
 		timelockSeed    PDASeed
 	}
-	timelockProgramID, err := solana.NewRandomPrivateKey()
-	require.NoError(t, err)
+
+	programID := solana.NewWallet().PublicKey()
+	timelockProgramID := solana.NewWallet().PublicKey()
+	MCMSeed := PDASeed([32]byte{1, 2, 3, 4})
 	timelockSeed := PDASeed([32]byte{1, 2, 3, 4})
-	configPDA, err := FindTimelockConfigPDA(timelockProgramID.PublicKey(), timelockSeed)
+
+	configPDA, err := FindTimelockConfigPDA(timelockProgramID, timelockSeed)
 	require.NoError(t, err)
+
 	tests := []struct {
-		name      string
-		params    params
-		setupMock func(mock *mocks.JSONRPCClient)
-		wantErr   error
+		name         string
+		params       params
+		setupMock    func(mock *mocks.JSONRPCClient)
+		wantMetadata *types.ChainMetadata
+		wantErr      error
 	}{
 		{
 			name: "valid metadata",
 			params: params{
 				startingOpCount: 100,
-				mcmProgramID:    solana.NewWallet().PublicKey(),
-				mcmInstanceSeed: PDASeed([32]byte{1, 2, 3, 4}),
-				timelock:        timelockProgramID.PublicKey(),
+				mcmProgramID:    programID,
+				mcmInstanceSeed: MCMSeed,
+				timelock:        timelockProgramID,
 				timelockSeed:    timelockSeed,
 			},
 			setupMock: func(mockJSONRPCClient *mocks.JSONRPCClient) {
 				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, &timelock.Config{}, nil)
+			},
+			wantMetadata: &types.ChainMetadata{
+				StartingOpCount:  100,
+				MCMAddress:       ContractAddress(programID, MCMSeed),
+				AdditionalFields: json.RawMessage(`{"proposerRoleAccessController":"11111111111111111111111111111111","cancellerRoleAccessController":"11111111111111111111111111111111","bypasserRoleAccessController":"11111111111111111111111111111111"}`),
 			},
 		},
 		{
 			name: "error rpc call",
 			params: params{
 				startingOpCount: 100,
-				mcmProgramID:    solana.NewWallet().PublicKey(),
-				mcmInstanceSeed: PDASeed([32]byte{1, 2, 3, 4}),
-				timelock:        timelockProgramID.PublicKey(),
+				mcmProgramID:    programID,
+				mcmInstanceSeed: MCMSeed,
+				timelock:        timelockProgramID,
 				timelockSeed:    timelockSeed,
 			},
 			wantErr: errors.New("unable to read timelock config pda: rpc error"),
@@ -83,16 +94,16 @@ func TestNewChainMetadataFromTimelock(t *testing.T) {
 				tt.params.timelockSeed)
 			if tt.wantErr == nil {
 				require.NoError(t, err, "expected no error but got one")
+				require.Empty(t, cmp.Diff(tt.wantMetadata, &metadata))
 			} else {
 				// Assert the error message matches the expected error.
 				require.NotNil(t, metadata)
-				metadata.StartingOpCount = tt.params.startingOpCount
-				metadata.MCMAddress = ContractAddress(tt.params.mcmProgramID, tt.params.mcmInstanceSeed)
 				require.EqualError(t, err, tt.wantErr.Error())
 			}
 		})
 	}
 }
+
 func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
 	t.Parallel()
 

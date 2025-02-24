@@ -76,7 +76,7 @@ func NewChainMetadata(
 	}, nil
 }
 
-// NewChainMetadataFromTimelock creates a new ChainMetadata from and RPC client
+// NewChainMetadataFromTimelock creates a new ChainMetadata from an RPC client
 // useful when access controller accounts are not available for the client
 func NewChainMetadataFromTimelock(
 	ctx context.Context,
