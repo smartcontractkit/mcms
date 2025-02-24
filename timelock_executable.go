@@ -115,6 +115,14 @@ func (t *TimelockExecutable) IsChainReady(ctx context.Context, chainSelector typ
 }
 
 func (t *TimelockExecutable) IsOperationReady(ctx context.Context, idx int) error {
+	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
+	// (one array per chain). The 0th element is zero-hash, the 1st is the
+	// operationID for that chain's 1st operation, etc.
+	err := t.setPredecessors(ctx)
+	if err != nil {
+		return fmt.Errorf("unable to set predecessors: %w", err)
+	}
+
 	op := t.proposal.Operations[idx]
 
 	cs := op.ChainSelector
