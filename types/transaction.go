@@ -6,13 +6,13 @@ package types
 type TransactionResult struct {
 	Hash        string `json:"hash"`
 	ChainFamily string `json:"chainFamily"`
-	RawData     any    `json:"tx"`
+	RawData     any    `json:"rawData"`
 }
 
-func NewTransactionResult(hash string, tx any, cf string) TransactionResult {
+func NewTransactionResult(hash string, rawData any, cf string) TransactionResult {
 	return TransactionResult{
 		Hash:        hash,
 		ChainFamily: cf,
-		RawData:     tx,
+		RawData:     rawData,
 	}
 }
