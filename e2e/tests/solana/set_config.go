@@ -18,7 +18,6 @@ import (
 )
 
 var testPDASeedSetConfigTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'c', 'o', 'n', 'f'}
-var testPDASeedSetConfigSkipTxTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'c', 'o', 'n', 'f', '-', 's', 'k', 'i', 'p', 't', 'x'}
 
 // Test_Solana_SetConfig tests the SetConfig functionality by setting a config on the MCM program
 func (s *SolanaTestSuite) Test_Solana_SetConfig() {
@@ -73,7 +72,7 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 		},
 	}
 
-	s.Run("send and confirm instructions to the blockchain", func () {
+	s.Run("send and confirm instructions to the blockchain", func() {
 		// --- act ---
 		configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.ChainSelector)
 		result, err := configurer.SetConfig(ctx, mcmAddress, &config, true)
@@ -88,7 +87,7 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 		s.Require().Empty(cmp.Diff(config, *gotConfig))
 	})
 
-	s.Run("do NOT send transactions to the blockchain", func () {
+	s.Run("do NOT send transactions to the blockchain", func() {
 		skipTxConfig := types.Config{
 			Quorum: 1,
 			Signers: []common.Address{
@@ -98,7 +97,7 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 		}
 
 		// --- act ---
-		configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.ChainSelector, mcmsSolana.SkipTransaction())
+		configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.ChainSelector, mcmsSolana.WithDoNotSendInstructionsOnChain())
 		result, err := configurer.SetConfig(ctx, mcmAddress, &skipTxConfig, true)
 		s.Require().NoError(err)
 
