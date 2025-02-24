@@ -58,8 +58,8 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.C
 	}
 
 	return types.TransactionResult{
-		Hash:           tx.Hash().Hex(),
-		ChainFamily:    chain_selectors.FamilyEVM,
-		RawTransaction: tx,
+		Hash:        tx.Hash().Hex(),
+		ChainFamily: chain_selectors.FamilyEVM,
+		RawData:     tx,
 	}, nil
 }

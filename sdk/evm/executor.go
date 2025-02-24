@@ -59,9 +59,9 @@ func (e *Executor) ExecuteOperation(
 	}
 
 	return types.TransactionResult{
-		Hash:           tx.Hash().Hex(),
-		ChainFamily:    chain_selectors.FamilyEVM,
-		RawTransaction: tx,
+		Hash:        tx.Hash().Hex(),
+		ChainFamily: chain_selectors.FamilyEVM,
+		RawData:     tx,
 	}, err
 }
 
@@ -103,8 +103,8 @@ func (e *Executor) SetRoot(
 	}
 
 	return types.TransactionResult{
-		Hash:           tx.Hash().Hex(),
-		ChainFamily:    chain_selectors.FamilyEVM,
-		RawTransaction: tx,
+		Hash:        tx.Hash().Hex(),
+		ChainFamily: chain_selectors.FamilyEVM,
+		RawData:     tx,
 	}, err
 }
