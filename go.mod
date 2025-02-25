@@ -18,7 +18,7 @@ require (
 	github.com/spf13/cast v1.7.1
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/tools v0.29.0
-	gotest.tools/v3 v3.5.1
+	gotest.tools/v3 v3.5.2
 )
 
 require (
