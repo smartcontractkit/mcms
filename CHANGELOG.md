@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.12.1
+
+### Patch Changes
+
+- [#318](https://github.com/smartcontractkit/mcms/pull/318) [`e19a319`](https://github.com/smartcontractkit/mcms/commit/e19a3192493fd79e6cf79154da5668bb637c254d) Thanks [@akhilchainani](https://github.com/akhilchainani)! - setPredecessors in constructor and refactor
+
 ## 0.12.0
 
 ### Minor Changes
