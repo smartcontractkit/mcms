@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.12.2
+
+### Patch Changes
+
+- [#320](https://github.com/smartcontractkit/mcms/pull/320) [`5383734`](https://github.com/smartcontractkit/mcms/commit/53837346adefec47eb0ab92937029f645baaf5a2) Thanks [@ecPablo](https://github.com/ecPablo)! - downgrade chainlink solana
+
 ## 0.12.1
 
 ### Patch Changes
