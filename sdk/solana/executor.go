@@ -153,7 +153,7 @@ func (e *Executor) SetRoot(
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
-	rootSignaturesPDA, err := FindRootSignaturesPDA(programID, pdaSeed, root, validUntil)
+	rootSignaturesPDA, err := FindRootSignaturesPDA(programID, pdaSeed, root, validUntil, e.auth.PublicKey())
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
