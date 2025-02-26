@@ -45,9 +45,9 @@ func FindExpiringRootAndOpCountPDA(programID solana.PublicKey, pdaSeed PDASeed) 
 }
 
 func FindRootSignaturesPDA(
-	programID solana.PublicKey, msigID PDASeed, root common.Hash, validUntil uint32,
+	programID solana.PublicKey, msigID PDASeed, root common.Hash, validUntil uint32, authority solana.PublicKey,
 ) (solana.PublicKey, error) {
-	seeds := [][]byte{[]byte("root_signatures"), msigID[:], root[:], validUntilBytes(validUntil)}
+	seeds := [][]byte{[]byte("root_signatures"), msigID[:], root[:], validUntilBytes(validUntil), authority[:]}
 	return findPDA(programID, seeds)
 }
 
