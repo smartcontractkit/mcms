@@ -17,7 +17,7 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 	}
 	if len(additionalFields) != 0 {
 		if err := json.Unmarshal(additionalFields, &fields); err != nil {
-			return fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
+			return fmt.Errorf("failed to unmarshal solana additional fields: %w", err)
 		}
 	}
 
@@ -29,7 +29,7 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 }
 
 type AdditionalFields struct {
-	Accounts []*solana.AccountMeta `json:"accounts" validate:"required"`
+	Accounts []*solana.AccountMeta `json:"accounts" validate:"omitempty"`
 	Value    *big.Int              `json:"value" validate:"omitempty"`
 }
 
