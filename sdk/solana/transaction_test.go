@@ -63,6 +63,8 @@ func TestNewTransactionFromInstruction(t *testing.T) {
 }
 
 func TestValidateAdditionalFields(t *testing.T) {
+	t.Parallel()
+
 	validAccount := &solana.AccountMeta{
 		PublicKey: solana.MustPublicKeyFromBase58("11111111111111111111111111111111"),
 		IsSigner:  true,
@@ -82,6 +84,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 				}
 				data, err := json.Marshal(fields)
 				require.NoError(t, err)
+
 				return data
 			}(),
 			wantErr: false,
@@ -110,6 +113,8 @@ func TestValidateAdditionalFields(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			err := ValidateAdditionalFields(tc.input)
 			if tc.wantErr {
 				require.Error(t, err)
@@ -122,6 +127,8 @@ func TestValidateAdditionalFields(t *testing.T) {
 }
 
 func TestAdditionalFieldsValidate(t *testing.T) {
+	t.Parallel()
+
 	validAccount := &solana.AccountMeta{
 		PublicKey: solana.MustPublicKeyFromBase58("11111111111111111111111111111111"),
 		IsSigner:  true,
@@ -160,6 +167,8 @@ func TestAdditionalFieldsValidate(t *testing.T) {
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
 			err := tc.fields.Validate()
 			if tc.wantErr {
 				require.Error(t, err)
