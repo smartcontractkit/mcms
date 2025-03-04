@@ -1,5 +1,13 @@
 # @smartcontractkit/mcms
 
+## 0.12.3
+
+### Patch Changes
+
+- [#323](https://github.com/smartcontractkit/mcms/pull/323) [`008aec7`](https://github.com/smartcontractkit/mcms/commit/008aec734962e517b5bb9f9cb384c5ac2d08fff8) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - solana: update rootSignaturesPDA to include authority as new seed
+
+- [#324](https://github.com/smartcontractkit/mcms/pull/324) [`fc04e76`](https://github.com/smartcontractkit/mcms/commit/fc04e76deac968504b9af51c7c0862fff809cfd9) Thanks [@ecPablo](https://github.com/ecPablo)! - allow empty accounts in solana additional fields for transactions
+
 ## 0.12.2
 
 ### Patch Changes
