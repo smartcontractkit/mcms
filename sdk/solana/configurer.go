@@ -25,6 +25,7 @@ type Configurer struct {
 	client        *rpc.Client
 	auth          solana.PrivateKey
 	skipSend      bool
+	authority     solana.PublicKey
 }
 
 // NewConfigurer creates a new Configurer for Solana chains.
@@ -41,6 +42,7 @@ func NewConfigurer(
 		auth:          auth,
 		chainSelector: chainSelector,
 		skipSend:      false,
+		authority:     auth.PublicKey(),
 	}
 	for _, opt := range options {
 		opt(configurer)
@@ -54,6 +56,12 @@ type configurerOption func(*Configurer)
 func WithDoNotSendInstructionsOnChain() configurerOption {
 	return func(c *Configurer) {
 		c.skipSend = true
+	}
+}
+
+func WithAuthority(newAuth solana.PublicKey) configurerOption {
+	return func(c *Configurer) {
+		c.authority = newAuth
 	}
 }
 
@@ -120,7 +128,7 @@ func (c *Configurer) SetConfig(
 		configSignersPDA,
 		rootMetadataPDA,
 		expiringRootAndOpCountPDA,
-		c.auth.PublicKey(),
+		c.authority,
 		solana.SystemProgramID))
 	if err != nil {
 		return types.TransactionResult{}, err
@@ -148,21 +156,21 @@ func (c *Configurer) preloadSigners(
 	configSignersPDA solana.PublicKey,
 ) error {
 	err := c.addInstruction("initSigners", bindings.NewInitSignersInstruction(mcmName, uint8(len(signerAddresses)), //nolint:gosec
-		configPDA, configSignersPDA, c.auth.PublicKey(), solana.SystemProgramID))
+		configPDA, configSignersPDA, c.authority, solana.SystemProgramID))
 	if err != nil {
 		return err
 	}
 
 	for i, chunkIndex := range chunkIndexes(len(signerAddresses), config.MaxAppendSignerBatchSize) {
 		err = c.addInstruction(fmt.Sprintf("appendSigners%d", i), bindings.NewAppendSignersInstruction(mcmName,
-			signerAddresses[chunkIndex[0]:chunkIndex[1]], configPDA, configSignersPDA, c.auth.PublicKey()))
+			signerAddresses[chunkIndex[0]:chunkIndex[1]], configPDA, configSignersPDA, c.authority))
 		if err != nil {
 			return err
 		}
 	}
 
 	err = c.addInstruction("finalizeSigners", bindings.NewFinalizeSignersInstruction(mcmName, configPDA,
-		configSignersPDA, c.auth.PublicKey()))
+		configSignersPDA, c.authority))
 	if err != nil {
 		return err
 	}
