@@ -10,7 +10,12 @@
       "mcmAddress": "0x123"
     },
     "16423721717087811551": {
-      "mcmAddress": "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX.mcms-instance-1"
+      "mcmAddress": "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX.mcms-instance-1",
+      "additionalFields": {
+        "proposerRoleAccessController": "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX",
+        "cancellerRoleAccessController": "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX",
+        "bypasserRoleAccessController": "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX"
+      }
     }
   },
   "description": "proposal for e2e tests",

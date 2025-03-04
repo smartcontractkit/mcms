@@ -72,7 +72,7 @@ func (e *TimelockExecutor) Execute(
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to find timelock signer pda: %w", err)
 	}
-	config, err := getTimelockConfig(ctx, e.client, configPDA)
+	config, err := GetTimelockConfig(ctx, e.client, configPDA)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to read config pda: %w", err)
 	}
@@ -95,8 +95,8 @@ func (e *TimelockExecutor) Execute(
 	}
 
 	return types.TransactionResult{
-		Hash:           signature,
-		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: tx,
+		Hash:        signature,
+		ChainFamily: chain_selectors.FamilySolana,
+		RawData:     tx,
 	}, nil
 }

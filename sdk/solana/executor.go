@@ -113,9 +113,9 @@ func (e *Executor) ExecuteOperation(
 	}
 
 	return types.TransactionResult{
-		Hash:           signature,
-		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: tx,
+		Hash:        signature,
+		ChainFamily: chain_selectors.FamilySolana,
+		RawData:     tx,
 	}, nil
 }
 
@@ -186,9 +186,9 @@ func (e *Executor) SetRoot(
 	}
 
 	return types.TransactionResult{
-		Hash:           signature,
-		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: tx,
+		Hash:        signature,
+		ChainFamily: chain_selectors.FamilySolana,
+		RawData:     tx,
 	}, nil
 }
 

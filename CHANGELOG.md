@@ -1,5 +1,33 @@
 # @smartcontractkit/mcms
 
+## 0.12.2
+
+### Patch Changes
+
+- [#320](https://github.com/smartcontractkit/mcms/pull/320) [`5383734`](https://github.com/smartcontractkit/mcms/commit/53837346adefec47eb0ab92937029f645baaf5a2) Thanks [@ecPablo](https://github.com/ecPablo)! - downgrade chainlink solana
+
+## 0.12.1
+
+### Patch Changes
+
+- [#318](https://github.com/smartcontractkit/mcms/pull/318) [`e19a319`](https://github.com/smartcontractkit/mcms/commit/e19a3192493fd79e6cf79154da5668bb637c254d) Thanks [@akhilchainani](https://github.com/akhilchainani)! - setPredecessors in constructor and refactor
+
+## 0.12.0
+
+### Minor Changes
+
+- [#297](https://github.com/smartcontractkit/mcms/pull/297) [`2a4a443`](https://github.com/smartcontractkit/mcms/commit/2a4a443552b4098fd6fb23055b8ec5a5fabb110b) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - fix: make predecessors parameter optional on NewProposal and NewTimelockProposal
+
+- [#310](https://github.com/smartcontractkit/mcms/pull/310) [`d5d9b16`](https://github.com/smartcontractkit/mcms/commit/d5d9b166d63330dae68e518e8dcdd0b4744bada9) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: enable calling SetConfig without sending the transaction
+
+- [#301](https://github.com/smartcontractkit/mcms/pull/301) [`d8a156c`](https://github.com/smartcontractkit/mcms/commit/d8a156c94f693bfeaa63b85a21e47ec4b4f1190e) Thanks [@akhilchainani](https://github.com/akhilchainani)! - Expose additional functions to help with proposal decoding
+
+- [#313](https://github.com/smartcontractkit/mcms/pull/313) [`4a4a5b5`](https://github.com/smartcontractkit/mcms/commit/4a4a5b52d56bdc8b1fc810a11dee58bd588d672d) Thanks [@ecPablo](https://github.com/ecPablo)! - Remove dependency of timelock converter in solana with rpc.Client
+
+### Patch Changes
+
+- [#311](https://github.com/smartcontractkit/mcms/pull/311) [`3808de9`](https://github.com/smartcontractkit/mcms/commit/3808de9556cd10fb713b009fa29b5ed859d9ae65) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - Update to latest chainlink-ccip/chains/solana
+
 ## 0.11.0
 
 ### Minor Changes

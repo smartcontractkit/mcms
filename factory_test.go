@@ -3,8 +3,6 @@ package mcms
 import (
 	"testing"
 
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -92,49 +90,36 @@ func Test_NewEncoder(t *testing.T) {
 	}
 }
 
-func Test_newTimelockConverterFromExecutor(t *testing.T) {
+func Test_newTimelockConverter(t *testing.T) {
 	t.Parallel()
-
-	solanaClient := &rpc.Client{}
-	solanaAuth, _ := solana.NewRandomPrivateKey()
 
 	tests := []struct {
 		name          string
 		chainSelector types.ChainSelector
-		executor      sdk.TimelockExecutor
 		want          sdk.TimelockConverter
 		wantErr       string
 	}{
 		{
 			name:          "success: EVM executor",
 			chainSelector: chaintest.Chain1Selector,
-			executor:      &evmsdk.TimelockExecutor{},
 			want:          &evmsdk.TimelockConverter{},
 		},
 		{
 			name:          "success: Solana executor",
 			chainSelector: chaintest.Chain4Selector,
-			executor:      solanasdk.NewTimelockExecutor(solanaClient, solanaAuth),
-			want:          solanasdk.NewTimelockConverter(solanaClient),
+			want:          &solanasdk.TimelockConverter{},
 		},
 		{
 			name:          "failure: unknown selector",
 			chainSelector: types.ChainSelector(123456789),
-			executor:      &UnknownTimelockExecutor{},
 			wantErr:       "chain family not found for selector 123456789",
-		},
-		{
-			name:          "failure: unknown executor type",
-			chainSelector: chaintest.Chain4Selector,
-			executor:      &UnknownTimelockExecutor{},
-			wantErr:       "unable to cast sdk executor to solana TimelockExecutor",
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := newTimelockConverterFromExecutor(tt.chainSelector, tt.executor)
+			got, err := newTimelockConverter(tt.chainSelector)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
@@ -144,8 +129,4 @@ func Test_newTimelockConverterFromExecutor(t *testing.T) {
 			}
 		})
 	}
-}
-
-type UnknownTimelockExecutor struct {
-	sdk.TimelockExecutor
 }

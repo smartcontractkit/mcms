@@ -102,7 +102,7 @@ func (s *ManualLedgerSigningTestSuite) setRootEVM(
 	configurer := evm.NewConfigurer(s.ClientA, s.authEVM)
 	tx, err := configurer.SetConfig(ctx, instance.Address().Hex(), &mcmConfig, true)
 	s.Require().NoError(err, "Failed to set contract configuration")
-	_, err = bind.WaitMined(ctx, s.ClientA, tx.RawTransaction.(*gethTypes.Transaction))
+	_, err = bind.WaitMined(ctx, s.ClientA, tx.RawData.(*gethTypes.Transaction))
 	s.Require().NoError(err, "Failed to mine set config transaction")
 
 	// set root

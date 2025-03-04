@@ -22,9 +22,9 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 	timelockAddress := "0x1234567890123456789012345678901234567890"
 	mcmAddress := "0x9876543210987654321098765432109876543210"
 	zeroHash := common.Hash{}
-
 	testCases := []struct {
 		name           string
+		metadata       types.ChainMetadata
 		op             types.BatchOperation
 		delay          string
 		operation      types.TimelockAction
@@ -121,7 +121,15 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 
 			converter := &TimelockConverter{}
 			chainOperations, operationID, err := converter.ConvertBatchToChainOperations(
-				ctx, tc.op, timelockAddress, mcmAddress, types.MustParseDuration(tc.delay), tc.operation, tc.predecessor, tc.salt,
+				ctx,
+				tc.metadata,
+				tc.op,
+				timelockAddress,
+				mcmAddress,
+				types.MustParseDuration(tc.delay),
+				tc.operation,
+				tc.predecessor,
+				tc.salt,
 			)
 
 			if tc.expectedError != nil {
