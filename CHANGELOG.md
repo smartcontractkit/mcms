@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.13.0
+
+### Minor Changes
+
+- [#329](https://github.com/smartcontractkit/mcms/pull/329) [`031adfb`](https://github.com/smartcontractkit/mcms/commit/031adfb1038d1716e7620104c5af6ff6b807ce4d) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - feat(solana): override authority on Configurer
+
 ## 0.12.3
 
 ### Patch Changes
