@@ -26,24 +26,36 @@ func Test_NewConfigurer(t *testing.T) {
 	auth := solana.MustPrivateKeyFromBase58("DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc")
 	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
 
+	newAuthorityAccount := solana.NewWallet().PublicKey()
+
 	tests := []struct {
-		name                string
-		constructorFn       func() *Configurer
-		wantSkipTransaction bool
+		name                 string
+		constructorFn        func() *Configurer
+		wantSkipTransaction  bool
+		wantAuthorityAccount solana.PublicKey
 	}{
 		{
 			name: "standard args",
 			constructorFn: func() *Configurer {
 				return NewConfigurer(client, auth, chainSelector)
 			},
-			wantSkipTransaction: false,
+			wantSkipTransaction:  false,
+			wantAuthorityAccount: auth.PublicKey(),
 		},
 		{
 			name: "skip transaction option",
 			constructorFn: func() *Configurer {
 				return NewConfigurer(client, auth, chainSelector, WithDoNotSendInstructionsOnChain())
 			},
-			wantSkipTransaction: true,
+			wantSkipTransaction:  true,
+			wantAuthorityAccount: auth.PublicKey(),
+		},
+		{
+			name: "override authorityAccount",
+			constructorFn: func() *Configurer {
+				return NewConfigurer(client, auth, chainSelector, WithAuthorityAccount(newAuthorityAccount))
+			},
+			wantAuthorityAccount: newAuthorityAccount,
 		},
 	}
 
@@ -54,6 +66,7 @@ func Test_NewConfigurer(t *testing.T) {
 
 			require.NotNil(t, configurer)
 			require.Equal(t, tt.wantSkipTransaction, configurer.skipSend)
+			require.Equal(t, tt.wantAuthorityAccount, configurer.authorityAccount)
 		})
 	}
 }
@@ -67,6 +80,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	require.NoError(t, err)
 	defaultMcmConfig := &types.Config{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x1")}}
 	clearRoot := false
+	newAuthorityAccount := solana.NewWallet().PublicKey()
 
 	tests := []struct {
 		name             string
@@ -108,6 +122,20 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			name:      "success - do not send instructions",
 			auth:      auth,
 			options:   []configurerOption{WithDoNotSendInstructionsOnChain()},
+			mcmConfig: defaultMcmConfig,
+			setup:     func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
+			wantHash:  "",
+			wantInstructions: []solana.Instruction{
+				bindings.NewInitSignersInstructionBuilder().Build(),
+				bindings.NewAppendSignersInstructionBuilder().Build(),
+				bindings.NewFinalizeSignersInstructionBuilder().Build(),
+				bindings.NewSetConfigInstructionBuilder().Build(),
+			},
+		},
+		{
+			name:      "success - override authorityAccount acciybt",
+			auth:      auth,
+			options:   []configurerOption{WithDoNotSendInstructionsOnChain(), WithAuthorityAccount(newAuthorityAccount)},
 			mcmConfig: defaultMcmConfig,
 			setup:     func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
 			wantHash:  "",
