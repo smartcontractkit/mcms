@@ -6,6 +6,7 @@ import (
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
+	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
@@ -23,6 +24,9 @@ func validateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 
 	case cselectors.FamilySolana:
 		return solana.ValidateAdditionalFields(additionalFields)
+
+	case cselectors.FamilyAptos:
+		return aptos.ValidateAdditionalFields(additionalFields)
 	}
 
 	return nil

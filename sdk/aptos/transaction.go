@@ -1,8 +1,23 @@
 package aptos
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 )
+
+func ValidateAdditionalFields(additionalFields json.RawMessage) error {
+	fields := AdditionalFields{}
+	if err := json.Unmarshal(additionalFields, &fields); err != nil {
+		return fmt.Errorf("failed to unmarshal Aptos additional fields: %w", err)
+	}
+
+	if err := fields.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
 
 type AdditionalFields struct {
 	ModuleName string `json:"module_name"`
