@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -26,15 +25,11 @@ const AppendIxDataChunkSize = 491
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
 type TimelockConverter struct {
-	client *rpc.Client
 }
 
-func NewTimelockConverter(client *rpc.Client) *TimelockConverter {
-	return &TimelockConverter{client: client}
-}
-
-func (t *TimelockConverter) ConvertBatchToChainOperations(
+func (t TimelockConverter) ConvertBatchToChainOperations(
 	ctx context.Context,
+	metadata types.ChainMetadata,
 	batchOp types.BatchOperation,
 	timelockAddress string,
 	mcmAddress string,
@@ -85,23 +80,22 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to find mcm signer address: %w", err)
 	}
-	config, err := getTimelockConfig(ctx, t.client, configPDA)
-	if err != nil {
-		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to read timelock config pda: %w", err)
+	var additionalFields AdditionalFieldsMetadata
+	if err = json.Unmarshal(metadata.AdditionalFields, &additionalFields); err != nil {
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to unmarshal solana-specific additional fields from chain metada: %w", err)
 	}
-
 	// encode the data based on the operation
 	var instructions []solana.Instruction
 	switch action {
 	case types.TimelockActionSchedule:
 		instructions, err = scheduleBatchInstructions(timelockPDASeed, operationID, predecessor, salt, delay.Duration,
-			uint32(len(batchOp.Transactions)), instructionsData, config.ProposerRoleAccessController, operationPDA, //nolint:gosec
+			uint32(len(batchOp.Transactions)), instructionsData, additionalFields.ProposerRoleAccessController, operationPDA, //nolint:gosec
 			configPDA, mcmSignerPDA)
 	case types.TimelockActionCancel:
-		instructions, err = cancelInstructions(timelockPDASeed, operationID, config.CancellerRoleAccessController,
+		instructions, err = cancelInstructions(timelockPDASeed, operationID, additionalFields.CancellerRoleAccessController,
 			operationPDA, configPDA, mcmSignerPDA)
 	case types.TimelockActionBypass:
-		instructions, err = bypassInstructions(timelockPDASeed, operationID, config.BypasserRoleAccessController,
+		instructions, err = bypassInstructions(timelockPDASeed, operationID, additionalFields.BypasserRoleAccessController,
 			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData) //nolint:gosec
 	default:
 		err = fmt.Errorf("invalid timelock operation: %s", string(action))

@@ -315,7 +315,8 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				"chainMetadata": {
 					"16015286601757825753": {
 						"mcmAddress": "0x0000000000000000000000000000000000000000",
-						"startingOpCount": 0
+						"startingOpCount": 0,
+						"additionalFields": null
 					}
 				},
 				"description": "Test proposal",

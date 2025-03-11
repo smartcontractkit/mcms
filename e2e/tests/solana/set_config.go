@@ -8,7 +8,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
+
+	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
+	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
@@ -69,16 +72,51 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 		},
 	}
 
-	// --- act ---
-	configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.ChainSelector)
-	signature, err := configurer.SetConfig(ctx, mcmAddress, &config, true)
-	s.Require().NoError(err)
-	_, err = solana.SignatureFromBase58(signature.Hash)
-	s.Require().NoError(err)
+	s.Run("send and confirm instructions to the blockchain", func() {
+		// --- act ---
+		configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.ChainSelector)
+		result, err := configurer.SetConfig(ctx, mcmAddress, &config, true)
+		s.Require().NoError(err)
+		_, err = solana.SignatureFromBase58(result.Hash)
+		s.Require().NoError(err)
 
-	// --- assert ---
-	gotConfig, err := mcmsSolana.NewInspector(s.SolanaClient).GetConfig(ctx, mcmAddress)
-	s.Require().NoError(err)
-	s.Require().NotNil(gotConfig)
-	s.Require().Empty(cmp.Diff(config, *gotConfig))
+		// --- assert ---
+		gotConfig, err := mcmsSolana.NewInspector(s.SolanaClient).GetConfig(ctx, mcmAddress)
+		s.Require().NoError(err)
+		s.Require().NotNil(gotConfig)
+		s.Require().Empty(cmp.Diff(config, *gotConfig))
+	})
+
+	s.Run("do NOT send transactions to the blockchain", func() {
+		skipTxConfig := types.Config{
+			Quorum: 1,
+			Signers: []common.Address{
+				testEVMAccounts[0].Address,
+			},
+			GroupSigners: []types.Config{},
+		}
+
+		// --- act ---
+		configurer := mcmsSolana.NewConfigurer(s.SolanaClient, auth, s.ChainSelector, mcmsSolana.WithDoNotSendInstructionsOnChain())
+		result, err := configurer.SetConfig(ctx, mcmAddress, &skipTxConfig, true)
+		s.Require().NoError(err)
+
+		// --- assert ---
+		s.Require().Empty(err, result.Hash)
+
+		gotConfig, err := mcmsSolana.NewInspector(s.SolanaClient).GetConfig(ctx, mcmAddress)
+		s.Require().NoError(err)
+		s.Require().NotNil(gotConfig)
+		s.Require().Empty(cmp.Diff(config, *gotConfig)) // previous config should still be valid
+
+		// manually send instructions from the response and confirm that they modified the config
+		instructions := result.RawData.([]solana.Instruction)
+		_, err = solanaCommon.SendAndConfirm(ctx, s.SolanaClient, instructions, auth, rpc.CommitmentConfirmed)
+		s.Require().NoError(err)
+
+		gotConfig, err = mcmsSolana.NewInspector(s.SolanaClient).GetConfig(ctx, mcmAddress)
+		s.Require().NoError(err)
+		s.Require().NotNil(gotConfig)
+		s.Require().Empty(cmp.Diff(skipTxConfig, *gotConfig))
+	})
 }

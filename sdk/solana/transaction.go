@@ -6,17 +6,40 @@ import (
 	"math/big"
 
 	"github.com/gagliardetto/solana-go"
+	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/types"
 )
 
+func ValidateAdditionalFields(additionalFields json.RawMessage) error {
+	fields := AdditionalFields{
+		Value: big.NewInt(0),
+	}
+	if len(additionalFields) != 0 {
+		if err := json.Unmarshal(additionalFields, &fields); err != nil {
+			return fmt.Errorf("failed to unmarshal solana additional fields: %w", err)
+		}
+	}
+
+	if err := fields.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type AdditionalFields struct {
-	Accounts []*solana.AccountMeta `json:"accounts" validate:"required"`
+	Accounts []*solana.AccountMeta `json:"accounts" validate:"omitempty"`
 	Value    *big.Int              `json:"value" validate:"omitempty"`
 }
 
 // Validate ensures the solana-specific fields are correct
 func (f AdditionalFields) Validate() error {
+	var validate = validator.New()
+	if err := validate.Struct(f); err != nil {
+		return err
+	}
+
 	return nil
 }
 

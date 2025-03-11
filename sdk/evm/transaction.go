@@ -10,6 +10,23 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+func ValidateAdditionalFields(additionalFields json.RawMessage) error {
+	fields := AdditionalFields{
+		Value: big.NewInt(0),
+	}
+	if len(additionalFields) != 0 {
+		if err := json.Unmarshal(additionalFields, &fields); err != nil {
+			return fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
+		}
+	}
+
+	if err := fields.Validate(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 type AdditionalFields struct {
 	Value *big.Int `json:"value"`
 }

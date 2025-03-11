@@ -12,6 +12,7 @@ import (
 type TimelockConverter interface {
 	ConvertBatchToChainOperations(
 		ctx context.Context,
+		metadata types.ChainMetadata,
 		bop types.BatchOperation,
 		timelockAddress string,
 		mcmAddress string,

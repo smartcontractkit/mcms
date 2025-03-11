@@ -20,22 +20,65 @@ var _ sdk.Configurer = &Configurer{}
 
 // Configurer configures the MCM contract for Solana chains.
 type Configurer struct {
-	chainSelector types.ChainSelector
-	client        *rpc.Client
-	auth          solana.PrivateKey
+	instructionCollection
+	chainSelector    types.ChainSelector
+	client           *rpc.Client
+	auth             solana.PrivateKey
+	skipSend         bool
+	authorityAccount solana.PublicKey
 }
 
 // NewConfigurer creates a new Configurer for Solana chains.
-func NewConfigurer(client *rpc.Client, auth solana.PrivateKey, chainSelector types.ChainSelector) *Configurer {
-	return &Configurer{
-		client:        client,
-		auth:          auth,
-		chainSelector: chainSelector,
+//
+// options:
+//
+//	WithDoNotSendInstructionsOnChain: when selected, the Configurer instance will not
+//			send the Solana instructions to the blockchain.
+//
+//	WithAuthorityAccount: sets the authorityAccount for the MCM contract. Defaults to the `auth` field if unset.
+//		Main use case is to allow authorityAccount to be overridden when processing the SetConfig with MCMS where
+//		the authorityAccount has to be the timelock signer.
+func NewConfigurer(
+	client *rpc.Client, auth solana.PrivateKey, chainSelector types.ChainSelector, options ...configurerOption,
+) *Configurer {
+	configurer := &Configurer{
+		client:           client,
+		auth:             auth,
+		chainSelector:    chainSelector,
+		skipSend:         false,
+		authorityAccount: auth.PublicKey(),
+	}
+	for _, opt := range options {
+		opt(configurer)
+	}
+
+	return configurer
+}
+
+type configurerOption func(*Configurer)
+
+func WithDoNotSendInstructionsOnChain() configurerOption {
+	return func(c *Configurer) {
+		c.skipSend = true
+	}
+}
+
+func WithAuthorityAccount(authorityAccount solana.PublicKey) configurerOption {
+	return func(c *Configurer) {
+		c.authorityAccount = authorityAccount
 	}
 }
 
 // SetConfig sets the configuration for the MCM contract on the Solana chain.
-func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
+//
+// The list of instructions needed to set the configuration is returned in the
+// `RawData` field. And if the instructions were sent on chain (which they are
+// unless the `WithDoNotSendInstructionsOnChain` option was selected in the
+// constructor), the signature of the last instruction is returned in the
+// `Hash` field.
+func (c *Configurer) SetConfig(
+	ctx context.Context, mcmAddress string, cfg *types.Config, clearRoot bool,
+) (types.TransactionResult, error) {
 	programID, pdaSeed, err := ParseContractAddress(mcmAddress)
 	if err != nil {
 		return types.TransactionResult{}, err
@@ -71,12 +114,15 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 		return types.TransactionResult{}, err
 	}
 
-	err = c.preloadSigners(ctx, pdaSeed, solanaSignerAddresses(signerAddresses), configPDA, configSignersPDA)
+	clear(c.instructions)
+	defer clear(c.instructions)
+
+	err = c.preloadSigners(pdaSeed, solanaSignerAddresses(signerAddresses), configPDA, configSignersPDA)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to preload signatures: %w", err)
 	}
 
-	setConfigInstruction := bindings.NewSetConfigInstruction(
+	err = c.addInstruction("setConfig", bindings.NewSetConfigInstruction(
 		pdaSeed,
 		signerGroups,
 		groupQuorums,
@@ -86,48 +132,51 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddress string, cfg *type
 		configSignersPDA,
 		rootMetadataPDA,
 		expiringRootAndOpCountPDA,
-		c.auth.PublicKey(),
-		solana.SystemProgramID)
-	signature, tx, err := sendAndConfirm(ctx, c.client, c.auth, setConfigInstruction, rpc.CommitmentConfirmed)
+		c.authorityAccount,
+		solana.SystemProgramID))
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("unable to set config: %w", err)
+		return types.TransactionResult{}, err
+	}
+
+	var signature string
+	if !c.skipSend {
+		signature, err = c.sendInstructions(ctx, c.client, c.auth)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("unable to set config: %w", err)
+		}
 	}
 
 	return types.TransactionResult{
-		Hash:           signature,
-		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: tx,
+		Hash:        signature,
+		ChainFamily: chain_selectors.FamilySolana,
+		RawData:     c.solanaInstructions(),
 	}, nil
 }
 
 func (c *Configurer) preloadSigners(
-	ctx context.Context,
 	mcmName [32]byte,
 	signerAddresses [][20]uint8,
 	configPDA solana.PublicKey,
 	configSignersPDA solana.PublicKey,
 ) error {
-	initSignersInstruction := bindings.NewInitSignersInstruction(mcmName, uint8(len(signerAddresses)), configPDA, //nolint:gosec
-		configSignersPDA, c.auth.PublicKey(), solana.SystemProgramID)
-	_, _, err := sendAndConfirm(ctx, c.client, c.auth, initSignersInstruction, rpc.CommitmentConfirmed)
+	err := c.addInstruction("initSigners", bindings.NewInitSignersInstruction(mcmName, uint8(len(signerAddresses)), //nolint:gosec
+		configPDA, configSignersPDA, c.authorityAccount, solana.SystemProgramID))
 	if err != nil {
-		return fmt.Errorf("unable to initialize signers: %w", err)
+		return err
 	}
 
 	for i, chunkIndex := range chunkIndexes(len(signerAddresses), config.MaxAppendSignerBatchSize) {
-		appendSignersInstructions := bindings.NewAppendSignersInstruction(mcmName,
-			signerAddresses[chunkIndex[0]:chunkIndex[1]], configPDA, configSignersPDA, c.auth.PublicKey())
-		_, _, aerr := sendAndConfirm(ctx, c.client, c.auth, appendSignersInstructions, rpc.CommitmentConfirmed)
-		if aerr != nil {
-			return fmt.Errorf("unable to append signers (%d): %w", i, aerr)
+		err = c.addInstruction(fmt.Sprintf("appendSigners%d", i), bindings.NewAppendSignersInstruction(mcmName,
+			signerAddresses[chunkIndex[0]:chunkIndex[1]], configPDA, configSignersPDA, c.authorityAccount))
+		if err != nil {
+			return err
 		}
 	}
 
-	finalizeSignersInstruction := bindings.NewFinalizeSignersInstruction(mcmName, configPDA, configSignersPDA,
-		c.auth.PublicKey())
-	_, _, err = sendAndConfirm(ctx, c.client, c.auth, finalizeSignersInstruction, rpc.CommitmentConfirmed)
+	err = c.addInstruction("finalizeSigners", bindings.NewFinalizeSignersInstruction(mcmName, configPDA,
+		configSignersPDA, c.authorityAccount))
 	if err != nil {
-		return fmt.Errorf("unable to finalize signers: %w", err)
+		return err
 	}
 
 	return nil
@@ -140,4 +189,55 @@ func solanaSignerAddresses(evmAddresses []evmCommon.Address) [][20]uint8 {
 	}
 
 	return solanaAddresses
+}
+
+type labeledInstruction struct {
+	solana.Instruction
+	label string
+}
+
+type instructionCollection struct {
+	instructions []labeledInstruction
+}
+
+func (c *instructionCollection) solanaInstructions() []solana.Instruction {
+	solanaInstructions := make([]solana.Instruction, len(c.instructions))
+	for i, instruction := range c.instructions {
+		solanaInstructions[i] = instruction.Instruction
+	}
+
+	return solanaInstructions
+}
+
+func (c *instructionCollection) addInstruction(label string, instructionBuilder any) error {
+	instruction, err := validateAndBuildSolanaInstruction(instructionBuilder)
+	if err != nil {
+		return fmt.Errorf("unable to validate and build %s instruction: %w", label, err)
+	}
+
+	c.instructions = append(c.instructions, labeledInstruction{instruction, label})
+
+	return nil
+}
+
+func (c *instructionCollection) sendInstructions(
+	ctx context.Context,
+	client *rpc.Client,
+	auth solana.PrivateKey,
+) (string, error) {
+	if len(auth) == 0 {
+		return "", nil
+	}
+
+	var signature string
+	var err error
+	for i, instruction := range c.instructions {
+		signature, _, err = sendAndConfirmInstructions(ctx, client, auth,
+			[]solana.Instruction{instruction}, rpc.CommitmentConfirmed)
+		if err != nil {
+			return "", fmt.Errorf("unable to send instruction %d - %s: %w", i, instruction.label, err)
+		}
+	}
+
+	return signature, nil
 }

@@ -154,7 +154,7 @@ func (t TimelockInspector) getRoleAccessList(ctx context.Context, address string
 		return nil, err
 	}
 
-	configAccount, err := getTimelockConfig(ctx, t.client, pda)
+	configAccount, err := GetTimelockConfig(ctx, t.client, pda)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +184,7 @@ func (t TimelockInspector) getRoleAccessList(ctx context.Context, address string
 	return accessListStr, nil
 }
 
-func getTimelockConfig(ctx context.Context, client *rpc.Client, configPDA solana.PublicKey) (timelock.Config, error) {
+func GetTimelockConfig(ctx context.Context, client *rpc.Client, configPDA solana.PublicKey) (timelock.Config, error) {
 	var config timelock.Config
 	err := solanaCommon.GetAccountDataBorshInto(ctx, client, configPDA, rpc.CommitmentConfirmed, &config)
 	if err != nil {
