@@ -1,14 +1,17 @@
 package evm
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math/big"
-
-	"context"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+
+	"github.com/ethereum/go-ethereum/ethclient"
 
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
@@ -106,6 +109,49 @@ func (s *Simulator) SimulateOperation(
 	return err
 }
 
+func (s *Simulator) SimulateBatchOperation(
+	ctx context.Context,
+	timelockAddress string,
+	batchOperation types.BatchOperation,
+) ([]byte, error) {
+	if s.Inspector == nil {
+		return nil, errors.New("Simulator was created without an inspector")
+	}
+
+	ethClient, ok := s.client.(*ethclient.Client) // FIXME: is there a workaround?
+	if !ok {
+		return nil, fmt.Errorf("unable to cast client to rpc.Client: %T", s.client)
+	}
+
+	calls := []transactionArgs{}
+	for _, transaction := range batchOperation.Transactions {
+		var additionalFields AdditionalFields
+		if err := json.Unmarshal(transaction.AdditionalFields, &additionalFields); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal additionalFields: %w", err)
+		}
+		calls = append(calls, transactionArgs{
+			From:  ptrTo(common.HexToAddress(timelockAddress)),
+			To:    ptrTo(common.HexToAddress(transaction.To)),
+			Value: (*hexutil.Big)(additionalFields.Value),
+			Data:  ptrTo(hexutil.Bytes(transaction.Data)),
+		})
+	}
+	simulateV1Arg := simOpts{
+		BlockStateCalls:        []simBlock{{Calls: calls}},
+		ReturnFullTransactions: false,
+		TraceTransfers:         false,
+		Validation:             false,
+	}
+
+	var resp json.RawMessage
+	err := ethClient.Client().CallContext(ctx, &resp, "eth_simulateV1", simulateV1Arg, nil)
+	if err != nil {
+		return nil, fmt.Errorf("eth_simulateV1 failed: %w", err)
+	}
+
+	return resp, nil
+}
+
 // func (e *EVMSimulator) SimulateChain(
 // 	url string,
 // ) error {
@@ -122,3 +168,29 @@ func (s *Simulator) SimulateOperation(
 // 	anvilClient.AnvilSetStorageAt()
 // 	return nil
 // }
+
+func ptrTo[T any](v T) *T {
+	return &v
+}
+
+// types needed by the "eth_simulateV1" endpoint
+type transactionArgs struct {
+	From                 *common.Address `json:"from,omitempty"`
+	To                   *common.Address `json:"to,omitempty"`
+	Gas                  *hexutil.Uint64 `json:"gas,omitempty"`
+	GasPrice             *hexutil.Big    `json:"gasPrice,omitempty"`
+	MaxFeePerGas         *hexutil.Big    `json:"maxFeePerGas,omitempty"`
+	MaxPriorityFeePerGas *hexutil.Big    `json:"maxPriorityFeePerGas,omitempty"`
+	Value                *hexutil.Big    `json:"value,omitempty"`
+	Nonce                *hexutil.Uint64 `json:"nonce,omitempty"`
+	Data                 *hexutil.Bytes  `json:"data,omitempty"`
+}
+type simBlock struct {
+	Calls []transactionArgs `json:"calls,omitempty"`
+}
+type simOpts struct {
+	BlockStateCalls        []simBlock `json:"blockStateCalls,omitempty"`
+	TraceTransfers         bool       `json:"returnFullTransactionObjects,omitempty"`
+	Validation             bool       `json:"traceTransfers,omitempty"`
+	ReturnFullTransactions bool       `json:"validation,omitempty"`
+}
