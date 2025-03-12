@@ -5,15 +5,18 @@ package aptos
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"encoding/json"
 	"slices"
 	"time"
 
+	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/ccip"
+	module_fee_quoter "github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/ccip/fee_quoter"
 	module_mcms "github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/mcms/mcms"
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -231,6 +234,212 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 				ChainSelector: a.ChainSelector,
 				Transaction: types.Transaction{
 					To:               a.MCMContract.Address.StringLong(),
+					Data:             module_mcms.ArgsToData(args),
+					AdditionalFields: afBytes,
+				},
+			})
+		}
+
+		// Configure CCIP
+		ccip := ccip.Bind(ccipObjectAddress, a.AptosRPCClient)
+		token := aptos.AccountAddress{}
+		token.ParseStringRelaxed("0xa")
+		evmFamilySelector, _ := hex.DecodeString("2812d52c")
+		{
+			module, function, _, args, err := ccip.RMNRemote.EncodeInitialize(1234)
+			a.Require().NoError(err)
+			additionalFields := aptossdk.AdditionalFields{
+				ModuleName: module.Name,
+				Function:   function,
+			}
+			afBytes, err := json.Marshal(additionalFields)
+			a.Require().NoError(err)
+			proposalBuilder.AddOperation(types.Operation{
+				ChainSelector: a.ChainSelector,
+				Transaction: types.Transaction{
+					To:               ccipObjectAddress.StringLong(),
+					Data:             module_mcms.ArgsToData(args),
+					AdditionalFields: afBytes,
+				},
+			})
+		}
+		{
+			module, function, _, args, err := ccip.ReceiverRegistry.EncodeInitialize()
+			a.Require().NoError(err)
+			additionalFields := aptossdk.AdditionalFields{
+				ModuleName: module.Name,
+				Function:   function,
+			}
+			afBytes, err := json.Marshal(additionalFields)
+			a.Require().NoError(err)
+			proposalBuilder.AddOperation(types.Operation{
+				ChainSelector: a.ChainSelector,
+				Transaction: types.Transaction{
+					To:               ccipObjectAddress.StringLong(),
+					Data:             module_mcms.ArgsToData(args),
+					AdditionalFields: afBytes,
+				},
+			})
+		}
+		{
+			module, function, _, args, err := ccip.Onramp.EncodeInitialize(1234, a.deployerAccount.AccountAddress(), []uint64{5678}, []bool{true}, []bool{false})
+			a.Require().NoError(err)
+			additionalFields := aptossdk.AdditionalFields{
+				ModuleName: module.Name,
+				Function:   function,
+			}
+			afBytes, err := json.Marshal(additionalFields)
+			a.Require().NoError(err)
+			proposalBuilder.AddOperation(types.Operation{
+				ChainSelector: a.ChainSelector,
+				Transaction: types.Transaction{
+					To:               ccipObjectAddress.StringLong(),
+					Data:             module_mcms.ArgsToData(args),
+					AdditionalFields: afBytes,
+				},
+			})
+		}
+		{
+			module, function, _, args, err := ccip.Offramp.EncodeInitialize(1234, 30, true, []uint64{5678}, []bool{true}, []bool{true}, [][]byte{[]byte("0x1234567890")})
+			a.Require().NoError(err)
+			additionalFields := aptossdk.AdditionalFields{
+				ModuleName: module.Name,
+				Function:   function,
+			}
+			afBytes, err := json.Marshal(additionalFields)
+			a.Require().NoError(err)
+			proposalBuilder.AddOperation(types.Operation{
+				ChainSelector: a.ChainSelector,
+				Transaction: types.Transaction{
+					To:               ccipObjectAddress.StringLong(),
+					Data:             module_mcms.ArgsToData(args),
+					AdditionalFields: afBytes,
+				},
+			})
+		}
+		{
+			module, function, _, args, err := ccip.FeeQuoter.EncodeInitialize(1000, token, 12400, []aptos.AccountAddress{token})
+			a.Require().NoError(err)
+			additionalFields := aptossdk.AdditionalFields{
+				ModuleName: module.Name,
+				Function:   function,
+			}
+			afBytes, err := json.Marshal(additionalFields)
+			a.Require().NoError(err)
+			proposalBuilder.AddOperation(types.Operation{
+				ChainSelector: a.ChainSelector,
+				Transaction: types.Transaction{
+					To:               ccipObjectAddress.StringLong(),
+					Data:             module_mcms.ArgsToData(args),
+					AdditionalFields: afBytes,
+				},
+			})
+		}
+		{
+			module, function, _, args, err := ccip.TokenAdminRegistry.EncodeInitialize()
+			a.Require().NoError(err)
+			additionalFields := aptossdk.AdditionalFields{
+				ModuleName: module.Name,
+				Function:   function,
+			}
+			afBytes, err := json.Marshal(additionalFields)
+			a.Require().NoError(err)
+			proposalBuilder.AddOperation(types.Operation{
+				ChainSelector: a.ChainSelector,
+				Transaction: types.Transaction{
+					To:               ccipObjectAddress.StringLong(),
+					Data:             module_mcms.ArgsToData(args),
+					AdditionalFields: afBytes,
+				},
+			})
+		}
+		{
+			module, function, _, args, err := ccip.FeeQuoter.EncodeApplyFeeTokenUpdates(nil, []aptos.AccountAddress{token})
+			a.Require().NoError(err)
+			additionalFields := aptossdk.AdditionalFields{
+				ModuleName: module.Name,
+				Function:   function,
+			}
+			afBytes, err := json.Marshal(additionalFields)
+			a.Require().NoError(err)
+			proposalBuilder.AddOperation(types.Operation{
+				ChainSelector: a.ChainSelector,
+				Transaction: types.Transaction{
+					To:               ccipObjectAddress.StringLong(),
+					Data:             module_mcms.ArgsToData(args),
+					AdditionalFields: afBytes,
+				},
+			})
+		}
+		{
+			module, function, _, args, err := ccip.FeeQuoter.EncodeApplyTokenTransferFeeConfigUpdates(5678, []aptos.AccountAddress{token}, []uint32{1}, []uint32{10000}, []uint16{0}, []uint32{1000}, []uint32{1000}, []bool{true}, nil)
+			a.Require().NoError(err)
+			additionalFields := aptossdk.AdditionalFields{
+				ModuleName: module.Name,
+				Function:   function,
+			}
+			afBytes, err := json.Marshal(additionalFields)
+			a.Require().NoError(err)
+			proposalBuilder.AddOperation(types.Operation{
+				ChainSelector: a.ChainSelector,
+				Transaction: types.Transaction{
+					To:               ccipObjectAddress.StringLong(),
+					Data:             module_mcms.ArgsToData(args),
+					AdditionalFields: afBytes,
+				},
+			})
+		}
+		{
+			module, function, _, args, err := ccip.FeeQuoter.EncodeApplyDestChainConfigUpdates(5678, module_fee_quoter.DestChainConfig{
+				IsEnabled:                         true,
+				MaxNumberOfTokensPerMsg:           1,
+				MaxDataBytes:                      10000,
+				MaxPerMsgGasLimit:                 7000000,
+				DestGasOverhead:                   0,
+				DestGasPerPayloadByteBase:         0,
+				DestGasPerPayloadByteHigh:         0,
+				DestGasPerPayloadByteThreshold:    0,
+				DestDataAvailabilityOverheadGas:   0,
+				DestGasPerDataAvailabilityByte:    0,
+				DestDataAvailabilityMultiplierBps: 0,
+				ChainFamilySelector:               evmFamilySelector,
+				EnforceOutOfOrder:                 false,
+				DefaultTokenFeeUsdCents:           0,
+				DefaultTokenDestGasOverhead:       0,
+				DefaultTxGasLimit:                 1000000,
+				GasMultiplierWeiPerEth:            0,
+				GasPriceStalenessThreshold:        10000000,
+				NetworkFeeUsdCents:                0,
+			})
+			a.Require().NoError(err)
+			additionalFields := aptossdk.AdditionalFields{
+				ModuleName: module.Name,
+				Function:   function,
+			}
+			afBytes, err := json.Marshal(additionalFields)
+			a.Require().NoError(err)
+			proposalBuilder.AddOperation(types.Operation{
+				ChainSelector: a.ChainSelector,
+				Transaction: types.Transaction{
+					To:               ccipObjectAddress.StringLong(),
+					Data:             module_mcms.ArgsToData(args),
+					AdditionalFields: afBytes,
+				},
+			})
+		}
+		{
+			module, function, _, args, err := ccip.FeeQuoter.EncodeApplyPremiumMultiplierWeiPerEthUpdates([]aptos.AccountAddress{token}, []uint64{1})
+			a.Require().NoError(err)
+			additionalFields := aptossdk.AdditionalFields{
+				ModuleName: module.Name,
+				Function:   function,
+			}
+			afBytes, err := json.Marshal(additionalFields)
+			a.Require().NoError(err)
+			proposalBuilder.AddOperation(types.Operation{
+				ChainSelector: a.ChainSelector,
+				Transaction: types.Transaction{
+					To:               ccipObjectAddress.StringLong(),
 					Data:             module_mcms.ArgsToData(args),
 					AdditionalFields: afBytes,
 				},

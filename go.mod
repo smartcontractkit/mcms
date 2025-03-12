@@ -4,6 +4,8 @@ go 1.23.3
 
 toolchain go1.23.4
 
+replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+
 require (
 	github.com/aptos-labs/aptos-go-sdk v1.5.0
 	github.com/ethereum/go-ethereum v1.14.11

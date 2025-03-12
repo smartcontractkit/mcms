@@ -32,7 +32,7 @@ type AptosTestSuite struct {
 }
 
 func (a *AptosTestSuite) SetupSuite() {
-	testnet := true
+	testnet := false
 	if testnet {
 		// TODO remove this after testing
 		a.TestSetup.AptosRPCClient, _ = aptos.NewNodeClient("https://api.testnet.aptoslabs.com/v1", 2)
