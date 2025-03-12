@@ -188,7 +188,7 @@ func (a *AptosTestSuite) Test_Aptos_DeployCCIP() {
 			})
 
 		// Compile CCIP
-		ccipPayload, err := ccip.Compile(ccipObjectAddress)
+		ccipPayload, err := ccip.Compile(ccipObjectAddress, a.MCMContract.Address, true)
 		a.Require().NoError(err)
 
 		// Create chunks

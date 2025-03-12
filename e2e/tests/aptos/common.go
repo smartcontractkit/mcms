@@ -8,6 +8,7 @@ import (
 
 	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/aptos-labs/aptos-go-sdk/crypto"
+	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/suite"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
@@ -37,7 +38,10 @@ func (a *AptosTestSuite) SetupSuite() {
 		a.TestSetup.AptosRPCClient, _ = aptos.NewNodeClient("https://api.testnet.aptoslabs.com/v1", 2)
 		a.ChainSelector = types.ChainSelector(cselectors.APTOS_TESTNET.Selector)
 		deployerKey := &crypto.Ed25519PrivateKey{}
-		err := deployerKey.FromHex(os.Getenv("USER_KEY"))
+		err := godotenv.Load("../custom_configs/.env")
+		a.Require().NoError(err)
+		userKey := os.Getenv("USER_KEY")
+		err = deployerKey.FromHex(userKey)
 		a.Require().NoError(err)
 		a.deployerAccount, err = aptos.NewAccountFromSigner(deployerKey)
 		a.Require().NoError(err)

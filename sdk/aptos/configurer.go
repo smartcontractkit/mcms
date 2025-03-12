@@ -59,8 +59,8 @@ func (c Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.Co
 		return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err)
 	}
 	return types.TransactionResult{
-		Hash:           tx.Hash,
-		ChainFamily:    chain_selectors.FamilyAptos,
-		RawTransaction: tx,
+		Hash:        tx.Hash,
+		ChainFamily: chain_selectors.FamilyAptos,
+		RawData:     tx,
 	}, nil
 }

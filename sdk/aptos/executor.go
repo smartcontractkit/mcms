@@ -151,9 +151,9 @@ func (e Executor) ExecuteOperation(
 	}
 
 	return types.TransactionResult{
-		Hash:           tx.Hash,
-		ChainFamily:    chain_selectors.FamilyAptos,
-		RawTransaction: tx,
+		Hash:        tx.Hash,
+		ChainFamily: chain_selectors.FamilyAptos,
+		RawData:     tx,
 	}, nil
 }
 
@@ -201,9 +201,9 @@ func (e Executor) SetRoot(
 	}
 
 	return types.TransactionResult{
-		Hash:           tx.Hash,
-		ChainFamily:    chain_selectors.FamilyAptos,
-		RawTransaction: tx,
+		Hash:        tx.Hash,
+		ChainFamily: chain_selectors.FamilyAptos,
+		RawData:     tx,
 	}, nil
 }
 
