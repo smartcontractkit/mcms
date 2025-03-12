@@ -23,6 +23,10 @@ var (
 	Chain4Selector    = types.ChainSelector(Chain4RawSelector) // 16423721717087811551
 	Chain4SolanaID    = cselectors.SOLANA_DEVNET.ChainID       // EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG
 
+	Chain5RawSelector = cselectors.APTOS_TESTNET.Selector
+	Chain5Selector    = types.ChainSelector(Chain5RawSelector)
+	Chain5AptosID     = cselectors.APTOS_TESTNET.ChainID
+
 	// ChainInvalidSelector is a chain selector that doesn't exist.
 	ChainInvalidSelector = types.ChainSelector(0)
 )

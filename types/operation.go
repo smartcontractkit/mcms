@@ -13,7 +13,7 @@ type Transaction struct {
 	OperationMetadata
 
 	To               string          `json:"to" validate:"required"`
-	Data             []byte          `json:"data" validate:"required"`
+	Data             []byte          `json:"data" validate:"required"` // TODO - for Aptos this is not required
 	AdditionalFields json.RawMessage `json:"additionalFields" validate:"required"`
 }
 
