@@ -771,12 +771,12 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 		{
 			name: "success: decodes a batch operation",
 			setup: func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string) {
+				t.Helper()
 				decoders := map[types.ChainSelector]sdk.Decoder{
 					chaintest.Chain1Selector: evm.NewDecoder(),
 				}
-				return decoders, map[string]string{
-					"RBACTimelock": bindings.RBACTimelockABI,
-				}
+
+				return decoders, map[string]string{"RBACTimelock": bindings.RBACTimelockABI}
 			},
 			give: []types.BatchOperation{
 				{
@@ -805,6 +805,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 		{
 			name: "failure: missing chain decoder",
 			setup: func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string) {
+				t.Helper()
 				return map[types.ChainSelector]sdk.Decoder{}, map[string]string{}
 			},
 			give: []types.BatchOperation{
@@ -827,9 +828,11 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 		{
 			name: "failure: missing contract ABI",
 			setup: func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string) {
+				t.Helper()
 				decoders := map[types.ChainSelector]sdk.Decoder{
 					chaintest.Chain1Selector: evm.NewDecoder(),
 				}
+
 				return decoders, map[string]string{}
 			},
 			give: []types.BatchOperation{
@@ -852,14 +855,14 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 		{
 			name: "failure: unable to decode operation",
 			setup: func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string) {
+				t.Helper()
 				mockDecoder := mocks.NewDecoder(t)
 				mockDecoder.EXPECT().Decode(mock.Anything, mock.Anything).Return(nil, errors.New("decode error"))
 				decoders := map[types.ChainSelector]sdk.Decoder{
 					chaintest.Chain1Selector: mockDecoder,
 				}
-				return decoders, map[string]string{
-					"RBACTimelock": bindings.RBACTimelockABI,
-				}
+
+				return decoders, map[string]string{"RBACTimelock": bindings.RBACTimelockABI}
 			},
 			give: []types.BatchOperation{
 				{

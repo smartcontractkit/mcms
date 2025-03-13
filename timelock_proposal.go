@@ -187,9 +187,9 @@ func (m *TimelockProposal) Convert(
 }
 
 // DecodeProposal decodes the raw transactions into a list of human-readable operations.
-func (p *TimelockProposal) DecodeProposal(decoders map[types.ChainSelector]sdk.Decoder, contractInterfaces map[string]string) ([][]sdk.DecodedOperation, error) {
-	decodedOps := make([][]sdk.DecodedOperation, len(p.Operations))
-	for i, op := range p.Operations {
+func (m *TimelockProposal) DecodeProposal(decoders map[types.ChainSelector]sdk.Decoder, contractInterfaces map[string]string) ([][]sdk.DecodedOperation, error) {
+	decodedOps := make([][]sdk.DecodedOperation, len(m.Operations))
+	for i, op := range m.Operations {
 		// Get the decoder for the chain selector
 		decoder, ok := decoders[op.ChainSelector]
 		if !ok {
