@@ -38,6 +38,8 @@ func Test_NewTimelockExecutable(t *testing.T) {
 	t.Parallel()
 
 	var (
+		ctx = context.Background()
+
 		executor = mocks.NewTimelockExecutor(t)
 
 		chainMetadata = map[types.ChainSelector]types.ChainMetadata{
@@ -153,7 +155,7 @@ func Test_NewTimelockExecutable(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			_, err := NewTimelockExecutable(tt.giveProposal, tt.giveExecutors)
+			_, err := NewTimelockExecutable(ctx, tt.giveProposal, tt.giveExecutors)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -269,7 +271,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 			t.Parallel()
 
 			proposal, executors := tt.setup(t)
-			timelockExecutable, err := NewTimelockExecutable(proposal, executors)
+			timelockExecutable, err := NewTimelockExecutable(ctx, proposal, executors)
 			require.NoError(t, err)
 
 			var got types.TransactionResult
@@ -538,7 +540,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	}
 
 	// Create new executable
-	tExecutable, err := NewTimelockExecutable(&proposal, tExecutors)
+	tExecutable, err := NewTimelockExecutable(ctx, &proposal, tExecutors)
 	require.NoError(t, err)
 
 	for i := range predecessors {
@@ -698,7 +700,7 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	}
 
 	// Create new executable
-	tExecutable, err := NewTimelockExecutable(&proposal, tExecutors)
+	tExecutable, err := NewTimelockExecutable(ctx, &proposal, tExecutors)
 	require.NoError(t, err)
 
 	for i := range predecessors {
@@ -828,6 +830,8 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 func Test_TimelockExecutable_GetChainSpecificIndex(t *testing.T) {
 	t.Parallel()
 
+	ctx := context.Background()
+
 	// We'll create a helper function for generating a minimal proposal
 	// that won't fail validation. It includes multiple operations across
 	// different chain selectors.
@@ -913,7 +917,7 @@ func Test_TimelockExecutable_GetChainSpecificIndex(t *testing.T) {
 		executors := map[types.ChainSelector]sdk.TimelockExecutor{}
 
 		// Create TimelockExecutable
-		tlExecutable, err := NewTimelockExecutable(proposal, executors)
+		tlExecutable, err := NewTimelockExecutable(ctx, proposal, executors)
 		require.NoError(t, err)
 
 		// Each test-case checks the chain-specific index for a given global index
