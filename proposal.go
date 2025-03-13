@@ -348,8 +348,8 @@ func (p *Proposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
 	return encoders, nil
 }
 
-// DecodeProposal decodes the raw transactions into a list of human-readable operations.
-func (p *Proposal) DecodeProposal(decoders map[types.ChainSelector]sdk.Decoder, contractInterfaces map[string]string) ([]sdk.DecodedOperation, error) {
+// Decode decodes the raw transactions into a list of human-readable operations.
+func (p *Proposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, contractInterfaces map[string]string) ([]sdk.DecodedOperation, error) {
 	decodedOps := make([]sdk.DecodedOperation, len(p.Operations))
 	for i, op := range p.Operations {
 		// Get the decoder for the chain selector

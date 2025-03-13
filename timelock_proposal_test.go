@@ -893,7 +893,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 			}
 
 			decoders, contractInterfaces := tt.setup(t)
-			got, err := proposal.DecodeProposal(decoders, contractInterfaces)
+			got, err := proposal.Decode(decoders, contractInterfaces)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)

@@ -944,7 +944,7 @@ func Test_Proposal_Decode(t *testing.T) {
 			}
 
 			decoders, interfaces := tt.setup(t)
-			got, err := proposal.DecodeProposal(decoders, interfaces)
+			got, err := proposal.Decode(decoders, interfaces)
 
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
