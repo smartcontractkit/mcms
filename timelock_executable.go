@@ -21,6 +21,7 @@ type TimelockExecutable struct {
 
 // NewTimelockExecutable creates a new TimelockExecutable from a proposal and a map of executors.
 func NewTimelockExecutable(
+	ctx context.Context,
 	proposal *TimelockProposal,
 	executors map[types.ChainSelector]sdk.TimelockExecutor,
 ) (*TimelockExecutable, error) {
@@ -36,7 +37,7 @@ func NewTimelockExecutable(
 	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
 	// (one array per chain). The 0th element is zero-hash, the 1st is the
 	// operationID for that chain's 1st operation, etc.
-	err := te.setPredecessors(context.Background())
+	err := te.setPredecessors(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to set predecessors: %w", err)
 	}
