@@ -186,6 +186,35 @@ func (m *TimelockProposal) Convert(
 	return result, predecessors, nil
 }
 
+// Decode decodes the raw transactions into a list of human-readable operations.
+func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, contractInterfaces map[string]string) ([][]sdk.DecodedOperation, error) {
+	decodedOps := make([][]sdk.DecodedOperation, len(m.Operations))
+	for i, op := range m.Operations {
+		// Get the decoder for the chain selector
+		decoder, ok := decoders[op.ChainSelector]
+		if !ok {
+			return nil, fmt.Errorf("no decoder found for chain selector %d", op.ChainSelector)
+		}
+
+		for _, tx := range op.Transactions {
+			// Get the contract interfaces for the contract type
+			contractInterface, ok := contractInterfaces[tx.ContractType]
+			if !ok {
+				return nil, fmt.Errorf("no contract interfaces found for contract type %s", tx.ContractType)
+			}
+
+			decodedOp, err := decoder.Decode(tx, contractInterface)
+			if err != nil {
+				return nil, fmt.Errorf("unable to decode operation: %w", err)
+			}
+
+			decodedOps[i] = append(decodedOps[i], decodedOp)
+		}
+	}
+
+	return decodedOps, nil
+}
+
 // timeLockProposalValidateBasic basic validation for an MCMS proposal
 func timeLockProposalValidateBasic(timelockProposal TimelockProposal) error {
 	// Get the current Unix timestamp as an int64
