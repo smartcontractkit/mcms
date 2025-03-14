@@ -131,6 +131,43 @@ func (t *TimelockExecutable) IsOperationReady(ctx context.Context, idx int) erro
 	return nil
 }
 
+// IsChainDone checks if the chain is done executing
+func (t *TimelockExecutable) IsChainDone(ctx context.Context, chainSelector types.ChainSelector) error {
+	// Check readiness for each global operation in the proposal
+	for globalIndex, op := range t.proposal.Operations {
+		if op.ChainSelector == chainSelector {
+			err := t.IsOperationDone(ctx, globalIndex)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (t *TimelockExecutable) IsOperationDone(ctx context.Context, idx int) error {
+	op := t.proposal.Operations[idx]
+
+	cs := op.ChainSelector
+	timelock := t.proposal.TimelockAddresses[cs]
+
+	operationID, err := t.GetOpID(ctx, idx, op, cs)
+	if err != nil {
+		return fmt.Errorf("unable to get operation ID: %w", err)
+	}
+
+	isDone, err := t.executors[cs].IsOperationDone(ctx, timelock, operationID)
+	if err != nil {
+		return err
+	}
+	if !isDone {
+		return &OperationNotDoneError{OpIndex: idx}
+	}
+
+	return nil
+}
+
 type Option func(*executeOptions)
 
 type executeOptions struct {

@@ -573,27 +573,44 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	require.NoError(t, sim.Backend.AdjustTime(5*time.Second))
 	sim.Backend.Commit() // Note < 1.14 geth needs a commit after adjusting time.
 
-	// Check that the operation is now ready
+	opIdx := 0
+
+	// IsReady
 	err = tExecutable.IsReady(ctx)
 	require.NoError(t, err)
-
-	// Check IsChainReady function succeeds
 	for chainSelector := range proposal.ChainMetadata {
 		err = tExecutable.IsChainReady(ctx, chainSelector)
 		require.NoError(t, err)
 	}
 
+	// !IsDone
+	err = tExecutable.IsOperationDone(ctx, opIdx)
+	require.Error(t, err)
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainDone(ctx, chainSelector)
+		require.Error(t, err)
+	}
+
 	// Execute the proposal
-	idx := 0
-	_, err = tExecutable.Execute(ctx, idx)
+	_, err = tExecutable.Execute(ctx, opIdx)
 	require.NoError(t, err)
 	sim.Backend.Commit()
-	opID, err := tExecutable.GetOpID(ctx, idx, proposal.Operations[idx], proposal.Operations[idx].ChainSelector)
+
+	// IsDone
+	err = tExecutable.IsOperationDone(ctx, opIdx)
 	require.NoError(t, err)
-	// Check that the operation is done
-	isOperationDone, err := timelockC.IsOperationDone(&bind.CallOpts{}, opID)
-	require.NoError(t, err)
-	require.True(t, isOperationDone)
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainDone(ctx, chainSelector)
+		require.NoError(t, err)
+	}
+
+	// !IsReady
+	err = tExecutable.IsOperationReady(ctx, opIdx)
+	require.Error(t, err)
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainReady(ctx, chainSelector)
+		require.Error(t, err)
+	}
 
 	// Check the state of the timelock contract
 	for _, role := range targetRoles {
