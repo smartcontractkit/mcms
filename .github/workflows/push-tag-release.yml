@@ -17,11 +17,6 @@ jobs:
         uses: smartcontractkit/.github/actions/ci-lint-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-go@0.3.1
         with:
           golangci-lint-version: v1.62.0
-          # grafana inputs
-          metrics-job-name: ci-lint
-          gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
-          gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
 
   ci-lint-e2e:
     name: Lint E2E tests
@@ -36,11 +31,6 @@ jobs:
         with:
           golangci-lint-version: v1.62.0
           golangci-lint-args: --build-tags="e2e"
-          metrics-job-name: ci-lint
-          gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
-          gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
-
 
   ci-test:
     runs-on: ubuntu-latest
@@ -50,13 +40,7 @@ jobs:
       actions: read
     steps:
       - name: ci-test
-        uses: smartcontractkit/.github/actions/ci-test-go@3835daadbcefcae06d12dc42a405a856c980d2cc # ci-test-go@0.3.4
-        with:
-          # grafana inputs
-          metrics-job-name: ci-test
-          gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
-          gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
+        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/0.3.5
 
   cicd-publish-release:
     runs-on: ubuntu-latest
@@ -72,18 +56,11 @@ jobs:
           app-name: mcms-lib
           publish: "false" # do not publish docker image to ECR
           update-git-tag: "true"
-
           # goreleaser inputs
           goreleaser-args: "--config .goreleaser.yml"
           goreleaser-version: '~> v2'
           goreleaser-dist: goreleaser-pro
           goreleaser-key: ${{ secrets.GORELEASER_KEY }}
-
-          # grafana inputs
-          metrics-job-name: cicd-publish-release
-          gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
-          gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
 
   notify-slack:
     if: ${{ success() }}
