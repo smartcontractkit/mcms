@@ -93,7 +93,7 @@ func (m *TimelockProposal) Validate() error {
 
 		for _, tx := range op.Transactions {
 			// Chain specific validations.
-			if err := ValidateAdditionalFields(tx.AdditionalFields, op.ChainSelector); err != nil {
+			if err := validateAdditionalFields(tx.AdditionalFields, op.ChainSelector); err != nil {
 				return err
 			}
 		}
@@ -129,10 +129,7 @@ func (m *TimelockProposal) Convert(
 	// 4) Rebuild chainMetadata in baseProposal
 	chainMetadataMap := make(map[types.ChainSelector]types.ChainMetadata)
 	for chain, metadata := range m.ChainMetadata {
-		chainMetadataMap[chain] = types.ChainMetadata{
-			StartingOpCount: metadata.StartingOpCount,
-			MCMAddress:      metadata.MCMAddress,
-		}
+		chainMetadataMap[chain] = metadata
 	}
 	baseProposal.ChainMetadata = chainMetadataMap
 
@@ -165,6 +162,7 @@ func (m *TimelockProposal) Convert(
 		// Convert the batch operation
 		convertedOps, operationID, err := converter.ConvertBatchToChainOperations(
 			ctx,
+			chainMetadata,
 			bop,
 			timelockAddr,
 			chainMetadata.MCMAddress,
@@ -186,6 +184,35 @@ func (m *TimelockProposal) Convert(
 
 	// 7) Return the MCMS-only proposal + the single slice of predecessors
 	return result, predecessors, nil
+}
+
+// Decode decodes the raw transactions into a list of human-readable operations.
+func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, contractInterfaces map[string]string) ([][]sdk.DecodedOperation, error) {
+	decodedOps := make([][]sdk.DecodedOperation, len(m.Operations))
+	for i, op := range m.Operations {
+		// Get the decoder for the chain selector
+		decoder, ok := decoders[op.ChainSelector]
+		if !ok {
+			return nil, fmt.Errorf("no decoder found for chain selector %d", op.ChainSelector)
+		}
+
+		for _, tx := range op.Transactions {
+			// Get the contract interfaces for the contract type
+			contractInterface, ok := contractInterfaces[tx.ContractType]
+			if !ok {
+				return nil, fmt.Errorf("no contract interfaces found for contract type %s", tx.ContractType)
+			}
+
+			decodedOp, err := decoder.Decode(tx, contractInterface)
+			if err != nil {
+				return nil, fmt.Errorf("unable to decode operation: %w", err)
+			}
+
+			decodedOps[i] = append(decodedOps[i], decodedOp)
+		}
+	}
+
+	return decodedOps, nil
 }
 
 // timeLockProposalValidateBasic basic validation for an MCMS proposal

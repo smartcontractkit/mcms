@@ -21,6 +21,7 @@ type TimelockExecutable struct {
 
 // NewTimelockExecutable creates a new TimelockExecutable from a proposal and a map of executors.
 func NewTimelockExecutable(
+	ctx context.Context,
 	proposal *TimelockProposal,
 	executors map[types.ChainSelector]sdk.TimelockExecutor,
 ) (*TimelockExecutable, error) {
@@ -28,16 +29,25 @@ func NewTimelockExecutable(
 		return nil, fmt.Errorf("TimelockExecutable can only be created from a TimelockProposal with action 'schedule'")
 	}
 
-	return &TimelockExecutable{
+	te := &TimelockExecutable{
 		proposal:  proposal,
 		executors: executors,
-	}, nil
+	}
+
+	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
+	// (one array per chain). The 0th element is zero-hash, the 1st is the
+	// operationID for that chain's 1st operation, etc.
+	err := te.setPredecessors(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to set predecessors: %w", err)
+	}
+
+	return te, nil
 }
 
 func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.BatchOperation, selector types.ChainSelector) (common.Hash, error) {
 	// Convert the batch operation
-	executor := t.executors[selector]
-	converter, err := newTimelockConverterFromExecutor(selector, executor)
+	converter, err := newTimelockConverter(selector)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("unable to create converter from executor: %w", err)
 	}
@@ -51,6 +61,7 @@ func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.B
 	}
 	_, operationID, err := converter.ConvertBatchToChainOperations(
 		ctx,
+		chainMetadata,
 		bop,
 		timelockAddr,
 		chainMetadata.MCMAddress,
@@ -72,14 +83,6 @@ func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.B
 // but others are not. This is not handled here. Regardless, execution
 // should not begin until all operations are ready.
 func (t *TimelockExecutable) IsReady(ctx context.Context) error {
-	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
-	// (one array per chain). The 0th element is zero-hash, the 1st is the
-	// operationID for that chain's 1st operation, etc.
-	err := t.setPredecessors(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to set predecessors: %w", err)
-	}
-
 	// Check readiness for each global operation in the proposal
 	for globalIndex := range t.proposal.Operations {
 		err := t.IsOperationReady(ctx, globalIndex)
@@ -93,14 +96,6 @@ func (t *TimelockExecutable) IsReady(ctx context.Context) error {
 
 // IsChainReady checks if the chain is ready for execution.
 func (t *TimelockExecutable) IsChainReady(ctx context.Context, chainSelector types.ChainSelector) error {
-	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
-	// (one array per chain). The 0th element is zero-hash, the 1st is the
-	// operationID for that chain's 1st operation, etc.
-	err := t.setPredecessors(ctx)
-	if err != nil {
-		return fmt.Errorf("unable to set predecessors: %w", err)
-	}
-
 	// Check readiness for each global operation in the proposal
 	for globalIndex, op := range t.proposal.Operations {
 		if op.ChainSelector == chainSelector {
@@ -131,6 +126,43 @@ func (t *TimelockExecutable) IsOperationReady(ctx context.Context, idx int) erro
 	}
 	if !isReady {
 		return &OperationNotReadyError{OpIndex: idx}
+	}
+
+	return nil
+}
+
+// IsChainDone checks if the chain is done executing
+func (t *TimelockExecutable) IsChainDone(ctx context.Context, chainSelector types.ChainSelector) error {
+	// Check readiness for each global operation in the proposal
+	for globalIndex, op := range t.proposal.Operations {
+		if op.ChainSelector == chainSelector {
+			err := t.IsOperationDone(ctx, globalIndex)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (t *TimelockExecutable) IsOperationDone(ctx context.Context, idx int) error {
+	op := t.proposal.Operations[idx]
+
+	cs := op.ChainSelector
+	timelock := t.proposal.TimelockAddresses[cs]
+
+	operationID, err := t.GetOpID(ctx, idx, op, cs)
+	if err != nil {
+		return fmt.Errorf("unable to get operation ID: %w", err)
+	}
+
+	isDone, err := t.executors[cs].IsOperationDone(ctx, timelock, operationID)
+	if err != nil {
+		return err
+	}
+	if !isDone {
+		return &OperationNotDoneError{OpIndex: idx}
 	}
 
 	return nil
@@ -172,11 +204,6 @@ func (t *TimelockExecutable) Execute(ctx context.Context, index int, opts ...Opt
 		opt(execOpts)
 	}
 
-	err := t.setPredecessors(ctx)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("unable to set predecessors: %w", err)
-	}
-
 	op := t.proposal.Operations[index]
 
 	// Get target contract
@@ -198,8 +225,8 @@ func (t *TimelockExecutable) setPredecessors(ctx context.Context) error {
 	if len(t.predecessors) == 0 && len(t.executors) > 0 {
 		var err error
 		var converters = make(map[types.ChainSelector]sdk.TimelockConverter)
-		for chainSelector, executor := range t.executors {
-			converters[chainSelector], err = newTimelockConverterFromExecutor(chainSelector, executor)
+		for chainSelector := range t.executors {
+			converters[chainSelector], err = newTimelockConverter(chainSelector)
 			if err != nil {
 				return fmt.Errorf("unable to create converter from executor: %w", err)
 			}

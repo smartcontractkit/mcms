@@ -5,18 +5,23 @@ import (
 	"errors"
 	"io"
 	"math"
+	"math/big"
 	"os"
 	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	"github.com/smartcontractkit/mcms/sdk/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -247,7 +252,8 @@ func Test_WriteProposal(t *testing.T) {
 				"chainMetadata": {
 					"3379446385462418246": {
 						"mcmAddress": "",
-						"startingOpCount": 0
+						"startingOpCount": 0,
+						"additionalFields": null
 					}
 				},
 				"operations": [
@@ -801,6 +807,153 @@ func Test_Proposal_TransactionCounts(t *testing.T) {
 		chaintest.Chain1Selector: 2,
 		chaintest.Chain2Selector: 1,
 	}, got)
+}
+
+func Test_Proposal_Decode(t *testing.T) {
+	t.Parallel()
+
+	// Get ABI
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err)
+	exampleRole := crypto.Keccak256Hash([]byte("EXAMPLE_ROLE"))
+
+	// Grant role data
+	grantRoleData, err := timelockAbi.Pack("grantRole", [32]byte(exampleRole), common.HexToAddress("0x123"))
+	require.NoError(t, err)
+
+	tests := []struct {
+		name    string
+		setup   func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string)
+		give    []types.Operation
+		want    []sdk.DecodedOperation
+		wantErr string
+	}{
+		{
+			name: "success: decodes an operation",
+			setup: func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string) {
+				t.Helper()
+				decoders := map[types.ChainSelector]sdk.Decoder{
+					chaintest.Chain1Selector: evm.NewDecoder(),
+				}
+
+				return decoders, map[string]string{"RBACTimelock": bindings.RBACTimelockABI}
+			},
+			give: []types.Operation{
+				{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: evm.NewTransaction(
+						common.HexToAddress("0xTestTarget"),
+						grantRoleData,
+						big.NewInt(0),
+						"RBACTimelock",
+						[]string{"grantRole"},
+					),
+				},
+			},
+			want: []sdk.DecodedOperation{
+				&evm.DecodedOperation{
+					FunctionName: "grantRole",
+					InputKeys:    []string{"role", "account"},
+					InputArgs:    []any{[32]byte(exampleRole.Bytes()), common.HexToAddress("0x0000000000000000000000000000000000000123")},
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "failure: missing chain decoder",
+			setup: func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string) {
+				t.Helper()
+				return map[types.ChainSelector]sdk.Decoder{}, map[string]string{}
+			},
+			give: []types.Operation{
+				{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: evm.NewTransaction(
+						common.HexToAddress("0xTestTarget"),
+						grantRoleData,
+						big.NewInt(0),
+						"RBACTimelock",
+						[]string{"grantRole"},
+					),
+				},
+			},
+			want:    nil,
+			wantErr: "no decoder found for chain selector 3379446385462418246",
+		},
+		{
+			name: "failure: missing contract ABI",
+			setup: func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string) {
+				t.Helper()
+				decoders := map[types.ChainSelector]sdk.Decoder{
+					chaintest.Chain1Selector: evm.NewDecoder(),
+				}
+
+				return decoders, map[string]string{}
+			},
+			give: []types.Operation{
+				{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: evm.NewTransaction(
+						common.HexToAddress("0xTestTarget"),
+						grantRoleData,
+						big.NewInt(0),
+						"RBACTimelock",
+						[]string{"grantRole"},
+					),
+				},
+			},
+			want:    nil,
+			wantErr: "no contract interfaces found for contract type RBACTimelock",
+		},
+		{
+			name: "failure: unable to decode operation",
+			setup: func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string) {
+				t.Helper()
+				mockDecoder := mocks.NewDecoder(t)
+				mockDecoder.EXPECT().Decode(mock.Anything, mock.Anything).Return(nil, errors.New("decode error"))
+				decoders := map[types.ChainSelector]sdk.Decoder{
+					chaintest.Chain1Selector: mockDecoder,
+				}
+
+				return decoders, map[string]string{"RBACTimelock": bindings.RBACTimelockABI}
+			},
+			give: []types.Operation{
+				{
+					ChainSelector: chaintest.Chain1Selector,
+					Transaction: evm.NewTransaction(
+						common.HexToAddress("0xTestTarget"),
+						grantRoleData,
+						big.NewInt(0),
+						"RBACTimelock",
+						[]string{"grantRole"},
+					),
+				},
+			},
+			want:    nil,
+			wantErr: "unable to decode operation: decode error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			proposal := Proposal{
+				BaseProposal: BaseProposal{},
+				Operations:   tt.give,
+			}
+
+			decoders, interfaces := tt.setup(t)
+			got, err := proposal.Decode(decoders, interfaces)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
 }
 
 func Test_Proposal_TransactionNonces(t *testing.T) {

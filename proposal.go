@@ -156,6 +156,15 @@ func (p *Proposal) Validate() error {
 		return err
 	}
 
+	// Validate chain metadata for each chain selector
+	// Should only be needed for timelock proposals (specifically solana proposals),
+	// but this might change as new chain families are added
+	for chainSelector, metadata := range p.ChainMetadata {
+		if err := validateChainMetadata(metadata, chainSelector); err != nil {
+			return err
+		}
+	}
+
 	// Validate all chains in operations have an entry in chain metadata
 	for _, op := range p.Operations {
 		if _, ok := p.ChainMetadata[op.ChainSelector]; !ok {
@@ -165,7 +174,7 @@ func (p *Proposal) Validate() error {
 
 	for _, op := range p.Operations {
 		// Chain specific validations.
-		if err := ValidateAdditionalFields(op.Transaction.AdditionalFields, op.ChainSelector); err != nil {
+		if err := validateAdditionalFields(op.Transaction.AdditionalFields, op.ChainSelector); err != nil {
 			return err
 		}
 	}
@@ -337,6 +346,33 @@ func (p *Proposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
 	}
 
 	return encoders, nil
+}
+
+// Decode decodes the raw transactions into a list of human-readable operations.
+func (p *Proposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, contractInterfaces map[string]string) ([]sdk.DecodedOperation, error) {
+	decodedOps := make([]sdk.DecodedOperation, len(p.Operations))
+	for i, op := range p.Operations {
+		// Get the decoder for the chain selector
+		decoder, ok := decoders[op.ChainSelector]
+		if !ok {
+			return nil, fmt.Errorf("no decoder found for chain selector %d", op.ChainSelector)
+		}
+
+		// Get the contract interfaces for the contract type
+		contractInterface, ok := contractInterfaces[op.Transaction.ContractType]
+		if !ok {
+			return nil, fmt.Errorf("no contract interfaces found for contract type %s", op.Transaction.ContractType)
+		}
+
+		decodedOp, err := decoder.Decode(op.Transaction, contractInterface)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode operation: %w", err)
+		}
+
+		decodedOps[i] = decodedOp
+	}
+
+	return decodedOps, nil
 }
 
 // proposalValidateBasic basic validation for an MCMS proposal

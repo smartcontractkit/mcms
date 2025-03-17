@@ -17,7 +17,6 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
-
 	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/external_program_cpi_stub"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 	"github.com/stretchr/testify/require"
@@ -57,7 +56,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedTimelockConverter)
 	timelockAddress := solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockConverter)
 	converters := map[types.ChainSelector]sdk.TimelockConverter{
-		s.ChainSelector: solanasdk.NewTimelockConverter(s.SolanaClient),
+		s.ChainSelector: solanasdk.TimelockConverter{},
 	}
 
 	// setup cpi-stub calls used as input
@@ -100,7 +99,14 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	operation2BypasserPDA, err := solanasdk.FindTimelockBypasserOperationPDA(s.TimelockProgramID, testPDASeedTimelockConverter, operation2ID)
 	s.Require().NoError(err)
 
-	// build base timelock proposal
+	metadata, err := solanasdk.NewChainMetadata(
+		0,
+		s.MCMProgramID,
+		testPDASeedTimelockConverter,
+		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
+		s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
+		s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
+	s.Require().NoError(err)
 	timelockProposalBuilder := func() *mcms.TimelockProposalBuilder {
 		return mcms.NewTimelockProposalBuilder().
 			SetValidUntil(uint32(validUntil)).
@@ -109,7 +115,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 			SetVersion("v1").
 			SetDelay(types.NewDuration(1*time.Second)).
 			AddTimelockAddress(s.ChainSelector, timelockAddress).
-			AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmAddress}).
+			AddChainMetadata(s.ChainSelector, metadata).
 			AddOperation(types.BatchOperation{ // op1
 				ChainSelector: s.ChainSelector,
 				Transactions:  []types.Transaction{emptyFnTransaction, u8DataTransaction},
@@ -132,7 +138,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
-			AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmAddress}).
+			AddChainMetadata(s.ChainSelector, metadata).
 			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
 				// op1: initialize operation instruction
 				To:                s.TimelockProgramID.String(),
@@ -336,7 +342,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
-			AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmAddress}).
+			AddChainMetadata(s.ChainSelector, metadata).
 			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
 				// op1: cancel operation instruction
 				To:                s.TimelockProgramID.String(),
@@ -389,7 +395,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
-			AddChainMetadata(s.ChainSelector, types.ChainMetadata{MCMAddress: mcmAddress}).
+			AddChainMetadata(s.ChainSelector, metadata).
 			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
 				// op1: initialize operation instruction
 				To:                s.TimelockProgramID.String(),
@@ -622,7 +628,7 @@ func (s *SolanaTestSuite) executeTimelockProposal(
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 		s.ChainSelector: solanasdk.NewTimelockExecutor(s.SolanaClient, wallet),
 	}
-	timelockExecutable, err := mcms.NewTimelockExecutable(timelockProposal, timelockExecutors)
+	timelockExecutable, err := mcms.NewTimelockExecutable(ctx, timelockProposal, timelockExecutors)
 	s.Require().NoError(err)
 
 	tx, err := timelockExecutable.Execute(ctx, 0)

@@ -113,9 +113,9 @@ func (e *Executor) ExecuteOperation(
 	}
 
 	return types.TransactionResult{
-		Hash:           signature,
-		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: tx,
+		Hash:        signature,
+		ChainFamily: chain_selectors.FamilySolana,
+		RawData:     tx,
 	}, nil
 }
 
@@ -153,7 +153,7 @@ func (e *Executor) SetRoot(
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
-	rootSignaturesPDA, err := FindRootSignaturesPDA(programID, pdaSeed, root, validUntil)
+	rootSignaturesPDA, err := FindRootSignaturesPDA(programID, pdaSeed, root, validUntil, e.auth.PublicKey())
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -186,9 +186,9 @@ func (e *Executor) SetRoot(
 	}
 
 	return types.TransactionResult{
-		Hash:           signature,
-		ChainFamily:    chain_selectors.FamilySolana,
-		RawTransaction: tx,
+		Hash:        signature,
+		ChainFamily: chain_selectors.FamilySolana,
+		RawData:     tx,
 	}, nil
 }
 
