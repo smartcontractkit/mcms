@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/mcms"
+	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"

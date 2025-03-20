@@ -13,8 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/bind"
-	module_mcms "github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
+	module_mcms "github.com/smartcontractkit/chainlink-aptos/bindings/mcms/mcms"
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"

@@ -11,9 +11,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/bind"
-	"github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/mcms"
-	module_mcms "github.com/smartcontractkit/chainlink-internal-integrations/aptos/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
+	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
+	module_mcms "github.com/smartcontractkit/chainlink-aptos/bindings/mcms/mcms"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
