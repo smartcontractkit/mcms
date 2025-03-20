@@ -628,7 +628,7 @@ func (s *SolanaTestSuite) executeTimelockProposal(
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 		s.ChainSelector: solanasdk.NewTimelockExecutor(s.SolanaClient, wallet),
 	}
-	timelockExecutable, err := mcms.NewTimelockExecutable(timelockProposal, timelockExecutors)
+	timelockExecutable, err := mcms.NewTimelockExecutable(ctx, timelockProposal, timelockExecutors)
 	s.Require().NoError(err)
 
 	tx, err := timelockExecutable.Execute(ctx, 0)

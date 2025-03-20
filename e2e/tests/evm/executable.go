@@ -692,7 +692,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	}
 
 	// Create new executable
-	tExecutable, err := mcms.NewTimelockExecutable(&proposalTimelock, tExecutors)
+	tExecutable, err := mcms.NewTimelockExecutable(ctx, &proposalTimelock, tExecutors)
 	s.Require().NoError(err)
 
 	err = tExecutable.IsReady(ctx)

@@ -19,6 +19,16 @@ func (e *OperationNotReadyError) Error() string {
 	return fmt.Sprintf("operation %d is not ready", e.OpIndex)
 }
 
+// OperationNotDoneError is returned when an operation is not yet done.
+type OperationNotDoneError struct {
+	OpIndex int
+}
+
+// Error implements the error interface.
+func (e *OperationNotDoneError) Error() string {
+	return fmt.Sprintf("operation %d is not done", e.OpIndex)
+}
+
 // InvalidProposalKindError is returned when an invalid proposal kind is provided.
 type InvalidProposalKindError struct {
 	ProvidedKind types.ProposalKind

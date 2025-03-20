@@ -18,11 +18,6 @@ jobs:
         uses: smartcontractkit/.github/actions/ci-lint-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-go@0.3.1
         with:
           golangci-lint-version: v1.62.0
-          # grafana inputs
-          metrics-job-name: ci-lint
-          gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
-          gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
 
   ci-lint-e2e:
     name: Lint E2E tests
@@ -37,10 +32,6 @@ jobs:
         with:
           golangci-lint-version: v1.62.0
           golangci-lint-args: --build-tags="e2e"
-          metrics-job-name: ci-lint
-          gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
-          gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
 
 
   ci-lint-misc:
@@ -58,15 +49,10 @@ jobs:
       actions: read
     steps:
       - name: ci-test
-        uses: smartcontractkit/.github/actions/ci-test-go@3835daadbcefcae06d12dc42a405a856c980d2cc # ci-test-go@0.3.4
+        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/0.3.5
         with:
           go-test-cmd: go test -coverprofile=coverage.txt $(go list ./...)
           use-go-cache: true
-          # grafana inputs
-          metrics-job-name: ci-test
-          gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
-          gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
 
   ci-test-e2e:
     name: Tests E2E
@@ -77,21 +63,17 @@ jobs:
       actions: read
     steps:
       - name: Install Rust
-        uses: moonrepo/setup-rust@v1
+        uses: moonrepo/setup-rust@ede6de059f8046a5e236c94046823e2af11ca670 # v1.2.2
       - name: Install Solana
-        uses: metaplex-foundation/actions/install-solana@v1
+        uses: metaplex-foundation/actions/install-solana@2389940047edc63a5781911f6a53fbdf784748d8 # v1.0.4
         with:
           version: 1.18.10
       - name: Build and test
-        uses: smartcontractkit/.github/actions/ci-test-go@3835daadbcefcae06d12dc42a405a856c980d2cc # ci-test-go@0.3.4
+        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/0.3.5
         with:
           go-test-cmd: go generate -tags=e2e ./e2e/... && CTF_CONFIGS=../config.toml go test -tags=e2e -v ./e2e/tests/...
           use-go-cache: true
-          # grafana inputs
-          metrics-job-name: ci-test
-          gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
-          gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
+
   cd-release:
     runs-on: ubuntu-latest
     permissions:
@@ -108,11 +90,6 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
           aws-role-arn: ${{ secrets.AWS_OIDC_MCMS_CI_CHANGESET_TOKEN_ISSUER_ROLE_ARN }}
           aws-lambda-url: ${{ secrets.GATI_LAMBDA_DEPLOYMENT_AUTOMATION_URL }}
-          # grafana inputs
-          metrics-job-name: cd-release
-          gc-basic-auth: ${{ secrets.GRAFANA_INTERNAL_BASIC_AUTH }}
-          gc-host: ${{ secrets.GRAFANA_INTERNAL_HOST }}
-          gc-org-id: ${{ secrets.GRAFANA_INTERNAL_TENANT_ID }}
 
   ci-sonarqube:
     name: Sonarqube Scan

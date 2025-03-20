@@ -1,5 +1,19 @@
 # @smartcontractkit/mcms
 
+## 0.15.0
+
+### Minor Changes
+
+- [#337](https://github.com/smartcontractkit/mcms/pull/337) [`3965c2d`](https://github.com/smartcontractkit/mcms/commit/3965c2d6d3dba9ef86b3e7917ff9d5227bffc4a5) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add IsOperationDone and IsChainDone to TimelockExecutable
+
+## 0.14.0
+
+### Minor Changes
+
+- [#309](https://github.com/smartcontractkit/mcms/pull/309) [`d6e3b1d`](https://github.com/smartcontractkit/mcms/commit/d6e3b1d21ab50f31276450f2d4e048c90bb7f126) Thanks [@akhilchainani](https://github.com/akhilchainani)! - Add proposal-level decoding related APIs
+
+- [#335](https://github.com/smartcontractkit/mcms/pull/335) [`8b5981a`](https://github.com/smartcontractkit/mcms/commit/8b5981aa999afb6c42f5f81c0a9e4bc0be563e49) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: add context to NewTimelockExecutable()
+
 ## 0.13.0
 
 ### Minor Changes

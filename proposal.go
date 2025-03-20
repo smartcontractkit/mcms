@@ -348,6 +348,33 @@ func (p *Proposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
 	return encoders, nil
 }
 
+// Decode decodes the raw transactions into a list of human-readable operations.
+func (p *Proposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, contractInterfaces map[string]string) ([]sdk.DecodedOperation, error) {
+	decodedOps := make([]sdk.DecodedOperation, len(p.Operations))
+	for i, op := range p.Operations {
+		// Get the decoder for the chain selector
+		decoder, ok := decoders[op.ChainSelector]
+		if !ok {
+			return nil, fmt.Errorf("no decoder found for chain selector %d", op.ChainSelector)
+		}
+
+		// Get the contract interfaces for the contract type
+		contractInterface, ok := contractInterfaces[op.Transaction.ContractType]
+		if !ok {
+			return nil, fmt.Errorf("no contract interfaces found for contract type %s", op.Transaction.ContractType)
+		}
+
+		decodedOp, err := decoder.Decode(op.Transaction, contractInterface)
+		if err != nil {
+			return nil, fmt.Errorf("unable to decode operation: %w", err)
+		}
+
+		decodedOps[i] = decodedOp
+	}
+
+	return decodedOps, nil
+}
+
 // proposalValidateBasic basic validation for an MCMS proposal
 func proposalValidateBasic(proposalObj Proposal) error {
 	validUntil := time.Unix(int64(proposalObj.ValidUntil), 0)
