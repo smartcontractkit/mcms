@@ -67,9 +67,12 @@ func Test_FindExpiringRootAndOpCountPDA(t *testing.T) {
 
 func Test_FindRootSignaturesPDA(t *testing.T) {
 	t.Parallel()
-	pda, err := FindRootSignaturesPDA(testMCMProgramID, testPDASeed, testRoot, 1735689600)
+	authority, err := solana.PublicKeyFromBase58("LoCoNsJFuhTkSQjfdDfn3yuwqhSYoPujmviRHVCzsqn")
 	require.NoError(t, err)
-	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("528jBx5Mn1EPt4vG47CRkr1zhj8QVfSMvfvBZksZdrHr")))
+
+	pda, err := FindRootSignaturesPDA(testMCMProgramID, testPDASeed, testRoot, 1735689600, authority)
+	require.NoError(t, err)
+	require.Empty(t, cmp.Diff(pda, solana.MustPublicKeyFromBase58("98m4KuqTruBS7oXDm4Kzq43TmF1Lih3J6pHHZ6Lo9hty")))
 }
 
 func Test_FindSeenSignedHashesPDA(t *testing.T) {

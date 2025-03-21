@@ -1,5 +1,33 @@
 # @smartcontractkit/mcms
 
+## 0.15.0
+
+### Minor Changes
+
+- [#337](https://github.com/smartcontractkit/mcms/pull/337) [`3965c2d`](https://github.com/smartcontractkit/mcms/commit/3965c2d6d3dba9ef86b3e7917ff9d5227bffc4a5) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add IsOperationDone and IsChainDone to TimelockExecutable
+
+## 0.14.0
+
+### Minor Changes
+
+- [#309](https://github.com/smartcontractkit/mcms/pull/309) [`d6e3b1d`](https://github.com/smartcontractkit/mcms/commit/d6e3b1d21ab50f31276450f2d4e048c90bb7f126) Thanks [@akhilchainani](https://github.com/akhilchainani)! - Add proposal-level decoding related APIs
+
+- [#335](https://github.com/smartcontractkit/mcms/pull/335) [`8b5981a`](https://github.com/smartcontractkit/mcms/commit/8b5981aa999afb6c42f5f81c0a9e4bc0be563e49) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: add context to NewTimelockExecutable()
+
+## 0.13.0
+
+### Minor Changes
+
+- [#329](https://github.com/smartcontractkit/mcms/pull/329) [`031adfb`](https://github.com/smartcontractkit/mcms/commit/031adfb1038d1716e7620104c5af6ff6b807ce4d) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - feat(solana): override authority on Configurer
+
+## 0.12.3
+
+### Patch Changes
+
+- [#323](https://github.com/smartcontractkit/mcms/pull/323) [`008aec7`](https://github.com/smartcontractkit/mcms/commit/008aec734962e517b5bb9f9cb384c5ac2d08fff8) Thanks [@graham-chainlink](https://github.com/graham-chainlink)! - solana: update rootSignaturesPDA to include authority as new seed
+
+- [#324](https://github.com/smartcontractkit/mcms/pull/324) [`fc04e76`](https://github.com/smartcontractkit/mcms/commit/fc04e76deac968504b9af51c7c0862fff809cfd9) Thanks [@ecPablo](https://github.com/ecPablo)! - allow empty accounts in solana additional fields for transactions
+
 ## 0.12.2
 
 ### Patch Changes

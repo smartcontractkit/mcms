@@ -21,6 +21,7 @@ type TimelockExecutable struct {
 
 // NewTimelockExecutable creates a new TimelockExecutable from a proposal and a map of executors.
 func NewTimelockExecutable(
+	ctx context.Context,
 	proposal *TimelockProposal,
 	executors map[types.ChainSelector]sdk.TimelockExecutor,
 ) (*TimelockExecutable, error) {
@@ -36,7 +37,7 @@ func NewTimelockExecutable(
 	// setPredecessors populates t.predecessors[chainSelector] = []common.Hash
 	// (one array per chain). The 0th element is zero-hash, the 1st is the
 	// operationID for that chain's 1st operation, etc.
-	err := te.setPredecessors(context.Background())
+	err := te.setPredecessors(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("unable to set predecessors: %w", err)
 	}
@@ -125,6 +126,43 @@ func (t *TimelockExecutable) IsOperationReady(ctx context.Context, idx int) erro
 	}
 	if !isReady {
 		return &OperationNotReadyError{OpIndex: idx}
+	}
+
+	return nil
+}
+
+// IsChainDone checks if the chain is done executing
+func (t *TimelockExecutable) IsChainDone(ctx context.Context, chainSelector types.ChainSelector) error {
+	// Check readiness for each global operation in the proposal
+	for globalIndex, op := range t.proposal.Operations {
+		if op.ChainSelector == chainSelector {
+			err := t.IsOperationDone(ctx, globalIndex)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+func (t *TimelockExecutable) IsOperationDone(ctx context.Context, idx int) error {
+	op := t.proposal.Operations[idx]
+
+	cs := op.ChainSelector
+	timelock := t.proposal.TimelockAddresses[cs]
+
+	operationID, err := t.GetOpID(ctx, idx, op, cs)
+	if err != nil {
+		return fmt.Errorf("unable to get operation ID: %w", err)
+	}
+
+	isDone, err := t.executors[cs].IsOperationDone(ctx, timelock, operationID)
+	if err != nil {
+		return err
+	}
+	if !isDone {
+		return &OperationNotDoneError{OpIndex: idx}
 	}
 
 	return nil

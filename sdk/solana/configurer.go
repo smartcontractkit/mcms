@@ -21,10 +21,11 @@ var _ sdk.Configurer = &Configurer{}
 // Configurer configures the MCM contract for Solana chains.
 type Configurer struct {
 	instructionCollection
-	chainSelector types.ChainSelector
-	client        *rpc.Client
-	auth          solana.PrivateKey
-	skipSend      bool
+	chainSelector    types.ChainSelector
+	client           *rpc.Client
+	auth             solana.PrivateKey
+	skipSend         bool
+	authorityAccount solana.PublicKey
 }
 
 // NewConfigurer creates a new Configurer for Solana chains.
@@ -32,15 +33,20 @@ type Configurer struct {
 // options:
 //
 //	WithDoNotSendInstructionsOnChain: when selected, the Configurer instance will not
-//		send the Solana instructions to the blockchain.
+//			send the Solana instructions to the blockchain.
+//
+//	WithAuthorityAccount: sets the authorityAccount for the MCM contract. Defaults to the `auth` field if unset.
+//		Main use case is to allow authorityAccount to be overridden when processing the SetConfig with MCMS where
+//		the authorityAccount has to be the timelock signer.
 func NewConfigurer(
 	client *rpc.Client, auth solana.PrivateKey, chainSelector types.ChainSelector, options ...configurerOption,
 ) *Configurer {
 	configurer := &Configurer{
-		client:        client,
-		auth:          auth,
-		chainSelector: chainSelector,
-		skipSend:      false,
+		client:           client,
+		auth:             auth,
+		chainSelector:    chainSelector,
+		skipSend:         false,
+		authorityAccount: auth.PublicKey(),
 	}
 	for _, opt := range options {
 		opt(configurer)
@@ -54,6 +60,12 @@ type configurerOption func(*Configurer)
 func WithDoNotSendInstructionsOnChain() configurerOption {
 	return func(c *Configurer) {
 		c.skipSend = true
+	}
+}
+
+func WithAuthorityAccount(authorityAccount solana.PublicKey) configurerOption {
+	return func(c *Configurer) {
+		c.authorityAccount = authorityAccount
 	}
 }
 
@@ -120,7 +132,7 @@ func (c *Configurer) SetConfig(
 		configSignersPDA,
 		rootMetadataPDA,
 		expiringRootAndOpCountPDA,
-		c.auth.PublicKey(),
+		c.authorityAccount,
 		solana.SystemProgramID))
 	if err != nil {
 		return types.TransactionResult{}, err
@@ -148,21 +160,21 @@ func (c *Configurer) preloadSigners(
 	configSignersPDA solana.PublicKey,
 ) error {
 	err := c.addInstruction("initSigners", bindings.NewInitSignersInstruction(mcmName, uint8(len(signerAddresses)), //nolint:gosec
-		configPDA, configSignersPDA, c.auth.PublicKey(), solana.SystemProgramID))
+		configPDA, configSignersPDA, c.authorityAccount, solana.SystemProgramID))
 	if err != nil {
 		return err
 	}
 
 	for i, chunkIndex := range chunkIndexes(len(signerAddresses), config.MaxAppendSignerBatchSize) {
 		err = c.addInstruction(fmt.Sprintf("appendSigners%d", i), bindings.NewAppendSignersInstruction(mcmName,
-			signerAddresses[chunkIndex[0]:chunkIndex[1]], configPDA, configSignersPDA, c.auth.PublicKey()))
+			signerAddresses[chunkIndex[0]:chunkIndex[1]], configPDA, configSignersPDA, c.authorityAccount))
 		if err != nil {
 			return err
 		}
 	}
 
 	err = c.addInstruction("finalizeSigners", bindings.NewFinalizeSignersInstruction(mcmName, configPDA,
-		configSignersPDA, c.auth.PublicKey()))
+		configSignersPDA, c.authorityAccount))
 	if err != nil {
 		return err
 	}
