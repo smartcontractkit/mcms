@@ -115,6 +115,7 @@ func (m *TimelockProposal) DeriveCancellationProposal() (TimelockProposal, error
 	newProposal := *m
 	newProposal.Signatures = []types.Signature{}
 	newProposal.Action = types.TimelockActionCancel
+
 	return newProposal, nil
 }
 
@@ -127,6 +128,7 @@ func (m *TimelockProposal) DeriveBypassProposal() (TimelockProposal, error) {
 	newProposal := *m
 	newProposal.Signatures = []types.Signature{}
 	newProposal.Action = types.TimelockActionBypass
+
 	return newProposal, nil
 }
 

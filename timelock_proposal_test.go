@@ -960,10 +960,13 @@ func buildDummyProposal(action types.TimelockAction) TimelockProposal {
 	if err != nil {
 		panic(err)
 	}
+
 	return *proposal
 }
 
 func TestDeriveBypassProposal(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		proposal   TimelockProposal
@@ -986,6 +989,8 @@ func TestDeriveBypassProposal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			newProposal, err := tt.proposal.DeriveBypassProposal()
 			if tt.wantErr {
 				require.Error(t, err)
@@ -1001,6 +1006,8 @@ func TestDeriveBypassProposal(t *testing.T) {
 }
 
 func TestDeriveCancellationProposal(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		proposal   TimelockProposal
@@ -1023,6 +1030,8 @@ func TestDeriveCancellationProposal(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			newProposal, err := tt.proposal.DeriveCancellationProposal()
 			if tt.wantErr {
 				require.Error(t, err)
