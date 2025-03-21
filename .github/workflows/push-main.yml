@@ -17,7 +17,7 @@ jobs:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-go@0.3.1
         with:
-          golangci-lint-version: v1.62.0
+          golangci-lint-version: v1.64.8
 
   ci-lint-e2e:
     name: Lint E2E tests
@@ -30,7 +30,7 @@ jobs:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-go@0.3.1
         with:
-          golangci-lint-version: v1.62.0
+          golangci-lint-version: v1.64.8
           golangci-lint-args: --build-tags="e2e"
 
 
