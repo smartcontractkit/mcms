@@ -24,7 +24,7 @@ const (
 	SignatureVOffset    = 27
 	SignatureVThreshold = 2
 
-	ChunkSizeBytes = 100_000
+	ChunkSizeBytes = 50_000
 )
 
 var _ sdk.Executor = &Executor{}
@@ -54,7 +54,7 @@ func (e Executor) ExecuteOperation(
 ) (types.TransactionResult, error) {
 	var mcmsAddress aptos.AccountAddress
 	if err := mcmsAddress.ParseStringRelaxed(metadata.MCMAddress); err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to parse mcm address: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to parse mcms address: %w", err)
 	}
 	var toAddress aptos.AccountAddress
 	if err := toAddress.ParseStringRelaxed(op.Transaction.To); err != nil {

@@ -10,13 +10,13 @@ import (
 	"slices"
 	"time"
 
-	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	module_mcms_user "github.com/smartcontractkit/chainlink-aptos/bindings/mcms_test/mcms_user"
+	"github.com/smartcontractkit/chainlink-aptos/relayer/codec"
 	"github.com/smartcontractkit/mcms"
-	aptosutil "github.com/smartcontractkit/mcms/e2e/utils/aptos"
 	"github.com/smartcontractkit/mcms/sdk"
 	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/types"
@@ -42,8 +42,11 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 		Signers: []common.Address{signers[0], signers[1]},
 	}
 	configurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount)
-	_, err := configurer.SetConfig(context.Background(), a.MCMContract.Address.StringLong(), config, false)
+	result, err := configurer.SetConfig(context.Background(), a.MCMSContract.Address.StringLong(), config, false)
 	a.Require().NoError(err, "setting config on Aptos mcms contract failed")
+	data, err := a.AptosRPCClient.WaitForTransaction(result.Hash)
+	a.Require().NoError(err)
+	a.Require().True(data.Success, data.VmStatus)
 
 	// Arguments to call MCMUser contract with
 	arg1 := "helloworld"
@@ -60,7 +63,7 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(a.ChainSelector, types.ChainMetadata{
 			StartingOpCount: 0,
-			MCMAddress:      a.MCMContract.Address.StringLong(),
+			MCMAddress:      a.MCMSContract.Address.StringLong(),
 		})
 
 	// Call 1
@@ -78,7 +81,7 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 	proposalBuilder.AddOperation(types.Operation{
 		ChainSelector: a.ChainSelector,
 		Transaction: types.Transaction{
-			To:               a.MCMSUserContract.StringLong(),
+			To:               a.MCMSTestContract.Address.StringLong(),
 			Data:             callOneParamBytes,
 			AdditionalFields: callOneAdditionalFields,
 		},
@@ -99,7 +102,7 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 	proposalBuilder.AddOperation(types.Operation{
 		ChainSelector: a.ChainSelector,
 		Transaction: types.Transaction{
-			To:               a.MCMSUserContract.StringLong(),
+			To:               a.MCMSTestContract.Address.StringLong(),
 			Data:             callTwoParamBytes,
 			AdditionalFields: callTwoAdditionalFields,
 		},
@@ -135,16 +138,16 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 	executable, err := mcms.NewExecutable(proposal, executors)
 	a.Require().NoError(err, "Error creating executable")
 
-	txHash, err := executable.SetRoot(context.Background(), a.ChainSelector)
+	result, err = executable.SetRoot(context.Background(), a.ChainSelector)
 	a.Require().NoError(err)
-	a.T().Logf("✅ SetRoot in tx: %s", txHash.Hash)
+	a.T().Logf("✅ SetRoot in tx: %s", result.Hash)
 
-	_, err = a.AptosRPCClient.WaitForTransaction(txHash.Hash)
+	_, err = a.AptosRPCClient.WaitForTransaction(result.Hash)
 	a.Require().NoError(err)
 
 	// Assert
 	tree, _ := proposal.MerkleTree()
-	gotHash, gotValidUntil, err := inspector.GetRoot(context.Background(), a.MCMContract.Address.StringLong())
+	gotHash, gotValidUntil, err := inspector.GetRoot(context.Background(), a.MCMSContract.Address.StringLong())
 	a.Require().NoError(err)
 	a.Require().Equal(uint32(validUntil), gotValidUntil)
 	a.Require().Equal(tree.Root, gotHash)
@@ -164,25 +167,19 @@ func (a *AptosTestSuite) Test_Aptos_SetRootExecute() {
 
 		// Check that op count has increased on the mcms contract
 		var opCount uint64
-		opCount, err = inspector.GetOpCount(context.Background(), a.MCMContract.Address.StringLong())
+		opCount, err = inspector.GetOpCount(context.Background(), a.MCMSContract.Address.StringLong())
 		a.Require().NoError(err)
 		a.Require().EqualValues(opCount, i+1)
 	}
 
 	// Check that arguments have been stored in the MCMUser contract
-	data, err := a.AptosRPCClient.AccountResource(a.MCMSUserContract, a.MCMSUserContract.StringLong()+"::mcms_user::UserData")
+	resourceData, err := a.AptosRPCClient.AccountResource(a.MCMSTestContract.Address, a.MCMSTestContract.Address.StringLong()+"::mcms_user::UserData")
 	a.Require().NoError(err)
 
-	userData := struct {
-		Invocations int
-		A           string
-		B           []byte
-		C           aptos.AccountAddress
-		D           *big.Int
-	}{}
-	err = aptosutil.DecodeAptosJsonValue([]any{data["data"]}, &userData)
+	userData := module_mcms_user.UserData{}
+	err = codec.DecodeAptosJsonValue(resourceData["data"], &userData)
 	a.Require().NoError(err)
-	a.Require().Equal(2, userData.Invocations)
+	a.Require().EqualValues(2, userData.Invocations)
 	a.Require().Equal(arg1, userData.A)
 	a.Require().Equal(arg2, userData.B)
 	a.Require().Equal(arg3, userData.C)

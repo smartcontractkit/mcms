@@ -22,7 +22,7 @@ import (
 )
 
 func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
-	a.T().Skip()
+	// a.T().Skip()
 	a.deployMCM()
 	opts := &bind.TransactOpts{Signer: a.deployerAccount}
 
@@ -42,7 +42,7 @@ func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
 		Signers: []common.Address{signers[0], signers[1]},
 	}
 	configurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount)
-	result, err := configurer.SetConfig(context.Background(), a.MCMContract.Address.StringLong(), config, false)
+	result, err := configurer.SetConfig(context.Background(), a.MCMSContract.Address.StringLong(), config, false)
 	a.Require().NoError(err, "setting config on Aptos mcms contract failed")
 
 	_, err = a.AptosRPCClient.WaitForTransaction(result.Hash)
@@ -50,7 +50,7 @@ func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
 	a.T().Logf("✅ SetConfig in tx: %s", result.Hash)
 
 	// Initiate ownership transfer
-	tx, err := a.MCMContract.MCMSAccount.TransferOwnershipToSelf(opts)
+	tx, err := a.MCMSContract.MCMSAccount.TransferOwnershipToSelf(opts)
 	a.Require().NoError(err)
 	_, err = a.AptosRPCClient.WaitForTransaction(tx.Hash)
 	a.Require().NoError(err)
@@ -65,11 +65,11 @@ func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(a.ChainSelector, types.ChainMetadata{
 			StartingOpCount: 0,
-			MCMAddress:      a.MCMContract.Address.StringLong(),
+			MCMAddress:      a.MCMSContract.Address.StringLong(),
 		})
 
 	// Call 1
-	module, function, _, args, err := a.MCMContract.MCMSAccount.EncodeAcceptOwnership()
+	module, function, _, args, err := a.MCMSContract.MCMSAccount.EncodeAcceptOwnership()
 	a.Require().NoError(err)
 
 	additionalFields := aptossdk.AdditionalFields{
@@ -81,7 +81,7 @@ func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
 	proposalBuilder.AddOperation(types.Operation{
 		ChainSelector: a.ChainSelector,
 		Transaction: types.Transaction{
-			To:               a.MCMContract.Address.StringLong(),
+			To:               a.MCMSContract.Address.StringLong(),
 			Data:             module_mcms.ArgsToData(args),
 			AdditionalFields: callOneAdditionalFields,
 		},
@@ -126,7 +126,7 @@ func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
 
 	// Assert
 	tree, _ := proposal.MerkleTree()
-	gotHash, gotValidUntil, err := inspector.GetRoot(context.Background(), a.MCMContract.Address.StringLong())
+	gotHash, gotValidUntil, err := inspector.GetRoot(context.Background(), a.MCMSContract.Address.StringLong())
 	a.Require().NoError(err)
 	a.Require().Equal(uint32(validUntil), gotValidUntil)
 	a.Require().Equal(tree.Root, gotHash)
@@ -146,15 +146,15 @@ func (a *AptosTestSuite) Test_Aptos_TransferOwnership() {
 
 		// Check that op count has increased on the mcms contract
 		var opCount uint64
-		opCount, err = inspector.GetOpCount(context.Background(), a.MCMContract.Address.StringLong())
+		opCount, err = inspector.GetOpCount(context.Background(), a.MCMSContract.Address.StringLong())
 		a.Require().NoError(err)
 		a.Require().EqualValues(opCount, i+1)
 	}
 
 	// Check that ownership has been transferred
-	owner, err := a.MCMContract.MCMSAccount.Owner(nil)
+	owner, err := a.MCMSContract.MCMSAccount.Owner(nil)
 	a.Require().NoError(err)
-	a.Require().Equal(a.MCMContract.Address.StringLong(), owner.StringLong())
+	a.Require().Equal(a.MCMSContract.Address.StringLong(), owner.StringLong())
 
 	fmt.Println("MCMS contract owner:", owner.StringLong())
 }

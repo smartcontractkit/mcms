@@ -8,16 +8,16 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 
 require (
 	github.com/aptos-labs/aptos-go-sdk v1.5.1-0.20250303230301-affcbec1c549
-	github.com/ethereum/go-ethereum v1.15.0
+	github.com/ethereum/go-ethereum v1.15.5
 	github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/solana-go v1.12.0
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/google/go-cmp v0.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
-	github.com/mitchellh/mapstructure v1.5.1-0.20220423185008-bf980b35cac4
-	github.com/smartcontractkit/chain-selectors v1.0.40
-	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250320172022-0e17212b62e1
+	github.com/smartcontractkit/chain-selectors v1.0.46
+	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250321090040-0b0edad18f18
+	github.com/smartcontractkit/chainlink-aptos/relayer v0.0.0-20250320162700-de7f1c0fd741
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250226104101-11778f2ead98
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.7
 	github.com/spf13/cast v1.7.1
@@ -144,6 +144,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.16 // indirect
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
+	github.com/mitchellh/mapstructure v1.5.1-0.20220423185008-bf980b35cac4 // indirect
 	github.com/mitchellh/pointerstructure v1.2.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/moby/docker-image-spec v1.3.1 // indirect
@@ -188,13 +189,12 @@ require (
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/smartcontractkit/chainlink-aptos/relayer v0.0.0-20250320162700-de7f1c0fd741 // indirect
 	github.com/smartcontractkit/chainlink-common v0.4.2-0.20250227203031-2537a8c226bb // indirect
 	github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20250220133800-f3b940c4f298 // indirect
 	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
-	github.com/supranational/blst v0.3.13 // indirect
+	github.com/supranational/blst v0.3.14 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/testcontainers/testcontainers-go v0.35.0 // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect
@@ -203,7 +203,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.13 // indirect
 	github.com/tklauser/numcpus v0.7.0 // indirect
 	github.com/urfave/cli/v2 v2.27.5 // indirect
-	github.com/valyala/fastjson v1.4.1 // indirect
+	github.com/valyala/fastjson v1.6.4 // indirect
 	github.com/wk8/go-ordered-map/v2 v2.1.8 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
 	github.com/xrash/smetrics v0.0.0-20240521201337-686a1a2994c1 // indirect

@@ -61,7 +61,7 @@ func TestAptosLedgerSetup(t *testing.T) {
 	suite.deployMCMUser()
 
 	configurer := aptossdk.NewConfigurer(suite.AptosRPCClient, suite.deployerAccount)
-	_, err = configurer.SetConfig(context.Background(), suite.MCMContract.Address.StringLong(), config, true)
+	_, err = configurer.SetConfig(context.Background(), suite.MCMSContract.Address.StringLong(), config, true)
 	suite.Require().NoError(err, "setting config on Aptos mcms contract")
 
 	// Build proposal
@@ -73,7 +73,7 @@ func TestAptosLedgerSetup(t *testing.T) {
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(suite.ChainSelector, types.ChainMetadata{
 			StartingOpCount: 0,
-			MCMAddress:      suite.MCMContract.Address.StringLong(),
+			MCMAddress:      suite.MCMSContract.Address.StringLong(),
 		})
 
 	// Call 1
@@ -90,7 +90,7 @@ func TestAptosLedgerSetup(t *testing.T) {
 	proposalBuilder.AddOperation(types.Operation{
 		ChainSelector: suite.ChainSelector,
 		Transaction: types.Transaction{
-			To:               suite.MCMSUserContract.StringLong(),
+			To:               suite.MCMSTestContract.Address.StringLong(),
 			Data:             callOneParamBytes,
 			AdditionalFields: callOneAdditionalFields,
 		},
@@ -111,7 +111,7 @@ func TestAptosLedgerSetup(t *testing.T) {
 	proposalBuilder.AddOperation(types.Operation{
 		ChainSelector: suite.ChainSelector,
 		Transaction: types.Transaction{
-			To:               suite.MCMSUserContract.StringLong(),
+			To:               suite.MCMSTestContract.Address.StringLong(),
 			Data:             callTwoParamBytes,
 			AdditionalFields: callTwoAdditionalFields,
 		},
