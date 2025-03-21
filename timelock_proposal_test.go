@@ -990,8 +990,13 @@ func TestDeriveBypassProposal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			newProposal, err := tt.proposal.DeriveBypassProposal()
+			dummyAddressess := map[types.ChainSelector]types.ChainMetadata{
+				chaintest.Chain2Selector: {
+					StartingOpCount: 1,
+					MCMAddress:      "0x0000000000000000000000000000000000000001",
+				},
+			}
+			newProposal, err := tt.proposal.DeriveBypassProposal(dummyAddressess)
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.EqualError(t, err, "cannot derive a bypass proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
@@ -1000,6 +1005,8 @@ func TestDeriveBypassProposal(t *testing.T) {
 				assert.Equal(t, tt.wantAction, newProposal.Action)
 				assert.Empty(t, newProposal.Signatures)
 				assert.NotEqual(t, tt.proposal, newProposal)
+				assert.NotEqual(t, newProposal.Salt(), tt.proposal.Salt())
+				assert.Equal(t, dummyAddressess, newProposal.ChainMetadata)
 			}
 		})
 	}
@@ -1031,8 +1038,13 @@ func TestDeriveCancellationProposal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			newProposal, err := tt.proposal.DeriveCancellationProposal()
+			dummyAddressess := map[types.ChainSelector]types.ChainMetadata{
+				chaintest.Chain2Selector: {
+					StartingOpCount: 1,
+					MCMAddress:      "0x0000000000000000000000000000000000000001",
+				},
+			}
+			newProposal, err := tt.proposal.DeriveCancellationProposal(dummyAddressess)
 			if tt.wantErr {
 				require.Error(t, err)
 				assert.EqualError(t, err, "cannot derive a cancellation proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
@@ -1041,6 +1053,8 @@ func TestDeriveCancellationProposal(t *testing.T) {
 				assert.Equal(t, tt.wantAction, newProposal.Action)
 				assert.Empty(t, newProposal.Signatures)
 				assert.NotEqual(t, tt.proposal, newProposal)
+				assert.NotEqual(t, newProposal.Salt(), tt.proposal.Salt())
+				assert.Equal(t, dummyAddressess, newProposal.ChainMetadata)
 			}
 		})
 	}

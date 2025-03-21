@@ -17,6 +17,7 @@ import (
 )
 
 var ZERO_HASH = common.Hash{}
+var DefaultValidUntil = 72 * time.Hour
 
 type TimelockProposal struct {
 	BaseProposal
@@ -105,22 +106,36 @@ func (m *TimelockProposal) Validate() error {
 
 	return nil
 }
+func replaceChainMetadataWithAddresses(p *TimelockProposal, addresses map[types.ChainSelector]types.ChainMetadata) error {
+	for chain := range p.ChainMetadata {
+		newMeta, ok := addresses[chain]
+		if !ok {
+			return fmt.Errorf("cannot replace addresses in chain metadata, missing address for chain %d", chain)
+		}
+		p.ChainMetadata[chain] = newMeta
+	}
+	return nil
+}
 
 // DeriveCancellationProposal derives a new proposal that cancels the current proposal.
-func (m *TimelockProposal) DeriveCancellationProposal() (TimelockProposal, error) {
+func (m *TimelockProposal) DeriveCancellationProposal(cancellerMetadata map[types.ChainSelector]types.ChainMetadata) (TimelockProposal, error) {
 	if m.Action != types.TimelockActionSchedule {
 		return TimelockProposal{}, fmt.Errorf("cannot derive a cancellation proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
 	}
 	// Create a copy of the current proposal, we don't want to affect the original proposal
 	newProposal := *m
 	newProposal.Signatures = []types.Signature{}
+	newProposal.ValidUntil = uint32(time.Now().Unix()) + uint32(DefaultValidUntil.Seconds())
 	newProposal.Action = types.TimelockActionCancel
-
+	err := replaceChainMetadataWithAddresses(&newProposal, cancellerMetadata)
+	if err != nil {
+		return TimelockProposal{}, err
+	}
 	return newProposal, nil
 }
 
 // DeriveBypassProposal derives a new proposal that bypasses the current proposal.
-func (m *TimelockProposal) DeriveBypassProposal() (TimelockProposal, error) {
+func (m *TimelockProposal) DeriveBypassProposal(bypasserAddresses map[types.ChainSelector]types.ChainMetadata) (TimelockProposal, error) {
 	if m.Action != types.TimelockActionSchedule {
 		return TimelockProposal{}, fmt.Errorf("cannot derive a bypass proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
 	}
@@ -128,7 +143,11 @@ func (m *TimelockProposal) DeriveBypassProposal() (TimelockProposal, error) {
 	newProposal := *m
 	newProposal.Signatures = []types.Signature{}
 	newProposal.Action = types.TimelockActionBypass
-
+	newProposal.ValidUntil = uint32(time.Now().Unix()) + uint32(DefaultValidUntil.Seconds())
+	err := replaceChainMetadataWithAddresses(&newProposal, bypasserAddresses)
+	if err != nil {
+		return TimelockProposal{}, err
+	}
 	return newProposal, nil
 }
 
