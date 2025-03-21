@@ -768,3 +768,109 @@ func TestProposal_WithoutSaltOverride(t *testing.T) {
 	assert.NotNil(t, saltBytes)
 	assert.NotEqual(t, common.Hash{}, saltBytes)
 }
+
+func buildDummyProposal(action types.TimelockAction) TimelockProposal {
+	builder := NewTimelockProposalBuilder()
+	builder.SetVersion("v1").
+		SetValidUntil(2004259681).
+		SetDescription("Test proposal").
+		SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
+			chaintest.Chain2Selector: {
+				StartingOpCount: 0,
+				MCMAddress:      "0x0000000000000000000000000000000000000000",
+			},
+		}).
+		SetOverridePreviousRoot(false).
+		SetAction(action).
+		SetDelay(types.MustParseDuration("1h")).
+		AddTimelockAddress(chaintest.Chain2Selector, "0x01").
+		SetOperations([]types.BatchOperation{{
+			ChainSelector: chaintest.Chain2Selector,
+			Transactions: []types.Transaction{
+				{
+					To:               "0x0000000000000000000000000000000000000000",
+					AdditionalFields: []byte(`{"value": 0}`),
+					Data:             []byte("data"),
+				},
+			},
+		}})
+	proposal, err := builder.Build()
+	if err != nil {
+		panic(err)
+	}
+	return *proposal
+}
+
+func TestDeriveBypassProposal(t *testing.T) {
+	tests := []struct {
+		name       string
+		proposal   TimelockProposal
+		wantErr    bool
+		wantAction types.TimelockAction
+	}{
+		{
+			name:       "valid schedule action",
+			proposal:   buildDummyProposal(types.TimelockActionSchedule),
+			wantErr:    false,
+			wantAction: types.TimelockActionBypass,
+		},
+		{
+			name:       "invalid non-schedule action",
+			proposal:   buildDummyProposal(types.TimelockActionCancel),
+			wantErr:    true,
+			wantAction: types.TimelockActionBypass,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			newProposal, err := tt.proposal.DeriveBypassProposal()
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.EqualError(t, err, "cannot derive a bypass proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantAction, newProposal.Action)
+				assert.Empty(t, newProposal.Signatures)
+				assert.NotEqual(t, tt.proposal, newProposal)
+			}
+		})
+	}
+}
+
+func TestDeriveCancellationProposal(t *testing.T) {
+	tests := []struct {
+		name       string
+		proposal   TimelockProposal
+		wantErr    bool
+		wantAction types.TimelockAction
+	}{
+		{
+			name:       "valid schedule action",
+			proposal:   buildDummyProposal(types.TimelockActionSchedule),
+			wantErr:    false,
+			wantAction: types.TimelockActionCancel,
+		},
+		{
+			name:       "invalid non-schedule action",
+			proposal:   buildDummyProposal(types.TimelockActionCancel),
+			wantErr:    true,
+			wantAction: types.TimelockActionCancel,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			newProposal, err := tt.proposal.DeriveCancellationProposal()
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.EqualError(t, err, "cannot derive a cancellation proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantAction, newProposal.Action)
+				assert.Empty(t, newProposal.Signatures)
+				assert.NotEqual(t, tt.proposal, newProposal)
+			}
+		})
+	}
+}
