@@ -106,6 +106,30 @@ func (m *TimelockProposal) Validate() error {
 	return nil
 }
 
+// DeriveCancellationProposal derives a new proposal that cancels the current proposal.
+func (m *TimelockProposal) DeriveCancellationProposal() (TimelockProposal, error) {
+	if m.Action != types.TimelockActionSchedule {
+		return TimelockProposal{}, fmt.Errorf("cannot derive a cancellation proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
+	}
+	// Create a copy of the current proposal, we don't want to affect the original proposal
+	newProposal := *m
+	newProposal.Signatures = []types.Signature{}
+	newProposal.Action = types.TimelockActionCancel
+	return newProposal, nil
+}
+
+// DeriveBypassProposal derives a new proposal that bypasses the current proposal.
+func (m *TimelockProposal) DeriveBypassProposal() (TimelockProposal, error) {
+	if m.Action != types.TimelockActionSchedule {
+		return TimelockProposal{}, fmt.Errorf("cannot derive a bypass proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
+	}
+	// Create a copy of the current proposal, we don't want to affect the original proposal
+	newProposal := *m
+	newProposal.Signatures = []types.Signature{}
+	newProposal.Action = types.TimelockActionBypass
+	return newProposal, nil
+}
+
 // Convert the proposal to an MCMS only proposal and also return all predecessors for easy access later.
 // Every transaction to be sent from the Timelock is encoded with the corresponding timelock method.
 func (m *TimelockProposal) Convert(
