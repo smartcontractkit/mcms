@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.16.0
+
+### Minor Changes
+
+- [#342](https://github.com/smartcontractkit/mcms/pull/342) [`58c4da1`](https://github.com/smartcontractkit/mcms/commit/58c4da1ae9c47ef84ab72587e78a5bf3d5993a19) Thanks [@ecPablo](https://github.com/ecPablo)! - Add proposal cancel and bypass helpers
+
 ## 0.15.0
 
 ### Minor Changes
