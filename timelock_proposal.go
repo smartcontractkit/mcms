@@ -17,6 +17,7 @@ import (
 )
 
 var ZERO_HASH = common.Hash{}
+var DefaultValidUntil = 72 * time.Hour
 
 type TimelockProposal struct {
 	BaseProposal
@@ -104,6 +105,59 @@ func (m *TimelockProposal) Validate() error {
 	}
 
 	return nil
+}
+func replaceChainMetadataWithAddresses(p *TimelockProposal, addresses map[types.ChainSelector]types.ChainMetadata) error {
+	for chain := range p.ChainMetadata {
+		newMeta, ok := addresses[chain]
+		if !ok {
+			return fmt.Errorf("cannot replace addresses in chain metadata, missing address for chain %d", chain)
+		}
+		p.ChainMetadata[chain] = newMeta
+	}
+
+	return nil
+}
+
+// deriveNewProposal creates a copy of the current proposal with overridden action, signatures, salt, and metadata.
+func (m *TimelockProposal) deriveNewProposal(action types.TimelockAction, metadata map[types.ChainSelector]types.ChainMetadata) (TimelockProposal, error) {
+	// Create a copy of the current proposal, we don't want to affect the original proposal
+	newProposal := *m
+	newProposal.Signatures = []types.Signature{}
+	ts := time.Now().Add(DefaultValidUntil).Unix()
+	ts32, err := safecast.Int64ToUint32(ts)
+	if err != nil {
+		return TimelockProposal{}, err
+	}
+	// #nosec G115
+	newProposal.ValidUntil = ts32
+	bytesSalt := m.Salt()
+	salt := common.BytesToHash(bytesSalt[:])
+	newProposal.SaltOverride = &salt
+	newProposal.Action = action
+	err = replaceChainMetadataWithAddresses(&newProposal, metadata)
+	if err != nil {
+		return TimelockProposal{}, err
+	}
+
+	return newProposal, nil
+}
+
+// DeriveCancellationProposal derives a new proposal that cancels the current proposal.
+func (m *TimelockProposal) DeriveCancellationProposal(cancellerMetadata map[types.ChainSelector]types.ChainMetadata) (TimelockProposal, error) {
+	if m.Action != types.TimelockActionSchedule {
+		return TimelockProposal{}, fmt.Errorf("cannot derive a cancellation proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
+	}
+
+	return m.deriveNewProposal(types.TimelockActionCancel, cancellerMetadata)
+}
+
+// DeriveBypassProposal derives a new proposal that bypasses the current proposal.
+func (m *TimelockProposal) DeriveBypassProposal(bypasserAddresses map[types.ChainSelector]types.ChainMetadata) (TimelockProposal, error) {
+	if m.Action != types.TimelockActionSchedule {
+		return TimelockProposal{}, fmt.Errorf("cannot derive a bypass proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
+	}
+
+	return m.deriveNewProposal(types.TimelockActionBypass, bypasserAddresses)
 }
 
 // Convert the proposal to an MCMS only proposal and also return all predecessors for easy access later.
