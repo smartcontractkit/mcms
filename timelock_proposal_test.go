@@ -1005,7 +1005,7 @@ func TestDeriveBypassProposal(t *testing.T) {
 				assert.Equal(t, tt.wantAction, newProposal.Action)
 				assert.Empty(t, newProposal.Signatures)
 				assert.NotEqual(t, tt.proposal, newProposal)
-				assert.NotEqual(t, newProposal.Salt(), tt.proposal.Salt())
+				assert.Equal(t, newProposal.Salt(), tt.proposal.Salt())
 				assert.Equal(t, dummyAddressess, newProposal.ChainMetadata)
 			}
 		})
@@ -1053,7 +1053,7 @@ func TestDeriveCancellationProposal(t *testing.T) {
 				assert.Equal(t, tt.wantAction, newProposal.Action)
 				assert.Empty(t, newProposal.Signatures)
 				assert.NotEqual(t, tt.proposal, newProposal)
-				assert.NotEqual(t, newProposal.Salt(), tt.proposal.Salt())
+				assert.Equal(t, newProposal.Salt(), tt.proposal.Salt())
 				assert.Equal(t, dummyAddressess, newProposal.ChainMetadata)
 			}
 		})
