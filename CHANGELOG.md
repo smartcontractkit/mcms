@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.16.1
+
+### Patch Changes
+
+- [#346](https://github.com/smartcontractkit/mcms/pull/346) [`741fc94`](https://github.com/smartcontractkit/mcms/commit/741fc94709beee3bcc15e9c251cc90cd6b82a109) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: use GetLatestBlockhash to retrive curr. block time in Solana
+
 ## 0.16.0
 
 ### Minor Changes
