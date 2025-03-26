@@ -96,9 +96,14 @@ func (t TimelockInspector) IsOperationReady(ctx context.Context, address string,
 		return false, err
 	}
 
-	blockTime, err := solanaCommon.GetBlockTime(ctx, t.client, rpc.CommitmentConfirmed)
+	slot, err := t.client.GetSlot(ctx, rpc.CommitmentConfirmed)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("failed to get slot: %w", err)
+	}
+
+	blockTime, err := t.client.GetBlockTime(ctx, slot)
+	if err != nil {
+		return false, fmt.Errorf("failed to get block time: %w", err)
 	}
 
 	ts, err := safecast.Uint64ToInt64(op.Timestamp)
