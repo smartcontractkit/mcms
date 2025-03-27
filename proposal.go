@@ -161,7 +161,7 @@ func (p *Proposal) Validate() error {
 	// but this might change as new chain families are added
 	for chainSelector, metadata := range p.ChainMetadata {
 		if err := validateChainMetadata(metadata, chainSelector); err != nil {
-			return err
+			return fmt.Errorf("error validating proposal: %w", err)
 		}
 	}
 

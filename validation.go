@@ -6,6 +6,7 @@ import (
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
+	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
@@ -23,6 +24,9 @@ func validateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 
 	case cselectors.FamilySolana:
 		return solana.ValidateAdditionalFields(additionalFields)
+
+	case cselectors.FamilyAptos:
+		return aptos.ValidateAdditionalFields(additionalFields)
 	}
 
 	return nil
@@ -39,6 +43,8 @@ func validateChainMetadata(metadata types.ChainMetadata, csel types.ChainSelecto
 	case cselectors.FamilySolana:
 		return solana.ValidateChainMetadata(metadata)
 	case cselectors.FamilyEVM:
+		return nil
+	case cselectors.FamilyAptos:
 		return nil
 	default:
 		return fmt.Errorf("unsupported chain family: %s", chainFamily)

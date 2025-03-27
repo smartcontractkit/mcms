@@ -8,6 +8,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
+	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
@@ -58,6 +59,16 @@ func Test_NewEncoder(t *testing.T) {
 			want: &solanasdk.Encoder{
 				TxCount:              giveTxCount,
 				ChainSelector:        chaintest.Chain4Selector,
+				OverridePreviousRoot: false,
+			},
+		},
+		{
+			name:         "success: returns an Aptos encoder (not simulated)",
+			giveSelector: chaintest.Chain5Selector,
+			giveIsSim:    false,
+			want: &aptossdk.Encoder{
+				TxCount:              giveTxCount,
+				ChainSelector:        chaintest.Chain5Selector,
 				OverridePreviousRoot: false,
 			},
 		},

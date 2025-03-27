@@ -18,7 +18,7 @@ jobs:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-go@0.3.1
         with:
-          golangci-lint-version: v1.61.0
+          golangci-lint-version: v1.64.8
 
   ci-lint-e2e:
     name: Lint E2E tests
@@ -31,7 +31,7 @@ jobs:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-go@0.3.1
         with:
-          golangci-lint-version: v1.62.0
+          golangci-lint-version: v1.64.8
           golangci-lint-args: --build-tags="e2e"
 
   ci-lint-misc:
@@ -69,6 +69,10 @@ jobs:
         uses: metaplex-foundation/actions/install-solana@2389940047edc63a5781911f6a53fbdf784748d8 # v1.0.4
         with:
           version: 1.18.10
+      - name: Install Aptos CLI
+        uses: aptos-labs/actions/install-aptos-cli@ce57287eb852b9819c1d74fecc3be187677559fd # v0.1
+        with:
+          CLI_VERSION: 7.0.0
       - name: Build and test
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/0.3.5
         with:

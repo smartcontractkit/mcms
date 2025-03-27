@@ -23,6 +23,54 @@ packages:
         config:
           dir: "./sdk/solana/mocks"
           filename: "jsonrpcclient.go"
+  github.com/smartcontractkit/chainlink-aptos/bindings/mcms:
+    config:
+      all: false
+      outpkg: "mock_mcms"
+      replace-type:
+        - "github.com/aptos-labs/aptos-go-sdk/internal/types.AccountAddress=aptos:github.com/aptos-labs/aptos-go-sdk.AccountAddress"
+    interfaces:
+      MCMS:
+        config:
+          dir: "./sdk/aptos/mocks/mcms"
+          filename: "mcms.go"
+  github.com/smartcontractkit/chainlink-aptos/bindings/mcms/mcms:
+    config:
+      all: false
+      outpkg: "mock_module_mcms"
+      replace-type:
+        - "github.com/aptos-labs/aptos-go-sdk/internal/types.AccountAddress=aptos:github.com/aptos-labs/aptos-go-sdk.AccountAddress"
+    interfaces:
+      MCMS:
+        config:
+          dir: "./sdk/aptos/mocks/mcms/mcms"
+          filename: "mcms.go"
+  github.com/smartcontractkit/chainlink-aptos/bindings/mcms/mcms_executor:
+    config:
+      all: false
+      outpkg: "mock_module_mcms_executor"
+      replace-type:
+        - "github.com/aptos-labs/aptos-go-sdk/internal/types.AccountAddress=aptos:github.com/aptos-labs/aptos-go-sdk.AccountAddress"
+    interfaces:
+      MCMSExecutor:
+        config:
+          dir: "./sdk/aptos/mocks/mcms/mcms_executor"
+          filename: "mcms_executor.go"
+  github.com/aptos-labs/aptos-go-sdk:
+    config:
+      all: false
+      outpkg: "mock_aptossdk"
+      replace-type:
+      - "github.com/aptos-labs/aptos-go-sdk/internal/types.AccountAddress=aptos:github.com/aptos-labs/aptos-go-sdk.AccountAddress"
+    interfaces:
+      AptosRpcClient:
+        config:
+          dir: "./sdk/aptos/mocks/aptos"
+          filename: "rpcclient.go"
+      TransactionSigner:
+        config:
+          dir: "./sdk/aptos/mocks/aptos"
+          filename: "transactionsigner.go"
 
 # Required to fix the following deprecation warning:
 # https://vektra.github.io/mockery/v2.48/deprecations/#issue-845-fix
