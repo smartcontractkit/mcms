@@ -28,6 +28,11 @@ func Test_GetChainSelectorFamily(t *testing.T) {
 			want: cselectors.FamilySolana,
 		},
 		{
+			name: "success: aptos",
+			give: ChainSelector(cselectors.APTOS_TESTNET.Selector),
+			want: cselectors.FamilyAptos,
+		},
+		{
 			name:    "invalid chain selector",
 			give:    0,
 			wantErr: "chain family not found for selector 0",
