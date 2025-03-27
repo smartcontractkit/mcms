@@ -14,6 +14,7 @@ import (
 
 	module_mcms_user "github.com/smartcontractkit/chainlink-aptos/bindings/mcms_test/mcms_user"
 	"github.com/smartcontractkit/chainlink-aptos/relayer/codec"
+
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
