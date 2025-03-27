@@ -13,6 +13,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 	module_mcms "github.com/smartcontractkit/chainlink-aptos/bindings/mcms/mcms"
+
 	mock_aptossdk "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
 	mock_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms"
 	mock_module_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms/mcms"
@@ -20,6 +21,7 @@ import (
 )
 
 func TestNewInspector(t *testing.T) {
+	t.Parallel()
 	mockClient := mock_aptossdk.NewAptosRpcClient(t)
 
 	inspector := NewInspector(mockClient)

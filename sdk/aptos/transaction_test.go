@@ -19,6 +19,7 @@ func Must[T any](t T, err error) T {
 	if err != nil {
 		panic(err)
 	}
+
 	return t
 }
 
@@ -33,9 +34,6 @@ func TestArgsToData(t *testing.T) {
 
 func TestValidateAdditionalFields(t *testing.T) {
 	t.Parallel()
-	type args struct {
-		additionalFields json.RawMessage
-	}
 	tests := []struct {
 		name             string
 		additionalFields json.RawMessage

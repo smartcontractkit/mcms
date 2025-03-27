@@ -14,6 +14,7 @@ import (
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -63,7 +64,7 @@ func (e Executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("failed to parse To address %q: %w", op.Transaction.To, err)
 	}
 	var additionalFields AdditionalFields
-	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
+	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 	}
 	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
@@ -115,6 +116,7 @@ func (e Executor) ExecuteOperation(
 			return types.TransactionResult{}, fmt.Errorf("getting nonce for %v: %w", e.auth.AccountAddress(), err)
 		}
 		for i, chunk := range chunks {
+			//nolint:gosec
 			seqNo := startSeqNo + uint64(i)
 			opts.SequenceNumber = &seqNo
 			if i == len(chunks)-1 {
@@ -134,6 +136,7 @@ func (e Executor) ExecuteOperation(
 				if err != nil {
 					return types.TransactionResult{}, fmt.Errorf("executing data chunk %v of %v on Aptos mcms contract: %w", i, len(chunks), err)
 				}
+
 				break
 			}
 			// All other chunks will be staged and executed with the last chunk

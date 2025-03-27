@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	"github.com/aptos-labs/aptos-go-sdk"
-
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-aptos/relayer/txm"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -27,10 +27,10 @@ func (d Decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.De
 	}
 
 	var additionalFields AdditionalFields
-	if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+	if err = json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 	}
-	if err := additionalFields.Validate(); err != nil {
+	if err = additionalFields.Validate(); err != nil {
 		return nil, fmt.Errorf("failed to validate additional fields: %w", err)
 	}
 
@@ -54,5 +54,6 @@ func (d Decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.De
 			return NewDecodedOperation(additionalFields.PackageName, additionalFields.ModuleName, additionalFields.Function, paramKeys, data)
 		}
 	}
+
 	return nil, fmt.Errorf("could not find function info for %s::%s::%s", additionalFields.PackageName, additionalFields.ModuleName, additionalFields.Function)
 }

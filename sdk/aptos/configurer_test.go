@@ -14,6 +14,7 @@ import (
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
+
 	mock_aptossdk "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
 	mock_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms"
 	mock_module_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms/mcms"

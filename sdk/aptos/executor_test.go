@@ -17,6 +17,7 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
+
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	mock_aptossdk "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
 	mock_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms"
@@ -79,7 +80,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().Execute(
 					mock.Anything,
-					big.NewInt(int64(chaintest.Chain5AptosID)),
+					new(big.Int).SetUint64(chaintest.Chain5AptosID),
 					Must(hexToAddress("0x123")),
 					uint64(42),
 					Must(hexToAddress("0x456")),
@@ -141,7 +142,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 						SequenceNumber: pointerTo(uint64(791)),
 						Signer:         signer,
 					},
-					big.NewInt(int64(chaintest.Chain5AptosID)),
+					new(big.Int).SetUint64(chaintest.Chain5AptosID),
 					Must(hexToAddress("0x123")),
 					uint64(42),
 					Must(hexToAddress("0x456")),
@@ -230,7 +231,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().Execute(
 					mock.Anything,
-					big.NewInt(int64(chaintest.Chain5AptosID)),
+					new(big.Int).SetUint64(chaintest.Chain5AptosID),
 					Must(hexToAddress("0x123")),
 					uint64(42),
 					Must(hexToAddress("0x456")),
@@ -340,7 +341,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 						SequenceNumber: pointerTo(uint64(790)),
 						Signer:         signer,
 					},
-					big.NewInt(int64(chaintest.Chain5AptosID)),
+					new(big.Int).SetUint64(chaintest.Chain5AptosID),
 					Must(hexToAddress("0x123")),
 					uint64(42),
 					Must(hexToAddress("0x456")),
@@ -427,7 +428,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 					mock.Anything,
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
 					uint64(1742987131),
-					big.NewInt(int64(chaintest.Chain5AptosID)),
+					new(big.Int).SetUint64(chaintest.Chain5AptosID),
 					Must(hexToAddress("0x123")),
 					uint64(45),
 					uint64(78),
@@ -486,7 +487,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 					mock.Anything,
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
 					uint64(1742987131),
-					big.NewInt(int64(chaintest.Chain5AptosID)),
+					new(big.Int).SetUint64(chaintest.Chain5AptosID),
 					Must(hexToAddress("0x123")),
 					uint64(45),
 					uint64(78),

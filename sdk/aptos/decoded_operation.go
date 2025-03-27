@@ -22,6 +22,7 @@ func NewDecodedOperation(packageName, moduleName, functionName string, inputKeys
 	if len(inputKeys) != len(inputArgs) {
 		return nil, fmt.Errorf("input keys and input args must have the same length")
 	}
+
 	return &DecodedOperation{
 		PackageName:  packageName,
 		ModuleName:   moduleName,

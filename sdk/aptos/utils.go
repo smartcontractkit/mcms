@@ -13,5 +13,6 @@ func hexToAddress(address string) (aptos.AccountAddress, error) {
 	if err := addr.ParseStringRelaxed(address); err != nil {
 		return aptos.AccountAddress{}, err
 	}
+
 	return addr, nil
 }

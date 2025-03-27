@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/aptos-labs/aptos-go-sdk"
-
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
@@ -59,6 +59,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err)
 	}
+
 	return types.TransactionResult{
 		Hash:        tx.Hash,
 		ChainFamily: chain_selectors.FamilyAptos,

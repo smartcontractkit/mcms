@@ -4,6 +4,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	module_mcms "github.com/smartcontractkit/chainlink-aptos/bindings/mcms/mcms"
+
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
