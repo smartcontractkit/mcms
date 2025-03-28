@@ -419,7 +419,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 				mockGetAccountInfo(t, mockJSONRPCClient, operationPDA, operation, nil)
 				mockGetBlockTime(t, mockJSONRPCClient, 1, &blockTime, errors.New("rpc error"), nil)
 			},
-			wantErr: "failed to get block height: rpc error",
+			wantErr: "failed to get slot: rpc error",
 		},
 		{
 			name: "error: GetBlockTime rpc error",

@@ -6,6 +6,7 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
@@ -36,6 +37,12 @@ func newEncoder(
 			txCount,
 			overridePreviousRoot,
 			// isSim,
+		)
+	case cselectors.FamilyAptos:
+		encoder = aptos.NewEncoder(
+			csel,
+			txCount,
+			overridePreviousRoot,
 		)
 	}
 
