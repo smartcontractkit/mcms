@@ -19,7 +19,7 @@ require (
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250327161505-c5e886268bd0
 	github.com/smartcontractkit/chainlink-aptos/relayer v0.0.0-20250327161505-c5e886268bd0
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250226104101-11778f2ead98
-	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.7
+	github.com/smartcontractkit/chainlink-testing-framework/framework v0.6.6
 	github.com/spf13/cast v1.7.1
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/tools v0.31.0
