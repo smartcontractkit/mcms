@@ -70,7 +70,7 @@ func (a *AptosTestSuite) Test_Aptos_SetConfig() {
 	}
 
 	// Set config
-	configurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount)
+	configurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount, 0)
 	res, err := configurer.SetConfig(context.Background(), mcmsAddress.StringLong(), config, true)
 	a.Require().NoError(err, "setting config on Aptos mcms contract")
 
@@ -79,7 +79,7 @@ func (a *AptosTestSuite) Test_Aptos_SetConfig() {
 	a.Require().True(data.Success, data.VmStatus)
 
 	// Assert that config has been set
-	inspector := aptossdk.NewInspector(a.AptosRPCClient)
+	inspector := aptossdk.NewInspector(a.AptosRPCClient, 0)
 	gotConfig, err := inspector.GetConfig(context.Background(), mcmsAddress.StringLong())
 	a.Require().NoError(err)
 	a.Require().NotNil(gotConfig)

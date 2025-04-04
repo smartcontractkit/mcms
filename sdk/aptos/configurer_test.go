@@ -26,10 +26,11 @@ func TestNewConfigurer(t *testing.T) {
 	mockClient := mock_aptossdk.NewAptosRpcClient(t)
 	mockSigner := mock_aptossdk.NewTransactionSigner(t)
 
-	configurer := NewConfigurer(mockClient, mockSigner)
+	configurer := NewConfigurer(mockClient, mockSigner, TimelockRoleBypasser)
 	assert.NotNil(t, configurer)
 	assert.Equal(t, mockClient, configurer.client)
 	assert.Equal(t, mockSigner, configurer.auth)
+	assert.Equal(t, TimelockRoleBypasser, configurer.role)
 	assert.NotNil(t, configurer.bindingFn)
 }
 
@@ -44,6 +45,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
+		role      TimelockRole
 		mockSetup func(m *mock_mcms.MCMS)
 		want      types.TransactionResult
 		wantErr   assert.ErrorAssertionFunc
@@ -78,11 +80,13 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				},
 				clearRoot: true,
 			},
+			role: TimelockRoleCanceller,
 			mockSetup: func(m *mock_mcms.MCMS) {
 				mockMCMSModule := mock_module_mcms.NewMCMS(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().SetConfig(
 					mock.Anything,
+					TimelockRoleCanceller.Byte(),
 					// Ordered addresses
 					[][]byte{
 						common.HexToAddress("0x111").Bytes(),
@@ -131,7 +135,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mockSetup: func(m *mock_mcms.MCMS) {
 				mockMCMSModule := mock_module_mcms.NewMCMS(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().SetConfig(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("error during SetConfig"))
+				mockMCMSModule.EXPECT().SetConfig(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("error during SetConfig"))
 			},
 			wantErr: AssertErrorContains("error during SetConfig"),
 		},
@@ -146,6 +150,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				bindingFn: func(_ aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
 					return mcmsBinding
 				},
+				role: tt.role,
 			}
 
 			if tt.mockSetup != nil {

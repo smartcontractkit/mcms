@@ -17,13 +17,15 @@ var _ sdk.Inspector = &Inspector{}
 type Inspector struct {
 	ConfigTransformer
 	client aptos.AptosRpcClient
+	role   TimelockRole
 
 	bindingFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms.MCMS
 }
 
-func NewInspector(client aptos.AptosRpcClient) *Inspector {
+func NewInspector(client aptos.AptosRpcClient, role TimelockRole) *Inspector {
 	return &Inspector{
 		client:    client,
+		role:      role,
 		bindingFn: mcms.Bind,
 	}
 }
@@ -35,7 +37,7 @@ func (i Inspector) GetConfig(ctx context.Context, mcmsAddr string) (*types.Confi
 	}
 	mcmsBinding := i.bindingFn(mcmsAddress, i.client)
 
-	config, err := mcmsBinding.MCMS().GetConfig(nil)
+	config, err := mcmsBinding.MCMS().GetConfig(nil, i.role.Byte())
 	if err != nil {
 		return nil, fmt.Errorf("get config: %w", err)
 	}
@@ -50,7 +52,7 @@ func (i Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, err
 	}
 	mcmsBinding := i.bindingFn(mcmsAddress, i.client)
 
-	opCount, err := mcmsBinding.MCMS().GetOpCount(nil)
+	opCount, err := mcmsBinding.MCMS().GetOpCount(nil, i.role.Byte())
 	if err != nil {
 		return 0, fmt.Errorf("get op count: %w", err)
 	}
@@ -65,7 +67,7 @@ func (i Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, u
 	}
 	mcmsBinding := i.bindingFn(mcmsAddress, i.client)
 
-	root, validUntil, err := mcmsBinding.MCMS().GetRoot(nil)
+	root, validUntil, err := mcmsBinding.MCMS().GetRoot(nil, i.role.Byte())
 	if err != nil {
 		return common.Hash{}, 0, fmt.Errorf("get root: %w", err)
 	}
@@ -81,7 +83,7 @@ func (i Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types.
 	}
 	mcmsBinding := i.bindingFn(mcmsAddress, i.client)
 
-	rootMetadata, err := mcmsBinding.MCMS().GetRootMetadata(nil)
+	rootMetadata, err := mcmsBinding.MCMS().GetRootMetadata(nil, i.role.Byte())
 	if err != nil {
 		return types.ChainMetadata{}, fmt.Errorf("get root metadata: %w", err)
 	}

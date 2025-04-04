@@ -85,8 +85,8 @@ func (_c *AptosRpcClient_Account_Call) Run(run func(address aptos.AccountAddress
 	return _c
 }
 
-func (_c *AptosRpcClient_Account_Call) Return(info aptos.AccountInfo, err error) *AptosRpcClient_Account_Call {
-	_c.Call.Return(info, err)
+func (_c *AptosRpcClient_Account_Call) Return(_a0 aptos.AccountInfo, _a1 error) *AptosRpcClient_Account_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -230,8 +230,8 @@ func (_c *AptosRpcClient_AccountModule_Call) Run(run func(address aptos.AccountA
 	return _c
 }
 
-func (_c *AptosRpcClient_AccountModule_Call) Return(data *api.MoveBytecode, err error) *AptosRpcClient_AccountModule_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_AccountModule_Call) Return(_a0 *api.MoveBytecode, _a1 error) *AptosRpcClient_AccountModule_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -304,8 +304,8 @@ func (_c *AptosRpcClient_AccountResource_Call) Run(run func(address aptos.Accoun
 	return _c
 }
 
-func (_c *AptosRpcClient_AccountResource_Call) Return(data map[string]interface{}, err error) *AptosRpcClient_AccountResource_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_AccountResource_Call) Return(_a0 map[string]interface{}, _a1 error) *AptosRpcClient_AccountResource_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -377,8 +377,8 @@ func (_c *AptosRpcClient_AccountResources_Call) Run(run func(address aptos.Accou
 	return _c
 }
 
-func (_c *AptosRpcClient_AccountResources_Call) Return(resources []aptos.AccountResourceInfo, err error) *AptosRpcClient_AccountResources_Call {
-	_c.Call.Return(resources, err)
+func (_c *AptosRpcClient_AccountResources_Call) Return(_a0 []aptos.AccountResourceInfo, _a1 error) *AptosRpcClient_AccountResources_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -450,8 +450,8 @@ func (_c *AptosRpcClient_AccountResourcesBCS_Call) Run(run func(address aptos.Ac
 	return _c
 }
 
-func (_c *AptosRpcClient_AccountResourcesBCS_Call) Return(resources []aptos.AccountResourceRecord, err error) *AptosRpcClient_AccountResourcesBCS_Call {
-	_c.Call.Return(resources, err)
+func (_c *AptosRpcClient_AccountResourcesBCS_Call) Return(_a0 []aptos.AccountResourceRecord, _a1 error) *AptosRpcClient_AccountResourcesBCS_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -510,8 +510,8 @@ func (_c *AptosRpcClient_AccountTransactions_Call) Run(run func(address aptos.Ac
 	return _c
 }
 
-func (_c *AptosRpcClient_AccountTransactions_Call) Return(data []*api.CommittedTransaction, err error) *AptosRpcClient_AccountTransactions_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_AccountTransactions_Call) Return(_a0 []*api.CommittedTransaction, _a1 error) *AptosRpcClient_AccountTransactions_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -568,8 +568,8 @@ func (_c *AptosRpcClient_BatchSubmitTransaction_Call) Run(run func(signedTxns []
 	return _c
 }
 
-func (_c *AptosRpcClient_BatchSubmitTransaction_Call) Return(response *api.BatchSubmitTransactionResponse, err error) *AptosRpcClient_BatchSubmitTransaction_Call {
-	_c.Call.Return(response, err)
+func (_c *AptosRpcClient_BatchSubmitTransaction_Call) Return(_a0 *api.BatchSubmitTransactionResponse, _a1 error) *AptosRpcClient_BatchSubmitTransaction_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -627,8 +627,8 @@ func (_c *AptosRpcClient_BlockByHeight_Call) Run(run func(blockHeight uint64, wi
 	return _c
 }
 
-func (_c *AptosRpcClient_BlockByHeight_Call) Return(data *api.Block, err error) *AptosRpcClient_BlockByHeight_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_BlockByHeight_Call) Return(_a0 *api.Block, _a1 error) *AptosRpcClient_BlockByHeight_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -686,8 +686,8 @@ func (_c *AptosRpcClient_BlockByVersion_Call) Run(run func(ledgerVersion uint64,
 	return _c
 }
 
-func (_c *AptosRpcClient_BlockByVersion_Call) Return(data *api.Block, err error) *AptosRpcClient_BlockByVersion_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_BlockByVersion_Call) Return(_a0 *api.Block, _a1 error) *AptosRpcClient_BlockByVersion_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -756,8 +756,8 @@ func (_c *AptosRpcClient_BuildSignAndSubmitTransaction_Call) Run(run func(sender
 	return _c
 }
 
-func (_c *AptosRpcClient_BuildSignAndSubmitTransaction_Call) Return(data *api.PendingTransaction, err error) *AptosRpcClient_BuildSignAndSubmitTransaction_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_BuildSignAndSubmitTransaction_Call) Return(_a0 *api.PendingTransaction, _a1 error) *AptosRpcClient_BuildSignAndSubmitTransaction_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -826,8 +826,8 @@ func (_c *AptosRpcClient_BuildTransaction_Call) Run(run func(sender aptos.Accoun
 	return _c
 }
 
-func (_c *AptosRpcClient_BuildTransaction_Call) Return(rawTxn *aptos.RawTransaction, err error) *AptosRpcClient_BuildTransaction_Call {
-	_c.Call.Return(rawTxn, err)
+func (_c *AptosRpcClient_BuildTransaction_Call) Return(_a0 *aptos.RawTransaction, _a1 error) *AptosRpcClient_BuildTransaction_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -896,8 +896,8 @@ func (_c *AptosRpcClient_BuildTransactionMultiAgent_Call) Run(run func(sender ap
 	return _c
 }
 
-func (_c *AptosRpcClient_BuildTransactionMultiAgent_Call) Return(rawTxn *aptos.RawTransactionWithData, err error) *AptosRpcClient_BuildTransactionMultiAgent_Call {
-	_c.Call.Return(rawTxn, err)
+func (_c *AptosRpcClient_BuildTransactionMultiAgent_Call) Return(_a0 *aptos.RawTransactionWithData, _a1 error) *AptosRpcClient_BuildTransactionMultiAgent_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -958,8 +958,8 @@ func (_c *AptosRpcClient_EntryFunctionWithArgs_Call) Run(run func(moduleAddress 
 	return _c
 }
 
-func (_c *AptosRpcClient_EntryFunctionWithArgs_Call) Return(entry *aptos.EntryFunction, err error) *AptosRpcClient_EntryFunctionWithArgs_Call {
-	_c.Call.Return(entry, err)
+func (_c *AptosRpcClient_EntryFunctionWithArgs_Call) Return(_a0 *aptos.EntryFunction, _a1 error) *AptosRpcClient_EntryFunctionWithArgs_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1013,8 +1013,8 @@ func (_c *AptosRpcClient_EstimateGasPrice_Call) Run(run func()) *AptosRpcClient_
 	return _c
 }
 
-func (_c *AptosRpcClient_EstimateGasPrice_Call) Return(info aptos.EstimateGasInfo, err error) *AptosRpcClient_EstimateGasPrice_Call {
-	_c.Call.Return(info, err)
+func (_c *AptosRpcClient_EstimateGasPrice_Call) Return(_a0 aptos.EstimateGasInfo, _a1 error) *AptosRpcClient_EstimateGasPrice_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1130,8 +1130,8 @@ func (_c *AptosRpcClient_GetChainId_Call) Run(run func()) *AptosRpcClient_GetCha
 	return _c
 }
 
-func (_c *AptosRpcClient_GetChainId_Call) Return(chainId uint8, err error) *AptosRpcClient_GetChainId_Call {
-	_c.Call.Return(chainId, err)
+func (_c *AptosRpcClient_GetChainId_Call) Return(_a0 uint8, _a1 error) *AptosRpcClient_GetChainId_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1185,8 +1185,8 @@ func (_c *AptosRpcClient_Info_Call) Run(run func()) *AptosRpcClient_Info_Call {
 	return _c
 }
 
-func (_c *AptosRpcClient_Info_Call) Return(info aptos.NodeInfo, err error) *AptosRpcClient_Info_Call {
-	_c.Call.Return(info, err)
+func (_c *AptosRpcClient_Info_Call) Return(_a0 aptos.NodeInfo, _a1 error) *AptosRpcClient_Info_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1550,8 +1550,8 @@ func (_c *AptosRpcClient_SimulateTransaction_Call) Run(run func(rawTxn *aptos.Ra
 	return _c
 }
 
-func (_c *AptosRpcClient_SimulateTransaction_Call) Return(data []*api.UserTransaction, err error) *AptosRpcClient_SimulateTransaction_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_SimulateTransaction_Call) Return(_a0 []*api.UserTransaction, _a1 error) *AptosRpcClient_SimulateTransaction_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1620,8 +1620,8 @@ func (_c *AptosRpcClient_SimulateTransactionMultiAgent_Call) Run(run func(rawTxn
 	return _c
 }
 
-func (_c *AptosRpcClient_SimulateTransactionMultiAgent_Call) Return(data []*api.UserTransaction, err error) *AptosRpcClient_SimulateTransactionMultiAgent_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_SimulateTransactionMultiAgent_Call) Return(_a0 []*api.UserTransaction, _a1 error) *AptosRpcClient_SimulateTransactionMultiAgent_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1678,8 +1678,8 @@ func (_c *AptosRpcClient_SubmitTransaction_Call) Run(run func(signedTransaction 
 	return _c
 }
 
-func (_c *AptosRpcClient_SubmitTransaction_Call) Return(data *api.PendingTransaction, err error) *AptosRpcClient_SubmitTransaction_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_SubmitTransaction_Call) Return(_a0 *api.PendingTransaction, _a1 error) *AptosRpcClient_SubmitTransaction_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1736,8 +1736,8 @@ func (_c *AptosRpcClient_TransactionByHash_Call) Run(run func(txnHash string)) *
 	return _c
 }
 
-func (_c *AptosRpcClient_TransactionByHash_Call) Return(data *api.Transaction, err error) *AptosRpcClient_TransactionByHash_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_TransactionByHash_Call) Return(_a0 *api.Transaction, _a1 error) *AptosRpcClient_TransactionByHash_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1794,8 +1794,8 @@ func (_c *AptosRpcClient_TransactionByVersion_Call) Run(run func(version uint64)
 	return _c
 }
 
-func (_c *AptosRpcClient_TransactionByVersion_Call) Return(data *api.CommittedTransaction, err error) *AptosRpcClient_TransactionByVersion_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_TransactionByVersion_Call) Return(_a0 *api.CommittedTransaction, _a1 error) *AptosRpcClient_TransactionByVersion_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1853,8 +1853,8 @@ func (_c *AptosRpcClient_Transactions_Call) Run(run func(start *uint64, limit *u
 	return _c
 }
 
-func (_c *AptosRpcClient_Transactions_Call) Return(data []*api.CommittedTransaction, err error) *AptosRpcClient_Transactions_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_Transactions_Call) Return(_a0 []*api.CommittedTransaction, _a1 error) *AptosRpcClient_Transactions_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1926,8 +1926,8 @@ func (_c *AptosRpcClient_View_Call) Run(run func(payload *aptos.ViewPayload, led
 	return _c
 }
 
-func (_c *AptosRpcClient_View_Call) Return(vals []interface{}, err error) *AptosRpcClient_View_Call {
-	_c.Call.Return(vals, err)
+func (_c *AptosRpcClient_View_Call) Return(_a0 []interface{}, _a1 error) *AptosRpcClient_View_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -1995,8 +1995,8 @@ func (_c *AptosRpcClient_WaitForTransaction_Call) Run(run func(txnHash string, o
 	return _c
 }
 
-func (_c *AptosRpcClient_WaitForTransaction_Call) Return(data *api.UserTransaction, err error) *AptosRpcClient_WaitForTransaction_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_WaitForTransaction_Call) Return(_a0 *api.UserTransaction, _a1 error) *AptosRpcClient_WaitForTransaction_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
@@ -2053,8 +2053,8 @@ func (_c *AptosRpcClient_WaitTransactionByHash_Call) Run(run func(txnHash string
 	return _c
 }
 
-func (_c *AptosRpcClient_WaitTransactionByHash_Call) Return(data *api.Transaction, err error) *AptosRpcClient_WaitTransactionByHash_Call {
-	_c.Call.Return(data, err)
+func (_c *AptosRpcClient_WaitTransactionByHash_Call) Return(_a0 *api.Transaction, _a1 error) *AptosRpcClient_WaitTransactionByHash_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
