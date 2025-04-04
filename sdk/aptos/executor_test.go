@@ -3,6 +3,7 @@ package aptos
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -31,7 +32,7 @@ func TestNewExecutor(t *testing.T) {
 	encoder := NewEncoder(chaintest.Chain5Selector, 1, true)
 	mockClient := mock_aptossdk.NewAptosRpcClient(t)
 	mockSigner := mock_aptossdk.NewTransactionSigner(t)
-	executor := NewExecutor(mockClient, mockSigner, encoder)
+	executor := NewExecutor(mockClient, mockSigner, encoder, 0)
 	assert.Equal(t, mockClient, executor.client)
 	assert.Equal(t, mockSigner, executor.auth)
 	assert.Equal(t, encoder, executor.Encoder)
@@ -62,7 +63,8 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			chainSelector: chaintest.Chain5Selector,
 			args: args{
 				metadata: types.ChainMetadata{
-					MCMAddress: "0x123",
+					MCMAddress:       "0x123",
+					AdditionalFields: Must(json.Marshal(AdditionalFieldsMetadata{Role: TimelockRoleProposer})),
 				},
 				nonce: 42,
 				proof: []common.Hash{common.HexToHash("0x123456789")},
@@ -80,6 +82,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().Execute(
 					mock.Anything,
+					TimelockRoleProposer.Byte(),
 					new(big.Int).SetUint64(chaintest.Chain5AptosID),
 					Must(hexToAddress("0x123")),
 					uint64(42),
@@ -101,7 +104,8 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			chainSelector: chaintest.Chain5Selector,
 			args: args{
 				metadata: types.ChainMetadata{
-					MCMAddress: "0x123",
+					MCMAddress:       "0x123",
+					AdditionalFields: Must(json.Marshal(AdditionalFieldsMetadata{Role: TimelockRoleProposer})),
 				},
 				nonce: 42,
 				proof: []common.Hash{common.HexToHash("0x123456789")},
@@ -142,6 +146,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 						SequenceNumber: pointerTo(uint64(791)),
 						Signer:         signer,
 					},
+					TimelockRoleProposer.Byte(),
 					new(big.Int).SetUint64(chaintest.Chain5AptosID),
 					Must(hexToAddress("0x123")),
 					uint64(42),
@@ -213,7 +218,8 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			chainSelector: chaintest.Chain5Selector,
 			args: args{
 				metadata: types.ChainMetadata{
-					MCMAddress: "0x123",
+					MCMAddress:       "0x123",
+					AdditionalFields: Must(json.Marshal(AdditionalFieldsMetadata{Role: TimelockRoleCanceller})),
 				},
 				nonce: 42,
 				proof: []common.Hash{common.HexToHash("0x123456789")},
@@ -231,6 +237,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().Execute(
 					mock.Anything,
+					TimelockRoleCanceller.Byte(),
 					new(big.Int).SetUint64(chaintest.Chain5AptosID),
 					Must(hexToAddress("0x123")),
 					uint64(42),
@@ -308,7 +315,8 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			chainSelector: chaintest.Chain5Selector,
 			args: args{
 				metadata: types.ChainMetadata{
-					MCMAddress: "0x123",
+					MCMAddress:       "0x123",
+					AdditionalFields: Must(json.Marshal(AdditionalFieldsMetadata{Role: TimelockRoleBypasser})),
 				},
 				nonce: 42,
 				proof: []common.Hash{common.HexToHash("0x123456789")},
@@ -341,6 +349,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 						SequenceNumber: pointerTo(uint64(790)),
 						Signer:         signer,
 					},
+					TimelockRoleBypasser.Byte(),
 					new(big.Int).SetUint64(chaintest.Chain5AptosID),
 					Must(hexToAddress("0x123")),
 					uint64(42),
@@ -410,8 +419,9 @@ func TestExecutor_SetRoot(t *testing.T) {
 			overridePreviousRoot: true,
 			args: args{
 				metadata: types.ChainMetadata{
-					MCMAddress:      "0x123",
-					StartingOpCount: 45,
+					MCMAddress:       "0x123",
+					StartingOpCount:  45,
+					AdditionalFields: Must(json.Marshal(AdditionalFieldsMetadata{Role: TimelockRoleProposer})),
 				},
 				proof:      []common.Hash{common.HexToHash("0x123456789")},
 				root:       [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
@@ -426,6 +436,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().SetRoot(
 					mock.Anything,
+					TimelockRoleProposer.Byte(),
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
 					uint64(1742987131),
 					new(big.Int).SetUint64(chaintest.Chain5AptosID),
@@ -469,8 +480,9 @@ func TestExecutor_SetRoot(t *testing.T) {
 			overridePreviousRoot: true,
 			args: args{
 				metadata: types.ChainMetadata{
-					MCMAddress:      "0x123",
-					StartingOpCount: 45,
+					MCMAddress:       "0x123",
+					StartingOpCount:  45,
+					AdditionalFields: Must(json.Marshal(AdditionalFieldsMetadata{Role: TimelockRoleCanceller})),
 				},
 				proof:      []common.Hash{common.HexToHash("0x123456789")},
 				root:       [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
@@ -485,6 +497,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().SetRoot(
 					mock.Anything,
+					TimelockRoleCanceller.Byte(),
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 23, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32},
 					uint64(1742987131),
 					new(big.Int).SetUint64(chaintest.Chain5AptosID),

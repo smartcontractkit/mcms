@@ -52,7 +52,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 					},
 				},
 			},
-			want:    common.HexToHash("0xae71ad695a3f8ca57cc0e6c0ac470f697bf572462c41e76a0525775541d1e31d"),
+			want:    common.HexToHash("0x083b481c650e1578f7be562e21f23a570b4943fead4b1ffc67ac548166d8cf5c"),
 			wantErr: assert.NoError,
 		}, {
 			name: "failure - invalid Aptos chain selector",
@@ -161,7 +161,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 					MCMAddress:      "0x222",
 				},
 			},
-			want:    common.HexToHash("0x473abb0ff4139883be8748f0707b1f3aad4861f5e8382521f0d54a446f2fb29e"),
+			want:    common.HexToHash("0x455b5b8ec10c95fe066ca1736547d0758fa2a8356b39ca6aa9043ae1504fcc87"),
 			wantErr: assert.NoError,
 		}, {
 			name: "success - with override previous root",
@@ -176,7 +176,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 					MCMAddress:      "0x222",
 				},
 			},
-			want:    common.HexToHash("0x063fb778d54011efa7481bb914e45654b77f2aef77a2eb698107042b44b1a6d5"),
+			want:    common.HexToHash("0xe7b0cb38489c34616ce7af39d6d22afe4269778337e037a43a476c5179259911"),
 			wantErr: assert.NoError,
 		}, {
 			name: "failure - invalid Aptos chain selector",

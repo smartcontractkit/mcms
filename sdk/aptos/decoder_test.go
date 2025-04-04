@@ -58,6 +58,7 @@ func TestDecoder(t *testing.T) {
 		t.Parallel()
 		functionInfo := module_mcms.FunctionInfo
 
+		role := byte(1)
 		root := common.HexToHash("0x61cf64140590b40dd677d1030320b73e2c0f0c807b42b1dd85c178dc1c72ab20").Bytes()
 		validUntil := uint64(time.Now().Unix()) //nolint:gosec
 		chainIDBig := big.NewInt(11572)
@@ -70,6 +71,7 @@ func TestDecoder(t *testing.T) {
 
 		mcmsC := mcms.Bind(multisigAddress, nil)
 		module, function, _, args, err := mcmsC.MCMS().Encoder().SetRoot(
+			role,
 			root,
 			validUntil,
 			chainIDBig,
@@ -97,8 +99,8 @@ func TestDecoder(t *testing.T) {
 			PackageName:  "mcms",
 			ModuleName:   module.ModuleName,
 			FunctionName: function,
-			InputKeys:    []string{"root", "valid_until", "chain_id", "multisig", "pre_op_count", "post_op_count", "override_previous_root", "metadata_proof", "signatures"},
-			InputArgs:    []any{root, validUntil, chainIDBig, multisigAddress, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures},
+			InputKeys:    []string{"role", "root", "valid_until", "chain_id", "multisig_addr", "pre_op_count", "post_op_count", "override_previous_root", "metadata_proof", "signatures"},
+			InputArgs:    []any{role, root, validUntil, chainIDBig, multisigAddress, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures},
 		}
 
 		d := NewDecoder()

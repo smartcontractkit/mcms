@@ -24,9 +24,10 @@ func TestNewInspector(t *testing.T) {
 	t.Parallel()
 	mockClient := mock_aptossdk.NewAptosRpcClient(t)
 
-	inspector := NewInspector(mockClient)
+	inspector := NewInspector(mockClient, TimelockRoleProposer)
 	assert.NotNil(t, inspector)
 	assert.Equal(t, mockClient, inspector.client)
+	assert.Equal(t, TimelockRoleProposer, inspector.role)
 }
 
 func TestInspector_GetConfig(t *testing.T) {
@@ -35,6 +36,7 @@ func TestInspector_GetConfig(t *testing.T) {
 	tests := []struct {
 		name      string
 		mcmsAddr  string
+		role      TimelockRole
 		mockSetup func(m *mock_mcms.MCMS)
 		want      *types.Config
 		wantErr   assert.ErrorAssertionFunc
@@ -42,10 +44,11 @@ func TestInspector_GetConfig(t *testing.T) {
 		{
 			name:     "success",
 			mcmsAddr: "0x123",
+			role:     TimelockRoleProposer,
 			mockSetup: func(m *mock_mcms.MCMS) {
 				mockMCMSModule := mock_module_mcms.NewMCMS(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().GetConfig(mock.Anything).Return(module_mcms.Config{
+				mockMCMSModule.EXPECT().GetConfig(mock.Anything, TimelockRoleProposer.Byte()).Return(module_mcms.Config{
 					Signers: []module_mcms.Signer{
 						{
 							Addr:  common.HexToAddress("0x111").Bytes(),
@@ -106,10 +109,11 @@ func TestInspector_GetConfig(t *testing.T) {
 		}, {
 			name:     "failure - GetConfig failed",
 			mcmsAddr: "0x123",
+			role:     TimelockRoleBypasser,
 			mockSetup: func(m *mock_mcms.MCMS) {
 				mockMCMSModule := mock_module_mcms.NewMCMS(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().GetConfig(mock.Anything).Return(module_mcms.Config{}, errors.New("error during GetConfig"))
+				mockMCMSModule.EXPECT().GetConfig(mock.Anything, TimelockRoleBypasser.Byte()).Return(module_mcms.Config{}, errors.New("error during GetConfig"))
 			},
 			want:    nil,
 			wantErr: AssertErrorContains("error during GetConfig"),
@@ -125,6 +129,7 @@ func TestInspector_GetConfig(t *testing.T) {
 				bindingFn: func(_ aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
 					return mcmsBinding
 				},
+				role: tt.role,
 			}
 
 			if tt.mockSetup != nil {
@@ -146,6 +151,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 	tests := []struct {
 		name      string
 		mcmsAddr  string
+		role      TimelockRole
 		mockSetup func(m *mock_mcms.MCMS)
 		want      uint64
 		wantErr   assert.ErrorAssertionFunc
@@ -153,10 +159,11 @@ func TestInspector_GetOpCount(t *testing.T) {
 		{
 			name:     "success",
 			mcmsAddr: "0x123",
+			role:     TimelockRoleCanceller,
 			mockSetup: func(m *mock_mcms.MCMS) {
 				mockMCMSModule := mock_module_mcms.NewMCMS(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().GetOpCount(mock.Anything).Return(127, nil)
+				mockMCMSModule.EXPECT().GetOpCount(mock.Anything, TimelockRoleCanceller.Byte()).Return(127, nil)
 			},
 			want:    127,
 			wantErr: assert.NoError,
@@ -167,10 +174,11 @@ func TestInspector_GetOpCount(t *testing.T) {
 		}, {
 			name:     "failure - GetOpCount failed",
 			mcmsAddr: "0x123",
+			role:     TimelockRoleBypasser,
 			mockSetup: func(m *mock_mcms.MCMS) {
 				mockMCMSModule := mock_module_mcms.NewMCMS(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().GetOpCount(mock.Anything).Return(0, errors.New("error during GetOpCount"))
+				mockMCMSModule.EXPECT().GetOpCount(mock.Anything, TimelockRoleBypasser.Byte()).Return(0, errors.New("error during GetOpCount"))
 			},
 			wantErr: AssertErrorContains("error during GetOpCount"),
 		},
@@ -185,6 +193,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 				bindingFn: func(_ aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
 					return mcmsBinding
 				},
+				role: tt.role,
 			}
 
 			if tt.mockSetup != nil {
@@ -206,6 +215,7 @@ func TestInspector_GetRoot(t *testing.T) {
 	tests := []struct {
 		name           string
 		mcmsAddr       string
+		role           TimelockRole
 		mockSetup      func(m *mock_mcms.MCMS)
 		wantHash       common.Hash
 		wantValidUntil uint32
@@ -214,10 +224,11 @@ func TestInspector_GetRoot(t *testing.T) {
 		{
 			name:     "success",
 			mcmsAddr: "0x123",
+			role:     TimelockRoleProposer,
 			mockSetup: func(m *mock_mcms.MCMS) {
 				mockMCMSModule := mock_module_mcms.NewMCMS(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().GetRoot(mock.Anything).Return(common.HexToAddress("0x123456789").Bytes(), 1742933811, nil)
+				mockMCMSModule.EXPECT().GetRoot(mock.Anything, TimelockRoleProposer.Byte()).Return(common.HexToAddress("0x123456789").Bytes(), 1742933811, nil)
 			},
 			wantHash:       common.HexToHash("0x123456789"),
 			wantValidUntil: 1742933811,
@@ -229,10 +240,11 @@ func TestInspector_GetRoot(t *testing.T) {
 		}, {
 			name:     "failure - GetRoot failed",
 			mcmsAddr: "0x123",
+			role:     TimelockRoleCanceller,
 			mockSetup: func(m *mock_mcms.MCMS) {
 				mockMCMSModule := mock_module_mcms.NewMCMS(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().GetRoot(mock.Anything).Return(nil, 0, errors.New("error during GetRoot"))
+				mockMCMSModule.EXPECT().GetRoot(mock.Anything, TimelockRoleCanceller.Byte()).Return(nil, 0, errors.New("error during GetRoot"))
 			},
 			wantErr: AssertErrorContains("error during GetRoot"),
 		},
@@ -247,6 +259,7 @@ func TestInspector_GetRoot(t *testing.T) {
 				bindingFn: func(_ aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
 					return mcmsBinding
 				},
+				role: tt.role,
 			}
 
 			if tt.mockSetup != nil {
@@ -269,6 +282,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 	tests := []struct {
 		name      string
 		mcmsAddr  string
+		role      TimelockRole
 		mockSetup func(m *mock_mcms.MCMS)
 		want      types.ChainMetadata
 		wantErr   assert.ErrorAssertionFunc
@@ -276,10 +290,11 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 		{
 			name:     "success",
 			mcmsAddr: "0x123",
+			role:     TimelockRoleBypasser,
 			mockSetup: func(m *mock_mcms.MCMS) {
 				mockMCMSModule := mock_module_mcms.NewMCMS(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().GetRootMetadata(mock.Anything).Return(module_mcms.RootMetadata{
+				mockMCMSModule.EXPECT().GetRootMetadata(mock.Anything, TimelockRoleBypasser.Byte()).Return(module_mcms.RootMetadata{
 					Multisig:   aptos.AccountThree,
 					PreOpCount: 201,
 				}, nil)
@@ -296,10 +311,11 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 		}, {
 			name:     "failure - GetRootMetadata failed",
 			mcmsAddr: "0x123",
+			role:     TimelockRoleProposer,
 			mockSetup: func(m *mock_mcms.MCMS) {
 				mockMCMSModule := mock_module_mcms.NewMCMS(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().GetRootMetadata(mock.Anything).Return(module_mcms.RootMetadata{}, errors.New("error during GetRootMetadata"))
+				mockMCMSModule.EXPECT().GetRootMetadata(mock.Anything, TimelockRoleProposer.Byte()).Return(module_mcms.RootMetadata{}, errors.New("error during GetRootMetadata"))
 			},
 			wantErr: AssertErrorContains("error during GetRootMetadata"),
 		},
@@ -314,6 +330,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 				bindingFn: func(_ aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
 					return mcmsBinding
 				},
+				role: tt.role,
 			}
 
 			if tt.mockSetup != nil {

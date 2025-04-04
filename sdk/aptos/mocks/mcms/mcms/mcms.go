@@ -28,6 +28,118 @@ func (_m *MCMS) EXPECT() *MCMS_Expecter {
 	return &MCMS_Expecter{mock: &_m.Mock}
 }
 
+// BypasserRole provides a mock function with given fields: opts
+func (_m *MCMS) BypasserRole(opts *bind.CallOpts) (byte, error) {
+	ret := _m.Called(opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BypasserRole")
+	}
+
+	var r0 byte
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) (byte, error)); ok {
+		return rf(opts)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) byte); ok {
+		r0 = rf(opts)
+	} else {
+		r0 = ret.Get(0).(byte)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts) error); ok {
+		r1 = rf(opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_BypasserRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BypasserRole'
+type MCMS_BypasserRole_Call struct {
+	*mock.Call
+}
+
+// BypasserRole is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+func (_e *MCMS_Expecter) BypasserRole(opts interface{}) *MCMS_BypasserRole_Call {
+	return &MCMS_BypasserRole_Call{Call: _e.mock.On("BypasserRole", opts)}
+}
+
+func (_c *MCMS_BypasserRole_Call) Run(run func(opts *bind.CallOpts)) *MCMS_BypasserRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts))
+	})
+	return _c
+}
+
+func (_c *MCMS_BypasserRole_Call) Return(_a0 byte, _a1 error) *MCMS_BypasserRole_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_BypasserRole_Call) RunAndReturn(run func(*bind.CallOpts) (byte, error)) *MCMS_BypasserRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CancellerRole provides a mock function with given fields: opts
+func (_m *MCMS) CancellerRole(opts *bind.CallOpts) (byte, error) {
+	ret := _m.Called(opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CancellerRole")
+	}
+
+	var r0 byte
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) (byte, error)); ok {
+		return rf(opts)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) byte); ok {
+		r0 = rf(opts)
+	} else {
+		r0 = ret.Get(0).(byte)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts) error); ok {
+		r1 = rf(opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_CancellerRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CancellerRole'
+type MCMS_CancellerRole_Call struct {
+	*mock.Call
+}
+
+// CancellerRole is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+func (_e *MCMS_Expecter) CancellerRole(opts interface{}) *MCMS_CancellerRole_Call {
+	return &MCMS_CancellerRole_Call{Call: _e.mock.On("CancellerRole", opts)}
+}
+
+func (_c *MCMS_CancellerRole_Call) Run(run func(opts *bind.CallOpts)) *MCMS_CancellerRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts))
+	})
+	return _c
+}
+
+func (_c *MCMS_CancellerRole_Call) Return(_a0 byte, _a1 error) *MCMS_CancellerRole_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_CancellerRole_Call) RunAndReturn(run func(*bind.CallOpts) (byte, error)) *MCMS_CancellerRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Encoder provides a mock function with no fields
 func (_m *MCMS) Encoder() module_mcms.MCMSEncoder {
 	ret := _m.Called()
@@ -75,9 +187,9 @@ func (_c *MCMS_Encoder_Call) RunAndReturn(run func() module_mcms.MCMSEncoder) *M
 	return _c
 }
 
-// Execute provides a mock function with given fields: opts, chainId, multisig, nonce, to, moduleName, function, data, proof
-func (_m *MCMS) Execute(opts *bind.TransactOpts, chainId *big.Int, multisig aptos.AccountAddress, nonce uint64, to aptos.AccountAddress, moduleName string, function string, data []byte, proof [][]byte) (*api.PendingTransaction, error) {
-	ret := _m.Called(opts, chainId, multisig, nonce, to, moduleName, function, data, proof)
+// Execute provides a mock function with given fields: opts, role, chainId, multisigAddr, nonce, to, moduleName, functionName, data, proof
+func (_m *MCMS) Execute(opts *bind.TransactOpts, role byte, chainId *big.Int, multisigAddr aptos.AccountAddress, nonce uint64, to aptos.AccountAddress, moduleName string, functionName string, data []byte, proof [][]byte) (*api.PendingTransaction, error) {
+	ret := _m.Called(opts, role, chainId, multisigAddr, nonce, to, moduleName, functionName, data, proof)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Execute")
@@ -85,19 +197,19 @@ func (_m *MCMS) Execute(opts *bind.TransactOpts, chainId *big.Int, multisig apto
 
 	var r0 *api.PendingTransaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) (*api.PendingTransaction, error)); ok {
-		return rf(opts, chainId, multisig, nonce, to, moduleName, function, data, proof)
+	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, byte, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) (*api.PendingTransaction, error)); ok {
+		return rf(opts, role, chainId, multisigAddr, nonce, to, moduleName, functionName, data, proof)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) *api.PendingTransaction); ok {
-		r0 = rf(opts, chainId, multisig, nonce, to, moduleName, function, data, proof)
+	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, byte, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) *api.PendingTransaction); ok {
+		r0 = rf(opts, role, chainId, multisigAddr, nonce, to, moduleName, functionName, data, proof)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*api.PendingTransaction)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*bind.TransactOpts, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) error); ok {
-		r1 = rf(opts, chainId, multisig, nonce, to, moduleName, function, data, proof)
+	if rf, ok := ret.Get(1).(func(*bind.TransactOpts, byte, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) error); ok {
+		r1 = rf(opts, role, chainId, multisigAddr, nonce, to, moduleName, functionName, data, proof)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -112,21 +224,22 @@ type MCMS_Execute_Call struct {
 
 // Execute is a helper method to define mock.On call
 //   - opts *bind.TransactOpts
+//   - role byte
 //   - chainId *big.Int
-//   - multisig aptos.AccountAddress
+//   - multisigAddr aptos.AccountAddress
 //   - nonce uint64
 //   - to aptos.AccountAddress
 //   - moduleName string
-//   - function string
+//   - functionName string
 //   - data []byte
 //   - proof [][]byte
-func (_e *MCMS_Expecter) Execute(opts interface{}, chainId interface{}, multisig interface{}, nonce interface{}, to interface{}, moduleName interface{}, function interface{}, data interface{}, proof interface{}) *MCMS_Execute_Call {
-	return &MCMS_Execute_Call{Call: _e.mock.On("Execute", opts, chainId, multisig, nonce, to, moduleName, function, data, proof)}
+func (_e *MCMS_Expecter) Execute(opts interface{}, role interface{}, chainId interface{}, multisigAddr interface{}, nonce interface{}, to interface{}, moduleName interface{}, functionName interface{}, data interface{}, proof interface{}) *MCMS_Execute_Call {
+	return &MCMS_Execute_Call{Call: _e.mock.On("Execute", opts, role, chainId, multisigAddr, nonce, to, moduleName, functionName, data, proof)}
 }
 
-func (_c *MCMS_Execute_Call) Run(run func(opts *bind.TransactOpts, chainId *big.Int, multisig aptos.AccountAddress, nonce uint64, to aptos.AccountAddress, moduleName string, function string, data []byte, proof [][]byte)) *MCMS_Execute_Call {
+func (_c *MCMS_Execute_Call) Run(run func(opts *bind.TransactOpts, role byte, chainId *big.Int, multisigAddr aptos.AccountAddress, nonce uint64, to aptos.AccountAddress, moduleName string, functionName string, data []byte, proof [][]byte)) *MCMS_Execute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*bind.TransactOpts), args[1].(*big.Int), args[2].(aptos.AccountAddress), args[3].(uint64), args[4].(aptos.AccountAddress), args[5].(string), args[6].(string), args[7].([]byte), args[8].([][]byte))
+		run(args[0].(*bind.TransactOpts), args[1].(byte), args[2].(*big.Int), args[3].(aptos.AccountAddress), args[4].(uint64), args[5].(aptos.AccountAddress), args[6].(string), args[7].(string), args[8].([]byte), args[9].([][]byte))
 	})
 	return _c
 }
@@ -136,14 +249,87 @@ func (_c *MCMS_Execute_Call) Return(_a0 *api.PendingTransaction, _a1 error) *MCM
 	return _c
 }
 
-func (_c *MCMS_Execute_Call) RunAndReturn(run func(*bind.TransactOpts, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) (*api.PendingTransaction, error)) *MCMS_Execute_Call {
+func (_c *MCMS_Execute_Call) RunAndReturn(run func(*bind.TransactOpts, byte, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) (*api.PendingTransaction, error)) *MCMS_Execute_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetConfig provides a mock function with given fields: opts
-func (_m *MCMS) GetConfig(opts *bind.CallOpts) (module_mcms.Config, error) {
-	ret := _m.Called(opts)
+// ExpiringRootAndOpCount provides a mock function with given fields: opts, multisig
+func (_m *MCMS) ExpiringRootAndOpCount(opts *bind.CallOpts, multisig aptos.AccountAddress) ([]byte, uint64, uint64, error) {
+	ret := _m.Called(opts, multisig)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ExpiringRootAndOpCount")
+	}
+
+	var r0 []byte
+	var r1 uint64
+	var r2 uint64
+	var r3 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, aptos.AccountAddress) ([]byte, uint64, uint64, error)); ok {
+		return rf(opts, multisig)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, aptos.AccountAddress) []byte); ok {
+		r0 = rf(opts, multisig)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, aptos.AccountAddress) uint64); ok {
+		r1 = rf(opts, multisig)
+	} else {
+		r1 = ret.Get(1).(uint64)
+	}
+
+	if rf, ok := ret.Get(2).(func(*bind.CallOpts, aptos.AccountAddress) uint64); ok {
+		r2 = rf(opts, multisig)
+	} else {
+		r2 = ret.Get(2).(uint64)
+	}
+
+	if rf, ok := ret.Get(3).(func(*bind.CallOpts, aptos.AccountAddress) error); ok {
+		r3 = rf(opts, multisig)
+	} else {
+		r3 = ret.Error(3)
+	}
+
+	return r0, r1, r2, r3
+}
+
+// MCMS_ExpiringRootAndOpCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ExpiringRootAndOpCount'
+type MCMS_ExpiringRootAndOpCount_Call struct {
+	*mock.Call
+}
+
+// ExpiringRootAndOpCount is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - multisig aptos.AccountAddress
+func (_e *MCMS_Expecter) ExpiringRootAndOpCount(opts interface{}, multisig interface{}) *MCMS_ExpiringRootAndOpCount_Call {
+	return &MCMS_ExpiringRootAndOpCount_Call{Call: _e.mock.On("ExpiringRootAndOpCount", opts, multisig)}
+}
+
+func (_c *MCMS_ExpiringRootAndOpCount_Call) Run(run func(opts *bind.CallOpts, multisig aptos.AccountAddress)) *MCMS_ExpiringRootAndOpCount_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].(aptos.AccountAddress))
+	})
+	return _c
+}
+
+func (_c *MCMS_ExpiringRootAndOpCount_Call) Return(_a0 []byte, _a1 uint64, _a2 uint64, _a3 error) *MCMS_ExpiringRootAndOpCount_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3)
+	return _c
+}
+
+func (_c *MCMS_ExpiringRootAndOpCount_Call) RunAndReturn(run func(*bind.CallOpts, aptos.AccountAddress) ([]byte, uint64, uint64, error)) *MCMS_ExpiringRootAndOpCount_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetConfig provides a mock function with given fields: opts, role
+func (_m *MCMS) GetConfig(opts *bind.CallOpts, role byte) (module_mcms.Config, error) {
+	ret := _m.Called(opts, role)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetConfig")
@@ -151,17 +337,17 @@ func (_m *MCMS) GetConfig(opts *bind.CallOpts) (module_mcms.Config, error) {
 
 	var r0 module_mcms.Config
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*bind.CallOpts) (module_mcms.Config, error)); ok {
-		return rf(opts)
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) (module_mcms.Config, error)); ok {
+		return rf(opts, role)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.CallOpts) module_mcms.Config); ok {
-		r0 = rf(opts)
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) module_mcms.Config); ok {
+		r0 = rf(opts, role)
 	} else {
 		r0 = ret.Get(0).(module_mcms.Config)
 	}
 
-	if rf, ok := ret.Get(1).(func(*bind.CallOpts) error); ok {
-		r1 = rf(opts)
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, byte) error); ok {
+		r1 = rf(opts, role)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -176,13 +362,14 @@ type MCMS_GetConfig_Call struct {
 
 // GetConfig is a helper method to define mock.On call
 //   - opts *bind.CallOpts
-func (_e *MCMS_Expecter) GetConfig(opts interface{}) *MCMS_GetConfig_Call {
-	return &MCMS_GetConfig_Call{Call: _e.mock.On("GetConfig", opts)}
+//   - role byte
+func (_e *MCMS_Expecter) GetConfig(opts interface{}, role interface{}) *MCMS_GetConfig_Call {
+	return &MCMS_GetConfig_Call{Call: _e.mock.On("GetConfig", opts, role)}
 }
 
-func (_c *MCMS_GetConfig_Call) Run(run func(opts *bind.CallOpts)) *MCMS_GetConfig_Call {
+func (_c *MCMS_GetConfig_Call) Run(run func(opts *bind.CallOpts, role byte)) *MCMS_GetConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*bind.CallOpts))
+		run(args[0].(*bind.CallOpts), args[1].(byte))
 	})
 	return _c
 }
@@ -192,17 +379,254 @@ func (_c *MCMS_GetConfig_Call) Return(_a0 module_mcms.Config, _a1 error) *MCMS_G
 	return _c
 }
 
-func (_c *MCMS_GetConfig_Call) RunAndReturn(run func(*bind.CallOpts) (module_mcms.Config, error)) *MCMS_GetConfig_Call {
+func (_c *MCMS_GetConfig_Call) RunAndReturn(run func(*bind.CallOpts, byte) (module_mcms.Config, error)) *MCMS_GetConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetOpCount provides a mock function with given fields: opts
-func (_m *MCMS) GetOpCount(opts *bind.CallOpts) (uint64, error) {
-	ret := _m.Called(opts)
+// GetOpCount provides a mock function with given fields: opts, role
+func (_m *MCMS) GetOpCount(opts *bind.CallOpts, role byte) (uint64, error) {
+	ret := _m.Called(opts, role)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetOpCount")
+	}
+
+	var r0 uint64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) (uint64, error)); ok {
+		return rf(opts, role)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) uint64); ok {
+		r0 = rf(opts, role)
+	} else {
+		r0 = ret.Get(0).(uint64)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, byte) error); ok {
+		r1 = rf(opts, role)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_GetOpCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOpCount'
+type MCMS_GetOpCount_Call struct {
+	*mock.Call
+}
+
+// GetOpCount is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - role byte
+func (_e *MCMS_Expecter) GetOpCount(opts interface{}, role interface{}) *MCMS_GetOpCount_Call {
+	return &MCMS_GetOpCount_Call{Call: _e.mock.On("GetOpCount", opts, role)}
+}
+
+func (_c *MCMS_GetOpCount_Call) Run(run func(opts *bind.CallOpts, role byte)) *MCMS_GetOpCount_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].(byte))
+	})
+	return _c
+}
+
+func (_c *MCMS_GetOpCount_Call) Return(_a0 uint64, _a1 error) *MCMS_GetOpCount_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_GetOpCount_Call) RunAndReturn(run func(*bind.CallOpts, byte) (uint64, error)) *MCMS_GetOpCount_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRoot provides a mock function with given fields: opts, role
+func (_m *MCMS) GetRoot(opts *bind.CallOpts, role byte) ([]byte, uint64, error) {
+	ret := _m.Called(opts, role)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRoot")
+	}
+
+	var r0 []byte
+	var r1 uint64
+	var r2 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) ([]byte, uint64, error)); ok {
+		return rf(opts, role)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) []byte); ok {
+		r0 = rf(opts, role)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, byte) uint64); ok {
+		r1 = rf(opts, role)
+	} else {
+		r1 = ret.Get(1).(uint64)
+	}
+
+	if rf, ok := ret.Get(2).(func(*bind.CallOpts, byte) error); ok {
+		r2 = rf(opts, role)
+	} else {
+		r2 = ret.Error(2)
+	}
+
+	return r0, r1, r2
+}
+
+// MCMS_GetRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRoot'
+type MCMS_GetRoot_Call struct {
+	*mock.Call
+}
+
+// GetRoot is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - role byte
+func (_e *MCMS_Expecter) GetRoot(opts interface{}, role interface{}) *MCMS_GetRoot_Call {
+	return &MCMS_GetRoot_Call{Call: _e.mock.On("GetRoot", opts, role)}
+}
+
+func (_c *MCMS_GetRoot_Call) Run(run func(opts *bind.CallOpts, role byte)) *MCMS_GetRoot_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].(byte))
+	})
+	return _c
+}
+
+func (_c *MCMS_GetRoot_Call) Return(_a0 []byte, _a1 uint64, _a2 error) *MCMS_GetRoot_Call {
+	_c.Call.Return(_a0, _a1, _a2)
+	return _c
+}
+
+func (_c *MCMS_GetRoot_Call) RunAndReturn(run func(*bind.CallOpts, byte) ([]byte, uint64, error)) *MCMS_GetRoot_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetRootMetadata provides a mock function with given fields: opts, role
+func (_m *MCMS) GetRootMetadata(opts *bind.CallOpts, role byte) (module_mcms.RootMetadata, error) {
+	ret := _m.Called(opts, role)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRootMetadata")
+	}
+
+	var r0 module_mcms.RootMetadata
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) (module_mcms.RootMetadata, error)); ok {
+		return rf(opts, role)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) module_mcms.RootMetadata); ok {
+		r0 = rf(opts, role)
+	} else {
+		r0 = ret.Get(0).(module_mcms.RootMetadata)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, byte) error); ok {
+		r1 = rf(opts, role)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_GetRootMetadata_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRootMetadata'
+type MCMS_GetRootMetadata_Call struct {
+	*mock.Call
+}
+
+// GetRootMetadata is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - role byte
+func (_e *MCMS_Expecter) GetRootMetadata(opts interface{}, role interface{}) *MCMS_GetRootMetadata_Call {
+	return &MCMS_GetRootMetadata_Call{Call: _e.mock.On("GetRootMetadata", opts, role)}
+}
+
+func (_c *MCMS_GetRootMetadata_Call) Run(run func(opts *bind.CallOpts, role byte)) *MCMS_GetRootMetadata_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].(byte))
+	})
+	return _c
+}
+
+func (_c *MCMS_GetRootMetadata_Call) Return(_a0 module_mcms.RootMetadata, _a1 error) *MCMS_GetRootMetadata_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_GetRootMetadata_Call) RunAndReturn(run func(*bind.CallOpts, byte) (module_mcms.RootMetadata, error)) *MCMS_GetRootMetadata_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// IsValidRole provides a mock function with given fields: opts, role
+func (_m *MCMS) IsValidRole(opts *bind.CallOpts, role byte) (bool, error) {
+	ret := _m.Called(opts, role)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IsValidRole")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) (bool, error)); ok {
+		return rf(opts, role)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) bool); ok {
+		r0 = rf(opts, role)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, byte) error); ok {
+		r1 = rf(opts, role)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_IsValidRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IsValidRole'
+type MCMS_IsValidRole_Call struct {
+	*mock.Call
+}
+
+// IsValidRole is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - role byte
+func (_e *MCMS_Expecter) IsValidRole(opts interface{}, role interface{}) *MCMS_IsValidRole_Call {
+	return &MCMS_IsValidRole_Call{Call: _e.mock.On("IsValidRole", opts, role)}
+}
+
+func (_c *MCMS_IsValidRole_Call) Run(run func(opts *bind.CallOpts, role byte)) *MCMS_IsValidRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].(byte))
+	})
+	return _c
+}
+
+func (_c *MCMS_IsValidRole_Call) Return(_a0 bool, _a1 error) *MCMS_IsValidRole_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_IsValidRole_Call) RunAndReturn(run func(*bind.CallOpts, byte) (bool, error)) *MCMS_IsValidRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// MaxNumSigners provides a mock function with given fields: opts
+func (_m *MCMS) MaxNumSigners(opts *bind.CallOpts) (uint64, error) {
+	ret := _m.Called(opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for MaxNumSigners")
 	}
 
 	var r0 uint64
@@ -225,116 +649,110 @@ func (_m *MCMS) GetOpCount(opts *bind.CallOpts) (uint64, error) {
 	return r0, r1
 }
 
-// MCMS_GetOpCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOpCount'
-type MCMS_GetOpCount_Call struct {
+// MCMS_MaxNumSigners_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MaxNumSigners'
+type MCMS_MaxNumSigners_Call struct {
 	*mock.Call
 }
 
-// GetOpCount is a helper method to define mock.On call
+// MaxNumSigners is a helper method to define mock.On call
 //   - opts *bind.CallOpts
-func (_e *MCMS_Expecter) GetOpCount(opts interface{}) *MCMS_GetOpCount_Call {
-	return &MCMS_GetOpCount_Call{Call: _e.mock.On("GetOpCount", opts)}
+func (_e *MCMS_Expecter) MaxNumSigners(opts interface{}) *MCMS_MaxNumSigners_Call {
+	return &MCMS_MaxNumSigners_Call{Call: _e.mock.On("MaxNumSigners", opts)}
 }
 
-func (_c *MCMS_GetOpCount_Call) Run(run func(opts *bind.CallOpts)) *MCMS_GetOpCount_Call {
+func (_c *MCMS_MaxNumSigners_Call) Run(run func(opts *bind.CallOpts)) *MCMS_MaxNumSigners_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(*bind.CallOpts))
 	})
 	return _c
 }
 
-func (_c *MCMS_GetOpCount_Call) Return(_a0 uint64, _a1 error) *MCMS_GetOpCount_Call {
+func (_c *MCMS_MaxNumSigners_Call) Return(_a0 uint64, _a1 error) *MCMS_MaxNumSigners_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MCMS_GetOpCount_Call) RunAndReturn(run func(*bind.CallOpts) (uint64, error)) *MCMS_GetOpCount_Call {
+func (_c *MCMS_MaxNumSigners_Call) RunAndReturn(run func(*bind.CallOpts) (uint64, error)) *MCMS_MaxNumSigners_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRoot provides a mock function with given fields: opts
-func (_m *MCMS) GetRoot(opts *bind.CallOpts) ([]byte, uint64, error) {
-	ret := _m.Called(opts)
+// MultisigObject provides a mock function with given fields: opts, role
+func (_m *MCMS) MultisigObject(opts *bind.CallOpts, role byte) (aptos.AccountAddress, error) {
+	ret := _m.Called(opts, role)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetRoot")
+		panic("no return value specified for MultisigObject")
 	}
 
-	var r0 []byte
-	var r1 uint64
-	var r2 error
-	if rf, ok := ret.Get(0).(func(*bind.CallOpts) ([]byte, uint64, error)); ok {
-		return rf(opts)
+	var r0 aptos.AccountAddress
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) (aptos.AccountAddress, error)); ok {
+		return rf(opts, role)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.CallOpts) []byte); ok {
-		r0 = rf(opts)
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, byte) aptos.AccountAddress); ok {
+		r0 = rf(opts, role)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]byte)
+			r0 = ret.Get(0).(aptos.AccountAddress)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*bind.CallOpts) uint64); ok {
-		r1 = rf(opts)
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, byte) error); ok {
+		r1 = rf(opts, role)
 	} else {
-		r1 = ret.Get(1).(uint64)
+		r1 = ret.Error(1)
 	}
 
-	if rf, ok := ret.Get(2).(func(*bind.CallOpts) error); ok {
-		r2 = rf(opts)
-	} else {
-		r2 = ret.Error(2)
-	}
-
-	return r0, r1, r2
+	return r0, r1
 }
 
-// MCMS_GetRoot_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRoot'
-type MCMS_GetRoot_Call struct {
+// MCMS_MultisigObject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'MultisigObject'
+type MCMS_MultisigObject_Call struct {
 	*mock.Call
 }
 
-// GetRoot is a helper method to define mock.On call
+// MultisigObject is a helper method to define mock.On call
 //   - opts *bind.CallOpts
-func (_e *MCMS_Expecter) GetRoot(opts interface{}) *MCMS_GetRoot_Call {
-	return &MCMS_GetRoot_Call{Call: _e.mock.On("GetRoot", opts)}
+//   - role byte
+func (_e *MCMS_Expecter) MultisigObject(opts interface{}, role interface{}) *MCMS_MultisigObject_Call {
+	return &MCMS_MultisigObject_Call{Call: _e.mock.On("MultisigObject", opts, role)}
 }
 
-func (_c *MCMS_GetRoot_Call) Run(run func(opts *bind.CallOpts)) *MCMS_GetRoot_Call {
+func (_c *MCMS_MultisigObject_Call) Run(run func(opts *bind.CallOpts, role byte)) *MCMS_MultisigObject_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*bind.CallOpts))
+		run(args[0].(*bind.CallOpts), args[1].(byte))
 	})
 	return _c
 }
 
-func (_c *MCMS_GetRoot_Call) Return(_a0 []byte, _a1 uint64, _a2 error) *MCMS_GetRoot_Call {
-	_c.Call.Return(_a0, _a1, _a2)
+func (_c *MCMS_MultisigObject_Call) Return(_a0 aptos.AccountAddress, _a1 error) *MCMS_MultisigObject_Call {
+	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MCMS_GetRoot_Call) RunAndReturn(run func(*bind.CallOpts) ([]byte, uint64, error)) *MCMS_GetRoot_Call {
+func (_c *MCMS_MultisigObject_Call) RunAndReturn(run func(*bind.CallOpts, byte) (aptos.AccountAddress, error)) *MCMS_MultisigObject_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// GetRootMetadata provides a mock function with given fields: opts
-func (_m *MCMS) GetRootMetadata(opts *bind.CallOpts) (module_mcms.RootMetadata, error) {
+// NumGroups provides a mock function with given fields: opts
+func (_m *MCMS) NumGroups(opts *bind.CallOpts) (uint64, error) {
 	ret := _m.Called(opts)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetRootMetadata")
+		panic("no return value specified for NumGroups")
 	}
 
-	var r0 module_mcms.RootMetadata
+	var r0 uint64
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*bind.CallOpts) (module_mcms.RootMetadata, error)); ok {
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) (uint64, error)); ok {
 		return rf(opts)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.CallOpts) module_mcms.RootMetadata); ok {
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) uint64); ok {
 		r0 = rf(opts)
 	} else {
-		r0 = ret.Get(0).(module_mcms.RootMetadata)
+		r0 = ret.Get(0).(uint64)
 	}
 
 	if rf, ok := ret.Get(1).(func(*bind.CallOpts) error); ok {
@@ -346,37 +764,209 @@ func (_m *MCMS) GetRootMetadata(opts *bind.CallOpts) (module_mcms.RootMetadata, 
 	return r0, r1
 }
 
-// MCMS_GetRootMetadata_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRootMetadata'
-type MCMS_GetRootMetadata_Call struct {
+// MCMS_NumGroups_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'NumGroups'
+type MCMS_NumGroups_Call struct {
 	*mock.Call
 }
 
-// GetRootMetadata is a helper method to define mock.On call
+// NumGroups is a helper method to define mock.On call
 //   - opts *bind.CallOpts
-func (_e *MCMS_Expecter) GetRootMetadata(opts interface{}) *MCMS_GetRootMetadata_Call {
-	return &MCMS_GetRootMetadata_Call{Call: _e.mock.On("GetRootMetadata", opts)}
+func (_e *MCMS_Expecter) NumGroups(opts interface{}) *MCMS_NumGroups_Call {
+	return &MCMS_NumGroups_Call{Call: _e.mock.On("NumGroups", opts)}
 }
 
-func (_c *MCMS_GetRootMetadata_Call) Run(run func(opts *bind.CallOpts)) *MCMS_GetRootMetadata_Call {
+func (_c *MCMS_NumGroups_Call) Run(run func(opts *bind.CallOpts)) *MCMS_NumGroups_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(*bind.CallOpts))
 	})
 	return _c
 }
 
-func (_c *MCMS_GetRootMetadata_Call) Return(_a0 module_mcms.RootMetadata, _a1 error) *MCMS_GetRootMetadata_Call {
+func (_c *MCMS_NumGroups_Call) Return(_a0 uint64, _a1 error) *MCMS_NumGroups_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MCMS_GetRootMetadata_Call) RunAndReturn(run func(*bind.CallOpts) (module_mcms.RootMetadata, error)) *MCMS_GetRootMetadata_Call {
+func (_c *MCMS_NumGroups_Call) RunAndReturn(run func(*bind.CallOpts) (uint64, error)) *MCMS_NumGroups_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// SetConfig provides a mock function with given fields: opts, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot
-func (_m *MCMS) SetConfig(opts *bind.TransactOpts, signerAddresses [][]byte, signerGroups []byte, groupQuorums []byte, groupParents []byte, clearRoot bool) (*api.PendingTransaction, error) {
-	ret := _m.Called(opts, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
+// ProposerRole provides a mock function with given fields: opts
+func (_m *MCMS) ProposerRole(opts *bind.CallOpts) (byte, error) {
+	ret := _m.Called(opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ProposerRole")
+	}
+
+	var r0 byte
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) (byte, error)); ok {
+		return rf(opts)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) byte); ok {
+		r0 = rf(opts)
+	} else {
+		r0 = ret.Get(0).(byte)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts) error); ok {
+		r1 = rf(opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_ProposerRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ProposerRole'
+type MCMS_ProposerRole_Call struct {
+	*mock.Call
+}
+
+// ProposerRole is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+func (_e *MCMS_Expecter) ProposerRole(opts interface{}) *MCMS_ProposerRole_Call {
+	return &MCMS_ProposerRole_Call{Call: _e.mock.On("ProposerRole", opts)}
+}
+
+func (_c *MCMS_ProposerRole_Call) Run(run func(opts *bind.CallOpts)) *MCMS_ProposerRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts))
+	})
+	return _c
+}
+
+func (_c *MCMS_ProposerRole_Call) Return(_a0 byte, _a1 error) *MCMS_ProposerRole_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_ProposerRole_Call) RunAndReturn(run func(*bind.CallOpts) (byte, error)) *MCMS_ProposerRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// RootMetadata provides a mock function with given fields: opts, multisig
+func (_m *MCMS) RootMetadata(opts *bind.CallOpts, multisig aptos.AccountAddress) (module_mcms.RootMetadata, error) {
+	ret := _m.Called(opts, multisig)
+
+	if len(ret) == 0 {
+		panic("no return value specified for RootMetadata")
+	}
+
+	var r0 module_mcms.RootMetadata
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, aptos.AccountAddress) (module_mcms.RootMetadata, error)); ok {
+		return rf(opts, multisig)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, aptos.AccountAddress) module_mcms.RootMetadata); ok {
+		r0 = rf(opts, multisig)
+	} else {
+		r0 = ret.Get(0).(module_mcms.RootMetadata)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, aptos.AccountAddress) error); ok {
+		r1 = rf(opts, multisig)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_RootMetadata_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'RootMetadata'
+type MCMS_RootMetadata_Call struct {
+	*mock.Call
+}
+
+// RootMetadata is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - multisig aptos.AccountAddress
+func (_e *MCMS_Expecter) RootMetadata(opts interface{}, multisig interface{}) *MCMS_RootMetadata_Call {
+	return &MCMS_RootMetadata_Call{Call: _e.mock.On("RootMetadata", opts, multisig)}
+}
+
+func (_c *MCMS_RootMetadata_Call) Run(run func(opts *bind.CallOpts, multisig aptos.AccountAddress)) *MCMS_RootMetadata_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].(aptos.AccountAddress))
+	})
+	return _c
+}
+
+func (_c *MCMS_RootMetadata_Call) Return(_a0 module_mcms.RootMetadata, _a1 error) *MCMS_RootMetadata_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_RootMetadata_Call) RunAndReturn(run func(*bind.CallOpts, aptos.AccountAddress) (module_mcms.RootMetadata, error)) *MCMS_RootMetadata_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SeenSignedHashes provides a mock function with given fields: opts, multisig
+func (_m *MCMS) SeenSignedHashes(opts *bind.CallOpts, multisig aptos.AccountAddress) (*bind.StdSimpleMap[[]byte, bool], error) {
+	ret := _m.Called(opts, multisig)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SeenSignedHashes")
+	}
+
+	var r0 *bind.StdSimpleMap[[]byte, bool]
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, aptos.AccountAddress) (*bind.StdSimpleMap[[]byte, bool], error)); ok {
+		return rf(opts, multisig)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, aptos.AccountAddress) *bind.StdSimpleMap[[]byte, bool]); ok {
+		r0 = rf(opts, multisig)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.StdSimpleMap[[]byte, bool])
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, aptos.AccountAddress) error); ok {
+		r1 = rf(opts, multisig)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_SeenSignedHashes_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SeenSignedHashes'
+type MCMS_SeenSignedHashes_Call struct {
+	*mock.Call
+}
+
+// SeenSignedHashes is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - multisig aptos.AccountAddress
+func (_e *MCMS_Expecter) SeenSignedHashes(opts interface{}, multisig interface{}) *MCMS_SeenSignedHashes_Call {
+	return &MCMS_SeenSignedHashes_Call{Call: _e.mock.On("SeenSignedHashes", opts, multisig)}
+}
+
+func (_c *MCMS_SeenSignedHashes_Call) Run(run func(opts *bind.CallOpts, multisig aptos.AccountAddress)) *MCMS_SeenSignedHashes_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].(aptos.AccountAddress))
+	})
+	return _c
+}
+
+func (_c *MCMS_SeenSignedHashes_Call) Return(_a0 *bind.StdSimpleMap[[]byte, bool], _a1 error) *MCMS_SeenSignedHashes_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_SeenSignedHashes_Call) RunAndReturn(run func(*bind.CallOpts, aptos.AccountAddress) (*bind.StdSimpleMap[[]byte, bool], error)) *MCMS_SeenSignedHashes_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SetConfig provides a mock function with given fields: opts, role, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot
+func (_m *MCMS) SetConfig(opts *bind.TransactOpts, role byte, signerAddresses [][]byte, signerGroups []byte, groupQuorums []byte, groupParents []byte, clearRoot bool) (*api.PendingTransaction, error) {
+	ret := _m.Called(opts, role, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetConfig")
@@ -384,19 +974,19 @@ func (_m *MCMS) SetConfig(opts *bind.TransactOpts, signerAddresses [][]byte, sig
 
 	var r0 *api.PendingTransaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, [][]byte, []byte, []byte, []byte, bool) (*api.PendingTransaction, error)); ok {
-		return rf(opts, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
+	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, byte, [][]byte, []byte, []byte, []byte, bool) (*api.PendingTransaction, error)); ok {
+		return rf(opts, role, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, [][]byte, []byte, []byte, []byte, bool) *api.PendingTransaction); ok {
-		r0 = rf(opts, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
+	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, byte, [][]byte, []byte, []byte, []byte, bool) *api.PendingTransaction); ok {
+		r0 = rf(opts, role, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*api.PendingTransaction)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*bind.TransactOpts, [][]byte, []byte, []byte, []byte, bool) error); ok {
-		r1 = rf(opts, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
+	if rf, ok := ret.Get(1).(func(*bind.TransactOpts, byte, [][]byte, []byte, []byte, []byte, bool) error); ok {
+		r1 = rf(opts, role, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -411,18 +1001,19 @@ type MCMS_SetConfig_Call struct {
 
 // SetConfig is a helper method to define mock.On call
 //   - opts *bind.TransactOpts
+//   - role byte
 //   - signerAddresses [][]byte
 //   - signerGroups []byte
 //   - groupQuorums []byte
 //   - groupParents []byte
 //   - clearRoot bool
-func (_e *MCMS_Expecter) SetConfig(opts interface{}, signerAddresses interface{}, signerGroups interface{}, groupQuorums interface{}, groupParents interface{}, clearRoot interface{}) *MCMS_SetConfig_Call {
-	return &MCMS_SetConfig_Call{Call: _e.mock.On("SetConfig", opts, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)}
+func (_e *MCMS_Expecter) SetConfig(opts interface{}, role interface{}, signerAddresses interface{}, signerGroups interface{}, groupQuorums interface{}, groupParents interface{}, clearRoot interface{}) *MCMS_SetConfig_Call {
+	return &MCMS_SetConfig_Call{Call: _e.mock.On("SetConfig", opts, role, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)}
 }
 
-func (_c *MCMS_SetConfig_Call) Run(run func(opts *bind.TransactOpts, signerAddresses [][]byte, signerGroups []byte, groupQuorums []byte, groupParents []byte, clearRoot bool)) *MCMS_SetConfig_Call {
+func (_c *MCMS_SetConfig_Call) Run(run func(opts *bind.TransactOpts, role byte, signerAddresses [][]byte, signerGroups []byte, groupQuorums []byte, groupParents []byte, clearRoot bool)) *MCMS_SetConfig_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*bind.TransactOpts), args[1].([][]byte), args[2].([]byte), args[3].([]byte), args[4].([]byte), args[5].(bool))
+		run(args[0].(*bind.TransactOpts), args[1].(byte), args[2].([][]byte), args[3].([]byte), args[4].([]byte), args[5].([]byte), args[6].(bool))
 	})
 	return _c
 }
@@ -432,14 +1023,14 @@ func (_c *MCMS_SetConfig_Call) Return(_a0 *api.PendingTransaction, _a1 error) *M
 	return _c
 }
 
-func (_c *MCMS_SetConfig_Call) RunAndReturn(run func(*bind.TransactOpts, [][]byte, []byte, []byte, []byte, bool) (*api.PendingTransaction, error)) *MCMS_SetConfig_Call {
+func (_c *MCMS_SetConfig_Call) RunAndReturn(run func(*bind.TransactOpts, byte, [][]byte, []byte, []byte, []byte, bool) (*api.PendingTransaction, error)) *MCMS_SetConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
-// SetRoot provides a mock function with given fields: opts, root, validUntil, chainId, multisig, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures
-func (_m *MCMS) SetRoot(opts *bind.TransactOpts, root []byte, validUntil uint64, chainId *big.Int, multisig aptos.AccountAddress, preOpCount uint64, postOpCount uint64, overridePreviousRoot bool, metadataProof [][]byte, signatures [][]byte) (*api.PendingTransaction, error) {
-	ret := _m.Called(opts, root, validUntil, chainId, multisig, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures)
+// SetRoot provides a mock function with given fields: opts, role, root, validUntil, chainId, multisigAddr, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures
+func (_m *MCMS) SetRoot(opts *bind.TransactOpts, role byte, root []byte, validUntil uint64, chainId *big.Int, multisigAddr aptos.AccountAddress, preOpCount uint64, postOpCount uint64, overridePreviousRoot bool, metadataProof [][]byte, signatures [][]byte) (*api.PendingTransaction, error) {
+	ret := _m.Called(opts, role, root, validUntil, chainId, multisigAddr, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SetRoot")
@@ -447,19 +1038,19 @@ func (_m *MCMS) SetRoot(opts *bind.TransactOpts, root []byte, validUntil uint64,
 
 	var r0 *api.PendingTransaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, []byte, uint64, *big.Int, aptos.AccountAddress, uint64, uint64, bool, [][]byte, [][]byte) (*api.PendingTransaction, error)); ok {
-		return rf(opts, root, validUntil, chainId, multisig, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures)
+	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, byte, []byte, uint64, *big.Int, aptos.AccountAddress, uint64, uint64, bool, [][]byte, [][]byte) (*api.PendingTransaction, error)); ok {
+		return rf(opts, role, root, validUntil, chainId, multisigAddr, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, []byte, uint64, *big.Int, aptos.AccountAddress, uint64, uint64, bool, [][]byte, [][]byte) *api.PendingTransaction); ok {
-		r0 = rf(opts, root, validUntil, chainId, multisig, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures)
+	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, byte, []byte, uint64, *big.Int, aptos.AccountAddress, uint64, uint64, bool, [][]byte, [][]byte) *api.PendingTransaction); ok {
+		r0 = rf(opts, role, root, validUntil, chainId, multisigAddr, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*api.PendingTransaction)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*bind.TransactOpts, []byte, uint64, *big.Int, aptos.AccountAddress, uint64, uint64, bool, [][]byte, [][]byte) error); ok {
-		r1 = rf(opts, root, validUntil, chainId, multisig, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures)
+	if rf, ok := ret.Get(1).(func(*bind.TransactOpts, byte, []byte, uint64, *big.Int, aptos.AccountAddress, uint64, uint64, bool, [][]byte, [][]byte) error); ok {
+		r1 = rf(opts, role, root, validUntil, chainId, multisigAddr, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -474,22 +1065,23 @@ type MCMS_SetRoot_Call struct {
 
 // SetRoot is a helper method to define mock.On call
 //   - opts *bind.TransactOpts
+//   - role byte
 //   - root []byte
 //   - validUntil uint64
 //   - chainId *big.Int
-//   - multisig aptos.AccountAddress
+//   - multisigAddr aptos.AccountAddress
 //   - preOpCount uint64
 //   - postOpCount uint64
 //   - overridePreviousRoot bool
 //   - metadataProof [][]byte
 //   - signatures [][]byte
-func (_e *MCMS_Expecter) SetRoot(opts interface{}, root interface{}, validUntil interface{}, chainId interface{}, multisig interface{}, preOpCount interface{}, postOpCount interface{}, overridePreviousRoot interface{}, metadataProof interface{}, signatures interface{}) *MCMS_SetRoot_Call {
-	return &MCMS_SetRoot_Call{Call: _e.mock.On("SetRoot", opts, root, validUntil, chainId, multisig, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures)}
+func (_e *MCMS_Expecter) SetRoot(opts interface{}, role interface{}, root interface{}, validUntil interface{}, chainId interface{}, multisigAddr interface{}, preOpCount interface{}, postOpCount interface{}, overridePreviousRoot interface{}, metadataProof interface{}, signatures interface{}) *MCMS_SetRoot_Call {
+	return &MCMS_SetRoot_Call{Call: _e.mock.On("SetRoot", opts, role, root, validUntil, chainId, multisigAddr, preOpCount, postOpCount, overridePreviousRoot, metadataProof, signatures)}
 }
 
-func (_c *MCMS_SetRoot_Call) Run(run func(opts *bind.TransactOpts, root []byte, validUntil uint64, chainId *big.Int, multisig aptos.AccountAddress, preOpCount uint64, postOpCount uint64, overridePreviousRoot bool, metadataProof [][]byte, signatures [][]byte)) *MCMS_SetRoot_Call {
+func (_c *MCMS_SetRoot_Call) Run(run func(opts *bind.TransactOpts, role byte, root []byte, validUntil uint64, chainId *big.Int, multisigAddr aptos.AccountAddress, preOpCount uint64, postOpCount uint64, overridePreviousRoot bool, metadataProof [][]byte, signatures [][]byte)) *MCMS_SetRoot_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*bind.TransactOpts), args[1].([]byte), args[2].(uint64), args[3].(*big.Int), args[4].(aptos.AccountAddress), args[5].(uint64), args[6].(uint64), args[7].(bool), args[8].([][]byte), args[9].([][]byte))
+		run(args[0].(*bind.TransactOpts), args[1].(byte), args[2].([]byte), args[3].(uint64), args[4].(*big.Int), args[5].(aptos.AccountAddress), args[6].(uint64), args[7].(uint64), args[8].(bool), args[9].([][]byte), args[10].([][]byte))
 	})
 	return _c
 }
@@ -499,7 +1091,642 @@ func (_c *MCMS_SetRoot_Call) Return(_a0 *api.PendingTransaction, _a1 error) *MCM
 	return _c
 }
 
-func (_c *MCMS_SetRoot_Call) RunAndReturn(run func(*bind.TransactOpts, []byte, uint64, *big.Int, aptos.AccountAddress, uint64, uint64, bool, [][]byte, [][]byte) (*api.PendingTransaction, error)) *MCMS_SetRoot_Call {
+func (_c *MCMS_SetRoot_Call) RunAndReturn(run func(*bind.TransactOpts, byte, []byte, uint64, *big.Int, aptos.AccountAddress, uint64, uint64, bool, [][]byte, [][]byte) (*api.PendingTransaction, error)) *MCMS_SetRoot_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Signers provides a mock function with given fields: opts, multisig
+func (_m *MCMS) Signers(opts *bind.CallOpts, multisig aptos.AccountAddress) (*bind.StdSimpleMap[[]byte, module_mcms.Signer], error) {
+	ret := _m.Called(opts, multisig)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Signers")
+	}
+
+	var r0 *bind.StdSimpleMap[[]byte, module_mcms.Signer]
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, aptos.AccountAddress) (*bind.StdSimpleMap[[]byte, module_mcms.Signer], error)); ok {
+		return rf(opts, multisig)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, aptos.AccountAddress) *bind.StdSimpleMap[[]byte, module_mcms.Signer]); ok {
+		r0 = rf(opts, multisig)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.StdSimpleMap[[]byte, module_mcms.Signer])
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, aptos.AccountAddress) error); ok {
+		r1 = rf(opts, multisig)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_Signers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Signers'
+type MCMS_Signers_Call struct {
+	*mock.Call
+}
+
+// Signers is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - multisig aptos.AccountAddress
+func (_e *MCMS_Expecter) Signers(opts interface{}, multisig interface{}) *MCMS_Signers_Call {
+	return &MCMS_Signers_Call{Call: _e.mock.On("Signers", opts, multisig)}
+}
+
+func (_c *MCMS_Signers_Call) Run(run func(opts *bind.CallOpts, multisig aptos.AccountAddress)) *MCMS_Signers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].(aptos.AccountAddress))
+	})
+	return _c
+}
+
+func (_c *MCMS_Signers_Call) Return(_a0 *bind.StdSimpleMap[[]byte, module_mcms.Signer], _a1 error) *MCMS_Signers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_Signers_Call) RunAndReturn(run func(*bind.CallOpts, aptos.AccountAddress) (*bind.StdSimpleMap[[]byte, module_mcms.Signer], error)) *MCMS_Signers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockExecuteBatch provides a mock function with given fields: opts, targets, moduleNames, functionNames, datas, predecessor, salt
+func (_m *MCMS) TimelockExecuteBatch(opts *bind.TransactOpts, targets []aptos.AccountAddress, moduleNames []string, functionNames []string, datas [][]byte, predecessor []byte, salt []byte) (*api.PendingTransaction, error) {
+	ret := _m.Called(opts, targets, moduleNames, functionNames, datas, predecessor, salt)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockExecuteBatch")
+	}
+
+	var r0 *api.PendingTransaction
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, []aptos.AccountAddress, []string, []string, [][]byte, []byte, []byte) (*api.PendingTransaction, error)); ok {
+		return rf(opts, targets, moduleNames, functionNames, datas, predecessor, salt)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, []aptos.AccountAddress, []string, []string, [][]byte, []byte, []byte) *api.PendingTransaction); ok {
+		r0 = rf(opts, targets, moduleNames, functionNames, datas, predecessor, salt)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*api.PendingTransaction)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.TransactOpts, []aptos.AccountAddress, []string, []string, [][]byte, []byte, []byte) error); ok {
+		r1 = rf(opts, targets, moduleNames, functionNames, datas, predecessor, salt)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_TimelockExecuteBatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockExecuteBatch'
+type MCMS_TimelockExecuteBatch_Call struct {
+	*mock.Call
+}
+
+// TimelockExecuteBatch is a helper method to define mock.On call
+//   - opts *bind.TransactOpts
+//   - targets []aptos.AccountAddress
+//   - moduleNames []string
+//   - functionNames []string
+//   - datas [][]byte
+//   - predecessor []byte
+//   - salt []byte
+func (_e *MCMS_Expecter) TimelockExecuteBatch(opts interface{}, targets interface{}, moduleNames interface{}, functionNames interface{}, datas interface{}, predecessor interface{}, salt interface{}) *MCMS_TimelockExecuteBatch_Call {
+	return &MCMS_TimelockExecuteBatch_Call{Call: _e.mock.On("TimelockExecuteBatch", opts, targets, moduleNames, functionNames, datas, predecessor, salt)}
+}
+
+func (_c *MCMS_TimelockExecuteBatch_Call) Run(run func(opts *bind.TransactOpts, targets []aptos.AccountAddress, moduleNames []string, functionNames []string, datas [][]byte, predecessor []byte, salt []byte)) *MCMS_TimelockExecuteBatch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.TransactOpts), args[1].([]aptos.AccountAddress), args[2].([]string), args[3].([]string), args[4].([][]byte), args[5].([]byte), args[6].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMS_TimelockExecuteBatch_Call) Return(_a0 *api.PendingTransaction, _a1 error) *MCMS_TimelockExecuteBatch_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_TimelockExecuteBatch_Call) RunAndReturn(run func(*bind.TransactOpts, []aptos.AccountAddress, []string, []string, [][]byte, []byte, []byte) (*api.PendingTransaction, error)) *MCMS_TimelockExecuteBatch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockGetBlockedFunction provides a mock function with given fields: opts, index
+func (_m *MCMS) TimelockGetBlockedFunction(opts *bind.CallOpts, index uint64) (module_mcms.Function, error) {
+	ret := _m.Called(opts, index)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockGetBlockedFunction")
+	}
+
+	var r0 module_mcms.Function
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, uint64) (module_mcms.Function, error)); ok {
+		return rf(opts, index)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, uint64) module_mcms.Function); ok {
+		r0 = rf(opts, index)
+	} else {
+		r0 = ret.Get(0).(module_mcms.Function)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, uint64) error); ok {
+		r1 = rf(opts, index)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_TimelockGetBlockedFunction_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockGetBlockedFunction'
+type MCMS_TimelockGetBlockedFunction_Call struct {
+	*mock.Call
+}
+
+// TimelockGetBlockedFunction is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - index uint64
+func (_e *MCMS_Expecter) TimelockGetBlockedFunction(opts interface{}, index interface{}) *MCMS_TimelockGetBlockedFunction_Call {
+	return &MCMS_TimelockGetBlockedFunction_Call{Call: _e.mock.On("TimelockGetBlockedFunction", opts, index)}
+}
+
+func (_c *MCMS_TimelockGetBlockedFunction_Call) Run(run func(opts *bind.CallOpts, index uint64)) *MCMS_TimelockGetBlockedFunction_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].(uint64))
+	})
+	return _c
+}
+
+func (_c *MCMS_TimelockGetBlockedFunction_Call) Return(_a0 module_mcms.Function, _a1 error) *MCMS_TimelockGetBlockedFunction_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_TimelockGetBlockedFunction_Call) RunAndReturn(run func(*bind.CallOpts, uint64) (module_mcms.Function, error)) *MCMS_TimelockGetBlockedFunction_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockGetBlockedFunctions provides a mock function with given fields: opts
+func (_m *MCMS) TimelockGetBlockedFunctions(opts *bind.CallOpts) ([]module_mcms.Function, error) {
+	ret := _m.Called(opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockGetBlockedFunctions")
+	}
+
+	var r0 []module_mcms.Function
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) ([]module_mcms.Function, error)); ok {
+		return rf(opts)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) []module_mcms.Function); ok {
+		r0 = rf(opts)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]module_mcms.Function)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts) error); ok {
+		r1 = rf(opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_TimelockGetBlockedFunctions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockGetBlockedFunctions'
+type MCMS_TimelockGetBlockedFunctions_Call struct {
+	*mock.Call
+}
+
+// TimelockGetBlockedFunctions is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+func (_e *MCMS_Expecter) TimelockGetBlockedFunctions(opts interface{}) *MCMS_TimelockGetBlockedFunctions_Call {
+	return &MCMS_TimelockGetBlockedFunctions_Call{Call: _e.mock.On("TimelockGetBlockedFunctions", opts)}
+}
+
+func (_c *MCMS_TimelockGetBlockedFunctions_Call) Run(run func(opts *bind.CallOpts)) *MCMS_TimelockGetBlockedFunctions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts))
+	})
+	return _c
+}
+
+func (_c *MCMS_TimelockGetBlockedFunctions_Call) Return(_a0 []module_mcms.Function, _a1 error) *MCMS_TimelockGetBlockedFunctions_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_TimelockGetBlockedFunctions_Call) RunAndReturn(run func(*bind.CallOpts) ([]module_mcms.Function, error)) *MCMS_TimelockGetBlockedFunctions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockGetBlockedFunctionsCount provides a mock function with given fields: opts
+func (_m *MCMS) TimelockGetBlockedFunctionsCount(opts *bind.CallOpts) (uint64, error) {
+	ret := _m.Called(opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockGetBlockedFunctionsCount")
+	}
+
+	var r0 uint64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) (uint64, error)); ok {
+		return rf(opts)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) uint64); ok {
+		r0 = rf(opts)
+	} else {
+		r0 = ret.Get(0).(uint64)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts) error); ok {
+		r1 = rf(opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_TimelockGetBlockedFunctionsCount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockGetBlockedFunctionsCount'
+type MCMS_TimelockGetBlockedFunctionsCount_Call struct {
+	*mock.Call
+}
+
+// TimelockGetBlockedFunctionsCount is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+func (_e *MCMS_Expecter) TimelockGetBlockedFunctionsCount(opts interface{}) *MCMS_TimelockGetBlockedFunctionsCount_Call {
+	return &MCMS_TimelockGetBlockedFunctionsCount_Call{Call: _e.mock.On("TimelockGetBlockedFunctionsCount", opts)}
+}
+
+func (_c *MCMS_TimelockGetBlockedFunctionsCount_Call) Run(run func(opts *bind.CallOpts)) *MCMS_TimelockGetBlockedFunctionsCount_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts))
+	})
+	return _c
+}
+
+func (_c *MCMS_TimelockGetBlockedFunctionsCount_Call) Return(_a0 uint64, _a1 error) *MCMS_TimelockGetBlockedFunctionsCount_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_TimelockGetBlockedFunctionsCount_Call) RunAndReturn(run func(*bind.CallOpts) (uint64, error)) *MCMS_TimelockGetBlockedFunctionsCount_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockGetTimestamp provides a mock function with given fields: opts, id
+func (_m *MCMS) TimelockGetTimestamp(opts *bind.CallOpts, id []byte) (uint64, error) {
+	ret := _m.Called(opts, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockGetTimestamp")
+	}
+
+	var r0 uint64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, []byte) (uint64, error)); ok {
+		return rf(opts, id)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, []byte) uint64); ok {
+		r0 = rf(opts, id)
+	} else {
+		r0 = ret.Get(0).(uint64)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, []byte) error); ok {
+		r1 = rf(opts, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_TimelockGetTimestamp_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockGetTimestamp'
+type MCMS_TimelockGetTimestamp_Call struct {
+	*mock.Call
+}
+
+// TimelockGetTimestamp is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - id []byte
+func (_e *MCMS_Expecter) TimelockGetTimestamp(opts interface{}, id interface{}) *MCMS_TimelockGetTimestamp_Call {
+	return &MCMS_TimelockGetTimestamp_Call{Call: _e.mock.On("TimelockGetTimestamp", opts, id)}
+}
+
+func (_c *MCMS_TimelockGetTimestamp_Call) Run(run func(opts *bind.CallOpts, id []byte)) *MCMS_TimelockGetTimestamp_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMS_TimelockGetTimestamp_Call) Return(_a0 uint64, _a1 error) *MCMS_TimelockGetTimestamp_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_TimelockGetTimestamp_Call) RunAndReturn(run func(*bind.CallOpts, []byte) (uint64, error)) *MCMS_TimelockGetTimestamp_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockIsOperation provides a mock function with given fields: opts, id
+func (_m *MCMS) TimelockIsOperation(opts *bind.CallOpts, id []byte) (bool, error) {
+	ret := _m.Called(opts, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockIsOperation")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, []byte) (bool, error)); ok {
+		return rf(opts, id)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, []byte) bool); ok {
+		r0 = rf(opts, id)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, []byte) error); ok {
+		r1 = rf(opts, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_TimelockIsOperation_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockIsOperation'
+type MCMS_TimelockIsOperation_Call struct {
+	*mock.Call
+}
+
+// TimelockIsOperation is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - id []byte
+func (_e *MCMS_Expecter) TimelockIsOperation(opts interface{}, id interface{}) *MCMS_TimelockIsOperation_Call {
+	return &MCMS_TimelockIsOperation_Call{Call: _e.mock.On("TimelockIsOperation", opts, id)}
+}
+
+func (_c *MCMS_TimelockIsOperation_Call) Run(run func(opts *bind.CallOpts, id []byte)) *MCMS_TimelockIsOperation_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMS_TimelockIsOperation_Call) Return(_a0 bool, _a1 error) *MCMS_TimelockIsOperation_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_TimelockIsOperation_Call) RunAndReturn(run func(*bind.CallOpts, []byte) (bool, error)) *MCMS_TimelockIsOperation_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockIsOperationDone provides a mock function with given fields: opts, id
+func (_m *MCMS) TimelockIsOperationDone(opts *bind.CallOpts, id []byte) (bool, error) {
+	ret := _m.Called(opts, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockIsOperationDone")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, []byte) (bool, error)); ok {
+		return rf(opts, id)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, []byte) bool); ok {
+		r0 = rf(opts, id)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, []byte) error); ok {
+		r1 = rf(opts, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_TimelockIsOperationDone_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockIsOperationDone'
+type MCMS_TimelockIsOperationDone_Call struct {
+	*mock.Call
+}
+
+// TimelockIsOperationDone is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - id []byte
+func (_e *MCMS_Expecter) TimelockIsOperationDone(opts interface{}, id interface{}) *MCMS_TimelockIsOperationDone_Call {
+	return &MCMS_TimelockIsOperationDone_Call{Call: _e.mock.On("TimelockIsOperationDone", opts, id)}
+}
+
+func (_c *MCMS_TimelockIsOperationDone_Call) Run(run func(opts *bind.CallOpts, id []byte)) *MCMS_TimelockIsOperationDone_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMS_TimelockIsOperationDone_Call) Return(_a0 bool, _a1 error) *MCMS_TimelockIsOperationDone_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_TimelockIsOperationDone_Call) RunAndReturn(run func(*bind.CallOpts, []byte) (bool, error)) *MCMS_TimelockIsOperationDone_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockIsOperationPending provides a mock function with given fields: opts, id
+func (_m *MCMS) TimelockIsOperationPending(opts *bind.CallOpts, id []byte) (bool, error) {
+	ret := _m.Called(opts, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockIsOperationPending")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, []byte) (bool, error)); ok {
+		return rf(opts, id)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, []byte) bool); ok {
+		r0 = rf(opts, id)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, []byte) error); ok {
+		r1 = rf(opts, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_TimelockIsOperationPending_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockIsOperationPending'
+type MCMS_TimelockIsOperationPending_Call struct {
+	*mock.Call
+}
+
+// TimelockIsOperationPending is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - id []byte
+func (_e *MCMS_Expecter) TimelockIsOperationPending(opts interface{}, id interface{}) *MCMS_TimelockIsOperationPending_Call {
+	return &MCMS_TimelockIsOperationPending_Call{Call: _e.mock.On("TimelockIsOperationPending", opts, id)}
+}
+
+func (_c *MCMS_TimelockIsOperationPending_Call) Run(run func(opts *bind.CallOpts, id []byte)) *MCMS_TimelockIsOperationPending_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMS_TimelockIsOperationPending_Call) Return(_a0 bool, _a1 error) *MCMS_TimelockIsOperationPending_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_TimelockIsOperationPending_Call) RunAndReturn(run func(*bind.CallOpts, []byte) (bool, error)) *MCMS_TimelockIsOperationPending_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockIsOperationReady provides a mock function with given fields: opts, id
+func (_m *MCMS) TimelockIsOperationReady(opts *bind.CallOpts, id []byte) (bool, error) {
+	ret := _m.Called(opts, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockIsOperationReady")
+	}
+
+	var r0 bool
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, []byte) (bool, error)); ok {
+		return rf(opts, id)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts, []byte) bool); ok {
+		r0 = rf(opts, id)
+	} else {
+		r0 = ret.Get(0).(bool)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts, []byte) error); ok {
+		r1 = rf(opts, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_TimelockIsOperationReady_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockIsOperationReady'
+type MCMS_TimelockIsOperationReady_Call struct {
+	*mock.Call
+}
+
+// TimelockIsOperationReady is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+//   - id []byte
+func (_e *MCMS_Expecter) TimelockIsOperationReady(opts interface{}, id interface{}) *MCMS_TimelockIsOperationReady_Call {
+	return &MCMS_TimelockIsOperationReady_Call{Call: _e.mock.On("TimelockIsOperationReady", opts, id)}
+}
+
+func (_c *MCMS_TimelockIsOperationReady_Call) Run(run func(opts *bind.CallOpts, id []byte)) *MCMS_TimelockIsOperationReady_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts), args[1].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMS_TimelockIsOperationReady_Call) Return(_a0 bool, _a1 error) *MCMS_TimelockIsOperationReady_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_TimelockIsOperationReady_Call) RunAndReturn(run func(*bind.CallOpts, []byte) (bool, error)) *MCMS_TimelockIsOperationReady_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockMinDelay provides a mock function with given fields: opts
+func (_m *MCMS) TimelockMinDelay(opts *bind.CallOpts) (uint64, error) {
+	ret := _m.Called(opts)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockMinDelay")
+	}
+
+	var r0 uint64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) (uint64, error)); ok {
+		return rf(opts)
+	}
+	if rf, ok := ret.Get(0).(func(*bind.CallOpts) uint64); ok {
+		r0 = rf(opts)
+	} else {
+		r0 = ret.Get(0).(uint64)
+	}
+
+	if rf, ok := ret.Get(1).(func(*bind.CallOpts) error); ok {
+		r1 = rf(opts)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MCMS_TimelockMinDelay_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockMinDelay'
+type MCMS_TimelockMinDelay_Call struct {
+	*mock.Call
+}
+
+// TimelockMinDelay is a helper method to define mock.On call
+//   - opts *bind.CallOpts
+func (_e *MCMS_Expecter) TimelockMinDelay(opts interface{}) *MCMS_TimelockMinDelay_Call {
+	return &MCMS_TimelockMinDelay_Call{Call: _e.mock.On("TimelockMinDelay", opts)}
+}
+
+func (_c *MCMS_TimelockMinDelay_Call) Run(run func(opts *bind.CallOpts)) *MCMS_TimelockMinDelay_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(*bind.CallOpts))
+	})
+	return _c
+}
+
+func (_c *MCMS_TimelockMinDelay_Call) Return(_a0 uint64, _a1 error) *MCMS_TimelockMinDelay_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MCMS_TimelockMinDelay_Call) RunAndReturn(run func(*bind.CallOpts) (uint64, error)) *MCMS_TimelockMinDelay_Call {
 	_c.Call.Return(run)
 	return _c
 }
