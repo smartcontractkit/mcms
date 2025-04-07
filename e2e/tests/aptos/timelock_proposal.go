@@ -22,11 +22,25 @@ import (
 )
 
 func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
+	/*
+		This tests that both the Proposers and the Bypassers can successfully perform operations
+		via the timelock.
+
+		1. Configure the Bypasser signers
+		2. Configure the Proposer signers
+		3. Initiate the ownership transfer from the deployer EOA (transfer_ownership)
+		4. Create a Proposer timelock proposal to accept ownership of itself (accept_ownership)
+			a. Set root and execute the proposal (schedule_batch)
+			b. Wait for the proposal to become ready (should take at least 10 seconds)
+			c. After it is ready, execute the timelock operation (execute_batch)
+			d. Check that ownership has actually been transferred
+		5. Create a Bypasser timelock proposal to call a function on the MCMSTest contract
+			a. Set root and execute the proposal (bypasser_execute_batch)
+			b. Check that the target contract has actually been called
+	*/
 	a.deployMCMSContract()
-	a.deployMCMSTestContract()
 	mcmsAddress := a.MCMSContract.Address()
 	mcmsTestAddress := a.MCMSTestContract.Address()
-	_ = mcmsTestAddress
 	opts := &bind.TransactOpts{Signer: a.deployerAccount}
 
 	// Configure Bypassers
@@ -130,10 +144,10 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 		a.Require().NoError(err)
 
 		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer)
-		inspectorsMaps := map[types.ChainSelector]sdk.Inspector{
+		inspectorsMap := map[types.ChainSelector]sdk.Inspector{
 			a.ChainSelector: inspector,
 		}
-		signable, err := mcms.NewSignable(&acceptOwnershipProposal, inspectorsMaps)
+		signable, err := mcms.NewSignable(&acceptOwnershipProposal, inspectorsMap)
 		a.Require().NoError(err)
 
 		_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(proposerKeys[0]))
