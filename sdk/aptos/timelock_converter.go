@@ -30,18 +30,18 @@ func NewTimelockConverter() *TimelockConverter {
 
 func (t *TimelockConverter) ConvertBatchToChainOperations(
 	_ context.Context,
-	metadata types.ChainMetadata,
+	_ types.ChainMetadata,
 	bop types.BatchOperation,
-	timelockAddress string,
+	_ string,
 	mcmAddress string,
 	delay types.Duration,
 	action types.TimelockAction,
 	predecessor common.Hash,
 	salt common.Hash,
 ) ([]types.Operation, common.Hash, error) {
-	mcmsAddress, mcmsErr := hexToAddress(metadata.MCMAddress)
+	mcmsAddress, mcmsErr := hexToAddress(mcmAddress)
 	if mcmsErr != nil {
-		return nil, common.Hash{}, fmt.Errorf("failed to parse MCMS address %q: %w", metadata.MCMAddress, mcmsErr)
+		return nil, common.Hash{}, fmt.Errorf("failed to parse MCMS address %q: %w", mcmAddress, mcmsErr)
 	}
 	mcmsBinding := t.bindingFn(mcmsAddress, nil)
 
@@ -54,7 +54,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	for i, tx := range bop.Transactions {
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return nil, common.Hash{}, err
+			return nil, common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 		}
 
 		toAddress, err := hexToAddress(tx.To)

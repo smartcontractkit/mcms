@@ -45,6 +45,10 @@ packages:
         config:
           dir: "./sdk/aptos/mocks/mcms/mcms"
           filename: "mcms.go"
+      MCMSEncoder:
+        config:
+          dir: "./sdk/aptos/mocks/mcms/mcms"
+          filename: "mcms_encoder.go"
   github.com/smartcontractkit/chainlink-aptos/bindings/mcms/mcms_executor:
     config:
       all: false

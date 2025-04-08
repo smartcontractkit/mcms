@@ -55,7 +55,7 @@ func (t *TimelockExecutor) Execute(
 	for i, tx := range bop.Transactions {
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return types.TransactionResult{}, err
+			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 		}
 
 		toAddress, err := hexToAddress(tx.To)

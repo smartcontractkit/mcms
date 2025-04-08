@@ -2,6 +2,7 @@ package aptos
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/aptos-labs/aptos-go-sdk"
@@ -29,22 +30,22 @@ func NewTimelockInspector(client aptos.AptosRpcClient) *TimelockInspector {
 
 // GetProposers returns the list of addresses with the proposer role
 func (tm TimelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
-	return nil, nil
+	return nil, errors.New("unsupported on Aptos")
 }
 
 // GetExecutors returns the list of addresses with the executor role
 func (tm TimelockInspector) GetExecutors(ctx context.Context, address string) ([]string, error) {
-	return nil, nil
+	return nil, errors.New("unsupported on Aptos")
 }
 
 // GetBypassers returns the list of addresses with the bypasser role
 func (tm TimelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
-	return nil, nil
+	return nil, errors.New("unsupported on Aptos")
 }
 
 // GetCancellers returns the list of addresses with the canceller role
 func (tm TimelockInspector) GetCancellers(ctx context.Context, address string) ([]string, error) {
-	return nil, nil
+	return nil, errors.New("unsupported on Aptos")
 }
 
 func (tm TimelockInspector) IsOperation(ctx context.Context, address string, opID [32]byte) (bool, error) {

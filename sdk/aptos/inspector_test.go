@@ -10,6 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 	module_mcms "github.com/smartcontractkit/chainlink-aptos/bindings/mcms/mcms"
@@ -28,6 +29,7 @@ func TestNewInspector(t *testing.T) {
 	assert.NotNil(t, inspector)
 	assert.Equal(t, mockClient, inspector.client)
 	assert.Equal(t, TimelockRoleProposer, inspector.role)
+	assert.NotNil(t, inspector.bindingFn)
 }
 
 func TestInspector_GetConfig(t *testing.T) {
@@ -126,7 +128,8 @@ func TestInspector_GetConfig(t *testing.T) {
 
 			mcmsBinding := mock_mcms.NewMCMS(t)
 			inspector := Inspector{
-				bindingFn: func(_ aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
+				bindingFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
+					require.Equal(t, Must(hexToAddress(tt.mcmsAddr)), mcmsAddress)
 					return mcmsBinding
 				},
 				role: tt.role,
@@ -190,7 +193,8 @@ func TestInspector_GetOpCount(t *testing.T) {
 
 			mcmsBinding := mock_mcms.NewMCMS(t)
 			inspector := Inspector{
-				bindingFn: func(_ aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
+				bindingFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
+					require.Equal(t, Must(hexToAddress(tt.mcmsAddr)), mcmsAddress)
 					return mcmsBinding
 				},
 				role: tt.role,

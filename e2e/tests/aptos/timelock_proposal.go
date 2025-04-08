@@ -39,6 +39,7 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 			b. Check that the target contract has actually been called
 	*/
 	a.deployMCMSContract()
+	a.deployMCMSTestContract()
 	mcmsAddress := a.MCMSContract.Address()
 	mcmsTestAddress := a.MCMSTestContract.Address()
 	opts := &bind.TransactOpts{Signer: a.deployerAccount}

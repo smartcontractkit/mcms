@@ -32,15 +32,15 @@ func TestNewExecutor(t *testing.T) {
 	encoder := NewEncoder(chaintest.Chain5Selector, 1, true)
 	mockClient := mock_aptossdk.NewAptosRpcClient(t)
 	mockSigner := mock_aptossdk.NewTransactionSigner(t)
-	executor := NewExecutor(mockClient, mockSigner, encoder, 0)
+	executor := NewExecutor(mockClient, mockSigner, encoder, TimelockRoleProposer)
 	assert.Equal(t, mockClient, executor.client)
 	assert.Equal(t, mockSigner, executor.auth)
 	assert.Equal(t, encoder, executor.Encoder)
+	assert.Equal(t, TimelockRoleProposer, executor.role)
 }
 
 func TestExecutor_ExecuteOperation(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
 	generateData := func(length int) []byte {
 		return bytes.Repeat([]byte{0x42}, length)
 	}
@@ -198,6 +198,21 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				},
 			},
 			wantErr: AssertErrorContains("unmarshal additional fields"),
+		}, {
+			name: "failure - invalid additional fields metadata",
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress:       "0x123",
+					AdditionalFields: []byte("invalid json"),
+				},
+				op: types.Operation{
+					Transaction: types.Transaction{
+						To:               "0x111",
+						AdditionalFields: []byte(`{"package_name":"package","module_name":"module","function":"function_one"}`),
+					},
+				},
+			},
+			wantErr: AssertErrorContains("unmarshal additional fields metadata"),
 		}, {
 			name:          "failure - invalid chain selector",
 			chainSelector: chaintest.Chain1Selector,
@@ -384,7 +399,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				tt.mockSetup(mockClient, mockSigner, mcmsBinding)
 			}
 
-			got, err := executor.ExecuteOperation(ctx, tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)
+			got, err := executor.ExecuteOperation(t.Context(), tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)
 			if !tt.wantErr(t, err, fmt.Sprintf("ExecuteOperation(%v, %v, %v, %v)", tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)) {
 				return
 			}
@@ -463,6 +478,17 @@ func TestExecutor_SetRoot(t *testing.T) {
 			},
 			want:    types.TransactionResult{},
 			wantErr: AssertErrorContains("parse MCMS address"),
+		}, {
+			name:          "failure - invalid additional fields metadata",
+			chainSelector: chaintest.Chain2Selector,
+			args: args{
+				metadata: types.ChainMetadata{
+					MCMAddress:       "0x1",
+					AdditionalFields: []byte("invalid json"),
+				},
+			},
+			want:    types.TransactionResult{},
+			wantErr: AssertErrorContains("unmarshal additional fields metadata"),
 		}, {
 			name:          "failure - invalid chain selector",
 			chainSelector: chaintest.Chain2Selector,
