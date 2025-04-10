@@ -71,7 +71,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 
 	operationID, err := HashOperationBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes())
 	if err != nil {
-		return nil, common.Hash{}, err
+		return nil, common.Hash{}, fmt.Errorf("failed to compute hash of batch operation: %w", err)
 	}
 
 	var (
@@ -136,7 +136,7 @@ func HashOperationBatch(targets []aptos.AccountAddress, moduleNames, functionNam
 	ser.FixedBytes(salt)
 
 	if err := ser.Error(); err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, fmt.Errorf("failed to serialize batch operation: %w", err)
 	}
 
 	return crypto.Keccak256Hash(ser.ToBytes()), nil

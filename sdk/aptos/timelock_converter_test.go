@@ -406,7 +406,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			},
 			wantErr: AssertErrorContains("error during TimelockScheduleBatch"),
 		}, {
-			name: "failure - TimelockScheduleBatch failed",
+			name: "failure - TimelockBypasserExecuteBatch failed",
 			args: args{
 				mcmAddress: "0x123",
 				action:     types.TimelockActionBypass,
@@ -473,7 +473,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 
 func TestHashOperationBatch(t *testing.T) {
 	t.Parallel()
-	// 0x860ab27255ad63f4b1cd56ffeb41953ba4b23d4d1f21e8e821ae7c1d4b0c8001
 
 	targets := []aptos.AccountAddress{aptos.AccountOne}
 	moduleNames := []string{"module"}

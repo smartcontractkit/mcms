@@ -13,7 +13,7 @@ import (
 
 var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 
-// TimelockInspector is an Inspector implementation for EVM chains for accessing the RBACTimelock contract
+// TimelockInspector is an Inspector implementation for Aptos, for accessing the MCMS-Timelock contract
 type TimelockInspector struct {
 	client aptos.AptosRpcClient
 

@@ -18,7 +18,7 @@ import (
 
 var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
 
-// TimelockExecutor is an Executor implementation for EVM chains for accessing the RBACTimelock contract
+// TimelockExecutor is an Executor implementation for Aptos, for accessing the MCMS-Timelock
 type TimelockExecutor struct {
 	TimelockInspector
 	client aptos.AptosRpcClient
