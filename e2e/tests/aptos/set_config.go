@@ -3,7 +3,6 @@
 package aptos
 
 import (
-	"context"
 	"slices"
 	"strings"
 
@@ -15,11 +14,17 @@ import (
 )
 
 func (a *AptosTestSuite) Test_Aptos_SetConfig() {
+	/*
+		This tests setting and retrieving the config for all three timelock roles:
+		- Bypasser
+		- Canceller
+		- Proposer
+	*/
 	a.deployMCMSContract()
 	mcmsAddress := a.MCMSContract.Address()
 
 	// Signers in each group need to be sorted alphabetically
-	signers := [14]common.Address{}
+	signers := [30]common.Address{}
 	for i := range signers {
 		key, _ := crypto.GenerateKey()
 		signers[i] = crypto.PubkeyToAddress(key.PublicKey)
@@ -28,7 +33,7 @@ func (a *AptosTestSuite) Test_Aptos_SetConfig() {
 		return strings.Compare(strings.ToLower(a.Hex()), strings.ToLower(b.Hex()))
 	})
 
-	config := &types.Config{
+	bypasserConfig := &types.Config{
 		Quorum: 2,
 		Signers: []common.Address{
 			signers[0],
@@ -69,19 +74,108 @@ func (a *AptosTestSuite) Test_Aptos_SetConfig() {
 		},
 	}
 
-	// Set config
-	configurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount)
-	res, err := configurer.SetConfig(context.Background(), mcmsAddress.StringLong(), config, true)
-	a.Require().NoError(err, "setting config on Aptos mcms contract")
+	cancellerConfig := &types.Config{
+		Quorum: 1,
+		Signers: []common.Address{
+			signers[14],
+			signers[15],
+		},
+		GroupSigners: []types.Config{
+			{
+				Quorum: 2,
+				Signers: []common.Address{
+					signers[16],
+					signers[17],
+					signers[18],
+					signers[19],
+				},
+				GroupSigners: []types.Config{},
+			},
+		},
+	}
 
-	data, err := a.AptosRPCClient.WaitForTransaction(res.Hash)
-	a.Require().NoError(err)
-	a.Require().True(data.Success, data.VmStatus)
+	proposerConfig := &types.Config{
+		Quorum:  2,
+		Signers: []common.Address{},
+		GroupSigners: []types.Config{
+			{
+				Quorum: 2,
+				Signers: []common.Address{
+					signers[20],
+					signers[21],
+					signers[22],
+					signers[23],
+				},
+				GroupSigners: []types.Config{},
+			}, {
+				Quorum: 2,
+				Signers: []common.Address{
+					signers[24],
+					signers[25],
+					signers[26],
+					signers[27],
+				},
+				GroupSigners: []types.Config{},
+			}, {
+				Quorum: 1,
+				Signers: []common.Address{
+					signers[28],
+					signers[29],
+				},
+				GroupSigners: []types.Config{},
+			},
+		},
+	}
+
+	// Set config
+	{
+		configurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount, aptossdk.TimelockRoleBypasser)
+		res, err := configurer.SetConfig(a.T().Context(), mcmsAddress.StringLong(), bypasserConfig, true)
+		a.Require().NoError(err, "setting config on Aptos mcms contract")
+
+		data, err := a.AptosRPCClient.WaitForTransaction(res.Hash)
+		a.Require().NoError(err)
+		a.Require().True(data.Success, data.VmStatus)
+	}
+	{
+		configurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount, aptossdk.TimelockRoleCanceller)
+		res, err := configurer.SetConfig(a.T().Context(), mcmsAddress.StringLong(), cancellerConfig, true)
+		a.Require().NoError(err, "setting config on Aptos mcms contract")
+
+		data, err := a.AptosRPCClient.WaitForTransaction(res.Hash)
+		a.Require().NoError(err)
+		a.Require().True(data.Success, data.VmStatus)
+	}
+	{
+		configurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount, aptossdk.TimelockRoleProposer)
+		res, err := configurer.SetConfig(a.T().Context(), mcmsAddress.StringLong(), proposerConfig, true)
+		a.Require().NoError(err, "setting config on Aptos mcms contract")
+
+		data, err := a.AptosRPCClient.WaitForTransaction(res.Hash)
+		a.Require().NoError(err)
+		a.Require().True(data.Success, data.VmStatus)
+	}
 
 	// Assert that config has been set
-	inspector := aptossdk.NewInspector(a.AptosRPCClient)
-	gotConfig, err := inspector.GetConfig(context.Background(), mcmsAddress.StringLong())
-	a.Require().NoError(err)
-	a.Require().NotNil(gotConfig)
-	a.Require().Equal(config, gotConfig)
+	{
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleBypasser)
+		gotConfig, err := inspector.GetConfig(a.T().Context(), mcmsAddress.StringLong())
+		a.Require().NoError(err)
+		a.Require().NotNil(gotConfig)
+		a.Require().Equal(bypasserConfig, gotConfig)
+	}
+	{
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleCanceller)
+		gotConfig, err := inspector.GetConfig(a.T().Context(), mcmsAddress.StringLong())
+		a.Require().NoError(err)
+		a.Require().NotNil(gotConfig)
+		a.Require().Equal(cancellerConfig, gotConfig)
+	}
+	{
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer)
+		gotConfig, err := inspector.GetConfig(a.T().Context(), mcmsAddress.StringLong())
+		a.Require().NoError(err)
+		a.Require().NotNil(gotConfig)
+		a.Require().Equal(proposerConfig, gotConfig)
+	}
 }

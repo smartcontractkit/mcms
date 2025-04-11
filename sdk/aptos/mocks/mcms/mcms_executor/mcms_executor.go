@@ -193,9 +193,9 @@ func (_c *MCMSExecutor_StageData_Call) RunAndReturn(run func(*bind.TransactOpts,
 	return _c
 }
 
-// StageDataAndExecute provides a mock function with given fields: opts, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs
-func (_m *MCMSExecutor) StageDataAndExecute(opts *bind.TransactOpts, chainId *big.Int, multisig aptos.AccountAddress, nonce uint64, to aptos.AccountAddress, moduleName string, function string, dataChunk []byte, partialProofs [][]byte) (*api.PendingTransaction, error) {
-	ret := _m.Called(opts, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs)
+// StageDataAndExecute provides a mock function with given fields: opts, role, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs
+func (_m *MCMSExecutor) StageDataAndExecute(opts *bind.TransactOpts, role byte, chainId *big.Int, multisig aptos.AccountAddress, nonce uint64, to aptos.AccountAddress, moduleName string, function string, dataChunk []byte, partialProofs [][]byte) (*api.PendingTransaction, error) {
+	ret := _m.Called(opts, role, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StageDataAndExecute")
@@ -203,19 +203,19 @@ func (_m *MCMSExecutor) StageDataAndExecute(opts *bind.TransactOpts, chainId *bi
 
 	var r0 *api.PendingTransaction
 	var r1 error
-	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) (*api.PendingTransaction, error)); ok {
-		return rf(opts, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs)
+	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, byte, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) (*api.PendingTransaction, error)); ok {
+		return rf(opts, role, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs)
 	}
-	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) *api.PendingTransaction); ok {
-		r0 = rf(opts, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs)
+	if rf, ok := ret.Get(0).(func(*bind.TransactOpts, byte, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) *api.PendingTransaction); ok {
+		r0 = rf(opts, role, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*api.PendingTransaction)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(*bind.TransactOpts, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) error); ok {
-		r1 = rf(opts, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs)
+	if rf, ok := ret.Get(1).(func(*bind.TransactOpts, byte, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) error); ok {
+		r1 = rf(opts, role, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -230,6 +230,7 @@ type MCMSExecutor_StageDataAndExecute_Call struct {
 
 // StageDataAndExecute is a helper method to define mock.On call
 //   - opts *bind.TransactOpts
+//   - role byte
 //   - chainId *big.Int
 //   - multisig aptos.AccountAddress
 //   - nonce uint64
@@ -238,13 +239,13 @@ type MCMSExecutor_StageDataAndExecute_Call struct {
 //   - function string
 //   - dataChunk []byte
 //   - partialProofs [][]byte
-func (_e *MCMSExecutor_Expecter) StageDataAndExecute(opts interface{}, chainId interface{}, multisig interface{}, nonce interface{}, to interface{}, moduleName interface{}, function interface{}, dataChunk interface{}, partialProofs interface{}) *MCMSExecutor_StageDataAndExecute_Call {
-	return &MCMSExecutor_StageDataAndExecute_Call{Call: _e.mock.On("StageDataAndExecute", opts, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs)}
+func (_e *MCMSExecutor_Expecter) StageDataAndExecute(opts interface{}, role interface{}, chainId interface{}, multisig interface{}, nonce interface{}, to interface{}, moduleName interface{}, function interface{}, dataChunk interface{}, partialProofs interface{}) *MCMSExecutor_StageDataAndExecute_Call {
+	return &MCMSExecutor_StageDataAndExecute_Call{Call: _e.mock.On("StageDataAndExecute", opts, role, chainId, multisig, nonce, to, moduleName, function, dataChunk, partialProofs)}
 }
 
-func (_c *MCMSExecutor_StageDataAndExecute_Call) Run(run func(opts *bind.TransactOpts, chainId *big.Int, multisig aptos.AccountAddress, nonce uint64, to aptos.AccountAddress, moduleName string, function string, dataChunk []byte, partialProofs [][]byte)) *MCMSExecutor_StageDataAndExecute_Call {
+func (_c *MCMSExecutor_StageDataAndExecute_Call) Run(run func(opts *bind.TransactOpts, role byte, chainId *big.Int, multisig aptos.AccountAddress, nonce uint64, to aptos.AccountAddress, moduleName string, function string, dataChunk []byte, partialProofs [][]byte)) *MCMSExecutor_StageDataAndExecute_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(*bind.TransactOpts), args[1].(*big.Int), args[2].(aptos.AccountAddress), args[3].(uint64), args[4].(aptos.AccountAddress), args[5].(string), args[6].(string), args[7].([]byte), args[8].([][]byte))
+		run(args[0].(*bind.TransactOpts), args[1].(byte), args[2].(*big.Int), args[3].(aptos.AccountAddress), args[4].(uint64), args[5].(aptos.AccountAddress), args[6].(string), args[7].(string), args[8].([]byte), args[9].([][]byte))
 	})
 	return _c
 }
@@ -254,7 +255,7 @@ func (_c *MCMSExecutor_StageDataAndExecute_Call) Return(_a0 *api.PendingTransact
 	return _c
 }
 
-func (_c *MCMSExecutor_StageDataAndExecute_Call) RunAndReturn(run func(*bind.TransactOpts, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) (*api.PendingTransaction, error)) *MCMSExecutor_StageDataAndExecute_Call {
+func (_c *MCMSExecutor_StageDataAndExecute_Call) RunAndReturn(run func(*bind.TransactOpts, byte, *big.Int, aptos.AccountAddress, uint64, aptos.AccountAddress, string, string, []byte, [][]byte) (*api.PendingTransaction, error)) *MCMSExecutor_StageDataAndExecute_Call {
 	_c.Call.Return(run)
 	return _c
 }

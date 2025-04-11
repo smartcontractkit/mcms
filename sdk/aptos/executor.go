@@ -37,10 +37,10 @@ type Executor struct {
 	bindingFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms.MCMS
 }
 
-func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder) *Executor {
+func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole) *Executor {
 	return &Executor{
 		Encoder:   encoder,
-		Inspector: NewInspector(client),
+		Inspector: NewInspector(client, role),
 		client:    client,
 		auth:      auth,
 		bindingFn: mcms.Bind,
@@ -67,6 +67,12 @@ func (e Executor) ExecuteOperation(
 	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 	}
+	var additionalFieldsMetadata AdditionalFieldsMetadata
+	if len(metadata.AdditionalFields) > 0 {
+		if err = json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
+		}
+	}
 	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
@@ -83,6 +89,7 @@ func (e Executor) ExecuteOperation(
 	if len(op.Transaction.Data) <= ChunkSizeBytes {
 		tx, err = mcmsBinding.MCMS().Execute(
 			opts,
+			additionalFieldsMetadata.Role.Byte(),
 			chainIDBig,
 			mcmsAddress,
 			uint64(nonce),
@@ -124,6 +131,7 @@ func (e Executor) ExecuteOperation(
 				// Also, add the proof to this last call
 				tx, err = mcmsBinding.MCMSExecutor().StageDataAndExecute(
 					opts,
+					additionalFieldsMetadata.Role.Byte(),
 					chainIDBig,
 					mcmsAddress,
 					uint64(nonce),
@@ -171,6 +179,12 @@ func (e Executor) SetRoot(
 		return types.TransactionResult{}, fmt.Errorf("failed to parse MCMS address %q: %w", metadata.MCMAddress, err)
 	}
 	mcmsBinding := e.bindingFn(mcmsAddress, e.client)
+	var additionalFieldsMetadata AdditionalFieldsMetadata
+	if len(metadata.AdditionalFields) > 0 {
+		if err = json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
+		}
+	}
 	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
@@ -187,6 +201,7 @@ func (e Executor) SetRoot(
 
 	tx, err := mcmsBinding.MCMS().SetRoot(
 		opts,
+		additionalFieldsMetadata.Role.Byte(),
 		root[:],
 		uint64(validUntil),
 		chainIDBig,

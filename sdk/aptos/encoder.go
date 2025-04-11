@@ -1,11 +1,11 @@
 package aptos
 
 import (
-	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"math/big"
 
+	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -40,12 +40,12 @@ func NewEncoder(
 	}
 }
 
-//nolint:mnd // Padding to 32 and 64 bytes respectively
 func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
 	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return common.Hash{}, err
 	}
+	chainIDBig := (&big.Int{}).SetUint64(chainID)
 	mcmsAddress, err := hexToAddress(metadata.MCMAddress)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to parse MCMS address %q: %w", metadata.MCMAddress, err)
@@ -58,42 +58,52 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
 		return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 	}
+	var additionalFieldsMetadata AdditionalFieldsMetadata
+	if len(metadata.AdditionalFields) > 0 {
+		if err := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
+			return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
+		}
+	}
 
-	var preImage []byte
-	preImage = append(preImage, mcmDomainSeparatorOp...)
-	preImage = append(preImage, common.LeftPadBytes(binary.BigEndian.AppendUint64(nil, chainID), 32)...)
-	preImage = append(preImage, mcmsAddress[:]...)
-	preImage = append(preImage, common.LeftPadBytes(binary.BigEndian.AppendUint32(nil, opCount), 32)...)
-	preImage = append(preImage, toAddress[:]...)
-	preImage = append(preImage, common.LeftPadBytes([]byte(additionalFields.ModuleName), 64)...)
-	preImage = append(preImage, common.LeftPadBytes([]byte(additionalFields.Function), 64)...)
-	preImage = append(preImage, append(op.Transaction.Data, bytes.Repeat([]byte{0}, 32-len(op.Transaction.Data)%32)...)...) // Right pad to 32-byte increment
+	ser := bcs.Serializer{}
+	ser.FixedBytes(mcmDomainSeparatorOp)
+	ser.U8(uint8(additionalFieldsMetadata.Role))
+	ser.U256(*chainIDBig)
+	ser.Struct(&mcmsAddress)
+	ser.U64(uint64(opCount))
+	ser.Struct(&toAddress)
+	ser.WriteString(additionalFields.ModuleName)
+	ser.WriteString(additionalFields.Function)
+	ser.WriteBytes(op.Transaction.Data)
 
-	return crypto.Keccak256Hash(preImage), nil
+	return crypto.Keccak256Hash(ser.ToBytes()), nil
 }
 
-//nolint:mnd // Padding to 32 and 64 bytes respectively
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
 	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return common.Hash{}, err
 	}
+	chainIDBig := (&big.Int{}).SetUint64(chainID)
 	mcmsAddress, err := hexToAddress(metadata.MCMAddress)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to parse MCMS address %q: %w", metadata.MCMAddress, err)
 	}
-
-	var preImage []byte
-	preImage = append(preImage, mcmDomainSeparatorMetadata...)
-	preImage = append(preImage, common.LeftPadBytes(binary.BigEndian.AppendUint64(nil, chainID), 32)...)
-	preImage = append(preImage, mcmsAddress[:]...)
-	preImage = append(preImage, common.LeftPadBytes(binary.BigEndian.AppendUint64(nil, metadata.StartingOpCount), 32)...)
-	preImage = append(preImage, common.LeftPadBytes(binary.BigEndian.AppendUint64(nil, metadata.StartingOpCount+e.TxCount), 32)...)
-	if e.OverridePreviousRoot {
-		preImage = append(preImage, common.LeftPadBytes([]byte{1}, 32)...)
-	} else {
-		preImage = append(preImage, common.LeftPadBytes([]byte{0}, 32)...)
+	var additionalFieldsMetadata AdditionalFieldsMetadata
+	if len(metadata.AdditionalFields) > 0 {
+		if err = json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
+			return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
+		}
 	}
 
-	return crypto.Keccak256Hash(preImage), nil
+	ser := bcs.Serializer{}
+	ser.FixedBytes(mcmDomainSeparatorMetadata)
+	ser.U8(uint8(additionalFieldsMetadata.Role))
+	ser.U256(*chainIDBig)
+	ser.Struct(&mcmsAddress)
+	ser.U64(metadata.StartingOpCount)
+	ser.U64(metadata.StartingOpCount + e.TxCount)
+	ser.Bool(e.OverridePreviousRoot)
+
+	return crypto.Keccak256Hash(ser.ToBytes()), nil
 }
