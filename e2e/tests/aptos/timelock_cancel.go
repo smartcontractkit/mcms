@@ -32,10 +32,7 @@ func (a *AptosTestSuite) Test_Aptos_TimelockCancel() {
 		7. Check that the operation has actually been cancelled -> is_operation should return false
 	*/
 	a.deployMCMSContract()
-	a.deployMCMSTestContract()
 	mcmsAddress := a.MCMSContract.Address()
-	mcmsTestAddress := a.MCMSTestContract.Address()
-	_ = mcmsTestAddress
 	opts := &bind.TransactOpts{Signer: a.deployerAccount}
 
 	// Configure Cancellers

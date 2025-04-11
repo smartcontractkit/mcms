@@ -14,6 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 	module_mcms_user "github.com/smartcontractkit/chainlink-aptos/bindings/mcms_test/mcms_user"
 	"github.com/smartcontractkit/chainlink-aptos/relayer/codec"
+	"github.com/stretchr/testify/assert"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -117,7 +118,7 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 				AdditionalFields: Must(json.Marshal(aptossdk.AdditionalFieldsMetadata{Role: aptossdk.TimelockRoleProposer})),
 			}).
 			SetAction(types.TimelockActionSchedule).
-			SetDelay(types.NewDuration(time.Second * 10))
+			SetDelay(types.NewDuration(time.Second * 2))
 
 		module, function, _, args, err := a.MCMSContract.MCMSAccount().Encoder().AcceptOwnership()
 		a.Require().NoError(err)
@@ -221,24 +222,16 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 		a.Require().NoError(err)
 		a.Require().True(ok, "Operation not found in timelock")
 
-		for {
-			if time.Now().Sub(start) > time.Second*20 {
-				a.T().Errorf("Time out waiting for proposal to be ready")
-				return
-			}
-			a.T().Logf("⏳ Checking if operation is ready...")
-			err := timelockExecutable.IsReady(a.T().Context())
-			if err != nil {
-				// TODO better way to check if this error is OperationNotReadyError
-				a.T().Logf("Not ready, waiting 1 second (error: %v)", err)
-				time.Sleep(1 * time.Second)
-				continue
-			}
-			elapsed := time.Since(start)
-			a.T().Logf("🟢 Timelock operation ready, elapsed time: %v", elapsed.String())
-			a.Require().Greaterf(elapsed, time.Second*10, "Proposal should only be ready after 10 seconds")
-			break
-		}
+		a.Require().EventuallyWithT(
+			func(collect *assert.CollectT) {
+				assert.NoErrorf(collect, timelockExecutable.IsReady(a.T().Context()), "Proposal is not ready")
+			},
+			time.Second*3,
+			time.Millisecond*500,
+		)
+		elapsed := time.Since(start)
+		a.Require().Greaterf(elapsed, time.Second*2, "Proposal should only be ready after 2 seconds")
+		a.T().Logf("🟢 Timelock operation ready, elapsed time: %v", elapsed.String())
 
 		for i := range acceptOwnershipTimelockProposal.Operations {
 			res, err := timelockExecutable.Execute(a.T().Context(), i)
