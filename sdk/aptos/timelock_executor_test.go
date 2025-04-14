@@ -76,7 +76,7 @@ func TestExecutor_Execute(t *testing.T) {
 				salt:            common.HexToHash("0xabcd"),
 			},
 			mockSetup: func(mcms *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().TimelockExecuteBatch(
 					mock.Anything,
@@ -164,7 +164,7 @@ func TestExecutor_Execute(t *testing.T) {
 				salt:            common.HexToHash("0xabcd"),
 			},
 			mockSetup: func(mcms *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().TimelockExecuteBatch(
 					mock.Anything,

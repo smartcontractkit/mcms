@@ -27,249 +27,6 @@ func (_m *MCMSEncoder) EXPECT() *MCMSEncoder_Expecter {
 	return &MCMSEncoder_Expecter{mock: &_m.Mock}
 }
 
-// AssertBypasserOrCancellerRole provides a mock function with given fields: role
-func (_m *MCMSEncoder) AssertBypasserOrCancellerRole(role byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
-	ret := _m.Called(role)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AssertBypasserOrCancellerRole")
-	}
-
-	var r0 bind.ModuleInformation
-	var r1 string
-	var r2 []aptos.TypeTag
-	var r3 [][]byte
-	var r4 error
-	if rf, ok := ret.Get(0).(func(byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
-		return rf(role)
-	}
-	if rf, ok := ret.Get(0).(func(byte) bind.ModuleInformation); ok {
-		r0 = rf(role)
-	} else {
-		r0 = ret.Get(0).(bind.ModuleInformation)
-	}
-
-	if rf, ok := ret.Get(1).(func(byte) string); ok {
-		r1 = rf(role)
-	} else {
-		r1 = ret.Get(1).(string)
-	}
-
-	if rf, ok := ret.Get(2).(func(byte) []aptos.TypeTag); ok {
-		r2 = rf(role)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]aptos.TypeTag)
-		}
-	}
-
-	if rf, ok := ret.Get(3).(func(byte) [][]byte); ok {
-		r3 = rf(role)
-	} else {
-		if ret.Get(3) != nil {
-			r3 = ret.Get(3).([][]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(4).(func(byte) error); ok {
-		r4 = rf(role)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
-}
-
-// MCMSEncoder_AssertBypasserOrCancellerRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AssertBypasserOrCancellerRole'
-type MCMSEncoder_AssertBypasserOrCancellerRole_Call struct {
-	*mock.Call
-}
-
-// AssertBypasserOrCancellerRole is a helper method to define mock.On call
-//   - role byte
-func (_e *MCMSEncoder_Expecter) AssertBypasserOrCancellerRole(role interface{}) *MCMSEncoder_AssertBypasserOrCancellerRole_Call {
-	return &MCMSEncoder_AssertBypasserOrCancellerRole_Call{Call: _e.mock.On("AssertBypasserOrCancellerRole", role)}
-}
-
-func (_c *MCMSEncoder_AssertBypasserOrCancellerRole_Call) Run(run func(role byte)) *MCMSEncoder_AssertBypasserOrCancellerRole_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(byte))
-	})
-	return _c
-}
-
-func (_c *MCMSEncoder_AssertBypasserOrCancellerRole_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_AssertBypasserOrCancellerRole_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
-	return _c
-}
-
-func (_c *MCMSEncoder_AssertBypasserOrCancellerRole_Call) RunAndReturn(run func(byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_AssertBypasserOrCancellerRole_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AssertBypasserOrProposerRole provides a mock function with given fields: role
-func (_m *MCMSEncoder) AssertBypasserOrProposerRole(role byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
-	ret := _m.Called(role)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AssertBypasserOrProposerRole")
-	}
-
-	var r0 bind.ModuleInformation
-	var r1 string
-	var r2 []aptos.TypeTag
-	var r3 [][]byte
-	var r4 error
-	if rf, ok := ret.Get(0).(func(byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
-		return rf(role)
-	}
-	if rf, ok := ret.Get(0).(func(byte) bind.ModuleInformation); ok {
-		r0 = rf(role)
-	} else {
-		r0 = ret.Get(0).(bind.ModuleInformation)
-	}
-
-	if rf, ok := ret.Get(1).(func(byte) string); ok {
-		r1 = rf(role)
-	} else {
-		r1 = ret.Get(1).(string)
-	}
-
-	if rf, ok := ret.Get(2).(func(byte) []aptos.TypeTag); ok {
-		r2 = rf(role)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]aptos.TypeTag)
-		}
-	}
-
-	if rf, ok := ret.Get(3).(func(byte) [][]byte); ok {
-		r3 = rf(role)
-	} else {
-		if ret.Get(3) != nil {
-			r3 = ret.Get(3).([][]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(4).(func(byte) error); ok {
-		r4 = rf(role)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
-}
-
-// MCMSEncoder_AssertBypasserOrProposerRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AssertBypasserOrProposerRole'
-type MCMSEncoder_AssertBypasserOrProposerRole_Call struct {
-	*mock.Call
-}
-
-// AssertBypasserOrProposerRole is a helper method to define mock.On call
-//   - role byte
-func (_e *MCMSEncoder_Expecter) AssertBypasserOrProposerRole(role interface{}) *MCMSEncoder_AssertBypasserOrProposerRole_Call {
-	return &MCMSEncoder_AssertBypasserOrProposerRole_Call{Call: _e.mock.On("AssertBypasserOrProposerRole", role)}
-}
-
-func (_c *MCMSEncoder_AssertBypasserOrProposerRole_Call) Run(run func(role byte)) *MCMSEncoder_AssertBypasserOrProposerRole_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(byte))
-	})
-	return _c
-}
-
-func (_c *MCMSEncoder_AssertBypasserOrProposerRole_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_AssertBypasserOrProposerRole_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
-	return _c
-}
-
-func (_c *MCMSEncoder_AssertBypasserOrProposerRole_Call) RunAndReturn(run func(byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_AssertBypasserOrProposerRole_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// AssertBypasserRole provides a mock function with given fields: role
-func (_m *MCMSEncoder) AssertBypasserRole(role byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
-	ret := _m.Called(role)
-
-	if len(ret) == 0 {
-		panic("no return value specified for AssertBypasserRole")
-	}
-
-	var r0 bind.ModuleInformation
-	var r1 string
-	var r2 []aptos.TypeTag
-	var r3 [][]byte
-	var r4 error
-	if rf, ok := ret.Get(0).(func(byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
-		return rf(role)
-	}
-	if rf, ok := ret.Get(0).(func(byte) bind.ModuleInformation); ok {
-		r0 = rf(role)
-	} else {
-		r0 = ret.Get(0).(bind.ModuleInformation)
-	}
-
-	if rf, ok := ret.Get(1).(func(byte) string); ok {
-		r1 = rf(role)
-	} else {
-		r1 = ret.Get(1).(string)
-	}
-
-	if rf, ok := ret.Get(2).(func(byte) []aptos.TypeTag); ok {
-		r2 = rf(role)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]aptos.TypeTag)
-		}
-	}
-
-	if rf, ok := ret.Get(3).(func(byte) [][]byte); ok {
-		r3 = rf(role)
-	} else {
-		if ret.Get(3) != nil {
-			r3 = ret.Get(3).([][]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(4).(func(byte) error); ok {
-		r4 = rf(role)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
-}
-
-// MCMSEncoder_AssertBypasserRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'AssertBypasserRole'
-type MCMSEncoder_AssertBypasserRole_Call struct {
-	*mock.Call
-}
-
-// AssertBypasserRole is a helper method to define mock.On call
-//   - role byte
-func (_e *MCMSEncoder_Expecter) AssertBypasserRole(role interface{}) *MCMSEncoder_AssertBypasserRole_Call {
-	return &MCMSEncoder_AssertBypasserRole_Call{Call: _e.mock.On("AssertBypasserRole", role)}
-}
-
-func (_c *MCMSEncoder_AssertBypasserRole_Call) Run(run func(role byte)) *MCMSEncoder_AssertBypasserRole_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(byte))
-	})
-	return _c
-}
-
-func (_c *MCMSEncoder_AssertBypasserRole_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_AssertBypasserRole_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
-	return _c
-}
-
-func (_c *MCMSEncoder_AssertBypasserRole_Call) RunAndReturn(run func(byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_AssertBypasserRole_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // BypasserRole provides a mock function with no fields
 func (_m *MCMSEncoder) BypasserRole() (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
 	ret := _m.Called()
@@ -835,418 +592,6 @@ func (_c *MCMSEncoder_Data_Call) Return(_a0 bind.ModuleInformation, _a1 string, 
 }
 
 func (_c *MCMSEncoder_Data_Call) RunAndReturn(run func(module_mcms.Call) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_Data_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// Dispatch provides a mock function with given fields: target, moduleName, functionName, data
-func (_m *MCMSEncoder) Dispatch(target aptos.AccountAddress, moduleName string, functionName string, data []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
-	ret := _m.Called(target, moduleName, functionName, data)
-
-	if len(ret) == 0 {
-		panic("no return value specified for Dispatch")
-	}
-
-	var r0 bind.ModuleInformation
-	var r1 string
-	var r2 []aptos.TypeTag
-	var r3 [][]byte
-	var r4 error
-	if rf, ok := ret.Get(0).(func(aptos.AccountAddress, string, string, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
-		return rf(target, moduleName, functionName, data)
-	}
-	if rf, ok := ret.Get(0).(func(aptos.AccountAddress, string, string, []byte) bind.ModuleInformation); ok {
-		r0 = rf(target, moduleName, functionName, data)
-	} else {
-		r0 = ret.Get(0).(bind.ModuleInformation)
-	}
-
-	if rf, ok := ret.Get(1).(func(aptos.AccountAddress, string, string, []byte) string); ok {
-		r1 = rf(target, moduleName, functionName, data)
-	} else {
-		r1 = ret.Get(1).(string)
-	}
-
-	if rf, ok := ret.Get(2).(func(aptos.AccountAddress, string, string, []byte) []aptos.TypeTag); ok {
-		r2 = rf(target, moduleName, functionName, data)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]aptos.TypeTag)
-		}
-	}
-
-	if rf, ok := ret.Get(3).(func(aptos.AccountAddress, string, string, []byte) [][]byte); ok {
-		r3 = rf(target, moduleName, functionName, data)
-	} else {
-		if ret.Get(3) != nil {
-			r3 = ret.Get(3).([][]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(4).(func(aptos.AccountAddress, string, string, []byte) error); ok {
-		r4 = rf(target, moduleName, functionName, data)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
-}
-
-// MCMSEncoder_Dispatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Dispatch'
-type MCMSEncoder_Dispatch_Call struct {
-	*mock.Call
-}
-
-// Dispatch is a helper method to define mock.On call
-//   - target aptos.AccountAddress
-//   - moduleName string
-//   - functionName string
-//   - data []byte
-func (_e *MCMSEncoder_Expecter) Dispatch(target interface{}, moduleName interface{}, functionName interface{}, data interface{}) *MCMSEncoder_Dispatch_Call {
-	return &MCMSEncoder_Dispatch_Call{Call: _e.mock.On("Dispatch", target, moduleName, functionName, data)}
-}
-
-func (_c *MCMSEncoder_Dispatch_Call) Run(run func(target aptos.AccountAddress, moduleName string, functionName string, data []byte)) *MCMSEncoder_Dispatch_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(aptos.AccountAddress), args[1].(string), args[2].(string), args[3].([]byte))
-	})
-	return _c
-}
-
-func (_c *MCMSEncoder_Dispatch_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_Dispatch_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
-	return _c
-}
-
-func (_c *MCMSEncoder_Dispatch_Call) RunAndReturn(run func(aptos.AccountAddress, string, string, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_Dispatch_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DispatchToAccount provides a mock function with given fields: functionNameBytes, data
-func (_m *MCMSEncoder) DispatchToAccount(functionNameBytes []byte, data []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
-	ret := _m.Called(functionNameBytes, data)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DispatchToAccount")
-	}
-
-	var r0 bind.ModuleInformation
-	var r1 string
-	var r2 []aptos.TypeTag
-	var r3 [][]byte
-	var r4 error
-	if rf, ok := ret.Get(0).(func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
-		return rf(functionNameBytes, data)
-	}
-	if rf, ok := ret.Get(0).(func([]byte, []byte) bind.ModuleInformation); ok {
-		r0 = rf(functionNameBytes, data)
-	} else {
-		r0 = ret.Get(0).(bind.ModuleInformation)
-	}
-
-	if rf, ok := ret.Get(1).(func([]byte, []byte) string); ok {
-		r1 = rf(functionNameBytes, data)
-	} else {
-		r1 = ret.Get(1).(string)
-	}
-
-	if rf, ok := ret.Get(2).(func([]byte, []byte) []aptos.TypeTag); ok {
-		r2 = rf(functionNameBytes, data)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]aptos.TypeTag)
-		}
-	}
-
-	if rf, ok := ret.Get(3).(func([]byte, []byte) [][]byte); ok {
-		r3 = rf(functionNameBytes, data)
-	} else {
-		if ret.Get(3) != nil {
-			r3 = ret.Get(3).([][]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(4).(func([]byte, []byte) error); ok {
-		r4 = rf(functionNameBytes, data)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
-}
-
-// MCMSEncoder_DispatchToAccount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DispatchToAccount'
-type MCMSEncoder_DispatchToAccount_Call struct {
-	*mock.Call
-}
-
-// DispatchToAccount is a helper method to define mock.On call
-//   - functionNameBytes []byte
-//   - data []byte
-func (_e *MCMSEncoder_Expecter) DispatchToAccount(functionNameBytes interface{}, data interface{}) *MCMSEncoder_DispatchToAccount_Call {
-	return &MCMSEncoder_DispatchToAccount_Call{Call: _e.mock.On("DispatchToAccount", functionNameBytes, data)}
-}
-
-func (_c *MCMSEncoder_DispatchToAccount_Call) Run(run func(functionNameBytes []byte, data []byte)) *MCMSEncoder_DispatchToAccount_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]byte), args[1].([]byte))
-	})
-	return _c
-}
-
-func (_c *MCMSEncoder_DispatchToAccount_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_DispatchToAccount_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
-	return _c
-}
-
-func (_c *MCMSEncoder_DispatchToAccount_Call) RunAndReturn(run func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_DispatchToAccount_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DispatchToDeployer provides a mock function with given fields: functionNameBytes, data
-func (_m *MCMSEncoder) DispatchToDeployer(functionNameBytes []byte, data []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
-	ret := _m.Called(functionNameBytes, data)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DispatchToDeployer")
-	}
-
-	var r0 bind.ModuleInformation
-	var r1 string
-	var r2 []aptos.TypeTag
-	var r3 [][]byte
-	var r4 error
-	if rf, ok := ret.Get(0).(func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
-		return rf(functionNameBytes, data)
-	}
-	if rf, ok := ret.Get(0).(func([]byte, []byte) bind.ModuleInformation); ok {
-		r0 = rf(functionNameBytes, data)
-	} else {
-		r0 = ret.Get(0).(bind.ModuleInformation)
-	}
-
-	if rf, ok := ret.Get(1).(func([]byte, []byte) string); ok {
-		r1 = rf(functionNameBytes, data)
-	} else {
-		r1 = ret.Get(1).(string)
-	}
-
-	if rf, ok := ret.Get(2).(func([]byte, []byte) []aptos.TypeTag); ok {
-		r2 = rf(functionNameBytes, data)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]aptos.TypeTag)
-		}
-	}
-
-	if rf, ok := ret.Get(3).(func([]byte, []byte) [][]byte); ok {
-		r3 = rf(functionNameBytes, data)
-	} else {
-		if ret.Get(3) != nil {
-			r3 = ret.Get(3).([][]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(4).(func([]byte, []byte) error); ok {
-		r4 = rf(functionNameBytes, data)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
-}
-
-// MCMSEncoder_DispatchToDeployer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DispatchToDeployer'
-type MCMSEncoder_DispatchToDeployer_Call struct {
-	*mock.Call
-}
-
-// DispatchToDeployer is a helper method to define mock.On call
-//   - functionNameBytes []byte
-//   - data []byte
-func (_e *MCMSEncoder_Expecter) DispatchToDeployer(functionNameBytes interface{}, data interface{}) *MCMSEncoder_DispatchToDeployer_Call {
-	return &MCMSEncoder_DispatchToDeployer_Call{Call: _e.mock.On("DispatchToDeployer", functionNameBytes, data)}
-}
-
-func (_c *MCMSEncoder_DispatchToDeployer_Call) Run(run func(functionNameBytes []byte, data []byte)) *MCMSEncoder_DispatchToDeployer_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]byte), args[1].([]byte))
-	})
-	return _c
-}
-
-func (_c *MCMSEncoder_DispatchToDeployer_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_DispatchToDeployer_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
-	return _c
-}
-
-func (_c *MCMSEncoder_DispatchToDeployer_Call) RunAndReturn(run func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_DispatchToDeployer_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DispatchToRegistry provides a mock function with given fields: functionNameBytes, data
-func (_m *MCMSEncoder) DispatchToRegistry(functionNameBytes []byte, data []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
-	ret := _m.Called(functionNameBytes, data)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DispatchToRegistry")
-	}
-
-	var r0 bind.ModuleInformation
-	var r1 string
-	var r2 []aptos.TypeTag
-	var r3 [][]byte
-	var r4 error
-	if rf, ok := ret.Get(0).(func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
-		return rf(functionNameBytes, data)
-	}
-	if rf, ok := ret.Get(0).(func([]byte, []byte) bind.ModuleInformation); ok {
-		r0 = rf(functionNameBytes, data)
-	} else {
-		r0 = ret.Get(0).(bind.ModuleInformation)
-	}
-
-	if rf, ok := ret.Get(1).(func([]byte, []byte) string); ok {
-		r1 = rf(functionNameBytes, data)
-	} else {
-		r1 = ret.Get(1).(string)
-	}
-
-	if rf, ok := ret.Get(2).(func([]byte, []byte) []aptos.TypeTag); ok {
-		r2 = rf(functionNameBytes, data)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]aptos.TypeTag)
-		}
-	}
-
-	if rf, ok := ret.Get(3).(func([]byte, []byte) [][]byte); ok {
-		r3 = rf(functionNameBytes, data)
-	} else {
-		if ret.Get(3) != nil {
-			r3 = ret.Get(3).([][]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(4).(func([]byte, []byte) error); ok {
-		r4 = rf(functionNameBytes, data)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
-}
-
-// MCMSEncoder_DispatchToRegistry_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DispatchToRegistry'
-type MCMSEncoder_DispatchToRegistry_Call struct {
-	*mock.Call
-}
-
-// DispatchToRegistry is a helper method to define mock.On call
-//   - functionNameBytes []byte
-//   - data []byte
-func (_e *MCMSEncoder_Expecter) DispatchToRegistry(functionNameBytes interface{}, data interface{}) *MCMSEncoder_DispatchToRegistry_Call {
-	return &MCMSEncoder_DispatchToRegistry_Call{Call: _e.mock.On("DispatchToRegistry", functionNameBytes, data)}
-}
-
-func (_c *MCMSEncoder_DispatchToRegistry_Call) Run(run func(functionNameBytes []byte, data []byte)) *MCMSEncoder_DispatchToRegistry_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]byte), args[1].([]byte))
-	})
-	return _c
-}
-
-func (_c *MCMSEncoder_DispatchToRegistry_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_DispatchToRegistry_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
-	return _c
-}
-
-func (_c *MCMSEncoder_DispatchToRegistry_Call) RunAndReturn(run func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_DispatchToRegistry_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// DispatchToSelf provides a mock function with given fields: functionNameBytes, data
-func (_m *MCMSEncoder) DispatchToSelf(functionNameBytes []byte, data []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
-	ret := _m.Called(functionNameBytes, data)
-
-	if len(ret) == 0 {
-		panic("no return value specified for DispatchToSelf")
-	}
-
-	var r0 bind.ModuleInformation
-	var r1 string
-	var r2 []aptos.TypeTag
-	var r3 [][]byte
-	var r4 error
-	if rf, ok := ret.Get(0).(func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
-		return rf(functionNameBytes, data)
-	}
-	if rf, ok := ret.Get(0).(func([]byte, []byte) bind.ModuleInformation); ok {
-		r0 = rf(functionNameBytes, data)
-	} else {
-		r0 = ret.Get(0).(bind.ModuleInformation)
-	}
-
-	if rf, ok := ret.Get(1).(func([]byte, []byte) string); ok {
-		r1 = rf(functionNameBytes, data)
-	} else {
-		r1 = ret.Get(1).(string)
-	}
-
-	if rf, ok := ret.Get(2).(func([]byte, []byte) []aptos.TypeTag); ok {
-		r2 = rf(functionNameBytes, data)
-	} else {
-		if ret.Get(2) != nil {
-			r2 = ret.Get(2).([]aptos.TypeTag)
-		}
-	}
-
-	if rf, ok := ret.Get(3).(func([]byte, []byte) [][]byte); ok {
-		r3 = rf(functionNameBytes, data)
-	} else {
-		if ret.Get(3) != nil {
-			r3 = ret.Get(3).([][]byte)
-		}
-	}
-
-	if rf, ok := ret.Get(4).(func([]byte, []byte) error); ok {
-		r4 = rf(functionNameBytes, data)
-	} else {
-		r4 = ret.Error(4)
-	}
-
-	return r0, r1, r2, r3, r4
-}
-
-// MCMSEncoder_DispatchToSelf_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DispatchToSelf'
-type MCMSEncoder_DispatchToSelf_Call struct {
-	*mock.Call
-}
-
-// DispatchToSelf is a helper method to define mock.On call
-//   - functionNameBytes []byte
-//   - data []byte
-func (_e *MCMSEncoder_Expecter) DispatchToSelf(functionNameBytes interface{}, data interface{}) *MCMSEncoder_DispatchToSelf_Call {
-	return &MCMSEncoder_DispatchToSelf_Call{Call: _e.mock.On("DispatchToSelf", functionNameBytes, data)}
-}
-
-func (_c *MCMSEncoder_DispatchToSelf_Call) Run(run func(functionNameBytes []byte, data []byte)) *MCMSEncoder_DispatchToSelf_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].([]byte), args[1].([]byte))
-	})
-	return _c
-}
-
-func (_c *MCMSEncoder_DispatchToSelf_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_DispatchToSelf_Call {
-	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
-	return _c
-}
-
-func (_c *MCMSEncoder_DispatchToSelf_Call) RunAndReturn(run func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_DispatchToSelf_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -4036,6 +3381,418 @@ func (_c *MCMSEncoder_TimelockCancel_Call) RunAndReturn(run func([]byte) (bind.M
 	return _c
 }
 
+// TimelockDispatch provides a mock function with given fields: target, moduleName, functionName, data
+func (_m *MCMSEncoder) TimelockDispatch(target aptos.AccountAddress, moduleName string, functionName string, data []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
+	ret := _m.Called(target, moduleName, functionName, data)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockDispatch")
+	}
+
+	var r0 bind.ModuleInformation
+	var r1 string
+	var r2 []aptos.TypeTag
+	var r3 [][]byte
+	var r4 error
+	if rf, ok := ret.Get(0).(func(aptos.AccountAddress, string, string, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
+		return rf(target, moduleName, functionName, data)
+	}
+	if rf, ok := ret.Get(0).(func(aptos.AccountAddress, string, string, []byte) bind.ModuleInformation); ok {
+		r0 = rf(target, moduleName, functionName, data)
+	} else {
+		r0 = ret.Get(0).(bind.ModuleInformation)
+	}
+
+	if rf, ok := ret.Get(1).(func(aptos.AccountAddress, string, string, []byte) string); ok {
+		r1 = rf(target, moduleName, functionName, data)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	if rf, ok := ret.Get(2).(func(aptos.AccountAddress, string, string, []byte) []aptos.TypeTag); ok {
+		r2 = rf(target, moduleName, functionName, data)
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).([]aptos.TypeTag)
+		}
+	}
+
+	if rf, ok := ret.Get(3).(func(aptos.AccountAddress, string, string, []byte) [][]byte); ok {
+		r3 = rf(target, moduleName, functionName, data)
+	} else {
+		if ret.Get(3) != nil {
+			r3 = ret.Get(3).([][]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(4).(func(aptos.AccountAddress, string, string, []byte) error); ok {
+		r4 = rf(target, moduleName, functionName, data)
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
+}
+
+// MCMSEncoder_TimelockDispatch_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockDispatch'
+type MCMSEncoder_TimelockDispatch_Call struct {
+	*mock.Call
+}
+
+// TimelockDispatch is a helper method to define mock.On call
+//   - target aptos.AccountAddress
+//   - moduleName string
+//   - functionName string
+//   - data []byte
+func (_e *MCMSEncoder_Expecter) TimelockDispatch(target interface{}, moduleName interface{}, functionName interface{}, data interface{}) *MCMSEncoder_TimelockDispatch_Call {
+	return &MCMSEncoder_TimelockDispatch_Call{Call: _e.mock.On("TimelockDispatch", target, moduleName, functionName, data)}
+}
+
+func (_c *MCMSEncoder_TimelockDispatch_Call) Run(run func(target aptos.AccountAddress, moduleName string, functionName string, data []byte)) *MCMSEncoder_TimelockDispatch_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(aptos.AccountAddress), args[1].(string), args[2].(string), args[3].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockDispatch_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_TimelockDispatch_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockDispatch_Call) RunAndReturn(run func(aptos.AccountAddress, string, string, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_TimelockDispatch_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockDispatchToAccount provides a mock function with given fields: functionNameBytes, data
+func (_m *MCMSEncoder) TimelockDispatchToAccount(functionNameBytes []byte, data []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
+	ret := _m.Called(functionNameBytes, data)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockDispatchToAccount")
+	}
+
+	var r0 bind.ModuleInformation
+	var r1 string
+	var r2 []aptos.TypeTag
+	var r3 [][]byte
+	var r4 error
+	if rf, ok := ret.Get(0).(func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
+		return rf(functionNameBytes, data)
+	}
+	if rf, ok := ret.Get(0).(func([]byte, []byte) bind.ModuleInformation); ok {
+		r0 = rf(functionNameBytes, data)
+	} else {
+		r0 = ret.Get(0).(bind.ModuleInformation)
+	}
+
+	if rf, ok := ret.Get(1).(func([]byte, []byte) string); ok {
+		r1 = rf(functionNameBytes, data)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	if rf, ok := ret.Get(2).(func([]byte, []byte) []aptos.TypeTag); ok {
+		r2 = rf(functionNameBytes, data)
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).([]aptos.TypeTag)
+		}
+	}
+
+	if rf, ok := ret.Get(3).(func([]byte, []byte) [][]byte); ok {
+		r3 = rf(functionNameBytes, data)
+	} else {
+		if ret.Get(3) != nil {
+			r3 = ret.Get(3).([][]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(4).(func([]byte, []byte) error); ok {
+		r4 = rf(functionNameBytes, data)
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
+}
+
+// MCMSEncoder_TimelockDispatchToAccount_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockDispatchToAccount'
+type MCMSEncoder_TimelockDispatchToAccount_Call struct {
+	*mock.Call
+}
+
+// TimelockDispatchToAccount is a helper method to define mock.On call
+//   - functionNameBytes []byte
+//   - data []byte
+func (_e *MCMSEncoder_Expecter) TimelockDispatchToAccount(functionNameBytes interface{}, data interface{}) *MCMSEncoder_TimelockDispatchToAccount_Call {
+	return &MCMSEncoder_TimelockDispatchToAccount_Call{Call: _e.mock.On("TimelockDispatchToAccount", functionNameBytes, data)}
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToAccount_Call) Run(run func(functionNameBytes []byte, data []byte)) *MCMSEncoder_TimelockDispatchToAccount_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]byte), args[1].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToAccount_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_TimelockDispatchToAccount_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToAccount_Call) RunAndReturn(run func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_TimelockDispatchToAccount_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockDispatchToDeployer provides a mock function with given fields: functionNameBytes, data
+func (_m *MCMSEncoder) TimelockDispatchToDeployer(functionNameBytes []byte, data []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
+	ret := _m.Called(functionNameBytes, data)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockDispatchToDeployer")
+	}
+
+	var r0 bind.ModuleInformation
+	var r1 string
+	var r2 []aptos.TypeTag
+	var r3 [][]byte
+	var r4 error
+	if rf, ok := ret.Get(0).(func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
+		return rf(functionNameBytes, data)
+	}
+	if rf, ok := ret.Get(0).(func([]byte, []byte) bind.ModuleInformation); ok {
+		r0 = rf(functionNameBytes, data)
+	} else {
+		r0 = ret.Get(0).(bind.ModuleInformation)
+	}
+
+	if rf, ok := ret.Get(1).(func([]byte, []byte) string); ok {
+		r1 = rf(functionNameBytes, data)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	if rf, ok := ret.Get(2).(func([]byte, []byte) []aptos.TypeTag); ok {
+		r2 = rf(functionNameBytes, data)
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).([]aptos.TypeTag)
+		}
+	}
+
+	if rf, ok := ret.Get(3).(func([]byte, []byte) [][]byte); ok {
+		r3 = rf(functionNameBytes, data)
+	} else {
+		if ret.Get(3) != nil {
+			r3 = ret.Get(3).([][]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(4).(func([]byte, []byte) error); ok {
+		r4 = rf(functionNameBytes, data)
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
+}
+
+// MCMSEncoder_TimelockDispatchToDeployer_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockDispatchToDeployer'
+type MCMSEncoder_TimelockDispatchToDeployer_Call struct {
+	*mock.Call
+}
+
+// TimelockDispatchToDeployer is a helper method to define mock.On call
+//   - functionNameBytes []byte
+//   - data []byte
+func (_e *MCMSEncoder_Expecter) TimelockDispatchToDeployer(functionNameBytes interface{}, data interface{}) *MCMSEncoder_TimelockDispatchToDeployer_Call {
+	return &MCMSEncoder_TimelockDispatchToDeployer_Call{Call: _e.mock.On("TimelockDispatchToDeployer", functionNameBytes, data)}
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToDeployer_Call) Run(run func(functionNameBytes []byte, data []byte)) *MCMSEncoder_TimelockDispatchToDeployer_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]byte), args[1].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToDeployer_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_TimelockDispatchToDeployer_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToDeployer_Call) RunAndReturn(run func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_TimelockDispatchToDeployer_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockDispatchToRegistry provides a mock function with given fields: functionNameBytes, data
+func (_m *MCMSEncoder) TimelockDispatchToRegistry(functionNameBytes []byte, data []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
+	ret := _m.Called(functionNameBytes, data)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockDispatchToRegistry")
+	}
+
+	var r0 bind.ModuleInformation
+	var r1 string
+	var r2 []aptos.TypeTag
+	var r3 [][]byte
+	var r4 error
+	if rf, ok := ret.Get(0).(func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
+		return rf(functionNameBytes, data)
+	}
+	if rf, ok := ret.Get(0).(func([]byte, []byte) bind.ModuleInformation); ok {
+		r0 = rf(functionNameBytes, data)
+	} else {
+		r0 = ret.Get(0).(bind.ModuleInformation)
+	}
+
+	if rf, ok := ret.Get(1).(func([]byte, []byte) string); ok {
+		r1 = rf(functionNameBytes, data)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	if rf, ok := ret.Get(2).(func([]byte, []byte) []aptos.TypeTag); ok {
+		r2 = rf(functionNameBytes, data)
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).([]aptos.TypeTag)
+		}
+	}
+
+	if rf, ok := ret.Get(3).(func([]byte, []byte) [][]byte); ok {
+		r3 = rf(functionNameBytes, data)
+	} else {
+		if ret.Get(3) != nil {
+			r3 = ret.Get(3).([][]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(4).(func([]byte, []byte) error); ok {
+		r4 = rf(functionNameBytes, data)
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
+}
+
+// MCMSEncoder_TimelockDispatchToRegistry_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockDispatchToRegistry'
+type MCMSEncoder_TimelockDispatchToRegistry_Call struct {
+	*mock.Call
+}
+
+// TimelockDispatchToRegistry is a helper method to define mock.On call
+//   - functionNameBytes []byte
+//   - data []byte
+func (_e *MCMSEncoder_Expecter) TimelockDispatchToRegistry(functionNameBytes interface{}, data interface{}) *MCMSEncoder_TimelockDispatchToRegistry_Call {
+	return &MCMSEncoder_TimelockDispatchToRegistry_Call{Call: _e.mock.On("TimelockDispatchToRegistry", functionNameBytes, data)}
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToRegistry_Call) Run(run func(functionNameBytes []byte, data []byte)) *MCMSEncoder_TimelockDispatchToRegistry_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]byte), args[1].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToRegistry_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_TimelockDispatchToRegistry_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToRegistry_Call) RunAndReturn(run func([]byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_TimelockDispatchToRegistry_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// TimelockDispatchToSelf provides a mock function with given fields: functionName, data
+func (_m *MCMSEncoder) TimelockDispatchToSelf(functionName string, data []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
+	ret := _m.Called(functionName, data)
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockDispatchToSelf")
+	}
+
+	var r0 bind.ModuleInformation
+	var r1 string
+	var r2 []aptos.TypeTag
+	var r3 [][]byte
+	var r4 error
+	if rf, ok := ret.Get(0).(func(string, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
+		return rf(functionName, data)
+	}
+	if rf, ok := ret.Get(0).(func(string, []byte) bind.ModuleInformation); ok {
+		r0 = rf(functionName, data)
+	} else {
+		r0 = ret.Get(0).(bind.ModuleInformation)
+	}
+
+	if rf, ok := ret.Get(1).(func(string, []byte) string); ok {
+		r1 = rf(functionName, data)
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	if rf, ok := ret.Get(2).(func(string, []byte) []aptos.TypeTag); ok {
+		r2 = rf(functionName, data)
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).([]aptos.TypeTag)
+		}
+	}
+
+	if rf, ok := ret.Get(3).(func(string, []byte) [][]byte); ok {
+		r3 = rf(functionName, data)
+	} else {
+		if ret.Get(3) != nil {
+			r3 = ret.Get(3).([][]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(4).(func(string, []byte) error); ok {
+		r4 = rf(functionName, data)
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
+}
+
+// MCMSEncoder_TimelockDispatchToSelf_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockDispatchToSelf'
+type MCMSEncoder_TimelockDispatchToSelf_Call struct {
+	*mock.Call
+}
+
+// TimelockDispatchToSelf is a helper method to define mock.On call
+//   - functionName string
+//   - data []byte
+func (_e *MCMSEncoder_Expecter) TimelockDispatchToSelf(functionName interface{}, data interface{}) *MCMSEncoder_TimelockDispatchToSelf_Call {
+	return &MCMSEncoder_TimelockDispatchToSelf_Call{Call: _e.mock.On("TimelockDispatchToSelf", functionName, data)}
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToSelf_Call) Run(run func(functionName string, data []byte)) *MCMSEncoder_TimelockDispatchToSelf_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(string), args[1].([]byte))
+	})
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToSelf_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_TimelockDispatchToSelf_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockDispatchToSelf_Call) RunAndReturn(run func(string, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_TimelockDispatchToSelf_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TimelockExecuteBatch provides a mock function with given fields: targets, moduleNames, functionNames, datas, predecessor, salt
 func (_m *MCMSEncoder) TimelockExecuteBatch(targets []aptos.AccountAddress, moduleNames []string, functionNames []string, datas [][]byte, predecessor []byte, salt []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
 	ret := _m.Called(targets, moduleNames, functionNames, datas, predecessor, salt)
@@ -4848,6 +4605,86 @@ func (_c *MCMSEncoder_TimelockMinDelay_Call) RunAndReturn(run func() (bind.Modul
 	return _c
 }
 
+// TimelockRole provides a mock function with no fields
+func (_m *MCMSEncoder) TimelockRole() (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for TimelockRole")
+	}
+
+	var r0 bind.ModuleInformation
+	var r1 string
+	var r2 []aptos.TypeTag
+	var r3 [][]byte
+	var r4 error
+	if rf, ok := ret.Get(0).(func() (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() bind.ModuleInformation); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bind.ModuleInformation)
+	}
+
+	if rf, ok := ret.Get(1).(func() string); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	if rf, ok := ret.Get(2).(func() []aptos.TypeTag); ok {
+		r2 = rf()
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).([]aptos.TypeTag)
+		}
+	}
+
+	if rf, ok := ret.Get(3).(func() [][]byte); ok {
+		r3 = rf()
+	} else {
+		if ret.Get(3) != nil {
+			r3 = ret.Get(3).([][]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(4).(func() error); ok {
+		r4 = rf()
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
+}
+
+// MCMSEncoder_TimelockRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'TimelockRole'
+type MCMSEncoder_TimelockRole_Call struct {
+	*mock.Call
+}
+
+// TimelockRole is a helper method to define mock.On call
+func (_e *MCMSEncoder_Expecter) TimelockRole() *MCMSEncoder_TimelockRole_Call {
+	return &MCMSEncoder_TimelockRole_Call{Call: _e.mock.On("TimelockRole")}
+}
+
+func (_c *MCMSEncoder_TimelockRole_Call) Run(run func()) *MCMSEncoder_TimelockRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockRole_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_TimelockRole_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
+	return _c
+}
+
+func (_c *MCMSEncoder_TimelockRole_Call) RunAndReturn(run func() (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_TimelockRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // TimelockScheduleBatch provides a mock function with given fields: targets, moduleNames, functionNames, datas, predecessor, salt, delay
 func (_m *MCMSEncoder) TimelockScheduleBatch(targets []aptos.AccountAddress, moduleNames []string, functionNames []string, datas [][]byte, predecessor []byte, salt []byte, delay uint64) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
 	ret := _m.Called(targets, moduleNames, functionNames, datas, predecessor, salt, delay)
@@ -5178,6 +5015,86 @@ func (_c *MCMSEncoder_VerifyMerkleProof_Call) Return(_a0 bind.ModuleInformation,
 }
 
 func (_c *MCMSEncoder_VerifyMerkleProof_Call) RunAndReturn(run func([][]byte, []byte, []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_VerifyMerkleProof_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ZeroHash provides a mock function with no fields
+func (_m *MCMSEncoder) ZeroHash() (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error) {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for ZeroHash")
+	}
+
+	var r0 bind.ModuleInformation
+	var r1 string
+	var r2 []aptos.TypeTag
+	var r3 [][]byte
+	var r4 error
+	if rf, ok := ret.Get(0).(func() (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)); ok {
+		return rf()
+	}
+	if rf, ok := ret.Get(0).(func() bind.ModuleInformation); ok {
+		r0 = rf()
+	} else {
+		r0 = ret.Get(0).(bind.ModuleInformation)
+	}
+
+	if rf, ok := ret.Get(1).(func() string); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Get(1).(string)
+	}
+
+	if rf, ok := ret.Get(2).(func() []aptos.TypeTag); ok {
+		r2 = rf()
+	} else {
+		if ret.Get(2) != nil {
+			r2 = ret.Get(2).([]aptos.TypeTag)
+		}
+	}
+
+	if rf, ok := ret.Get(3).(func() [][]byte); ok {
+		r3 = rf()
+	} else {
+		if ret.Get(3) != nil {
+			r3 = ret.Get(3).([][]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(4).(func() error); ok {
+		r4 = rf()
+	} else {
+		r4 = ret.Error(4)
+	}
+
+	return r0, r1, r2, r3, r4
+}
+
+// MCMSEncoder_ZeroHash_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ZeroHash'
+type MCMSEncoder_ZeroHash_Call struct {
+	*mock.Call
+}
+
+// ZeroHash is a helper method to define mock.On call
+func (_e *MCMSEncoder_Expecter) ZeroHash() *MCMSEncoder_ZeroHash_Call {
+	return &MCMSEncoder_ZeroHash_Call{Call: _e.mock.On("ZeroHash")}
+}
+
+func (_c *MCMSEncoder_ZeroHash_Call) Run(run func()) *MCMSEncoder_ZeroHash_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *MCMSEncoder_ZeroHash_Call) Return(_a0 bind.ModuleInformation, _a1 string, _a2 []aptos.TypeTag, _a3 [][]byte, _a4 error) *MCMSEncoder_ZeroHash_Call {
+	_c.Call.Return(_a0, _a1, _a2, _a3, _a4)
+	return _c
+}
+
+func (_c *MCMSEncoder_ZeroHash_Call) RunAndReturn(run func() (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)) *MCMSEncoder_ZeroHash_Call {
 	_c.Call.Return(run)
 	return _c
 }

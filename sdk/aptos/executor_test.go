@@ -78,7 +78,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				},
 			},
 			mockSetup: func(client *mock_aptossdk.AptosRpcClient, signer *mock_aptossdk.TransactionSigner, mcms *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().Execute(
 					mock.Anything,
@@ -123,7 +123,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				client.EXPECT().Account(Must(hexToAddress("0x111111"))).Return(aptos.AccountInfo{
 					SequenceNumberStr: "789",
 				}, nil)
-				mockMCMSExecutorModule := mock_module_mcms_executor.NewMCMSExecutor(t)
+				mockMCMSExecutorModule := mock_module_mcms_executor.NewMCMSExecutorInterface(t)
 				mcms.EXPECT().MCMSExecutor().Return(mockMCMSExecutorModule)
 				mockMCMSExecutorModule.EXPECT().StageData(
 					&bind.TransactOpts{
@@ -248,7 +248,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				},
 			},
 			mockSetup: func(client *mock_aptossdk.AptosRpcClient, signer *mock_aptossdk.TransactionSigner, mcms *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().Execute(
 					mock.Anything,
@@ -312,7 +312,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				client.EXPECT().Account(Must(hexToAddress("0x111111"))).Return(aptos.AccountInfo{
 					SequenceNumberStr: "789",
 				}, nil)
-				mockMCMSExecutorModule := mock_module_mcms_executor.NewMCMSExecutor(t)
+				mockMCMSExecutorModule := mock_module_mcms_executor.NewMCMSExecutorInterface(t)
 				mcms.EXPECT().MCMSExecutor().Return(mockMCMSExecutorModule)
 				mockMCMSExecutorModule.EXPECT().StageData(
 					&bind.TransactOpts{
@@ -349,7 +349,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				client.EXPECT().Account(Must(hexToAddress("0x111111"))).Return(aptos.AccountInfo{
 					SequenceNumberStr: "789",
 				}, nil)
-				mockMCMSExecutorModule := mock_module_mcms_executor.NewMCMSExecutor(t)
+				mockMCMSExecutorModule := mock_module_mcms_executor.NewMCMSExecutorInterface(t)
 				mcms.EXPECT().MCMSExecutor().Return(mockMCMSExecutorModule)
 				mockMCMSExecutorModule.EXPECT().StageData(
 					&bind.TransactOpts{
@@ -447,7 +447,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 				},
 			},
 			mockSetup: func(mcms *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().SetRoot(
 					mock.Anything,
@@ -519,7 +519,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 				},
 			},
 			mockSetup: func(mcms *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				mcms.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().SetRoot(
 					mock.Anything,

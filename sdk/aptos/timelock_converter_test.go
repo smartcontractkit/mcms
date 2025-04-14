@@ -86,7 +86,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				salt:        common.HexToHash("0xabcd"),
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMS(t)
+				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMS)
 				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
 				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
@@ -175,7 +175,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				salt:        common.HexToHash("0xabcd"),
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMS(t)
+				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMS)
 				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
 				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
@@ -261,7 +261,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				salt:        common.HexToHash("0xabcd"),
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMS(t)
+				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMS)
 				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
 				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
@@ -393,7 +393,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				action:     types.TimelockActionSchedule,
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMS(t)
+				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMS)
 				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
 				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
@@ -412,7 +412,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				action:     types.TimelockActionBypass,
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMS(t)
+				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMS)
 				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
 				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
@@ -431,7 +431,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				action:     types.TimelockActionCancel,
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMS(t)
+				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMS)
 				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
 				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)

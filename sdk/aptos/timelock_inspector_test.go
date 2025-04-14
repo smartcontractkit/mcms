@@ -70,7 +70,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().TimelockIsOperation(
 					mock.Anything,
@@ -92,7 +92,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().TimelockIsOperation(
 					mock.Anything,
@@ -148,7 +148,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().TimelockIsOperationPending(
 					mock.Anything,
@@ -170,7 +170,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().TimelockIsOperationPending(
 					mock.Anything,
@@ -226,7 +226,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().TimelockIsOperationReady(
 					mock.Anything,
@@ -248,7 +248,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().TimelockIsOperationReady(
 					mock.Anything,
@@ -304,7 +304,7 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().TimelockIsOperationDone(
 					mock.Anything,
@@ -326,7 +326,7 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().TimelockIsOperationDone(
 					mock.Anything,

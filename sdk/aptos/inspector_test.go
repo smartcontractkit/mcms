@@ -48,7 +48,7 @@ func TestInspector_GetConfig(t *testing.T) {
 			mcmsAddr: "0x123",
 			role:     TimelockRoleProposer,
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().GetConfig(mock.Anything, TimelockRoleProposer.Byte()).Return(module_mcms.Config{
 					Signers: []module_mcms.Signer{
@@ -113,7 +113,7 @@ func TestInspector_GetConfig(t *testing.T) {
 			mcmsAddr: "0x123",
 			role:     TimelockRoleBypasser,
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().GetConfig(mock.Anything, TimelockRoleBypasser.Byte()).Return(module_mcms.Config{}, errors.New("error during GetConfig"))
 			},
@@ -164,7 +164,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 			mcmsAddr: "0x123",
 			role:     TimelockRoleCanceller,
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().GetOpCount(mock.Anything, TimelockRoleCanceller.Byte()).Return(127, nil)
 			},
@@ -179,7 +179,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 			mcmsAddr: "0x123",
 			role:     TimelockRoleBypasser,
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().GetOpCount(mock.Anything, TimelockRoleBypasser.Byte()).Return(0, errors.New("error during GetOpCount"))
 			},
@@ -230,7 +230,7 @@ func TestInspector_GetRoot(t *testing.T) {
 			mcmsAddr: "0x123",
 			role:     TimelockRoleProposer,
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().GetRoot(mock.Anything, TimelockRoleProposer.Byte()).Return(common.HexToAddress("0x123456789").Bytes(), 1742933811, nil)
 			},
@@ -246,7 +246,7 @@ func TestInspector_GetRoot(t *testing.T) {
 			mcmsAddr: "0x123",
 			role:     TimelockRoleCanceller,
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().GetRoot(mock.Anything, TimelockRoleCanceller.Byte()).Return(nil, 0, errors.New("error during GetRoot"))
 			},
@@ -296,7 +296,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 			mcmsAddr: "0x123",
 			role:     TimelockRoleBypasser,
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().GetRootMetadata(mock.Anything, TimelockRoleBypasser.Byte()).Return(module_mcms.RootMetadata{
 					Multisig:   aptos.AccountThree,
@@ -317,7 +317,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 			mcmsAddr: "0x123",
 			role:     TimelockRoleProposer,
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().GetRootMetadata(mock.Anything, TimelockRoleProposer.Byte()).Return(module_mcms.RootMetadata{}, errors.New("error during GetRootMetadata"))
 			},

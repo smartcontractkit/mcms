@@ -82,7 +82,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			},
 			role: TimelockRoleCanceller,
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().SetConfig(
 					mock.Anything,
@@ -133,7 +133,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				},
 			},
 			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMS(t)
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
 				m.EXPECT().MCMS().Return(mockMCMSModule)
 				mockMCMSModule.EXPECT().SetConfig(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("error during SetConfig"))
 			},
