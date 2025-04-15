@@ -1,5 +1,17 @@
 # @smartcontractkit/mcms
 
+## 0.17.0
+
+### Minor Changes
+
+- [#355](https://github.com/smartcontractkit/mcms/pull/355) [`28b56e3`](https://github.com/smartcontractkit/mcms/commit/28b56e31d312458457faf12c9e6354018c2c84b2) Thanks [@friedemannf](https://github.com/friedemannf)! - Add Timelock support for Aptos
+
+- [#265](https://github.com/smartcontractkit/mcms/pull/265) [`a51bc1b`](https://github.com/smartcontractkit/mcms/commit/a51bc1bba20e98f14f0973550f90f80fe58dd2a7) Thanks [@friedemannf](https://github.com/friedemannf)! - Add Aptos support
+
+### Patch Changes
+
+- [#350](https://github.com/smartcontractkit/mcms/pull/350) [`46b795b`](https://github.com/smartcontractkit/mcms/commit/46b795bfbb96e826d3c8a6a28e8e1134e71e354d) Thanks [@ecPablo](https://github.com/ecPablo)! - update ledger product ids
+
 ## 0.16.1
 
 ### Patch Changes
