@@ -16,3 +16,12 @@ func hexToAddress(address string) (aptos.AccountAddress, error) {
 
 	return addr, nil
 }
+
+func mustHexToAddress(address string) *aptos.AccountAddress {
+	addr, err := hexToAddress(address)
+	if err != nil {
+		panic(err)
+	}
+
+	return &addr
+}

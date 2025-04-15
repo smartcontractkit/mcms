@@ -110,18 +110,18 @@ import (
 
 func main() {
   // Step 1: Initialize the ProposalBuilder
-  builder := mcms.NewProposalBuilder()
+  timelockBuilder := mcms.NewProposalBuilder()
   selector := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector)
 
   // Step 2: Set Proposal Details
-  builder.
+  timelockBuilder.
     SetVersion("v1").
     SetValidUntil(1794610529).
     SetDescription("Increase staking rewards").
     SetOverridePreviousRoot(false)
 
   // Step 3: Set Chain Metadata
-  builder.SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
+  timelockBuilder.SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
     selector: {
       StartingOpCount: 0,
       MCMAddress:      "0x123",
@@ -129,12 +129,12 @@ func main() {
   })
 
   // append or overwrite chain metadata to the existing map
-  builder.AddChainMetadata(selector, types.ChainMetadata{
+  timelockBuilder.AddChainMetadata(selector, types.ChainMetadata{
     StartingOpCount: 0, MCMAddress: "0x345",
   })
 
   // Step 4: Set Operations
-  builder.SetOperations([]types.Operation{
+  timelockBuilder.SetOperations([]types.Operation{
     {
       ChainSelector: selector,
       Transaction: types.Transaction{
@@ -162,7 +162,7 @@ func main() {
   })
 
   // append operations to the existing array
-  builder.AddOperation(
+  timelockBuilder.AddOperation(
     types.Operation{
       ChainSelector: selector,
       Transaction: types.Transaction{
@@ -178,7 +178,7 @@ func main() {
   )
 
   // Step 5: Build the Proposal
-  proposal, err := builder.Build()
+  proposal, err := timelockBuilder.Build()
   if err != nil {
     log.Fatalf("Error building proposal: %v", err)
   }
@@ -305,46 +305,76 @@ specific operations and add them to a proposal. Here are some examples:
 
 ### EVM Operations
 
-Use the `evm.NewTransaction` helper to build EVM specific transaction.
+Use the `evm.NewTransaction` helper to build an EVM specific transaction.
 
 ```go
 // Create an evm specific tx for the proposal operation
 tx := evm.NewTransaction(
-common.Address{},
-[]byte("data bytes of the transaction"),
-5, // Value in GWEI
-"MyEVMContractType",
-[]string{"tag1", "tag2"},
+  common.Address{},
+  []byte("data bytes of the transaction"),
+  5, // Value in GWEI
+  "MyEVMContractType",
+  []string{"tag1", "tag2"},
 )
 
-op := builder.AddOperation(types.Operation{
-ChainSelector: selector,
-Transaction:   tx,
+builder.AddOperation(types.Operation{
+  ChainSelector: selector,
+  Transaction:   tx,
 })
 ```
 
 ### Solana Operations
 
-Use the `solana.NewTransaction` helper to build Solana specific transaction.
+Use the `solana.NewTransaction` helper to build a Solana specific transaction.
 
 ```go
 // Create a solana specific tx for the proposal operation
 accounts := []*solana.AccountMeta{
-{
-PublicKey:  solana.MustPublicKeyFromBase58("account pub key"),
-IsSigner:   false,
-IsWritable: true,
-}
+  {
+    PublicKey:  solana.MustPublicKeyFromBase58("account pub key"),
+    IsSigner:   false,
+    IsWritable: true,
+  }
 }
 
 tx := solana.NewTransaction(
-"programIDGoesHere",
-[]byte("data bytes of the instruction"),
-accounts,
-"MySolanaContractType",
-[]string{"tag1", "tag2"}
+  "programIDGoesHere",
+  []byte("data bytes of the instruction"),
+  accounts,
+  "MySolanaContractType",
+  []string{"tag1", "tag2"}
 )
 
-op := builder.AddOperation(types.Operation{ChainSelector: selector, Transaction: tx})
+builder.AddOperation(types.Operation{ChainSelector: selector, Transaction: tx})
 
+```
+
+### Aptos Operations
+
+Use the `aptos.NewTransaction` helper to build an Aptos specific transaction.
+Please note that MCMS on Aptos does not support non-timelock proposals. All operations targeting Aptos have to go through timelock.
+
+```go
+toAddress := aptos.AccountAddress{}
+if err := toAddress.ParseStringRelaxed("0xe2bb72029d2e1f48b7bede6569a9226653c43ab44e1a7e0df21eac31b3c91bf4"); err != nil {
+  panic(err)
+}
+
+tx, err := aptossdk.NewTransaction(
+  "package",
+  "module",
+  "function",
+  toAddress,
+  []byte("calldata"),
+  "MyAptosContractType",
+  []string("tag1", "tag2")
+)
+if err != nil {
+  panic(err)
+}
+
+timelockBuilder.AddOperation(types.BatchOperation{
+  ChainSelector: selector,
+  Transactions:  []types.Transaction{tx},
+})
 ```

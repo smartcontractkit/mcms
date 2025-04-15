@@ -64,6 +64,9 @@ func newTimelockConverter(csel types.ChainSelector) (sdk.TimelockConverter, erro
 	case cselectors.FamilySolana:
 		return &solana.TimelockConverter{}, nil
 
+	case cselectors.FamilyAptos:
+		return aptos.NewTimelockConverter(), nil
+
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}

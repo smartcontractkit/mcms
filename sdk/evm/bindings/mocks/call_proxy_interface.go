@@ -3,7 +3,7 @@
 package mocks
 
 import (
-	bind "github.com/ethereum/go-ethereum/accounts/abi/bind"
+	bind "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 	bindings "github.com/smartcontractkit/mcms/sdk/evm/bindings"
 
 	common "github.com/ethereum/go-ethereum/common"

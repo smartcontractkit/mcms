@@ -7,17 +7,16 @@ toolchain go1.24.1
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
-	github.com/aptos-labs/aptos-go-sdk v1.5.1-0.20250322153135-0c35be181ce8
-	github.com/ethereum/go-ethereum v1.15.5
+	github.com/aptos-labs/aptos-go-sdk v1.6.3-0.20250331001805-0680b714db6d
+	github.com/ethereum/go-ethereum v1.15.7
 	github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/solana-go v1.12.0
 	github.com/go-playground/validator/v10 v10.25.0
 	github.com/google/go-cmp v0.7.0
 	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
-	github.com/smartcontractkit/chain-selectors v1.0.47
-	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250327161505-c5e886268bd0
-	github.com/smartcontractkit/chainlink-aptos/relayer v0.0.0-20250327161505-c5e886268bd0
+	github.com/smartcontractkit/chain-selectors v1.0.48
+	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250414155853-651b4e583ee9
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250226104101-11778f2ead98
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.7
 	github.com/spf13/cast v1.7.1
@@ -189,7 +188,7 @@ require (
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/smartcontractkit/chainlink-common v0.5.1-0.20250314131019-e227d4e2dc2f // indirect
+	github.com/smartcontractkit/chainlink-common v0.6.1-0.20250329081313-84ec641e0758 // indirect
 	github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20250220133800-f3b940c4f298 // indirect
 	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect
@@ -241,8 +240,8 @@ require (
 	golang.org/x/term v0.30.0 // indirect
 	golang.org/x/text v0.23.0 // indirect
 	golang.org/x/time v0.10.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250313205543-e70fdf4c4cb4 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250324211829-b45e905df463 // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250324211829-b45e905df463 // indirect
 	google.golang.org/grpc v1.71.0 // indirect
 	google.golang.org/protobuf v1.36.6 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect

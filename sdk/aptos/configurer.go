@@ -19,14 +19,16 @@ var _ sdk.Configurer = &Configurer{}
 type Configurer struct {
 	client aptos.AptosRpcClient
 	auth   aptos.TransactionSigner
+	role   TimelockRole
 
 	bindingFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms.MCMS
 }
 
-func NewConfigurer(client aptos.AptosRpcClient, auth aptos.TransactionSigner) *Configurer {
+func NewConfigurer(client aptos.AptosRpcClient, auth aptos.TransactionSigner, role TimelockRole) *Configurer {
 	return &Configurer{
 		client:    client,
 		auth:      auth,
+		role:      role,
 		bindingFn: mcms.Bind,
 	}
 }
@@ -50,6 +52,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 	tx, err := mcmsBinding.MCMS().SetConfig(
 		opts,
+		c.role.Byte(),
 		signers,
 		signerGroups,
 		groupQuorum[:],

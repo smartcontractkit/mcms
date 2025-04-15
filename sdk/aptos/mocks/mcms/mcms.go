@@ -79,19 +79,19 @@ func (_c *MCMS_Address_Call) RunAndReturn(run func() aptos.AccountAddress) *MCMS
 }
 
 // MCMS provides a mock function with no fields
-func (_m *MCMS) MCMS() module_mcms.MCMS {
+func (_m *MCMS) MCMS() module_mcms.MCMSInterface {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for MCMS")
 	}
 
-	var r0 module_mcms.MCMS
-	if rf, ok := ret.Get(0).(func() module_mcms.MCMS); ok {
+	var r0 module_mcms.MCMSInterface
+	if rf, ok := ret.Get(0).(func() module_mcms.MCMSInterface); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(module_mcms.MCMS)
+			r0 = ret.Get(0).(module_mcms.MCMSInterface)
 		}
 	}
 
@@ -115,30 +115,30 @@ func (_c *MCMS_MCMS_Call) Run(run func()) *MCMS_MCMS_Call {
 	return _c
 }
 
-func (_c *MCMS_MCMS_Call) Return(_a0 module_mcms.MCMS) *MCMS_MCMS_Call {
+func (_c *MCMS_MCMS_Call) Return(_a0 module_mcms.MCMSInterface) *MCMS_MCMS_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MCMS_MCMS_Call) RunAndReturn(run func() module_mcms.MCMS) *MCMS_MCMS_Call {
+func (_c *MCMS_MCMS_Call) RunAndReturn(run func() module_mcms.MCMSInterface) *MCMS_MCMS_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // MCMSAccount provides a mock function with no fields
-func (_m *MCMS) MCMSAccount() module_mcms_account.MCMSAccount {
+func (_m *MCMS) MCMSAccount() module_mcms_account.MCMSAccountInterface {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for MCMSAccount")
 	}
 
-	var r0 module_mcms_account.MCMSAccount
-	if rf, ok := ret.Get(0).(func() module_mcms_account.MCMSAccount); ok {
+	var r0 module_mcms_account.MCMSAccountInterface
+	if rf, ok := ret.Get(0).(func() module_mcms_account.MCMSAccountInterface); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(module_mcms_account.MCMSAccount)
+			r0 = ret.Get(0).(module_mcms_account.MCMSAccountInterface)
 		}
 	}
 
@@ -162,30 +162,30 @@ func (_c *MCMS_MCMSAccount_Call) Run(run func()) *MCMS_MCMSAccount_Call {
 	return _c
 }
 
-func (_c *MCMS_MCMSAccount_Call) Return(_a0 module_mcms_account.MCMSAccount) *MCMS_MCMSAccount_Call {
+func (_c *MCMS_MCMSAccount_Call) Return(_a0 module_mcms_account.MCMSAccountInterface) *MCMS_MCMSAccount_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MCMS_MCMSAccount_Call) RunAndReturn(run func() module_mcms_account.MCMSAccount) *MCMS_MCMSAccount_Call {
+func (_c *MCMS_MCMSAccount_Call) RunAndReturn(run func() module_mcms_account.MCMSAccountInterface) *MCMS_MCMSAccount_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // MCMSDeployer provides a mock function with no fields
-func (_m *MCMS) MCMSDeployer() module_mcms_deployer.MCMSDeployer {
+func (_m *MCMS) MCMSDeployer() module_mcms_deployer.MCMSDeployerInterface {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for MCMSDeployer")
 	}
 
-	var r0 module_mcms_deployer.MCMSDeployer
-	if rf, ok := ret.Get(0).(func() module_mcms_deployer.MCMSDeployer); ok {
+	var r0 module_mcms_deployer.MCMSDeployerInterface
+	if rf, ok := ret.Get(0).(func() module_mcms_deployer.MCMSDeployerInterface); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(module_mcms_deployer.MCMSDeployer)
+			r0 = ret.Get(0).(module_mcms_deployer.MCMSDeployerInterface)
 		}
 	}
 
@@ -209,30 +209,30 @@ func (_c *MCMS_MCMSDeployer_Call) Run(run func()) *MCMS_MCMSDeployer_Call {
 	return _c
 }
 
-func (_c *MCMS_MCMSDeployer_Call) Return(_a0 module_mcms_deployer.MCMSDeployer) *MCMS_MCMSDeployer_Call {
+func (_c *MCMS_MCMSDeployer_Call) Return(_a0 module_mcms_deployer.MCMSDeployerInterface) *MCMS_MCMSDeployer_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MCMS_MCMSDeployer_Call) RunAndReturn(run func() module_mcms_deployer.MCMSDeployer) *MCMS_MCMSDeployer_Call {
+func (_c *MCMS_MCMSDeployer_Call) RunAndReturn(run func() module_mcms_deployer.MCMSDeployerInterface) *MCMS_MCMSDeployer_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // MCMSExecutor provides a mock function with no fields
-func (_m *MCMS) MCMSExecutor() module_mcms_executor.MCMSExecutor {
+func (_m *MCMS) MCMSExecutor() module_mcms_executor.MCMSExecutorInterface {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for MCMSExecutor")
 	}
 
-	var r0 module_mcms_executor.MCMSExecutor
-	if rf, ok := ret.Get(0).(func() module_mcms_executor.MCMSExecutor); ok {
+	var r0 module_mcms_executor.MCMSExecutorInterface
+	if rf, ok := ret.Get(0).(func() module_mcms_executor.MCMSExecutorInterface); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(module_mcms_executor.MCMSExecutor)
+			r0 = ret.Get(0).(module_mcms_executor.MCMSExecutorInterface)
 		}
 	}
 
@@ -256,30 +256,30 @@ func (_c *MCMS_MCMSExecutor_Call) Run(run func()) *MCMS_MCMSExecutor_Call {
 	return _c
 }
 
-func (_c *MCMS_MCMSExecutor_Call) Return(_a0 module_mcms_executor.MCMSExecutor) *MCMS_MCMSExecutor_Call {
+func (_c *MCMS_MCMSExecutor_Call) Return(_a0 module_mcms_executor.MCMSExecutorInterface) *MCMS_MCMSExecutor_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MCMS_MCMSExecutor_Call) RunAndReturn(run func() module_mcms_executor.MCMSExecutor) *MCMS_MCMSExecutor_Call {
+func (_c *MCMS_MCMSExecutor_Call) RunAndReturn(run func() module_mcms_executor.MCMSExecutorInterface) *MCMS_MCMSExecutor_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // MCMSRegistry provides a mock function with no fields
-func (_m *MCMS) MCMSRegistry() module_mcms_registry.MCMSRegistry {
+func (_m *MCMS) MCMSRegistry() module_mcms_registry.MCMSRegistryInterface {
 	ret := _m.Called()
 
 	if len(ret) == 0 {
 		panic("no return value specified for MCMSRegistry")
 	}
 
-	var r0 module_mcms_registry.MCMSRegistry
-	if rf, ok := ret.Get(0).(func() module_mcms_registry.MCMSRegistry); ok {
+	var r0 module_mcms_registry.MCMSRegistryInterface
+	if rf, ok := ret.Get(0).(func() module_mcms_registry.MCMSRegistryInterface); ok {
 		r0 = rf()
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(module_mcms_registry.MCMSRegistry)
+			r0 = ret.Get(0).(module_mcms_registry.MCMSRegistryInterface)
 		}
 	}
 
@@ -303,12 +303,12 @@ func (_c *MCMS_MCMSRegistry_Call) Run(run func()) *MCMS_MCMSRegistry_Call {
 	return _c
 }
 
-func (_c *MCMS_MCMSRegistry_Call) Return(_a0 module_mcms_registry.MCMSRegistry) *MCMS_MCMSRegistry_Call {
+func (_c *MCMS_MCMSRegistry_Call) Return(_a0 module_mcms_registry.MCMSRegistryInterface) *MCMS_MCMSRegistry_Call {
 	_c.Call.Return(_a0)
 	return _c
 }
 
-func (_c *MCMS_MCMSRegistry_Call) RunAndReturn(run func() module_mcms_registry.MCMSRegistry) *MCMS_MCMSRegistry_Call {
+func (_c *MCMS_MCMSRegistry_Call) RunAndReturn(run func() module_mcms_registry.MCMSRegistryInterface) *MCMS_MCMSRegistry_Call {
 	_c.Call.Return(run)
 	return _c
 }

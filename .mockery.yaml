@@ -41,10 +41,14 @@ packages:
       replace-type:
         - "github.com/aptos-labs/aptos-go-sdk/internal/types.AccountAddress=aptos:github.com/aptos-labs/aptos-go-sdk.AccountAddress"
     interfaces:
-      MCMS:
+      MCMSInterface:
         config:
           dir: "./sdk/aptos/mocks/mcms/mcms"
           filename: "mcms.go"
+      MCMSEncoder:
+        config:
+          dir: "./sdk/aptos/mocks/mcms/mcms"
+          filename: "mcms_encoder.go"
   github.com/smartcontractkit/chainlink-aptos/bindings/mcms/mcms_executor:
     config:
       all: false
@@ -52,7 +56,7 @@ packages:
       replace-type:
         - "github.com/aptos-labs/aptos-go-sdk/internal/types.AccountAddress=aptos:github.com/aptos-labs/aptos-go-sdk.AccountAddress"
     interfaces:
-      MCMSExecutor:
+      MCMSExecutorInterface:
         config:
           dir: "./sdk/aptos/mocks/mcms/mcms_executor"
           filename: "mcms_executor.go"

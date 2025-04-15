@@ -69,3 +69,11 @@ func (a *AptosTestSuite) deployMCMSTestContract() {
 	a.T().Logf("📃 Deployed MCMS Test contract at %v in tx %v", addr.StringLong(), data.Hash)
 	a.MCMSTestContract = mcmsTestContract
 }
+
+func Must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+
+	return t
+}
