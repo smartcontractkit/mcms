@@ -46,7 +46,7 @@ func (e *TimelockExecutor) Execute(
 	}
 	bindings.SetProgramID(programID) // see https://github.com/gagliardetto/solana-go/issues/254
 
-	instructionsData, err := getInstructionDataFromBatchOperation(bop)
+	instructionsData, err := getInstructionDataFromBatchOperation(bop, false)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to get InstructionData from batch operation: %w", err)
 	}
