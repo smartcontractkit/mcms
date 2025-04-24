@@ -26,6 +26,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	// --- arrange ---
 	ctx := context.Background()
 	s.SetupMCM(testPDASeedSetRootTest)
+	s.SetupTimelock(testPDASeedSetRootTest, 1*time.Second)
 
 	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedSetRootTest)
 
@@ -92,6 +93,6 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 
 	gotRoot, gotValidUntil, err := inspectors[s.ChainSelector].GetRoot(ctx, mcmAddress)
 	s.Require().NoError(err)
-	s.Require().Equal(common.HexToHash("0x11329486f2a7bb589320f2a8e9fad50fd5ed9ceeb3c1e2f71491d5ab848c7f60"), gotRoot)
+	s.Require().Equal(common.HexToHash("0x2b970fa3b929cafc45e8740e5123ebf150c519813bcf4d9c7284518fd5720108"), gotRoot)
 	s.Require().Equal(uint32(validUntil), gotValidUntil)
 }
