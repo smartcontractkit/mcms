@@ -19,8 +19,8 @@ import (
 	"github.com/google/go-cmp/cmp"
 	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/external_program_cpi_stub"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
-	"github.com/stretchr/testify/require"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms"
 	e2eutils "github.com/smartcontractkit/mcms/e2e/utils/solana"
@@ -97,14 +97,19 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	operation2PDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockProgramID, testPDASeedTimelockConverter, operation2ID)
 	s.Require().NoError(err)
 
-	metadata, err := solanasdk.NewChainMetadata(
-		0,
-		s.MCMProgramID,
-		testPDASeedTimelockConverter,
-		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
-		s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
-		s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
-	s.Require().NoError(err)
+	chainMetadata := func() types.ChainMetadata {
+		address := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedTimelockConverter)
+		opCount, err := solanasdk.NewInspector(s.SolanaClient).GetOpCount(ctx, address)
+		s.Require().NoError(err)
+
+		metadata, err := solanasdk.NewChainMetadata(opCount, s.MCMProgramID, testPDASeedTimelockConverter,
+			s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
+			s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
+			s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
+		s.Require().NoError(err)
+
+		return metadata
+	}
 	timelockProposalBuilder := func() *mcms.TimelockProposalBuilder {
 		return mcms.NewTimelockProposalBuilder().
 			SetValidUntil(uint32(validUntil)).
@@ -113,7 +118,6 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 			SetVersion("v1").
 			SetDelay(types.NewDuration(1*time.Second)).
 			AddTimelockAddress(s.ChainSelector, timelockAddress).
-			AddChainMetadata(s.ChainSelector, metadata).
 			AddOperation(types.BatchOperation{ // op1
 				ChainSelector: s.ChainSelector,
 				Transactions:  []types.Transaction{emptyFnTransaction, u8DataTransaction},
@@ -125,7 +129,11 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	}
 
 	s.Run("schedule", func() {
-		timelockProposal, err := timelockProposalBuilder().SetAction(types.TimelockActionSchedule).Build()
+		cMetadata := chainMetadata()
+		timelockProposal, err := timelockProposalBuilder().
+			AddChainMetadata(s.ChainSelector, cMetadata).
+			SetAction(types.TimelockActionSchedule).
+			Build()
 		s.Require().NoError(err)
 
 		proposerAC := s.Roles[timelock.Proposer_Role].AccessController.PublicKey()
@@ -136,7 +144,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
-			AddChainMetadata(s.ChainSelector, metadata).
+			AddChainMetadata(s.ChainSelector, chainMetadata()).
 			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
 				// op1: initialize operation instruction
 				To:                s.TimelockProgramID.String(),
@@ -334,11 +342,15 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		// --- assert ---
 		// check that the AccountMut instruction executed successfully
 		finalValue := readCPIStubU8Value(ctx, s.T(), s.SolanaClient, u8ValuePDA)
-		s.Require().Equal(initialValue + 1, finalValue)
+		s.Require().Equal(initialValue+1, finalValue)
 	})
 
 	s.Run("cancel", func() {
-		timelockProposal, err := timelockProposalBuilder().SetAction(types.TimelockActionCancel).Build()
+		metadata := chainMetadata()
+		timelockProposal, err := timelockProposalBuilder().
+			AddChainMetadata(s.ChainSelector, metadata).
+			SetAction(types.TimelockActionCancel).
+			Build()
 		s.Require().NoError(err)
 
 		// build expected output Proposal
@@ -396,12 +408,9 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		operation2BypasserPDA, err := solanasdk.FindTimelockBypasserOperationPDA(s.TimelockProgramID, testPDASeedTimelockConverter, bypassOperation2ID)
 		s.Require().NoError(err)
 
-		opCount, err := solanasdk.NewInspector(s.SolanaClient).GetOpCount(ctx, metadata.MCMAddress)
-		s.Require().NoError(err)
-		bypassMetadata := metadata
-		bypassMetadata.StartingOpCount = opCount
+		metadata := chainMetadata()
 		timelockProposal, err := timelockProposalBuilder().
-			AddChainMetadata(s.ChainSelector, bypassMetadata).
+			AddChainMetadata(s.ChainSelector, metadata).
 			SetAction(types.TimelockActionBypass).
 			Build()
 		s.Require().NoError(err)
@@ -616,7 +625,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		// --- assert ---
 		// check that the AccountMut instruction executed successfully
 		finalValue := readCPIStubU8Value(ctx, s.T(), s.SolanaClient, u8ValuePDA)
-		s.Require().Equal(initialValue + 1, finalValue)
+		s.Require().Equal(initialValue+1, finalValue)
 	})
 }
 
@@ -674,15 +683,6 @@ func (s *SolanaTestSuite) executeTimelockProposal(
 	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `account_mut`")
 }
 
-func newRandomAccount(t *testing.T) (solana.PrivateKey, solana.PublicKey) { //nolint:unused
-	t.Helper()
-
-	privateKey, err := solana.NewRandomPrivateKey()
-	require.NoError(t, err)
-
-	return privateKey, privateKey.PublicKey()
-}
-
 func marshalAdditionalFields(t *testing.T, additionalFields solanasdk.AdditionalFields) []byte {
 	t.Helper()
 	marshalledBytes, err := json.Marshal(additionalFields)
@@ -721,8 +721,11 @@ func getTransactionLogs(t *testing.T, ctx context.Context, client *rpc.Client, s
 }
 
 func readCPIStubU8Value(ctx context.Context, t *testing.T, client *rpc.Client, pda solana.PublicKey) uint8 {
+	t.Helper()
+
 	var account cpistub.Value
 	err := solanaCommon.GetAccountDataBorshInto(ctx, client, pda, rpc.CommitmentConfirmed, &account)
 	require.NoError(t, err)
+
 	return account.Value
 }

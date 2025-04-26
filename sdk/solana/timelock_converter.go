@@ -24,8 +24,7 @@ const AppendIxDataChunkSize = 491
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
-type TimelockConverter struct {
-}
+type TimelockConverter struct{}
 
 func (t TimelockConverter) ConvertBatchToChainOperations(
 	ctx context.Context,
@@ -103,8 +102,8 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 			return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", err)
 		}
 		instructions, err = bypassInstructions(timelockPDASeed, operationID, additionalFields.BypasserRoleAccessController,
-			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData,
-			accounts) //nolint:gosec
+			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData, //nolint:gosec
+			accounts)
 	default:
 		err = fmt.Errorf("invalid timelock operation: %s", string(action))
 	}
@@ -306,7 +305,7 @@ func scheduleBatchInstructions(
 		offset := 0
 
 		for offset < len(rawData) {
-			end := min(offset + AppendIxDataChunkSize, len(rawData))
+			end := min(offset+AppendIxDataChunkSize, len(rawData))
 			chunk := rawData[offset:end]
 
 			appendIx, appendErr := bindings.NewAppendInstructionDataInstruction(
@@ -407,7 +406,7 @@ func bypassInstructions(
 
 		for offset < len(rawData) {
 			// -- append bypasser instruction data
-			end := min(offset + AppendIxDataChunkSize, len(rawData))
+			end := min(offset+AppendIxDataChunkSize, len(rawData))
 			chunk := rawData[offset:end]
 
 			appendIx, appendErr := bindings.NewAppendBypasserInstructionDataInstruction(
