@@ -26,6 +26,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 	// --- arrange ---
 	ctx := context.Background()
 	s.SetupMCM(testPDASeedSetRootTest)
+	s.SetupTimelock(testPDASeedSetRootTest, 1*time.Second)
 
 	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedSetRootTest)
 

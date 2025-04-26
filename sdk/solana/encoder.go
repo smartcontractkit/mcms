@@ -139,6 +139,7 @@ func boolToPaddedEncoding(b bool) []byte {
 
 func serializeAccountMeta(a *solana.AccountMeta) []byte {
 	var flags byte
+	// if a.IsSigner && solana.IsOnCurve(a.PublicKey.Bytes()) {
 	if a.IsSigner {
 		flags |= 0b10
 	}

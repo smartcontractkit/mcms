@@ -97,7 +97,6 @@ func (e *Executor) ExecuteOperation(
 		uint64(nonce),
 		op.Transaction.Data,
 		byteProof,
-
 		configPDA,
 		rootMetadataPDA,
 		expiringRootAndOpCountPDA,
@@ -105,8 +104,19 @@ func (e *Executor) ExecuteOperation(
 		signedPDA,
 		e.auth.PublicKey(),
 	)
+
 	// Append the accounts from the AdditionalFields
 	ix.AccountMetaSlice = append(ix.AccountMetaSlice, additionalFields.Accounts...)
+	// // Append the accounts from the AdditionalFields
+	// for _, account := range additionalFields.Accounts {
+	// 	// isSigner := account.IsSigner && solana.IsOnCurve(account.PublicKey.Bytes())
+	// 	ix.AccountMetaSlice = append(ix.AccountMetaSlice, &solana.AccountMeta{
+	// 		PublicKey:  account.PublicKey,
+	// 		IsWritable: account.IsWritable,
+	// 		IsSigner:   false, // isSigner,
+	// 	})
+	// }
+
 	signature, tx, err := e.sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to call execute operation instruction: %w", err)

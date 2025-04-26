@@ -12,9 +12,9 @@ family = "evm"
 
 # Predefined anvil keys for testing
 private_keys = [
-    "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
-    "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
-    "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
+	"0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
+	"0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
+	"0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
 ]
 
 [evm_config_b]
@@ -35,10 +35,11 @@ public_key ="9n1pyVGGo6V4mpiSDMVay5As9NurEkY283wwRk1Kto2C"
 
 
 [solana_config.solana_programs]
-mcm = "6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX"
-timelock = "LoCoNsJFuhTkSQjfdDfn3yuwqhSYoPujmviRHVCzsqn"
-access_controller = "9xi644bRR8birboDGdTiwBq3C7VEeR7VuamRYYXCubUW"
-external_program_cpi_stub = "4HeqEoSyfYpeC2goFLj9eHgkxV33mR5G7JYAbRsN14uQ"
+mcm = "5vNJx78mz7KVMjhuipyr9jKBKcMrKYGdjGkgE4LUmjKk"
+timelock = "DoajfR5tK24xVw51fWcawUZWhAXD8yrBJVacc13neVQA"
+access_controller = "6KsN58MTnRQ8FfPaXHiFPPFGDRioikj9CdPvPxZJdCjb"
+external_program_cpi_stub = "2zZwzyptLqwFJFEFxjPvrdhiGpH9pJ3MfrrmZX6NTKxm"
 
-[aptos_config]
-type = "aptos"
+# [aptos_config]
+# type = "aptos"
+# port = "8888"
