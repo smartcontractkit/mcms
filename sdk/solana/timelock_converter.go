@@ -231,6 +231,22 @@ func getAccountsFromBatchOperation(batchOp types.BatchOperation) ([]*solana.Acco
 	return uniqueAccounts, nil
 }
 
+func syncWritableAttribute(accounts []*solana.AccountMeta) []*solana.AccountMeta {
+	writableAttrMap := map[solana.PublicKey]bool{}
+	for _, account := range accounts {
+		writableAttrMap[account.PublicKey] = writableAttrMap[account.PublicKey] || account.IsWritable
+	}
+
+	syncedAccounts := make([]*solana.AccountMeta, len(accounts))
+	for i, account := range accounts {
+		accountCopy := *account
+		accountCopy.IsWritable = writableAttrMap[account.PublicKey]
+		syncedAccounts[i] = &accountCopy
+	}
+
+	return syncedAccounts
+}
+
 func getTagsFromBatchOperation(batchOp types.BatchOperation) []string {
 	tags := make([]string, 0)
 	for _, tx := range batchOp.Transactions {
@@ -448,6 +464,7 @@ func bypassInstructions(
 	bypassExecIxBuilder := bindings.NewBypasserExecuteBatchInstruction(pdaSeed, operationID,
 		operationPDA, configPDA, signerPDA, bypassAccessController, mcmSignerPDA)
 	bypassExecIxBuilder.AccountMetaSlice = append(bypassExecIxBuilder.AccountMetaSlice, remainingAccounts...)
+	bypassExecIxBuilder.AccountMetaSlice = syncWritableAttribute(bypassExecIxBuilder.AccountMetaSlice)
 	instruction, err := bypassExecIxBuilder.ValidateAndBuild()
 	if err != nil {
 		return []solana.Instruction{}, fmt.Errorf("unable to build BypasserExecuteBatch instruction: %w", err)
