@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.18.0
+
+### Minor Changes
+
+- [#366](https://github.com/smartcontractkit/mcms/pull/366) [`637d057`](https://github.com/smartcontractkit/mcms/commit/637d0578ec656f4eacbfd06f88a01d9bcada5034) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): fix the accounts added to the BypassExecuteBatch instruction
+
 ## 0.17.0
 
 ### Minor Changes
