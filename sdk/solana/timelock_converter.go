@@ -24,8 +24,7 @@ const AppendIxDataChunkSize = 491
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
-type TimelockConverter struct {
-}
+type TimelockConverter struct{}
 
 func (t TimelockConverter) ConvertBatchToChainOperations(
 	ctx context.Context,
@@ -55,6 +54,9 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to convert batchop to solana instructions: %w", err)
 	}
 
+	if action == types.TimelockActionBypass {
+		predecessor = common.Hash{}
+	}
 	operationID, err := HashOperation(instructionsData, predecessor, salt)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to compute operation id: %w", err)
@@ -95,8 +97,13 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		instructions, err = cancelInstructions(timelockPDASeed, operationID, additionalFields.CancellerRoleAccessController,
 			operationPDA, configPDA, mcmSignerPDA)
 	case types.TimelockActionBypass:
+		accounts, rerr := getAccountsFromBatchOperation(batchOp)
+		if rerr != nil {
+			return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", err)
+		}
 		instructions, err = bypassInstructions(timelockPDASeed, operationID, additionalFields.BypasserRoleAccessController,
-			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData) //nolint:gosec
+			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData, //nolint:gosec
+			accounts)
 	default:
 		err = fmt.Errorf("invalid timelock operation: %s", string(action))
 	}
@@ -104,7 +111,7 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to build %v instruction: %w", action, err)
 	}
 
-	operations, err := solanaInstructionToMcmsOperation(instructions, batchOp.ChainSelector, tags)
+	operations, err := solanaInstructionToMcmsOperation(instructions, batchOp.ChainSelector, tags, mcmSignerPDA)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to convert instructions to mcms operations: %w", err)
 	}
@@ -206,7 +213,38 @@ func getAccountsFromBatchOperation(batchOp types.BatchOperation) ([]*solana.Acco
 		accounts = append(accounts, additionalFields.Accounts...)
 	}
 
-	return accounts, nil
+	accountsMap := map[solana.PublicKey]*solana.AccountMeta{}
+	uniqueAccounts := make([]*solana.AccountMeta, 0)
+	for _, account := range accounts {
+		existingAccount, found := accountsMap[account.PublicKey]
+		if found {
+			// existingAccount.IsSigner = existingAccount.IsSigner || account.IsSigner
+			existingAccount.IsWritable = existingAccount.IsWritable || account.IsWritable
+		} else {
+			accountCopy := *account
+			accountCopy.IsSigner = false
+			accountsMap[account.PublicKey] = &accountCopy
+			uniqueAccounts = append(uniqueAccounts, &accountCopy)
+		}
+	}
+
+	return uniqueAccounts, nil
+}
+
+func syncWritableAttribute(accounts []*solana.AccountMeta) []*solana.AccountMeta {
+	writableAttrMap := map[solana.PublicKey]bool{}
+	for _, account := range accounts {
+		writableAttrMap[account.PublicKey] = writableAttrMap[account.PublicKey] || account.IsWritable
+	}
+
+	syncedAccounts := make([]*solana.AccountMeta, len(accounts))
+	for i, account := range accounts {
+		accountCopy := *account
+		accountCopy.IsWritable = writableAttrMap[account.PublicKey]
+		syncedAccounts[i] = &accountCopy
+	}
+
+	return syncedAccounts
 }
 
 func getTagsFromBatchOperation(batchOp types.BatchOperation) []string {
@@ -219,7 +257,7 @@ func getTagsFromBatchOperation(batchOp types.BatchOperation) []string {
 }
 
 func solanaInstructionToMcmsOperation(
-	instructions []solana.Instruction, chainSelector types.ChainSelector, tags []string,
+	instructions []solana.Instruction, chainSelector types.ChainSelector, tags []string, signerPDA solana.PublicKey,
 ) ([]types.Operation, error) {
 	operations := make([]types.Operation, 0, len(instructions))
 	for _, instruction := range instructions {
@@ -230,7 +268,7 @@ func solanaInstructionToMcmsOperation(
 
 		accounts := []*solana.AccountMeta{}
 		for _, account := range instruction.Accounts() {
-			account.IsSigner = account.IsSigner && solana.IsOnCurve(account.PublicKey.Bytes())
+			account.IsSigner = account.IsSigner && account.PublicKey != signerPDA
 			accounts = append(accounts, account)
 		}
 
@@ -283,10 +321,7 @@ func scheduleBatchInstructions(
 		offset := 0
 
 		for offset < len(rawData) {
-			end := offset + AppendIxDataChunkSize
-			if end > len(rawData) {
-				end = len(rawData)
-			}
+			end := min(offset+AppendIxDataChunkSize, len(rawData))
 			chunk := rawData[offset:end]
 
 			appendIx, appendErr := bindings.NewAppendInstructionDataInstruction(
@@ -342,11 +377,12 @@ func cancelInstructions(
 
 func bypassInstructions(
 	pdaSeed PDASeed, operationID [32]byte, bypassAccessController, operationPDA, configPDA, signerPDA,
-	mcmSignerPDA solana.PublicKey,
-	salt [32]byte,
-	numInstructions uint32, instructionsData []bindings.InstructionData,
+	mcmSignerPDA solana.PublicKey, salt [32]byte, numInstructions uint32, instructionsData []bindings.InstructionData,
+	remainingAccounts []*solana.AccountMeta,
 ) ([]solana.Instruction, error) {
 	instructions := make([]solana.Instruction, 0, numInstructions)
+
+	// -- initialize bypasser operation
 	initOpIx, ioErr := bindings.NewInitializeBypasserOperationInstruction(
 		pdaSeed,
 		operationID,
@@ -364,6 +400,7 @@ func bypassInstructions(
 	instructions = append(instructions, initOpIx)
 
 	for i, instruction := range instructionsData {
+		// -- initialize bypasser instruction
 		initIx, apErr := bindings.NewInitializeBypasserInstructionInstruction(
 			pdaSeed,
 			operationID,
@@ -384,10 +421,8 @@ func bypassInstructions(
 		offset := 0
 
 		for offset < len(rawData) {
-			end := offset + AppendIxDataChunkSize
-			if end > len(rawData) {
-				end = len(rawData)
-			}
+			// -- append bypasser instruction data
+			end := min(offset+AppendIxDataChunkSize, len(rawData))
 			chunk := rawData[offset:end]
 
 			appendIx, appendErr := bindings.NewAppendBypasserInstructionDataInstruction(
@@ -411,6 +446,7 @@ func bypassInstructions(
 		}
 	}
 
+	// -- finalize bypasser operation
 	finOpIx, foErr := bindings.NewFinalizeBypasserOperationInstruction(
 		pdaSeed,
 		operationID,
@@ -424,8 +460,12 @@ func bypassInstructions(
 	}
 	instructions = append(instructions, finOpIx)
 
-	instruction, err := bindings.NewBypasserExecuteBatchInstruction(pdaSeed, operationID, operationPDA,
-		configPDA, signerPDA, bypassAccessController, mcmSignerPDA).ValidateAndBuild()
+	// -- bypasser execute batch
+	bypassExecIxBuilder := bindings.NewBypasserExecuteBatchInstruction(pdaSeed, operationID,
+		operationPDA, configPDA, signerPDA, bypassAccessController, mcmSignerPDA)
+	bypassExecIxBuilder.AccountMetaSlice = append(bypassExecIxBuilder.AccountMetaSlice, remainingAccounts...)
+	bypassExecIxBuilder.AccountMetaSlice = syncWritableAttribute(bypassExecIxBuilder.AccountMetaSlice)
+	instruction, err := bypassExecIxBuilder.ValidateAndBuild()
 	if err != nil {
 		return []solana.Instruction{}, fmt.Errorf("unable to build BypasserExecuteBatch instruction: %w", err)
 	}
