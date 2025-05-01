@@ -359,7 +359,10 @@ func Test_ScheduleAndCancelProposal(t *testing.T) {
 	}
 }
 
-func scheduleGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash, delay types.Duration) (evmsim.SimulatedChain, *bindings.ManyChainMultiSig, *bindings.RBACTimelock, TimelockProposal, []common.Hash) {
+func scheduleGrantRolesProposal(
+	t *testing.T, targetRoles []common.Hash, delay types.Duration) (evmsim.SimulatedChain, *bindings.ManyChainMultiSig,
+	*bindings.RBACTimelock, TimelockProposal, []common.Hash,
+) {
 	t.Helper()
 
 	sim := evmsim.NewSimulatedChain(t, 1)
@@ -450,7 +453,7 @@ func scheduleGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles [
 func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
 	t.Helper()
 
-	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, ctx, targetRoles, types.MustParseDuration("5s"))
+	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, targetRoles, types.MustParseDuration("5s"))
 
 	converters := map[types.ChainSelector]sdk.TimelockConverter{
 		chaintest.Chain1Selector: &evm.TimelockConverter{},
@@ -559,58 +562,27 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 		require.False(t, isOperationReady)
 	}
 
-	// Check IsReady function fails
-	err = tExecutable.IsReady(ctx)
-	require.Error(t, err)
-
-	// Check IsChainReady function fails
-	for chainSelector := range proposal.ChainMetadata {
-		err = tExecutable.IsChainReady(ctx, chainSelector)
-		require.Error(t, err)
-	}
+	opIdx := 0
+	requireOperationPending(t, ctx, tExecutable, &proposal, opIdx)
+	requireOperationNotReady(t, ctx, tExecutable, &proposal, opIdx)
+	requireOperationNotDone(t, ctx, tExecutable, &proposal, opIdx)
 
 	// sleep for 5 seconds and then mine a block
 	require.NoError(t, sim.Backend.AdjustTime(5*time.Second))
 	sim.Backend.Commit() // Note < 1.14 geth needs a commit after adjusting time.
 
-	opIdx := 0
-
-	// IsReady
-	err = tExecutable.IsReady(ctx)
-	require.NoError(t, err)
-	for chainSelector := range proposal.ChainMetadata {
-		err = tExecutable.IsChainReady(ctx, chainSelector)
-		require.NoError(t, err)
-	}
-
-	// !IsDone
-	err = tExecutable.IsOperationDone(ctx, opIdx)
-	require.Error(t, err)
-	for chainSelector := range proposal.ChainMetadata {
-		err = tExecutable.IsChainDone(ctx, chainSelector)
-		require.Error(t, err)
-	}
+	requireOperationPending(t, ctx, tExecutable, &proposal, opIdx)
+	requireOperationReady(t, ctx, tExecutable, &proposal, opIdx)
+	requireOperationNotDone(t, ctx, tExecutable, &proposal, opIdx)
 
 	// Execute the proposal
 	_, err = tExecutable.Execute(ctx, opIdx)
 	require.NoError(t, err)
 	sim.Backend.Commit()
 
-	// IsDone
-	err = tExecutable.IsOperationDone(ctx, opIdx)
-	require.NoError(t, err)
-	for chainSelector := range proposal.ChainMetadata {
-		err = tExecutable.IsChainDone(ctx, chainSelector)
-		require.NoError(t, err)
-	}
-
-	// !IsReady
-	err = tExecutable.IsOperationReady(ctx, opIdx)
-	require.Error(t, err)
-	for chainSelector := range proposal.ChainMetadata {
-		err = tExecutable.IsChainReady(ctx, chainSelector)
-		require.Error(t, err)
-	}
+	requireOperationNotPending(t, ctx, tExecutable, &proposal, opIdx)
+	requireOperationNotReady(t, ctx, tExecutable, &proposal, opIdx)
+	requireOperationDone(t, ctx, tExecutable, &proposal, opIdx)
 
 	// Check the state of the timelock contract
 	for _, role := range targetRoles {
@@ -626,7 +598,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
 	t.Helper()
 
-	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, ctx, targetRoles, types.MustParseDuration("5m"))
+	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, targetRoles, types.MustParseDuration("5m"))
 
 	converters := map[types.ChainSelector]sdk.TimelockConverter{
 		chaintest.Chain1Selector: &evm.TimelockConverter{},
@@ -984,4 +956,76 @@ func Test_TimelockExecutable_GetChainSpecificIndex(t *testing.T) {
 			})
 		}
 	})
+}
+
+func requireOperationPending(
+	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
+) {
+	t.Helper()
+	err := tExecutable.IsOperationPending(ctx, opIdx)
+	require.NoError(t, err)
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainPending(ctx, chainSelector)
+		require.NoError(t, err)
+	}
+}
+
+func requireOperationNotPending(
+	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
+) {
+	t.Helper()
+	err := tExecutable.IsOperationPending(ctx, opIdx)
+	require.ErrorContains(t, err, "operation 0 is not pending")
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainPending(ctx, chainSelector)
+		require.ErrorContains(t, err, "operation 0 is not pending")
+	}
+}
+
+func requireOperationReady(
+	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
+) {
+	t.Helper()
+	err := tExecutable.IsOperationReady(ctx, opIdx)
+	require.NoError(t, err)
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainReady(ctx, chainSelector)
+		require.NoError(t, err)
+	}
+}
+
+func requireOperationNotReady(
+	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
+) {
+	t.Helper()
+	err := tExecutable.IsOperationReady(ctx, opIdx)
+	require.ErrorContains(t, err, "operation 0 is not ready")
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainReady(ctx, chainSelector)
+		require.ErrorContains(t, err, "operation 0 is not ready")
+	}
+}
+
+func requireOperationDone(
+	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
+) {
+	t.Helper()
+	err := tExecutable.IsOperationDone(ctx, opIdx)
+	require.NoError(t, err)
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainDone(ctx, chainSelector)
+		require.NoError(t, err)
+	}
+}
+
+func requireOperationNotDone(
+	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
+) {
+	t.Helper()
+	err := tExecutable.IsOperationDone(ctx, opIdx)
+	require.ErrorContains(t, err, "operation 0 is not done")
+	for chainSelector := range proposal.ChainMetadata {
+		err = tExecutable.IsChainDone(ctx, chainSelector)
+		require.ErrorContains(t, err, "operation 0 is not done")
+	}
 }

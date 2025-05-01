@@ -15,8 +15,18 @@ type OperationNotReadyError struct {
 }
 
 // Error implements the error interface.
-func (e *OperationNotReadyError) Error() string {
+func (e OperationNotReadyError) Error() string {
 	return fmt.Sprintf("operation %d is not ready", e.OpIndex)
+}
+
+// OperationNotPendingError is returned when an operation is not yet pending.
+type OperationNotPendingError struct {
+	OpIndex int
+}
+
+// Error implements the error interface.
+func (e OperationNotPendingError) Error() string {
+	return fmt.Sprintf("operation %d is not pending", e.OpIndex)
 }
 
 // OperationNotDoneError is returned when an operation is not yet done.
@@ -25,7 +35,7 @@ type OperationNotDoneError struct {
 }
 
 // Error implements the error interface.
-func (e *OperationNotDoneError) Error() string {
+func (e OperationNotDoneError) Error() string {
 	return fmt.Sprintf("operation %d is not done", e.OpIndex)
 }
 
