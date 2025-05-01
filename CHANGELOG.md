@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.19.0
+
+### Minor Changes
+
+- [#368](https://github.com/smartcontractkit/mcms/pull/368) [`4e53d4d`](https://github.com/smartcontractkit/mcms/commit/4e53d4db82fba9e0907ae3bda6a7adc2dbc6c026) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add IsOperationPending() and IsChainPending() to TimelockExecutable
+
 ## 0.18.0
 
 ### Minor Changes
