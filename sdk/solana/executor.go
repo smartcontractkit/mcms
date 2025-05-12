@@ -20,6 +20,8 @@ import (
 
 var _ sdk.Executor = (*Executor)(nil)
 
+var ErrSignedHashAlreadySeen = func(root [32]byte) error { return fmt.Errorf("SignedHashAlreadySeen: 0x%x", root) }
+
 const maxPreloadSignaturesAttempts = 3
 
 // Executor is an Executor implementation for Solana chains, allowing for the execution of
@@ -130,6 +132,14 @@ func (e *Executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
+	sameRoot, err := e.equalCurrentRoot(ctx, metadata.MCMAddress, root)
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
+	if sameRoot {
+		return types.TransactionResult{}, ErrSignedHashAlreadySeen(root)
+	}
+
 	programID, pdaSeed, err := ParseContractAddress(metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, err
@@ -270,6 +280,15 @@ func (e *Executor) solanaMetadata(metadata types.ChainMetadata, configPDA [32]by
 		PostOpCount:          metadata.StartingOpCount + e.TxCount,
 		OverridePreviousRoot: e.OverridePreviousRoot,
 	}
+}
+
+func (e *Executor) equalCurrentRoot(ctx context.Context, mcmAddress string, newRoot [32]byte) (bool, error) {
+	currentRoot, _, err := e.GetRoot(ctx, mcmAddress)
+	if err != nil {
+		return false, fmt.Errorf("failed to get root: %w", err)
+	}
+
+	return currentRoot == newRoot, nil
 }
 
 // solanaProof converts a proof coming as a slice of common.Hash to a slice of [32]byte.
