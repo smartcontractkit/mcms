@@ -99,7 +99,6 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				},
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {
-
 			},
 			want:    "",
 			wantErr: errors.New("invalid contract ID provided"),
@@ -155,7 +154,6 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				},
 			},
 			mockSetup: func(m *mocks.JSONRPCClient) {
-
 			},
 			want:    "",
 			wantErr: errors.New("invalid contract ID provided"),
@@ -216,7 +214,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 		wantErr    string
 	}{
 		{
-			name:       "success",
+			name:       "success - direct",
 			metadata:   defaultMetadata,
 			proof:      defaultProof,
 			root:       defaultRoot,
@@ -237,6 +235,42 @@ func TestExecutor_SetRoot(t *testing.T) {
 					"oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo", nil, nil)
 			},
 			want: "oaV9FKKPDVneUANQ9hJqEuhgwfUgbxucUC4TmzpgGJhuSxBueapWc9HJ4cJQMqT2PPQX6rhTbKnXkebsaravnLo",
+		},
+		{
+			name:       "success - after account already in use error",
+			metadata:   defaultMetadata,
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: defaultSignatures,
+			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
+				t.Helper()
+
+				accountAlreadyInUseError := errors.New(`
+					(string) (len=4) "logs": ([]interface {}) (len=7 cap=8) {
+					(string) (len=63) "Program 5vNJx78mz7KVMjhuipyr9jKBKcMrKYGdjGkgE4LUmjKk invoke [1]",
+					(string) (len=40) "Program log: Instruction: InitSignatures",
+					(string) (len=51) "Program 11111111111111111111111111111111 invoke [2]",
+					(string) (len=110) "Allocate: account Address { address: DKvwoHhcRMZwsedUvJqmsNuat52WdcYQD7agqMjJybbF, base: None } already in use",
+					(string) (len=74) "Program 11111111111111111111111111111111 failed: custom program error: 0x0",
+					(string) (len=90) "Program 5vNJx78mz7KVMjhuipyr9jKBKcMrKYGdjGkgE4LUmjKk consumed 7202 of 200000 compute units",
+					(string) (len=86) "Program 5vNJx78mz7KVMjhuipyr9jKBKcMrKYGdjGkgE4LUmjKk failed: custom program error: 0x0"`)
+
+				// 6 transactions: init-signatures, clear-signatures, init-signatures append-signatures, finalize-signatures, set-root
+				mockSolanaTransaction(t, mockJSONRPCClient, 80, 70,
+					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v", nil, accountAlreadyInUseError)
+				mockSolanaTransaction(t, mockJSONRPCClient, 81, 71,
+					"5qm3BUCF1DswRm4r32mipWZa5NrbHYgPst8BJXr1BysNaqfEz4kVGnGzCx3vLWJoWi2FRszzgLUxfcmAfLzzHw9n", nil, nil)
+				mockSolanaTransaction(t, mockJSONRPCClient, 82, 72,
+					"KCAkcwG8LG3cS3bUemdR1grv6EoyqfgDJN3BJfN58azEDkpRFa9S66RDFvtNWHga9htimSnfNkGoWVLLx7AJKrs", nil, nil)
+				mockSolanaTransaction(t, mockJSONRPCClient, 83, 63,
+					"4GWCdxQAsAmbqyaB1SCHpmnyRWmBwBY5S6hUpSMz2gENErgt8zqmsXnz9dbXCchucZqAf7ZdctzTNtUUTjD8rMcv", nil, nil)
+				mockSolanaTransaction(t, mockJSONRPCClient, 84, 64,
+					"npfXXzfJzSkB6QcwS36P9dzc61itiDnLX9yGVyzaooftiSFs1A53JWHGQq6F9MzjWxKD8bRLPKWuGseUxHK56s3", nil, nil)
+				mockSolanaTransaction(t, mockJSONRPCClient, 85, 65,
+					"2W1d6qQAVPjssJgm6WMeLxwatKZ9TUUZcvNHdFaguvLxrCFqPdpuikiz9YdfkXG5eLojQNjrW6L6W2sFRWEujER", nil, nil)
+			},
+			want: "2W1d6qQAVPjssJgm6WMeLxwatKZ9TUUZcvNHdFaguvLxrCFqPdpuikiz9YdfkXG5eLojQNjrW6L6W2sFRWEujER",
 		},
 		{
 			name:       "failure: invalid address",
@@ -376,4 +410,43 @@ func newTestExecutor(t *testing.T, auth solana.PrivateKey, chainSelector types.C
 	encoder := NewEncoder(chainSelector, 1, false)
 
 	return NewExecutor(encoder, client, auth), mockJSONRPCClient
+}
+
+func Test_isAccountAlreadyInUseError(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{
+			name: "account already in use error",
+			err: errors.New(`
+				(string) (len=51) "Program 11111111111111111111111111111111 invoke [2]",
+				(string) (len=110) "Allocate: account Address { address: DKvwoHhcRMZwsedUvJqmsNuat52WdcYQD7agqMjJybbF, base: None } already in use",
+				(string) (len=74) "Program 11111111111111111111111111111111 failed: custom program error: 0x0",
+				(string) (len=90) "Program 5vNJx78mz7KVMjhuipyr9jKBKcMrKYGdjGkgE4LUmjKk consumed 7202 of 200000 compute units",
+			`),
+			want: true,
+		},
+		{
+			name: "other error",
+			err:  errors.New(`other error`),
+			want: false,
+		},
+		{
+			name: "other similar but not quite the same error",
+			err:  errors.New(`Allocate: already in use`),
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := isAccountAlreadyInUseError(tt.err)
+			require.Equal(t, tt.want, got)
+		})
+	}
 }
