@@ -1,6 +1,6 @@
 {
   "name": "@smartcontractkit/mcms",
-  "version": "0.19.1",
+  "version": "0.19.2",
   "description": "Tools/Libraries to Deploy/Manage/Interact with MCMS",
   "private": true,
   "scripts": {

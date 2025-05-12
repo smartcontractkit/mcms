@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.19.2
+
+### Patch Changes
+
+- [#376](https://github.com/smartcontractkit/mcms/pull/376) [`cb1e96a`](https://github.com/smartcontractkit/mcms/commit/cb1e96aeeea47a32d24cabf3b67a2d21013f538e) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump chainlink-ccip version
+
 ## 0.19.1
 
 ### Patch Changes
