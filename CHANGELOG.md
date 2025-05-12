@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.19.1
+
+### Patch Changes
+
+- [#374](https://github.com/smartcontractkit/mcms/pull/374) [`17381e4`](https://github.com/smartcontractkit/mcms/commit/17381e45d25c8690bee810720024cfb2ea67251b) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: call ClearSignatures in Solana's SetRoot upon receiving an "account in use" error
+
 ## 0.19.0
 
 ### Minor Changes
