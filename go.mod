@@ -17,7 +17,7 @@ require (
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
 	github.com/smartcontractkit/chain-selectors v1.0.48
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250414155853-651b4e583ee9
-	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250512155317-4615e5659ce4
+	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250512193142-11507db18550
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.7
 	github.com/spf13/cast v1.7.1
 	github.com/stretchr/testify v1.10.0
