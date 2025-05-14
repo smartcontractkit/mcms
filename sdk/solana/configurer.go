@@ -18,6 +18,8 @@ import (
 
 var _ sdk.Configurer = &Configurer{}
 
+const maxAppendSignerBatchSize = 20 // REVIEW: run chunking tests to verify actual limit
+
 // Configurer configures the MCM contract for Solana chains.
 type Configurer struct {
 	instructionCollection
@@ -165,7 +167,7 @@ func (c *Configurer) preloadSigners(
 		return err
 	}
 
-	for i, chunkIndex := range chunkIndexes(len(signerAddresses), config.MaxAppendSignerBatchSize) {
+	for i, chunkIndex := range chunkIndexes(len(signerAddresses), maxAppendSignerBatchSize) {
 		err = c.addInstruction(fmt.Sprintf("appendSigners%d", i), bindings.NewAppendSignersInstruction(mcmName,
 			signerAddresses[chunkIndex[0]:chunkIndex[1]], configPDA, configSignersPDA, c.authorityAccount))
 		if err != nil {
