@@ -18,9 +18,9 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-// AppendIxDataChunkSize number is derived from chainlink-ccip
-// https://github.com/smartcontractkit/chainlink-ccip/blob/main/chains/solana/contracts/tests/config/timelock_config.go#L20
-const AppendIxDataChunkSize = 491
+// AppendIxDataChunkSize number is derived from chainlink-ccip; using 400 as
+// recommended by jonghyeon.park@smartcontract.com.
+const AppendIxDataChunkSize = 400
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
