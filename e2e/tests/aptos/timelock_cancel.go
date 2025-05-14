@@ -174,7 +174,7 @@ func (a *AptosTestSuite) Test_Aptos_TimelockCancel() {
 	tree, _ := acceptOwnershipProposal.MerkleTree()
 	gotHash, gotValidUntil, err := proposerInspector.GetRoot(a.T().Context(), mcmsAddress.StringLong())
 	a.Require().NoError(err)
-	a.Require().Equal(uint32(validUntil), gotValidUntil)
+	a.Require().Equal(validUntil, gotValidUntil)
 	a.Require().Equal(tree.Root, gotHash)
 
 	// Execute
@@ -241,8 +241,6 @@ func (a *AptosTestSuite) Test_Aptos_TimelockCancel() {
 	a.Require().True(quorumMet, "Quorum not met")
 
 	// Set Root
-	encoders, err = cancelProposal.GetEncoders()
-	a.Require().NoError(err)
 	cancellerExecutors := map[types.ChainSelector]sdk.Executor{
 		a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleCanceller),
 	}

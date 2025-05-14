@@ -16,9 +16,11 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-go@0.3.1
+        uses: smartcontractkit/.github/actions/ci-lint-go@9fc306ac63d8997c9ca0da283e56caaf71589f83 # ci-lint-go@1.0.0
         with:
           golangci-lint-version: v1.64.8
+          use-go-cache: true
+          only-new-issues: false
 
   ci-lint-e2e:
     name: Lint E2E tests
@@ -29,17 +31,19 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-go@0.3.1
+        uses: smartcontractkit/.github/actions/ci-lint-go@9fc306ac63d8997c9ca0da283e56caaf71589f83 # ci-lint-go@1.0.0
         with:
           golangci-lint-version: v1.64.8
           golangci-lint-args: --build-tags="e2e"
+          use-go-cache: true
+          only-new-issues: false
 
   ci-lint-misc:
     name: Lint GH Actions and scripts
     runs-on: ubuntu-latest
     steps:
       - name: Linting Misc (yaml + sh files)
-        uses: smartcontractkit/.github/actions/ci-lint-misc@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-lint-misc@0.1.4
+        uses: smartcontractkit/.github/actions/ci-lint-misc@9fc306ac63d8997c9ca0da283e56caaf71589f83 # ci-lint-misc@1.0.0
 
   ci-test:
     name: Tests
