@@ -1,5 +1,13 @@
 # @smartcontractkit/mcms
 
+## 0.19.3
+
+### Patch Changes
+
+- [#384](https://github.com/smartcontractkit/mcms/pull/384) [`80e82ad`](https://github.com/smartcontractkit/mcms/commit/80e82ad071080c870e876d098eba3827a8bcd4ed) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): use smaller batch "append instruction" chunk size
+
+- [#381](https://github.com/smartcontractkit/mcms/pull/381) [`0b3000a`](https://github.com/smartcontractkit/mcms/commit/0b3000ac7471503e93836a4ecd23b4378555758e) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): use smaller batch size for the "appendSigner" instructions
+
 ## 0.19.2
 
 ### Patch Changes
