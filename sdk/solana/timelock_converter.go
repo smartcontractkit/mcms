@@ -20,7 +20,7 @@ import (
 
 // AppendIxDataChunkSize number is derived from chainlink-ccip
 // https://github.com/smartcontractkit/chainlink-ccip/blob/main/chains/solana/contracts/tests/config/timelock_config.go#L20
-const AppendIxDataChunkSize = 491
+const AppendIxDataChunkSize = 400
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
