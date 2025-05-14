@@ -185,15 +185,15 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 		tree, _ := acceptOwnershipProposal.MerkleTree()
 		gotHash, gotValidUntil, err := inspector.GetRoot(a.T().Context(), mcmsAddress.StringLong())
 		a.Require().NoError(err)
-		a.Require().Equal(uint32(validUntil), gotValidUntil)
+		a.Require().Equal(validUntil, gotValidUntil)
 		a.Require().Equal(tree.Root, gotHash)
 
 		// Execute
 		start := time.Now()
 		for i := range acceptOwnershipProposal.Operations {
 			a.T().Logf("Executing operation: %v", i)
-			txOutput, err := executable.Execute(a.T().Context(), i)
-			a.Require().NoError(err)
+			txOutput, xerr := executable.Execute(a.T().Context(), i)
+			a.Require().NoError(xerr)
 			data, err = a.AptosRPCClient.WaitForTransaction(txOutput.Hash)
 			a.Require().NoError(err)
 			a.Require().True(data.Success, data.VmStatus)
@@ -264,8 +264,8 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 			a.ChainSelector: inspector,
 		}
 
-		startingOpCount, err := inspector.GetOpCount(a.T().Context(), mcmsAddress.StringLong())
-		a.Require().NoError(err)
+		startingOpCount, errr := inspector.GetOpCount(a.T().Context(), mcmsAddress.StringLong())
+		a.Require().NoError(errr)
 		validUntil := uint32(time.Now().Add(time.Hour * 24).Unix())
 		mcmsTestProposalBuilder := mcms.NewTimelockProposalBuilder().
 			SetVersion("v1").
@@ -280,12 +280,12 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 			SetAction(types.TimelockActionBypass)
 
 		// Call 1
-		module, function, _, args, err := a.MCMSTestContract.MCMSUser().Encoder().FunctionOne(arg1, arg2)
-		a.Require().NoError(err)
+		module, function, _, args, errr := a.MCMSTestContract.MCMSUser().Encoder().FunctionOne(arg1, arg2)
+		a.Require().NoError(errr)
 		bop := types.BatchOperation{
 			ChainSelector: a.ChainSelector,
 		}
-		tx, err := aptossdk.NewTransaction(
+		tx, errr := aptossdk.NewTransaction(
 			module.PackageName,
 			module.ModuleName,
 			function,
@@ -294,7 +294,7 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 			"MCMSTest",
 			nil,
 		)
-		a.Require().NoError(err)
+		a.Require().NoError(errr)
 		bop.Transactions = append(bop.Transactions, tx)
 
 		// Call 2
@@ -314,52 +314,52 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 
 		mcmsTestProposalBuilder.AddOperation(bop)
 
-		mcmsTestTimelockProposal, err := mcmsTestProposalBuilder.Build()
-		a.Require().NoError(err)
+		mcmsTestTimelockProposal, errr := mcmsTestProposalBuilder.Build()
+		a.Require().NoError(errr)
 
 		convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
 			a.ChainSelector: aptossdk.NewTimelockConverter(),
 		}
-		mcmsTestProposal, _, err := mcmsTestTimelockProposal.Convert(a.T().Context(), convertersMap)
-		a.Require().NoError(err)
+		mcmsTestProposal, _, errr := mcmsTestTimelockProposal.Convert(a.T().Context(), convertersMap)
+		a.Require().NoError(errr)
 
-		signable, err := mcms.NewSignable(&mcmsTestProposal, inspectorsMaps)
-		a.Require().NoError(err)
+		signable, errr := mcms.NewSignable(&mcmsTestProposal, inspectorsMaps)
+		a.Require().NoError(errr)
 
-		_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(bypasserKeys[0]))
-		a.Require().NoError(err)
-		_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(bypasserKeys[1]))
-		a.Require().NoError(err)
+		_, errr = signable.SignAndAppend(mcms.NewPrivateKeySigner(bypasserKeys[0]))
+		a.Require().NoError(errr)
+		_, errr = signable.SignAndAppend(mcms.NewPrivateKeySigner(bypasserKeys[1]))
+		a.Require().NoError(errr)
 
-		quorumMet, err := signable.ValidateSignatures(a.T().Context())
-		a.Require().NoError(err)
+		quorumMet, errr := signable.ValidateSignatures(a.T().Context())
+		a.Require().NoError(errr)
 		a.Require().True(quorumMet, "Quorum not met")
 
 		// Set Root
-		encoders, err := mcmsTestProposal.GetEncoders()
-		a.Require().NoError(err)
+		encoders, errr := mcmsTestProposal.GetEncoders()
+		a.Require().NoError(errr)
 		aptosEncoder := encoders[a.ChainSelector].(*aptossdk.Encoder)
 		executors := map[types.ChainSelector]sdk.Executor{
 			a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleBypasser),
 		}
-		executable, err := mcms.NewExecutable(&mcmsTestProposal, executors)
-		a.Require().NoError(err)
+		executable, errr := mcms.NewExecutable(&mcmsTestProposal, executors)
+		a.Require().NoError(errr)
 
-		result, err := executable.SetRoot(a.T().Context(), a.ChainSelector)
-		a.Require().NoError(err)
+		result, errr := executable.SetRoot(a.T().Context(), a.ChainSelector)
+		a.Require().NoError(errr)
 
-		data, err := a.AptosRPCClient.WaitForTransaction(result.Hash)
-		a.Require().NoError(err)
+		data, errr := a.AptosRPCClient.WaitForTransaction(result.Hash)
+		a.Require().NoError(errr)
 		a.Require().True(data.Success, data.VmStatus)
 		a.T().Logf("✅ SetRoot in tx: %s", result.Hash)
 
 		// Execute
 		for i := range mcmsTestProposal.Operations {
 			a.T().Logf("Executing operation: %v", i)
-			txOutput, err := executable.Execute(a.T().Context(), i)
-			a.Require().NoError(err)
-			data, err := a.AptosRPCClient.WaitForTransaction(txOutput.Hash)
-			a.Require().NoError(err)
+			txOutput, errr := executable.Execute(a.T().Context(), i)
+			a.Require().NoError(errr)
+			data, errr := a.AptosRPCClient.WaitForTransaction(txOutput.Hash)
+			a.Require().NoError(errr)
 			a.Require().True(data.Success, data.VmStatus)
 			a.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
 		}
