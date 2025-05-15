@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.20.0
+
+### Minor Changes
+
+- [#388](https://github.com/smartcontractkit/mcms/pull/388) [`8f66eb2`](https://github.com/smartcontractkit/mcms/commit/8f66eb299b2f3c8901fd4e8688565ce79a72a9f0) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): use solanacommon.SendTransaction() that supports retries
+
 ## 0.19.3
 
 ### Patch Changes
