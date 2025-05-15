@@ -87,7 +87,7 @@ func mockSolanaTransaction(
 	t.Helper()
 
 	client.EXPECT().CallForInto(
-		anyContext, mock.Anything, "getLatestBlockhash", []any{rpc.M{"commitment": rpc.CommitmentFinalized}},
+		anyContext, mock.Anything, "getLatestBlockhash", []any{rpc.M{"commitment": rpc.CommitmentConfirmed}},
 	).RunAndReturn(func(_ context.Context, output any, _ string, _ []any) error {
 		result, ok := output.(**rpc.GetLatestBlockhashResult)
 		require.True(t, ok)
