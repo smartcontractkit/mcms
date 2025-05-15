@@ -10,6 +10,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
 	cselectors "github.com/smartcontractkit/chain-selectors"
+	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
@@ -31,6 +32,10 @@ func TestSimulator_SimulateSetRoot(t *testing.T) {
 		{R: common.HexToHash("0x3"), S: common.HexToHash("0x4"), V: 27},
 		{R: common.HexToHash("0x5"), S: common.HexToHash("0x6"), V: 27},
 	}
+	previousRoot := common.HexToHash("0xabcdefabcdefabcdefabcdefabcdefabcdef")
+	rootAndOpCount := &bindings.ExpiringRootAndOpCount{Root: previousRoot, ValidUntil: 123}
+	opCountPDA, err := FindExpiringRootAndOpCountPDA(testMCMProgramID, testPDASeed)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name          string
@@ -41,13 +46,32 @@ func TestSimulator_SimulateSetRoot(t *testing.T) {
 			name: "success",
 			setupMocks: func(t *testing.T, client *mocks.JSONRPCClient) {
 				t.Helper()
+				mockGetAccountInfo(t, client, opCountPDA, rootAndOpCount, nil)
 				mockSolanaSimulateTransaction(t, client, 50, nil, nil)
 			},
+		},
+		{
+			name: "failure: unable to GetRoot",
+			setupMocks: func(t *testing.T, client *mocks.JSONRPCClient) {
+				t.Helper()
+				mockGetAccountInfo(t, client, opCountPDA, root, errors.New("error"))
+			},
+			expectedError: "failed to get root: error",
+		},
+		{
+			name: "failure: GetRoot returns the same root",
+			setupMocks: func(t *testing.T, client *mocks.JSONRPCClient) {
+				t.Helper()
+				currentRootAndOpCount := &bindings.ExpiringRootAndOpCount{Root: root, ValidUntil: 123}
+				mockGetAccountInfo(t, client, opCountPDA, currentRootAndOpCount, nil)
+			},
+			expectedError: "SignedHashAlreadySeen: 0x0000000000000000000000000000000000000000000000000000000000001234",
 		},
 		{
 			name: "failure: GetLastBlockhash error",
 			setupMocks: func(t *testing.T, client *mocks.JSONRPCClient) {
 				t.Helper()
+				mockGetAccountInfo(t, client, opCountPDA, rootAndOpCount, nil)
 				mockSolanaSimulateTransaction(t, client, 50, errors.New("GetLastBlockhash error"), nil)
 			},
 			expectedError: "GetLastBlockhash error",
@@ -56,6 +80,7 @@ func TestSimulator_SimulateSetRoot(t *testing.T) {
 			name: "failure: SimulateTransaction error",
 			setupMocks: func(t *testing.T, client *mocks.JSONRPCClient) {
 				t.Helper()
+				mockGetAccountInfo(t, client, opCountPDA, rootAndOpCount, nil)
 				mockSolanaSimulateTransaction(t, client, 50, nil, errors.New("SimulateTransaction error"))
 			},
 			expectedError: "SimulateTransaction error",
