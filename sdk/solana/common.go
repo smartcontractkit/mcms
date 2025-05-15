@@ -164,7 +164,8 @@ func sendAndConfirmInstructions(
 	instructions []solana.Instruction,
 	commitmentType rpc.CommitmentType,
 ) (string, *rpc.GetTransactionResult, error) {
-	result, err := solanaCommon.SendAndConfirm(ctx, client, instructions, auth, commitmentType)
+	result, err := solanaCommon.SendAndConfirmWithLookupTablesAndRetries(ctx, client, instructions, auth,
+		commitmentType, map[solana.PublicKey]solana.PublicKeySlice{})
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to send instruction: %w", err)
 	}
