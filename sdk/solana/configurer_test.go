@@ -160,6 +160,8 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
 
+				configurer.sendAndConfirm = sendAndConfirmInstructionsWithoutRetries
+
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
 					"4PQcRHQJT4cRQZooAhZMAP9ZXJsAka9DeKvXeYvXAvPpHb4Qkc5rmTSHDA2SZSh9aKPBguBx4kmcyHHbkytoAiRr",
 					nil, fmt.Errorf("initialize signers error"))
@@ -172,6 +174,8 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmConfig: defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+
+				configurer.sendAndConfirm = sendAndConfirmInstructionsWithoutRetries
 
 				// initialize signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -190,6 +194,8 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmConfig: defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+
+				configurer.sendAndConfirm = sendAndConfirmInstructionsWithoutRetries
 
 				// initialize signers + append signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -210,6 +216,8 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmConfig: &types.Config{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x1")}},
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+
+				configurer.sendAndConfirm = sendAndConfirmInstructionsWithoutRetries
 
 				// initialize signers + append signers + finalize signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -259,4 +267,16 @@ func newTestConfigurer(
 	client := rpc.NewWithCustomRPCClient(mockJSONRPCClient)
 
 	return NewConfigurer(client, auth, chainSelector, options...), mockJSONRPCClient
+}
+
+func sendAndConfirmInstructionsWithoutRetries(
+	ctx context.Context,
+	client *rpc.Client,
+	auth solana.PrivateKey,
+	instructions []solana.Instruction,
+	commitmentType rpc.CommitmentType,
+	opts ...sendTransactionOption,
+) (string, *rpc.GetTransactionResult, error) {
+	opts = append(opts, WithRetries(1))
+	return sendAndConfirmInstructions(ctx, client, auth, instructions, commitmentType, opts...)
 }

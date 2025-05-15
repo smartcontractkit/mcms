@@ -4,13 +4,13 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
-	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 )
 
 const (
@@ -73,7 +73,8 @@ func FindTimelockOperationPDA(
 }
 
 func FindTimelockBypasserOperationPDA(
-	programID solana.PublicKey, timelockID PDASeed, opID [32]byte) (solana.PublicKey, error) {
+	programID solana.PublicKey, timelockID PDASeed, opID [32]byte,
+) (solana.PublicKey, error) {
 	seeds := [][]byte{[]byte("timelock_bypasser_operation"), timelockID[:], opID[:]}
 	return findPDA(programID, seeds)
 }
@@ -138,6 +139,16 @@ type SendAndConfirmFn func(
 	auth solana.PrivateKey,
 	builder any,
 	commitmentType rpc.CommitmentType,
+	opts ...sendTransactionOption,
+) (string, *rpc.GetTransactionResult, error)
+
+type SendAndConfirmInstructionsFn func(
+	ctx context.Context,
+	client *rpc.Client,
+	auth solana.PrivateKey,
+	instructions []solana.Instruction,
+	commitmentType rpc.CommitmentType,
+	opts ...sendTransactionOption,
 ) (string, *rpc.GetTransactionResult, error)
 
 // sendAndConfirm contains the default logic for sending and confirming instructions.
@@ -147,13 +158,14 @@ func sendAndConfirm(
 	auth solana.PrivateKey,
 	instructionBuilder any,
 	commitmentType rpc.CommitmentType,
+	opts ...sendTransactionOption,
 ) (string, *rpc.GetTransactionResult, error) {
 	instruction, err := validateAndBuildSolanaInstruction(instructionBuilder)
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to validate and build instruction: %w", err)
 	}
 
-	return sendAndConfirmInstructions(ctx, client, auth, []solana.Instruction{instruction}, commitmentType)
+	return sendAndConfirmInstructions(ctx, client, auth, []solana.Instruction{instruction}, commitmentType, opts...)
 }
 
 // sendAndConfirm contains the default logic for sending and confirming instructions.
@@ -163,8 +175,9 @@ func sendAndConfirmInstructions(
 	auth solana.PrivateKey,
 	instructions []solana.Instruction,
 	commitmentType rpc.CommitmentType,
+	opts ...sendTransactionOption,
 ) (string, *rpc.GetTransactionResult, error) {
-	result, err := solanaCommon.SendAndConfirm(ctx, client, instructions, auth, commitmentType)
+	result, err := sendTransaction(ctx, client, instructions, auth, commitmentType, opts...)
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to send instruction: %w", err)
 	}
@@ -192,4 +205,145 @@ func chunkIndexes(numItems int, chunkSize int) [][2]int {
 	}
 
 	return indexes
+}
+
+type sendTransactionOptions struct {
+	retries       int
+	delay         time.Duration
+	skipPreflight bool
+}
+
+var defaultSendTransactionOptions = func() *sendTransactionOptions {
+	return &sendTransactionOptions{
+		retries:       500,                   //nolint:mnd
+		delay:         50 * time.Millisecond, //nolint:mnd
+		skipPreflight: false,
+	}
+}
+
+type sendTransactionOption func(*sendTransactionOptions)
+
+func WithRetries(retries int) sendTransactionOption {
+	return func(opts *sendTransactionOptions) { opts.retries = retries }
+}
+
+func WithDelay(delay time.Duration) sendTransactionOption {
+	return func(opts *sendTransactionOptions) {
+		opts.delay = delay
+	}
+}
+
+func WithSkipPreflight(skipPreflight bool) sendTransactionOption {
+	return func(opts *sendTransactionOptions) {
+		opts.skipPreflight = skipPreflight
+	}
+}
+
+func sendTransaction(
+	ctx context.Context,
+	rpcClient *rpc.Client,
+	instructions []solana.Instruction,
+	signerAndPayer solana.PrivateKey,
+	commitment rpc.CommitmentType,
+	opts ...sendTransactionOption,
+) (*rpc.GetTransactionResult, error) {
+	var errBlockHash error
+	var hashRes *rpc.GetLatestBlockhashResult
+
+	sendTransactionOptions := defaultSendTransactionOptions()
+	for _, opt := range opts {
+		opt(sendTransactionOptions)
+	}
+
+	for range sendTransactionOptions.retries {
+		hashRes, errBlockHash = rpcClient.GetLatestBlockhash(ctx, rpc.CommitmentConfirmed)
+		if errBlockHash != nil {
+			fmt.Println("GetLatestBlockhash error:", errBlockHash) //nolint:forbidigo
+			time.Sleep(sendTransactionOptions.delay)
+
+			continue
+		}
+
+		break
+	}
+	if errBlockHash != nil {
+		fmt.Println("GetLatestBlockhash error after retries:", errBlockHash) //nolint:forbidigo
+		return nil, errBlockHash
+	}
+
+	tx, err := solana.NewTransaction(instructions, hashRes.Value.Blockhash, solana.TransactionPayer(signerAndPayer.PublicKey()))
+	if err != nil {
+		return nil, err
+	}
+
+	// build signers map
+	signers := map[solana.PublicKey]solana.PrivateKey{signerAndPayer.PublicKey(): signerAndPayer}
+	_, err = tx.Sign(func(pub solana.PublicKey) *solana.PrivateKey {
+		priv, ok := signers[pub]
+		if !ok {
+			fmt.Printf("ERROR: Missing signer private key for %s\n", pub) //nolint:forbidigo
+		}
+
+		return &priv
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	var txsig solana.Signature
+	for range sendTransactionOptions.retries {
+		txOpts := rpc.TransactionOpts{SkipPreflight: sendTransactionOptions.skipPreflight, PreflightCommitment: commitment}
+		txsig, err = rpcClient.SendTransactionWithOpts(ctx, tx, txOpts)
+		if err != nil {
+			fmt.Println("Error sending transaction:", err) //nolint:forbidigo
+			time.Sleep(sendTransactionOptions.delay)
+
+			continue
+		}
+
+		break
+	}
+	// If tx failed with rpc error, we should not retry as confirmation will never happen
+	if err != nil {
+		fmt.Println("Error sending transaction after retries:", err) //nolint:forbidigo
+		return nil, err
+	}
+
+	var txStatus rpc.ConfirmationStatusType
+	count := 0
+	for txStatus != rpc.ConfirmationStatusConfirmed && txStatus != rpc.ConfirmationStatusFinalized {
+		if count > sendTransactionOptions.retries {
+			return nil, fmt.Errorf("unable to find transaction within timeout (sig: %v)", txsig)
+		}
+		count++
+		statusRes, sigErr := rpcClient.GetSignatureStatuses(ctx, true, txsig)
+		if sigErr != nil {
+			fmt.Println(sigErr) //nolint:forbidigo // debugging if tx errors; mainnet can be flakey
+			time.Sleep(sendTransactionOptions.delay)
+
+			continue
+		}
+		if statusRes != nil && len(statusRes.Value) > 0 && statusRes.Value[0] != nil {
+			txStatus = statusRes.Value[0].ConfirmationStatus
+		}
+		time.Sleep(sendTransactionOptions.delay)
+	}
+
+	v := uint64(0)
+	var errGetTx error
+	var transactionRes *rpc.GetTransactionResult
+	txOpts := &rpc.GetTransactionOpts{Commitment: commitment, MaxSupportedTransactionVersion: &v}
+	for range sendTransactionOptions.retries {
+		transactionRes, errGetTx = rpcClient.GetTransaction(ctx, txsig, txOpts)
+		if errGetTx != nil {
+			fmt.Println("Error getting transaction:", errGetTx) //nolint:forbidigo
+			time.Sleep(sendTransactionOptions.delay)
+
+			continue
+		}
+
+		break
+	}
+
+	return transactionRes, errGetTx
 }

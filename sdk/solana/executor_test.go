@@ -53,9 +53,8 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	tx, err := NewTransaction(testMCMProgramID.String(), data, big.NewInt(0), accounts, "solana-testing", []string{})
 	require.NoError(t, err)
 	tests := []struct {
-		name string
-		args args
-
+		name      string
+		args      args
 		mockSetup func(*mocks.JSONRPCClient)
 		want      string
 		assertion assert.ErrorAssertionFunc
@@ -153,10 +152,9 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					ChainSelector: types.ChainSelector(selector),
 				},
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
-			},
-			want:    "",
-			wantErr: errors.New("invalid contract ID provided"),
+			mockSetup: func(m *mocks.JSONRPCClient) {},
+			want:      "",
+			wantErr:   errors.New("invalid contract ID provided"),
 			assertion: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.EqualError(t, err, "unable to unmarshal additional fields: invalid character 'b' looking for beginning of value")
 			},
@@ -170,7 +168,8 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			encoder := NewEncoder(types.ChainSelector(selector), uint64(tt.args.nonce), false)
 			client := rpc.NewWithCustomRPCClient(jsonRPCClient)
 			tt.mockSetup(jsonRPCClient)
-			e := NewExecutor(encoder, client, auth)
+
+			e := NewExecutor(encoder, client, auth).withSendAndConfirmFn(sendAndConfirmWithoutRetries)
 
 			got, err := e.ExecuteOperation(ctx, tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)
 			if tt.wantErr != nil {
@@ -246,6 +245,8 @@ func TestExecutor_SetRoot(t *testing.T) {
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
 
+				executor.sendAndConfirm = sendAndConfirmWithoutRetries
+
 				accountAlreadyInUseError := errors.New(`
 					(string) (len=4) "logs": ([]interface {}) (len=7 cap=8) {
 					(string) (len=63) "Program 5vNJx78mz7KVMjhuipyr9jKBKcMrKYGdjGkgE4LUmjKk invoke [1]",
@@ -302,6 +303,8 @@ func TestExecutor_SetRoot(t *testing.T) {
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
 
+				executor.sendAndConfirm = sendAndConfirmWithoutRetries
+
 				// init-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
 					"AxzwxQ2DLR4zEFxEPGaafR4z3MY4CP1CAdSs1ZZhArtgS3G4F9oYSy3Nx1HyA1Macb4bYEi4jU6F1CL4SRrZz1v",
@@ -318,6 +321,8 @@ func TestExecutor_SetRoot(t *testing.T) {
 			signatures: defaultSignatures,
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+
+				executor.sendAndConfirm = sendAndConfirmWithoutRetries
 
 				// init-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
@@ -339,6 +344,8 @@ func TestExecutor_SetRoot(t *testing.T) {
 			signatures: defaultSignatures,
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+
+				executor.sendAndConfirm = sendAndConfirmWithoutRetries
 
 				// init-signatures + append-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
@@ -362,6 +369,8 @@ func TestExecutor_SetRoot(t *testing.T) {
 			signatures: defaultSignatures,
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+
+				executor.sendAndConfirm = sendAndConfirmWithoutRetries
 
 				// init-signatures + append-signatures + finalize-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
@@ -449,4 +458,16 @@ func Test_isAccountAlreadyInUseError(t *testing.T) {
 			require.Equal(t, tt.want, got)
 		})
 	}
+}
+
+func sendAndConfirmWithoutRetries(
+	ctx context.Context,
+	client *rpc.Client,
+	auth solana.PrivateKey,
+	instructionBuilder any,
+	commitmentType rpc.CommitmentType,
+	opts ...sendTransactionOption,
+) (string, *rpc.GetTransactionResult, error) {
+	opts = append(opts, WithRetries(1))
+	return sendAndConfirm(ctx, client, auth, instructionBuilder, commitmentType, opts...)
 }

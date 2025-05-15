@@ -28,6 +28,7 @@ type Configurer struct {
 	auth             solana.PrivateKey
 	skipSend         bool
 	authorityAccount solana.PublicKey
+	sendAndConfirm   SendAndConfirmInstructionsFn
 }
 
 // NewConfigurer creates a new Configurer for Solana chains.
@@ -49,6 +50,7 @@ func NewConfigurer(
 		chainSelector:    chainSelector,
 		skipSend:         false,
 		authorityAccount: auth.PublicKey(),
+		sendAndConfirm:   sendAndConfirmInstructions,
 	}
 	for _, opt := range options {
 		opt(configurer)
@@ -142,7 +144,7 @@ func (c *Configurer) SetConfig(
 
 	var signature string
 	if !c.skipSend {
-		signature, err = c.sendInstructions(ctx, c.client, c.auth)
+		signature, err = c.sendInstructions(ctx, c.client, c.auth, c.sendAndConfirm)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("unable to set config: %w", err)
 		}
@@ -226,6 +228,7 @@ func (c *instructionCollection) sendInstructions(
 	ctx context.Context,
 	client *rpc.Client,
 	auth solana.PrivateKey,
+	sendAndConfirmFn SendAndConfirmInstructionsFn,
 ) (string, error) {
 	if len(auth) == 0 {
 		return "", nil
@@ -234,8 +237,7 @@ func (c *instructionCollection) sendInstructions(
 	var signature string
 	var err error
 	for i, instruction := range c.instructions {
-		signature, _, err = sendAndConfirmInstructions(ctx, client, auth,
-			[]solana.Instruction{instruction}, rpc.CommitmentConfirmed)
+		signature, _, err = sendAndConfirmFn(ctx, client, auth, []solana.Instruction{instruction}, rpc.CommitmentConfirmed)
 		if err != nil {
 			return "", fmt.Errorf("unable to send instruction %d - %s: %w", i, instruction.label, err)
 		}

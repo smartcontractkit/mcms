@@ -19,8 +19,9 @@ var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
 // TimelockExecutor is an Executor implementation for solana chains for accessing the RBACTimelock program
 type TimelockExecutor struct {
 	*TimelockInspector
-	client *rpc.Client
-	auth   solana.PrivateKey
+	client         *rpc.Client
+	auth           solana.PrivateKey
+	sendAndConfirm SendAndConfirmFn
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor
@@ -29,6 +30,7 @@ func NewTimelockExecutor(client *rpc.Client, auth solana.PrivateKey) *TimelockEx
 		TimelockInspector: NewTimelockInspector(client),
 		client:            client,
 		auth:              auth,
+		sendAndConfirm:    sendAndConfirm,
 	}
 }
 
@@ -89,7 +91,7 @@ func (e *TimelockExecutor) Execute(
 		predecessorOperationPDA, configPDA, signerPDA, config.ExecutorRoleAccessController, e.auth.PublicKey())
 	instruction.AccountMetaSlice = append(instruction.AccountMetaSlice, accounts...)
 
-	signature, tx, err := sendAndConfirm(ctx, e.client, e.auth, instruction, rpc.CommitmentConfirmed)
+	signature, tx, err := e.sendAndConfirm(ctx, e.client, e.auth, instruction, rpc.CommitmentConfirmed)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to call execute operation instruction: %w", err)
 	}
