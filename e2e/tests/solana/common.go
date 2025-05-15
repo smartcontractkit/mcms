@@ -29,6 +29,7 @@ import (
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
@@ -548,4 +549,8 @@ func (s *SolanaTestSuite) waitForOperationToBeReady(ctx context.Context, timeloc
 
 	s.Require().Fail("operation not ready after %d attempts (scheduled for: %v, with buffer: %v)",
 		maxAttempts, scheduledTime.UTC(), scheduledTimeWithBuffer.UTC())
+}
+
+func (s *SolanaTestSuite) contextWithLogger() context.Context {
+	return context.WithValue(context.Background(), solanasdk.ContextLoggerValue, zap.NewNop().Sugar())
 }
