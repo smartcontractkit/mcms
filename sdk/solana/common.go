@@ -8,9 +8,12 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
+	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 	"github.com/gagliardetto/solana-go/rpc"
+
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/fees"
 )
 
 const (
@@ -177,6 +180,13 @@ func sendAndConfirmInstructions(
 	commitmentType rpc.CommitmentType,
 	opts ...sendTransactionOption,
 ) (string, *rpc.GetTransactionResult, error) {
+	// FIXME: right now we're always setting the compute unit limit to the max; this
+	// consumes more gas than we needed. We should either set the compute unit limit
+	// based on the output of a simulation, or do not set the limit initially, then
+	// handle the "compute unit limits" exceeded error and automatically retry with
+	// a higher limit
+	opts = append(opts, WithComputeUnitLimit(computebudget.MAX_COMPUTE_UNIT_LIMIT))
+
 	result, err := sendTransaction(ctx, client, instructions, auth, commitmentType, opts...)
 	if err != nil {
 		return "", nil, fmt.Errorf("unable to send instruction: %w", err)
@@ -208,16 +218,20 @@ func chunkIndexes(numItems int, chunkSize int) [][2]int {
 }
 
 type sendTransactionOptions struct {
-	retries       int
-	delay         time.Duration
-	skipPreflight bool
+	retries          int
+	delay            time.Duration
+	skipPreflight    bool
+	computeUnitLimit fees.ComputeUnitLimit
+	computeUnitPrice fees.ComputeUnitPrice
 }
 
 var defaultSendTransactionOptions = func() *sendTransactionOptions {
 	return &sendTransactionOptions{
-		retries:       500,                   //nolint:mnd
-		delay:         50 * time.Millisecond, //nolint:mnd
-		skipPreflight: false,
+		retries:          500,                   //nolint:mnd
+		delay:            50 * time.Millisecond, //nolint:mnd
+		skipPreflight:    false,
+		computeUnitLimit: 0,
+		computeUnitPrice: 0,
 	}
 }
 
@@ -236,6 +250,18 @@ func WithDelay(delay time.Duration) sendTransactionOption {
 func WithSkipPreflight(skipPreflight bool) sendTransactionOption {
 	return func(opts *sendTransactionOptions) {
 		opts.skipPreflight = skipPreflight
+	}
+}
+
+func WithComputeUnitPrice(price fees.ComputeUnitPrice) sendTransactionOption {
+	return func(opts *sendTransactionOptions) {
+		opts.computeUnitPrice = price
+	}
+}
+
+func WithComputeUnitLimit(limit fees.ComputeUnitLimit) sendTransactionOption {
+	return func(opts *sendTransactionOptions) {
+		opts.computeUnitLimit = limit
 	}
 }
 
@@ -274,6 +300,19 @@ func sendTransaction(
 	tx, err := solana.NewTransaction(instructions, hashRes.Value.Blockhash, solana.TransactionPayer(signerAndPayer.PublicKey()))
 	if err != nil {
 		return nil, err
+	}
+
+	if sendTransactionOptions.computeUnitPrice > 0 {
+		err = fees.SetComputeUnitPrice(tx, sendTransactionOptions.computeUnitPrice)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set compute unit price: %w", err)
+		}
+	}
+	if sendTransactionOptions.computeUnitLimit > 0 {
+		err = fees.SetComputeUnitLimit(tx, sendTransactionOptions.computeUnitLimit)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set compute unit limit: %w", err)
+		}
 	}
 
 	// build signers map
