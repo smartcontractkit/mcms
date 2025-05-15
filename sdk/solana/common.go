@@ -4,11 +4,14 @@ import (
 	"context"
 	"encoding/binary"
 	"fmt"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 )
@@ -214,10 +217,14 @@ type sendTransactionOptions struct {
 }
 
 var defaultSendTransactionOptions = func() *sendTransactionOptions {
+	retries := getenv("MCMS_SOLANA_MAX_RETRIES", 500, strconv.Atoi) //nolint:mnd
+	delay := getenv("MCMS_SOLANA_RETRY_DELAY", 50, strconv.Atoi)    //nolint:mnd
+	skipPreflight := getenv("MCMS_SOLANA_SKIP_PREFLIGHT", false, strconv.ParseBool)
+
 	return &sendTransactionOptions{
-		retries:       500,                   //nolint:mnd
-		delay:         50 * time.Millisecond, //nolint:mnd
-		skipPreflight: false,
+		retries:       retries,
+		delay:         time.Millisecond * time.Duration(delay),
+		skipPreflight: skipPreflight,
 	}
 }
 
@@ -346,4 +353,18 @@ func sendTransaction(
 	}
 
 	return transactionRes, errGetTx
+}
+
+func getenv[T any](key string, defaultValue T, converter func(string) (T, error)) T {
+	value, found := os.LookupEnv(key)
+	if !found {
+		return defaultValue
+	}
+
+	convertedValue, err := converter(value)
+	if err != nil {
+		return defaultValue
+	}
+
+	return convertedValue
 }
