@@ -10,10 +10,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
+	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 	"github.com/gagliardetto/solana-go/rpc"
+	"go.uber.org/zap"
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/fees"
 )
 
 const (
@@ -211,20 +214,34 @@ func chunkIndexes(numItems int, chunkSize int) [][2]int {
 }
 
 type sendTransactionOptions struct {
-	retries       int
-	delay         time.Duration
-	skipPreflight bool
+	retries          int
+	delay            time.Duration
+	skipPreflight    bool
+	computeUnitLimit fees.ComputeUnitLimit
+	computeUnitPrice fees.ComputeUnitPrice
 }
 
 var defaultSendTransactionOptions = func() *sendTransactionOptions {
 	retries := getenv("MCMS_SOLANA_MAX_RETRIES", 500, strconv.Atoi) //nolint:mnd
 	delay := getenv("MCMS_SOLANA_RETRY_DELAY", 50, strconv.Atoi)    //nolint:mnd
 	skipPreflight := getenv("MCMS_SOLANA_SKIP_PREFLIGHT", false, strconv.ParseBool)
+	computeUnitPrice := getenv("MCMS_SOLANA_COMPUTE_UNIT_PRICE", 0, strconv.Atoi)
+
+	// FIXME: should default ot 0 like computeUnitPrice above
+	// right now we're always setting the compute unit limit to the max; this
+	// consumes more gas than we needed. We should either set the compute unit limit
+	// based on the output of a simulation, or do not set the limit initially, then
+	// handle the "compute unit limits" exceeded error and automatically retry with
+	// a higher limit
+	// computeUnitLimit := getenv("MCMS_SOLANA_COMPUTE_UNIT_LIMIT", 0, strconv.Atoi)
+	computeUnitLimit := getenv("MCMS_SOLANA_COMPUTE_UNIT_LIMIT", computebudget.MAX_COMPUTE_UNIT_LIMIT, strconv.Atoi)
 
 	return &sendTransactionOptions{
-		retries:       retries,
-		delay:         time.Millisecond * time.Duration(delay),
-		skipPreflight: skipPreflight,
+		retries:          retries,
+		delay:            time.Millisecond * time.Duration(delay),
+		skipPreflight:    skipPreflight,
+		computeUnitPrice: fees.ComputeUnitPrice(computeUnitPrice),
+		computeUnitLimit: fees.ComputeUnitLimit(computeUnitLimit),
 	}
 }
 
@@ -246,6 +263,18 @@ func WithSkipPreflight(skipPreflight bool) sendTransactionOption {
 	}
 }
 
+func WithComputeUnitPrice(price fees.ComputeUnitPrice) sendTransactionOption {
+	return func(opts *sendTransactionOptions) {
+		opts.computeUnitPrice = price
+	}
+}
+
+func WithComputeUnitLimit(limit fees.ComputeUnitLimit) sendTransactionOption {
+	return func(opts *sendTransactionOptions) {
+		opts.computeUnitLimit = limit
+	}
+}
+
 func sendTransaction(
 	ctx context.Context,
 	rpcClient *rpc.Client,
@@ -256,6 +285,7 @@ func sendTransaction(
 ) (*rpc.GetTransactionResult, error) {
 	var errBlockHash error
 	var hashRes *rpc.GetLatestBlockhashResult
+	logger := logFromContext(ctx)
 
 	sendTransactionOptions := defaultSendTransactionOptions()
 	for _, opt := range opts {
@@ -265,7 +295,7 @@ func sendTransaction(
 	for range sendTransactionOptions.retries {
 		hashRes, errBlockHash = rpcClient.GetLatestBlockhash(ctx, rpc.CommitmentConfirmed)
 		if errBlockHash != nil {
-			fmt.Println("GetLatestBlockhash error:", errBlockHash) //nolint:forbidigo
+			logger.Infof("GetLatestBlockhash error:", errBlockHash)
 			time.Sleep(sendTransactionOptions.delay)
 
 			continue
@@ -274,7 +304,7 @@ func sendTransaction(
 		break
 	}
 	if errBlockHash != nil {
-		fmt.Println("GetLatestBlockhash error after retries:", errBlockHash) //nolint:forbidigo
+		logger.Infof("GetLatestBlockhash error after retries:", errBlockHash)
 		return nil, errBlockHash
 	}
 
@@ -283,12 +313,25 @@ func sendTransaction(
 		return nil, err
 	}
 
+	if sendTransactionOptions.computeUnitPrice > 0 {
+		err = fees.SetComputeUnitPrice(tx, sendTransactionOptions.computeUnitPrice)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set compute unit price: %w", err)
+		}
+	}
+	if sendTransactionOptions.computeUnitLimit > 0 {
+		err = fees.SetComputeUnitLimit(tx, sendTransactionOptions.computeUnitLimit)
+		if err != nil {
+			return nil, fmt.Errorf("failed to set compute unit limit: %w", err)
+		}
+	}
+
 	// build signers map
 	signers := map[solana.PublicKey]solana.PrivateKey{signerAndPayer.PublicKey(): signerAndPayer}
 	_, err = tx.Sign(func(pub solana.PublicKey) *solana.PrivateKey {
 		priv, ok := signers[pub]
 		if !ok {
-			fmt.Printf("ERROR: Missing signer private key for %s\n", pub) //nolint:forbidigo
+			logger.Infof("ERROR: Missing signer private key for %s\n", pub)
 		}
 
 		return &priv
@@ -302,7 +345,7 @@ func sendTransaction(
 		txOpts := rpc.TransactionOpts{SkipPreflight: sendTransactionOptions.skipPreflight, PreflightCommitment: commitment}
 		txsig, err = rpcClient.SendTransactionWithOpts(ctx, tx, txOpts)
 		if err != nil {
-			fmt.Println("Error sending transaction:", err) //nolint:forbidigo
+			logger.Infof("Error sending transaction:", err)
 			time.Sleep(sendTransactionOptions.delay)
 
 			continue
@@ -312,7 +355,6 @@ func sendTransaction(
 	}
 	// If tx failed with rpc error, we should not retry as confirmation will never happen
 	if err != nil {
-		fmt.Println("Error sending transaction after retries:", err) //nolint:forbidigo
 		return nil, err
 	}
 
@@ -325,7 +367,7 @@ func sendTransaction(
 		count++
 		statusRes, sigErr := rpcClient.GetSignatureStatuses(ctx, true, txsig)
 		if sigErr != nil {
-			fmt.Println(sigErr) //nolint:forbidigo // debugging if tx errors; mainnet can be flakey
+			logger.Infof("GetSignaturesStatuses error: %v", sigErr)
 			time.Sleep(sendTransactionOptions.delay)
 
 			continue
@@ -341,9 +383,9 @@ func sendTransaction(
 	var transactionRes *rpc.GetTransactionResult
 	txOpts := &rpc.GetTransactionOpts{Commitment: commitment, MaxSupportedTransactionVersion: &v}
 	for range sendTransactionOptions.retries {
-		transactionRes, errGetTx = rpcClient.GetTransaction(ctx, txsig, txOpts)
-		if errGetTx != nil {
-			fmt.Println("Error getting transaction:", errGetTx) //nolint:forbidigo
+		transactionRes, err = rpcClient.GetTransaction(ctx, txsig, txOpts)
+		if err != nil {
+			logger.Infof("GetTransaction error:", err)
 			time.Sleep(sendTransactionOptions.delay)
 
 			continue
@@ -357,7 +399,7 @@ func sendTransaction(
 
 func getenv[T any](key string, defaultValue T, converter func(string) (T, error)) T {
 	value, found := os.LookupEnv(key)
-	if !found {
+	if !found || value == "" {
 		return defaultValue
 	}
 
@@ -367,4 +409,22 @@ func getenv[T any](key string, defaultValue T, converter func(string) (T, error)
 	}
 
 	return convertedValue
+}
+
+type Logger interface {
+	Infof(template string, args ...any)
+}
+
+type contextLoggerValueT string
+
+const ContextLoggerValue = contextLoggerValueT("mcms-logger")
+
+func logFromContext(ctx context.Context) Logger {
+	value := ctx.Value(ContextLoggerValue)
+	logger, ok := value.(Logger)
+	if !ok {
+		logger = zap.Must(zap.NewProduction()).Sugar()
+	}
+
+	return logger
 }
