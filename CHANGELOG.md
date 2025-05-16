@@ -1,5 +1,15 @@
 # @smartcontractkit/mcms
 
+## 0.20.1
+
+### Patch Changes
+
+- [#385](https://github.com/smartcontractkit/mcms/pull/385) [`4c4a585`](https://github.com/smartcontractkit/mcms/commit/4c4a585eab19cc743b2eb2fb7149f3312d3a85f8) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: cache compiled solana programs in CI
+
+- [#392](https://github.com/smartcontractkit/mcms/pull/392) [`b7948a2`](https://github.com/smartcontractkit/mcms/commit/b7948a228ae1faf333d314c0dfb8ce8e1756fcf4) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: set CU limit as the maximum (1.4M) to avoid CU errors in mainnet
+
+- [#394](https://github.com/smartcontractkit/mcms/pull/394) [`6ff9d02`](https://github.com/smartcontractkit/mcms/commit/6ff9d024cedb9ac81093442407239d08992405ec) Thanks [@kylesmartin](https://github.com/kylesmartin)! - Support Ledger MMII encoding
+
 ## 0.20.0
 
 ### Minor Changes
