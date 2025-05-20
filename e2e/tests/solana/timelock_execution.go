@@ -168,7 +168,7 @@ func (s *SolanaTestSuite) scheduleMintTx(
 		offset := 0
 
 		for offset < len(rawData) {
-			end := offset + mcmsSolana.AppendIxDataChunkSize
+			end := offset + mcmsSolana.AppendIxDataChunkSize()
 			if end > len(rawData) {
 				end = len(rawData)
 			}
