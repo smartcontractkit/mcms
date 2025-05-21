@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.20.2
+
+### Patch Changes
+
+- [#378](https://github.com/smartcontractkit/mcms/pull/378) [`571f37b`](https://github.com/smartcontractkit/mcms/commit/571f37bc207b5ece48413b1f764fb7a2f00bd7b9) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): check current root before calling SetRoot
+
 ## 0.20.1
 
 ### Patch Changes
