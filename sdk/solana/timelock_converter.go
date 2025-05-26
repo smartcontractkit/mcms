@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -17,10 +18,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
-
-// AppendIxDataChunkSize number is derived from chainlink-ccip; using 400 as
-// recommended by jonghyeon.park@smartcontract.com.
-const AppendIxDataChunkSize = 400
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
@@ -321,7 +318,7 @@ func scheduleBatchInstructions(
 		offset := 0
 
 		for offset < len(rawData) {
-			end := min(offset+AppendIxDataChunkSize, len(rawData))
+			end := min(offset+AppendIxDataChunkSize(), len(rawData))
 			chunk := rawData[offset:end]
 
 			appendIx, appendErr := bindings.NewAppendInstructionDataInstruction(
@@ -422,7 +419,7 @@ func bypassInstructions(
 
 		for offset < len(rawData) {
 			// -- append bypasser instruction data
-			end := min(offset+AppendIxDataChunkSize, len(rawData))
+			end := min(offset+AppendIxDataChunkSize(), len(rawData))
 			chunk := rawData[offset:end]
 
 			appendIx, appendErr := bindings.NewAppendBypasserInstructionDataInstruction(
@@ -484,4 +481,66 @@ func boolToByte(b bool) byte {
 	}
 
 	return i
+}
+
+const (
+	maxTransactionSize              = 1232
+	appendIxDataSizeBytes           = 80
+	appendIxNumAccounts             = 5
+	baseExecuteBatchDataSizeBytes   = 64
+	executeBatchNumAccounts         = 6
+	numAccounts                     = 1 + appendIxNumAccounts + executeBatchNumAccounts
+	accountBytes                    = 32
+	proofHashBytes                  = 32
+	numRequiredSignaturesBytes      = 1
+	numReadOnlySignedAccountsBytes  = 1
+	numReadOnlyUnignedAccountsBytes = 1
+	numAccountKeysBytes             = 1
+	accountsBytes                   = numAccounts * accountBytes
+	recentBlockHashBytes            = 32
+	numInstructions                 = 2
+	numInstructionsBytes            = 1
+	programIdIndexBytes             = 1 * numInstructions
+	numInstructionAccountsBytes     = 1 * numInstructions
+	accountIndexesBytes             = 1 * numAccounts
+	numSignatures                   = 1
+	signatureBytes                  = 64
+	numSignaturesBytes              = 1
+	signaturesBytes                 = signatureBytes * numSignatures
+	setComputeUnitLimitBytes        = 7
+	paddingBytes                    = 16
+	defaultNumProofs                = 8
+)
+
+// calculate the maximum size of a data byte array
+// that can be passed to the AppendInstructionData instruction. It assumes a few things:
+// * a single signature will be added to the transaction
+// * we won't use an address lookup table
+// * a SetComputeUnitLimit instruction _will_ be added to the transaction
+func AppendIxDataChunkSize() int {
+	// this value probably can't be computed; so we estimate using
+	// `# proofs == merklet tree height`, and `# operations == 2^(tree height)`.
+	// for instance, with the default `numProofs == 8` we can encode up to 256 operations.
+	// TODO: add a better heuristic that considers the number of instructions in all
+	//       batch operations and also the size of each instruction.
+	numProofs := getenv("MCMS_SOLANA_NUM_PROOFS", defaultNumProofs, strconv.Atoi)
+
+	executeBatchDataSizeBytes := baseExecuteBatchDataSizeBytes + (numProofs * proofHashBytes)
+
+	return maxTransactionSize -
+		appendIxDataSizeBytes -
+		executeBatchDataSizeBytes -
+		numRequiredSignaturesBytes -
+		numReadOnlySignedAccountsBytes -
+		numReadOnlyUnignedAccountsBytes -
+		numAccountKeysBytes -
+		accountsBytes -
+		recentBlockHashBytes -
+		numInstructionsBytes -
+		programIdIndexBytes -
+		numInstructionAccountsBytes -
+		accountIndexesBytes -
+		numSignaturesBytes -
+		signaturesBytes -
+		setComputeUnitLimitBytes
 }

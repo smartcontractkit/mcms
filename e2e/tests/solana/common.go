@@ -421,7 +421,7 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 		offset := 0
 
 		for offset < len(rawData) {
-			end := offset + solanasdk.AppendIxDataChunkSize
+			end := offset + solanasdk.AppendIxDataChunkSize()
 			if end > len(rawData) {
 				end = len(rawData)
 			}
