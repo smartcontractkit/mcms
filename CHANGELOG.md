@@ -1,5 +1,13 @@
 # @smartcontractkit/mcms
 
+## 0.20.2
+
+### Patch Changes
+
+- [#396](https://github.com/smartcontractkit/mcms/pull/396) [`a6ff022`](https://github.com/smartcontractkit/mcms/commit/a6ff022f82a2b10eb7ece0b6507a3a43421e0db1) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): fix calculation of AppendInstructionData chunk size
+
+- [#378](https://github.com/smartcontractkit/mcms/pull/378) [`571f37b`](https://github.com/smartcontractkit/mcms/commit/571f37bc207b5ece48413b1f764fb7a2f00bd7b9) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): check current root before calling SetRoot
+
 ## 0.20.1
 
 ### Patch Changes
