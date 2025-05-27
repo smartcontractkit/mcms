@@ -523,32 +523,31 @@ func (s *SolanaTestSuite) waitForOperationToBeReady(ctx context.Context, timeloc
 	opPDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockProgramID, timelockID, opID)
 	s.Require().NoError(err)
 
-	var opAccount timelock.Operation
-	err = common.GetAccountDataBorshInto(ctx, s.SolanaClient, opPDA, rpc.CommitmentConfirmed, &opAccount)
-	s.Require().NoError(err)
-
-	if opAccount.State == timelock.Done_OperationState {
-		return
-	}
-
-	scheduledTime := time.Unix(int64(opAccount.Timestamp), 0)
-
-	// add buffer to scheduled time to ensure blockchain has advanced enough
-	scheduledTimeWithBuffer := scheduledTime.Add(timeBuffer)
-
-	for range maxAttempts {
-		currentTime, err := common.GetBlockTime(ctx, s.SolanaClient, rpc.CommitmentConfirmed)
+	for i := 0; i < maxAttempts; i++ {
+		var opAccount timelock.Operation
+		err := common.GetAccountDataBorshInto(ctx, s.SolanaClient, opPDA, rpc.CommitmentConfirmed, &opAccount)
 		s.Require().NoError(err)
-
-		if currentTime.Time().After(scheduledTimeWithBuffer) || currentTime.Time().Equal(scheduledTimeWithBuffer) {
+		s.T().Log("Operation state: ", opAccount.State)
+		switch opAccount.State {
+		case timelock.Done_OperationState:
+			s.T().Log("Operation already executed")
 			return
+		case timelock.Scheduled_OperationState:
+			scheduledTime := time.Unix(int64(opAccount.Timestamp), 0).Add(timeBuffer)
+
+			currentTime, err := common.GetBlockTime(ctx, s.SolanaClient, rpc.CommitmentConfirmed)
+			s.Require().NoError(err)
+
+			if currentTime.Time().After(scheduledTime) || currentTime.Time().Equal(scheduledTime) {
+				s.T().Log("Operation is ready for execution")
+				return
+			}
 		}
 
 		time.Sleep(pollInterval)
 	}
 
-	s.Require().Fail("operation not ready after %d attempts (scheduled for: %v, with buffer: %v)",
-		maxAttempts, scheduledTime.UTC(), scheduledTimeWithBuffer.UTC())
+	s.Require().Fail("operation not ready after %d attempts", maxAttempts)
 }
 
 func (s *SolanaTestSuite) contextWithLogger() context.Context {
