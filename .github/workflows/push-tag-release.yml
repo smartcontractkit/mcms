@@ -50,7 +50,7 @@ jobs:
       actions: read
     steps:
       - name: cicd-publish-release
-        uses: smartcontractkit/.github/actions/cicd-build-publish-artifacts-go@b4737861584f88fa9569d6978f70fedf8b1ae67c # cicd-build-publish-artifacts-go@0.4.0
+        uses: smartcontractkit/.github/actions/cicd-build-publish-artifacts-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # cicd-build-publish-artifacts-go@0.4.0
         with:
           # general inputs
           app-name: mcms-lib
