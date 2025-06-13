@@ -44,6 +44,7 @@ func (c *Config) AllSigners() []common.Address {
 	}
 
 	collect(c)
+
 	return signers
 }
 

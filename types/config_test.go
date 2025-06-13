@@ -405,6 +405,8 @@ func Test_unorderedArrayEquals(t *testing.T) {
 }
 
 func TestAllSigners(t *testing.T) {
+	t.Parallel()
+
 	addr := func(hex string) common.Address { return common.HexToAddress(hex) }
 
 	tests := []struct {
@@ -468,6 +470,8 @@ func TestAllSigners(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := tt.input.AllSigners()
 			assert.ElementsMatch(t, tt.expected, got)
 		})
