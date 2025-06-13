@@ -403,3 +403,73 @@ func Test_unorderedArrayEquals(t *testing.T) {
 		})
 	}
 }
+
+func TestAllSigners(t *testing.T) {
+	addr := func(hex string) common.Address { return common.HexToAddress(hex) }
+
+	tests := []struct {
+		name     string
+		input    Config
+		expected []common.Address
+	}{
+		{
+			name:     "no signers",
+			input:    Config{},
+			expected: []common.Address{},
+		},
+		{
+			name: "only direct signers",
+			input: Config{
+				Signers: []common.Address{addr("0x1"), addr("0x2")},
+			},
+			expected: []common.Address{addr("0x1"), addr("0x2")},
+		},
+		{
+			name: "only group signers",
+			input: Config{
+				GroupSigners: []Config{
+					{Signers: []common.Address{addr("0x3")}},
+					{Signers: []common.Address{addr("0x4")}},
+				},
+			},
+			expected: []common.Address{addr("0x3"), addr("0x4")},
+		},
+		{
+			name: "signers with nested groups",
+			input: Config{
+				Signers: []common.Address{addr("0x1")},
+				GroupSigners: []Config{
+					{
+						Signers: []common.Address{addr("0x2")},
+						GroupSigners: []Config{
+							{Signers: []common.Address{addr("0x3")}},
+						},
+					},
+				},
+			},
+			expected: []common.Address{addr("0x1"), addr("0x2"), addr("0x3")},
+		},
+		{
+			name: "duplicate signers in multiple groups",
+			input: Config{
+				Signers: []common.Address{addr("0x1")},
+				GroupSigners: []Config{
+					{
+						Signers: []common.Address{addr("0x1"), addr("0x2")},
+					},
+					{
+						Signers: []common.Address{addr("0x2"), addr("0x3")},
+					},
+				},
+			},
+			expected: []common.Address{addr("0x1"), addr("0x2"), addr("0x3")},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.input.AllSigners()
+			assert.ElementsMatch(t, tt.expected, got)
+		})
+	}
+}

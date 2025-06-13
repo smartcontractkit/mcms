@@ -25,6 +25,28 @@ type Config struct {
 	GroupSigners []Config `json:"groupSigners"`
 }
 
+// AllSigners returns a deduplicated list of all individual signers recursively
+func (c *Config) AllSigners() []common.Address {
+	seen := make(map[common.Address]bool)
+	var result []common.Address
+
+	var collect func(cfg *Config)
+	collect = func(cfg *Config) {
+		for _, s := range cfg.Signers {
+			if !seen[s] {
+				seen[s] = true
+				result = append(result, s)
+			}
+		}
+		for _, gs := range cfg.GroupSigners {
+			collect(&gs)
+		}
+	}
+
+	collect(c)
+	return result
+}
+
 // NewConfig returns a new config with the given quorum, signers and group signers and ensures it
 // is valid.
 func NewConfig(quorum uint8, signers []common.Address, groupSigners []Config) (Config, error) {
