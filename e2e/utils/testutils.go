@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -78,4 +79,25 @@ func ReadFixture(path string) (*os.File, error) {
 	}
 
 	return file, nil
+}
+
+// source: https://github.com/samber/lo/blob/49f24de9198ce4500df6cbef3260066bf777da74/find.go#L610-L613
+func Sample[T any](collection []T) T {
+	size := len(collection)
+	if size == 0 {
+		var empty T
+		return empty
+	}
+
+	return collection[rand.IntN(size)]
+}
+
+// source: https://github.com/samber/lo/blob/49f24de9198ce4500df6cbef3260066bf777da74/slice.go#L126
+func Times[T any](count int, iteratee func(index int) T) []T {
+	result := make([]T, count)
+	for i := range count {
+		result[i] = iteratee(i)
+	}
+
+	return result
 }
