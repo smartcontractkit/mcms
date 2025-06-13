@@ -1,5 +1,4 @@
-run:
-  timeout: 5m
+version: "2"
 linters:
   enable:
     - asciicheck
@@ -18,11 +17,8 @@ linters:
     - fatcontext
     - forbidigo
     - goconst
-    - gofmt
-    - goimports
     - gosec
     - intrange
-    - makezero
     - loggercheck
     - makezero
     - misspell
@@ -43,63 +39,84 @@ linters:
     - usestdlibvars
     - wastedassign
     - whitespace
-linters-settings:
-  goconst:
-    min-len: 5
-  goimports:
-    local-prefixes: github.com/smartcontractkit/mcms
-  govet:
-    enable:
-      - shadow
-  nlreturn:
-    block-size: 2
-  revive:
-    confidence: 1.0
+  settings:
+    goconst:
+      min-len: 5
+    govet:
+      enable:
+        - shadow
+    nlreturn:
+      block-size: 2
+    revive:
+      confidence: 1
+      rules:
+        - name: comment-spacings
+        - name: constant-logical-expr
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: defer
+        - name: dot-imports
+        - name: early-return
+        - name: empty-block
+        - name: error-return
+        - name: error-strings
+        - name: error-naming
+        - name: errorf
+        - name: identical-branches
+        - name: if-return
+        - name: import-shadowing
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: redundant-import-alias
+        - name: string-of-int
+        - name: superfluous-else
+        - name: time-equal
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: use-any
+        - name: useless-break
+        - name: var-naming
+        - name: var-declaration
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
     rules:
-      - name: comment-spacings
-      - name: constant-logical-expr
-      - name: context-as-argument
-      - name: context-keys-type
-      - name: defer
-      - name: dot-imports
-      - name: early-return
-      - name: empty-block
-      - name: error-return
-      - name: error-strings
-      - name: error-naming
-      - name: errorf
-      - name: identical-branches
-      - name: if-return
-      - name: import-shadowing
-      - name: increment-decrement
-      - name: indent-error-flow
-      - name: package-comments
-      - name: range
-      - name: receiver-naming
-      - name: redefines-builtin-id
-      - name: redundant-import-alias
-      - name: string-of-int
-      - name: superfluous-else
-      - name: time-equal
-      - name: time-naming
-      - name: unexported-return
-      - name: unreachable-code
-      - name: use-any
-      - name: useless-break
-      - name: var-naming
-      - name: var-declaration
-issues:
-  exclude-dirs:
-    # Exclude the directory from linting because it will soon be removed and only contains
-    # generated code. Can be removed once the gethwrappers directory is removed.
-    - sdk/evm/bindings
-    - sdk/usbwallet
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - unparam # No need to check for unused parameters in tests, since there are often false positives
-    - path: ^e2e/
-      linters:
-        - mnd # Exclude magic numbers rule in the e2e folder
-        - gosec # Exclude integer overflow (G115)
-        - paralleltest # Exclude requiring parallel tests
+      - linters:
+          - unparam
+        path: _test\.go
+      - linters:
+          - gosec
+          - mnd
+          - paralleltest
+        path: ^e2e/
+    paths:
+      - sdk/evm/bindings
+      - sdk/usbwallet
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/smartcontractkit/mcms
+  exclusions:
+    generated: lax
+    paths:
+      - sdk/evm/bindings
+      - sdk/usbwallet
+      - third_party$
+      - builtin$
+      - examples$
