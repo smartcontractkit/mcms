@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.20.3
+
+### Patch Changes
+
+- [#403](https://github.com/smartcontractkit/mcms/pull/403) [`1dbe8a3`](https://github.com/smartcontractkit/mcms/commit/1dbe8a38aa6b31dbdd2838dbf5d9f850da85320c) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore(solana): validate AccessController config multiple accounts
+
 ## 0.20.2
 
 ### Patch Changes
