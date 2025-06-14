@@ -162,7 +162,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			if tt.wantErr != nil {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.wantErr.Error())
-				assert.Equal(t, "", tx.Hash)
+				assert.Empty(t, tx.Hash)
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, tx.Hash)

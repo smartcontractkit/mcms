@@ -6,6 +6,7 @@ package solanae2e
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -547,8 +548,7 @@ func (s *SolanaTestSuite) waitForOperationToBeReady(ctx context.Context, timeloc
 		time.Sleep(pollInterval)
 	}
 
-	s.Require().Fail("operation not ready after %d attempts (scheduled for: %v, with buffer: %v)",
-		maxAttempts, scheduledTime.UTC(), scheduledTimeWithBuffer.UTC())
+	s.Require().Fail(fmt.Sprintf("Operation %s is not ready after %d attempts", opID, maxAttempts))
 }
 
 func (s *SolanaTestSuite) contextWithLogger() context.Context {

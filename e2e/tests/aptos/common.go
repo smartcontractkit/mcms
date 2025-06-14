@@ -48,9 +48,9 @@ func (a *AptosTestSuite) SetupSuite() {
 
 func (a *AptosTestSuite) deployMCMSContract() {
 	mcmsSeed := mcms.DefaultSeed + time.Now().String()
-	addr, tx, mcmsContract, err := mcms.DeployToResourceAccount(a.deployerAccount, a.TestSetup.AptosRPCClient, mcmsSeed)
+	addr, tx, mcmsContract, err := mcms.DeployToResourceAccount(a.deployerAccount, a.AptosRPCClient, mcmsSeed)
 	a.Require().NoError(err)
-	data, err := a.TestSetup.AptosRPCClient.WaitForTransaction(tx.Hash)
+	data, err := a.AptosRPCClient.WaitForTransaction(tx.Hash)
 	a.Require().NoError(err)
 	a.Require().True(data.Success, data.VmStatus)
 	a.T().Logf("📃 Deployed MCM contract at %v in tx %v", addr.StringLong(), data.Hash)
@@ -61,9 +61,9 @@ func (a *AptosTestSuite) deployMCMSTestContract() {
 	if a.MCMSContract == nil {
 		a.T().Fatal("MCMS contract not found. Can only deploy MCMS user contract after MCMS contract has been deployed.")
 	}
-	addr, tx, mcmsTestContract, err := mcmstest.DeployToObject(a.deployerAccount, a.TestSetup.AptosRPCClient, a.MCMSContract.Address())
+	addr, tx, mcmsTestContract, err := mcmstest.DeployToObject(a.deployerAccount, a.AptosRPCClient, a.MCMSContract.Address())
 	a.Require().NoError(err)
-	data, err := a.TestSetup.AptosRPCClient.WaitForTransaction(tx.Hash)
+	data, err := a.AptosRPCClient.WaitForTransaction(tx.Hash)
 	a.Require().NoError(err)
 	a.Require().True(data.Success, data.VmStatus)
 	a.T().Logf("📃 Deployed MCMS Test contract at %v in tx %v", addr.StringLong(), data.Hash)

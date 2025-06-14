@@ -95,7 +95,7 @@ func Test_BaseProposal_SetChainMetadata(t *testing.T) {
 	})
 
 	assert.Equal(t, uint64(0), proposal.ChainMetadata[chaintest.Chain1Selector].StartingOpCount)
-	assert.Equal(t, "", proposal.ChainMetadata[chaintest.Chain1Selector].MCMAddress)
+	assert.Empty(t, proposal.ChainMetadata[chaintest.Chain1Selector].MCMAddress)
 }
 
 func Test_NewProposal(t *testing.T) {

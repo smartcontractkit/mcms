@@ -336,7 +336,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerSingleTX_Success(t *testin
 	require.NoError(t, err)
 	require.NotNil(t, tx)
 	require.NotNil(t, tx.RawData)
-	require.NotEqual(t, "", tx.Hash)
+	require.NotEmpty(t, tx.Hash)
 	sim.Backend.Commit()
 
 	// Check the state of the MCMS contract
@@ -473,7 +473,7 @@ func TestExecutor_ExecuteE2E_SingleChainSingleSignerMultipleTX_Success(t *testin
 		require.NoError(t, err)
 		require.NotNil(t, tx)
 		require.NotNil(t, tx.RawData)
-		require.NotEqual(t, "", tx.Hash)
+		require.NotEmpty(t, tx.Hash)
 
 		sim.Backend.Commit()
 	}
@@ -618,7 +618,7 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		require.NoError(t, err)
 		require.NotNil(t, tx)
 		require.NotNil(t, tx.RawData)
-		require.NotEqual(t, "", tx.Hash)
+		require.NotEmpty(t, tx.Hash)
 
 		sim.Backend.Commit()
 	}

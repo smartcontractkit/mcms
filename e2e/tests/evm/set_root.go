@@ -61,7 +61,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 	s.mcmsContract = s.deployMCMSContract()
 	s.timelockContract = s.deployTimelockContract(s.mcmsContract.Address().String())
 	s.deployerKey = crypto.PubkeyToAddress(privateKey.PublicKey)
-	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.Config.BlockchainA.Out.Family)
+	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)
 	s.chainSelector = mcmtypes.ChainSelector(chainDetails.ChainSelector)
 }
