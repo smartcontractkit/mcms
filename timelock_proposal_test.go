@@ -18,7 +18,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
+
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/sdk/mocks"
@@ -773,7 +773,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 			setup: func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string) {
 				t.Helper()
 				decoders := map[types.ChainSelector]sdk.Decoder{
-					chaintest.Chain1Selector: evm.NewDecoder(),
+					chaintest.Chain1Selector: evmsdk.NewDecoder(),
 				}
 
 				return decoders, map[string]string{"RBACTimelock": bindings.RBACTimelockABI}
@@ -782,7 +782,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 				{
 					ChainSelector: chaintest.Chain1Selector,
 					Transactions: []types.Transaction{
-						evm.NewTransaction(
+						evmsdk.NewTransaction(
 							common.HexToAddress("0xTestTarget"),
 							grantRoleData,
 							big.NewInt(0),
@@ -794,7 +794,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 			},
 			want: [][]sdk.DecodedOperation{
 				{
-					&evm.DecodedOperation{
+					&evmsdk.DecodedOperation{
 						FunctionName: "grantRole",
 						InputKeys:    []string{"role", "account"},
 						InputArgs:    []any{[32]byte(exampleRole.Bytes()), common.HexToAddress("0x0000000000000000000000000000000000000123")},
@@ -812,7 +812,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 				{
 					ChainSelector: chaintest.Chain1Selector,
 					Transactions: []types.Transaction{
-						evm.NewTransaction(
+						evmsdk.NewTransaction(
 							common.HexToAddress("0xTestTarget"),
 							grantRoleData,
 							big.NewInt(0),
@@ -830,7 +830,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 			setup: func(t *testing.T) (map[types.ChainSelector]sdk.Decoder, map[string]string) {
 				t.Helper()
 				decoders := map[types.ChainSelector]sdk.Decoder{
-					chaintest.Chain1Selector: evm.NewDecoder(),
+					chaintest.Chain1Selector: evmsdk.NewDecoder(),
 				}
 
 				return decoders, map[string]string{}
@@ -839,7 +839,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 				{
 					ChainSelector: chaintest.Chain1Selector,
 					Transactions: []types.Transaction{
-						evm.NewTransaction(
+						evmsdk.NewTransaction(
 							common.HexToAddress("0xTestTarget"),
 							grantRoleData,
 							big.NewInt(0),
@@ -868,7 +868,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 				{
 					ChainSelector: chaintest.Chain1Selector,
 					Transactions: []types.Transaction{
-						evm.NewTransaction(
+						evmsdk.NewTransaction(
 							common.HexToAddress("0xTestTarget"),
 							grantRoleData,
 							big.NewInt(0),

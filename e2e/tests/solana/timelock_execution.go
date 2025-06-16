@@ -79,7 +79,7 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 
 	signature, err := executor.Execute(ctx, batchOp, timelockAddress, predecessor, salt)
 	s.Require().NoError(err)
-	s.Require().NotEqual("", signature)
+	s.Require().NotEmpty(signature)
 
 	// --- assert ---
 	finalBalance := getBalance(ctx, s.T(), s.SolanaClient, receiverATA)
