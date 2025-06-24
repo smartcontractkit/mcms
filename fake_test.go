@@ -1,5 +1,7 @@
 package mcms
 
+import "github.com/ethereum/go-ethereum/common"
+
 // fakeWriter is a fake implementation of io.Writer.
 type fakeWriter struct {
 	n   int
@@ -33,4 +35,13 @@ func newFakeSigner(sigB []byte, err error) signer {
 // Sign implemnts the signer interface.
 func (f *fakeSigner) Sign(payload []byte) ([]byte, error) {
 	return f.sigB, f.err
+}
+
+// GetAddress implements the signer interface and returns a fixed address.
+func (f *fakeSigner) GetAddress() (common.Address, error) {
+	if f.err != nil {
+		return common.Address{}, f.err
+	}
+
+	return common.HexToAddress("0x1234"), nil
 }

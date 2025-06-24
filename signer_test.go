@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/require"
 )
@@ -46,4 +47,18 @@ func Test_PrivateKeySigner_Sign(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_PrivateKeySigner_GetAddress(t *testing.T) {
+	t.Parallel()
+
+	privKey, err := crypto.HexToECDSA(testPrivateKeyHex)
+	require.NoError(t, err)
+
+	signer := NewPrivateKeySigner(privKey)
+	addr, err := signer.GetAddress()
+
+	require.NoError(t, err)
+	want := common.HexToAddress("0xFe6d23D3C194bA84C035be35ad82775ddf0BFf4e")
+	require.Equal(t, want, addr)
 }
