@@ -1,5 +1,29 @@
 # @smartcontractkit/mcms
 
+## 0.20.2
+
+### Patch Changes
+
+- [#396](https://github.com/smartcontractkit/mcms/pull/396) [`a6ff022`](https://github.com/smartcontractkit/mcms/commit/a6ff022f82a2b10eb7ece0b6507a3a43421e0db1) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): fix calculation of AppendInstructionData chunk size
+
+- [#378](https://github.com/smartcontractkit/mcms/pull/378) [`571f37b`](https://github.com/smartcontractkit/mcms/commit/571f37bc207b5ece48413b1f764fb7a2f00bd7b9) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): check current root before calling SetRoot
+
+## 0.20.1
+
+### Patch Changes
+
+- [#385](https://github.com/smartcontractkit/mcms/pull/385) [`4c4a585`](https://github.com/smartcontractkit/mcms/commit/4c4a585eab19cc743b2eb2fb7149f3312d3a85f8) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: cache compiled solana programs in CI
+
+- [#392](https://github.com/smartcontractkit/mcms/pull/392) [`b7948a2`](https://github.com/smartcontractkit/mcms/commit/b7948a228ae1faf333d314c0dfb8ce8e1756fcf4) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: set CU limit as the maximum (1.4M) to avoid CU errors in mainnet
+
+- [#394](https://github.com/smartcontractkit/mcms/pull/394) [`6ff9d02`](https://github.com/smartcontractkit/mcms/commit/6ff9d024cedb9ac81093442407239d08992405ec) Thanks [@kylesmartin](https://github.com/kylesmartin)! - Support Ledger MMII encoding
+
+## 0.20.0
+
+### Minor Changes
+
+- [#388](https://github.com/smartcontractkit/mcms/pull/388) [`8f66eb2`](https://github.com/smartcontractkit/mcms/commit/8f66eb299b2f3c8901fd4e8688565ce79a72a9f0) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): use solanacommon.SendTransaction() that supports retries
+
 ## 0.19.3
 
 ### Patch Changes

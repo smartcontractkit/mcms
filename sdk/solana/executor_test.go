@@ -12,6 +12,7 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
 	cselectors "github.com/smartcontractkit/chain-selectors"
+	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -34,9 +35,7 @@ func TestNewExecutor(t *testing.T) {
 	require.NotNil(t, executor)
 }
 
-func TestExecutor_ExecuteOperation(t *testing.T) {
-	t.Parallel()
-
+func TestExecutor_ExecuteOperation(t *testing.T) { //nolint:paralleltest
 	type args struct {
 		metadata types.ChainMetadata
 		nonce    uint32
@@ -52,11 +51,11 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	accounts := []*solana.AccountMeta{}
 	tx, err := NewTransaction(testMCMProgramID.String(), data, big.NewInt(0), accounts, "solana-testing", []string{})
 	require.NoError(t, err)
-	tests := []struct {
-		name string
-		args args
 
-		mockSetup func(*mocks.JSONRPCClient)
+	tests := []struct {
+		name      string
+		args      args
+		setup     func(*testing.T, *mocks.JSONRPCClient)
 		want      string
 		assertion assert.ErrorAssertionFunc
 		wantErr   error
@@ -76,7 +75,8 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					ChainSelector: types.ChainSelector(selector),
 				},
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
+			setup: func(t *testing.T, m *mocks.JSONRPCClient) {
+				t.Helper()
 				mockSolanaTransaction(t, m, 20, 5,
 					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", nil, nil)
 			},
@@ -98,8 +98,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					ChainSelector: types.ChainSelector(selector),
 				},
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
-			},
+			setup:   func(t *testing.T, m *mocks.JSONRPCClient) { t.Helper() },
 			want:    "",
 			wantErr: errors.New("invalid contract ID provided"),
 			assertion: func(t assert.TestingT, err error, i ...any) bool {
@@ -121,14 +120,12 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					ChainSelector: types.ChainSelector(selector),
 				},
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
-				mockSolanaTransaction(t,
-					m,
-					20,
-					5,
-					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
-					nil,
-					errors.New("ix send failure"))
+			setup: func(t *testing.T, m *mocks.JSONRPCClient) {
+				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
+
+				mockSolanaTransaction(t, m, 20, 5, "2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
+					nil, errors.New("ix send failure"))
 			},
 			want:    "",
 			wantErr: errors.New("invalid contract ID provided"),
@@ -153,8 +150,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					ChainSelector: types.ChainSelector(selector),
 				},
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
-			},
+			setup:   func(t *testing.T, m *mocks.JSONRPCClient) { t.Helper() },
 			want:    "",
 			wantErr: errors.New("invalid contract ID provided"),
 			assertion: func(t assert.TestingT, err error, i ...any) bool {
@@ -162,17 +158,16 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			jsonRPCClient := mocks.NewJSONRPCClient(t)
 			encoder := NewEncoder(types.ChainSelector(selector), uint64(tt.args.nonce), false)
 			client := rpc.NewWithCustomRPCClient(jsonRPCClient)
-			tt.mockSetup(jsonRPCClient)
-			e := NewExecutor(encoder, client, auth)
+			executor := NewExecutor(encoder, client, auth)
 
-			got, err := e.ExecuteOperation(ctx, tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)
+			tt.setup(t, jsonRPCClient)
+
+			got, err := executor.ExecuteOperation(ctx, tt.args.metadata, tt.args.nonce, tt.args.proof, tt.args.op)
 			if tt.wantErr != nil {
 				tt.assertion(t, err, fmt.Sprintf("%q. Executor.ExecuteOperation()", tt.name))
 			} else {
@@ -185,9 +180,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	}
 }
 
-func TestExecutor_SetRoot(t *testing.T) {
-	t.Parallel()
-
+func TestExecutor_SetRoot(t *testing.T) { //nolint:paralleltest
 	ctx := context.Background()
 	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
 	auth, err := solana.NewRandomPrivateKey()
@@ -201,6 +194,10 @@ func TestExecutor_SetRoot(t *testing.T) {
 		{R: common.HexToHash("0x3"), S: common.HexToHash("0x4"), V: 27},
 		{R: common.HexToHash("0x5"), S: common.HexToHash("0x6"), V: 27},
 	}
+	defaultPreviousRoot := common.HexToHash("0xabcdefabcdefabcdefabcdefabcdefabcdef")
+	defaultRootAndOpCount := &bindings.ExpiringRootAndOpCount{Root: defaultPreviousRoot, ValidUntil: 123}
+	opCountPDA, err := FindExpiringRootAndOpCountPDA(testMCMProgramID, testPDASeed)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name       string
@@ -222,6 +219,8 @@ func TestExecutor_SetRoot(t *testing.T) {
 			signatures: defaultSignatures,
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, defaultRootAndOpCount, nil)
 
 				// TODO: extract/decode payload in transaction data and test values
 				// 4 transactions: init-signatures, append-signatures, finalize-signatures, set-root
@@ -245,6 +244,9 @@ func TestExecutor_SetRoot(t *testing.T) {
 			signatures: defaultSignatures,
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
+
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, defaultRootAndOpCount, nil)
 
 				accountAlreadyInUseError := errors.New(`
 					(string) (len=4) "logs": ([]interface {}) (len=7 cap=8) {
@@ -283,14 +285,44 @@ func TestExecutor_SetRoot(t *testing.T) {
 			wantErr:    "invalid solana contract address format: \"invalid-mcm-address\"",
 		},
 		{
+			name:       "failure: unable to GetRoot",
+			metadata:   defaultMetadata,
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: generateSignatures(t, 256),
+			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
+				t.Helper()
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, defaultRootAndOpCount, errors.New("error"))
+			},
+			wantErr: "failed to get root: error",
+		},
+		{
+			name:       "failure: GetRoot returns the same root",
+			metadata:   defaultMetadata,
+			proof:      defaultProof,
+			root:       defaultRoot,
+			validUntil: defaultValidUntil,
+			signatures: generateSignatures(t, 256),
+			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
+				t.Helper()
+				rootAndOpCount := &bindings.ExpiringRootAndOpCount{Root: defaultRoot, ValidUntil: 123}
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, rootAndOpCount, nil)
+			},
+			wantErr: "SignedHashAlreadySeen: 0x0000000000000000000000000000000000000000000000000000000000001234",
+		},
+		{
 			name:       "failure: too many signatures",
 			metadata:   defaultMetadata,
 			proof:      defaultProof,
 			root:       defaultRoot,
 			validUntil: defaultValidUntil,
 			signatures: generateSignatures(t, 256),
-			setup:      func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) { t.Helper() },
-			wantErr:    "too many signatures (max 255)",
+			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
+				t.Helper()
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, defaultRootAndOpCount, nil)
+			},
+			wantErr: "too many signatures (max 255)",
 		},
 		{
 			name:       "failure: initialize signatures error",
@@ -301,6 +333,9 @@ func TestExecutor_SetRoot(t *testing.T) {
 			signatures: defaultSignatures,
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
+
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, defaultRootAndOpCount, nil)
 
 				// init-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -318,6 +353,9 @@ func TestExecutor_SetRoot(t *testing.T) {
 			signatures: defaultSignatures,
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
+
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, defaultRootAndOpCount, nil)
 
 				// init-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
@@ -339,6 +377,9 @@ func TestExecutor_SetRoot(t *testing.T) {
 			signatures: defaultSignatures,
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
+
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, defaultRootAndOpCount, nil)
 
 				// init-signatures + append-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
@@ -362,6 +403,9 @@ func TestExecutor_SetRoot(t *testing.T) {
 			signatures: defaultSignatures,
 			setup: func(t *testing.T, executor *Executor, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
+
+				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, defaultRootAndOpCount, nil)
 
 				// init-signatures + append-signatures + finalize-signatures
 				mockSolanaTransaction(t, mockJSONRPCClient, 50, 60,
@@ -379,10 +423,8 @@ func TestExecutor_SetRoot(t *testing.T) {
 			wantErr: "unable to set root: unable to send instruction: set root error",
 		},
 	}
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			executor, mockJSONRPCClient := newTestExecutor(t, auth, chainSelector)
 			tt.setup(t, executor, mockJSONRPCClient)
 

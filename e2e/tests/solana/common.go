@@ -6,6 +6,7 @@ package solanae2e
 import (
 	"context"
 	"crypto/ecdsa"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -29,6 +30,7 @@ import (
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+	"go.uber.org/zap"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
@@ -420,7 +422,7 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 		offset := 0
 
 		for offset < len(rawData) {
-			end := offset + solanasdk.AppendIxDataChunkSize
+			end := offset + solanasdk.AppendIxDataChunkSize()
 			if end > len(rawData) {
 				end = len(rawData)
 			}
@@ -546,6 +548,9 @@ func (s *SolanaTestSuite) waitForOperationToBeReady(ctx context.Context, timeloc
 		time.Sleep(pollInterval)
 	}
 
-	s.Require().Fail("operation not ready after %d attempts (scheduled for: %v, with buffer: %v)",
-		maxAttempts, scheduledTime.UTC(), scheduledTimeWithBuffer.UTC())
+	s.Require().Fail(fmt.Sprintf("Operation %s is not ready after %d attempts", opID, maxAttempts))
+}
+
+func (s *SolanaTestSuite) contextWithLogger() context.Context {
+	return context.WithValue(context.Background(), solanasdk.ContextLoggerValue, zap.NewNop().Sugar())
 }

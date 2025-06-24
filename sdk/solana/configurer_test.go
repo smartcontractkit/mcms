@@ -71,9 +71,7 @@ func Test_NewConfigurer(t *testing.T) {
 	}
 }
 
-func TestConfigurer_SetConfig(t *testing.T) {
-	t.Parallel()
-
+func TestConfigurer_SetConfig(t *testing.T) { //nolint:paralleltest // https://github.com/kunwardeep/paralleltest/issues/49
 	ctx := context.Background()
 	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
 	auth, err := solana.NewRandomPrivateKey()
@@ -159,6 +157,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmConfig: defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
 
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
 					"4PQcRHQJT4cRQZooAhZMAP9ZXJsAka9DeKvXeYvXAvPpHb4Qkc5rmTSHDA2SZSh9aKPBguBx4kmcyHHbkytoAiRr",
@@ -172,6 +171,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmConfig: defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
 
 				// initialize signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -190,6 +190,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmConfig: defaultMcmConfig,
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
 
 				// initialize signers + append signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -210,6 +211,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmConfig: &types.Config{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x1")}},
 			setup: func(t *testing.T, configurer *Configurer, mockJSONRPCClient *mocks.JSONRPCClient) {
 				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
 
 				// initialize signers + append signers + finalize signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -227,10 +229,8 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			wantErr: "unable to set config: unable to send instruction 3 - setConfig: unable to send instruction: set config error",
 		},
 	}
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest // https://github.com/kunwardeep/paralleltest/issues/49
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			configurer, mockJSONRPCClient := newTestConfigurer(t, tt.auth, chainSelector, tt.options...)
 			tt.setup(t, configurer, mockJSONRPCClient)
 

@@ -17,10 +17,11 @@ require (
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
 	github.com/smartcontractkit/chain-selectors v1.0.48
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250414155853-651b4e583ee9
-	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250512193142-11507db18550
+	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250515132731-ad40fab9b75e
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.7
 	github.com/spf13/cast v1.7.1
 	github.com/stretchr/testify v1.10.0
+	go.uber.org/zap v1.27.0
 	golang.org/x/tools v0.31.0
 	gotest.tools/v3 v3.5.1
 )
@@ -189,7 +190,6 @@ require (
 	github.com/shoenig/go-m1cpu v0.1.6 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/smartcontractkit/chainlink-ccip v0.0.0-20250320090719-315440f5b0a7 // indirect
 	github.com/smartcontractkit/chainlink-common v0.6.1-0.20250329081313-84ec641e0758 // indirect
 	github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20250220133800-f3b940c4f298 // indirect
@@ -233,7 +233,6 @@ require (
 	go.opentelemetry.io/proto/otlp v1.5.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/ratelimit v0.3.1 // indirect
-	go.uber.org/zap v1.27.0 // indirect
 	golang.org/x/crypto v0.36.0 // indirect
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394 // indirect
 	golang.org/x/net v0.37.0 // indirect

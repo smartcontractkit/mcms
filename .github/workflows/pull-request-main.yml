@@ -16,9 +16,9 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@9fc306ac63d8997c9ca0da283e56caaf71589f83 # ci-lint-go@1.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@5ef875a78da521085ad768ecf2ed5e25009496f7 # ci-lint-go@2.0.0
         with:
-          golangci-lint-version: v1.64.8
+          golangci-lint-version: v2.1.6
           use-go-cache: true
           only-new-issues: false
 
@@ -31,9 +31,9 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@9fc306ac63d8997c9ca0da283e56caaf71589f83 # ci-lint-go@1.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@5ef875a78da521085ad768ecf2ed5e25009496f7 # ci-lint-go@2.0.0
         with:
-          golangci-lint-version: v1.64.8
+          golangci-lint-version: v2.1.6
           golangci-lint-args: --build-tags="e2e"
           use-go-cache: true
           only-new-issues: false
@@ -80,10 +80,34 @@ jobs:
         with:
           CLI_VERSION: 7.0.0
 
-      - name: Build and test
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compute Solana programs cache key
+        id: solana-programs-cache-key
+        shell: bash
+        run: |
+          key="$(go list -m github.com/smartcontractkit/chainlink-ccip/chains/solana)"
+          echo "key=${key}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Solana programs
+        uses: actions/cache@v4
+        id: cache-solana-programs
+        with:
+          path: ./e2e/artifacts/solana
+          key: "${{ runner.os }}-mcms-contracts-${{ steps.solana-programs-cache-key.outputs.key }}"
+
+      - name: Build Solana programs
+        if: steps.cache-solana-programs.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          ./e2e/tests/solana/compile-mcm-contracts.sh
+
+      - name: Run e2e tests
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
         with:
-          go-test-cmd: go generate -tags=e2e ./e2e/... && CTF_CONFIGS=../config.toml go test -tags=e2e -v ./e2e/tests/...
+          go-test-cmd: CTF_CONFIGS=../config.toml go test -tags=e2e -v ./e2e/tests/...
+          checkout-repo: false
           use-go-cache: true
 
   ci-sonarqube:

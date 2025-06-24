@@ -16,7 +16,8 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
 
-	e2eutils "github.com/smartcontractkit/mcms/e2e/utils/solana"
+	e2eutils "github.com/smartcontractkit/mcms/e2e/utils"
+	e2esolanautils "github.com/smartcontractkit/mcms/e2e/utils/solana"
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -39,17 +40,18 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 	// Create auth and executor private keys
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
-	proposerAndExecutorKey, err := solana.NewRandomPrivateKey()
-	s.Require().NoError(err)
+	proposers := generatePrivateKeys(s.T(), 5)
+	proposerKey := e2eutils.Sample(proposers)
+	executors := generatePrivateKeys(s.T(), 5)
+	executorKey := e2eutils.Sample(executors)
 	mintKey, err := solana.NewRandomPrivateKey()
 	s.Require().NoError(err)
 
-	e2eutils.FundAccounts(s.T(), ctx, []solana.PublicKey{auth.PublicKey(), proposerAndExecutorKey.PublicKey()}, 1, s.SolanaClient)
+	accountsToFund := []solana.PublicKey{auth.PublicKey(), proposerKey.PublicKey(), executorKey.PublicKey()}
+	e2esolanautils.FundAccounts(s.T(), ctx, accountsToFund, 1, s.SolanaClient)
 
-	s.AssignRoleToAccounts(ctx, testTimelockExecuteID, auth, []solana.PublicKey{proposerAndExecutorKey.PublicKey()},
-		timelock.Proposer_Role)
-	s.AssignRoleToAccounts(ctx, testTimelockExecuteID, auth, []solana.PublicKey{proposerAndExecutorKey.PublicKey()},
-		timelock.Executor_Role)
+	s.AssignRoleToAccounts(ctx, testTimelockExecuteID, auth, getPublicKeys(proposers), timelock.Proposer_Role)
+	s.AssignRoleToAccounts(ctx, testTimelockExecuteID, auth, getPublicKeys(executors), timelock.Executor_Role)
 
 	signerPDA, err := mcmsSolana.FindTimelockSignerPDA(s.TimelockProgramID, testTimelockExecuteID)
 	s.Require().NoError(err)
@@ -59,14 +61,14 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 
 	predecessor := [32]byte{}
 	salt := [32]byte{123}
-	executor := mcmsSolana.NewTimelockExecutor(s.SolanaClient, proposerAndExecutorKey)
+	executor := mcmsSolana.NewTimelockExecutor(s.SolanaClient, executorKey)
 	timelockAddress := mcmsSolana.ContractAddress(s.TimelockProgramID, testTimelockExecuteID)
 
 	initialBalance := getBalance(ctx, s.T(), s.SolanaClient, receiverATA)
 
 	// schedule mint transaction and build batch operation from the returned ScheduleBatch instruction
 	mintIx, operationID := s.scheduleMintTx(ctx, mintKey.PublicKey(), receiverATA,
-		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(), signerPDA, proposerAndExecutorKey,
+		s.Roles[timelock.Proposer_Role].AccessController.PublicKey(), signerPDA, proposerKey,
 		predecessor, salt)
 	s.waitForOperationToBeReady(ctx, testTimelockExecuteID, operationID)
 
@@ -77,7 +79,7 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 
 	signature, err := executor.Execute(ctx, batchOp, timelockAddress, predecessor, salt)
 	s.Require().NoError(err)
-	s.Require().NotEqual("", signature)
+	s.Require().NotEmpty(signature)
 
 	// --- assert ---
 	finalBalance := getBalance(ctx, s.T(), s.SolanaClient, receiverATA)
@@ -168,7 +170,7 @@ func (s *SolanaTestSuite) scheduleMintTx(
 		offset := 0
 
 		for offset < len(rawData) {
-			end := offset + mcmsSolana.AppendIxDataChunkSize
+			end := offset + mcmsSolana.AppendIxDataChunkSize()
 			if end > len(rawData) {
 				end = len(rawData)
 			}
@@ -226,4 +228,24 @@ func getBalance(ctx context.Context, t *testing.T, client *rpc.Client, account s
 	require.NoError(t, err)
 
 	return balance.Value.Amount
+}
+
+func generatePrivateKeys(t *testing.T, count int) []solana.PrivateKey {
+	t.Helper()
+
+	return e2eutils.Times(count, func(_ int) solana.PrivateKey {
+		key, err := solana.NewRandomPrivateKey()
+		require.NoError(t, err)
+
+		return key
+	})
+}
+
+func getPublicKeys(privateKeys []solana.PrivateKey) []solana.PublicKey {
+	publicKeys := make([]solana.PublicKey, len(privateKeys))
+	for i, privateKey := range privateKeys {
+		publicKeys[i] = privateKey.PublicKey()
+	}
+
+	return publicKeys
 }

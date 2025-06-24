@@ -166,7 +166,7 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			t.Logf("Initialized Aptos RPC client @ %s", nodeUrl)
 			info, err := aptosClient.Info()
 			require.NoError(t, err, "Failed to get Aptos node info")
-			require.NotZero(t, info.LedgerVersionStr)
+			require.NotEmpty(t, info.LedgerVersionStr)
 			in.AptosChain.ChainID = strconv.FormatUint(uint64(info.ChainId), 10)
 		}
 
