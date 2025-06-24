@@ -42,5 +42,6 @@ func (f *fakeSigner) GetAddress() (common.Address, error) {
 	if f.err != nil {
 		return common.Address{}, f.err
 	}
+
 	return common.HexToAddress("0x1234"), nil
 }
