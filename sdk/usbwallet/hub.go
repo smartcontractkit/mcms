@@ -70,7 +70,7 @@ func NewLedgerHub() (*Hub, error) {
 	return newHub(LedgerScheme, 0x2c97, []uint16{
 
 		// Device definitions taken from
-		// https://github.com/ethereum/go-ethereum/blob/c49aadc4b628c55da9948b0a1f37f487129ce28a/accounts/usbwallet/hub.go#L75-L91
+		// https://github.com/LedgerHQ/ledger-live/blob/595cb73b7e6622dbbcfc11867082ddc886f1bf01/libs/ledgerjs/packages/devices/src/index.ts
 
 		// Original product IDs
 		0x0000, /* Ledger Blue */
@@ -167,8 +167,11 @@ func (hub *Hub) refreshWallets() {
 
 	for _, info := range infos {
 		for _, id := range hub.productIDs {
+			// We check both the raw ProductID (legacy) and just the upper byte, as Ledger
+			// uses `MMII`, encoding a model (MM) and an interface bitfield (II)
+			mmOnly := info.ProductID & 0xff00
 			// Windows and Macos use UsageID matching, Linux uses Interface matching
-			if info.ProductID == id && (info.UsagePage == hub.usageID || info.Interface == hub.endpointID) {
+			if (info.ProductID == id || mmOnly == id) && (info.UsagePage == hub.usageID || info.Interface == hub.endpointID) {
 				devices = append(devices, info)
 				break
 			}

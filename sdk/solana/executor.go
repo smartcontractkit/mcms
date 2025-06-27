@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"regexp"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
@@ -18,6 +19,10 @@ import (
 )
 
 var _ sdk.Executor = (*Executor)(nil)
+
+var ErrSignedHashAlreadySeen = func(root [32]byte) error { return fmt.Errorf("SignedHashAlreadySeen: 0x%x", root) }
+
+const maxPreloadSignaturesAttempts = 3
 
 // Executor is an Executor implementation for Solana chains, allowing for the execution of
 // operations on the MCMS contract
@@ -97,7 +102,6 @@ func (e *Executor) ExecuteOperation(
 		uint64(nonce),
 		op.Transaction.Data,
 		byteProof,
-
 		configPDA,
 		rootMetadataPDA,
 		expiringRootAndOpCountPDA,
@@ -105,8 +109,8 @@ func (e *Executor) ExecuteOperation(
 		signedPDA,
 		e.auth.PublicKey(),
 	)
-	// Append the accounts from the AdditionalFields
 	ix.AccountMetaSlice = append(ix.AccountMetaSlice, additionalFields.Accounts...)
+
 	signature, tx, err := e.sendAndConfirm(ctx, e.client, e.auth, ix, rpc.CommitmentConfirmed)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to call execute operation instruction: %w", err)
@@ -128,6 +132,14 @@ func (e *Executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
+	sameRoot, err := e.equalCurrentRoot(ctx, metadata.MCMAddress, root)
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
+	if sameRoot {
+		return types.TransactionResult{}, ErrSignedHashAlreadySeen(root)
+	}
+
 	programID, pdaSeed, err := ParseContractAddress(metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, err
@@ -162,7 +174,7 @@ func (e *Executor) SetRoot(
 		return types.TransactionResult{}, err
 	}
 
-	err = e.preloadSignatures(ctx, pdaSeed, root, validUntil, sortedSignatures, rootSignaturesPDA)
+	err = e.preloadSignatures(ctx, pdaSeed, root, validUntil, sortedSignatures, rootSignaturesPDA, 0)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -201,11 +213,16 @@ func (e *Executor) preloadSignatures(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 	signaturesPDA solana.PublicKey,
+	attempt int,
 ) error {
 	initSignaturesInstruction := mcm.NewInitSignaturesInstruction(mcmName, root, validUntil,
 		uint8(len(sortedSignatures)), signaturesPDA, e.auth.PublicKey(), solana.SystemProgramID) //nolint:gosec
 	_, _, err := e.sendAndConfirm(ctx, e.client, e.auth, initSignaturesInstruction, rpc.CommitmentConfirmed)
 	if err != nil {
+		if isAccountAlreadyInUseError(err) {
+			return e.retryPreloadSignatures(ctx, mcmName, root, validUntil, sortedSignatures, signaturesPDA, attempt)
+		}
+
 		return fmt.Errorf("unable to initialize signatures: %w", err)
 	}
 
@@ -230,6 +247,30 @@ func (e *Executor) preloadSignatures(
 	return nil
 }
 
+// retryPreloadSignatures clears the signatures pda and then calls preloadSignatures
+func (e *Executor) retryPreloadSignatures(
+	ctx context.Context,
+	mcmName [32]byte,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+	signaturesPDA solana.PublicKey,
+	attempt int,
+) error {
+	if attempt >= maxPreloadSignaturesAttempts {
+		return fmt.Errorf("maximum attempts to retry preload signatures reached (%d); aborting", attempt)
+	}
+
+	clearSignaturesInstruction := mcm.NewClearSignaturesInstruction(mcmName, root, validUntil, signaturesPDA,
+		e.auth.PublicKey())
+	_, _, err := e.sendAndConfirm(ctx, e.client, e.auth, clearSignaturesInstruction, rpc.CommitmentConfirmed)
+	if err != nil {
+		return fmt.Errorf("unable to clear signatures: %w", err)
+	}
+
+	return e.preloadSignatures(ctx, mcmName, root, validUntil, sortedSignatures, signaturesPDA, attempt+1)
+}
+
 // solanaMetadata returns the root metadata input for the MCM program
 func (e *Executor) solanaMetadata(metadata types.ChainMetadata, configPDA [32]byte) mcm.RootMetadataInput {
 	return mcm.RootMetadataInput{
@@ -239,6 +280,15 @@ func (e *Executor) solanaMetadata(metadata types.ChainMetadata, configPDA [32]by
 		PostOpCount:          metadata.StartingOpCount + e.TxCount,
 		OverridePreviousRoot: e.OverridePreviousRoot,
 	}
+}
+
+func (e *Executor) equalCurrentRoot(ctx context.Context, mcmAddress string, newRoot [32]byte) (bool, error) {
+	currentRoot, _, err := e.GetRoot(ctx, mcmAddress)
+	if err != nil {
+		return false, fmt.Errorf("failed to get root: %w", err)
+	}
+
+	return currentRoot == newRoot, nil
 }
 
 // solanaProof converts a proof coming as a slice of common.Hash to a slice of [32]byte.
@@ -264,4 +314,10 @@ func solanaSignatures(signatures []types.Signature) []mcm.Signature {
 	}
 
 	return solanaSignatures
+}
+
+var accountAlreadyInUsePattern = regexp.MustCompile(`Allocate: account Address.*already in use`)
+
+func isAccountAlreadyInUseError(err error) bool {
+	return accountAlreadyInUsePattern.MatchString(err.Error())
 }

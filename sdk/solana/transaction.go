@@ -82,12 +82,5 @@ func NewTransactionFromInstruction(
 		return types.Transaction{}, fmt.Errorf("unable to get instruction data: %w", err)
 	}
 
-	// ensure PDAs don't have the "IsSigner" flag
-	for _, account := range instruction.Accounts() {
-		if account != nil && !solana.IsOnCurve(account.PublicKey[:]) {
-			account.IsSigner = false
-		}
-	}
-
 	return NewTransaction(instruction.ProgramID().String(), data, nil, instruction.Accounts(), contractType, tags)
 }

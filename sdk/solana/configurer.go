@@ -18,6 +18,8 @@ import (
 
 var _ sdk.Configurer = &Configurer{}
 
+const maxAppendSignerBatchSize = 20 // REVIEW: run chunking tests to verify actual limit
+
 // Configurer configures the MCM contract for Solana chains.
 type Configurer struct {
 	instructionCollection
@@ -114,8 +116,7 @@ func (c *Configurer) SetConfig(
 		return types.TransactionResult{}, err
 	}
 
-	clear(c.instructions)
-	defer clear(c.instructions)
+	defer func() { c.instructions = []labeledInstruction{} }()
 
 	err = c.preloadSigners(pdaSeed, solanaSignerAddresses(signerAddresses), configPDA, configSignersPDA)
 	if err != nil {
@@ -165,7 +166,7 @@ func (c *Configurer) preloadSigners(
 		return err
 	}
 
-	for i, chunkIndex := range chunkIndexes(len(signerAddresses), config.MaxAppendSignerBatchSize) {
+	for i, chunkIndex := range chunkIndexes(len(signerAddresses), maxAppendSignerBatchSize) {
 		err = c.addInstruction(fmt.Sprintf("appendSigners%d", i), bindings.NewAppendSignersInstruction(mcmName,
 			signerAddresses[chunkIndex[0]:chunkIndex[1]], configPDA, configSignersPDA, c.authorityAccount))
 		if err != nil {
@@ -232,8 +233,7 @@ func (c *instructionCollection) sendInstructions(
 	var signature string
 	var err error
 	for i, instruction := range c.instructions {
-		signature, _, err = sendAndConfirmInstructions(ctx, client, auth,
-			[]solana.Instruction{instruction}, rpc.CommitmentConfirmed)
+		signature, _, err = sendAndConfirmInstructions(ctx, client, auth, []solana.Instruction{instruction}, rpc.CommitmentConfirmed)
 		if err != nil {
 			return "", fmt.Errorf("unable to send instruction %d - %s: %w", i, instruction.label, err)
 		}

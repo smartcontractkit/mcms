@@ -2,4 +2,4 @@
 "@smartcontractkit/mcms": minor
 ---
 
-Add Timelock support for Aptos
+upgrade golangci lint

@@ -71,6 +71,7 @@ func (s *Simulator) collectInstructions(
 	auth solana.PrivateKey,
 	instructionBuilder any,
 	commitmentType rpc.CommitmentType,
+	opts ...sendTransactionOption,
 ) (string, *rpc.GetTransactionResult, error) {
 	instruction, err := validateAndBuildSolanaInstruction(instructionBuilder)
 	if err != nil {

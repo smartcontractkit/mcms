@@ -29,9 +29,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	require.Equal(t, executor.auth, auth)
 }
 
-func Test_TimelockExecutor_Execute(t *testing.T) {
-	t.Parallel()
-
+func Test_TimelockExecutor_Execute(t *testing.T) { //nolint:paralleltest
 	type args struct {
 		bop             types.BatchOperation
 		salt            [32]byte
@@ -64,7 +62,7 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		mockSetup func(*mocks.JSONRPCClient)
+		setup     func(*testing.T, *TimelockExecutor, *mocks.JSONRPCClient)
 		want      string
 		assertion assert.ErrorAssertionFunc
 	}{
@@ -77,7 +75,8 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 				},
 				timelockAddress: fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
+			setup: func(t *testing.T, e *TimelockExecutor, m *mocks.JSONRPCClient) {
+				t.Helper()
 				mockGetAccountInfo(t, m, configPDA, config, nil)
 				mockSolanaTransaction(t, m, 20, 5,
 					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6", nil, nil)
@@ -94,7 +93,7 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 				},
 				timelockAddress: "bad ...format",
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {},
+			setup:     func(t *testing.T, e *TimelockExecutor, m *mocks.JSONRPCClient) { t.Helper() },
 			assertion: assertErrorEquals("invalid solana contract address format: \"bad ...format\""),
 		},
 		{
@@ -110,7 +109,7 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 				},
 				timelockAddress: fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {},
+			setup: func(t *testing.T, e *TimelockExecutor, m *mocks.JSONRPCClient) { t.Helper() },
 			assertion: assertErrorEquals("unable to get InstructionData from batch operation: " +
 				"unable to unmarshal additional fields: " +
 				"invalid character 'i' looking for beginning of value\n" +
@@ -129,7 +128,7 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 				},
 				timelockAddress: fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {},
+			setup: func(t *testing.T, e *TimelockExecutor, m *mocks.JSONRPCClient) { t.Helper() },
 			assertion: assertErrorEquals("unable to get InstructionData from batch operation: " +
 				"unable to parse program id from To field: " +
 				"unable to parse base58 solana program id: " +
@@ -144,7 +143,8 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 				},
 				timelockAddress: fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
+			setup: func(t *testing.T, e *TimelockExecutor, m *mocks.JSONRPCClient) {
+				t.Helper()
 				mockGetAccountInfo(t, m, configPDA, config, fmt.Errorf("GetAccountInfo error"))
 			},
 			assertion: assertErrorEquals("unable to read config pda: GetAccountInfo error"),
@@ -158,7 +158,10 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 				},
 				timelockAddress: fmt.Sprintf("%s.%s", testTimelockProgramID.String(), testTimelockSeed),
 			},
-			mockSetup: func(m *mocks.JSONRPCClient) {
+			setup: func(t *testing.T, e *TimelockExecutor, m *mocks.JSONRPCClient) {
+				t.Helper()
+				t.Setenv("MCMS_SOLANA_MAX_RETRIES", "1")
+
 				mockGetAccountInfo(t, m, configPDA, config, nil)
 				mockSolanaTransaction(t, m, 20, 5,
 					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
@@ -169,14 +172,12 @@ func Test_TimelockExecutor_Execute(t *testing.T) {
 			},
 		},
 	}
-	for _, tt := range tests {
+	for _, tt := range tests { //nolint:paralleltest
 		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
 			jsonRPCClient := mocks.NewJSONRPCClient(t)
 			client := rpc.NewWithCustomRPCClient(jsonRPCClient)
-			tt.mockSetup(jsonRPCClient)
 			e := NewTimelockExecutor(client, auth)
+			tt.setup(t, e, jsonRPCClient)
 
 			got, err := e.Execute(ctx, tt.args.bop, tt.args.timelockAddress, tt.args.predecessor, tt.args.salt)
 

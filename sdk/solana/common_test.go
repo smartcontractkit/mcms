@@ -126,6 +126,7 @@ func Test_sendAndConfirm(t *testing.T) {
 		name            string
 		setup           func(*mocks.JSONRPCClient)
 		builder         any
+		opts            []sendTransactionOption
 		wantSignature   string
 		wantTransaction *rpc.GetTransactionResult
 		wantErr         string
@@ -184,6 +185,7 @@ func Test_sendAndConfirm(t *testing.T) {
 					"NyH6sKKEbAMjxzG9qLTcwd1yEmv46Z94XmH5Pp9AXJps8EofvpPdUn5bp7rzKnztWmxskBiVRnp4DwaHujhHvFh",
 					nil, fmt.Errorf("send and confirm error"))
 			},
+			opts:    []sendTransactionOption{WithRetries(1)},
 			wantErr: "unable to send instruction: send and confirm error",
 		},
 	}
@@ -195,7 +197,7 @@ func Test_sendAndConfirm(t *testing.T) {
 			client := rpc.NewWithCustomRPCClient(mockJSONRPCClient)
 			tt.setup(mockJSONRPCClient)
 
-			gotSignature, gotTransaction, err := sendAndConfirm(ctx, client, auth, tt.builder, commitmentType)
+			gotSignature, gotTransaction, err := sendAndConfirm(ctx, client, auth, tt.builder, commitmentType, tt.opts...)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)

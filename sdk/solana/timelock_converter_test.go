@@ -396,7 +396,7 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 					},
 				},
 				{
-					// schedule batch
+					// bypass batch execute
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -407,6 +407,10 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("2g4vS5Y9g5FKoBakfNTEQcoyuPxuqgiXhribGxE1Vrsb")},
 							{PublicKey: solana.MPK(bypasserAC.PublicKey().String())},
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
+							{PublicKey: solana.MPK("GwAQ33PbytKignFmKvyVSLp7pD8tKMaBXXNwFTTkGsME"), IsWritable: false, IsSigner: false},
+							{PublicKey: solana.MPK("8na2HyqgS15GcjiWmMQvQ87o8kw188QgaVSTa6q94orU"), IsWritable: true, IsSigner: false},
+							{PublicKey: solana.MPK("AjfVZUFzzC8nyA37GXBEdB57RfqPYXifYNtP9jRdRtCw"), IsWritable: true, IsSigner: false},
+							{PublicKey: solana.MPK("t3ChqFTKHUFdjNPDf8CuhFGwkwzqR47LL7sDbeU99XD"), IsWritable: false, IsSigner: false},
 						}}),
 						OperationMetadata: types.OperationMetadata{
 							ContractType: "RBACTimelock",
@@ -488,8 +492,8 @@ func Test_TimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(tt.wantOperations, operations))
 				require.Empty(t, cmp.Diff(tt.wantPredecessor, predecessors))
+				require.Empty(t, cmp.Diff(tt.wantOperations, operations))
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}
@@ -512,4 +516,27 @@ func base64Decode(t *testing.T, str string) []byte {
 	require.NoError(t, err)
 
 	return decodedBytes
+}
+
+func TestAppendIxDataChunkSize(t *testing.T) {
+	tests := []struct {
+		name      string
+		numProofs string
+		want      int
+	}{
+		{name: "numProofs: default (8)", numProofs: "", want: 323},
+		{name: "numProofs:          0 ", numProofs: "0", want: 579},
+		{name: "numProofs:          1 ", numProofs: "1", want: 547},
+		{name: "numProofs:          2 ", numProofs: "1", want: 547},
+		{name: "numProofs:          8 ", numProofs: "8", want: 323},
+		{name: "numProofs:         12 ", numProofs: "12", want: 195},
+		{name: "numProofs:         18 ", numProofs: "18", want: 3},
+		{name: "numProofs:         19 ", numProofs: "19", want: -29}, // <<< we max at 2^18 operations in a Solana proposal
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("MCMS_SOLANA_NUM_PROOFS", tt.numProofs)
+			require.Equal(t, tt.want, AppendIxDataChunkSize())
+		})
+	}
 }

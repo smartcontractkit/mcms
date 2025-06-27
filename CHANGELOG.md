@@ -1,5 +1,73 @@
 # @smartcontractkit/mcms
 
+## 0.20.2
+
+### Patch Changes
+
+- [#396](https://github.com/smartcontractkit/mcms/pull/396) [`a6ff022`](https://github.com/smartcontractkit/mcms/commit/a6ff022f82a2b10eb7ece0b6507a3a43421e0db1) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): fix calculation of AppendInstructionData chunk size
+
+- [#378](https://github.com/smartcontractkit/mcms/pull/378) [`571f37b`](https://github.com/smartcontractkit/mcms/commit/571f37bc207b5ece48413b1f764fb7a2f00bd7b9) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): check current root before calling SetRoot
+
+## 0.20.1
+
+### Patch Changes
+
+- [#385](https://github.com/smartcontractkit/mcms/pull/385) [`4c4a585`](https://github.com/smartcontractkit/mcms/commit/4c4a585eab19cc743b2eb2fb7149f3312d3a85f8) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: cache compiled solana programs in CI
+
+- [#392](https://github.com/smartcontractkit/mcms/pull/392) [`b7948a2`](https://github.com/smartcontractkit/mcms/commit/b7948a228ae1faf333d314c0dfb8ce8e1756fcf4) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: set CU limit as the maximum (1.4M) to avoid CU errors in mainnet
+
+- [#394](https://github.com/smartcontractkit/mcms/pull/394) [`6ff9d02`](https://github.com/smartcontractkit/mcms/commit/6ff9d024cedb9ac81093442407239d08992405ec) Thanks [@kylesmartin](https://github.com/kylesmartin)! - Support Ledger MMII encoding
+
+## 0.20.0
+
+### Minor Changes
+
+- [#388](https://github.com/smartcontractkit/mcms/pull/388) [`8f66eb2`](https://github.com/smartcontractkit/mcms/commit/8f66eb299b2f3c8901fd4e8688565ce79a72a9f0) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): use solanacommon.SendTransaction() that supports retries
+
+## 0.19.3
+
+### Patch Changes
+
+- [#384](https://github.com/smartcontractkit/mcms/pull/384) [`80e82ad`](https://github.com/smartcontractkit/mcms/commit/80e82ad071080c870e876d098eba3827a8bcd4ed) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): use smaller batch "append instruction" chunk size
+
+- [#381](https://github.com/smartcontractkit/mcms/pull/381) [`0b3000a`](https://github.com/smartcontractkit/mcms/commit/0b3000ac7471503e93836a4ecd23b4378555758e) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): use smaller batch size for the "appendSigner" instructions
+
+## 0.19.2
+
+### Patch Changes
+
+- [#376](https://github.com/smartcontractkit/mcms/pull/376) [`cb1e96a`](https://github.com/smartcontractkit/mcms/commit/cb1e96aeeea47a32d24cabf3b67a2d21013f538e) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump chainlink-ccip version
+
+## 0.19.1
+
+### Patch Changes
+
+- [#374](https://github.com/smartcontractkit/mcms/pull/374) [`17381e4`](https://github.com/smartcontractkit/mcms/commit/17381e45d25c8690bee810720024cfb2ea67251b) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: call ClearSignatures in Solana's SetRoot upon receiving an "account in use" error
+
+## 0.19.0
+
+### Minor Changes
+
+- [#368](https://github.com/smartcontractkit/mcms/pull/368) [`4e53d4d`](https://github.com/smartcontractkit/mcms/commit/4e53d4db82fba9e0907ae3bda6a7adc2dbc6c026) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add IsOperationPending() and IsChainPending() to TimelockExecutable
+
+## 0.18.0
+
+### Minor Changes
+
+- [#366](https://github.com/smartcontractkit/mcms/pull/366) [`637d057`](https://github.com/smartcontractkit/mcms/commit/637d0578ec656f4eacbfd06f88a01d9bcada5034) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): fix the accounts added to the BypassExecuteBatch instruction
+
+## 0.17.0
+
+### Minor Changes
+
+- [#355](https://github.com/smartcontractkit/mcms/pull/355) [`28b56e3`](https://github.com/smartcontractkit/mcms/commit/28b56e31d312458457faf12c9e6354018c2c84b2) Thanks [@friedemannf](https://github.com/friedemannf)! - Add Timelock support for Aptos
+
+- [#265](https://github.com/smartcontractkit/mcms/pull/265) [`a51bc1b`](https://github.com/smartcontractkit/mcms/commit/a51bc1bba20e98f14f0973550f90f80fe58dd2a7) Thanks [@friedemannf](https://github.com/friedemannf)! - Add Aptos support
+
+### Patch Changes
+
+- [#350](https://github.com/smartcontractkit/mcms/pull/350) [`46b795b`](https://github.com/smartcontractkit/mcms/commit/46b795bfbb96e826d3c8a6a28e8e1134e71e354d) Thanks [@ecPablo](https://github.com/ecPablo)! - update ledger product ids
+
 ## 0.16.1
 
 ### Patch Changes
