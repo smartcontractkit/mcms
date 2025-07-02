@@ -70,7 +70,7 @@ type BaseProposal struct {
 	OverridePreviousRoot bool                                        `json:"overridePreviousRoot"`
 	ChainMetadata        map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata" validate:"required,min=1"`
 	Description          string                                      `json:"description"`
-	Labels               map[string]any                              `json:"metadata,omitempty"`
+	Metadata             map[string]any                              `json:"metadata,omitempty"`
 	// This field is passed to SDK implementations to indicate whether the proposal is being run
 	// against a simulated environment. This is only used for testing purposes.
 	useSimulatedBackend bool `json:"-"`
