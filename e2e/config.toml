@@ -42,3 +42,7 @@ external_program_cpi_stub = "2zZwzyptLqwFJFEFxjPvrdhiGpH9pJ3MfrrmZX6NTKxm"
 
 [aptos_config]
 type = "aptos"
+
+
+[sui_config]
+type = "sui"

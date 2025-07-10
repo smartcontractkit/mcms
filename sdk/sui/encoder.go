@@ -55,11 +55,11 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		return common.Hash{}, err
 	}
 	chainIDBig := (&big.Int{}).SetUint64(chainID)
-	mcmsAddress, err := sui.AddressFromHex(metadata.MCMAddress)
+	mcmsAddress, err := AddressFromHex(metadata.MCMAddress)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to parse MCMS address %q: %w", metadata.MCMAddress, err)
 	}
-	toAddress, err := sui.AddressFromHex(op.Transaction.To)
+	toAddress, err := AddressFromHex(op.Transaction.To)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to parse To address %q: %w", op.Transaction.To, err)
 	}

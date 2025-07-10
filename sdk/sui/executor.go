@@ -2,11 +2,17 @@ package sui
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"math/big"
 
-	"github.com/aptos-labs/aptos-go-sdk"
+	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -24,19 +30,31 @@ var _ sdk.Executor = &Executor{}
 type Executor struct {
 	*Encoder
 	*Inspector
-	client aptos.AptosRpcClient
-	auth   aptos.TransactionSigner
-
-	bindingFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms.MCMS
+	client        sui.ISuiAPI
+	signer        bindutils.SuiSigner
+	mcmsPackageId string
+	mcms          module_mcms.IMcms
 }
 
-func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole) *Executor {
-	return &Executor{
-		Encoder:   encoder,
-		client:    client,
-		auth:      auth,
-		bindingFn: mcms.Bind,
+func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageId string, role TimelockRole) (*Executor, error) {
+	mcms, err := module_mcms.NewMcms(mcmsPackageId, client)
+	if err != nil {
+		return nil, err
 	}
+
+	inspector, err := NewInspector(client, signer, mcmsPackageId, role)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Executor{
+		Encoder:       encoder,
+		Inspector:     inspector,
+		client:        client,
+		signer:        signer,
+		mcmsPackageId: mcmsPackageId,
+		mcms:          mcms,
+	}, nil
 }
 
 func (e Executor) ExecuteOperation(
@@ -46,9 +64,60 @@ func (e Executor) ExecuteOperation(
 	proof []common.Hash,
 	op types.Operation,
 ) (types.TransactionResult, error) {
+	var additionalFields AdditionalFields
+	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+	}
 
-	// TODO
-	return types.TransactionResult{}, nil
+	var additionalFieldsMetadata AdditionalFieldsMetadata
+	if len(metadata.AdditionalFields) > 0 {
+		if err := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
+		}
+	}
+
+	chainID, err := chain_selectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
+	chainIDBig := big.NewInt(int64(chainID))
+
+	proofBytes := make([][]byte, len(proof))
+	for i, hash := range proof {
+		proofBytes[i] = hash.Bytes()
+	}
+
+	opts := &bind.CallOpts{
+		Signer: e.signer,
+	}
+
+	stateObj := bind.Object{Id: metadata.MCMAddress}
+	clockObj := bind.Object{Id: "0x6"} // Clock object ID in Sui
+
+	tx, err := e.mcms.Execute(
+		ctx,
+		opts,
+		stateObj,
+		clockObj,
+		additionalFieldsMetadata.Role.Byte(),
+		chainIDBig,
+		common.FromHex(metadata.MCMAddress),
+		uint64(nonce),
+		common.FromHex(op.Transaction.To),
+		additionalFields.ModuleName,
+		additionalFields.Function,
+		op.Transaction.Data,
+		proofBytes,
+	)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("executing operation on Sui mcms contract: %w", err)
+	}
+
+	return types.TransactionResult{
+		Hash:        tx.Digest,
+		ChainFamily: chain_selectors.FamilySui,
+		RawData:     tx,
+	}, nil
 }
 
 func (e Executor) SetRoot(
@@ -59,9 +128,57 @@ func (e Executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
+	var additionalFieldsMetadata AdditionalFieldsMetadata
+	if len(metadata.AdditionalFields) > 0 {
+		if err := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
+		}
+	}
 
-	// TODO
-	return types.TransactionResult{}, nil
+	chainID, err := chain_selectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
+	chainIDBig := big.NewInt(int64(chainID))
+
+	proofBytes := make([][]byte, len(proof))
+	for i, hash := range proof {
+		proofBytes[i] = hash.Bytes()
+	}
+	signatures := encodeSignatures(sortedSignatures)
+
+	opts := &bind.CallOpts{
+		Signer: e.signer,
+	}
+
+	stateObj := bind.Object{Id: metadata.MCMAddress}
+	clockObj := bind.Object{Id: "0x6"} // Clock object ID in Sui
+
+	tx, err := e.mcms.SetRoot(
+		ctx,
+		opts,
+		stateObj,
+		clockObj,
+		additionalFieldsMetadata.Role.Byte(),
+		root[:],
+		uint64(validUntil),
+		chainIDBig,
+		common.FromHex(metadata.MCMAddress),
+		metadata.StartingOpCount,
+		metadata.StartingOpCount+e.TxCount,
+		e.OverridePreviousRoot,
+		proofBytes,
+		signatures,
+	)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("setting root on Sui mcms contract: %w", err)
+	}
+
+	return types.TransactionResult{
+		Hash:        tx.Digest,
+		ChainFamily: chain_selectors.FamilySui,
+		RawData:     tx,
+	}, nil
 }
 
 func encodeSignatures(signatures []types.Signature) [][]byte {
