@@ -13,6 +13,15 @@ updates:
     directory: '/'
     schedule:
       interval: weekly
+  - package-ecosystem: gomod
+    directory: '/'
+    schedule:
+      interval: daily
+    allow:
+      - dependency-name: "github.com/smartcontractkit/chain-selectors"
+    labels:
+      - urgent-bump
+      - chain-selectors
   - package-ecosystem: npm
     directory: "/"
     schedule:
