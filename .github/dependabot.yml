@@ -12,16 +12,15 @@ updates:
   - package-ecosystem: gomod
     directory: '/'
     schedule:
-      interval: weekly
-  - package-ecosystem: gomod
-    directory: '/'
-    schedule:
       interval: daily
     allow:
       - dependency-name: "github.com/smartcontractkit/chain-selectors"
-    labels:
-      - urgent-bump
-      - chain-selectors
+      - dependency-name: "github.com/smartcontractkit/chainlink-aptos"
+      - dependency-name: "github.com/smartcontractkit/chainlink-ccip/chains/solana"
+      - dependency-name: "github.com/smartcontractkit/chainlink-testing-framework/framework"
+      - dependency-name: "github.com/aptos-labs/aptos-go-sdk"
+      - dependency-name: "github.com/ethereum/go-ethereum"
+      - dependency-name: "github.com/gagliardetto/solana-go"
   - package-ecosystem: npm
     directory: "/"
     schedule:
