@@ -5,6 +5,7 @@ package sui
 import (
 	"context"
 
+	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/stretchr/testify/suite"
 
@@ -22,31 +23,45 @@ type SuiTestSuite struct {
 	client sui.ISuiAPI
 	signer bindutils.SuiSigner
 
-	mcms        module_mcms.IMcms
-	mcmsObject  string
-	timelockObj string
-	depStateObj string
-	registryObj string
-	accountObj  string
-	ownerCapObj string
+	mcmsPackageId string
+	mcms          module_mcms.IMcms
+	mcmsObj       string
+	timelockObj   string
+	depStateObj   string
+	registryObj   string
+	accountObj    string
+	ownerCapObj   string
 }
 
 func (s *SuiTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
+	account := s.TestSetup.SuiBlockchain.NetworkSpecificData.SuiAccount
+
+	// Create a Sui signer from the mnemonic using the block-vision SDK
+	signerAccount, err := signer.NewSignertWithMnemonic(account.Mnemonic)
+	s.Require().NoError(err, "Failed to create signer from mnemonic")
+
+	// Get the private key from the signer
+	privateKey := signerAccount.PriKey
+	testSigner := NewTestPrivateKeySigner(privateKey)
+
 	// Set up Sui client
 	s.client = s.TestSetup.SuiClient
 	// TODO: Find funded accounts
-	// s.signer = signer
+	s.signer = testSigner
 	s.deployMCMSContract()
 }
 
 func (s *SuiTestSuite) deployMCMSContract() {
-
+	gasBudget := uint64(300_000_000)
 	mcmsPackage, tx, err := mcms.PublishMCMS(context.Background(), &bind.CallOpts{
-		Signer: s.signer,
+		Signer:           s.signer,
+		GasBudget:        &gasBudget,
+		WaitForExecution: true,
 	}, s.client)
 	s.Require().NoError(err, "Failed to publish MCMS package")
+	s.mcmsPackageId = mcmsPackage.Address()
 	s.mcms = mcmsPackage.MCMS()
 
 	mcmsObject, err1 := bind.FindObjectIdFromPublishTx(*tx, "mcms", "MultisigState")
@@ -60,7 +75,7 @@ func (s *SuiTestSuite) deployMCMSContract() {
 		s.T().Fatalf("Failed to find object IDs in publish tx: %v, %v, %v, %v, %v, %v", err1, err2, err3, err4, err5, err6)
 	}
 
-	s.mcmsObject = mcmsObject
+	s.mcmsObj = mcmsObject
 	s.timelockObj = timelockObj
 	s.depStateObj = depState
 	s.registryObj = reg

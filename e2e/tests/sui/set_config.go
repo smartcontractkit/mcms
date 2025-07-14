@@ -14,7 +14,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-const Sui_test_chain_selector = 10
+const Sui_test_chain_selector = 18395503381733958356
 
 func (s *SuiTestSuite) Test_Sui_SetConfig() {
 
@@ -25,7 +25,7 @@ func (s *SuiTestSuite) Test_Sui_SetConfig() {
 		signers[i] = crypto.PubkeyToAddress(key.PublicKey)
 	}
 	slices.SortFunc(signers[:], func(a, b common.Address) int {
-		return strings.Compare(strings.ToLower(s.Hex()), strings.ToLower(b.Hex()))
+		return strings.Compare(strings.ToLower(a.Hex()), strings.ToLower(b.Hex()))
 	})
 
 	bypasserConfig := &types.Config{
@@ -124,49 +124,49 @@ func (s *SuiTestSuite) Test_Sui_SetConfig() {
 
 	// Set config
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleBypasser, s.mcms.Address(), s.mcms.ownerCapObj, Sui_test_chain_selector)
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleBypasser, s.mcmsPackageId, s.ownerCapObj, Sui_test_chain_selector)
 		s.Require().NoError(err, "creating configurer for Sui mcms contract")
-		_, err = configurer.SetConfig(s.T().Context(), s.mcms.mcmsObject, bypasserConfig, true)
+		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, bypasserConfig, true)
 		s.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleCanceller, s.mcms.Address(), s.mcms.ownerCapObj, Sui_test_chain_selector)
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleCanceller, s.mcmsPackageId, s.ownerCapObj, Sui_test_chain_selector)
 		s.Require().NoError(err, "creating configurer for Sui mcms contract")
-		_, err = configurer.SetConfig(s.T().Context(), s.mcms.mcmsObject, cancellerConfig, true)
+		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, cancellerConfig, true)
 		s.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcms.Address(), s.mcms.ownerCapObj, Sui_test_chain_selector)
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageId, s.ownerCapObj, Sui_test_chain_selector)
 		s.Require().NoError(err, "creating configurer for Sui mcms contract")
-		_, err = configurer.SetConfig(s.T().Context(), s.mcms.mcmsObject, proposerConfig, true)
+		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, proposerConfig, true)
 		s.Require().NoError(err, "setting config on Sui mcms contract")
 
 	}
 
 	// Assert that config has been set
 	{
-		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcms.Address(), suisdk.TimelockRoleBypasser)
+		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleBypasser)
 		s.Require().NoError(err, "creating inspector for Sui mcms contract")
 
-		gotConfig, err := inspector.GetConfig(s.T().Context(), s.mcms.mcmsObject)
+		gotConfig, err := inspector.GetConfig(s.T().Context(), s.mcmsObj)
 		s.Require().NoError(err)
 		s.Require().NotNil(gotConfig)
 		s.Require().Equal(bypasserConfig, gotConfig)
 	}
 	{
-		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcms.Address(), suisdk.TimelockRoleCanceller)
+		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleCanceller)
 		s.Require().NoError(err, "creating inspector for Sui mcms contract")
 
-		gotConfig, err := inspector.GetConfig(s.T().Context(), s.mcms.mcmsObject)
+		gotConfig, err := inspector.GetConfig(s.T().Context(), s.mcmsObj)
 		s.Require().NoError(err)
 		s.Require().NotNil(gotConfig)
 		s.Require().Equal(cancellerConfig, gotConfig)
 	}
 	{
-		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcms.Address(), suisdk.TimelockRoleProposer)
+		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleProposer)
 		s.Require().NoError(err, "creating inspector for Sui mcms contract")
 
-		gotConfig, err := inspector.GetConfig(s.T().Context(), s.mcms.mcmsObject)
+		gotConfig, err := inspector.GetConfig(s.T().Context(), s.mcmsObj)
 		s.Require().NoError(err)
 		s.Require().NotNil(gotConfig)
 		s.Require().Equal(proposerConfig, gotConfig)

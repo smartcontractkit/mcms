@@ -59,7 +59,8 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		signers[i] = addr.Bytes()
 	}
 	opts := bind.CallOpts{
-		Signer: c.signer,
+		Signer:           c.signer,
+		WaitForExecution: true,
 	}
 	tx, err := c.mcms.SetConfig(
 		ctx,
@@ -74,6 +75,9 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		groupParents[:],
 		clearRoot,
 	)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to set config: %w", err)
+	}
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
