@@ -23,8 +23,6 @@ import (
 const (
 	SignatureVOffset    = 27
 	SignatureVThreshold = 2
-
-	ChunkSizeBytes = 50_000
 )
 
 var _ sdk.Executor = &Executor{}
@@ -136,9 +134,6 @@ func (e Executor) ExecuteOperation(
 	}
 
 	// The execution needs to go in hand with the timelock operation in the same PTB transaction
-	// ptb := transaction.NewTransaction()
-
-	// // Build the execute call in the PTB
 	ptb, timelockCallback, err := e.mcms.BuildPTBFromEncodedCall(ctx, opts, executeCall)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
@@ -197,47 +192,17 @@ func (e Executor) ExecuteOperation(
 	})
 
 	// Process each ExecutingCallbackParams individually
-	// We iterate in forward order when using borrow with index
-	for i, call := range calls {
+	// We need to process them in reverse order since we're using pop_back to extract elements
+	for i := len(calls) - 1; i >= 0; i-- {
+		call := calls[i]
 
 		targetString := fmt.Sprintf("0x%x", call.Target)
 		isTargetMCMSPackage := targetString == e.mcmsPackageId
 
+		// If the target is the MCMS package, we need to call ExecuteDispatchToAccount
 		if isTargetMCMSPackage {
-			// This is an MCMS operation, use ExecuteDispatchToAccount
-			fmt.Printf("  - Processing as MCMS operation via ExecuteDispatchToAccount\n")
-
-			// Create the index argument as a transaction.Argument
-			indexArg := ptb.Pure(uint64(i))
-
-			// we can just call the default program to access swap remove
-			singleExecuteParam, err := e.mcms.Encoder().GetSingleExecuteCallbackParamsWithArgs(executeCallback, indexArg)
-			if err != nil {
-				return types.TransactionResult{}, fmt.Errorf("getting single execute callback params %d: %w", i, err)
-			}
-
-			callbackElement, err := e.mcms.ExtendPTB(ctx, ptb, opts, singleExecuteParam)
-			if err != nil {
-				return types.TransactionResult{}, fmt.Errorf("extending PTB with single execute callback params %d: %w", i, err)
-			}
-
-			// Create a new Argument that references the first element of the tuple result
-			// The callbackElement.Result should contain the command index from the GetSingleExecuteCallbackParams call
-			var commandIndex uint16
-			if callbackElement.Result != nil {
-				commandIndex = *callbackElement.Result
-			} else {
-				return types.TransactionResult{}, fmt.Errorf("callbackElement does not have a Result field set")
-			}
-
-			// Create a NestedResult argument to get the first element (index 0) of the tuple
-			executingCallbackParams := transaction.Argument{
-				NestedResult: &transaction.NestedResult{
-					Index:       commandIndex,
-					ResultIndex: 0, // First element of the tuple
-				},
-			}
-
+			// We need to extract individual ExecutingCallbackParams from the executeCallback vector
+			executingCallbackParams, err := extractExecutingCallbackParams(e.mcmsPackageId, ptb, executeCallback)
 			executeDispatchCall, err := e.mcms.Encoder().ExecuteDispatchToAccountWithArgs(
 				registryArg,
 				accountArg,
@@ -252,66 +217,36 @@ func (e Executor) ExecuteOperation(
 			if err != nil {
 				return types.TransactionResult{}, fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
 			}
-
-			fmt.Printf("  - Successfully added ExecuteDispatchToAccount call to PTB\n")
-
+			// If this is a destination contract operation, we need to call mcms_entrypoint
 		} else {
-			// This is a destination contract operation, use mcms_entrypoint
-			fmt.Printf("  - Processing as destination contract operation via mcms_entrypoint\n")
-
-			// Extract the element at index i from executeCallback vector using PTB vector borrow
-			// We need to create the proper type tag for ExecutingCallbackParams
-			executingCallbackParamsType := fmt.Sprintf("%s::mcms_registry::ExecutingCallbackParams", e.mcmsPackageId)
-
-			// Convert the type string to TypeTag
-			typeTag, err := bindutils.ConvertTypeStringToTypeTag(executingCallbackParamsType)
+			executingCallbackParams, err := extractExecutingCallbackParams(e.mcmsPackageId, ptb, executeCallback)
 			if err != nil {
-				return types.TransactionResult{}, fmt.Errorf("failed to convert type string to TypeTag: %w", err)
+				return types.TransactionResult{}, fmt.Errorf("extracting ExecutingCallbackParams %d: %w", i, err)
 			}
-
-			// Create the vector borrow call to get the element at index i by reference
-			// This gives us a reference to the ExecutingCallbackParams
-			indexArg := ptb.Pure(uint64(i))
-			callbackElement := ptb.MoveCall(
-				"0x1", // Standard library package for vector operations
-				"vector",
-				"borrow",
-				[]transaction.TypeTag{*typeTag}, // Type arguments
-				[]transaction.Argument{*executeCallback, indexArg}, // Arguments: vector and index
-			)
-
-			fmt.Printf("  - Extracted ExecutingCallbackParams[%d] from vector\n", i)
-
-			// For destination contract operations, we need to call the mcms_entrypoint function
-			// on the destination contract with the ExecutingCallbackParams
-			fmt.Printf("  - Calling mcms_entrypoint on target contract: %s\n", targetString)
 
 			// Call the mcms_entrypoint function on the destination contract
 			ptb.MoveCall(
 				models.SuiAddress(targetString), // The destination contract package
 				call.ModuleName,
-				"mcms_entrypoint",                       // Standard MCMS entrypoint function
-				[]transaction.TypeTag{},                 // No type arguments
-				[]transaction.Argument{callbackElement}, // Arguments: ExecutingCallbackParams
+				"mcms_entrypoint",                                // Standard MCMS entrypoint function
+				[]transaction.TypeTag{},                          // No type arguments
+				[]transaction.Argument{*executingCallbackParams}, // Arguments: ExecutingCallbackParams
 			)
 
-			fmt.Printf("  - Successfully added mcms_entrypoint call to PTB\n")
+			// TODO: Add the call to the PTB
 		}
-
-		fmt.Printf("  - Processed ExecutingCallbackParams[%d] for %s::%s\n", i, call.ModuleName, call.FunctionName)
 	}
 
-	// For now, log the completion of processing
-	fmt.Printf("Completed processing %d ExecutingCallbackParams\n", len(calls))
+	// After processing all elements, the vector should be empty, we need to close it
+	if err := closeExecutingCallbackParams(e.mcmsPackageId, ptb, executeCallback); err != nil {
+		return types.TransactionResult{}, fmt.Errorf("closing ExecutingCallbackParams vector: %w", err)
+	}
 
-	// Execute the complete PTB with both calls
+	// Execute the complete PTB with every call
 	tx, err := bind.ExecutePTB(ctx, opts, e.client, ptb)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("Op execution with PTB failed: %w", err)
 	}
-
-	txJSON, err := json.MarshalIndent(tx, "", "  ")
-	fmt.Printf("TX JSON:\n%s", string(txJSON))
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
@@ -417,4 +352,44 @@ func encodeSignatures(signatures []types.Signature) [][]byte {
 	}
 
 	return sigs
+}
+
+func extractExecutingCallbackParams(mcmsPackageId string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
+	// Convert the type string to TypeTag
+	executingCallbackParamsType := fmt.Sprintf("%s::mcms_registry::ExecutingCallbackParams", mcmsPackageId)
+	typeTag, err := bindutils.ConvertTypeStringToTypeTag(executingCallbackParamsType)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert type string to TypeTag: %w", err)
+	}
+
+	// Create the vector pop_back call to extract an element by value
+	// This gives us the actual ExecutingCallbackParams by value, consuming it from the vector
+	executingCallbackParams := ptb.MoveCall(
+		"0x1", // Standard library package for vector operations
+		"vector",
+		"pop_back",
+		[]transaction.TypeTag{*typeTag}, // Type arguments
+		[]transaction.Argument{*vectorExecutingCallback}, // Arguments: just the vector
+	)
+
+	return &executingCallbackParams, nil
+}
+
+func closeExecutingCallbackParams(mcmsPackageId string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
+	// Get the type tag for ExecutingCallbackParams
+	executingCallbackParamsType := fmt.Sprintf("%s::mcms_registry::ExecutingCallbackParams", mcmsPackageId)
+	typeTag, err := bindutils.ConvertTypeStringToTypeTag(executingCallbackParamsType)
+	if err != nil {
+		return fmt.Errorf("failed to convert type string to TypeTag: %w", err)
+	}
+
+	ptb.MoveCall(
+		"0x1", // Standard library package
+		"vector",
+		"destroy_empty",
+		[]transaction.TypeTag{*typeTag},
+		[]transaction.Argument{*vectorExecutingCallback},
+	)
+
+	return nil
 }
