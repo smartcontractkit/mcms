@@ -15,8 +15,8 @@ func (t TimelockRole) String() string {
 	return "unknown"
 }
 
-func (t TimelockRole) Byte() byte {
-	return byte(t)
+func (t TimelockRole) Byte() uint8 {
+	return uint8(t)
 }
 
 const (

@@ -89,7 +89,7 @@ func (i Inspector) GetConfig(ctx context.Context, mcmsAddr string) (*types.Confi
 
 	config, err := i.mcms.DevInspect().GetConfig(ctx, opts, stateObj, i.role.Byte())
 	if err != nil {
-		return nil, fmt.Errorf("get config: %w", err)
+		return nil, fmt.Errorf("Failed to GetConfig: %w", err)
 	}
 
 	return i.ToConfig(config)
@@ -104,7 +104,7 @@ func (i Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, err
 
 	opCount, err := i.mcms.DevInspect().GetOpCount(ctx, opts, stateObj, i.role.Byte())
 	if err != nil {
-		return 0, fmt.Errorf("get op count: %w", err)
+		return 0, fmt.Errorf("Failed to GetOpCount: %w", err)
 	}
 
 	return opCount, nil
@@ -119,7 +119,7 @@ func (i Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, u
 
 	result, err := i.mcms.DevInspect().GetRoot(ctx, opts, stateObj, i.role.Byte())
 	if err != nil {
-		return common.Hash{}, 0, fmt.Errorf("get root: %w", err)
+		return common.Hash{}, 0, fmt.Errorf("Failed to GetRoot: %w", err)
 	}
 
 	// The result is []any containing [root []byte, validUntil uint64]
@@ -150,7 +150,7 @@ func (i Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types.
 
 	rootMetadata, err := i.mcms.DevInspect().GetRootMetadata(ctx, opts, stateObj, i.role.Byte())
 	if err != nil {
-		return types.ChainMetadata{}, fmt.Errorf("get root metadata: %w", err)
+		return types.ChainMetadata{}, fmt.Errorf("Failed to GetRootMetadata: %w", err)
 	}
 
 	return types.ChainMetadata{
