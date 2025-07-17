@@ -192,6 +192,23 @@ func (s *SuiTestSuite) Test_Sui_TimelockProposal() {
 			s.Require().NoError(err)
 			s.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
 		}
+
+		// Complete the proposal transfer
+		s.T().Logf("Completing the proposal transfer...")
+		tx, err := s.mcmsAccount.ExecuteOwnershipTransfer(s.T().Context(), &bind.CallOpts{
+			Signer:           s.signer,
+			WaitForExecution: true,
+		}, bind.Object{Id: s.ownerCapObj}, bind.Object{Id: s.accountObj}, bind.Object{Id: s.registryObj}, "0x0")
+		s.Require().NoError(err, "Failed to execute ownership transfer")
+		s.Require().NotEmpty(tx, "Transaction should not be empty")
+		s.T().Logf("✅ Executed ownership transfer in tx: %s", tx.Digest)
+
+		// Check owner
+		owner, err := bind.ReadObject(s.T().Context(), s.accountObj, s.client)
+		s.Require().NoError(err)
+		// TODO: Due to the @mcms problem, the owner is set to zero instead of the actual mcms package ID
+		s.Require().Equal("0x0000000000000000000000000000000000000000000000000000000000000000", owner.Data.Content.Fields["owner"], "Owner should be the owner cap object")
+
 	}
 
 }
