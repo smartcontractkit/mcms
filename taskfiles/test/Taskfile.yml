@@ -1,4 +1,4 @@
-version: '3'
+version: "3"
 
 tasks:
   default:
@@ -15,14 +15,14 @@ tasks:
   e2e:
     desc: "Run e2e tests"
     env:
-      CTF_CONFIGS: "{{ .CTF_CONFIGS | default \"../config.toml\" }}"
+      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.toml" }}'
     cmds:
-      - CTF_CONFIGS=$CTF_CONFIGS go test -tags=e2e {{.CLI_ARGS}} ./e2e/tests...
+      - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e {{.CLI_ARGS}} ./e2e/tests...
 
   e2e:aptos:
     desc: "Run Aptos e2e tests"
     env:
-      CTF_CONFIGS: "{{ .CTF_CONFIGS | default \"../config.toml\" }}"
+      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.toml" }}'
     cmds:
       - CTF_CONFIGS=$CTF_CONFIGS go test -tags=e2e -test.run TestAptosSuite {{.CLI_ARGS}} ./e2e/tests...
 
@@ -36,6 +36,6 @@ tasks:
     desc: "Run ledger signing test"
     env:
       RUN_LEDGER_SUITE: true
-      CTF_CONFIGS: "{{ .CTF_CONFIGS | default \"../config.toml\" }}"
+      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.toml" }}'
     cmds:
-      -  go test -tags=e2e -v {{.CLI_ARGS}} ./e2e/ledger
+      - go test -tags=e2e -v {{.CLI_ARGS}} ./e2e/ledger
