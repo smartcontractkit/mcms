@@ -14,8 +14,6 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-const Sui_test_chain_selector = 18395503381733958356
-
 func (s *SuiTestSuite) Test_Sui_SetConfig() {
 
 	// Signers in each group need to be sorted alphabetically
@@ -124,19 +122,19 @@ func (s *SuiTestSuite) Test_Sui_SetConfig() {
 
 	// Set config
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleBypasser, s.mcmsPackageId, s.ownerCapObj, Sui_test_chain_selector)
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleBypasser, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
 		s.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, bypasserConfig, true)
 		s.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleCanceller, s.mcmsPackageId, s.ownerCapObj, Sui_test_chain_selector)
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleCanceller, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
 		s.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, cancellerConfig, true)
 		s.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageId, s.ownerCapObj, Sui_test_chain_selector)
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
 		s.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, proposerConfig, true)
 		s.Require().NoError(err, "setting config on Sui mcms contract")

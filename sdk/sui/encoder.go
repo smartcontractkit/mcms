@@ -8,7 +8,6 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/pattonkan/sui-go/sui"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
@@ -55,10 +54,6 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		return common.Hash{}, err
 	}
 	chainIDBig := (&big.Int{}).SetUint64(chainID)
-	mcmsAddress, err := AddressFromHex(metadata.MCMAddress)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("failed to parse MCMS address %q: %w", metadata.MCMAddress, err)
-	}
 	toAddress, err := AddressFromHex(op.Transaction.To)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to parse To address %q: %w", op.Transaction.To, err)
@@ -74,11 +69,17 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		}
 	}
 
+	zeroAddress, err := AddressFromHex("0x0")
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to decode mcms package ID: %w", err)
+	}
+
 	ser := bcs.Serializer{}
 	ser.FixedBytes(mcmDomainSeparatorOp)
 	ser.U8(uint8(additionalFieldsMetadata.Role))
 	ser.U256(*chainIDBig)
-	ser.WriteBytes(mcmsAddress.Bytes())
+	// TODO: This is an issue in the contract. Hardcoded to zero address for now.
+	ser.WriteBytes(zeroAddress.Bytes())
 	ser.U64(uint64(opCount))
 	ser.WriteBytes(toAddress.Bytes())
 	ser.WriteString(additionalFields.ModuleName)
@@ -95,25 +96,104 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	}
 	chainIDBig := (&big.Int{}).SetUint64(chainID)
 
-	mcmsAddress, err := sui.AddressFromHex(metadata.MCMAddress)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("failed to parse MCMS address %q: %w", metadata.MCMAddress, err)
+	if metadata.AdditionalFields == nil || len(metadata.AdditionalFields) == 0 {
+		return common.Hash{}, fmt.Errorf("additional fields metadata is empty")
 	}
 	var additionalFieldsMetadata AdditionalFieldsMetadata
-	if len(metadata.AdditionalFields) > 0 {
-		if err = json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
-			return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
-		}
+	if err := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
+		return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
+	}
+
+	zeroAddress, err := AddressFromHex("0x0")
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to decode mcms package ID: %w", err)
 	}
 
 	ser := bcs.Serializer{}
 	ser.FixedBytes(mcmDomainSeparatorMetadata)
 	ser.U8(uint8(additionalFieldsMetadata.Role))
 	ser.U256(*chainIDBig)
-	ser.WriteBytes(mcmsAddress.Bytes())
+	ser.WriteBytes(zeroAddress.Bytes())
 	ser.U64(metadata.StartingOpCount)
 	ser.U64(metadata.StartingOpCount + e.TxCount)
 	ser.Bool(e.OverridePreviousRoot)
 
 	return crypto.Keccak256Hash(ser.ToBytes()), nil
+}
+
+func SerializeTimelockScheduleBatch(targets [][]byte,
+	moduleNames []string,
+	functionNames []string,
+	datas [][]byte,
+	predecessor []byte,
+	salt []byte,
+	delay uint64) ([]byte, error) {
+	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
+		// Serialize targets vector
+		//nolint:gosec
+		ser.Uleb128(uint32(len(targets)))
+		for _, target := range targets {
+			ser.FixedBytes(target)
+		}
+
+		// Write module names
+		//nolint:gosec
+		ser.Uleb128(uint32(len(moduleNames)))
+		for _, moduleName := range moduleNames {
+			ser.WriteString(moduleName)
+		}
+
+		// Write function names
+		//nolint:gosec
+		ser.Uleb128(uint32(len(functionNames)))
+		for _, functionName := range functionNames {
+			ser.WriteString(functionName)
+		}
+
+		// Write data
+		//nolint:gosec
+		ser.Uleb128(uint32(len(datas)))
+		for _, data := range datas {
+			ser.WriteBytes(data)
+		}
+
+		ser.WriteBytes(predecessor)
+		ser.WriteBytes(salt)
+		ser.U64(delay)
+	})
+}
+
+func SerializeTimelockBypasserExecuteBatch(targets [][]byte,
+	moduleNames []string,
+	functionNames []string,
+	datas [][]byte) ([]byte, error) {
+	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
+		// Serialize targets vector
+		//nolint:gosec
+		ser.Uleb128(uint32(len(targets)))
+		for _, target := range targets {
+			ser.FixedBytes(target)
+		}
+
+		// Write module names
+		//nolint:gosec
+		ser.Uleb128(uint32(len(moduleNames)))
+		for _, moduleName := range moduleNames {
+			ser.WriteString(moduleName)
+		}
+
+		// Write function names
+		//nolint:gosec
+		ser.Uleb128(uint32(len(functionNames)))
+		for _, functionName := range functionNames {
+			ser.WriteString(functionName)
+		}
+
+		// Write data
+		//nolint:gosec
+		ser.Uleb128(uint32(len(datas)))
+		for _, data := range datas {
+			ser.WriteBytes(data)
+		}
+	})
 }

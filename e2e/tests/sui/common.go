@@ -11,9 +11,12 @@ import (
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	module_mcms_account "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_account"
+
 	"github.com/smartcontractkit/chainlink-sui/bindings/packages/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type SuiTestSuite struct {
@@ -23,6 +26,9 @@ type SuiTestSuite struct {
 	client sui.ISuiAPI
 	signer bindutils.SuiSigner
 
+	chainSelector types.ChainSelector
+
+	// MCMS
 	mcmsPackageId string
 	mcms          module_mcms.IMcms
 	mcmsObj       string
@@ -31,6 +37,9 @@ type SuiTestSuite struct {
 	registryObj   string
 	accountObj    string
 	ownerCapObj   string
+
+	// MCMS Account
+	mcmsAccount module_mcms_account.IMcmsAccount
 }
 
 func (s *SuiTestSuite) SetupSuite() {
@@ -50,7 +59,12 @@ func (s *SuiTestSuite) SetupSuite() {
 	s.client = s.TestSetup.SuiClient
 	// TODO: Find funded accounts
 	s.signer = testSigner
+	s.chainSelector = types.ChainSelector(18395503381733958356)
+
 	s.deployMCMSContract()
+
+	s.mcmsAccount, err = module_mcms_account.NewMcmsAccount(s.mcmsPackageId, s.client)
+	s.Require().NoError(err, "Failed to create MCMS account instance")
 }
 
 func (s *SuiTestSuite) deployMCMSContract() {
@@ -81,4 +95,12 @@ func (s *SuiTestSuite) deployMCMSContract() {
 	s.registryObj = reg
 	s.accountObj = acc
 	s.ownerCapObj = ownCap
+}
+
+func Must[T any](t T, err error) T {
+	if err != nil {
+		panic(err)
+	}
+
+	return t
 }
