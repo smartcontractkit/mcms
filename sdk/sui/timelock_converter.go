@@ -2,10 +2,8 @@ package sui
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"strings"
 
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/common"
@@ -15,6 +13,12 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
+)
+
+const (
+	TimelockActionSchedule = "timelock_schedule_batch"
+	TimelockActionCancel   = "timelock_cancel"
+	TimelockActionBypass   = "timelock_bypasser_execute_batch"
 )
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
@@ -66,12 +70,12 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 			return nil, common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 		}
 
-		// Convert hex string to bytes
-		target, err := hex.DecodeString(strings.TrimPrefix(tx.To, "0x"))
+		// Convert Sui address properly using AddressFromHex to ensure correct padding
+		targetAddr, err := AddressFromHex(tx.To)
 		if err != nil {
-			return nil, common.Hash{}, fmt.Errorf("failed to decode target hex string: %w", err)
+			return nil, common.Hash{}, fmt.Errorf("failed to parse target address %q: %w", tx.To, err)
 		}
-		targets[i] = target
+		targets[i] = targetAddr.Bytes()
 		moduleNames[i] = additionalFields.ModuleName
 		functionNames[i] = additionalFields.Function
 		datas[i] = tx.Data
@@ -84,15 +88,15 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	var err error
 	switch action {
 	case types.TimelockActionSchedule:
-		function = "timelock_schedule_batch"
+		function = TimelockActionSchedule
 		data, err = SerializeTimelockScheduleBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes(), uint64(delay.Seconds()))
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock schedule batch: %w", err)
 		}
 	case types.TimelockActionCancel:
-		function = "timelock_cancel"
+		function = TimelockActionCancel
 	case types.TimelockActionBypass:
-		function = "timelock_bypasser_execute_batch"
+		function = TimelockActionBypass
 		data, err = SerializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock bypasser execute batch: %w", err)

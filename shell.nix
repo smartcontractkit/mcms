@@ -16,6 +16,7 @@
       go_1_24
       gopls
       mockgen
+      go-mockery
 
       # Keep adding as needed
 
