@@ -15,6 +15,9 @@ import (
 )
 
 func (s *SuiTestSuite) Test_Sui_SetConfig() {
+	// Setup the test suite and deploy contracts
+	s.SetupSuite()
+	s.DeployMCMSContract()
 
 	// Signers in each group need to be sorted alphabetically
 	signers := [30]common.Address{}

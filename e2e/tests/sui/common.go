@@ -60,14 +60,9 @@ func (s *SuiTestSuite) SetupSuite() {
 	// TODO: Find funded accounts
 	s.signer = testSigner
 	s.chainSelector = types.ChainSelector(18395503381733958356)
-
-	s.deployMCMSContract()
-
-	s.mcmsAccount, err = module_mcms_account.NewMcmsAccount(s.mcmsPackageId, s.client)
-	s.Require().NoError(err, "Failed to create MCMS account instance")
 }
 
-func (s *SuiTestSuite) deployMCMSContract() {
+func (s *SuiTestSuite) DeployMCMSContract() {
 	gasBudget := uint64(300_000_000)
 	mcmsPackage, tx, err := mcms.PublishMCMS(context.Background(), &bind.CallOpts{
 		Signer:           s.signer,
@@ -95,6 +90,10 @@ func (s *SuiTestSuite) deployMCMSContract() {
 	s.registryObj = reg
 	s.accountObj = acc
 	s.ownerCapObj = ownCap
+
+	s.mcmsAccount, err = module_mcms_account.NewMcmsAccount(s.mcmsPackageId, s.client)
+	s.Require().NoError(err, "Failed to create MCMS account instance")
+
 }
 
 func Must[T any](t T, err error) T {

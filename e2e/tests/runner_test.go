@@ -30,4 +30,7 @@ import (
 
 func TestSuiSuite(t *testing.T) {
 	suite.Run(t, new(suie2e.SuiTestSuite))
+	suite.Run(t, new(suie2e.InspectionTestSuite))
+	suite.Run(t, new(suie2e.TimelockInspectionTestSuite))
+	suite.Run(t, new(suie2e.SetRootTestSuite))
 }

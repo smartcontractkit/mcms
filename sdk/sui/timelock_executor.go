@@ -8,7 +8,6 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
@@ -25,16 +24,12 @@ type TimelockExecutor struct {
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
 	mcmsPackageId string
-	mcms          module_mcms.IMcms
+	registryObj   string
+	accountObj    string
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor
-func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageId string) (*TimelockExecutor, error) {
-	mcms, err := module_mcms.NewMcms(mcmsPackageId, client)
-	if err != nil {
-		return nil, err
-	}
-
+func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageId string, registryObj string, accountObj string) (*TimelockExecutor, error) {
 	timelockInspector, err := NewTimelockInspector(client, signer, mcmsPackageId)
 	if err != nil {
 		return nil, err
@@ -45,20 +40,21 @@ func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPac
 		client:            client,
 		signer:            signer,
 		mcmsPackageId:     mcmsPackageId,
-		mcms:              mcms,
+		registryObj:       registryObj,
+		accountObj:        accountObj,
 	}, nil
 }
 
 func (t *TimelockExecutor) Execute(
 	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
 ) (types.TransactionResult, error) {
-	opts := &bind.CallOpts{Signer: t.signer}
 
 	targets := make([]string, len(bop.Transactions))
 	moduleNames := make([]string, len(bop.Transactions))
 	functionNames := make([]string, len(bop.Transactions))
 	datas := make([][]byte, len(bop.Transactions))
 
+	var calls []Call
 	for i, tx := range bop.Transactions {
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
@@ -69,14 +65,25 @@ func (t *TimelockExecutor) Execute(
 		moduleNames[i] = additionalFields.ModuleName
 		functionNames[i] = additionalFields.Function
 		datas[i] = tx.Data
+
+		// Convert Sui address properly using AddressFromHex to ensure correct padding
+		targetAddress, err := AddressFromHex(tx.To)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to parse target address %q: %w", tx.To, err)
+		}
+
+		calls = append(calls, Call{
+			Target:       targetAddress.Bytes(),
+			ModuleName:   additionalFields.ModuleName,
+			FunctionName: additionalFields.Function,
+			Data:         tx.Data,
+		})
 	}
 
 	timelockObj := bind.Object{Id: timelockAddress}
 	clockObj := bind.Object{Id: "0x6"} // Clock object ID in Sui
 
-	tx, err := t.mcms.TimelockExecuteBatch(
-		ctx,
-		opts,
+	timelockExecuteCall, err := t.mcms.Encoder().TimelockExecuteBatch(
 		timelockObj,
 		clockObj,
 		targets,
@@ -88,6 +95,24 @@ func (t *TimelockExecutor) Execute(
 	)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to execute batch: %w", err)
+	}
+
+	opts := &bind.CallOpts{Signer: t.signer, WaitForExecution: true}
+
+	ptb, executeCallback, err := t.mcms.BuildPTBFromEncodedCall(ctx, opts, timelockExecuteCall)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
+	}
+
+	err = ExtendPTBFromExecutingCallbackParams(ctx, t.client, t.mcms, ptb, opts, t.mcmsPackageId, executeCallback, calls, t.registryObj, t.accountObj)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", err)
+	}
+
+	// Execute the complete PTB with every call
+	tx, err := bind.ExecutePTB(ctx, opts, t.client, ptb)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("Op execution with PTB failed: %w", err)
 	}
 
 	return types.TransactionResult{

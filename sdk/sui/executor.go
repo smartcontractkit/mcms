@@ -2,9 +2,11 @@ package sui
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
@@ -37,9 +39,10 @@ type Executor struct {
 
 	accountObj  string
 	registryObj string
+	timelockObj string
 }
 
-func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageId string, role TimelockRole, accountObj string, registryObj string) (*Executor, error) {
+func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageId string, role TimelockRole, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
 	mcms, err := module_mcms.NewMcms(mcmsPackageId, client)
 	if err != nil {
 		return nil, err
@@ -59,9 +62,11 @@ func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encode
 		mcms:          mcms,
 		accountObj:    accountObj,
 		registryObj:   registryObj,
+		timelockObj:   timelockObj,
 	}, nil
 }
 
+// TODO: As the contracts are structured, we can't select the operation to execute, as the batch is inside the Op
 func (e Executor) ExecuteOperation(
 	ctx context.Context,
 	metadata types.ChainMetadata,
@@ -138,110 +143,49 @@ func (e Executor) ExecuteOperation(
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}
-
 	// Now build the timelock call using the result from the execute call
-	var timelockCall *bind.EncodedCall
 	encoder := e.mcms.Encoder()
-	switch additionalFields.Function {
-	case "timelock_schedule_batch":
-		// timelockCall, err = encoder.DispatchTimelockScheduleBatchWithArgs(stateObj, "0x6", timelockCallback)
-		return types.TransactionResult{}, fmt.Errorf("timelock action not available yet: %s", additionalFields.Function)
-	case "timelock_cancel":
-		// timelockCall, err = encoder.DispatchTimelockCancelWithArgs(timelockCallback)
-		return types.TransactionResult{}, fmt.Errorf("timelock action not available yet: %s", additionalFields.Function)
-	case "timelock_bypasser_execute_batch":
-		// This returns []ExecutingCallbackParams. A set of inidividual calls that can be executed, either through `execute_dispatch_to_account` if it's an MCMS operation, or `mcms_entrypoint` of the destination contract
-		timelockCall, err = encoder.DispatchTimelockBypasserExecuteBatchWithArgs(timelockCallback)
-	default:
+	if additionalFields.Function != TimelockActionBypass && additionalFields.Function != TimelockActionSchedule && additionalFields.Function != TimelockActionCancel {
 		return types.TransactionResult{}, fmt.Errorf("unsupported timelock action: %s", additionalFields.Function)
 	}
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", err)
-	}
 
-	// Add the timelock call to the same PTB
-	// If bypass, this a set of execute callbacks
-	executeCallback, err := e.mcms.ExtendPTB(ctx, ptb, opts, timelockCall)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("building PTB for timelock call: %w", err)
-	}
-
-	objResolver := bind.NewObjectResolver(e.client)
-	registryResolved, err := objResolver.ResolveObject(ctx, e.registryObj)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to resolve registry object: %w", err)
-	}
-	registryObjArg, err := objResolver.CreateObjectArgWithMutability(registryResolved, true)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to create object arg for registry: %w", err)
-	}
-	registryArg := ptb.Object(transaction.CallArg{
-		Object: registryObjArg,
-	})
-
-	accountResolved, err := objResolver.ResolveObject(ctx, e.accountObj)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to resolve account object: %w", err)
-	}
-	accountObjArg, err := objResolver.CreateObjectArgWithMutability(accountResolved, true)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to create object arg for account: %w", err)
-	}
-	accountArg := ptb.Object(transaction.CallArg{
-		Object: accountObjArg,
-	})
-
-	// Process each ExecutingCallbackParams individually
-	// We need to process them in reverse order since we're using pop_back to extract elements
-	for i := len(calls) - 1; i >= 0; i-- {
-		call := calls[i]
-
-		targetString := fmt.Sprintf("0x%x", call.Target)
-		isTargetMCMSPackage := targetString == e.mcmsPackageId
-
-		// If the target is the MCMS package, we need to call ExecuteDispatchToAccount
-		if isTargetMCMSPackage {
-			// We need to extract individual ExecutingCallbackParams from the executeCallback vector
-			executingCallbackParams, err := extractExecutingCallbackParams(e.mcmsPackageId, ptb, executeCallback)
-			executeDispatchCall, err := e.mcms.Encoder().ExecuteDispatchToAccountWithArgs(
-				registryArg,
-				accountArg,
-				executingCallbackParams,
-			)
-			if err != nil {
-				return types.TransactionResult{}, fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", i, err)
-			}
-
-			// Add the call to the PTB
-			_, err = e.mcms.ExtendPTB(ctx, ptb, opts, executeDispatchCall)
-			if err != nil {
-				return types.TransactionResult{}, fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
-			}
-			// If this is a destination contract operation, we need to call mcms_entrypoint
-		} else {
-			executingCallbackParams, err := extractExecutingCallbackParams(e.mcmsPackageId, ptb, executeCallback)
-			if err != nil {
-				return types.TransactionResult{}, fmt.Errorf("extracting ExecutingCallbackParams %d: %w", i, err)
-			}
-
-			// Call the mcms_entrypoint function on the destination contract
-			ptb.MoveCall(
-				models.SuiAddress(targetString), // The destination contract package
-				call.ModuleName,
-				"mcms_entrypoint",                                // Standard MCMS entrypoint function
-				[]transaction.TypeTag{},                          // No type arguments
-				[]transaction.Argument{*executingCallbackParams}, // Arguments: ExecutingCallbackParams
-			)
-
-			// TODO: Add the call to the PTB
+	if additionalFields.Function == TimelockActionSchedule {
+		timelockObjectArg, err := toObjectArg(ctx, e.client, ptb, e.timelockObj, true)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to create object arg for timelock: %w", err)
+		}
+		clockObjectArg, err := toObjectArg(ctx, e.client, ptb, "0x6", false)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to create object arg for clock: %w", err)
+		}
+		timelockCall, err := encoder.DispatchTimelockScheduleBatchWithArgs(timelockObjectArg, clockObjectArg, timelockCallback)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", err)
+		}
+		_, err = e.mcms.ExtendPTB(ctx, ptb, opts, timelockCall)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("adding timelock call to PTB: %w", err)
 		}
 	}
 
-	// After processing all elements, the vector should be empty, we need to close it
-	if err := closeExecutingCallbackParams(e.mcmsPackageId, ptb, executeCallback); err != nil {
-		return types.TransactionResult{}, fmt.Errorf("closing ExecutingCallbackParams vector: %w", err)
+	if additionalFields.Function == TimelockActionCancel {
+
 	}
 
+	if additionalFields.Function == TimelockActionBypass {
+		timelockCall, err := encoder.DispatchTimelockBypasserExecuteBatchWithArgs(timelockCallback)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", err)
+		}
+
+		// Add the timelock call to the same PTB
+		// If bypass, this a set of execute callbacks
+		executeCallback, err := e.mcms.ExtendPTB(ctx, ptb, opts, timelockCall)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("building PTB for timelock call: %w", err)
+		}
+		err = ExtendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, opts, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj)
+	}
 	// Execute the complete PTB with every call
 	tx, err := bind.ExecutePTB(ctx, opts, e.client, ptb)
 	if err != nil {
@@ -294,6 +238,7 @@ func (e Executor) SetRoot(
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to decode mcms package ID: %w", err)
 	}
+
 	tx, err := e.mcms.SetRoot(
 		ctx,
 		opts,
@@ -390,6 +335,97 @@ func closeExecutingCallbackParams(mcmsPackageId string, ptb *transaction.Transac
 		[]transaction.TypeTag{*typeTag},
 		[]transaction.Argument{*vectorExecutingCallback},
 	)
+
+	return nil
+}
+
+func toObjectArg(ctx context.Context, client sui.ISuiAPI, ptb *transaction.Transaction, obj string, mut bool) (*transaction.Argument, error) {
+	objResolver := bind.NewObjectResolver(client)
+	objResolved, err := objResolver.ResolveObject(ctx, obj)
+	if err != nil {
+		return nil, fmt.Errorf("failed to resolve object: %w", err)
+	}
+	objArg, err := objResolver.CreateObjectArgWithMutability(objResolved, mut)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create object arg: %w", err)
+	}
+	arg := ptb.Object(transaction.CallArg{
+		Object: objArg,
+	})
+	return &arg, nil
+}
+
+func ExtendPTBFromExecutingCallbackParams(
+	ctx context.Context,
+	client sui.ISuiAPI,
+	mcms *module_mcms.McmsContract,
+	ptb *transaction.Transaction,
+	opts *bind.CallOpts,
+	mcmsPackageId string,
+	executeCallback *transaction.Argument,
+	calls []Call,
+	registryObj string,
+	accountObj string,
+) error {
+	// Process each ExecutingCallbackParams individually
+	// We need to process them in reverse order since we're using pop_back to extract elements
+	for i := len(calls) - 1; i >= 0; i-- {
+		call := calls[i]
+
+		// Ensure proper address formatting - convert bytes to hex with proper padding
+		targetString := fmt.Sprintf("0x%s", strings.ToLower(hex.EncodeToString(call.Target)))
+		isTargetMCMSPackage := targetString == mcmsPackageId
+
+		// If the target is the MCMS package, we need to call ExecuteDispatchToAccount
+		if isTargetMCMSPackage {
+			// We need to extract individual ExecutingCallbackParams from the executeCallback vector
+			executingCallbackParams, err := extractExecutingCallbackParams(mcmsPackageId, ptb, executeCallback)
+			registryArg, err := toObjectArg(ctx, client, ptb, registryObj, true)
+			if err != nil {
+				return fmt.Errorf("failed to create object arg for registry: %w", err)
+			}
+			accountArg, err := toObjectArg(ctx, client, ptb, accountObj, true)
+			if err != nil {
+				return fmt.Errorf("failed to create object arg for account: %w", err)
+			}
+			executeDispatchCall, err := mcms.Encoder().ExecuteDispatchToAccountWithArgs(
+				registryArg,
+				accountArg,
+				executingCallbackParams,
+			)
+			if err != nil {
+				return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", i, err)
+			}
+
+			// Add the call to the PTB
+			_, err = mcms.ExtendPTB(ctx, ptb, opts, executeDispatchCall)
+			if err != nil {
+				return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
+			}
+			// If this is a destination contract operation, we need to call mcms_entrypoint
+		} else {
+			executingCallbackParams, err := extractExecutingCallbackParams(mcmsPackageId, ptb, executeCallback)
+			if err != nil {
+				return fmt.Errorf("extracting ExecutingCallbackParams %d: %w", i, err)
+			}
+
+			// Call the mcms_entrypoint function on the destination contract
+			ptb.MoveCall(
+				models.SuiAddress(targetString), // The destination contract package
+				call.ModuleName,
+				"mcms_entrypoint",                                // Standard MCMS entrypoint function
+				[]transaction.TypeTag{},                          // No type arguments
+				[]transaction.Argument{*executingCallbackParams}, // Arguments: ExecutingCallbackParams
+			)
+
+			// TODO: Add the call to the PTB
+		}
+	}
+
+	// After processing all elements, the vector should be empty, we need to close it
+	if err := closeExecutingCallbackParams(mcmsPackageId, ptb, executeCallback); err != nil {
+		return fmt.Errorf("closing ExecutingCallbackParams vector: %w", err)
+	}
 
 	return nil
 }
