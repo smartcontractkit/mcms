@@ -155,6 +155,6 @@ func (i Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types.
 
 	return types.ChainMetadata{
 		StartingOpCount: rootMetadata.PreOpCount,
-		MCMAddress:      common.BytesToAddress(rootMetadata.Multisig).Hex(),
+		MCMAddress:      rootMetadata.Multisig,
 	}, nil
 }
