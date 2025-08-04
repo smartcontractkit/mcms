@@ -37,12 +37,13 @@ type Executor struct {
 	mcmsPackageId string
 	mcms          *module_mcms.McmsContract
 
+	mcmsObj     string // MultisigState object ID
 	accountObj  string
 	registryObj string
 	timelockObj string
 }
 
-func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageId string, role TimelockRole, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
+func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageId string, role TimelockRole, mcmsObj string, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
 	mcms, err := module_mcms.NewMcms(mcmsPackageId, client)
 	if err != nil {
 		return nil, err
@@ -60,6 +61,7 @@ func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encode
 		signer:        signer,
 		mcmsPackageId: mcmsPackageId,
 		mcms:          mcms,
+		mcmsObj:       mcmsObj,
 		accountObj:    accountObj,
 		registryObj:   registryObj,
 		timelockObj:   timelockObj,
@@ -97,7 +99,7 @@ func (e Executor) ExecuteOperation(
 		proofBytes[i] = hash.Bytes()
 	}
 
-	stateObj := bind.Object{Id: metadata.MCMAddress}
+	stateObj := bind.Object{Id: e.mcmsObj}
 	clockObj := bind.Object{Id: "0x6"} // Clock object ID in Sui
 
 	opts := &bind.CallOpts{
@@ -105,10 +107,6 @@ func (e Executor) ExecuteOperation(
 		WaitForExecution: true,
 	}
 
-	zeroAddress, err := AddressFromHex("0x0")
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to decode mcms package ID: %w", err)
-	}
 	toAddress, err := AddressFromHex(op.Transaction.To)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse To address %q: %w", op.Transaction.To, err)
@@ -125,10 +123,9 @@ func (e Executor) ExecuteOperation(
 		clockObj,
 		additionalFieldsMetadata.Role.Byte(),
 		chainIDBig,
-		// TODO: this is an issue in the contract. Hardcoded to zero address for now.
-		zeroAddress.Bytes(), // Needs to always be MCMS package id
+		e.mcmsPackageId,
 		uint64(nonce),
-		toAddress.Bytes(), // Needs to always be MCMS pacakge id
+		toAddress.Hex(), // Needs to always be MCMS package id
 		additionalFields.ModuleName,
 		additionalFields.Function, // Can only be one of the dispatch
 		op.Transaction.Data,       // For timelock, data is the collection of every call we want to execute, including module, function and data
@@ -231,13 +228,8 @@ func (e Executor) SetRoot(
 		WaitForExecution: true,
 	}
 
-	stateObj := bind.Object{Id: metadata.MCMAddress}
-	clockObj := bind.Object{Id: "0x6"} // Clock object ID in Sui
-
-	zeroAddress, err := AddressFromHex("0x0")
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to decode mcms package ID: %w", err)
-	}
+	stateObj := bind.Object{Id: e.mcmsObj} // Use stored MultisigState object ID
+	clockObj := bind.Object{Id: "0x6"}     // Clock object ID in Sui
 
 	tx, err := e.mcms.SetRoot(
 		ctx,
@@ -246,10 +238,10 @@ func (e Executor) SetRoot(
 		clockObj,
 		additionalFieldsMetadata.Role.Byte(),
 		root[:],
-		uint64(validUntil)*1000, // the contract expects milliseconds
+		uint64(validUntil), // the contract expects seconds
 		chainIDBig,
-		// TODO: this is an issue in the contract. Hardcoded to zero address for now.
-		zeroAddress.Bytes(),
+		// Use the actual MCMS package address
+		e.mcmsPackageId,
 		metadata.StartingOpCount,
 		metadata.StartingOpCount+e.TxCount,
 		e.OverridePreviousRoot,

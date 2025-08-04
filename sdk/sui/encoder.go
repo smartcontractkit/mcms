@@ -69,7 +69,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		}
 	}
 
-	zeroAddress, err := AddressFromHex("0x0")
+	mcmsAddress, err := AddressFromHex(metadata.MCMAddress)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to decode mcms package ID: %w", err)
 	}
@@ -78,10 +78,9 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 	ser.FixedBytes(mcmDomainSeparatorOp)
 	ser.U8(uint8(additionalFieldsMetadata.Role))
 	ser.U256(*chainIDBig)
-	// TODO: This is an issue in the contract. Hardcoded to zero address for now.
-	ser.WriteBytes(zeroAddress.Bytes())
+	ser.FixedBytes(mcmsAddress.Bytes())
 	ser.U64(uint64(opCount))
-	ser.WriteBytes(toAddress.Bytes())
+	ser.FixedBytes(toAddress.Bytes())
 	ser.WriteString(additionalFields.ModuleName)
 	ser.WriteString(additionalFields.Function)
 	ser.WriteBytes(op.Transaction.Data)
@@ -104,7 +103,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
 	}
 
-	zeroAddress, err := AddressFromHex("0x0")
+	mcmsAddress, err := AddressFromHex(metadata.MCMAddress)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to decode mcms package ID: %w", err)
 	}
@@ -113,7 +112,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	ser.FixedBytes(mcmDomainSeparatorMetadata)
 	ser.U8(uint8(additionalFieldsMetadata.Role))
 	ser.U256(*chainIDBig)
-	ser.WriteBytes(zeroAddress.Bytes())
+	ser.FixedBytes(mcmsAddress.Bytes())
 	ser.U64(metadata.StartingOpCount)
 	ser.U64(metadata.StartingOpCount + e.TxCount)
 	ser.Bool(e.OverridePreviousRoot)
