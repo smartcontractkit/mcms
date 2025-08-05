@@ -26,6 +26,13 @@ tasks:
     cmds:
       - CTF_CONFIGS=$CTF_CONFIGS go test -tags=e2e -test.run TestAptosSuite {{.CLI_ARGS}} ./e2e/tests...
 
+  e2e:sui:
+    desc: "Run Sui e2e tests"
+    env:
+      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.toml" }}'
+    cmds:
+      - CTF_CONFIGS=$CTF_CONFIGS go test -tags=e2e -test.run TestSuiSuite {{.CLI_ARGS}} ./e2e/tests...
+
   coverage:
     desc: "Run unit test suite with coverage"
     cmds:
