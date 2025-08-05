@@ -12,6 +12,7 @@ require (
 	github.com/gagliardetto/solana-go v1.12.0
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/google/go-cmp v0.7.0
+	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
 	github.com/smartcontractkit/chain-selectors v1.0.61
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250626122206-319db248496a
