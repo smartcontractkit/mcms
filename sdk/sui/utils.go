@@ -26,6 +26,7 @@ func AddressFromHex(str string) (*Address, error) {
 	}
 	var address Address
 	copy(address[AddressLen-len(data):], data[:])
+
 	return &address, nil
 }
 
@@ -41,5 +42,6 @@ func HexToBytes(hexStr string) ([]byte, error) {
 	if strings.HasPrefix(hexStr, "0x") || strings.HasPrefix(hexStr, "0X") {
 		hexStr = hexStr[2:]
 	}
+
 	return hex.DecodeString(hexStr)
 }

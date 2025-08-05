@@ -1023,6 +1023,67 @@ func (_c *AptosRpcClient_EstimateGasPrice_Call) RunAndReturn(run func() (aptos.E
 	return _c
 }
 
+// EventsByCreationNumber provides a mock function with given fields: account, creationNumber, start, limit
+func (_m *AptosRpcClient) EventsByCreationNumber(account aptos.AccountAddress, creationNumber string, start *uint64, limit *uint64) ([]*api.Event, error) {
+	ret := _m.Called(account, creationNumber, start, limit)
+
+	if len(ret) == 0 {
+		panic("no return value specified for EventsByCreationNumber")
+	}
+
+	var r0 []*api.Event
+	var r1 error
+	if rf, ok := ret.Get(0).(func(aptos.AccountAddress, string, *uint64, *uint64) ([]*api.Event, error)); ok {
+		return rf(account, creationNumber, start, limit)
+	}
+	if rf, ok := ret.Get(0).(func(aptos.AccountAddress, string, *uint64, *uint64) []*api.Event); ok {
+		r0 = rf(account, creationNumber, start, limit)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]*api.Event)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(aptos.AccountAddress, string, *uint64, *uint64) error); ok {
+		r1 = rf(account, creationNumber, start, limit)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// AptosRpcClient_EventsByCreationNumber_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'EventsByCreationNumber'
+type AptosRpcClient_EventsByCreationNumber_Call struct {
+	*mock.Call
+}
+
+// EventsByCreationNumber is a helper method to define mock.On call
+//   - account aptos.AccountAddress
+//   - creationNumber string
+//   - start *uint64
+//   - limit *uint64
+func (_e *AptosRpcClient_Expecter) EventsByCreationNumber(account interface{}, creationNumber interface{}, start interface{}, limit interface{}) *AptosRpcClient_EventsByCreationNumber_Call {
+	return &AptosRpcClient_EventsByCreationNumber_Call{Call: _e.mock.On("EventsByCreationNumber", account, creationNumber, start, limit)}
+}
+
+func (_c *AptosRpcClient_EventsByCreationNumber_Call) Run(run func(account aptos.AccountAddress, creationNumber string, start *uint64, limit *uint64)) *AptosRpcClient_EventsByCreationNumber_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(aptos.AccountAddress), args[1].(string), args[2].(*uint64), args[3].(*uint64))
+	})
+	return _c
+}
+
+func (_c *AptosRpcClient_EventsByCreationNumber_Call) Return(_a0 []*api.Event, _a1 error) *AptosRpcClient_EventsByCreationNumber_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *AptosRpcClient_EventsByCreationNumber_Call) RunAndReturn(run func(aptos.AccountAddress, string, *uint64, *uint64) ([]*api.Event, error)) *AptosRpcClient_EventsByCreationNumber_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // EventsByHandle provides a mock function with given fields: account, eventHandle, fieldName, start, limit
 func (_m *AptosRpcClient) EventsByHandle(account aptos.AccountAddress, eventHandle string, fieldName string, start *uint64, limit *uint64) ([]*api.Event, error) {
 	ret := _m.Called(account, eventHandle, fieldName, start, limit)
