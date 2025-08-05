@@ -9,9 +9,8 @@
       # Development
       go-task
       golangci-lint
-
-      # Required for Sui CLI (Move compilation)
       git
+      
       # Go 1.24 + tools
       go_1_24
       gopls

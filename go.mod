@@ -4,8 +4,6 @@ go 1.24.1
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-replace github.com/smartcontractkit/chainlink-sui => ../chainlink-sui
-
 require (
 	github.com/aptos-labs/aptos-go-sdk v1.7.1-0.20250602153733-bb1facae1d43
 	github.com/block-vision/sui-go-sdk v1.0.9
@@ -15,11 +13,10 @@ require (
 	github.com/go-playground/validator/v10 v10.26.0
 	github.com/google/go-cmp v0.7.0
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
-	github.com/pattonkan/sui-go v0.1.1
 	github.com/smartcontractkit/chain-selectors v1.0.61
-	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250612083123-6ad06411b489
+	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250626122206-319db248496a
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250515132731-ad40fab9b75e
-	github.com/smartcontractkit/chainlink-sui v0.0.0-20250710144652-18c3dbf0ab25
+	github.com/smartcontractkit/chainlink-sui v0.0.0-20250805114040-3bb90bd25b82 // TODO: Should be with latest main branch
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.7
 	github.com/spf13/cast v1.7.1
 	github.com/stretchr/testify v1.10.0
@@ -58,7 +55,6 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.17.0 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
-	github.com/btcsuite/btcutil v1.0.2 // indirect
 	github.com/buger/jsonparser v1.1.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect

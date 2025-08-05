@@ -4,8 +4,11 @@ package sui
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 
 	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/types"
@@ -30,20 +33,19 @@ func (s *InspectionTestSuite) TestGetConfig() {
 	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleProposer)
 	s.Require().NoError(err, "Failed to create inspector")
 
-	// Create some test signers
-	testSigner1 := common.HexToAddress("0x1234567890123456789012345678901234567890")
-	testSigner2 := common.HexToAddress("0xabcdefabcdefabcdefabcdefabcdefabcdefabcdef")
+	proposers := [3]common.Address{}
+	proposerKeys := [3]*ecdsa.PrivateKey{}
+	for i := range proposers {
+		proposerKeys[i], _ = crypto.GenerateKey()
+		proposers[i] = crypto.PubkeyToAddress(proposerKeys[i].PublicKey)
+	}
+	slices.SortFunc(proposers[:], func(a, b common.Address) int {
+		return a.Cmp(b)
+	})
 
-	// Create a test configuration
 	testConfig := &types.Config{
-		Quorum:  1,
-		Signers: []common.Address{testSigner1, testSigner2},
-		GroupSigners: []types.Config{
-			{
-				Quorum:  1,
-				Signers: []common.Address{testSigner2},
-			},
-		},
+		Quorum:  2,
+		Signers: proposers[:],
 	}
 
 	// Set the configuration using the configurer
@@ -62,8 +64,8 @@ func (s *InspectionTestSuite) TestGetConfig() {
 	// Verify the configuration matches what we set
 	s.Require().Equal(testConfig.Quorum, config.Quorum, "Quorum should match")
 	s.Require().Len(config.Signers, len(testConfig.Signers), "Number of signers should match")
-	s.Require().Equal(testSigner1, config.Signers[0], "First signer should match")
-	s.Require().Equal(testSigner2, config.Signers[1], "Second signer should match")
+	s.Require().Equal(proposers[0], config.Signers[0], "First signer should match")
+	s.Require().Equal(proposers[1], config.Signers[1], "Second signer should match")
 
 	// Verify group signers
 	s.Require().Len(config.GroupSigners, len(testConfig.GroupSigners), "Number of group signers should match")

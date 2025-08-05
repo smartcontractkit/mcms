@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
@@ -99,7 +100,8 @@ func (t *TimelockExecutor) Execute(
 
 	opts := &bind.CallOpts{Signer: t.signer, WaitForExecution: true}
 
-	ptb, executeCallback, err := t.mcms.BuildPTBFromEncodedCall(ctx, opts, timelockExecuteCall)
+	ptb := transaction.NewTransaction()
+	executeCallback, err := t.mcms.ExtendPTB(ctx, ptb, opts, timelockExecuteCall)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}

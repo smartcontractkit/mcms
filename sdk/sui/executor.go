@@ -135,8 +135,9 @@ func (e Executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("executing operation on Sui mcms contract: %w", err)
 	}
 
+	ptb := transaction.NewTransaction()
 	// The execution needs to go in hand with the timelock operation in the same PTB transaction
-	ptb, timelockCallback, err := e.mcms.BuildPTBFromEncodedCall(ctx, opts, executeCall)
+	timelockCallback, err := e.mcms.ExtendPTB(ctx, ptb, opts, executeCall)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}

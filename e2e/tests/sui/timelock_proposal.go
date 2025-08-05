@@ -19,7 +19,12 @@ import (
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 )
 
-func (s *SuiTestSuite) Test_Sui_TimelockProposal() {
+// TimelockProposalTestSuite defines the test suite for Sui timelock proposal tests
+type TimelockProposalTestSuite struct {
+	SuiTestSuite
+}
+
+func (s *TimelockProposalTestSuite) Test_Sui_TimelockProposal() {
 	s.T().Run("TimelockProposal - MCMSAccount Accept Ownership through Bypass", func(t *testing.T) {
 		RunAcceptOwnershipProposal(s, suisdk.TimelockRoleBypasser)
 	})
@@ -29,7 +34,7 @@ func (s *SuiTestSuite) Test_Sui_TimelockProposal() {
 	})
 }
 
-func RunAcceptOwnershipProposal(s *SuiTestSuite, role suisdk.TimelockRole) {
+func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.TimelockRole) {
 	s.T().Logf("Running accept ownership proposal with role: %v", role)
 	s.DeployMCMSContract()
 
