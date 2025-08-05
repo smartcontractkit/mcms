@@ -14,7 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 
 	e2eutils "github.com/smartcontractkit/mcms/e2e/utils"
 	e2esolanautils "github.com/smartcontractkit/mcms/e2e/utils/solana"

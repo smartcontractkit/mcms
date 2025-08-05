@@ -21,10 +21,10 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/access_controller"
-	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/external_program_cpi_stub"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/access_controller"
+	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/external_program_cpi_stub"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/accesscontroller"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
@@ -89,6 +89,14 @@ func generateTestEVMAccounts(t *testing.T, numAccounts int) []EVMTestAccount {
 	return testAccounts
 }
 
+type RoleMap map[timelock.Role]RoleAccounts
+
+type RoleAccounts struct {
+	Role             timelock.Role
+	Accounts         []solana.PrivateKey
+	AccessController solana.PrivateKey
+}
+
 // SolanaTestSuite is the base test suite for all solana e2e tests
 type SolanaTestSuite struct {
 	suite.Suite
@@ -99,7 +107,7 @@ type SolanaTestSuite struct {
 	TimelockProgramID         solana.PublicKey
 	AccessControllerProgramID solana.PublicKey
 	CPIStubProgramID          solana.PublicKey
-	Roles                     timelockutils.RoleMap
+	Roles                     RoleMap
 }
 
 // SetupSuite runs before the test suite
@@ -202,7 +210,14 @@ func (s *SolanaTestSuite) SetupTimelock(pdaSeed [32]byte, minDelay time.Duration
 	s.Require().NoError(err)
 
 	_, roleMap := timelockutils.TestRoleAccounts(2)
-	s.Roles = roleMap
+	s.Roles = RoleMap{}
+	for k, v := range roleMap {
+		s.Roles[timelock.Role(k)] = RoleAccounts{
+			Role:             timelock.Role(v.Role),
+			Accounts:         v.Accounts,
+			AccessController: v.AccessController,
+		}
+	}
 
 	s.Run("init access controller", func() {
 		for _, data := range roleMap {
@@ -242,10 +257,10 @@ func (s *SolanaTestSuite) SetupTimelock(pdaSeed [32]byte, minDelay time.Duration
 			s.TimelockProgramID,
 			programData.Address,
 			s.AccessControllerProgramID,
-			roleMap[timelock.Proposer_Role].AccessController.PublicKey(),
-			roleMap[timelock.Executor_Role].AccessController.PublicKey(),
-			roleMap[timelock.Canceller_Role].AccessController.PublicKey(),
-			roleMap[timelock.Bypasser_Role].AccessController.PublicKey(),
+			s.Roles[timelock.Proposer_Role].AccessController.PublicKey(),
+			s.Roles[timelock.Executor_Role].AccessController.PublicKey(),
+			s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
+			s.Roles[timelock.Bypasser_Role].AccessController.PublicKey(),
 		).ValidateAndBuild()
 		s.Require().NoError(err3)
 
@@ -259,14 +274,14 @@ func (s *SolanaTestSuite) SetupTimelock(pdaSeed [32]byte, minDelay time.Duration
 
 		s.Require().Equal(admin.PublicKey(), configAccount.Owner, "Owner doesn't match")
 		s.Require().Equal(uint64(minDelay.Seconds()), configAccount.MinDelay, "MinDelay doesn't match")
-		s.Require().Equal(roleMap[timelock.Proposer_Role].AccessController.PublicKey(), configAccount.ProposerRoleAccessController, "ProposerRoleAccessController doesn't match")
-		s.Require().Equal(roleMap[timelock.Executor_Role].AccessController.PublicKey(), configAccount.ExecutorRoleAccessController, "ExecutorRoleAccessController doesn't match")
-		s.Require().Equal(roleMap[timelock.Canceller_Role].AccessController.PublicKey(), configAccount.CancellerRoleAccessController, "CancellerRoleAccessController doesn't match")
-		s.Require().Equal(roleMap[timelock.Bypasser_Role].AccessController.PublicKey(), configAccount.BypasserRoleAccessController, "BypasserRoleAccessController doesn't match")
+		s.Require().Equal(s.Roles[timelock.Proposer_Role].AccessController.PublicKey(), configAccount.ProposerRoleAccessController, "ProposerRoleAccessController doesn't match")
+		s.Require().Equal(s.Roles[timelock.Executor_Role].AccessController.PublicKey(), configAccount.ExecutorRoleAccessController, "ExecutorRoleAccessController doesn't match")
+		s.Require().Equal(s.Roles[timelock.Canceller_Role].AccessController.PublicKey(), configAccount.CancellerRoleAccessController, "CancellerRoleAccessController doesn't match")
+		s.Require().Equal(s.Roles[timelock.Bypasser_Role].AccessController.PublicKey(), configAccount.BypasserRoleAccessController, "BypasserRoleAccessController doesn't match")
 	})
 
 	s.Run("setup roles", func() {
-		for _, roleAccounts := range roleMap {
+		for _, roleAccounts := range s.Roles {
 			accounts := make([]solana.PublicKey, 0, len(roleAccounts.Accounts))
 			for _, account := range roleAccounts.Accounts {
 				accounts = append(accounts, account.PublicKey())
@@ -403,11 +418,20 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 	ixs = append(ixs, initOpIx)
 
 	for i, instruction := range op.ToInstructionData() {
+		accounts := make([]timelock.InstructionAccount, len(instruction.Accounts))
+		for i := range instruction.Accounts {
+			accounts[i] = timelock.InstructionAccount{
+				Pubkey:     instruction.Accounts[i].Pubkey,
+				IsSigner:   instruction.Accounts[i].IsSigner,
+				IsWritable: instruction.Accounts[i].IsWritable,
+			}
+		}
+
 		initIx, apErr := timelock.NewInitializeInstructionInstruction(
 			timelockID,
 			op.OperationID(),
 			instruction.ProgramId,
-			instruction.Accounts,
+			accounts,
 			operationPDA,
 			configPDA,
 			proposerAC,
