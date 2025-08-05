@@ -46,6 +46,8 @@ func validateChainMetadata(metadata types.ChainMetadata, csel types.ChainSelecto
 		return nil
 	case cselectors.FamilyAptos:
 		return nil
+	case cselectors.FamilySui:
+		return nil
 	default:
 		return fmt.Errorf("unsupported chain family: %s", chainFamily)
 	}

@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/aptos-labs/aptos-go-sdk"
+	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/ws"
@@ -36,7 +37,9 @@ type Config struct {
 	BlockchainB *blockchain.Input `toml:"evm_config_b"`
 	SolanaChain *blockchain.Input `toml:"solana_config"`
 	AptosChain  *blockchain.Input `toml:"aptos_config"`
-	Settings    struct {
+	SuiChain    *blockchain.Input `toml:"sui_config"`
+
+	Settings struct {
 		PrivateKeys []string `toml:"private_keys"`
 	} `toml:"settings"`
 }
@@ -50,6 +53,8 @@ type TestSetup struct {
 	AptosRPCClient   *aptos.NodeClient
 	SolanaBlockchain *blockchain.Output
 	AptosBlockchain  *blockchain.Output
+	SuiClient        sui.ISuiAPI
+	SuiBlockchain    *blockchain.Output
 	Config
 }
 
@@ -164,10 +169,25 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 
 			// Test liveness, will also fetch ChainID
 			t.Logf("Initialized Aptos RPC client @ %s", nodeUrl)
-			info, err := aptosClient.Info()
-			require.NoError(t, err, "Failed to get Aptos node info")
-			require.NotEmpty(t, info.LedgerVersionStr)
-			in.AptosChain.ChainID = strconv.FormatUint(uint64(info.ChainId), 10)
+			nodeInfo, infoErr := aptosClient.Info()
+			require.NoError(t, infoErr, "Failed to get Aptos node info")
+			require.NotEmpty(t, nodeInfo.LedgerVersionStr)
+			in.AptosChain.ChainID = strconv.FormatUint(uint64(nodeInfo.ChainId), 10)
+		}
+
+		var (
+			suiClient           sui.ISuiAPI
+			suiBlockchainOutput *blockchain.Output
+		)
+		if in.SuiChain != nil {
+			suiBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.SuiChain)
+			require.NoError(t, err, "Failed to initialize Sui blockchain")
+
+			nodeUrl := suiBlockchainOutput.Nodes[0].HostHTTPUrl
+			suiClient = sui.NewSuiClient(nodeUrl)
+
+			// Test liveness, will also fetch ChainID
+			t.Logf("Initialized Sui RPC client @ %s", nodeUrl)
 		}
 
 		sharedSetup = &TestSetup{
@@ -178,6 +198,8 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			AptosRPCClient:   aptosClient,
 			SolanaBlockchain: solanaBlockChainOutput,
 			AptosBlockchain:  aptosBlockchainOutput,
+			SuiClient:        suiClient,
+			SuiBlockchain:    suiBlockchainOutput,
 			Config:           *in,
 		}
 	})
