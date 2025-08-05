@@ -7,13 +7,20 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
-	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
+)
+
+const (
+	// MaxQuorumArraySize represents the maximum size for quorum-related arrays
+	MaxQuorumArraySize = 32
+	// MinRootResultLength is the minimum expected length for root query results
+	MinRootResultLength = 2
 )
 
 var _ sdk.Inspector = &Inspector{}
@@ -43,14 +50,14 @@ func (c *ConfigTransformer) ToConfig(config module_mcms.Config) (*types.Config, 
 
 	// Convert GroupQuorums slice to array
 	for i, quorum := range config.GroupQuorums {
-		if i < 32 {
+		if i < MaxQuorumArraySize {
 			evmConfig.GroupQuorums[i] = quorum
 		}
 	}
 
 	// Convert GroupParents slice to array
 	for i, parent := range config.GroupParents {
-		if i < 32 {
+		if i < MaxQuorumArraySize {
 			evmConfig.GroupParents[i] = parent
 		}
 	}
@@ -71,6 +78,7 @@ func NewInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageId 
 	if err != nil {
 		return nil, err
 	}
+
 	return &Inspector{
 		client:        client,
 		signer:        signer,
@@ -89,7 +97,7 @@ func (i Inspector) GetConfig(ctx context.Context, mcmsAddr string) (*types.Confi
 
 	config, err := i.mcms.DevInspect().GetConfig(ctx, opts, stateObj, i.role.Byte())
 	if err != nil {
-		return nil, fmt.Errorf("Failed to GetConfig: %w", err)
+		return nil, fmt.Errorf("failed to GetConfig: %w", err)
 	}
 
 	return i.ToConfig(config)
@@ -104,7 +112,7 @@ func (i Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, err
 
 	opCount, err := i.mcms.DevInspect().GetOpCount(ctx, opts, stateObj, i.role.Byte())
 	if err != nil {
-		return 0, fmt.Errorf("Failed to GetOpCount: %w", err)
+		return 0, fmt.Errorf("failed to GetOpCount: %w", err)
 	}
 
 	return opCount, nil
@@ -119,12 +127,12 @@ func (i Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, u
 
 	result, err := i.mcms.DevInspect().GetRoot(ctx, opts, stateObj, i.role.Byte())
 	if err != nil {
-		return common.Hash{}, 0, fmt.Errorf("Failed to GetRoot: %w", err)
+		return common.Hash{}, 0, fmt.Errorf("failed to GetRoot: %w", err)
 	}
 
 	// The result is []any containing [root []byte, validUntil uint64]
-	if len(result) < 2 {
-		return common.Hash{}, 0, fmt.Errorf("invalid root result: expected 2 elements, got %d", len(result))
+	if len(result) < MinRootResultLength {
+		return common.Hash{}, 0, fmt.Errorf("invalid root result: expected %d elements, got %d", MinRootResultLength, len(result))
 	}
 
 	root, ok := result[0].([]byte)
@@ -150,7 +158,7 @@ func (i Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types.
 
 	rootMetadata, err := i.mcms.DevInspect().GetRootMetadata(ctx, opts, stateObj, i.role.Byte())
 	if err != nil {
-		return types.ChainMetadata{}, fmt.Errorf("Failed to GetRootMetadata: %w", err)
+		return types.ChainMetadata{}, fmt.Errorf("failed to GetRootMetadata: %w", err)
 	}
 
 	return types.ChainMetadata{

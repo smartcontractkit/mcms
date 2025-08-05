@@ -33,6 +33,7 @@ func NewConfigurer(client sui.ISuiAPI, signer bindutils.SuiSigner, role Timelock
 	if err != nil {
 		return nil, err
 	}
+
 	return &Configurer{
 		client:        client,
 		signer:        signer,
@@ -44,11 +45,11 @@ func NewConfigurer(client sui.ISuiAPI, signer bindutils.SuiSigner, role Timelock
 }
 
 func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
-	chainID, err := chain_selectors.SuiChainIdFromSelector(uint64(c.chainSelector))
+	chainID, err := chain_selectors.SuiChainIdFromSelector(c.chainSelector)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
-	chainIDBig := big.NewInt(int64(chainID))
+	chainIDBig := new(big.Int).SetUint64(chainID)
 	groupQuorum, groupParents, signerAddresses, signerGroups, err := evm.ExtractSetConfigInputs(cfg)
 
 	if err != nil {

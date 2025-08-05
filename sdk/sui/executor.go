@@ -24,8 +24,10 @@ import (
 )
 
 const (
-	SignatureVOffset    = 27
-	SignatureVThreshold = 2
+	// EthereumSignatureLength represents the byte length for signature components
+	EthereumSignatureLength = 32
+	SignatureVOffset        = 27
+	SignatureVThreshold     = 2
 )
 
 var _ sdk.Executor = &Executor{}
@@ -93,7 +95,7 @@ func (e Executor) ExecuteOperation(
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
-	chainIDBig := big.NewInt(int64(chainID))
+	chainIDBig := new(big.Int).SetUint64(chainID)
 
 	proofBytes := make([][]byte, len(proof))
 	for i, hash := range proof {
@@ -149,17 +151,17 @@ func (e Executor) ExecuteOperation(
 	}
 
 	if additionalFields.Function == TimelockActionSchedule {
-		timelockObjectArg, err := toObjectArg(ctx, e.client, ptb, e.timelockObj, true)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to create object arg for timelock: %w", err)
+		timelockObjectArg, timelockErr := toObjectArg(ctx, e.client, ptb, e.timelockObj, true)
+		if timelockErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to create object arg for timelock: %w", timelockErr)
 		}
-		clockObjectArg, err := toObjectArg(ctx, e.client, ptb, "0x6", false)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to create object arg for clock: %w", err)
+		clockObjectArg, clockErr := toObjectArg(ctx, e.client, ptb, "0x6", false)
+		if clockErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to create object arg for clock: %w", clockErr)
 		}
-		timelockCall, err := encoder.DispatchTimelockScheduleBatchWithArgs(timelockObjectArg, clockObjectArg, timelockCallback)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", err)
+		timelockCall, encodeErr := encoder.DispatchTimelockScheduleBatchWithArgs(timelockObjectArg, clockObjectArg, timelockCallback)
+		if encodeErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", encodeErr)
 		}
 		_, err = e.mcms.ExtendPTB(ctx, ptb, opts, timelockCall)
 		if err != nil {
@@ -168,30 +170,30 @@ func (e Executor) ExecuteOperation(
 	}
 
 	if additionalFields.Function == TimelockActionCancel {
-
+		// TODO: Implement cancel functionality when needed
+		return types.TransactionResult{}, fmt.Errorf("cancel functionality not yet implemented")
 	}
 
 	if additionalFields.Function == TimelockActionBypass {
-		timelockCall, err := encoder.DispatchTimelockBypasserExecuteBatchWithArgs(timelockCallback)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", err)
+		timelockCall, timelockErr := encoder.DispatchTimelockBypasserExecuteBatchWithArgs(timelockCallback)
+		if timelockErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", timelockErr)
 		}
 
 		// Add the timelock call to the same PTB
 		// If bypass, this a set of execute callbacks
-		executeCallback, err := e.mcms.ExtendPTB(ctx, ptb, opts, timelockCall)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("building PTB for timelock call: %w", err)
+		executeCallback, extendCallbackErr := e.mcms.ExtendPTB(ctx, ptb, opts, timelockCall)
+		if extendCallbackErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("building PTB for timelock call: %w", extendCallbackErr)
 		}
-		err = ExtendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, opts, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj, []types.Transaction{op.Transaction})
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", err)
+		if extendErr := ExtendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, opts, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj); extendErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", extendErr)
 		}
 	}
 	// Execute the complete PTB with every call
 	tx, err := bind.ExecutePTB(ctx, opts, e.client, ptb)
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("Op execution with PTB failed: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("op execution with PTB failed: %w", err)
 	}
 
 	return types.TransactionResult{
@@ -220,7 +222,7 @@ func (e Executor) SetRoot(
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
-	chainIDBig := big.NewInt(int64(chainID))
+	chainIDBig := new(big.Int).SetUint64(chainID)
 
 	proofBytes := make([][]byte, len(proof))
 	for i, hash := range proof {
@@ -272,16 +274,16 @@ func encodeSignatures(signatures []types.Signature) [][]byte {
 		s := signature.S.Bytes()
 
 		// Pad R to 32 bytes if needed
-		if len(r) < 32 {
-			padded := make([]byte, 32)
-			copy(padded[32-len(r):], r)
+		if len(r) < EthereumSignatureLength {
+			padded := make([]byte, EthereumSignatureLength)
+			copy(padded[EthereumSignatureLength-len(r):], r)
 			r = padded
 		}
 
 		// Pad S to 32 bytes if needed
-		if len(s) < 32 {
-			padded := make([]byte, 32)
-			copy(padded[32-len(s):], s)
+		if len(s) < EthereumSignatureLength {
+			padded := make([]byte, EthereumSignatureLength)
+			copy(padded[EthereumSignatureLength-len(s):], s)
 			s = padded
 		}
 
@@ -349,6 +351,7 @@ func toObjectArg(ctx context.Context, client sui.ISuiAPI, ptb *transaction.Trans
 	arg := ptb.Object(transaction.CallArg{
 		Object: objArg,
 	})
+
 	return &arg, nil
 }
 
@@ -377,7 +380,10 @@ func ExtendPTBFromExecutingCallbackParams(
 		// If the target is the MCMS package, we need to call ExecuteDispatchToAccount
 		if isTargetMCMSPackage {
 			// We need to extract individual ExecutingCallbackParams from the executeCallback vector
-			executingCallbackParams, err := extractExecutingCallbackParams(mcmsPackageId, ptb, executeCallback)
+			executingCallbackParams, extractErr := extractExecutingCallbackParams(mcmsPackageId, ptb, executeCallback)
+			if extractErr != nil {
+				return fmt.Errorf("failed to extract executing callback params: %w", extractErr)
+			}
 			registryArg, err := toObjectArg(ctx, client, ptb, registryObj, true)
 			if err != nil {
 				return fmt.Errorf("failed to create object arg for registry: %w", err)

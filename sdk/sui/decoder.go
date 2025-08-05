@@ -6,6 +6,13 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 )
 
+const (
+	// SuiAddressLength represents the byte length of Sui addresses
+	SuiAddressLength = 32
+	// MinimumResultLength is the minimum expected length for certain results
+	MinimumResultLength = 2
+)
+
 type Call struct {
 	Target       []byte
 	ModuleName   string
@@ -20,8 +27,8 @@ func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 	targetsLen := deserializer.Uleb128()
 
 	targets := make([][]byte, targetsLen)
-	for i := uint32(0); i < targetsLen; i++ {
-		target := deserializer.ReadFixedBytes(32) // addresses are 32 bytes in Sui
+	for i := range targetsLen {
+		target := deserializer.ReadFixedBytes(SuiAddressLength) // addresses are 32 bytes in Sui
 		targets[i] = target
 	}
 
@@ -29,7 +36,7 @@ func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 	moduleNamesLen := deserializer.Uleb128()
 
 	moduleNames := make([]string, moduleNamesLen)
-	for i := uint32(0); i < moduleNamesLen; i++ {
+	for i := range moduleNamesLen {
 		moduleName := deserializer.ReadString()
 		moduleNames[i] = moduleName
 	}
@@ -38,7 +45,7 @@ func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 	functionNamesLen := deserializer.Uleb128()
 
 	functionNames := make([]string, functionNamesLen)
-	for i := uint32(0); i < functionNamesLen; i++ {
+	for i := range functionNamesLen {
 		functionName := deserializer.ReadString()
 		functionNames[i] = functionName
 	}
@@ -47,7 +54,7 @@ func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 	datasLen := deserializer.Uleb128()
 
 	datas := make([][]byte, datasLen)
-	for i := uint32(0); i < datasLen; i++ {
+	for i := range datasLen {
 		// ReadBytes() handles the length prefix automatically for vector<u8>
 		dataBytes := deserializer.ReadBytes()
 		datas[i] = dataBytes
@@ -61,7 +68,7 @@ func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 
 	// Convert to Call structs
 	calls := make([]Call, len(targets))
-	for i := 0; i < len(targets); i++ {
+	for i := range targets {
 		calls[i] = Call{
 			Target:       targets[i],
 			ModuleName:   moduleNames[i],

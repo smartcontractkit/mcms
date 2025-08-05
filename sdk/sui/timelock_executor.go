@@ -50,13 +50,12 @@ func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPac
 func (t *TimelockExecutor) Execute(
 	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
 ) (types.TransactionResult, error) {
-
 	targets := make([]string, len(bop.Transactions))
 	moduleNames := make([]string, len(bop.Transactions))
 	functionNames := make([]string, len(bop.Transactions))
 	datas := make([][]byte, len(bop.Transactions))
 
-	var calls []Call
+	calls := make([]Call, 0, len(bop.Transactions))
 	for i, tx := range bop.Transactions {
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
@@ -115,7 +114,7 @@ func (t *TimelockExecutor) Execute(
 	// Execute the complete PTB with every call
 	tx, err := bind.ExecutePTB(ctx, opts, t.client, ptb)
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("Op execution with PTB failed: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("op execution with PTB failed: %w", err)
 	}
 
 	return types.TransactionResult{

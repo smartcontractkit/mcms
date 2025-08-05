@@ -123,7 +123,11 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		Transaction:   tx,
 	}
 
-	operationID, err := HashOperationBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes())
+	operationID, hashErr := HashOperationBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes())
+	if hashErr != nil {
+		return nil, common.Hash{}, fmt.Errorf("failed to hash operation batch: %w", hashErr)
+	}
+
 	return []types.Operation{op}, operationID, nil
 }
 
@@ -133,7 +137,9 @@ func HashOperationBatch(targets [][]byte, moduleNames, functionNames []string, d
 	hasher := crypto.NewKeccakState()
 
 	// Write number of targets
-	hasher.Write([]byte(fmt.Sprintf("%d", len(targets))))
+	if _, err := fmt.Fprintf(hasher, "%d", len(targets)); err != nil {
+		return common.Hash{}, fmt.Errorf("failed to write targets length: %w", err)
+	}
 
 	// Write each target, module, function, and data
 	for i, target := range targets {
@@ -148,6 +154,9 @@ func HashOperationBatch(targets [][]byte, moduleNames, functionNames []string, d
 	hasher.Write(salt)
 
 	var hash common.Hash
-	hasher.Read(hash[:])
+	if _, err := hasher.Read(hash[:]); err != nil {
+		return common.Hash{}, fmt.Errorf("failed to read hash: %w", err)
+	}
+
 	return hash, nil
 }
