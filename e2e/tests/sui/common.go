@@ -162,7 +162,6 @@ func (s *testSigner) fundTestAccount() error {
 }
 
 func (s *SuiTestSuite) SetupSuite() {
-	// Skip the problematic framework and connect directly to local Sui node
 	s.client = sui.NewSuiClient("http://localhost:9000")
 
 	testSigner, err := newTestSigner()

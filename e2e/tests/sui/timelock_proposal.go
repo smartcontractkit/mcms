@@ -34,10 +34,12 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	s.SuiTestSuite.T().Logf("Running accept ownership proposal with role: %v", role)
 	s.SuiTestSuite.DeployMCMSContract()
 
-	// Init transfer ownership
-	// Create configurations using helpers
-	bypasserConfig := CreateBypasserConfig(2, 2)
-	proposerConfig := CreateProposerConfig(3, 2)
+	bypasserCount := 2
+	bypasserQuorum := 2
+	bypasserConfig := CreateBypasserConfig(bypasserCount, uint8(bypasserQuorum))
+	proposerCount := 3
+	proposerQuorum := 2
+	proposerConfig := CreateProposerConfig(proposerCount, uint8(proposerQuorum))
 
 	// Set config
 	{
@@ -53,6 +55,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 
+	// Init transfer ownership
 	{
 		tx, err := s.SuiTestSuite.mcmsAccount.TransferOwnershipToSelf(
 			s.SuiTestSuite.T().Context(),
@@ -95,15 +98,14 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		Transactions:  []types.Transaction{transaction},
 	}
 
-	// Get the actual current operation count from the contract
 	inspector, err := suisdk.NewInspector(s.SuiTestSuite.client, s.SuiTestSuite.signer, s.SuiTestSuite.mcmsPackageId, role)
 	s.SuiTestSuite.Require().NoError(err, "creating inspector for op count query")
 
+	// Get the actual current operation count from the contract
 	currentOpCount, err := inspector.GetOpCount(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)
 	s.SuiTestSuite.Require().NoError(err, "Failed to get current operation count")
 	s.SuiTestSuite.T().Logf("🔍 CURRENT operation count: %d", currentOpCount)
 
-	// Construct the timelock proposal using helper
 	var action types.TimelockAction
 	var delay *types.Duration
 	if role == suisdk.TimelockRoleProposer {
@@ -148,16 +150,19 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	}
 
 	s.SuiTestSuite.T().Logf("Signing the proposal...")
-	// Sign the proposal using helper
+
 	var keys []*ecdsa.PrivateKey
+	var quorum int
 	if role == suisdk.TimelockRoleProposer {
 		keys = proposerConfig.Keys
+		quorum = proposerQuorum
 	} else if role == suisdk.TimelockRoleBypasser {
 		keys = bypasserConfig.Keys
+		quorum = bypasserQuorum
 	} else {
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
-	signable, err := SignProposal(&proposal, inspectorsMap, keys)
+	signable, err := SignProposal(&proposal, inspectorsMap, keys, quorum)
 	s.SuiTestSuite.Require().NoError(err)
 
 	// Need to query inspector with MCMS state object ID
@@ -187,13 +192,11 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	s.SuiTestSuite.T().Logf("Proposal ValidUntil: %d", proposal.ValidUntil)
 	s.SuiTestSuite.T().Logf("Number of Operations: %d", len(proposal.Operations))
 
-	// Log chain metadata
 	for chainSel, metadata := range proposal.ChainMetadata {
 		s.SuiTestSuite.T().Logf("Chain %d metadata - StartingOpCount: %d, MCMAddress: %s",
 			chainSel, metadata.StartingOpCount, metadata.MCMAddress)
 	}
 
-	// Log operation details
 	for i, op := range proposal.Operations {
 		s.SuiTestSuite.T().Logf("Operation %d: ChainSelector=%d, To=%s, DataLen=%d",
 			i, op.ChainSelector, op.Transaction.To, len(op.Transaction.Data))
