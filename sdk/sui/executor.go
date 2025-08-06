@@ -140,7 +140,7 @@ func (e Executor) ExecuteOperation(
 
 	ptb := transaction.NewTransaction()
 	// The execution needs to go in hand with the timelock operation in the same PTB transaction
-	timelockCallback, err := e.mcms.ExtendPTB(ctx, ptb, opts, executeCall)
+	timelockCallback, err := e.mcms.AppendPTB(ctx, ptb, executeCall)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}
@@ -151,19 +151,11 @@ func (e Executor) ExecuteOperation(
 	}
 
 	if additionalFields.Function == TimelockActionSchedule {
-		timelockObjectArg, timelockErr := toObjectArg(ctx, e.client, ptb, e.timelockObj, true)
-		if timelockErr != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to create object arg for timelock: %w", timelockErr)
-		}
-		clockObjectArg, clockErr := toObjectArg(ctx, e.client, ptb, "0x6", false)
-		if clockErr != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to create object arg for clock: %w", clockErr)
-		}
-		timelockCall, encodeErr := encoder.DispatchTimelockScheduleBatchWithArgs(timelockObjectArg, clockObjectArg, timelockCallback)
+		timelockCall, encodeErr := encoder.DispatchTimelockScheduleBatchWithArgs(e.timelockObj, "0x6", timelockCallback)
 		if encodeErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", encodeErr)
 		}
-		_, err = e.mcms.ExtendPTB(ctx, ptb, opts, timelockCall)
+		_, err = e.mcms.AppendPTB(ctx, ptb, timelockCall)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("adding timelock call to PTB: %w", err)
 		}
@@ -182,11 +174,11 @@ func (e Executor) ExecuteOperation(
 
 		// Add the timelock call to the same PTB
 		// If bypass, this a set of execute callbacks
-		executeCallback, extendCallbackErr := e.mcms.ExtendPTB(ctx, ptb, opts, timelockCall)
+		executeCallback, extendCallbackErr := e.mcms.AppendPTB(ctx, ptb, timelockCall)
 		if extendCallbackErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("building PTB for timelock call: %w", extendCallbackErr)
 		}
-		if extendErr := ExtendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, opts, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj); extendErr != nil {
+		if extendErr := AppendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, opts, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj); extendErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", extendErr)
 		}
 	}
@@ -338,24 +330,7 @@ func closeExecutingCallbackParams(mcmsPackageId string, ptb *transaction.Transac
 	return nil
 }
 
-func toObjectArg(ctx context.Context, client sui.ISuiAPI, ptb *transaction.Transaction, obj string, mut bool) (*transaction.Argument, error) {
-	objResolver := bind.NewObjectResolver(client)
-	objResolved, err := objResolver.ResolveObject(ctx, obj)
-	if err != nil {
-		return nil, fmt.Errorf("failed to resolve object: %w", err)
-	}
-	objArg, err := objResolver.CreateObjectArgWithMutability(objResolved, mut)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create object arg: %w", err)
-	}
-	arg := ptb.Object(transaction.CallArg{
-		Object: objArg,
-	})
-
-	return &arg, nil
-}
-
-func ExtendPTBFromExecutingCallbackParams(
+func AppendPTBFromExecutingCallbackParams(
 	ctx context.Context,
 	client sui.ISuiAPI,
 	mcms *module_mcms.McmsContract,
@@ -384,17 +359,9 @@ func ExtendPTBFromExecutingCallbackParams(
 			if extractErr != nil {
 				return fmt.Errorf("failed to extract executing callback params: %w", extractErr)
 			}
-			registryArg, err := toObjectArg(ctx, client, ptb, registryObj, true)
-			if err != nil {
-				return fmt.Errorf("failed to create object arg for registry: %w", err)
-			}
-			accountArg, err := toObjectArg(ctx, client, ptb, accountObj, true)
-			if err != nil {
-				return fmt.Errorf("failed to create object arg for account: %w", err)
-			}
 			executeDispatchCall, err := mcms.Encoder().ExecuteDispatchToAccountWithArgs(
-				registryArg,
-				accountArg,
+				registryObj,
+				accountObj,
 				executingCallbackParams,
 			)
 			if err != nil {
@@ -402,7 +369,7 @@ func ExtendPTBFromExecutingCallbackParams(
 			}
 
 			// Add the call to the PTB
-			_, err = mcms.ExtendPTB(ctx, ptb, opts, executeDispatchCall)
+			_, err = mcms.AppendPTB(ctx, ptb, executeDispatchCall)
 			if err != nil {
 				return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
 			}

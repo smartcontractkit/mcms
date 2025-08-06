@@ -101,12 +101,12 @@ func (t *TimelockExecutor) Execute(
 	opts := &bind.CallOpts{Signer: t.signer, WaitForExecution: true}
 
 	ptb := transaction.NewTransaction()
-	executeCallback, err := t.mcms.ExtendPTB(ctx, ptb, opts, timelockExecuteCall)
+	executeCallback, err := t.mcms.AppendPTB(ctx, ptb, timelockExecuteCall)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}
 
-	err = ExtendPTBFromExecutingCallbackParams(ctx, t.client, t.mcms, ptb, opts, t.mcmsPackageId, executeCallback, calls, t.registryObj, t.accountObj, bop.Transactions)
+	err = AppendPTBFromExecutingCallbackParams(ctx, t.client, t.mcms, ptb, opts, t.mcmsPackageId, executeCallback, calls, t.registryObj, t.accountObj)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", err)
 	}
