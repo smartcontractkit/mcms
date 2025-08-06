@@ -4,7 +4,6 @@ package sui
 
 import (
 	"crypto/ecdsa"
-	"testing"
 	"time"
 
 	"github.com/smartcontractkit/mcms"
@@ -12,84 +11,71 @@ import (
 	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/types"
 
+	"github.com/aptos-labs/aptos-go-sdk/bcs"
+
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 )
 
-// TimelockProposalTestSuite defines the test suite for Sui timelock proposal tests
-type TimelockProposalTestSuite struct {
+type MCMSUserTestSuite struct {
 	SuiTestSuite
 }
 
-func (s *TimelockProposalTestSuite) Test_Sui_TimelockProposal() {
-	s.SuiTestSuite.T().Run("TimelockProposal - MCMSAccount Accept Ownership through Bypass", func(t *testing.T) {
-		RunAcceptOwnershipProposal(s, suisdk.TimelockRoleBypasser)
-	})
-
-	s.SuiTestSuite.T().Run("TimelockProposal - MCMSAccount Accept Ownership through Schedule", func(t *testing.T) {
-		RunAcceptOwnershipProposal(s, suisdk.TimelockRoleProposer)
-	})
+// SetupSuite runs before the test suite
+func (s *MCMSUserTestSuite) SetupSuite() {
+	s.SuiTestSuite.SetupSuite()
+	s.SuiTestSuite.DeployMCMSContract()
+	s.SuiTestSuite.DeployMCMSUserContract()
 }
 
-func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.TimelockRole) {
-	s.SuiTestSuite.T().Logf("Running accept ownership proposal with role: %v", role)
-	s.SuiTestSuite.DeployMCMSContract()
+// TestMCMSUserFunctionOne tests MCMS user function one
+func (s *MCMSUserTestSuite) Test_MCMSUser_Function_One() {
+	RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleProposer)
+}
 
-	// Init transfer ownership
-	// Create configurations using helpers
-	bypasserConfig := CreateBypasserConfig(2, 2)
+func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRole) {
+	s.SuiTestSuite.T().Logf("Running MCMS user function one proposal with role: %v", role)
+
+	// Create proposer configuration using helper
 	proposerConfig := CreateProposerConfig(3, 2)
 
 	// Set config
 	{
-		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, suisdk.TimelockRoleBypasser, s.SuiTestSuite.mcmsPackageId, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
-		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
-		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj, bypasserConfig.Config, true)
-		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
-	}
-	{
-		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, suisdk.TimelockRoleProposer, s.SuiTestSuite.mcmsPackageId, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, role, s.SuiTestSuite.mcmsPackageId, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
 		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj, proposerConfig.Config, true)
 		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 
-	{
-		tx, err := s.SuiTestSuite.mcmsAccount.TransferOwnershipToSelf(
-			s.SuiTestSuite.T().Context(),
-			&bind.CallOpts{
-				Signer:           s.SuiTestSuite.signer,
-				WaitForExecution: true,
-			},
-			bind.Object{Id: s.SuiTestSuite.ownerCapObj},
-			bind.Object{Id: s.SuiTestSuite.accountObj},
-		)
-		s.SuiTestSuite.Require().NoError(err, "Failed to transfer ownership to self")
-		s.SuiTestSuite.Require().NotEmpty(tx, "Transaction should not be empty")
-	}
-
 	var timelockProposal *mcms.TimelockProposal
 
 	delay_5_secs := time.Second * 5
-	// Create a timelock proposal accepting the ownership transfer
 
-	// Get the accept ownership call information and build the MCMS Operation
-	encodedCall, err := s.SuiTestSuite.mcmsAccount.Encoder().AcceptOwnershipAsTimelock(bind.Object{Id: s.SuiTestSuite.accountObj})
+	// Create a timelock proposal calling MCMS user function one
+	// Get the function one call information and build the MCMS Operation
+	arg1 := "Updated Field A"
+	arg2 := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	encodedCall, err := s.SuiTestSuite.mcmsUser.Encoder().FunctionOne(
+		bind.Object{Id: s.SuiTestSuite.stateObj},
+		bind.Object{Id: s.SuiTestSuite.mcmsUserOwnerCapObj},
+		arg1,
+		arg2,
+	)
 	s.SuiTestSuite.Require().NoError(err)
 
-	callBytes := []byte{}
-	if len(encodedCall.CallArgs) > 0 && encodedCall.CallArgs[0].CallArg.Pure != nil {
-		callBytes = encodedCall.CallArgs[0].CallArg.Pure.Bytes
-	}
+	callBytes, err := s.serializeFunctionOneData(arg1, arg2)
+	s.SuiTestSuite.Require().NoError(err, "Failed to serialize function one data")
 
-	transaction, err := suisdk.NewTransaction(
+	transaction, err := suisdk.NewTransactionWithStateObj(
 		encodedCall.Module.ModuleName,
 		encodedCall.Function,
 		encodedCall.Module.PackageID,
 		callBytes,
-		"MCMS",
+		"MCMSUser",
 		[]string{},
+		s.SuiTestSuite.stateObj,
 	)
 	s.SuiTestSuite.Require().NoError(err)
+
 	op := types.BatchOperation{
 		ChainSelector: s.SuiTestSuite.chainSelector,
 		Transactions:  []types.Transaction{transaction},
@@ -118,7 +104,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 
 	proposalConfig := ProposalBuilderConfig{
 		Version:        "v1",
-		Description:    "Accept ownership via timelock",
+		Description:    "MCMS user function one",
 		ChainSelector:  s.SuiTestSuite.chainSelector,
 		MCMSPackageId:  s.SuiTestSuite.mcmsPackageId,
 		Role:           role,
@@ -127,8 +113,8 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		Delay:          delay,
 	}
 
-	acceptOwnershipProposalBuilder := CreateTimelockProposalBuilder(proposalConfig, []types.BatchOperation{op})
-	timelockProposal, err = acceptOwnershipProposalBuilder.Build()
+	mcmsUserFunctionOneProposalBuilder := CreateTimelockProposalBuilder(proposalConfig, []types.BatchOperation{op})
+	timelockProposal, err = mcmsUserFunctionOneProposalBuilder.Build()
 	s.SuiTestSuite.Require().NoError(err)
 
 	// Sign the proposal, set root and execute proposal operations
@@ -152,8 +138,6 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	var keys []*ecdsa.PrivateKey
 	if role == suisdk.TimelockRoleProposer {
 		keys = proposerConfig.Keys
-	} else if role == suisdk.TimelockRoleBypasser {
-		keys = bypasserConfig.Keys
 	} else {
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
@@ -172,6 +156,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	suiEncoder := encoders[s.SuiTestSuite.chainSelector].(*suisdk.Encoder)
 	executor, err := suisdk.NewExecutor(s.SuiTestSuite.client, s.SuiTestSuite.signer, suiEncoder, s.SuiTestSuite.mcmsPackageId, role, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
 	s.SuiTestSuite.Require().NoError(err, "creating executor for Sui mcms contract")
+
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.SuiTestSuite.chainSelector: executor,
 	}
@@ -221,48 +206,86 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		s.SuiTestSuite.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
 	}
 
-	if role == suisdk.TimelockRoleProposer {
-		// If proposer, some time needs to pass before the proposal can be executed sleep for delay_5_secs
-		s.SuiTestSuite.T().Logf("Sleeping for %v before executing the proposal transfer...", delay_5_secs)
-		time.Sleep(delay_5_secs)
-
-		timelockExecutor, err := suisdk.NewTimelockExecutor(
-			s.SuiTestSuite.client,
-			s.SuiTestSuite.signer,
-			s.SuiTestSuite.mcmsPackageId,
-			s.SuiTestSuite.registryObj,
-			s.SuiTestSuite.accountObj,
+	// Before executing, We need to register OwnerCap with MCMS
+	{
+		tx, err := s.SuiTestSuite.mcmsUser.RegisterMcmsEntrypoint(
+			s.SuiTestSuite.T().Context(),
+			&bind.CallOpts{
+				Signer:           s.SuiTestSuite.signer,
+				WaitForExecution: true,
+			},
+			bind.Object{Id: s.SuiTestSuite.mcmsUserOwnerCapObj},
+			bind.Object{Id: s.SuiTestSuite.registryObj},
+			bind.Object{Id: s.SuiTestSuite.stateObj},
 		)
+		s.SuiTestSuite.Require().NoError(err, "Failed to register with MCMS")
+		s.SuiTestSuite.Require().NotEmpty(tx, "Transaction should not be empty")
 
-		s.SuiTestSuite.Require().NoError(err, "creating timelock executor for Sui mcms contract")
-		timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
-			s.SuiTestSuite.chainSelector: timelockExecutor,
-		}
-		timelockExecutable, err := mcms.NewTimelockExecutable(s.SuiTestSuite.T().Context(), timelockProposal, timelockExecutors)
-		s.SuiTestSuite.Require().NoError(err)
-		s.SuiTestSuite.T().Logf("Executing the operation through timelock...")
-		txOutput, err := timelockExecutable.Execute(s.SuiTestSuite.T().Context(), 0, mcms.WithCallProxy(s.SuiTestSuite.timelockObj))
-		s.SuiTestSuite.Require().NoError(err)
-		s.SuiTestSuite.T().Logf("✅ Executed proposal transfer in tx: %s", txOutput.Hash)
+		s.SuiTestSuite.T().Logf("✅ Registered with MCMS in tx: %s", tx.Digest)
 	}
-	// Complete the proposal transfer
-	s.SuiTestSuite.T().Logf("Completing the proposal transfer...")
-	tx, err := s.SuiTestSuite.mcmsAccount.ExecuteOwnershipTransfer(s.SuiTestSuite.T().Context(), &bind.CallOpts{
-		Signer:           s.SuiTestSuite.signer,
-		WaitForExecution: true,
-	}, bind.Object{Id: s.SuiTestSuite.ownerCapObj}, bind.Object{Id: s.SuiTestSuite.accountObj}, bind.Object{Id: s.SuiTestSuite.registryObj}, s.SuiTestSuite.mcmsPackageId)
-	s.SuiTestSuite.Require().NoError(err, "Failed to execute ownership transfer")
-	s.SuiTestSuite.Require().NotEmpty(tx, "Transaction should not be empty")
-	s.SuiTestSuite.T().Logf("✅ Executed ownership transfer in tx: %s", tx.Digest)
 
-	// Check owner
-	owner, err := bind.ReadObject(s.SuiTestSuite.T().Context(), s.SuiTestSuite.accountObj, s.SuiTestSuite.client)
+	// If proposer, some time needs to pass before the proposal can be executed sleep for delay_5_secs
+	s.SuiTestSuite.T().Logf("Sleeping for %v before executing the proposal transfer...", delay_5_secs)
+	time.Sleep(delay_5_secs)
+
+	timelockExecutor, err := suisdk.NewTimelockExecutor(
+		s.SuiTestSuite.client,
+		s.SuiTestSuite.signer,
+		s.SuiTestSuite.mcmsPackageId,
+		s.SuiTestSuite.registryObj,
+		s.SuiTestSuite.accountObj,
+	)
+
+	s.SuiTestSuite.Require().NoError(err, "creating timelock executor for Sui mcms contract")
+	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
+		s.SuiTestSuite.chainSelector: timelockExecutor,
+	}
+	timelockExecutable, err := mcms.NewTimelockExecutable(s.SuiTestSuite.T().Context(), timelockProposal, timelockExecutors)
 	s.SuiTestSuite.Require().NoError(err)
-	s.SuiTestSuite.Require().Equal(s.SuiTestSuite.mcmsPackageId, owner.Data.Content.Fields["owner"], "Owner should be the mcms package ID")
+
+	s.SuiTestSuite.T().Logf("Executing the operation through timelock...")
+	txOutput, err := timelockExecutable.Execute(s.SuiTestSuite.T().Context(), 0, mcms.WithCallProxy(s.SuiTestSuite.timelockObj))
+	s.SuiTestSuite.Require().NoError(err)
+	s.SuiTestSuite.T().Logf("✅ Executed proposal transfer in tx: %s", txOutput.Hash)
 
 	// Check op count got incremented by 1
 	postOpCount, err := inspector.GetOpCount(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)
 	s.SuiTestSuite.Require().NoError(err, "Failed to get post operation count")
 	s.SuiTestSuite.T().Logf("🔍 POST operation count: %d", postOpCount)
-	//s.SuiTestSuite.Require().Equal(currentOpCount+1, postOpCount, "Operation count should be incremented by 1")
+	s.SuiTestSuite.Require().Equal(currentOpCount+1, postOpCount, "Operation count should be incremented by 1")
+
+	fieldA, err := s.SuiTestSuite.mcmsUser.DevInspect().GetFieldA(
+		s.SuiTestSuite.T().Context(),
+		&bind.CallOpts{
+			Signer:           s.SuiTestSuite.signer,
+			WaitForExecution: true,
+		},
+		bind.Object{Id: s.SuiTestSuite.stateObj},
+	)
+	s.SuiTestSuite.Require().NoError(err, "Failed to get fieldA")
+
+	fieldB, err := s.SuiTestSuite.mcmsUser.DevInspect().GetFieldB(
+		s.SuiTestSuite.T().Context(),
+		&bind.CallOpts{
+			Signer:           s.SuiTestSuite.signer,
+			WaitForExecution: true,
+		},
+		bind.Object{Id: s.SuiTestSuite.stateObj},
+	)
+	s.SuiTestSuite.Require().NoError(err, "Failed to get fieldB")
+
+	s.SuiTestSuite.T().Logf("🔍 New fieldA: %s", fieldA)
+	s.SuiTestSuite.T().Logf("🔍 New fieldB: %x", fieldB)
+	s.SuiTestSuite.Require().Equal(arg1, fieldA, "FieldA should be equal to arg1")
+	s.SuiTestSuite.Require().Equal(arg2, fieldB, "FieldB should be equal to arg2")
+	s.SuiTestSuite.T().Logf("✅ Successfully executed MCMS user function one proposal with role: %v", role)
+}
+
+// Helper functions
+
+func (s *MCMSUserTestSuite) serializeFunctionOneData(arg1 string, arg2 []byte) ([]byte, error) {
+	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
+		ser.WriteString(arg1)
+		ser.WriteBytes(arg2)
+	})
 }

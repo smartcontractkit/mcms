@@ -14,6 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
@@ -182,7 +183,10 @@ func (e Executor) ExecuteOperation(
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("building PTB for timelock call: %w", err)
 		}
-		err = ExtendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, opts, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj)
+		err = ExtendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, opts, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj, []types.Transaction{op.Transaction})
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", err)
+		}
 	}
 	// Execute the complete PTB with every call
 	tx, err := bind.ExecutePTB(ctx, opts, e.client, ptb)
@@ -359,6 +363,7 @@ func ExtendPTBFromExecutingCallbackParams(
 	calls []Call,
 	registryObj string,
 	accountObj string,
+	transactions []types.Transaction,
 ) error {
 	// Process each ExecutingCallbackParams individually
 	// We need to process them in reverse order since we're using pop_back to extract elements
@@ -402,16 +407,47 @@ func ExtendPTBFromExecutingCallbackParams(
 				return fmt.Errorf("extracting ExecutingCallbackParams %d: %w", i, err)
 			}
 
-			// Call the mcms_entrypoint function on the destination contract
+			// Get the registry object for the mcms_entrypoint call
+			registryArg, err := toObjectArg(ctx, client, ptb, registryObj, true)
+			if err != nil {
+				return fmt.Errorf("failed to create object arg for registry: %w", err)
+			}
+
+			// Get the state object from the transaction additional fields
+			var stateObjArg *transaction.Argument
+
+			// Find the matching transaction for this call to get additional fields
+			var additionalFields AdditionalFields
+
+			// Match the call with its corresponding transaction based on module name and function
+			for j := range transactions {
+				var txAdditionalFields AdditionalFields
+				if err := json.Unmarshal(transactions[j].AdditionalFields, &txAdditionalFields); err == nil {
+					if txAdditionalFields.ModuleName == call.ModuleName && txAdditionalFields.Function == call.FunctionName {
+						additionalFields = txAdditionalFields
+
+						break
+					}
+				}
+			}
+
+			stateObjArg, err = toObjectArg(ctx, client, ptb, additionalFields.StateObj, true)
+			if err != nil {
+				return fmt.Errorf("failed to create object arg for module data: %w", err)
+			}
+
+			// Call `mcms_entrypoint` function on the destination contract
 			ptb.MoveCall(
 				models.SuiAddress(targetString), // The destination contract package
 				call.ModuleName,
-				"mcms_entrypoint",                                // Standard MCMS entrypoint function
-				[]transaction.TypeTag{},                          // No type arguments
-				[]transaction.Argument{*executingCallbackParams}, // Arguments: ExecutingCallbackParams
+				"mcms_entrypoint",
+				[]transaction.TypeTag{}, // No type arguments
+				[]transaction.Argument{
+					*stateObjArg,
+					*registryArg,
+					*executingCallbackParams,
+				}, // Arguments: state_obj, registry, ExecutingCallbackParams
 			)
-
-			// TODO: Add the call to the PTB
 		}
 	}
 

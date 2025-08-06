@@ -33,9 +33,14 @@ func (af AdditionalFields) Validate() error {
 }
 
 func NewTransaction(moduleName, function string, to string, data []byte, contractType string, tags []string) (types.Transaction, error) {
+	return NewTransactionWithStateObj(moduleName, function, to, data, contractType, tags, "")
+}
+
+func NewTransactionWithStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string) (types.Transaction, error) {
 	additionalFields := AdditionalFields{
 		ModuleName: moduleName,
 		Function:   function,
+		StateObj:   stateObj,
 	}
 	marshalledAdditionalFields, err := json.Marshal(additionalFields)
 	if err != nil {

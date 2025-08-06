@@ -26,6 +26,7 @@ var (
 type AdditionalFields struct {
 	ModuleName string `json:"module_name"`
 	Function   string `json:"function"`
+	StateObj   string `json:"state_obj,omitempty"` // Needed for calling `mcms_entrypoint`
 }
 
 var _ sdk.Encoder = &Encoder{}
