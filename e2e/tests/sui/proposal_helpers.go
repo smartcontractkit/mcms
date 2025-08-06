@@ -14,15 +14,12 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-// ProposerConfig holds configuration for proposers
 type ProposerConfig struct {
 	Count  int
 	Quorum uint8
 	Keys   []*ecdsa.PrivateKey
 	Config *types.Config
 }
-
-// BypasserConfig holds configuration for bypassers
 type BypasserConfig struct {
 	Count  int
 	Quorum uint8
@@ -30,7 +27,6 @@ type BypasserConfig struct {
 	Config *types.Config
 }
 
-// CreateProposerConfig generates proposer keys and configuration
 func CreateProposerConfig(count int, quorum uint8) *ProposerConfig {
 	proposers := make([]common.Address, count)
 	proposerKeys := make([]*ecdsa.PrivateKey, count)
@@ -54,7 +50,6 @@ func CreateProposerConfig(count int, quorum uint8) *ProposerConfig {
 	}
 }
 
-// CreateBypasserConfig generates bypasser keys and configuration
 func CreateBypasserConfig(count int, quorum uint8) *BypasserConfig {
 	bypassers := make([]common.Address, count)
 	bypasserKeys := make([]*ecdsa.PrivateKey, count)
@@ -78,7 +73,6 @@ func CreateBypasserConfig(count int, quorum uint8) *BypasserConfig {
 	}
 }
 
-// ProposalBuilderConfig contains common proposal configuration
 type ProposalBuilderConfig struct {
 	Version        string
 	Description    string
@@ -90,7 +84,6 @@ type ProposalBuilderConfig struct {
 	Delay          *types.Duration
 }
 
-// CreateTimelockProposalBuilder creates a timelock proposal builder with common setup
 func CreateTimelockProposalBuilder(config ProposalBuilderConfig, operations []types.BatchOperation) *mcms.TimelockProposalBuilder {
 	validUntilMs := uint32(time.Now().Add(time.Hour * 24).Unix())
 
@@ -105,12 +98,10 @@ func CreateTimelockProposalBuilder(config ProposalBuilderConfig, operations []ty
 			AdditionalFields: mustMarshal(suisdk.AdditionalFieldsMetadata{Role: config.Role}),
 		})
 
-	// Add all operations
 	for _, op := range operations {
 		builder.AddOperation(op)
 	}
 
-	// Set action and delay
 	builder.SetAction(config.Action)
 	if config.Delay != nil {
 		builder.SetDelay(*config.Delay)
@@ -119,15 +110,13 @@ func CreateTimelockProposalBuilder(config ProposalBuilderConfig, operations []ty
 	return builder
 }
 
-// SignProposal signs a proposal with the given keys
-func SignProposal(proposal *mcms.Proposal, inspectorsMap map[types.ChainSelector]sdk.Inspector, keys []*ecdsa.PrivateKey) (*mcms.Signable, error) {
+func SignProposal(proposal *mcms.Proposal, inspectorsMap map[types.ChainSelector]sdk.Inspector, keys []*ecdsa.PrivateKey, quorum int) (*mcms.Signable, error) {
 	signable, err := mcms.NewSignable(proposal, inspectorsMap)
 	if err != nil {
 		return nil, err
 	}
 
-	// Sign with required number of keys (typically quorum)
-	for i := 0; i < len(keys) && i < 2; i++ { // Sign with first 2 keys to meet typical quorum
+	for i := 0; i < len(keys) && i < quorum; i++ {
 		_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(keys[i]))
 		if err != nil {
 			return nil, err
@@ -137,7 +126,6 @@ func SignProposal(proposal *mcms.Proposal, inspectorsMap map[types.ChainSelector
 	return signable, nil
 }
 
-// mustMarshal marshals the data and panics if error occurs (similar to Must helper)
 func mustMarshal(v interface{}) []byte {
 	data, err := json.Marshal(v)
 	if err != nil {

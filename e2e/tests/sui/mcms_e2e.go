@@ -35,10 +35,7 @@ func (s *MCMSUserTestSuite) Test_MCMSUser_Function_One() {
 func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRole) {
 	s.SuiTestSuite.T().Logf("Running MCMS user function one proposal with role: %v", role)
 
-	// Create proposer configuration using helper
 	proposerConfig := CreateProposerConfig(3, 2)
-
-	// Set config
 	{
 		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, role, s.SuiTestSuite.mcmsPackageId, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
 		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
@@ -81,15 +78,14 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		Transactions:  []types.Transaction{transaction},
 	}
 
-	// Get the actual current operation count from the contract
 	inspector, err := suisdk.NewInspector(s.SuiTestSuite.client, s.SuiTestSuite.signer, s.SuiTestSuite.mcmsPackageId, role)
 	s.SuiTestSuite.Require().NoError(err, "creating inspector for op count query")
 
+	// Get the actual current operation count from the contract
 	currentOpCount, err := inspector.GetOpCount(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)
 	s.SuiTestSuite.Require().NoError(err, "Failed to get current operation count")
 	s.SuiTestSuite.T().Logf("🔍 CURRENT operation count: %d", currentOpCount)
 
-	// Construct the timelock proposal using helper
 	var action types.TimelockAction
 	var delay *types.Duration
 	if role == suisdk.TimelockRoleProposer {
@@ -134,14 +130,16 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	}
 
 	s.SuiTestSuite.T().Logf("Signing the proposal...")
-	// Sign the proposal using helper
+
 	var keys []*ecdsa.PrivateKey
+	var quorum int
 	if role == suisdk.TimelockRoleProposer {
 		keys = proposerConfig.Keys
+		quorum = proposerQuorum
 	} else {
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
-	signable, err := SignProposal(&proposal, inspectorsMap, keys)
+	signable, err := SignProposal(&proposal, inspectorsMap, keys, quorum)
 	s.SuiTestSuite.Require().NoError(err)
 
 	// Need to query inspector with MCMS state object ID
@@ -172,13 +170,11 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	s.SuiTestSuite.T().Logf("Proposal ValidUntil: %d", proposal.ValidUntil)
 	s.SuiTestSuite.T().Logf("Number of Operations: %d", len(proposal.Operations))
 
-	// Log chain metadata
 	for chainSel, metadata := range proposal.ChainMetadata {
 		s.SuiTestSuite.T().Logf("Chain %d metadata - StartingOpCount: %d, MCMAddress: %s",
 			chainSel, metadata.StartingOpCount, metadata.MCMAddress)
 	}
 
-	// Log operation details
 	for i, op := range proposal.Operations {
 		s.SuiTestSuite.T().Logf("Operation %d: ChainSelector=%d, To=%s, DataLen=%d",
 			i, op.ChainSelector, op.Transaction.To, len(op.Transaction.Data))
@@ -198,7 +194,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	s.SuiTestSuite.T().Logf("✅ SetRoot in tx: %s", result.Hash)
 
 	s.SuiTestSuite.T().Logf("Executing the proposal operations...")
-	// Execute
+
 	for i := range proposal.Operations {
 		s.SuiTestSuite.T().Logf("Executing operation: %v", i)
 		txOutput, err := executable.Execute(s.SuiTestSuite.T().Context(), i)
@@ -251,7 +247,6 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	// Check op count got incremented by 1
 	postOpCount, err := inspector.GetOpCount(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)
 	s.SuiTestSuite.Require().NoError(err, "Failed to get post operation count")
-	s.SuiTestSuite.T().Logf("🔍 POST operation count: %d", postOpCount)
 	s.SuiTestSuite.Require().Equal(currentOpCount+1, postOpCount, "Operation count should be incremented by 1")
 
 	fieldA, err := s.SuiTestSuite.mcmsUser.DevInspect().GetFieldA(
@@ -280,8 +275,6 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	s.SuiTestSuite.Require().Equal(arg2, fieldB, "FieldB should be equal to arg2")
 	s.SuiTestSuite.T().Logf("✅ Successfully executed MCMS user function one proposal with role: %v", role)
 }
-
-// Helper functions
 
 func (s *MCMSUserTestSuite) serializeFunctionOneData(arg1 string, arg2 []byte) ([]byte, error) {
 	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
