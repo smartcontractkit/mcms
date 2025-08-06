@@ -17,7 +17,7 @@ require (
 	github.com/smartcontractkit/chain-selectors v1.0.61
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250626122206-319db248496a
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250515132731-ad40fab9b75e
-	github.com/smartcontractkit/chainlink-sui v0.0.0-20250805114040-3bb90bd25b82 // TODO: Should be with latest main branch
+	github.com/smartcontractkit/chainlink-sui v0.0.0-20250806133356-d76f4c32da99 // TODO: Should be with latest main branch
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.4.7
 	github.com/spf13/cast v1.7.1
 	github.com/stretchr/testify v1.10.0
