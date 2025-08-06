@@ -169,10 +169,10 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 
 			// Test liveness, will also fetch ChainID
 			t.Logf("Initialized Aptos RPC client @ %s", nodeUrl)
-			info, err := aptosClient.Info()
-			require.NoError(t, err, "Failed to get Aptos node info")
-			require.NotEmpty(t, info.LedgerVersionStr)
-			in.AptosChain.ChainID = strconv.FormatUint(uint64(info.ChainId), 10)
+			nodeInfo, infoErr := aptosClient.Info()
+			require.NoError(t, infoErr, "Failed to get Aptos node info")
+			require.NotEmpty(t, nodeInfo.LedgerVersionStr)
+			in.AptosChain.ChainID = strconv.FormatUint(uint64(nodeInfo.ChainId), 10)
 		}
 
 		var (

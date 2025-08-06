@@ -8,7 +8,6 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
@@ -50,13 +49,12 @@ func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPac
 func (t *TimelockExecutor) Execute(
 	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
 ) (types.TransactionResult, error) {
-
 	targets := make([]string, len(bop.Transactions))
 	moduleNames := make([]string, len(bop.Transactions))
 	functionNames := make([]string, len(bop.Transactions))
 	datas := make([][]byte, len(bop.Transactions))
 
-	var calls []Call
+	calls := make([]Call, 0, len(bop.Transactions))
 	for i, tx := range bop.Transactions {
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
@@ -102,12 +100,12 @@ func (t *TimelockExecutor) Execute(
 	opts := &bind.CallOpts{Signer: t.signer, WaitForExecution: true}
 
 	ptb := transaction.NewTransaction()
-	executeCallback, err := t.mcms.ExtendPTB(ctx, ptb, opts, timelockExecuteCall)
+	executeCallback, err := t.mcms.AppendPTB(ctx, ptb, timelockExecuteCall)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}
 
-	err = ExtendPTBFromExecutingCallbackParams(ctx, t.client, t.mcms, ptb, opts, t.mcmsPackageId, executeCallback, calls, t.registryObj, t.accountObj, bop.Transactions)
+	err = AppendPTBFromExecutingCallbackParams(ctx, t.client, t.mcms, ptb, opts, t.mcmsPackageId, executeCallback, calls, t.registryObj, t.accountObj)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", err)
 	}
@@ -115,7 +113,7 @@ func (t *TimelockExecutor) Execute(
 	// Execute the complete PTB with every call
 	tx, err := bind.ExecutePTB(ctx, opts, t.client, ptb)
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("Op execution with PTB failed: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("op execution with PTB failed: %w", err)
 	}
 
 	return types.TransactionResult{

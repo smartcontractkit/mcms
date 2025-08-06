@@ -60,13 +60,13 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		return common.Hash{}, fmt.Errorf("failed to parse To address %q: %w", op.Transaction.To, err)
 	}
 	additionalFields := AdditionalFields{}
-	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
-		return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+	if unmarshalErr := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); unmarshalErr != nil {
+		return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", unmarshalErr)
 	}
 	var additionalFieldsMetadata AdditionalFieldsMetadata
 	if len(metadata.AdditionalFields) > 0 {
-		if err := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
-			return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
+		if unmarshalErr := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); unmarshalErr != nil {
+			return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", unmarshalErr)
 		}
 	}
 
@@ -96,12 +96,12 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	}
 	chainIDBig := (&big.Int{}).SetUint64(chainID)
 
-	if metadata.AdditionalFields == nil || len(metadata.AdditionalFields) == 0 {
+	if len(metadata.AdditionalFields) == 0 {
 		return common.Hash{}, fmt.Errorf("additional fields metadata is empty")
 	}
 	var additionalFieldsMetadata AdditionalFieldsMetadata
-	if err := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
-		return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
+	if unmarshalErr := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); unmarshalErr != nil {
+		return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", unmarshalErr)
 	}
 
 	mcmsAddress, err := AddressFromHex(metadata.MCMAddress)
