@@ -8,6 +8,7 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
@@ -106,7 +107,7 @@ func (t *TimelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}
 
-	err = ExtendPTBFromExecutingCallbackParams(ctx, t.client, t.mcms, ptb, opts, t.mcmsPackageId, executeCallback, calls, t.registryObj, t.accountObj)
+	err = ExtendPTBFromExecutingCallbackParams(ctx, t.client, t.mcms, ptb, opts, t.mcmsPackageId, executeCallback, calls, t.registryObj, t.accountObj, bop.Transactions)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", err)
 	}
