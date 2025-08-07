@@ -70,7 +70,7 @@ func (s *Signable) Sign(signer signer) (sig types.Signature, err error) {
 
 	// Get the signing hash
 	payload, err := s.proposal.SigningMessage() // This should be signingMessage for ledger
-	fmt.Println("📜 SigningMessage:", payload.String())
+
 	if err != nil {
 		return sig, err
 	}
