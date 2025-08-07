@@ -80,11 +80,30 @@ func mockGetBlockTime(
 	}).Once()
 }
 
+type mockSolanaTransactionOptions struct {
+	transactionMeta *rpc.TransactionMeta
+}
+
+type mockSolanaTransactionOption func(*mockSolanaTransactionOptions)
+
+func withSolanaTransactionMeta(txMeta *rpc.TransactionMeta) mockSolanaTransactionOption {
+	return func(opts *mockSolanaTransactionOptions) {
+		opts.transactionMeta = txMeta
+	}
+}
+
 func mockSolanaTransaction(
 	t *testing.T, client *mocks.JSONRPCClient, lastBlockHeight uint64, slot uint64, signature string,
-	blockTime *solana.UnixTimeSeconds, mockError error,
+	blockTime *solana.UnixTimeSeconds, mockError error, opts ...mockSolanaTransactionOption,
 ) {
 	t.Helper()
+
+	options := mockSolanaTransactionOptions{
+		transactionMeta: &rpc.TransactionMeta{},
+	}
+	for _, opt := range opts {
+		opt(&options)
+	}
 
 	client.EXPECT().CallForInto(
 		anyContext, mock.Anything, "getLatestBlockhash", []any{rpc.M{"commitment": rpc.CommitmentConfirmed}},
@@ -151,7 +170,7 @@ func mockSolanaTransaction(
 			Slot:        slot,
 			BlockTime:   blockTime,
 			Transaction: &transactionEnvelope,
-			Meta:        &rpc.TransactionMeta{},
+			Meta:        options.transactionMeta,
 		}
 
 		return nil
