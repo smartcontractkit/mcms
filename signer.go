@@ -34,6 +34,7 @@ func NewPrivateKeySigner(pk *ecdsa.PrivateKey) *PrivateKeySigner {
 // The payload here should be without the EIP 191 prefix,
 // and the function will add it before signing.
 func (s *PrivateKeySigner) Sign(payload []byte) ([]byte, error) {
+	fmt.Println("[DEBUG]", "Signing payload with private key:", common.Bytes2Hex(payload))
 	return crypto.Sign(toEthSignedMessageHash(payload).Bytes(), s.pk)
 }
 
