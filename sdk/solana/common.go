@@ -383,8 +383,8 @@ func sendTransaction(
 	var transactionRes *rpc.GetTransactionResult
 	txOpts := &rpc.GetTransactionOpts{Commitment: commitment, MaxSupportedTransactionVersion: &v}
 	for range sendTransactionOptions.retries {
-		transactionRes, err = rpcClient.GetTransaction(ctx, txsig, txOpts)
-		if err != nil {
+		transactionRes, errGetTx = rpcClient.GetTransaction(ctx, txsig, txOpts)
+		if errGetTx != nil {
 			logger.Infof("GetTransaction error:", err)
 			time.Sleep(sendTransactionOptions.delay)
 
@@ -393,8 +393,18 @@ func sendTransaction(
 
 		break
 	}
+	if errGetTx != nil {
+		return nil, fmt.Errorf("failed to get transaction: %w", errGetTx)
+	}
 
-	return transactionRes, errGetTx
+	if transactionRes.Meta == nil {
+		return nil, fmt.Errorf("transaction meta is nil for transaction %s", txsig)
+	}
+	if transactionRes.Meta.Err != nil {
+		return nil, fmt.Errorf("transaction failed: %+v", transactionRes.Meta)
+	}
+
+	return transactionRes, nil
 }
 
 func getenv[T any](key string, defaultValue T, converter func(string) (T, error)) T {
