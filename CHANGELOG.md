@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.21.1
+
+### Patch Changes
+
+- [#430](https://github.com/smartcontractkit/mcms/pull/430) [`38e8ca4`](https://github.com/smartcontractkit/mcms/commit/38e8ca450284adbc79be5f41cce84d4348ff0d15) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump chainlink-ccip/chains/solana to 7f8a0f40
+
 ## 0.21.0
 
 ### Minor Changes

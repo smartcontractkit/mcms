@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gagliardetto/solana-go"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
 
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"

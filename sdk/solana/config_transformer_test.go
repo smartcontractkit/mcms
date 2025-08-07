@@ -6,7 +6,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/google/go-cmp/cmp"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
+	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/v3/assert"
 

@@ -3,7 +3,7 @@ package solana
 import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
+	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
 
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/sdk/evm"

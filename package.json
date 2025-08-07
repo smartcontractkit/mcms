@@ -1,6 +1,6 @@
 {
   "name": "@smartcontractkit/mcms",
-  "version": "0.21.0",
+  "version": "0.21.1",
   "description": "Tools/Libraries to Deploy/Manage/Interact with MCMS",
   "private": true,
   "scripts": {
@@ -17,8 +17,5 @@
     "@changesets/cli": "~2.29.4",
     "changeset": "^0.2.6"
   },
-  "repository": "https://github.com/smartcontractkit/mcms",
-  "dependencies": {
-    "@docusaurus/plugin-client-redirects": "^3.8.1"
-  }
+  "repository": "https://github.com/smartcontractkit/mcms"
 }
