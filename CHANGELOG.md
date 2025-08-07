@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.21.2
+
+### Patch Changes
+
+- [#434](https://github.com/smartcontractkit/mcms/pull/434) [`1e4cc68`](https://github.com/smartcontractkit/mcms/commit/1e4cc687f14d692e5c952149ecaeb4197a1ad8db) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: check "Meta" attribute when processing a transaction result
+
 ## 0.21.1
 
 ### Patch Changes
