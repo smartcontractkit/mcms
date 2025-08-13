@@ -142,3 +142,16 @@ func (tm TimelockInspector) IsOperationDone(ctx context.Context, address string,
 
 	return timelock.IsOperationDone(&bind.CallOpts{Context: ctx}, opID)
 }
+
+// GetMinDelay returns the minimum delay for the timelock at the given address
+func (tm TimelockInspector) GetMinDelay(ctx context.Context, address string) (uint64, error) {
+	tl, err := bindings.NewRBACTimelock(common.HexToAddress(address), tm.client)
+	if err != nil {
+		return 0, err
+	}
+	d, err := tl.GetMinDelay(&bind.CallOpts{Context: ctx})
+	if err != nil {
+		return 0, err
+	}
+	return d.Uint64(), nil
+}

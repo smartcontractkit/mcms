@@ -13,4 +13,5 @@ type TimelockInspector interface {
 	IsOperationPending(ctx context.Context, address string, opID [32]byte) (bool, error)
 	IsOperationReady(ctx context.Context, address string, opID [32]byte) (bool, error)
 	IsOperationDone(ctx context.Context, address string, opID [32]byte) (bool, error)
+	GetMinDelay(ctx context.Context, address string) (uint64, error)
 }
