@@ -128,6 +128,24 @@ func (t TimelockInspector) IsOperationDone(ctx context.Context, address string, 
 	return op.State == timelock.Done_OperationState, nil
 }
 
+func (t TimelockInspector) GetMinDelay(ctx context.Context, address string) (uint64, error) {
+	programID, seed, err := ParseContractAddress(address)
+	if err != nil {
+		return 0, err
+	}
+
+	pda, err := FindTimelockConfigPDA(programID, seed)
+	if err != nil {
+		return 0, err
+	}
+
+	configAccount, err := GetTimelockConfig(ctx, t.client, pda)
+	if err != nil {
+		return 0, err
+	}
+	return configAccount.MinDelay, nil
+}
+
 func (t TimelockInspector) getOpData(ctx context.Context, address string, opID [32]byte) (timelock.Operation, error) {
 	programID, seed, err := ParseContractAddress(address)
 	if err != nil {

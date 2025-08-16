@@ -67,7 +67,11 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 		a.Require().NoError(err)
 		a.Require().True(data.Success, data.VmStatus)
 	}
-
+	// Get Min Delay
+	timelockInspector := aptossdk.NewTimelockInspector(a.AptosRPCClient)
+	delay, err := timelockInspector.GetMinDelay(a.T().Context(), mcmsAddress.StringLong())
+	a.Require().NoError(err)
+	a.Require().Equal(102, delay)
 	// Configure Proposers
 	proposers := [3]common.Address{}
 	proposerKeys := [3]*ecdsa.PrivateKey{}
