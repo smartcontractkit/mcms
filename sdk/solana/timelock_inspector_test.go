@@ -567,6 +567,54 @@ func TestTimelockInspector_getRoleAccessController(t *testing.T) {
 	}
 }
 
+func TestTimelockInspector_GetMinDelay(t *testing.T) {
+	t.Parallel()
+
+	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
+	require.NoError(t, err)
+
+	cfg := createTimelockConfig(t)
+	cfg.MinDelay = 123
+
+	tests := []struct {
+		name    string
+		setup   func(*mocks.JSONRPCClient)
+		want    uint64
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, cfg, nil)
+			},
+			want: 123,
+		},
+		{
+			name: "error: get timelock config account info rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, cfg, errors.New("rpc error"))
+			},
+			wantErr: "rpc error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			inspector, jsonRPCClient := newTestTimelockInspector(t)
+			tt.setup(jsonRPCClient)
+
+			got, err := inspector.GetMinDelay(context.Background(), ContractAddress(testTimelockProgramID, testPDASeed))
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
 // ----- helpers -----
 
 func newTestTimelockInspector(t *testing.T) (*TimelockInspector, *mocks.JSONRPCClient) {
