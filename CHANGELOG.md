@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.22.0
+
+### Minor Changes
+
+- [#441](https://github.com/smartcontractkit/mcms/pull/441) [`fdf66b3`](https://github.com/smartcontractkit/mcms/commit/fdf66b3210adc6fdb2b8763bcdedba0dd06ee5bb) Thanks [@ecPablo](https://github.com/ecPablo)! - Adds support for getMinDelay to timelock inspectors on all supported chain families
+
 ## 0.21.2
 
 ### Patch Changes
