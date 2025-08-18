@@ -153,5 +153,6 @@ func (tm TimelockInspector) GetMinDelay(ctx context.Context, address string) (ui
 	if err != nil {
 		return 0, err
 	}
+
 	return d.Uint64(), nil
 }

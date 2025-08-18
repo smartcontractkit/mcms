@@ -143,6 +143,7 @@ func (t TimelockInspector) GetMinDelay(ctx context.Context, address string) (uin
 	if err != nil {
 		return 0, err
 	}
+
 	return configAccount.MinDelay, nil
 }
 

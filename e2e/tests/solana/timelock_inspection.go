@@ -158,6 +158,18 @@ func (s *SolanaTestSuite) TestIsOperationDone() {
 	s.Require().True(operation, "Operation should be done")
 }
 
+func (s *SolanaTestSuite) TestGetMinDelay() {
+	ctx := context.Background()
+	minDelay := 1 * time.Second
+	s.SetupTimelock(testPDASeedTimelockIsOperationsDone, minDelay)
+
+	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
+	delay, err := inspector.GetMinDelay(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockIsOperationsDone))
+
+	s.Require().NoError(err, "Failed to query min delay")
+	s.Require().Equal(delay, minDelay, "Min delay should match the configured value")
+}
+
 func (s *SolanaTestSuite) createOperation(timelockID [32]byte) timelockutils.Operation {
 	salt, serr := timelockutils.SimpleSalt()
 	s.Require().NoError(serr)

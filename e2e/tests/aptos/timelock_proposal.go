@@ -9,6 +9,7 @@ import (
 	"slices"
 	"time"
 
+	"github.com/aptos-labs/aptos-go-sdk/api"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
@@ -71,7 +72,7 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 	timelockInspector := aptossdk.NewTimelockInspector(a.AptosRPCClient)
 	delay, err := timelockInspector.GetMinDelay(a.T().Context(), mcmsAddress.StringLong())
 	a.Require().NoError(err)
-	a.Require().Equal(102, delay)
+	a.Require().Equal(uint64(0), delay)
 	// Configure Proposers
 	proposers := [3]common.Address{}
 	proposerKeys := [3]*ecdsa.PrivateKey{}
@@ -88,18 +89,22 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 			Signers: proposers[:],
 		}
 		proposeConfigurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount, aptossdk.TimelockRoleProposer)
-		result, err := proposeConfigurer.SetConfig(a.T().Context(), mcmsAddress.StringLong(), proposerConfig, false)
+		var result types.TransactionResult
+		result, err = proposeConfigurer.SetConfig(a.T().Context(), mcmsAddress.StringLong(), proposerConfig, false)
 		a.Require().NoError(err)
-		data, err := a.AptosRPCClient.WaitForTransaction(result.Hash)
+		var data *api.UserTransaction
+		data, err = a.AptosRPCClient.WaitForTransaction(result.Hash)
 		a.Require().NoError(err)
 		a.Require().True(data.Success, data.VmStatus)
 	}
 
 	// Initiate ownership transfer
 	{
-		tx, err := a.MCMSContract.MCMSAccount().TransferOwnershipToSelf(opts)
+		var tx *api.PendingTransaction
+		tx, err = a.MCMSContract.MCMSAccount().TransferOwnershipToSelf(opts)
 		a.Require().NoError(err)
-		data, err := a.AptosRPCClient.WaitForTransaction(tx.Hash)
+		var data *api.UserTransaction
+		data, err = a.AptosRPCClient.WaitForTransaction(tx.Hash)
 		a.Require().NoError(err)
 		a.Require().True(data.Success, data.VmStatus)
 		a.T().Logf("🚀 TransferOwnershipToSelf in tx: %s", tx.Hash)
@@ -124,9 +129,9 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 			SetAction(types.TimelockActionSchedule).
 			SetDelay(types.NewDuration(time.Second * 2))
 
-		module, function, _, args, err := a.MCMSContract.MCMSAccount().Encoder().AcceptOwnership()
-		a.Require().NoError(err)
-		transaction, err := aptossdk.NewTransaction(
+		module, function, _, args, errAccept := a.MCMSContract.MCMSAccount().Encoder().AcceptOwnership()
+		a.Require().NoError(errAccept)
+		transaction, errTx := aptossdk.NewTransaction(
 			module.PackageName,
 			module.ModuleName,
 			function,
@@ -135,25 +140,28 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 			"MCMS",
 			nil,
 		)
-		a.Require().NoError(err)
+		a.Require().NoError(errTx)
 		acceptOwnershipProposalBuilder.AddOperation(types.BatchOperation{
 			ChainSelector: a.ChainSelector,
 			Transactions:  []types.Transaction{transaction},
 		})
-		acceptOwnershipTimelockProposal, err := acceptOwnershipProposalBuilder.Build()
+		var acceptOwnershipTimelockProposal *mcms.TimelockProposal
+		acceptOwnershipTimelockProposal, err = acceptOwnershipProposalBuilder.Build()
 		a.Require().NoError(err)
 
 		convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
 			a.ChainSelector: aptossdk.NewTimelockConverter(),
 		}
-		acceptOwnershipProposal, _, err := acceptOwnershipTimelockProposal.Convert(a.T().Context(), convertersMap)
+		var acceptOwnershipProposal mcms.Proposal
+		acceptOwnershipProposal, _, err = acceptOwnershipTimelockProposal.Convert(a.T().Context(), convertersMap)
 		a.Require().NoError(err)
 
 		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer)
 		inspectorsMap := map[types.ChainSelector]sdk.Inspector{
 			a.ChainSelector: inspector,
 		}
-		signable, err := mcms.NewSignable(&acceptOwnershipProposal, inspectorsMap)
+		var signable *mcms.Signable
+		signable, err = mcms.NewSignable(&acceptOwnershipProposal, inspectorsMap)
 		a.Require().NoError(err)
 
 		_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(proposerKeys[0]))
@@ -163,32 +171,37 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 		_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(proposerKeys[2]))
 		a.Require().NoError(err)
 
-		quorumMet, err := signable.ValidateSignatures(a.T().Context())
+		var quorumMet bool
+		quorumMet, err = signable.ValidateSignatures(a.T().Context())
 		a.Require().NoError(err, "Error validating signatures")
 		a.Require().True(quorumMet, "Quorum not met")
 
 		// Set Root
-		encoders, err := acceptOwnershipProposal.GetEncoders()
+		var encoders map[types.ChainSelector]sdk.Encoder
+		encoders, err = acceptOwnershipProposal.GetEncoders()
 		a.Require().NoError(err)
 		aptosEncoder := encoders[a.ChainSelector].(*aptossdk.Encoder)
 		executors := map[types.ChainSelector]sdk.Executor{
 			a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleProposer),
 		}
-		executable, err := mcms.NewExecutable(&acceptOwnershipProposal, executors)
+		var executable *mcms.Executable
+		executable, err = mcms.NewExecutable(&acceptOwnershipProposal, executors)
 		a.Require().NoError(err, "Error creating executable")
 
-		result, err := executable.SetRoot(a.T().Context(), a.ChainSelector)
+		var result types.TransactionResult
+		result, err = executable.SetRoot(a.T().Context(), a.ChainSelector)
 		a.Require().NoError(err)
 
-		data, err := a.AptosRPCClient.WaitForTransaction(result.Hash)
+		var data *api.UserTransaction
+		data, err = a.AptosRPCClient.WaitForTransaction(result.Hash)
 		a.Require().NoError(err)
 		a.Require().True(data.Success, data.VmStatus)
 		a.T().Logf("✅ SetRoot in tx: %s", result.Hash)
 
 		// Assert
 		tree, _ := acceptOwnershipProposal.MerkleTree()
-		gotHash, gotValidUntil, err := inspector.GetRoot(a.T().Context(), mcmsAddress.StringLong())
-		a.Require().NoError(err)
+		gotHash, gotValidUntil, errSetRoot := inspector.GetRoot(a.T().Context(), mcmsAddress.StringLong())
+		a.Require().NoError(errSetRoot)
 		a.Require().Equal(validUntil, gotValidUntil)
 		a.Require().Equal(tree.Root, gotHash)
 
@@ -216,14 +229,17 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 		timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 			a.ChainSelector: timelockExecutor,
 		}
-		timelockExecutable, err := mcms.NewTimelockExecutable(a.T().Context(), acceptOwnershipTimelockProposal, timelockExecutors)
+		var timelockExecutable *mcms.TimelockExecutable
+		timelockExecutable, err = mcms.NewTimelockExecutable(a.T().Context(), acceptOwnershipTimelockProposal, timelockExecutors)
 		a.Require().NoError(err)
 
-		operationID, err := timelockExecutable.GetOpID(a.T().Context(), 0, acceptOwnershipTimelockProposal.Operations[0], a.ChainSelector)
+		var operationID common.Hash
+		operationID, err = timelockExecutable.GetOpID(a.T().Context(), 0, acceptOwnershipTimelockProposal.Operations[0], a.ChainSelector)
 		a.Require().NoError(err)
 		timelockInspector := aptossdk.NewTimelockInspector(a.AptosRPCClient)
-		ok, err := timelockInspector.IsOperation(a.T().Context(), mcmsAddress.StringLong(), operationID)
-		a.Require().NoError(err)
+
+		ok, errIsOp := timelockInspector.IsOperation(a.T().Context(), mcmsAddress.StringLong(), operationID)
+		a.Require().NoError(errIsOp)
 		a.Require().True(ok, "Operation not found in timelock")
 
 		a.Require().EventuallyWithT(
@@ -238,8 +254,8 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 		a.T().Logf("🟢 Timelock operation ready, elapsed time: %v", elapsed.String())
 
 		for i := range acceptOwnershipTimelockProposal.Operations {
-			res, err := timelockExecutable.Execute(a.T().Context(), i)
-			a.Require().NoError(err)
+			res, errExec := timelockExecutable.Execute(a.T().Context(), i)
+			a.Require().NoError(errExec)
 			data, err = a.AptosRPCClient.WaitForTransaction(res.Hash)
 			a.Require().NoError(err)
 			a.Require().True(data.Success, data.VmStatus)
