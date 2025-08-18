@@ -425,6 +425,7 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 					if tt.name != "failure - invalid MCMS address" {
 						require.Equal(t, Must(hexToAddress(tt.args.mcmsAddr)), mcmsAddress)
 					}
+
 					return mcmsBinding
 				},
 			}
