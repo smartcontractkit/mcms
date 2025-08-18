@@ -361,3 +361,83 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 		})
 	}
 }
+
+func TestTimelockInspector_GetMinDelay(t *testing.T) {
+	t.Parallel()
+
+	type args struct {
+		mcmsAddr string
+	}
+	tests := []struct {
+		name      string
+		args      args
+		mockSetup func(m *mock_mcms.MCMS)
+		want      uint64
+		wantErr   assert.ErrorAssertionFunc
+	}{
+		{
+			name: "success",
+			args: args{
+				mcmsAddr: "0x123",
+			},
+			mockSetup: func(m *mock_mcms.MCMS) {
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
+				m.EXPECT().MCMS().Return(mockMCMSModule)
+				mockMCMSModule.EXPECT().TimelockMinDelay(
+					mock.Anything,
+				).Return(uint64(321), nil)
+			},
+			want:    321,
+			wantErr: assert.NoError,
+		},
+		{
+			name: "failure - invalid MCMS address",
+			args: args{
+				mcmsAddr: "invalidaddress",
+			},
+			wantErr: AssertErrorContains("parse MCMS address"),
+		},
+		{
+			name: "failure - TimelockMinDelay failed",
+			args: args{
+				mcmsAddr: "0x123",
+			},
+			mockSetup: func(m *mock_mcms.MCMS) {
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
+				m.EXPECT().MCMS().Return(mockMCMSModule)
+				mockMCMSModule.EXPECT().TimelockMinDelay(
+					mock.Anything,
+				).Return(uint64(0), errors.New("error during TimelockMinDelay"))
+			},
+			want:    0,
+			wantErr: AssertErrorContains("error during TimelockMinDelay"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mcmsBinding := mock_mcms.NewMCMS(t)
+			inspector := TimelockInspector{
+				bindingFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
+					// only validate hex address if parsing was supposed to succeed
+					if tt.name != "failure - invalid MCMS address" {
+						require.Equal(t, Must(hexToAddress(tt.args.mcmsAddr)), mcmsAddress)
+					}
+					return mcmsBinding
+				},
+			}
+
+			if tt.mockSetup != nil {
+				tt.mockSetup(mcmsBinding)
+			}
+
+			got, err := inspector.GetMinDelay(t.Context(), tt.args.mcmsAddr)
+			if !tt.wantErr(t, err, fmt.Sprintf("GetMinDelay(%q)", tt.args.mcmsAddr)) {
+				return
+			}
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
