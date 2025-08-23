@@ -82,3 +82,7 @@ func newProposal[T ProposalInterface](r io.Reader, predecessors []io.Reader) (T,
 
 	return p, nil
 }
+
+func pointerTo[T any](v T) *T {
+	return &v
+}

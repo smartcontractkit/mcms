@@ -1,6 +1,9 @@
 package mcms
 
-import "github.com/smartcontractkit/mcms/types"
+import (
+	eth "github.com/ethereum/go-ethereum/common"
+	"github.com/smartcontractkit/mcms/types"
+)
 
 // TimelockProposalBuilder builder for timelock proposals types.
 type TimelockProposalBuilder struct {
@@ -67,6 +70,12 @@ func (b *TimelockProposalBuilder) AddOperation(bop types.BatchOperation) *Timelo
 func (b *TimelockProposalBuilder) SetOperations(bops []types.BatchOperation) *TimelockProposalBuilder {
 	b.proposal.Operations = bops
 
+	return b
+}
+
+// SetSalt sets the SaltOverride field of the BaseProposal.
+func (b *TimelockProposalBuilder) SetSalt(salt *eth.Hash) *TimelockProposalBuilder {
+	b.proposal.SaltOverride = salt
 	return b
 }
 
