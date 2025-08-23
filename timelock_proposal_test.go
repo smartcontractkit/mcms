@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -905,7 +906,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 	}
 }
 
-func TestProposal_WithoutSaltOverride(t *testing.T) {
+func Test_TimelockProposal_WithoutSaltOverride(t *testing.T) {
 	t.Parallel()
 	builder := NewTimelockProposalBuilder()
 	builder.SetVersion("v1").
@@ -931,40 +932,7 @@ func TestProposal_WithoutSaltOverride(t *testing.T) {
 	assert.NotEqual(t, common.Hash{}, saltBytes)
 }
 
-func buildDummyProposal(action types.TimelockAction) TimelockProposal {
-	builder := NewTimelockProposalBuilder()
-	builder.SetVersion("v1").
-		SetValidUntil(2004259681).
-		SetDescription("Test proposal").
-		SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
-			chaintest.Chain2Selector: {
-				StartingOpCount: 0,
-				MCMAddress:      "0x0000000000000000000000000000000000000000",
-			},
-		}).
-		SetOverridePreviousRoot(false).
-		SetAction(action).
-		SetDelay(types.MustParseDuration("1h")).
-		AddTimelockAddress(chaintest.Chain2Selector, "0x01").
-		SetOperations([]types.BatchOperation{{
-			ChainSelector: chaintest.Chain2Selector,
-			Transactions: []types.Transaction{
-				{
-					To:               "0x0000000000000000000000000000000000000000",
-					AdditionalFields: []byte(`{"value": 0}`),
-					Data:             []byte("data"),
-				},
-			},
-		}})
-	proposal, err := builder.Build()
-	if err != nil {
-		panic(err)
-	}
-
-	return *proposal
-}
-
-func TestDeriveBypassProposal(t *testing.T) {
+func Test_TimelockProposal_DeriveBypassProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -1012,7 +980,7 @@ func TestDeriveBypassProposal(t *testing.T) {
 	}
 }
 
-func TestDeriveCancellationProposal(t *testing.T) {
+func Test_TimelockProposal_DeriveCancellationProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -1058,4 +1026,338 @@ func TestDeriveCancellationProposal(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_TimelockProposal_Merge(t *testing.T) {
+	t.Parallel()
+
+	baseMeta := types.ChainMetadata{
+		StartingOpCount: 1,
+		MCMAddress:      "0xabc",
+	}
+	otherMeta := types.ChainMetadata{
+		StartingOpCount: 2,
+		MCMAddress:      "0xdef",
+	}
+	chainSel := chaintest.Chain1Selector
+
+	sig1, err := types.NewSignatureFromBytes(common.Hex2Bytes("0000000000000000000000000000000000000000000000001111111111111111000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaa1b"))
+	require.NoError(t, err)
+	sig2, err := types.NewSignatureFromBytes(common.Hex2Bytes("0000000000000000000000000000000000000000000000002222222222222222000000000000000000000000000000000000000000000000bbbbbbbbbbbbbbbb1b"))
+	require.NoError(t, err)
+	salt1 := common.HexToHash("0x123456")
+	salt2 := common.HexToHash("0xabcdef")
+
+	baseProposalBuilder := NewTimelockProposalBuilder().
+		SetDescription("proposal 1").
+		SetVersion("v1").
+		SetAction(types.TimelockActionSchedule).
+		SetValidUntil(2051222400). // 2035-01-01 00:00:00 UTC
+		SetDelay(types.NewDuration(1*time.Minute)).
+		AddSignature(sig1).
+		AddTimelockAddress(chaintest.Chain1Selector, "0xchain1TimelockAddress").
+		AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{
+			StartingOpCount:  1,
+			MCMAddress:       "0xchain1McmAddress",
+			AdditionalFields: json.RawMessage(`{"chain1": "value1"}`),
+		}).
+		AddOperation(types.BatchOperation{
+			ChainSelector: chaintest.Chain1Selector,
+			Transactions: []types.Transaction{
+				{
+					To:               "0xchain1ToAddress1",
+					Data:             common.Hex2Bytes("0x0001"),
+					AdditionalFields: json.RawMessage(`{"value": 0}`),
+				},
+			},
+		})
+
+	makeProposal := func(desc string, action types.TimelockAction, validUntil uint32, delay types.Duration, meta map[types.ChainSelector]types.ChainMetadata, timelockAddrs map[types.ChainSelector]string, sigs []types.Signature, salt *common.Hash, ops []types.BatchOperation, override bool, metadata map[string]any) *TimelockProposal {
+		return &TimelockProposal{
+			BaseProposal: BaseProposal{
+				Version:              "v1",
+				Kind:                 types.KindTimelockProposal,
+				ValidUntil:           validUntil,
+				Signatures:           sigs,
+				OverridePreviousRoot: override,
+				ChainMetadata:        meta,
+				Description:          desc,
+				Metadata:             metadata,
+			},
+			Action:            action,
+			Delay:             delay,
+			TimelockAddresses: timelockAddrs,
+			Operations:        ops,
+			SaltOverride:      salt,
+		}
+	}
+
+	tests := []struct {
+		name      string
+		proposal1 *TimelockProposal
+		proposal2 *TimelockProposal
+		wantErr   string
+		assert    func(t *testing.T, merged *TimelockProposal)
+	}{
+		{
+			name: "success: merge with non-overlapping chains and addresses",
+			proposal1: mustBuild(t, baseProposalBuilder.
+				SetSalt(pointerTo(common.HexToHash("0x123456"))),
+			),
+			proposal2: mustBuild(t, NewTimelockProposalBuilder().
+				SetDescription("proposal 2").
+				SetVersion("v1").
+				SetAction(types.TimelockActionSchedule).
+				SetValidUntil(2053987200). // 2035-02-02 00:00:00 UTC
+				SetDelay(types.NewDuration(2*time.Minute)).
+				AddSignature(sig2).
+				AddTimelockAddress(chaintest.Chain2Selector, "0xchain2TimelockAddress").
+				AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{
+					StartingOpCount:  2,
+					MCMAddress:       "0xchain2McmAddress",
+					AdditionalFields: json.RawMessage(`{"chain2": "value2"}`),
+				}).
+				AddOperation(types.BatchOperation{
+					ChainSelector: chaintest.Chain2Selector,
+					Transactions: []types.Transaction{
+						{
+							To:               "0xchain2ToAddress1",
+							Data:             common.Hex2Bytes("0x2001"),
+							AdditionalFields: json.RawMessage(`{"value": 0}`),
+						},
+						{
+							To:               "0xchain2ToAddress2",
+							Data:             common.Hex2Bytes("0x2002"),
+							AdditionalFields: json.RawMessage{},
+						},
+					},
+				}),
+			),
+			assert: func(t *testing.T, merged *TimelockProposal) {
+				want := mustBuild(t, baseProposalBuilder.
+					SetDescription("proposal1\nproposal 2").
+					SetValidUntil(2051222400). // 2035-01-01 00:00:00 UTC
+					SetDelay(types.NewDuration(2*time.Minute)).
+					SetSalt(pointerTo(common.HexToHash("0xabcdef"))).
+					AddSignature(sig2).
+					AddTimelockAddress(chaintest.Chain2Selector, "0xchain2TimelockAddress").
+					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{
+						StartingOpCount:  2,
+						MCMAddress:       "0xchain2McmAddress",
+						AdditionalFields: json.RawMessage(`{"chain2": "value2"}`),
+					}).
+					AddOperation(types.BatchOperation{
+						ChainSelector: chaintest.Chain2Selector,
+						Transactions: []types.Transaction{
+							{
+								To:               "0xchain2ToAddress1",
+								Data:             common.Hex2Bytes("0x2001"),
+								AdditionalFields: json.RawMessage(`{"value": 0}`),
+							},
+							{
+								To:               "0xchain2ToAddress1",
+								Data:             common.Hex2Bytes("0x2002"),
+								AdditionalFields: json.RawMessage{},
+							},
+						},
+					}),
+				)
+
+				require.Equal(t, want, merged)
+			},
+		},
+		{
+			name: "failure: different versions",
+			proposal1: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+				map[types.ChainSelector]string{chainSel: "0x01"},
+				nil, nil, nil, false, nil,
+			),
+			proposal2: func() *TimelockProposal {
+				p := makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+					map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+					map[types.ChainSelector]string{chainSel: "0x01"},
+					nil, nil, nil, false, nil,
+				)
+				p.Version = "v2"
+				return p
+			}(),
+			wantErr: "different versions",
+		},
+		{
+			name: "failure: different kinds",
+			proposal1: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+				map[types.ChainSelector]string{chainSel: "0x01"},
+				nil, nil, nil, false, nil,
+			),
+			proposal2: func() *TimelockProposal {
+				p := makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+					map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+					map[types.ChainSelector]string{chainSel: "0x01"},
+					nil, nil, nil, false, nil,
+				)
+				p.Kind = types.KindProposal
+				return p
+			}(),
+			wantErr: "different kinds",
+		},
+		{
+			name: "failure: different actions",
+			proposal1: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+				map[types.ChainSelector]string{chainSel: "0x01"},
+				nil, nil, nil, false, nil,
+			),
+			proposal2: func() *TimelockProposal {
+				p := makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+					map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+					map[types.ChainSelector]string{chainSel: "0x01"},
+					nil, nil, nil, false, nil,
+				)
+				p.Action = types.TimelockActionCancel
+				return p
+			}(),
+			wantErr: "different actions",
+		},
+		{
+			name: "failure: different timelock addresses for same chain",
+			proposal1: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+				map[types.ChainSelector]string{chainSel: "0x01"},
+				nil, nil, nil, false, nil,
+			),
+			proposal2: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+				map[types.ChainSelector]string{chainSel: "0x02"},
+				nil, nil, nil, false, nil,
+			),
+			wantErr: "different timelock addresses",
+		},
+		{
+			name: "success: merge signatures without duplicates",
+			proposal1: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+				map[types.ChainSelector]string{chainSel: "0x01"},
+				[]types.Signature{sig1}, nil, nil, false, nil,
+			),
+			proposal2: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chaintest.Chain2Selector: otherMeta},
+				map[types.ChainSelector]string{chaintest.Chain2Selector: "0x02"},
+				[]types.Signature{sig1}, nil, nil, false, nil,
+			),
+			assert: func(t *testing.T, merged *TimelockProposal) {
+				assert.Len(t, merged.Signatures, 1)
+			},
+		},
+		{
+			name: "success: merge salt overrides by xor",
+			proposal1: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+				map[types.ChainSelector]string{chainSel: "0x01"},
+				nil, &salt1, nil, false, nil,
+			),
+			proposal2: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chaintest.Chain2Selector: otherMeta},
+				map[types.ChainSelector]string{chaintest.Chain2Selector: "0x02"},
+				nil, &salt2, nil, false, nil,
+			),
+			assert: func(t *testing.T, merged *TimelockProposal) {
+				require.NotNil(t, merged.SaltOverride)
+				expected := salt1
+				for i := range expected {
+					expected[i] ^= salt2[i]
+				}
+				assert.Equal(t, expected, *merged.SaltOverride)
+			},
+		},
+		{
+			name: "success: merge metadata",
+			proposal1: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+				map[types.ChainSelector]string{chainSel: "0x01"},
+				nil, nil, nil, false, map[string]any{"foo": "bar"},
+			),
+			proposal2: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chaintest.Chain2Selector: otherMeta},
+				map[types.ChainSelector]string{chaintest.Chain2Selector: "0x02"},
+				nil, nil, nil, false, map[string]any{"baz": "qux"},
+			),
+			assert: func(t *testing.T, merged *TimelockProposal) {
+				assert.Equal(t, "bar", merged.Metadata["foo"])
+				assert.Equal(t, "qux", merged.Metadata["baz"])
+			},
+		},
+		{
+			name: "failure: merge metadata with conflict",
+			proposal1: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chainSel: baseMeta},
+				map[types.ChainSelector]string{chainSel: "0x01"},
+				nil, nil, nil, false, map[string]any{"foo": "bar"},
+			),
+			proposal2: makeProposal("desc", types.TimelockActionSchedule, 100, types.MustParseDuration("1h"),
+				map[types.ChainSelector]types.ChainMetadata{chaintest.Chain2Selector: otherMeta},
+				map[types.ChainSelector]string{chaintest.Chain2Selector: "0x02"},
+				nil, nil, nil, false, map[string]any{"foo": "baz"},
+			),
+			wantErr: "conflicting metadata",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			merged, err := tt.proposal1.Merge(tt.proposal2)
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				tt.assert(t, merged)
+			}
+		})
+	}
+}
+
+// ----- helpers -----
+
+func buildDummyProposal(action types.TimelockAction) TimelockProposal {
+	builder := NewTimelockProposalBuilder()
+	builder.SetVersion("v1").
+		SetValidUntil(2004259681).
+		SetDescription("Test proposal").
+		SetChainMetadata(map[types.ChainSelector]types.ChainMetadata{
+			chaintest.Chain2Selector: {
+				StartingOpCount: 0,
+				MCMAddress:      "0x0000000000000000000000000000000000000000",
+			},
+		}).
+		SetOverridePreviousRoot(false).
+		SetAction(action).
+		SetDelay(types.MustParseDuration("1h")).
+		AddTimelockAddress(chaintest.Chain2Selector, "0x01").
+		SetOperations([]types.BatchOperation{{
+			ChainSelector: chaintest.Chain2Selector,
+			Transactions: []types.Transaction{
+				{
+					To:               "0x0000000000000000000000000000000000000000",
+					AdditionalFields: []byte(`{"value": 0}`),
+					Data:             []byte("data"),
+				},
+			},
+		}})
+	proposal, err := builder.Build()
+	if err != nil {
+		panic(err)
+	}
+
+	return *proposal
+}
+
+type builder[T any] interface{ Build() (T, error) }
+
+func mustBuild[T any, B builder[T]](t *testing.T, builder B) T {
+	proposal, err := builder.Build()
+	require.NoError(t, err)
+	return proposal
 }

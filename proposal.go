@@ -391,3 +391,25 @@ func proposalValidateBasic(proposalObj Proposal) error {
 func wrapTreeGenErr(err error) error {
 	return fmt.Errorf("merkle tree generation error: %w", err)
 }
+
+func mergeMetadata(m1, m2 map[string]any) (map[string]any, error) {
+	if len(m1) == 0 {
+		return m2, nil
+	}
+	if len(m2) == 0 {
+		return m1, nil
+	}
+
+	merged := make(map[string]any, len(m1))
+	maps.Copy(merged, m1)
+	for k, v2 := range m2 {
+		v1, exists := m1[k]
+		if !exists || v1 == v2 {
+			merged[k] = v2
+		}
+
+		return nil, fmt.Errorf("conflicting metadata for key %s: %v vs %v", k, v1, v2)
+	}
+
+	return m1, errors.New("not implemented")
+}
