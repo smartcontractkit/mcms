@@ -8,7 +8,6 @@ import (
 	"math/big"
 	"strings"
 
-	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -16,6 +15,7 @@ import (
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	module_fee_quoter "github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter"
 	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
@@ -115,10 +115,13 @@ func (e Executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("failed to parse To address %q: %w", op.Transaction.To, err)
 	}
 
-	// Decode calls from transaction data
-	calls, err := DeserializeTimelockBypasserExecuteBatch(op.Transaction.Data)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to deserialize timelock bypasser execute batch: %w", err)
+	// If it's a bypass, op.Transaction.Data includes the state obj, but the contract doesn't need it
+	data := op.Transaction.Data
+	if additionalFields.Function == TimelockActionBypass {
+		data, err = RemoveStateObjectsFromBypassData(op.Transaction.Data)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to remove state objects from bypass data: %w", err)
+		}
 	}
 
 	executeCall, err := e.mcms.Encoder().Execute(
@@ -131,7 +134,7 @@ func (e Executor) ExecuteOperation(
 		toAddress.Hex(), // Needs to always be MCMS package id
 		additionalFields.ModuleName,
 		additionalFields.Function, // Can only be one of the dispatch
-		op.Transaction.Data,       // For timelock, data is the collection of every call we want to execute, including module, function and data
+		data,                      // For timelock, data is the collection of every call we want to execute, including module, function and data
 		proofBytes,
 	)
 	if err != nil {
@@ -140,7 +143,7 @@ func (e Executor) ExecuteOperation(
 
 	ptb := transaction.NewTransaction()
 	// The execution needs to go in hand with the timelock operation in the same PTB transaction
-	timelockCallback, err := e.mcms.AppendPTB(ctx, ptb, executeCall)
+	timelockCallback, err := e.mcms.AppendPTB(ctx, opts, ptb, executeCall)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}
@@ -155,7 +158,7 @@ func (e Executor) ExecuteOperation(
 		if encodeErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", encodeErr)
 		}
-		_, err = e.mcms.AppendPTB(ctx, ptb, timelockCall)
+		_, err = e.mcms.AppendPTB(ctx, opts, ptb, timelockCall)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("adding timelock call to PTB: %w", err)
 		}
@@ -174,11 +177,17 @@ func (e Executor) ExecuteOperation(
 
 		// Add the timelock call to the same PTB
 		// If bypass, this a set of execute callbacks
-		executeCallback, extendCallbackErr := e.mcms.AppendPTB(ctx, ptb, timelockCall)
+		executeCallback, extendCallbackErr := e.mcms.AppendPTB(ctx, opts, ptb, timelockCall)
 		if extendCallbackErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("building PTB for timelock call: %w", extendCallbackErr)
 		}
-		if extendErr := AppendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, opts, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj); extendErr != nil {
+		// Decode calls from transaction data
+		calls, err := DeserializeTimelockBypasserExecuteBatch(op.Transaction.Data)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to deserialize timelock bypasser execute batch: %w", err)
+		}
+
+		if extendErr := AppendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj); extendErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", extendErr)
 		}
 	}
@@ -335,14 +344,14 @@ func AppendPTBFromExecutingCallbackParams(
 	client sui.ISuiAPI,
 	mcms *module_mcms.McmsContract,
 	ptb *transaction.Transaction,
-	opts *bind.CallOpts,
 	mcmsPackageId string,
 	executeCallback *transaction.Argument,
 	calls []Call,
 	registryObj string,
 	accountObj string,
-	transactions []types.Transaction,
 ) error {
+	// Only used for object resolving caching
+	opts := &bind.CallOpts{}
 	// Process each ExecutingCallbackParams individually
 	// We need to process them in reverse order since we're using pop_back to extract elements
 	for i := len(calls) - 1; i >= 0; i-- {
@@ -369,7 +378,7 @@ func AppendPTBFromExecutingCallbackParams(
 			}
 
 			// Add the call to the PTB
-			_, err = mcms.AppendPTB(ctx, ptb, executeDispatchCall)
+			_, err = mcms.AppendPTB(ctx, opts, ptb, executeDispatchCall)
 			if err != nil {
 				return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
 			}
@@ -380,47 +389,28 @@ func AppendPTBFromExecutingCallbackParams(
 				return fmt.Errorf("extracting ExecutingCallbackParams %d: %w", i, err)
 			}
 
-			// Get the registry object for the mcms_entrypoint call
-			registryArg, err := toObjectArg(ctx, client, ptb, registryObj, true)
+			// We can use any contract that implements the mcms_entrypoint function
+			entryPointContract, err := module_fee_quoter.NewFeeQuoter(targetString, client)
 			if err != nil {
-				return fmt.Errorf("failed to create object arg for registry: %w", err)
+				return fmt.Errorf("failed to create MCMS EntryPoint contract: %w", err)
 			}
 
-			// Get the state object from the transaction additional fields
-			var stateObjArg *transaction.Argument
-
-			// Find the matching transaction for this call to get additional fields
-			var additionalFields AdditionalFields
-
-			// Match the call with its corresponding transaction based on module name and function
-			for j := range transactions {
-				var txAdditionalFields AdditionalFields
-				if err := json.Unmarshal(transactions[j].AdditionalFields, &txAdditionalFields); err == nil {
-					if txAdditionalFields.ModuleName == call.ModuleName && txAdditionalFields.Function == call.FunctionName {
-						additionalFields = txAdditionalFields
-
-						break
-					}
-				}
-			}
-
-			stateObjArg, err = toObjectArg(ctx, client, ptb, additionalFields.StateObj, true)
-			if err != nil {
-				return fmt.Errorf("failed to create object arg for module data: %w", err)
-			}
-
-			// Call `mcms_entrypoint` function on the destination contract
-			ptb.MoveCall(
-				models.SuiAddress(targetString), // The destination contract package
-				call.ModuleName,
-				"mcms_entrypoint",
-				[]transaction.TypeTag{}, // No type arguments
-				[]transaction.Argument{
-					*stateObjArg,
-					*registryArg,
-					*executingCallbackParams,
-				}, // Arguments: state_obj, registry, ExecutingCallbackParams
+			// Prepare the mcms_entrypoint call
+			entryPointCall, err := entryPointContract.Encoder().McmsEntrypointWithArgs(
+				call.StateObj,
+				registryObj,
+				executingCallbackParams,
 			)
+			if err != nil {
+				return fmt.Errorf("failed to create mcms_entrypoint call: %w", err)
+			}
+			// Override the module info with the actual target
+			entryPointCall.Module.ModuleName = call.ModuleName
+
+			_, err = mcms.AppendPTB(ctx, opts, ptb, entryPointCall)
+			if err != nil {
+				return fmt.Errorf("failed to append mcms_entrypoint call to PTB: %w", err)
+			}
 		}
 	}
 

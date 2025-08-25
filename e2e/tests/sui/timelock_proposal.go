@@ -81,6 +81,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 
 	callBytes := []byte{}
 	if len(encodedCall.CallArgs) > 0 && encodedCall.CallArgs[0].CallArg.Pure != nil {
+		// TODO: Are we getting the right bytes here? callbytes are the entire bytes of the call
 		callBytes = encodedCall.CallArgs[0].CallArg.Pure.Bytes
 	}
 

@@ -18,14 +18,21 @@ type Call struct {
 	ModuleName   string
 	FunctionName string
 	Data         []byte
+	StateObj     string
 }
 
 func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 	deserializer := bcs.NewDeserializer(data)
 
+	// Deserialize stateObjects vector
+	stateObjectsLen := deserializer.Uleb128()
+	stateObjects := make([]string, stateObjectsLen)
+	for i := range stateObjectsLen {
+		stateObjects[i] = deserializer.ReadString()
+	}
+
 	// Deserialize targets vector
 	targetsLen := deserializer.Uleb128()
-
 	targets := make([][]byte, targetsLen)
 	for i := range targetsLen {
 		target := deserializer.ReadFixedBytes(SuiAddressLength) // addresses are 32 bytes in Sui
@@ -34,7 +41,6 @@ func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 
 	// Deserialize module names vector
 	moduleNamesLen := deserializer.Uleb128()
-
 	moduleNames := make([]string, moduleNamesLen)
 	for i := range moduleNamesLen {
 		moduleName := deserializer.ReadString()
@@ -43,7 +49,6 @@ func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 
 	// Deserialize function names vector
 	functionNamesLen := deserializer.Uleb128()
-
 	functionNames := make([]string, functionNamesLen)
 	for i := range functionNamesLen {
 		functionName := deserializer.ReadString()
@@ -52,7 +57,6 @@ func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 
 	// Deserialize datas vector
 	datasLen := deserializer.Uleb128()
-
 	datas := make([][]byte, datasLen)
 	for i := range datasLen {
 		// ReadBytes() handles the length prefix automatically for vector<u8>
@@ -66,14 +70,19 @@ func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 			len(targets), len(moduleNames), len(functionNames), len(datas))
 	}
 
-	// Convert to Call structs
+	// If stateObjects vector is not empty and matches the length, assign each stateObj to the call
 	calls := make([]Call, len(targets))
 	for i := range targets {
+		stateObj := ""
+		if len(stateObjects) == len(targets) {
+			stateObj = stateObjects[i]
+		}
 		calls[i] = Call{
 			Target:       targets[i],
 			ModuleName:   moduleNames[i],
 			FunctionName: functionNames[i],
 			Data:         datas[i],
+			StateObj:     stateObj,
 		}
 	}
 

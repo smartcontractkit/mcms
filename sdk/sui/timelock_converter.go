@@ -58,6 +58,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	salt common.Hash,
 ) ([]types.Operation, common.Hash, error) {
 	// Extract transaction data from batch operation
+	stateObjs := make([]string, len(bop.Transactions))
 	targets := make([][]byte, len(bop.Transactions))
 	moduleNames := make([]string, len(bop.Transactions))
 	functionNames := make([]string, len(bop.Transactions))
@@ -76,6 +77,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 			return nil, common.Hash{}, fmt.Errorf("failed to parse target address %q: %w", tx.To, err)
 		}
 		targets[i] = targetAddr.Bytes()
+		stateObjs[i] = additionalFields.StateObj
 		moduleNames[i] = additionalFields.ModuleName
 		functionNames[i] = additionalFields.Function
 		datas[i] = tx.Data
@@ -97,7 +99,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		function = TimelockActionCancel
 	case types.TimelockActionBypass:
 		function = TimelockActionBypass
-		data, err = SerializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
+		data, err = SerializeTimelockBypasserExecuteBatch(stateObjs, targets, moduleNames, functionNames, datas)
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock bypasser execute batch: %w", err)
 		}
@@ -106,6 +108,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	// Create the transaction
+	// TODO: we could include the Timelock object address in the additional fields if needed
 	tx, err := NewTransaction(
 		"mcms", // can only be mcms
 		function,
