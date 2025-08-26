@@ -99,7 +99,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		function = TimelockActionCancel
 	case types.TimelockActionBypass:
 		function = TimelockActionBypass
-		data, err = SerializeTimelockBypasserExecuteBatch(stateObjs, targets, moduleNames, functionNames, datas)
+		data, err = SerializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock bypasser execute batch: %w", err)
 		}
@@ -108,14 +108,15 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	// Create the transaction
-	// TODO: we could include the Timelock object address in the additional fields if needed
-	tx, err := NewTransaction(
+	tx, err := NewTransactionWithManyStateObj(
+		stateObjs,
 		"mcms", // can only be mcms
 		function,
 		t.mcmsPackageId, // can only call itself
 		data,
 		"MCMS",
 		tags,
+		timelockAddress,
 	)
 	if err != nil {
 		return nil, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)

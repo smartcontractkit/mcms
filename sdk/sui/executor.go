@@ -115,15 +115,6 @@ func (e Executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("failed to parse To address %q: %w", op.Transaction.To, err)
 	}
 
-	// If it's a bypass, op.Transaction.Data includes the state obj, but the contract doesn't need it
-	data := op.Transaction.Data
-	if additionalFields.Function == TimelockActionBypass {
-		data, err = RemoveStateObjectsFromBypassData(op.Transaction.Data)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to remove state objects from bypass data: %w", err)
-		}
-	}
-
 	executeCall, err := e.mcms.Encoder().Execute(
 		stateObj,
 		clockObj,
@@ -134,7 +125,7 @@ func (e Executor) ExecuteOperation(
 		toAddress.Hex(), // Needs to always be MCMS package id
 		additionalFields.ModuleName,
 		additionalFields.Function, // Can only be one of the dispatch
-		data,                      // For timelock, data is the collection of every call we want to execute, including module, function and data
+		op.Transaction.Data,       // For timelock, data is the collection of every call we want to execute, including module, function and data
 		proofBytes,
 	)
 	if err != nil {
@@ -185,6 +176,18 @@ func (e Executor) ExecuteOperation(
 		calls, err := DeserializeTimelockBypasserExecuteBatch(op.Transaction.Data)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("failed to deserialize timelock bypasser execute batch: %w", err)
+		}
+		if len(calls) != len(additionalFields.InternalStateObjects) {
+			return types.TransactionResult{}, fmt.Errorf("mismatched call and state object count")
+		}
+		for i, call := range calls {
+			calls[i] = Call{
+				ModuleName:   call.ModuleName,
+				FunctionName: call.FunctionName,
+				StateObj:     additionalFields.InternalStateObjects[i],
+				Data:         call.Data,
+				Target:       call.Target,
+			}
 		}
 
 		if extendErr := AppendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj); extendErr != nil {
@@ -395,6 +398,7 @@ func AppendPTBFromExecutingCallbackParams(
 				return fmt.Errorf("failed to create MCMS EntryPoint contract: %w", err)
 			}
 
+			fmt.Println("STATE OBJECT", call.StateObj)
 			// Prepare the mcms_entrypoint call
 			entryPointCall, err := entryPointContract.Encoder().McmsEntrypointWithArgs(
 				call.StateObj,

@@ -24,9 +24,10 @@ var (
 
 // AdditionalFields represents the additional fields in Sui MCMS operations
 type AdditionalFields struct {
-	ModuleName string `json:"module_name"`
-	Function   string `json:"function"`
-	StateObj   string `json:"state_obj,omitempty"` // Needed for calling `mcms_entrypoint`
+	ModuleName           string   `json:"module_name"`
+	Function             string   `json:"function"`
+	StateObj             string   `json:"state_obj,omitempty"`              // Needed for calling `mcms_entrypoint`
+	InternalStateObjects []string `json:"internal_state_objects,omitempty"` // Needed for calling `mcms_entrypoint`. When batching calls, this will contain all state objects
 }
 
 var _ sdk.Encoder = &Encoder{}
@@ -163,17 +164,11 @@ func SerializeTimelockScheduleBatch(targets [][]byte,
 	})
 }
 
-func SerializeTimelockBypasserExecuteBatch(stateObjects []string, targets [][]byte,
+func SerializeTimelockBypasserExecuteBatch(targets [][]byte,
 	moduleNames []string,
 	functionNames []string,
 	datas [][]byte) ([]byte, error) {
 	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		// Serialize stateObjects vector
-		ser.Uleb128(uint32(len(stateObjects)))
-		for _, stateObj := range stateObjects {
-			ser.WriteString(stateObj)
-		}
-
 		// Serialize targets vector
 		//nolint:gosec
 		ser.Uleb128(uint32(len(targets)))

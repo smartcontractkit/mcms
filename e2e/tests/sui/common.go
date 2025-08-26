@@ -253,6 +253,24 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 
 	s.mcmsUserOwnerCapObj = mcmsUserOwnerCapObj
 	s.stateObj = userDataObj
+
+	// For executing, We need to register OwnerCap with MCMS
+	{
+		tx, err := s.mcmsUser.RegisterMcmsEntrypoint(
+			s.T().Context(),
+			&bind.CallOpts{
+				Signer:           s.signer,
+				WaitForExecution: true,
+			},
+			bind.Object{Id: s.mcmsUserOwnerCapObj},
+			bind.Object{Id: s.registryObj},
+			bind.Object{Id: s.stateObj},
+		)
+		s.Require().NoError(err, "Failed to register with MCMS")
+		s.Require().NotEmpty(tx, "Transaction should not be empty")
+
+		s.T().Logf("✅ Registered with MCMS in tx: %s", tx.Digest)
+	}
 }
 
 func Must[T any](t T, err error) T {

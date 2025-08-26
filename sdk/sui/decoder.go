@@ -24,13 +24,6 @@ type Call struct {
 func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 	deserializer := bcs.NewDeserializer(data)
 
-	// Deserialize stateObjects vector
-	stateObjectsLen := deserializer.Uleb128()
-	stateObjects := make([]string, stateObjectsLen)
-	for i := range stateObjectsLen {
-		stateObjects[i] = deserializer.ReadString()
-	}
-
 	// Deserialize targets vector
 	targetsLen := deserializer.Uleb128()
 	targets := make([][]byte, targetsLen)
@@ -73,16 +66,11 @@ func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 	// If stateObjects vector is not empty and matches the length, assign each stateObj to the call
 	calls := make([]Call, len(targets))
 	for i := range targets {
-		stateObj := ""
-		if len(stateObjects) == len(targets) {
-			stateObj = stateObjects[i]
-		}
 		calls[i] = Call{
 			Target:       targets[i],
 			ModuleName:   moduleNames[i],
 			FunctionName: functionNames[i],
 			Data:         datas[i],
-			StateObj:     stateObj,
 		}
 	}
 

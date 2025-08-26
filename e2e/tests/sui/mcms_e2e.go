@@ -30,16 +30,26 @@ func (s *MCMSUserTestSuite) SetupSuite() {
 // TestMCMSUserFunctionOne tests MCMS user function one
 func (s *MCMSUserTestSuite) Test_MCMSUser_Function_One() {
 	RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleProposer)
+	RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleBypasser)
 }
 
 func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRole) {
 	s.SuiTestSuite.T().Logf("Running MCMS user function one proposal with role: %v", role)
 
 	proposerConfig := CreateProposerConfig(3, 2)
+	bypasserConfig := CreateBypasserConfig(2, 2)
+
+	// Set config
 	{
 		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, role, s.SuiTestSuite.mcmsPackageId, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
 		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj, proposerConfig.Config, true)
+		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
+	}
+	{
+		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, suisdk.TimelockRoleBypasser, s.SuiTestSuite.mcmsPackageId, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
+		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
+		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj, bypasserConfig.Config, true)
 		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 
@@ -137,6 +147,8 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	if role == suisdk.TimelockRoleProposer {
 		keys = proposerConfig.Keys
 		quorum = proposerQuorum
+	} else if role == suisdk.TimelockRoleBypasser {
+		keys = bypasserConfig.Keys
 	} else {
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
@@ -202,48 +214,31 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		s.SuiTestSuite.Require().NoError(err)
 		s.SuiTestSuite.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
 	}
+	if role == suisdk.TimelockRoleProposer {
+		// If proposer, some time needs to pass before the proposal can be executed sleep for delay_5_secs
+		s.SuiTestSuite.T().Logf("Sleeping for %v before executing the proposal transfer...", delay_5_secs)
+		time.Sleep(delay_5_secs)
 
-	// Before executing, We need to register OwnerCap with MCMS
-	{
-		tx, err := s.SuiTestSuite.mcmsUser.RegisterMcmsEntrypoint(
-			s.SuiTestSuite.T().Context(),
-			&bind.CallOpts{
-				Signer:           s.SuiTestSuite.signer,
-				WaitForExecution: true,
-			},
-			bind.Object{Id: s.SuiTestSuite.mcmsUserOwnerCapObj},
-			bind.Object{Id: s.SuiTestSuite.registryObj},
-			bind.Object{Id: s.SuiTestSuite.stateObj},
+		timelockExecutor, err := suisdk.NewTimelockExecutor(
+			s.SuiTestSuite.client,
+			s.SuiTestSuite.signer,
+			s.SuiTestSuite.mcmsPackageId,
+			s.SuiTestSuite.registryObj,
+			s.SuiTestSuite.accountObj,
 		)
-		s.SuiTestSuite.Require().NoError(err, "Failed to register with MCMS")
-		s.SuiTestSuite.Require().NotEmpty(tx, "Transaction should not be empty")
 
-		s.SuiTestSuite.T().Logf("✅ Registered with MCMS in tx: %s", tx.Digest)
+		s.SuiTestSuite.Require().NoError(err, "creating timelock executor for Sui mcms contract")
+		timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
+			s.SuiTestSuite.chainSelector: timelockExecutor,
+		}
+		timelockExecutable, err := mcms.NewTimelockExecutable(s.SuiTestSuite.T().Context(), timelockProposal, timelockExecutors)
+		s.SuiTestSuite.Require().NoError(err)
+
+		s.SuiTestSuite.T().Logf("Executing the operation through timelock...")
+		txOutput, err := timelockExecutable.Execute(s.SuiTestSuite.T().Context(), 0, mcms.WithCallProxy(s.SuiTestSuite.timelockObj))
+		s.SuiTestSuite.Require().NoError(err)
+		s.SuiTestSuite.T().Logf("✅ Executed proposal transfer in tx: %s", txOutput.Hash)
 	}
-
-	// If proposer, some time needs to pass before the proposal can be executed sleep for delay_5_secs
-	s.SuiTestSuite.T().Logf("Sleeping for %v before executing the proposal transfer...", delay_5_secs)
-	time.Sleep(delay_5_secs)
-
-	timelockExecutor, err := suisdk.NewTimelockExecutor(
-		s.SuiTestSuite.client,
-		s.SuiTestSuite.signer,
-		s.SuiTestSuite.mcmsPackageId,
-		s.SuiTestSuite.registryObj,
-		s.SuiTestSuite.accountObj,
-	)
-
-	s.SuiTestSuite.Require().NoError(err, "creating timelock executor for Sui mcms contract")
-	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
-		s.SuiTestSuite.chainSelector: timelockExecutor,
-	}
-	timelockExecutable, err := mcms.NewTimelockExecutable(s.SuiTestSuite.T().Context(), timelockProposal, timelockExecutors)
-	s.SuiTestSuite.Require().NoError(err)
-
-	s.SuiTestSuite.T().Logf("Executing the operation through timelock...")
-	txOutput, err := timelockExecutable.Execute(s.SuiTestSuite.T().Context(), 0, mcms.WithCallProxy(s.SuiTestSuite.timelockObj))
-	s.SuiTestSuite.Require().NoError(err)
-	s.SuiTestSuite.T().Logf("✅ Executed proposal transfer in tx: %s", txOutput.Hash)
 
 	// Check op count got incremented by 1
 	postOpCount, err := inspector.GetOpCount(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)

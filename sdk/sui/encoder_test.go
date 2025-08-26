@@ -221,7 +221,6 @@ func TestSerializeTimelockBypasserExecuteBatch(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		stateObjects  []string
 		targets       [][]byte
 		moduleNames   []string
 		functionNames []string
@@ -230,7 +229,6 @@ func TestSerializeTimelockBypasserExecuteBatch(t *testing.T) {
 	}{
 		{
 			name:          "success - single call",
-			stateObjects:  []string{"state_obj_1"},
 			targets:       [][]byte{{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20}},
 			moduleNames:   []string{"test_module"},
 			functionNames: []string{"test_function"},
@@ -238,8 +236,7 @@ func TestSerializeTimelockBypasserExecuteBatch(t *testing.T) {
 			wantErr:       assert.NoError,
 		},
 		{
-			name:         "success - multiple calls",
-			stateObjects: []string{"state_obj_1", "state_obj_2"},
+			name: "success - multiple calls",
 			targets: [][]byte{
 				{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20},
 				{0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40},
@@ -250,8 +247,7 @@ func TestSerializeTimelockBypasserExecuteBatch(t *testing.T) {
 			wantErr:       assert.NoError,
 		},
 		{
-			name:          "success - empty state objects",
-			stateObjects:  []string{},
+			name:          "success - empty case",
 			targets:       [][]byte{{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20}},
 			moduleNames:   []string{"test_module"},
 			functionNames: []string{"test_function"},
@@ -263,7 +259,7 @@ func TestSerializeTimelockBypasserExecuteBatch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			data, err := SerializeTimelockBypasserExecuteBatch(tt.stateObjects, tt.targets, tt.moduleNames, tt.functionNames, tt.datas)
+			data, err := SerializeTimelockBypasserExecuteBatch(tt.targets, tt.moduleNames, tt.functionNames, tt.datas)
 			if !tt.wantErr(t, err, "SerializeTimelockBypasserExecuteBatch should not error") {
 				return
 			}
@@ -280,97 +276,8 @@ func TestSerializeTimelockBypasserExecuteBatch(t *testing.T) {
 					assert.Equal(t, tt.functionNames[i], call.FunctionName, "Function name should match")
 					assert.Equal(t, tt.datas[i], call.Data, "Data should match")
 
-					// Check state object assignment
-					if len(tt.stateObjects) == len(tt.targets) {
-						assert.Equal(t, tt.stateObjects[i], call.StateObj, "State object should match")
-					} else {
-						assert.Equal(t, "", call.StateObj, "State object should be empty when count doesn't match")
-					}
-				}
-			}
-		})
-	}
-}
-
-func TestRemoveStateObjectsFromBypassData(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name          string
-		stateObjects  []string
-		targets       [][]byte
-		moduleNames   []string
-		functionNames []string
-		datas         [][]byte
-		wantErr       assert.ErrorAssertionFunc
-	}{
-		{
-			name:          "success - single call with state object",
-			stateObjects:  []string{"state_obj_1"},
-			targets:       [][]byte{{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20}},
-			moduleNames:   []string{"test_module"},
-			functionNames: []string{"test_function"},
-			datas:         [][]byte{{0xaa, 0xbb, 0xcc}},
-			wantErr:       assert.NoError,
-		},
-		{
-			name:         "success - multiple calls with state objects",
-			stateObjects: []string{"state_obj_1", "state_obj_2"},
-			targets: [][]byte{
-				{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20},
-				{0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29, 0x2a, 0x2b, 0x2c, 0x2d, 0x2e, 0x2f, 0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3a, 0x3b, 0x3c, 0x3d, 0x3e, 0x3f, 0x40},
-			},
-			moduleNames:   []string{"module_1", "module_2"},
-			functionNames: []string{"function_1", "function_2"},
-			datas:         [][]byte{{0xaa, 0xbb}, {0xcc, 0xdd, 0xee}},
-			wantErr:       assert.NoError,
-		},
-		{
-			name:          "success - empty state objects",
-			stateObjects:  []string{},
-			targets:       [][]byte{{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20}},
-			moduleNames:   []string{"test_module"},
-			functionNames: []string{"test_function"},
-			datas:         [][]byte{{0xaa, 0xbb, 0xcc}},
-			wantErr:       assert.NoError,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			// First serialize with state objects
-			originalData, err := SerializeTimelockBypasserExecuteBatch(tt.stateObjects, tt.targets, tt.moduleNames, tt.functionNames, tt.datas)
-			assert.NoError(t, err, "Serialization should not fail")
-
-			// Remove state objects
-			dataWithoutStateObjects, err := RemoveStateObjectsFromBypassData(originalData)
-			if !tt.wantErr(t, err, "RemoveStateObjectsFromBypassData should not error") {
-				return
-			}
-
-			if err == nil {
-				// Verify the result can be deserialized (but state objects should be empty)
-				calls, deserializeErr := DeserializeTimelockBypasserExecuteBatchWithoutStateObjects(dataWithoutStateObjects)
-				assert.NoError(t, deserializeErr, "Should be able to deserialize data without state objects")
-				assert.Equal(t, len(tt.targets), len(calls), "Number of calls should match number of targets")
-
-				for i, call := range calls {
-					assert.Equal(t, tt.targets[i], call.Target, "Target should match")
-					assert.Equal(t, tt.moduleNames[i], call.ModuleName, "Module name should match")
-					assert.Equal(t, tt.functionNames[i], call.FunctionName, "Function name should match")
-					assert.Equal(t, tt.datas[i], call.Data, "Data should match")
-					assert.Equal(t, "", call.StateObj, "State object should be empty after removal")
-				}
-
-				// Verify the data without state objects is different from original (unless there were no state objects)
-				if len(tt.stateObjects) > 0 {
-					assert.NotEqual(t, originalData, dataWithoutStateObjects, "Data should be different after removing state objects")
-				} else {
-					// When there are no state objects, the RemoveStateObjectsFromBypassData function should
-					// still remove the empty vector prefix (0x00), so the data should be different
-					assert.NotEqual(t, originalData, dataWithoutStateObjects, "Data should be different after removing empty state objects vector")
+					// State object should always be empty since we don't serialize it anymore
+					assert.Equal(t, "", call.StateObj, "State object should be empty")
 				}
 			}
 		})
