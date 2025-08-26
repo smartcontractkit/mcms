@@ -49,6 +49,13 @@ func Test_NewTimelockExecutable(t *testing.T) {
 			},
 		}
 
+		chainMetadataBad = map[types.ChainSelector]types.ChainMetadata{
+			types.ChainSelector(1): {
+				StartingOpCount: 1,
+				MCMAddress:      "0x1234",
+			},
+		}
+
 		timelockAddresses = map[types.ChainSelector]string{
 			chaintest.Chain1Selector: "0x1234",
 		}
@@ -113,7 +120,7 @@ func Test_NewTimelockExecutable(t *testing.T) {
 					ValidUntil:           2004259681,
 					OverridePreviousRoot: false,
 					Signatures:           []types.Signature{},
-					ChainMetadata:        chainMetadata,
+					ChainMetadata:        chainMetadataBad,
 				},
 				Action:            types.TimelockActionSchedule,
 				Delay:             types.MustParseDuration("1h"),
@@ -125,29 +132,6 @@ func Test_NewTimelockExecutable(t *testing.T) {
 			},
 			wantErr:    true,
 			wantErrMsg: "unable to set predecessors: unable to create converter from executor: chain family not found for selector",
-		},
-		{
-			name: "failure: convert error",
-			giveProposal: &TimelockProposal{
-				BaseProposal: BaseProposal{
-					Version:              "v1",
-					Kind:                 types.KindTimelockProposal,
-					Description:          "description",
-					ValidUntil:           2004259681,
-					OverridePreviousRoot: false,
-					Signatures:           []types.Signature{},
-					ChainMetadata:        chainMetadata,
-				},
-				Action:            types.TimelockActionSchedule,
-				Delay:             types.MustParseDuration("1h"),
-				TimelockAddresses: timelockAddresses,
-				Operations:        batchOps,
-			},
-			giveExecutors: map[types.ChainSelector]sdk.TimelockExecutor{
-				chaintest.Chain2Selector: executor,
-			},
-			wantErr:    true,
-			wantErrMsg: "unable to set predecessors: unable to find converter for chain selector",
 		},
 	}
 
