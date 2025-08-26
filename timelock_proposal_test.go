@@ -11,6 +11,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+	solana2 "github.com/gagliardetto/solana-go"
 	"github.com/go-playground/validator/v10"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/solana"
 
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
@@ -1058,4 +1060,115 @@ func TestDeriveCancellationProposal(t *testing.T) {
 			}
 		})
 	}
+}
+
+func marshalAdditionalFields(t *testing.T, additionalFields solana.AdditionalFields) []byte {
+	t.Helper()
+	marshalledBytes, err := json.Marshal(additionalFields)
+	require.NoError(t, err)
+
+	return marshalledBytes
+}
+
+func Test_TimelockProposal_ConvertedOperationCounts(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	validChainMetadata := map[types.ChainSelector]types.ChainMetadata{
+		chaintest.Chain1Selector: {
+			StartingOpCount: 1,
+			MCMAddress:      "0x123",
+		},
+		chaintest.Chain2Selector: {
+			StartingOpCount: 1,
+			MCMAddress:      "0x456",
+		},
+		chaintest.Chain4Selector: {
+			StartingOpCount: 1,
+			MCMAddress:      solana.ContractAddress(solana2.SystemProgramID, solana.PDASeed{}),
+			AdditionalFields: marshalAdditionalFields(t, solana.AdditionalFields{
+				Accounts: []*solana2.AccountMeta{
+					{PublicKey: solana2.SystemProgramID, IsWritable: true},
+					{PublicKey: solana2.SystemProgramID},
+					{PublicKey: solana2.SystemProgramID},
+					{PublicKey: solana2.SystemProgramID, IsWritable: true},
+				},
+			}),
+		},
+	}
+
+	validTimelockAddresses := map[types.ChainSelector]string{
+		chaintest.Chain1Selector: "0x123",
+		chaintest.Chain2Selector: "0x456",
+		chaintest.Chain4Selector: solana.ContractAddress(solana2.SystemProgramID, solana.PDASeed{}),
+	}
+
+	tx := func(data string) types.Transaction {
+		return types.Transaction{
+			To:               "0x123",
+			AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
+			Data:             common.Hex2Bytes(data),
+			OperationMetadata: types.OperationMetadata{
+				ContractType: "Sample contract",
+				Tags:         []string{"tag1"},
+			},
+		}
+	}
+	solanaTx, err := solana.NewTransaction(solana2.SystemProgramID.String(),
+		[]byte{},
+		big.NewInt(0),
+		[]*solana2.AccountMeta{{
+			PublicKey:  solana2.SystemProgramID,
+			IsSigner:   false,
+			IsWritable: true,
+		}},
+		"Token",
+		[]string{"minting-test"},
+	)
+	require.NoError(t, err)
+
+	proposal := TimelockProposal{
+		BaseProposal: BaseProposal{
+			Version:              "v1",
+			Kind:                 types.KindTimelockProposal,
+			Description:          "description",
+			ValidUntil:           2004259681,
+			OverridePreviousRoot: false,
+			Signatures:           []types.Signature{},
+			ChainMetadata:        validChainMetadata,
+		},
+		Action:            types.TimelockActionSchedule,
+		Delay:             types.MustParseDuration("1h"),
+		TimelockAddresses: validTimelockAddresses,
+		Operations: []types.BatchOperation{
+			{
+				ChainSelector: chaintest.Chain1Selector,
+				Transactions:  []types.Transaction{tx("0x")},
+			},
+			{
+				ChainSelector: chaintest.Chain2Selector,
+				Transactions:  []types.Transaction{tx("0x1")},
+			},
+			{
+				ChainSelector: chaintest.Chain2Selector,
+				Transactions:  []types.Transaction{tx("0x2")},
+			},
+			{
+				ChainSelector: chaintest.Chain4Selector,
+				Transactions:  []types.Transaction{solanaTx},
+			},
+		},
+	}
+
+	counts, err := proposal.ConvertedOperationCounts(ctx)
+	require.NoError(t, err)
+
+	// After conversion, we expect one converted operation for Chain1
+	// and two converted operations for Chain2 (same as the number of
+	// batch operations targeting each chain in this EVM-only setup).
+	require.Len(t, counts, 3)
+	assert.Equal(t, uint64(1), counts[chaintest.Chain1Selector])
+	assert.Equal(t, uint64(2), counts[chaintest.Chain2Selector])
+	assert.Equal(t, uint64(4), counts[chaintest.Chain4Selector])
 }
