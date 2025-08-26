@@ -23,6 +23,11 @@ var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
 type TimelockConverter struct{}
 
+// NewTimelockConverter creates a new instance of the TimelockConverter
+func NewTimelockConverter() *TimelockConverter {
+	return &TimelockConverter{}
+}
+
 func (t TimelockConverter) ConvertBatchToChainOperations(
 	ctx context.Context,
 	metadata types.ChainMetadata,
