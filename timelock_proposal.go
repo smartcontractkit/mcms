@@ -317,7 +317,7 @@ func (m *TimelockProposal) ConvertedOperationCounts(
 	// Convert the proposal with the provided converters
 	prop, _, err := m.Convert(ctx, converters)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to convert proposal: %w", err)
 	}
 
 	// Count converted ops per chain
