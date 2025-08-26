@@ -1128,38 +1128,34 @@ func Test_TimelockProposal_ConvertedOperationCounts(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	proposal := TimelockProposal{
-		BaseProposal: BaseProposal{
-			Version:              "v1",
-			Kind:                 types.KindTimelockProposal,
-			Description:          "description",
-			ValidUntil:           2004259681,
-			OverridePreviousRoot: false,
-			Signatures:           []types.Signature{},
-			ChainMetadata:        validChainMetadata,
-		},
-		Action:            types.TimelockActionSchedule,
-		Delay:             types.MustParseDuration("1h"),
-		TimelockAddresses: validTimelockAddresses,
-		Operations: []types.BatchOperation{
-			{
-				ChainSelector: chaintest.Chain1Selector,
-				Transactions:  []types.Transaction{tx("0x")},
-			},
-			{
-				ChainSelector: chaintest.Chain2Selector,
-				Transactions:  []types.Transaction{tx("0x1")},
-			},
-			{
-				ChainSelector: chaintest.Chain2Selector,
-				Transactions:  []types.Transaction{tx("0x2")},
-			},
-			{
-				ChainSelector: chaintest.Chain4Selector,
-				Transactions:  []types.Transaction{solanaTx},
-			},
-		},
-	}
+	proposal, err := NewTimelockProposalBuilder().
+		SetVersion("v1").
+		SetDescription("description").
+		SetValidUntil(2004259681).
+		SetOverridePreviousRoot(false).
+		SetChainMetadata(validChainMetadata).
+		SetAction(types.TimelockActionSchedule).
+		SetDelay(types.MustParseDuration("1h")).
+		SetTimelockAddresses(validTimelockAddresses).
+		AddOperation(types.BatchOperation{
+			ChainSelector: chaintest.Chain1Selector,
+			Transactions:  []types.Transaction{tx("0x")},
+		}).
+		AddOperation(types.BatchOperation{
+			ChainSelector: chaintest.Chain2Selector,
+			Transactions:  []types.Transaction{tx("0x1")},
+		}).
+		AddOperation(types.BatchOperation{
+			ChainSelector: chaintest.Chain2Selector,
+			Transactions:  []types.Transaction{tx("0x2")},
+		}).
+		AddOperation(types.BatchOperation{
+			ChainSelector: chaintest.Chain4Selector,
+			Transactions:  []types.Transaction{solanaTx},
+		}).
+		Build()
+
+	require.NoError(t, err)
 
 	counts, err := proposal.OperationCounts(ctx)
 	require.NoError(t, err)
