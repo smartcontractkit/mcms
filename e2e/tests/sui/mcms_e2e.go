@@ -36,8 +36,12 @@ func (s *MCMSUserTestSuite) Test_MCMSUser_Function_One() {
 func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRole) {
 	s.SuiTestSuite.T().Logf("Running MCMS user function one proposal with role: %v", role)
 
-	proposerConfig := CreateProposerConfig(3, 2)
-	bypasserConfig := CreateBypasserConfig(2, 2)
+	bypasserCount := 2
+	bypasserQuorum := 2
+	bypasserConfig := CreateBypasserConfig(bypasserCount, uint8(bypasserQuorum))
+	proposerCount := 3
+	proposerQuorum := 2
+	proposerConfig := CreateProposerConfig(proposerCount, uint8(proposerQuorum))
 
 	// Set config
 	{
@@ -149,6 +153,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		quorum = proposerQuorum
 	} else if role == suisdk.TimelockRoleBypasser {
 		keys = bypasserConfig.Keys
+		quorum = bypasserQuorum
 	} else {
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
