@@ -300,9 +300,9 @@ func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sd
 	return converters, nil
 }
 
-// ConvertedOperationCounts returns per-chain counts *after* conversion for all chains in
+// OperationCounts returns per-chain counts *after* conversion for all chains in
 // the proposal, as some chains have different operation counts after conversion.
-func (m *TimelockProposal) ConvertedOperationCounts(
+func (m *TimelockProposal) OperationCounts(
 	ctx context.Context,
 
 ) (map[types.ChainSelector]uint64, error) {

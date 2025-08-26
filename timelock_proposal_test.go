@@ -1161,7 +1161,7 @@ func Test_TimelockProposal_ConvertedOperationCounts(t *testing.T) {
 		},
 	}
 
-	counts, err := proposal.ConvertedOperationCounts(ctx)
+	counts, err := proposal.OperationCounts(ctx)
 	require.NoError(t, err)
 
 	// After conversion, we expect one converted operation for Chain1
