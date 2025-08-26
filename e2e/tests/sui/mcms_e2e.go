@@ -59,7 +59,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	)
 	s.SuiTestSuite.Require().NoError(err)
 
-	// TODO: We need to construct the mcms tx using the bindings, also the serialization should come from them
+	// TODO: We should construct the mcms tx data using the bindings
 	callBytes, err := s.serializeFunctionOneData(arg1, arg2)
 	s.SuiTestSuite.Require().NoError(err, "Failed to serialize function one data")
 
