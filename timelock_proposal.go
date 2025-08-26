@@ -311,7 +311,7 @@ func (m *TimelockProposal) ConvertedOperationCounts(
 
 	converters, err := m.buildTimelockConverters()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to build timelock converters: %w", err)
 	}
 
 	// Convert the proposal with the provided converters
