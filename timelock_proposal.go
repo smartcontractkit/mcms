@@ -296,6 +296,7 @@ func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sd
 
 		converters[chain] = converter
 	}
+
 	return converters, nil
 }
 
@@ -309,6 +310,9 @@ func (m *TimelockProposal) ConvertedOperationCounts(
 	out := m.TransactionCounts()
 
 	converters, err := m.buildTimelockConverters()
+	if err != nil {
+		return nil, err
+	}
 
 	// Convert the proposal with the provided converters
 	prop, _, err := m.Convert(ctx, converters)
@@ -328,6 +332,7 @@ func (m *TimelockProposal) ConvertedOperationCounts(
 			out[sel] = n
 		}
 	}
+
 	return out, nil
 }
 
