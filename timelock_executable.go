@@ -262,7 +262,7 @@ func (t *TimelockExecutable) setPredecessors(ctx context.Context) error {
 	if len(t.predecessors) == 0 && len(t.executors) > 0 {
 		var err error
 		var converters = make(map[types.ChainSelector]sdk.TimelockConverter)
-		for chainSelector := range t.executors {
+		for chainSelector := range t.proposal.ChainMetadata {
 			converters[chainSelector], err = newTimelockConverter(chainSelector)
 			if err != nil {
 				return fmt.Errorf("unable to create converter from executor: %w", err)
