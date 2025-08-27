@@ -1562,7 +1562,7 @@ func Test_TimelockProposal_Merge(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			merged, err := tt.proposal1.Merge(tt.proposal2)
+			merged, err := tt.proposal1.Merge(t.Context(), tt.proposal2)
 			if tt.wantErr != "" {
 				require.ErrorContains(t, err, tt.wantErr)
 			} else {

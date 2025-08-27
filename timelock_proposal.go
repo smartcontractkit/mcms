@@ -336,7 +336,7 @@ func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.Chain
 }
 
 // Merge merges the given timelock proposal with the current one
-func (m *TimelockProposal) Merge(other *TimelockProposal) (*TimelockProposal, error) {
+func (m *TimelockProposal) Merge(_ context.Context, other *TimelockProposal) (*TimelockProposal, error) {
 	if m.Version != other.Version {
 		return nil, errors.New("cannot merge proposals with different versions")
 	}
@@ -348,7 +348,7 @@ func (m *TimelockProposal) Merge(other *TimelockProposal) (*TimelockProposal, er
 	}
 
 	if m.OverridePreviousRoot || other.OverridePreviousRoot {
-		// FIXME: log warning?; return error
+		// FIXME: log warning when DX-1650 is done
 		m.OverridePreviousRoot = true
 	}
 
