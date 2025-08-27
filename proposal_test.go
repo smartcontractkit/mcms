@@ -252,8 +252,7 @@ func Test_WriteProposal(t *testing.T) {
 				"chainMetadata": {
 					"3379446385462418246": {
 						"mcmAddress": "",
-						"startingOpCount": 0,
-						"additionalFields": null
+						"startingOpCount": 0
 					}
 				},
 				"operations": [

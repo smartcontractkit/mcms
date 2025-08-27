@@ -2,4 +2,4 @@
 "@smartcontractkit/mcms": minor
 ---
 
-upgrade golangci lint
+feat: implement TimelockProposal.Merge()

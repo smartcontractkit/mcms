@@ -136,12 +136,12 @@ A list of cryptographic proposal signatures of the signers, where each element r
 **chainMetadata** object<br/>
 Maps the chain-specific configuration for each blockchain involved in the proposal. The key of the object is the chain selector ID, and the value is the metadata object. An entry is required for every chain referenced in the proposal's operations.
 
-For more details about the chain metadata, see [Chain Metadata](/key-concepts/operations-and-chain-metadata.md#chain-metadata).
+For more details about the chain metadata, see [Chain Metadata](./chain-metadata.md).
 
 ---
 
 **operations** array of objects<br/>
 A list of operations to be executed across chains. Each operation contains a batch of transaction to be executed atomically. Each transaction in the batch has the same fields as a regular transaction (e.g., `to`, `data`, `value`).
 
-For more details about the operations, see [Operations](/key-concepts/operations-and-chain-metadata.md#timelock-proposal-operations).
+For more details about the operations, see [Operations](./operations.md).
 <!-- panels:end -->

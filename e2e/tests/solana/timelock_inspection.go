@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/gagliardetto/solana-go"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
 
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
@@ -22,6 +22,7 @@ var testPDASeedTimelockIsOperations = [32]byte{'t', 'e', 's', 't', '-', 't', 'i'
 var testPDASeedTimelockIsOperationsPending = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'p', 'e', 'n', 'd'}
 var testPDASeedTimelockIsOperationsReady = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'r', 'e', 'a', 'd', 'y'}
 var testPDASeedTimelockIsOperationsDone = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'd', 'o', 'n', 'e'}
+var testPDASeedTimelockMinDelay = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'm', 'i', 'n', 'd', 'e', 'l', 'a', 'y'}
 
 func (s *SolanaTestSuite) TestGetProposers() {
 	s.SetupTimelock(testPDASeedTimelockGetProposers, 1*time.Second)
@@ -156,6 +157,18 @@ func (s *SolanaTestSuite) TestIsOperationDone() {
 
 	s.Require().NoError(err, "Failed to check if operation is done")
 	s.Require().True(operation, "Operation should be done")
+}
+
+func (s *SolanaTestSuite) TestGetMinDelay() {
+	ctx := context.Background()
+	minDelay := 1 * time.Second
+	s.SetupTimelock(testPDASeedTimelockMinDelay, minDelay)
+
+	inspector := solanasdk.NewTimelockInspector(s.SolanaClient)
+	delay, err := inspector.GetMinDelay(ctx, solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockMinDelay))
+
+	s.Require().NoError(err, "Failed to query min delay")
+	s.Require().Equal(delay, uint64(minDelay.Seconds()), "Min delay should match the configured value")
 }
 
 func (s *SolanaTestSuite) createOperation(timelockID [32]byte) timelockutils.Operation {

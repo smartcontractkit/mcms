@@ -7,8 +7,8 @@ import (
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/access_controller"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/access_controller"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
@@ -557,6 +557,54 @@ func TestTimelockInspector_getRoleAccessController(t *testing.T) {
 			t.Parallel()
 
 			got, err := getRoleAccessController(*config, tt.role)
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestTimelockInspector_GetMinDelay(t *testing.T) {
+	t.Parallel()
+
+	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
+	require.NoError(t, err)
+
+	cfg := createTimelockConfig(t)
+	cfg.MinDelay = 123
+
+	tests := []struct {
+		name    string
+		setup   func(*mocks.JSONRPCClient)
+		want    uint64
+		wantErr string
+	}{
+		{
+			name: "success",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, cfg, nil)
+			},
+			want: 123,
+		},
+		{
+			name: "error: get timelock config account info rpc error",
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockGetAccountInfo(t, mockJSONRPCClient, timelockConfigPDA, cfg, errors.New("rpc error"))
+			},
+			wantErr: "rpc error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			inspector, jsonRPCClient := newTestTimelockInspector(t)
+			tt.setup(jsonRPCClient)
+
+			got, err := inspector.GetMinDelay(context.Background(), ContractAddress(testTimelockProgramID, testPDASeed))
 			if tt.wantErr != "" {
 				require.EqualError(t, err, tt.wantErr)
 			} else {

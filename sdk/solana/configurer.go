@@ -9,7 +9,7 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
+	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"

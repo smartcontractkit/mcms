@@ -1,19 +1,21 @@
 {
   "name": "@smartcontractkit/mcms",
-  "version": "0.20.2",
+  "version": "0.21.2",
   "description": "Tools/Libraries to Deploy/Manage/Interact with MCMS",
   "private": true,
   "scripts": {
     "ci:changeset:publish": "pnpm changeset publish",
     "ci:changeset:version": "pnpm changeset version && pnpm version --patch",
-    "docs": "docsify serve docs"
+    "docs:start": "cd docs && pnpm start",
+    "docs:build": "cd docs && pnpm build",
+    "docs:serve": "cd docs && pnpm serve",
+    "docs:deploy": "cd docs && pnpm deploy"
   },
   "author": "@smartcontractkit",
   "devDependencies": {
     "@changesets/changelog-github": "^0.5.0",
     "@changesets/cli": "~2.29.4",
-    "changeset": "^0.2.6",
-    "docsify-cli": "^4.4.4"
+    "changeset": "^0.2.6"
   },
   "repository": "https://github.com/smartcontractkit/mcms"
 }

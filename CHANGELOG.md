@@ -1,5 +1,33 @@
 # @smartcontractkit/mcms
 
+## 0.21.2
+
+### Patch Changes
+
+- [#434](https://github.com/smartcontractkit/mcms/pull/434) [`1e4cc68`](https://github.com/smartcontractkit/mcms/commit/1e4cc687f14d692e5c952149ecaeb4197a1ad8db) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: check "Meta" attribute when processing a transaction result
+
+## 0.21.1
+
+### Patch Changes
+
+- [#430](https://github.com/smartcontractkit/mcms/pull/430) [`38e8ca4`](https://github.com/smartcontractkit/mcms/commit/38e8ca450284adbc79be5f41cce84d4348ff0d15) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump chainlink-ccip/chains/solana to 7f8a0f40
+
+## 0.21.0
+
+### Minor Changes
+
+- [#413](https://github.com/smartcontractkit/mcms/pull/413) [`fe08b88`](https://github.com/smartcontractkit/mcms/commit/fe08b8829cfd7818e04b808f08e5c9d0290b5da8) Thanks [@ecPablo](https://github.com/ecPablo)! - Add labels field to proposal base type
+
+- [#402](https://github.com/smartcontractkit/mcms/pull/402) [`6d53434`](https://github.com/smartcontractkit/mcms/commit/6d53434bdce48425dbdaa47a221a9aabd467a9e6) Thanks [@ecPablo](https://github.com/ecPablo)! - Add AllSigners() function to Config struct.
+
+- [#404](https://github.com/smartcontractkit/mcms/pull/404) [`0d1d460`](https://github.com/smartcontractkit/mcms/commit/0d1d4607524fb8a47e3190e8c78811064a58fa68) Thanks [@ecPablo](https://github.com/ecPablo)! - upgrade golangci lint
+
+### Patch Changes
+
+- [#403](https://github.com/smartcontractkit/mcms/pull/403) [`1dbe8a3`](https://github.com/smartcontractkit/mcms/commit/1dbe8a38aa6b31dbdd2838dbf5d9f850da85320c) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore(solana): validate AccessController config multiple accounts
+
+- [#409](https://github.com/smartcontractkit/mcms/pull/409) [`2d2b9ea`](https://github.com/smartcontractkit/mcms/commit/2d2b9ea5c7784a9f49aa5bd399fc860fe58b9f4b) Thanks [@akuzni2](https://github.com/akuzni2)! - Add a getter method to get signer address
+
 ## 0.20.2
 
 ### Patch Changes

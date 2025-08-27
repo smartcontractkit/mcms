@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/gagliardetto/solana-go"
-	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/external_program_cpi_stub"
+	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/external_program_cpi_stub"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/types"
