@@ -4,15 +4,20 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -106,6 +111,7 @@ func (m *TimelockProposal) Validate() error {
 
 	return nil
 }
+
 func replaceChainMetadataWithAddresses(p *TimelockProposal, addresses map[types.ChainSelector]types.ChainMetadata) error {
 	for chain := range p.ChainMetadata {
 		newMeta, ok := addresses[chain]
@@ -267,6 +273,152 @@ func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, 
 	}
 
 	return decodedOps, nil
+}
+
+// buildTimelockConverters builds a map of chain selectors to their corresponding TimelockConverter implementations.
+func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sdk.TimelockConverter, error) {
+	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
+	for chain := range m.ChainMetadata {
+		fam, err := types.GetChainSelectorFamily(chain)
+		if err != nil {
+			return nil, fmt.Errorf("error getting chain family: %w", err)
+		}
+
+		var converter sdk.TimelockConverter
+		switch fam {
+		case chain_selectors.FamilyEVM:
+			converter = evm.NewTimelockConverter()
+		case chain_selectors.FamilySolana:
+			converter = solana.NewTimelockConverter()
+		case chain_selectors.FamilyAptos:
+			converter = aptos.NewTimelockConverter()
+		default:
+			return nil, fmt.Errorf("unsupported chain family %s", fam)
+		}
+
+		converters[chain] = converter
+	}
+
+	return converters, nil
+}
+
+// OperationCounts returns per-chain counts *after* conversion for all chains in
+// the proposal, as some chains have different operation counts after conversion.
+func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.ChainSelector]uint64, error) {
+	// Start with raw counts (works for all non-converted chains)
+	out := m.TransactionCounts()
+
+	converters, err := m.buildTimelockConverters()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build timelock converters: %w", err)
+	}
+
+	// Convert the proposal with the provided converters
+	prop, _, err := m.Convert(ctx, converters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert proposal: %w", err)
+	}
+
+	// Count converted ops per chain
+	convCounts := make(map[types.ChainSelector]uint64)
+	for _, op := range prop.Operations {
+		convCounts[op.ChainSelector]++
+	}
+
+	// Overlay converted counts only for chains we attempted to convert
+	for sel := range converters {
+		if n, ok := convCounts[sel]; ok {
+			out[sel] = n
+		}
+	}
+
+	return out, nil
+}
+
+// Merge merges the given timelock proposal with the current one
+func (m *TimelockProposal) Merge(_ context.Context, other *TimelockProposal) (*TimelockProposal, error) {
+	if m.Version != other.Version {
+		return nil, errors.New("cannot merge proposals with different versions")
+	}
+	if m.Kind != other.Kind {
+		return nil, errors.New("cannot merge proposals with different kinds")
+	}
+	if m.Action != other.Action {
+		return nil, errors.New("cannot merge proposals with different actions")
+	}
+
+	if m.OverridePreviousRoot || other.OverridePreviousRoot {
+		// FIXME: log warning when DX-1650 is done
+		m.OverridePreviousRoot = true
+	}
+
+	if other.Description != "" {
+		if m.Description != "" {
+			m.Description += "\n"
+		}
+		m.Description += other.Description
+	}
+
+	signatureMap := map[types.Signature]struct{}{}
+	for _, signature := range m.Signatures {
+		signatureMap[signature] = struct{}{}
+	}
+	for _, signature := range other.Signatures {
+		_, exists := signatureMap[signature]
+		if !exists {
+			m.Signatures = append(m.Signatures, signature)
+		}
+	}
+
+	var err error
+	m.Metadata, err = mergeMetadata(m.Metadata, other.Metadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge proposal metadata: %w", err)
+	}
+
+	for chainSelector, otherMetadata := range other.ChainMetadata {
+		thisMetadata, exists := m.ChainMetadata[chainSelector]
+		if !exists {
+			m.ChainMetadata[chainSelector] = otherMetadata
+			continue
+		}
+
+		mergedMetadata, err := thisMetadata.Merge(otherMetadata)
+		if err != nil {
+			return nil, fmt.Errorf("failed to merge metadata for chain %v: %w", chainSelector, err)
+		}
+
+		m.ChainMetadata[chainSelector] = mergedMetadata
+	}
+
+	m.ValidUntil = min(m.ValidUntil, other.ValidUntil)
+	m.Delay = types.NewDuration(time.Duration(max(m.Delay.Nanoseconds(), other.Delay.Nanoseconds())))
+
+	for chainSelector, otherTimelockAddress := range other.TimelockAddresses {
+		currentAddress, exists := m.TimelockAddresses[chainSelector]
+		if exists {
+			if currentAddress != otherTimelockAddress {
+				return nil, fmt.Errorf("cannot merge proposals with different timelock addresses (chain %v): %q vs %q",
+					chainSelector, currentAddress, otherTimelockAddress)
+			}
+		} else {
+			m.TimelockAddresses[chainSelector] = otherTimelockAddress
+		}
+	}
+
+	m.Operations = append(m.Operations, other.Operations...)
+
+	if other.SaltOverride != nil {
+		if m.SaltOverride == nil {
+			m.SaltOverride = other.SaltOverride
+		} else {
+			for i := range m.SaltOverride {
+				m.SaltOverride[i] ^= other.SaltOverride[i]
+			}
+		}
+	}
+
+	return m, nil
 }
 
 // timeLockProposalValidateBasic basic validation for an MCMS proposal
