@@ -20,6 +20,16 @@ type TimelockInspector struct {
 	bindingFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms.MCMS
 }
 
+func (tm TimelockInspector) GetMinDelay(ctx context.Context, address string) (uint64, error) {
+	mcmsAddress, err := hexToAddress(address)
+	if err != nil {
+		return 0, fmt.Errorf("failed to parse MCMS address %q: %w", mcmsAddress, err)
+	}
+	mcmsBinding := tm.bindingFn(mcmsAddress, tm.client)
+
+	return mcmsBinding.MCMS().TimelockMinDelay(nil)
+}
+
 // NewTimelockInspector creates a new TimelockInspector
 func NewTimelockInspector(client aptos.AptosRpcClient) *TimelockInspector {
 	return &TimelockInspector{

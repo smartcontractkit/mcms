@@ -262,6 +262,63 @@ func (_c *TimelockExecutor_GetExecutors_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// GetMinDelay provides a mock function with given fields: ctx, address
+func (_m *TimelockExecutor) GetMinDelay(ctx context.Context, address string) (uint64, error) {
+	ret := _m.Called(ctx, address)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMinDelay")
+	}
+
+	var r0 uint64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (uint64, error)); ok {
+		return rf(ctx, address)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) uint64); ok {
+		r0 = rf(ctx, address)
+	} else {
+		r0 = ret.Get(0).(uint64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, address)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// TimelockExecutor_GetMinDelay_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMinDelay'
+type TimelockExecutor_GetMinDelay_Call struct {
+	*mock.Call
+}
+
+// GetMinDelay is a helper method to define mock.On call
+//   - ctx context.Context
+//   - address string
+func (_e *TimelockExecutor_Expecter) GetMinDelay(ctx interface{}, address interface{}) *TimelockExecutor_GetMinDelay_Call {
+	return &TimelockExecutor_GetMinDelay_Call{Call: _e.mock.On("GetMinDelay", ctx, address)}
+}
+
+func (_c *TimelockExecutor_GetMinDelay_Call) Run(run func(ctx context.Context, address string)) *TimelockExecutor_GetMinDelay_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *TimelockExecutor_GetMinDelay_Call) Return(_a0 uint64, _a1 error) *TimelockExecutor_GetMinDelay_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *TimelockExecutor_GetMinDelay_Call) RunAndReturn(run func(context.Context, string) (uint64, error)) *TimelockExecutor_GetMinDelay_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetProposers provides a mock function with given fields: ctx, address
 func (_m *TimelockExecutor) GetProposers(ctx context.Context, address string) ([]string, error) {
 	ret := _m.Called(ctx, address)
