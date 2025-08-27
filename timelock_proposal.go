@@ -10,9 +10,13 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -267,6 +271,69 @@ func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, 
 	}
 
 	return decodedOps, nil
+}
+
+// buildTimelockConverters builds a map of chain selectors to their corresponding TimelockConverter implementations.
+func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sdk.TimelockConverter, error) {
+	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
+	for chain := range m.ChainMetadata {
+		fam, err := types.GetChainSelectorFamily(chain)
+		if err != nil {
+			return nil, fmt.Errorf("error getting chain family: %w", err)
+		}
+
+		var converter sdk.TimelockConverter
+		switch fam {
+		case chain_selectors.FamilyEVM:
+			converter = evm.NewTimelockConverter()
+		case chain_selectors.FamilySolana:
+			converter = solana.NewTimelockConverter()
+		case chain_selectors.FamilyAptos:
+			converter = aptos.NewTimelockConverter()
+		default:
+			return nil, fmt.Errorf("unsupported chain family %s", fam)
+		}
+
+		converters[chain] = converter
+	}
+
+	return converters, nil
+}
+
+// OperationCounts returns per-chain counts *after* conversion for all chains in
+// the proposal, as some chains have different operation counts after conversion.
+func (m *TimelockProposal) OperationCounts(
+	ctx context.Context,
+
+) (map[types.ChainSelector]uint64, error) {
+	// Start with raw counts (works for all non-converted chains)
+	out := m.TransactionCounts()
+
+	converters, err := m.buildTimelockConverters()
+	if err != nil {
+		return nil, fmt.Errorf("failed to build timelock converters: %w", err)
+	}
+
+	// Convert the proposal with the provided converters
+	prop, _, err := m.Convert(ctx, converters)
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert proposal: %w", err)
+	}
+
+	// Count converted ops per chain
+	convCounts := make(map[types.ChainSelector]uint64)
+	for _, op := range prop.Operations {
+		convCounts[op.ChainSelector]++
+	}
+
+	// Overlay converted counts only for chains we attempted to convert
+	for sel := range converters {
+		if n, ok := convCounts[sel]; ok {
+			out[sel] = n
+		}
+	}
+
+	return out, nil
 }
 
 // timeLockProposalValidateBasic basic validation for an MCMS proposal
