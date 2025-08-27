@@ -29,6 +29,12 @@ func (b *BaseProposalBuilder[T]) AddSignature(signature types.Signature) T {
 	return b.builder
 }
 
+// SetSignatures sets the list of signature to the BaseProposal.
+func (b *BaseProposalBuilder[T]) SetSignatures(signatures []types.Signature) T {
+	b.baseProposal.Signatures = signatures
+	return b.builder
+}
+
 // SetOverridePreviousRoot sets the overridePreviousRoot field of the BaseProposal.
 func (b *BaseProposalBuilder[T]) SetOverridePreviousRoot(override bool) T {
 	b.baseProposal.OverridePreviousRoot = override

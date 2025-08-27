@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/binary"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"time"
@@ -110,6 +111,7 @@ func (m *TimelockProposal) Validate() error {
 
 	return nil
 }
+
 func replaceChainMetadataWithAddresses(p *TimelockProposal, addresses map[types.ChainSelector]types.ChainMetadata) error {
 	for chain := range p.ChainMetadata {
 		newMeta, ok := addresses[chain]
@@ -302,10 +304,7 @@ func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sd
 
 // OperationCounts returns per-chain counts *after* conversion for all chains in
 // the proposal, as some chains have different operation counts after conversion.
-func (m *TimelockProposal) OperationCounts(
-	ctx context.Context,
-
-) (map[types.ChainSelector]uint64, error) {
+func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.ChainSelector]uint64, error) {
 	// Start with raw counts (works for all non-converted chains)
 	out := m.TransactionCounts()
 
@@ -334,6 +333,92 @@ func (m *TimelockProposal) OperationCounts(
 	}
 
 	return out, nil
+}
+
+// Merge merges the given timelock proposal with the current one
+func (m *TimelockProposal) Merge(_ context.Context, other *TimelockProposal) (*TimelockProposal, error) {
+	if m.Version != other.Version {
+		return nil, errors.New("cannot merge proposals with different versions")
+	}
+	if m.Kind != other.Kind {
+		return nil, errors.New("cannot merge proposals with different kinds")
+	}
+	if m.Action != other.Action {
+		return nil, errors.New("cannot merge proposals with different actions")
+	}
+
+	if m.OverridePreviousRoot || other.OverridePreviousRoot {
+		// FIXME: log warning when DX-1650 is done
+		m.OverridePreviousRoot = true
+	}
+
+	if other.Description != "" {
+		if m.Description != "" {
+			m.Description += "\n"
+		}
+		m.Description += other.Description
+	}
+
+	signatureMap := map[types.Signature]struct{}{}
+	for _, signature := range m.Signatures {
+		signatureMap[signature] = struct{}{}
+	}
+	for _, signature := range other.Signatures {
+		_, exists := signatureMap[signature]
+		if !exists {
+			m.Signatures = append(m.Signatures, signature)
+		}
+	}
+
+	var err error
+	m.Metadata, err = mergeMetadata(m.Metadata, other.Metadata)
+	if err != nil {
+		return nil, fmt.Errorf("failed to merge proposal metadata: %w", err)
+	}
+
+	for chainSelector, otherMetadata := range other.ChainMetadata {
+		thisMetadata, exists := m.ChainMetadata[chainSelector]
+		if !exists {
+			m.ChainMetadata[chainSelector] = otherMetadata
+			continue
+		}
+
+		mergedMetadata, err := thisMetadata.Merge(otherMetadata)
+		if err != nil {
+			return nil, fmt.Errorf("failed to merge metadata for chain %v: %w", chainSelector, err)
+		}
+
+		m.ChainMetadata[chainSelector] = mergedMetadata
+	}
+
+	m.ValidUntil = min(m.ValidUntil, other.ValidUntil)
+	m.Delay = types.NewDuration(time.Duration(max(m.Delay.Nanoseconds(), other.Delay.Nanoseconds())))
+
+	for chainSelector, otherTimelockAddress := range other.TimelockAddresses {
+		currentAddress, exists := m.TimelockAddresses[chainSelector]
+		if exists {
+			if currentAddress != otherTimelockAddress {
+				return nil, fmt.Errorf("cannot merge proposals with different timelock addresses (chain %v): %q vs %q",
+					chainSelector, currentAddress, otherTimelockAddress)
+			}
+		} else {
+			m.TimelockAddresses[chainSelector] = otherTimelockAddress
+		}
+	}
+
+	m.Operations = append(m.Operations, other.Operations...)
+
+	if other.SaltOverride != nil {
+		if m.SaltOverride == nil {
+			m.SaltOverride = other.SaltOverride
+		} else {
+			for i := range m.SaltOverride {
+				m.SaltOverride[i] ^= other.SaltOverride[i]
+			}
+		}
+	}
+
+	return m, nil
 }
 
 // timeLockProposalValidateBasic basic validation for an MCMS proposal
