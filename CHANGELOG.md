@@ -1,5 +1,19 @@
 # @smartcontractkit/mcms
 
+## 0.22.0
+
+### Minor Changes
+
+- [#441](https://github.com/smartcontractkit/mcms/pull/441) [`fdf66b3`](https://github.com/smartcontractkit/mcms/commit/fdf66b3210adc6fdb2b8763bcdedba0dd06ee5bb) Thanks [@ecPablo](https://github.com/ecPablo)! - Adds support for getMinDelay to timelock inspectors on all supported chain families
+
+- [#446](https://github.com/smartcontractkit/mcms/pull/446) [`2e56b50`](https://github.com/smartcontractkit/mcms/commit/2e56b5047882d65a6ba10806062a2200fca716f0) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: implement TimelockProposal.Merge()
+
+- [#450](https://github.com/smartcontractkit/mcms/pull/450) [`6e542cb`](https://github.com/smartcontractkit/mcms/commit/6e542cb9887e246af9c68a2d18cbb4320bda2767) Thanks [@ecPablo](https://github.com/ecPablo)! - feat: add converted operations count function
+
+### Patch Changes
+
+- [#449](https://github.com/smartcontractkit/mcms/pull/449) [`8f14da3`](https://github.com/smartcontractkit/mcms/commit/8f14da380cf1618e169ae08b2c8b2f470d621f60) Thanks [@ecPablo](https://github.com/ecPablo)! - fix: avoid requiring all executors for converters generation
+
 ## 0.21.2
 
 ### Patch Changes
