@@ -316,3 +316,13 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 		return isOpDone
 	}, 5*time.Second, 500*time.Millisecond, "Operation was not completed in time")
 }
+
+// TestGetMinDelay tests the GetMinDelay method
+func (s *TimelockInspectionTestSuite) TestGetMinDelay() {
+	ctx := context.Background()
+	inspector := evm.NewTimelockInspector(s.ClientA)
+
+	delay, err := inspector.GetMinDelay(ctx, s.timelockContract.Address().Hex())
+	s.Require().NoError(err, "Failed to get min delay")
+	s.Require().EqualValues(0, delay)
+}
