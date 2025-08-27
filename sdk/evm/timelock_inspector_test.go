@@ -473,3 +473,75 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 		})
 	}
 }
+
+func TestTimelockInspector_GetMinDelay(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+
+	tests := []struct {
+		name      string
+		address   string
+		minDelay  *big.Int
+		mockError error
+		want      uint64
+		wantErr   error
+	}{
+		{
+			name:     "GetMinDelay success",
+			address:  "0x1234567890abcdef1234567890abcdef12345678",
+			minDelay: big.NewInt(300),
+			want:     300,
+		},
+		{
+			name:      "GetMinDelay call contract failure error",
+			address:   "0x1234567890abcdef1234567890abcdef12345678",
+			mockError: errors.New("call to contract failed"),
+			want:      0,
+			wantErr:   errors.New("call to contract failed"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			// Arrange
+			mockClient := evm_mocks.NewContractDeployBackend(t)
+			inspector := NewTimelockInspector(mockClient)
+
+			parsedABI, err := bindings.RBACTimelockMetaData.GetAbi()
+			require.NoError(t, err)
+
+			if tt.mockError == nil {
+				// Encode the expected getMinDelay result
+				encoded, packErr := parsedABI.Methods["getMinDelay"].Outputs.Pack(tt.minDelay)
+				require.NoError(t, packErr)
+
+				// Expect a single CallContract returning the encoded minDelay
+				mockClient.EXPECT().
+					CallContract(mock.Anything, mock.IsType(ethereum.CallMsg{}), mock.IsType(&big.Int{})).
+					Return(encoded, nil).Once()
+			} else {
+				// Simulate a low-level call failure
+				mockClient.EXPECT().
+					CallContract(mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, tt.mockError).Once()
+			}
+
+			// Act
+			got, err := inspector.GetMinDelay(ctx, tt.address)
+
+			// Assert
+			if tt.wantErr != nil {
+				require.Error(t, err)
+				require.EqualError(t, err, tt.wantErr.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			}
+
+			mockClient.AssertExpectations(t)
+		})
+	}
+}

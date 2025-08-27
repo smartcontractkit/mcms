@@ -10,9 +10,9 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	cpiStubBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/external_program_cpi_stub"
-	mcmBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/mcm"
-	timelockBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	cpiStubBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/external_program_cpi_stub"
+	mcmBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
+	timelockBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
@@ -166,19 +166,19 @@ func Test_sendAndConfirm(t *testing.T) {
 			},
 		},
 		{
-			name:    "failure: unsupported instruction builder error ",
+			name:    "failure: unsupported instruction builder error",
 			builder: cpiStubBindings.NewEmptyInstruction(),
 			setup:   func(mockJSONRPCClient *mocks.JSONRPCClient) {},
 			wantErr: "unable to validate and build instruction: unsupported instruction builder: ",
 		},
 		{
-			name:    "failure: ValidateAndBuild error ",
+			name:    "failure: ValidateAndBuild error",
 			builder: &invalidTestInstruction{},
 			setup:   func(mockJSONRPCClient *mocks.JSONRPCClient) {},
 			wantErr: "unable to validate and build instruction: validate and build error",
 		},
 		{
-			name:    "failure: sendAndConfirm error ",
+			name:    "failure: sendAndConfirm error",
 			builder: mcmBindings.NewAcceptOwnershipInstruction(testPDASeed, mcmConfigPDA, auth.PublicKey()),
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -187,6 +187,32 @@ func Test_sendAndConfirm(t *testing.T) {
 			},
 			opts:    []sendTransactionOption{WithRetries(1)},
 			wantErr: "unable to send instruction: send and confirm error",
+		},
+		{
+			name:    "failure: sendAndConfirm error - nil Meta",
+			builder: mcmBindings.NewAcceptOwnershipInstruction(testPDASeed, mcmConfigPDA, auth.PublicKey()),
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
+					"NyH6sKKEbAMjxzG9qLTcwd1yEmv46Z94XmH5Pp9AXJps8EofvpPdUn5bp7rzKnztWmxskBiVRnp4DwaHujhHvFh",
+					nil, nil, withSolanaTransactionMeta(nil))
+			},
+			opts:    []sendTransactionOption{WithRetries(1)},
+			wantErr: "transaction meta is nil for transaction",
+		},
+		{
+			name:    "failure: sendAndConfirm error - Meta.Err",
+			builder: mcmBindings.NewAcceptOwnershipInstruction(testPDASeed, mcmConfigPDA, auth.PublicKey()),
+			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
+				txMeta := &rpc.TransactionMeta{
+					Err: fmt.Errorf("solana transaction meta error"),
+				}
+
+				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
+					"NyH6sKKEbAMjxzG9qLTcwd1yEmv46Z94XmH5Pp9AXJps8EofvpPdUn5bp7rzKnztWmxskBiVRnp4DwaHujhHvFh",
+					nil, nil, withSolanaTransactionMeta(txMeta))
+			},
+			opts:    []sendTransactionOption{WithRetries(1)},
+			wantErr: "unable to send instruction: transaction failed: &{Err:solana transaction meta error",
 		},
 	}
 	for _, tt := range tests {

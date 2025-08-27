@@ -1,5 +1,51 @@
 # @smartcontractkit/mcms
 
+## 0.21.2
+
+### Patch Changes
+
+- [#434](https://github.com/smartcontractkit/mcms/pull/434) [`1e4cc68`](https://github.com/smartcontractkit/mcms/commit/1e4cc687f14d692e5c952149ecaeb4197a1ad8db) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: check "Meta" attribute when processing a transaction result
+
+## 0.21.1
+
+### Patch Changes
+
+- [#430](https://github.com/smartcontractkit/mcms/pull/430) [`38e8ca4`](https://github.com/smartcontractkit/mcms/commit/38e8ca450284adbc79be5f41cce84d4348ff0d15) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump chainlink-ccip/chains/solana to 7f8a0f40
+
+## 0.21.0
+
+### Minor Changes
+
+- [#413](https://github.com/smartcontractkit/mcms/pull/413) [`fe08b88`](https://github.com/smartcontractkit/mcms/commit/fe08b8829cfd7818e04b808f08e5c9d0290b5da8) Thanks [@ecPablo](https://github.com/ecPablo)! - Add labels field to proposal base type
+
+- [#402](https://github.com/smartcontractkit/mcms/pull/402) [`6d53434`](https://github.com/smartcontractkit/mcms/commit/6d53434bdce48425dbdaa47a221a9aabd467a9e6) Thanks [@ecPablo](https://github.com/ecPablo)! - Add AllSigners() function to Config struct.
+
+- [#404](https://github.com/smartcontractkit/mcms/pull/404) [`0d1d460`](https://github.com/smartcontractkit/mcms/commit/0d1d4607524fb8a47e3190e8c78811064a58fa68) Thanks [@ecPablo](https://github.com/ecPablo)! - upgrade golangci lint
+
+### Patch Changes
+
+- [#403](https://github.com/smartcontractkit/mcms/pull/403) [`1dbe8a3`](https://github.com/smartcontractkit/mcms/commit/1dbe8a38aa6b31dbdd2838dbf5d9f850da85320c) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore(solana): validate AccessController config multiple accounts
+
+- [#409](https://github.com/smartcontractkit/mcms/pull/409) [`2d2b9ea`](https://github.com/smartcontractkit/mcms/commit/2d2b9ea5c7784a9f49aa5bd399fc860fe58b9f4b) Thanks [@akuzni2](https://github.com/akuzni2)! - Add a getter method to get signer address
+
+## 0.20.2
+
+### Patch Changes
+
+- [#396](https://github.com/smartcontractkit/mcms/pull/396) [`a6ff022`](https://github.com/smartcontractkit/mcms/commit/a6ff022f82a2b10eb7ece0b6507a3a43421e0db1) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): fix calculation of AppendInstructionData chunk size
+
+- [#378](https://github.com/smartcontractkit/mcms/pull/378) [`571f37b`](https://github.com/smartcontractkit/mcms/commit/571f37bc207b5ece48413b1f764fb7a2f00bd7b9) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix(solana): check current root before calling SetRoot
+
+## 0.20.1
+
+### Patch Changes
+
+- [#385](https://github.com/smartcontractkit/mcms/pull/385) [`4c4a585`](https://github.com/smartcontractkit/mcms/commit/4c4a585eab19cc743b2eb2fb7149f3312d3a85f8) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: cache compiled solana programs in CI
+
+- [#392](https://github.com/smartcontractkit/mcms/pull/392) [`b7948a2`](https://github.com/smartcontractkit/mcms/commit/b7948a228ae1faf333d314c0dfb8ce8e1756fcf4) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: set CU limit as the maximum (1.4M) to avoid CU errors in mainnet
+
+- [#394](https://github.com/smartcontractkit/mcms/pull/394) [`6ff9d02`](https://github.com/smartcontractkit/mcms/commit/6ff9d024cedb9ac81093442407239d08992405ec) Thanks [@kylesmartin](https://github.com/kylesmartin)! - Support Ledger MMII encoding
+
 ## 0.20.0
 
 ### Minor Changes

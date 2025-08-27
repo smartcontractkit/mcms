@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/accounts"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/smartcontractkit/mcms/sdk/usbwallet"
@@ -13,6 +15,7 @@ import (
 // signer is an interface for different strategies for signing payloads.
 type signer interface {
 	Sign(payload []byte) ([]byte, error)
+	GetAddress() (common.Address, error)
 }
 
 var _ signer = &PrivateKeySigner{}
@@ -34,6 +37,11 @@ func (s *PrivateKeySigner) Sign(payload []byte) ([]byte, error) {
 	return crypto.Sign(toEthSignedMessageHash(payload).Bytes(), s.pk)
 }
 
+// GetAddress returns the address of the signer.
+func (s *PrivateKeySigner) GetAddress() (common.Address, error) {
+	return crypto.PubkeyToAddress(s.pk.PublicKey), nil
+}
+
 var _ signer = &LedgerSigner{}
 
 // LedgerSigner signs payloads using a Ledger.
@@ -50,31 +58,52 @@ func NewLedgerSigner(derivationPath []uint32) *LedgerSigner {
 // The payload here should be without the EIP 191 prefix,
 // and the ledger will add it before signing.
 func (s *LedgerSigner) Sign(payload []byte) ([]byte, error) {
+	wallet, account, err := s.setupLedgerAccount()
+	if err != nil {
+		return nil, err
+	}
+	defer wallet.Close()
+
+	// Sign the payload with EIP 191
+	return wallet.SignText(account, payload[:])
+}
+
+func (s *LedgerSigner) GetAddress() (common.Address, error) {
+	wallet, account, err := s.setupLedgerAccount()
+	if err != nil {
+		return common.Address{}, err
+	}
+	defer wallet.Close()
+
+	return account.Address, nil
+}
+
+// setupLedgerAccount loads the wallet and account from the ledger. Caller is responsible for closing the wallet.
+func (s *LedgerSigner) setupLedgerAccount() (accounts.Wallet, accounts.Account, error) {
 	// Load ledger
 	ledgerhub, err := usbwallet.NewLedgerHub()
 	if err != nil {
-		return nil, fmt.Errorf("failed to open ledger hub: %w", err)
+		return nil, accounts.Account{}, fmt.Errorf("failed to open ledger hub: %w", err)
 	}
 
 	// Get the first wallet
 	wallets := ledgerhub.Wallets()
 	if len(wallets) == 0 {
-		return nil, errors.New("no wallets found")
+		return nil, accounts.Account{}, errors.New("no wallets found")
 	}
 	wallet := wallets[0]
 
 	// Open the ledger
 	if err = wallet.Open(""); err != nil {
-		return nil, fmt.Errorf("failed to open wallet: %w", err)
+		return nil, accounts.Account{}, fmt.Errorf("failed to open wallet: %w", err)
 	}
-	defer wallet.Close()
 
 	// Load account
 	account, err := wallet.Derive(s.derivationPath, true)
 	if err != nil {
-		return nil, fmt.Errorf("is your ledger ethereum app open? Failed to derive account: %w derivation path %v", err, s.derivationPath)
+		wallet.Close() // Only close on error since caller won't be able to
+		return nil, accounts.Account{}, fmt.Errorf("is your ledger ethereum app open? Failed to derive account: %w derivation path %v", err, s.derivationPath)
 	}
 
-	// Sign the payload with EIP 191
-	return wallet.SignText(account, payload[:])
+	return wallet, account, nil
 }

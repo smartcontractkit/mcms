@@ -517,3 +517,26 @@ func base64Decode(t *testing.T, str string) []byte {
 
 	return decodedBytes
 }
+
+func TestAppendIxDataChunkSize(t *testing.T) {
+	tests := []struct {
+		name      string
+		numProofs string
+		want      int
+	}{
+		{name: "numProofs: default (8)", numProofs: "", want: 323},
+		{name: "numProofs:          0 ", numProofs: "0", want: 579},
+		{name: "numProofs:          1 ", numProofs: "1", want: 547},
+		{name: "numProofs:          2 ", numProofs: "1", want: 547},
+		{name: "numProofs:          8 ", numProofs: "8", want: 323},
+		{name: "numProofs:         12 ", numProofs: "12", want: 195},
+		{name: "numProofs:         18 ", numProofs: "18", want: 3},
+		{name: "numProofs:         19 ", numProofs: "19", want: -29}, // <<< we max at 2^18 operations in a Solana proposal
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Setenv("MCMS_SOLANA_NUM_PROOFS", tt.numProofs)
+			require.Equal(t, tt.want, AppendIxDataChunkSize())
+		})
+	}
+}

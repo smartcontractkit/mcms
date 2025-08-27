@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand/v2"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -66,7 +67,7 @@ func WaitMinedWithTxHash(ctx context.Context, b bind.DeployBackend, txHash commo
 func ReadFixture(path string) (*os.File, error) {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
-		return nil, fmt.Errorf("Failed to get current file path")
+		return nil, fmt.Errorf("failed to get current file path")
 	}
 	projectRoot := filepath.Dir(filepath.Dir(filepath.Dir(filename)))
 	fixturePath := filepath.Join(projectRoot, "e2e", "fixtures", path)
@@ -74,8 +75,29 @@ func ReadFixture(path string) (*os.File, error) {
 	file, err := os.Open(fixturePath)
 
 	if err != nil {
-		return nil, fmt.Errorf("Failed to open fixture file: %w", err)
+		return nil, fmt.Errorf("failed to open fixture file: %w", err)
 	}
 
 	return file, nil
+}
+
+// source: https://github.com/samber/lo/blob/49f24de9198ce4500df6cbef3260066bf777da74/find.go#L610-L613
+func Sample[T any](collection []T) T {
+	size := len(collection)
+	if size == 0 {
+		var empty T
+		return empty
+	}
+
+	return collection[rand.IntN(size)]
+}
+
+// source: https://github.com/samber/lo/blob/49f24de9198ce4500df6cbef3260066bf777da74/slice.go#L126
+func Times[T any](count int, iteratee func(index int) T) []T {
+	result := make([]T, count)
+	for i := range count {
+		result[i] = iteratee(i)
+	}
+
+	return result
 }

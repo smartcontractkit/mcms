@@ -7,8 +7,8 @@ import (
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/access_controller"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/access_controller"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
@@ -126,6 +126,25 @@ func (t TimelockInspector) IsOperationDone(ctx context.Context, address string, 
 	}
 
 	return op.State == timelock.Done_OperationState, nil
+}
+
+func (t TimelockInspector) GetMinDelay(ctx context.Context, address string) (uint64, error) {
+	programID, seed, err := ParseContractAddress(address)
+	if err != nil {
+		return 0, err
+	}
+
+	pda, err := FindTimelockConfigPDA(programID, seed)
+	if err != nil {
+		return 0, err
+	}
+
+	configAccount, err := GetTimelockConfig(ctx, t.client, pda)
+	if err != nil {
+		return 0, err
+	}
+
+	return configAccount.MinDelay, nil
 }
 
 func (t TimelockInspector) getOpData(ctx context.Context, address string, opID [32]byte) (timelock.Operation, error) {

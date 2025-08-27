@@ -10,7 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/timelock"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -102,6 +102,10 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 		s.Require().NoError(err)
 		s.Require().Equal(common.HexToHash("0x2b970fa3b929cafc45e8740e5123ebf150c519813bcf4d9c7284518fd5720108"), gotRoot)
 		s.Require().Equal(proposal.ValidUntil, gotValidUntil)
+
+		// --- act: call SetRoot again ---
+		_, err = executable.SetRoot(ctx, s.ChainSelector)
+		s.Require().ErrorContains(err, "SignedHashAlreadySeen: ")
 	})
 
 	s.Run("multiple signers - exceeds default CU Limit", func() {
