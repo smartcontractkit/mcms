@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
@@ -267,8 +268,8 @@ func TestSerializeTimelockBypasserExecuteBatch(t *testing.T) {
 			// Verify the data can be deserialized back
 			if err == nil {
 				calls, deserializeErr := DeserializeTimelockBypasserExecuteBatch(data)
-				assert.NoError(t, deserializeErr, "Should be able to deserialize the serialized data")
-				assert.Equal(t, len(tt.targets), len(calls), "Number of calls should match number of targets")
+				require.NoError(t, deserializeErr, "Should be able to deserialize the serialized data")
+				assert.Len(t, calls, len(tt.targets), "Number of calls should match number of targets")
 
 				for i, call := range calls {
 					assert.Equal(t, tt.targets[i], call.Target, "Target should match")
@@ -277,7 +278,7 @@ func TestSerializeTimelockBypasserExecuteBatch(t *testing.T) {
 					assert.Equal(t, tt.datas[i], call.Data, "Data should match")
 
 					// State object should always be empty since we don't serialize it anymore
-					assert.Equal(t, "", call.StateObj, "State object should be empty")
+					assert.Empty(t, call.StateObj, "State object should be empty")
 				}
 			}
 		})

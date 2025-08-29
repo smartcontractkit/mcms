@@ -173,8 +173,8 @@ func (e Executor) ExecuteOperation(
 			return types.TransactionResult{}, fmt.Errorf("building PTB for timelock call: %w", extendCallbackErr)
 		}
 		// Decode calls from transaction data
-		calls, err := DeserializeTimelockBypasserExecuteBatch(op.Transaction.Data)
-		if err != nil {
+		calls, desErr := DeserializeTimelockBypasserExecuteBatch(op.Transaction.Data)
+		if desErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("failed to deserialize timelock bypasser execute batch: %w", err)
 		}
 		if len(calls) != len(additionalFields.InternalStateObjects) {
@@ -398,7 +398,6 @@ func AppendPTBFromExecutingCallbackParams(
 				return fmt.Errorf("failed to create MCMS EntryPoint contract: %w", err)
 			}
 
-			fmt.Println("STATE OBJECT", call.StateObj)
 			// Prepare the mcms_entrypoint call
 			entryPointCall, err := entryPointContract.Encoder().McmsEntrypointWithArgs(
 				call.StateObj,

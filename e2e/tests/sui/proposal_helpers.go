@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
@@ -126,10 +127,11 @@ func SignProposal(proposal *mcms.Proposal, inspectorsMap map[types.ChainSelector
 	return signable, nil
 }
 
-func mustMarshal(v interface{}) []byte {
+func mustMarshal(v any) []byte {
 	data, err := json.Marshal(v)
 	if err != nil {
 		panic(err)
 	}
+
 	return data
 }
