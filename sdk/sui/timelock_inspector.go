@@ -38,6 +38,21 @@ func NewTimelockInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPa
 	}, nil
 }
 
+func (tm TimelockInspector) GetMinDelay(ctx context.Context, address string) (uint64, error) {
+	timelockObj := bind.Object{Id: address}
+
+	opts := &bind.CallOpts{
+		Signer: tm.signer,
+	}
+
+	result, err := tm.mcms.DevInspect().TimelockMinDelay(ctx, opts, timelockObj)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get min delay: %w", err)
+	}
+
+	return result, nil
+}
+
 // GetProposers returns the list of addresses with the proposer role
 func (tm TimelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
 	return nil, errors.New("unsupported on Sui")
