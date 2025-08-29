@@ -23,8 +23,8 @@ type MCMSUserTestSuite struct {
 // SetupSuite runs before the test suite
 func (s *MCMSUserTestSuite) SetupSuite() {
 	s.SuiTestSuite.SetupSuite()
-	s.SuiTestSuite.DeployMCMSContract()
-	s.SuiTestSuite.DeployMCMSUserContract()
+	s.DeployMCMSContract()
+	s.DeployMCMSUserContract()
 }
 
 // TestMCMSUserFunctionOne tests MCMS user function one
@@ -103,13 +103,14 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 
 	var action types.TimelockAction
 	var delay *types.Duration
-	if role == suisdk.TimelockRoleProposer {
+	switch role {
+	case suisdk.TimelockRoleProposer:
 		action = types.TimelockActionSchedule
 		delayDuration := types.NewDuration(delay_5_secs)
 		delay = &delayDuration
-	} else if role == suisdk.TimelockRoleBypasser {
+	case suisdk.TimelockRoleBypasser:
 		action = types.TimelockActionBypass
-	} else {
+	default:
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
 
@@ -148,13 +149,14 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 
 	var keys []*ecdsa.PrivateKey
 	var quorum int
-	if role == suisdk.TimelockRoleProposer {
+	switch role {
+	case suisdk.TimelockRoleProposer:
 		keys = proposerConfig.Keys
 		quorum = proposerQuorum
-	} else if role == suisdk.TimelockRoleBypasser {
+	case suisdk.TimelockRoleBypasser:
 		keys = bypasserConfig.Keys
 		quorum = bypasserQuorum
-	} else {
+	default:
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
 	signable, err := SignProposal(&proposal, inspectorsMap, keys, quorum)
@@ -215,8 +217,8 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 
 	for i := range proposal.Operations {
 		s.SuiTestSuite.T().Logf("Executing operation: %v", i)
-		txOutput, err := executable.Execute(s.SuiTestSuite.T().Context(), i)
-		s.SuiTestSuite.Require().NoError(err)
+		txOutput, execErr := executable.Execute(s.SuiTestSuite.T().Context(), i)
+		s.SuiTestSuite.Require().NoError(execErr)
 		s.SuiTestSuite.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
 	}
 	if role == suisdk.TimelockRoleProposer {
@@ -224,7 +226,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		s.SuiTestSuite.T().Logf("Sleeping for %v before executing the proposal transfer...", delay_5_secs)
 		time.Sleep(delay_5_secs)
 
-		timelockExecutor, err := suisdk.NewTimelockExecutor(
+		timelockExecutor, tErr := suisdk.NewTimelockExecutor(
 			s.SuiTestSuite.client,
 			s.SuiTestSuite.signer,
 			s.SuiTestSuite.mcmsPackageId,
@@ -232,7 +234,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 			s.SuiTestSuite.accountObj,
 		)
 
-		s.SuiTestSuite.Require().NoError(err, "creating timelock executor for Sui mcms contract")
+		s.SuiTestSuite.Require().NoError(tErr, "creating timelock executor for Sui mcms contract")
 		timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 			s.SuiTestSuite.chainSelector: timelockExecutor,
 		}

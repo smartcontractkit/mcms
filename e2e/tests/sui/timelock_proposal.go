@@ -109,13 +109,14 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 
 	var action types.TimelockAction
 	var delay *types.Duration
-	if role == suisdk.TimelockRoleProposer {
+	switch role {
+	case suisdk.TimelockRoleProposer:
 		action = types.TimelockActionSchedule
 		delayDuration := types.NewDuration(delay_5_secs)
 		delay = &delayDuration
-	} else if role == suisdk.TimelockRoleBypasser {
+	case suisdk.TimelockRoleBypasser:
 		action = types.TimelockActionBypass
-	} else {
+	default:
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
 
@@ -154,13 +155,14 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 
 	var keys []*ecdsa.PrivateKey
 	var quorum int
-	if role == suisdk.TimelockRoleProposer {
+	switch role {
+	case suisdk.TimelockRoleProposer:
 		keys = proposerConfig.Keys
 		quorum = proposerQuorum
-	} else if role == suisdk.TimelockRoleBypasser {
+	case suisdk.TimelockRoleBypasser:
 		keys = bypasserConfig.Keys
 		quorum = bypasserQuorum
-	} else {
+	default:
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
 	signable, err := SignProposal(&proposal, inspectorsMap, keys, quorum)
@@ -220,8 +222,8 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	// Execute
 	for i := range proposal.Operations {
 		s.SuiTestSuite.T().Logf("Executing operation: %v", i)
-		txOutput, err := executable.Execute(s.SuiTestSuite.T().Context(), i)
-		s.SuiTestSuite.Require().NoError(err)
+		txOutput, execErr := executable.Execute(s.SuiTestSuite.T().Context(), i)
+		s.SuiTestSuite.Require().NoError(execErr)
 		s.SuiTestSuite.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
 	}
 
@@ -230,7 +232,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		s.SuiTestSuite.T().Logf("Sleeping for %v before executing the proposal transfer...", delay_5_secs)
 		time.Sleep(delay_5_secs)
 
-		timelockExecutor, err := suisdk.NewTimelockExecutor(
+		timelockExecutor, tErr := suisdk.NewTimelockExecutor(
 			s.SuiTestSuite.client,
 			s.SuiTestSuite.signer,
 			s.SuiTestSuite.mcmsPackageId,
@@ -238,7 +240,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 			s.SuiTestSuite.accountObj,
 		)
 
-		s.SuiTestSuite.Require().NoError(err, "creating timelock executor for Sui mcms contract")
+		s.SuiTestSuite.Require().NoError(tErr, "creating timelock executor for Sui mcms contract")
 		timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 			s.SuiTestSuite.chainSelector: timelockExecutor,
 		}
@@ -268,5 +270,5 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	postOpCount, err := inspector.GetOpCount(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)
 	s.SuiTestSuite.Require().NoError(err, "Failed to get post operation count")
 	s.SuiTestSuite.T().Logf("🔍 POST operation count: %d", postOpCount)
-	//s.SuiTestSuite.Require().Equal(currentOpCount+1, postOpCount, "Operation count should be incremented by 1")
+	s.SuiTestSuite.Require().Equal(currentOpCount+1, postOpCount, "Operation count should be incremented by 1")
 }

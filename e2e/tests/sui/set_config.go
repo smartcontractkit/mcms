@@ -141,7 +141,6 @@ func (s *SuiTestSuite) Test_Sui_SetConfig() {
 		s.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, proposerConfig, true)
 		s.Require().NoError(err, "setting config on Sui mcms contract")
-
 	}
 
 	// Assert that config has been set
@@ -172,5 +171,4 @@ func (s *SuiTestSuite) Test_Sui_SetConfig() {
 		s.Require().NotNil(gotConfig)
 		s.Require().Equal(proposerConfig, gotConfig)
 	}
-
 }

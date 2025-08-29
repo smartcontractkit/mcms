@@ -22,7 +22,7 @@ type InspectionTestSuite struct {
 // SetupSuite runs before the test suite
 func (s *InspectionTestSuite) SetupSuite() {
 	s.SuiTestSuite.SetupSuite()
-	s.SuiTestSuite.DeployMCMSContract()
+	s.DeployMCMSContract()
 }
 
 // TestGetConfig checks contract configuration
