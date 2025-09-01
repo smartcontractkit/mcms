@@ -58,7 +58,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 					},
 				},
 			},
-			want:    common.HexToHash("0x273f491fddd57442ffe9cef7ba560a035bac034df0edf9e51b01b637c34babf9"),
+			want:    common.HexToHash("0x083b481c650e1578f7be562e21f23a570b4943fead4b1ffc67ac548166d8cf5c"),
 			wantErr: assert.NoError,
 		}, {
 			name: "failure - invalid Sui chain selector",
@@ -78,8 +78,16 @@ func TestEncoder_HashOperation(t *testing.T) {
 				metadata: types.ChainMetadata{
 					MCMAddress: "invalidaddress",
 				},
+				op: types.Operation{
+					Transaction: types.Transaction{
+						OperationMetadata: types.OperationMetadata{},
+						To:                "0x222",
+						Data:              []byte{0x11, 0x22, 0x33, 0x44},
+						AdditionalFields:  json.RawMessage(`{"module_name":"module","function":"function_one"}`),
+					},
+				},
 			},
-			wantErr: AssertErrorContains("parse MCMS address"),
+			wantErr: AssertErrorContains("failed to decode mcms package ID"),
 		}, {
 			name: "failure - invalid to address",
 			fields: fields{
@@ -95,7 +103,9 @@ func TestEncoder_HashOperation(t *testing.T) {
 				op: types.Operation{
 					Transaction: types.Transaction{
 						OperationMetadata: types.OperationMetadata{},
-						To:                "invalidaddress",
+						To:                "invalid",
+						Data:              []byte{0x11, 0x22, 0x33, 0x44},
+						AdditionalFields:  json.RawMessage(`{"module_name":"module","function":"function_one"}`),
 					},
 				},
 			},
@@ -163,11 +173,12 @@ func TestEncoder_HashMetadata(t *testing.T) {
 			},
 			args: args{
 				metadata: types.ChainMetadata{
-					StartingOpCount: 7,
-					MCMAddress:      "0x222",
+					StartingOpCount:  7,
+					MCMAddress:       "0x222",
+					AdditionalFields: json.RawMessage(`{"role":0}`),
 				},
 			},
-			want:    common.HexToHash("0xed8b697fd845f8c1a493d1da979d91f0c4ab6acff6d0f86797029c3ecd8f8b57"),
+			want:    common.HexToHash("0x455b5b8ec10c95fe066ca1736547d0758fa2a8356b39ca6aa9043ae1504fcc87"),
 			wantErr: assert.NoError,
 		}, {
 			name: "success - with override previous root",
@@ -178,11 +189,12 @@ func TestEncoder_HashMetadata(t *testing.T) {
 			},
 			args: args{
 				metadata: types.ChainMetadata{
-					StartingOpCount: 7,
-					MCMAddress:      "0x222",
+					StartingOpCount:  7,
+					MCMAddress:       "0x222",
+					AdditionalFields: json.RawMessage(`{"role":0}`),
 				},
 			},
-			want:    common.HexToHash("0xf8345dcc86304d6b38a38976b81bbc05ee8b194d44d6c5fb3564b110d0d25d1d"),
+			want:    common.HexToHash("0xe7b0cb38489c34616ce7af39d6d22afe4269778337e037a43a476c5179259911"),
 			wantErr: assert.NoError,
 		}, {
 			name: "failure - invalid Sui chain selector",
@@ -198,10 +210,11 @@ func TestEncoder_HashMetadata(t *testing.T) {
 			},
 			args: args{
 				metadata: types.ChainMetadata{
-					MCMAddress: "invalidaddress!",
+					MCMAddress:       "invalidaddress!",
+					AdditionalFields: json.RawMessage(`{"role":0}`),
 				},
 			},
-			wantErr: AssertErrorContains("parse MCMS address"),
+			wantErr: AssertErrorContains("failed to decode mcms package ID"),
 		},
 	}
 	for _, tt := range tests {

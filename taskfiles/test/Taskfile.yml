@@ -12,6 +12,11 @@ tasks:
     cmds:
       - go test {{.CLI_ARGS}} ./...
 
+  unit:sui:
+    desc: "Run Sui unit tests"
+    cmds:
+      - go test -v {{.CLI_ARGS}} ./sdk/sui/...
+
   e2e:
     desc: "Run e2e tests"
     env:

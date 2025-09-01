@@ -102,6 +102,10 @@ packages:
         config:
           dir: "./sdk/sui/mocks/mcms"
           filename: "imcms.go"
+      IMcmsDevInspect:
+        config:
+          dir: "./sdk/sui/mocks/mcms"
+          filename: "imcmsdevinspect.go"
 
 # Required to fix the following deprecation warning:
 # https://vektra.github.io/mockery/v2.48/deprecations/#issue-845-fix
