@@ -13,11 +13,6 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func AssertErrorContains(errorMessage string) assert.ErrorAssertionFunc {
-	return func(t assert.TestingT, err error, i ...any) bool {
-		return assert.ErrorContains(t, err, errorMessage, i...)
-	}
-}
 func TestEncoder_HashOperation(t *testing.T) {
 	t.Parallel()
 	type fields struct {

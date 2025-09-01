@@ -2,6 +2,7 @@ package sui
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"math/big"
@@ -11,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	cselectors "github.com/smartcontractkit/chain-selectors"
@@ -22,6 +24,21 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+func AssertErrorContains(errorMessage string) assert.ErrorAssertionFunc {
+	return func(t assert.TestingT, err error, msgAndArgs ...interface{}) bool {
+		if err == nil {
+			return assert.Fail(t, "Expected error to be returned", msgAndArgs...)
+		}
+		return assert.Contains(t, err.Error(), errorMessage, msgAndArgs...)
+	}
+}
+
+func MustMarshalJSON(t *testing.T, v interface{}) []byte {
+	t.Helper()
+	data, err := json.Marshal(v)
+	require.NoError(t, err)
+	return data
+}
 func TestNewConfigurer(t *testing.T) {
 	t.Parallel()
 	mockClient := mock_sui.NewISuiAPI(t)
