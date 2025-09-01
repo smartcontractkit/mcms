@@ -116,6 +116,8 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		delay = &delayDuration
 	case suisdk.TimelockRoleBypasser:
 		action = types.TimelockActionBypass
+	case suisdk.TimelockRoleCanceller:
+		s.SuiTestSuite.T().Fatalf("TimelockRoleCanceller is not yet supported in this test")
 	default:
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
@@ -162,6 +164,8 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	case suisdk.TimelockRoleBypasser:
 		keys = bypasserConfig.Keys
 		quorum = bypasserQuorum
+	case suisdk.TimelockRoleCanceller:
+		s.SuiTestSuite.T().Fatalf("TimelockRoleCanceller is not yet supported in this test")
 	default:
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
@@ -244,8 +248,8 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 			s.SuiTestSuite.chainSelector: timelockExecutor,
 		}
-		timelockExecutable, err := mcms.NewTimelockExecutable(s.SuiTestSuite.T().Context(), timelockProposal, timelockExecutors)
-		s.SuiTestSuite.Require().NoError(err)
+		timelockExecutable, execErr := mcms.NewTimelockExecutable(s.SuiTestSuite.T().Context(), timelockProposal, timelockExecutors)
+		s.SuiTestSuite.Require().NoError(execErr)
 		s.SuiTestSuite.T().Logf("Executing the operation through timelock...")
 		txOutput, err := timelockExecutable.Execute(s.SuiTestSuite.T().Context(), 0, mcms.WithCallProxy(s.SuiTestSuite.timelockObj))
 		s.SuiTestSuite.Require().NoError(err)

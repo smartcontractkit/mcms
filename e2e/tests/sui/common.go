@@ -13,13 +13,12 @@ import (
 	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	module_mcms_account "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_account"
 	module_mcms_user "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
+	"github.com/smartcontractkit/chainlink-sui/bindings/packages/mcms"
+	mcmsuser "github.com/smartcontractkit/chainlink-sui/bindings/packages/mcms/mcms_user"
+	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/types"
-
-	"github.com/smartcontractkit/chainlink-sui/bindings/packages/mcms"
-	"github.com/smartcontractkit/chainlink-sui/bindings/packages/mcms/mcms_user"
-	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 )
 
 type SuiTestSuite struct {

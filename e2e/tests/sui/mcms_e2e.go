@@ -45,15 +45,15 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 
 	// Set config
 	{
-		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, role, s.SuiTestSuite.mcmsPackageId, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, role, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
 		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
-		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj, proposerConfig.Config, true)
+		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.mcmsObj, proposerConfig.Config, true)
 		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 	{
-		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, suisdk.TimelockRoleBypasser, s.SuiTestSuite.mcmsPackageId, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleBypasser, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
 		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
-		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj, bypasserConfig.Config, true)
+		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.mcmsObj, bypasserConfig.Config, true)
 		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 
@@ -65,9 +65,9 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	// Get the function one call information and build the MCMS Operation
 	arg1 := "Updated Field A"
 	arg2 := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-	encodedCall, err := s.SuiTestSuite.mcmsUser.Encoder().FunctionOne(
-		bind.Object{Id: s.SuiTestSuite.stateObj},
-		bind.Object{Id: s.SuiTestSuite.mcmsUserOwnerCapObj},
+	encodedCall, err := s.mcmsUser.Encoder().FunctionOne(
+		bind.Object{Id: s.stateObj},
+		bind.Object{Id: s.mcmsUserOwnerCapObj},
 		arg1,
 		arg2,
 	)
@@ -84,20 +84,20 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		callBytes,
 		"MCMSUser",
 		[]string{},
-		s.SuiTestSuite.stateObj,
+		s.stateObj,
 	)
 	s.SuiTestSuite.Require().NoError(err)
 
 	op := types.BatchOperation{
-		ChainSelector: s.SuiTestSuite.chainSelector,
+		ChainSelector: s.chainSelector,
 		Transactions:  []types.Transaction{transaction},
 	}
 
-	inspector, err := suisdk.NewInspector(s.SuiTestSuite.client, s.SuiTestSuite.signer, s.SuiTestSuite.mcmsPackageId, role)
+	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, role)
 	s.SuiTestSuite.Require().NoError(err, "creating inspector for op count query")
 
 	// Get the actual current operation count from the contract
-	currentOpCount, err := inspector.GetOpCount(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)
+	currentOpCount, err := inspector.GetOpCount(s.SuiTestSuite.T().Context(), s.mcmsObj)
 	s.SuiTestSuite.Require().NoError(err, "Failed to get current operation count")
 	s.SuiTestSuite.T().Logf("🔍 CURRENT operation count: %d", currentOpCount)
 
@@ -110,6 +110,8 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		delay = &delayDuration
 	case suisdk.TimelockRoleBypasser:
 		action = types.TimelockActionBypass
+	case suisdk.TimelockRoleCanceller:
+		s.SuiTestSuite.T().Fatalf("TimelockRoleCanceller is not yet supported in this test")
 	default:
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
@@ -156,6 +158,8 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	case suisdk.TimelockRoleBypasser:
 		keys = bypasserConfig.Keys
 		quorum = bypasserQuorum
+	case suisdk.TimelockRoleCanceller:
+		s.SuiTestSuite.T().Fatalf("TimelockRoleCanceller is not yet supported in this test")
 	default:
 		s.SuiTestSuite.T().Fatalf("Unsupported role: %v", role)
 	}
@@ -238,8 +242,8 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 			s.SuiTestSuite.chainSelector: timelockExecutor,
 		}
-		timelockExecutable, err := mcms.NewTimelockExecutable(s.SuiTestSuite.T().Context(), timelockProposal, timelockExecutors)
-		s.SuiTestSuite.Require().NoError(err)
+		timelockExecutable, execErr := mcms.NewTimelockExecutable(s.SuiTestSuite.T().Context(), timelockProposal, timelockExecutors)
+		s.SuiTestSuite.Require().NoError(execErr)
 
 		s.SuiTestSuite.T().Logf("Executing the operation through timelock...")
 		txOutput, err := timelockExecutable.Execute(s.SuiTestSuite.T().Context(), 0, mcms.WithCallProxy(s.SuiTestSuite.timelockObj))
