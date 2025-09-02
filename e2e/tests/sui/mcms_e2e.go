@@ -22,7 +22,7 @@ type MCMSUserTestSuite struct {
 
 // SetupSuite runs before the test suite
 func (s *MCMSUserTestSuite) SetupSuite() {
-	s.SetupSuite()
+	s.SuiTestSuite.SetupSuite()
 	s.DeployMCMSContract()
 	s.DeployMCMSUserContract()
 }
