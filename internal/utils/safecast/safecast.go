@@ -18,6 +18,15 @@ func IntToUint8(value int) (uint8, error) {
 	return cast.ToUint8E(value)
 }
 
+// IntToUint32 safely converts an int to uint32 using cast and checks for overflow
+func IntToUint32(value int) (uint32, error) {
+	if value < 0 || value > math.MaxUint32 {
+		return 0, fmt.Errorf("value %d exceeds uint32 range", value)
+	}
+
+	return cast.ToUint32E(value)
+}
+
 // Uint64ToUint8 safely converts an int64 to uint8 using cast and checks for overflow
 func Uint64ToUint8(value uint64) (uint8, error) {
 	if value > math.MaxUint8 {

@@ -37,7 +37,7 @@ func TestTimelockInspector_GetProposers(t *testing.T) {
 	require.NoError(t, err)
 
 	result, err := inspector.GetProposers(ctx, "0x123")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "unsupported on Sui")
 }
@@ -53,7 +53,7 @@ func TestTimelockInspector_GetExecutors(t *testing.T) {
 	require.NoError(t, err)
 
 	result, err := inspector.GetExecutors(ctx, "0x123")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "unsupported on Sui")
 }
@@ -69,7 +69,7 @@ func TestTimelockInspector_GetBypassers(t *testing.T) {
 	require.NoError(t, err)
 
 	result, err := inspector.GetBypassers(ctx, "0x123")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "unsupported on Sui")
 }
@@ -85,7 +85,7 @@ func TestTimelockInspector_GetCancellers(t *testing.T) {
 	require.NoError(t, err)
 
 	result, err := inspector.GetCancellers(ctx, "0x123")
-	assert.Error(t, err)
+	require.Error(t, err)
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "unsupported on Sui")
 }

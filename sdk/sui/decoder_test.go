@@ -6,6 +6,8 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 )
 
 func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
@@ -107,25 +109,33 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		// would validate the lengths before serializing
 		serializedData, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
 			// Serialize targets vector (2 elements)
-			ser.Uleb128(uint32(len(targets)))
+			targetsLen, err := safecast.IntToUint32(len(targets))
+			require.NoError(t, err)
+			ser.Uleb128(targetsLen)
 			for _, target := range targets {
 				ser.FixedBytes(target)
 			}
 
 			// Serialize module names vector (1 element - mismatch!)
-			ser.Uleb128(uint32(len(moduleNames)))
+			moduleNamesLen, err := safecast.IntToUint32(len(moduleNames))
+			require.NoError(t, err)
+			ser.Uleb128(moduleNamesLen)
 			for _, moduleName := range moduleNames {
 				ser.WriteString(moduleName)
 			}
 
 			// Serialize function names vector (2 elements)
-			ser.Uleb128(uint32(len(functionNames)))
+			functionNamesLen, err := safecast.IntToUint32(len(functionNames))
+			require.NoError(t, err)
+			ser.Uleb128(functionNamesLen)
 			for _, functionName := range functionNames {
 				ser.WriteString(functionName)
 			}
 
 			// Serialize datas vector (2 elements)
-			ser.Uleb128(uint32(len(datas)))
+			datasLen, err := safecast.IntToUint32(len(datas))
+			require.NoError(t, err)
+			ser.Uleb128(datasLen)
 			for _, data := range datas {
 				ser.WriteBytes(data)
 			}
@@ -146,22 +156,30 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		datas := [][]byte{{0x01}, {0x02}}                       // 2 elements
 
 		serializedData, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
-			ser.Uleb128(uint32(len(targets)))
+			targetsLen, err := safecast.IntToUint32(len(targets))
+			require.NoError(t, err)
+			ser.Uleb128(targetsLen)
 			for _, target := range targets {
 				ser.FixedBytes(target)
 			}
 
-			ser.Uleb128(uint32(len(moduleNames)))
+			moduleNamesLen, err := safecast.IntToUint32(len(moduleNames))
+			require.NoError(t, err)
+			ser.Uleb128(moduleNamesLen)
 			for _, moduleName := range moduleNames {
 				ser.WriteString(moduleName)
 			}
 
-			ser.Uleb128(uint32(len(functionNames)))
+			functionNamesLen, err := safecast.IntToUint32(len(functionNames))
+			require.NoError(t, err)
+			ser.Uleb128(functionNamesLen)
 			for _, functionName := range functionNames {
 				ser.WriteString(functionName)
 			}
 
-			ser.Uleb128(uint32(len(datas)))
+			datasLen, err := safecast.IntToUint32(len(datas))
+			require.NoError(t, err)
+			ser.Uleb128(datasLen)
 			for _, data := range datas {
 				ser.WriteBytes(data)
 			}
@@ -182,22 +200,30 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		datas := [][]byte{{0x01}}                               // 1 element - mismatch!
 
 		serializedData, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
-			ser.Uleb128(uint32(len(targets)))
+			targetsLen, err := safecast.IntToUint32(len(targets))
+			require.NoError(t, err)
+			ser.Uleb128(targetsLen)
 			for _, target := range targets {
 				ser.FixedBytes(target)
 			}
 
-			ser.Uleb128(uint32(len(moduleNames)))
+			moduleNamesLen, err := safecast.IntToUint32(len(moduleNames))
+			require.NoError(t, err)
+			ser.Uleb128(moduleNamesLen)
 			for _, moduleName := range moduleNames {
 				ser.WriteString(moduleName)
 			}
 
-			ser.Uleb128(uint32(len(functionNames)))
+			functionNamesLen, err := safecast.IntToUint32(len(functionNames))
+			require.NoError(t, err)
+			ser.Uleb128(functionNamesLen)
 			for _, functionName := range functionNames {
 				ser.WriteString(functionName)
 			}
 
-			ser.Uleb128(uint32(len(datas)))
+			datasLen, err := safecast.IntToUint32(len(datas))
+			require.NoError(t, err)
+			ser.Uleb128(datasLen)
 			for _, data := range datas {
 				ser.WriteBytes(data)
 			}
@@ -226,7 +252,9 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		serializedData, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
 			// Only provide targets data, missing moduleNames, functionNames, and datas
 			targets := [][]byte{make([]byte, 32)}
-			ser.Uleb128(uint32(len(targets)))
+			targetsLen, err := safecast.IntToUint32(len(targets))
+			require.NoError(t, err)
+			ser.Uleb128(targetsLen)
 			for _, target := range targets {
 				ser.FixedBytes(target)
 			}

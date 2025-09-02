@@ -24,18 +24,20 @@ import (
 )
 
 func AssertErrorContains(errorMessage string) assert.ErrorAssertionFunc {
-	return func(t assert.TestingT, err error, msgAndArgs ...interface{}) bool {
+	return func(t assert.TestingT, err error, msgAndArgs ...any) bool {
 		if err == nil {
 			return assert.Fail(t, "Expected error to be returned", msgAndArgs...)
 		}
+
 		return assert.Contains(t, err.Error(), errorMessage, msgAndArgs...)
 	}
 }
 
-func MustMarshalJSON(t *testing.T, v interface{}) []byte {
+func MustMarshalJSON(t *testing.T, v any) []byte {
 	t.Helper()
 	data, err := json.Marshal(v)
 	require.NoError(t, err)
+
 	return data
 }
 func TestNewConfigurer(t *testing.T) {
@@ -46,10 +48,10 @@ func TestNewConfigurer(t *testing.T) {
 	// Test successful creation
 	mcmsPackageID := "0x123456789abcdef"
 	ownerCap := "0xabcdef123456789"
-	chainSelector := uint64(cselectors.SUI_TESTNET.Selector)
+	chainSelector := cselectors.SUI_TESTNET.Selector
 
 	configurer, err := NewConfigurer(mockClient, mockSigner, TimelockRoleBypasser, mcmsPackageID, ownerCap, chainSelector)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	assert.NotNil(t, configurer)
 	assert.Equal(t, mockClient, configurer.client)
 	assert.Equal(t, mockSigner, configurer.signer)

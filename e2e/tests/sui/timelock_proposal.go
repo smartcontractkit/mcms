@@ -251,8 +251,8 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		timelockExecutable, execErr := mcms.NewTimelockExecutable(s.SuiTestSuite.T().Context(), timelockProposal, timelockExecutors)
 		s.SuiTestSuite.Require().NoError(execErr)
 		s.SuiTestSuite.T().Logf("Executing the operation through timelock...")
-		txOutput, err := timelockExecutable.Execute(s.SuiTestSuite.T().Context(), 0, mcms.WithCallProxy(s.SuiTestSuite.timelockObj))
-		s.SuiTestSuite.Require().NoError(err)
+		txOutput, terr := timelockExecutable.Execute(s.SuiTestSuite.T().Context(), 0, mcms.WithCallProxy(s.SuiTestSuite.timelockObj))
+		s.SuiTestSuite.Require().NoError(terr)
 		s.SuiTestSuite.T().Logf("✅ Executed proposal transfer in tx: %s", txOutput.Hash)
 	}
 	// Complete the proposal transfer
