@@ -79,7 +79,7 @@ func TestConfigTransformer_ToConfig(t *testing.T) {
 		}
 
 		config, err := transformer.ToConfig(suiConfig)
-		assert.Error(t, err)
+		require.Error(t, err)
 		assert.Nil(t, config)
 		assert.Contains(t, err.Error(), "Quorum must be greater than 0")
 	})

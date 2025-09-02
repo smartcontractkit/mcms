@@ -24,7 +24,7 @@ type SetRootTestSuite struct {
 // SetupSuite runs before the test suite
 func (s *SetRootTestSuite) SetupSuite() {
 	s.SuiTestSuite.SetupSuite()
-	s.SuiTestSuite.DeployMCMSContract()
+	s.DeployMCMSContract()
 }
 
 // TestSetRoot tests the SetRoot functionality by setting a root on the MCMS contract
@@ -45,11 +45,11 @@ func (s *SetRootTestSuite) TestSetRoot() {
 	// Create metadata for this chain
 	metadata := types.ChainMetadata{
 		StartingOpCount: 0,
-		MCMAddress:      s.SuiTestSuite.mcmsObj,
+		MCMAddress:      s.mcmsObj,
 		AdditionalFields: []byte(fmt.Sprintf(`{
 			"role": 2,
 			"mcms_package_id": "%s"
-		}`, s.SuiTestSuite.mcmsPackageID)), // Use package address for proof verification
+		}`, s.mcmsPackageID)), // Use package address for proof verification
 	}
 
 	// Build a test proposal
@@ -63,7 +63,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 		AddOperation(types.Operation{
 			ChainSelector: s.chainSelector,
 			Transaction: types.Transaction{
-				To:   s.SuiTestSuite.accountObj, // Use account object as target
+				To:   s.accountObj, // Use account object as target
 				Data: []byte("test-transaction-data"),
 				AdditionalFields: json.RawMessage(`{
 					"module_name": "mcms_account",
@@ -86,7 +86,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 	s.Require().NoError(err, "Failed to get encoders")
 	encoder := encoders[s.chainSelector].(*suisdk.Encoder)
 
-	executor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.SuiTestSuite.mcmsPackageID, suisdk.TimelockRoleProposer, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
+	executor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.mcmsPackageID, suisdk.TimelockRoleProposer, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
 	s.Require().NoError(err, "Failed to create executor")
 
 	executors := map[types.ChainSelector]sdk.Executor{
@@ -106,7 +106,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 		s.Require().NoError(err, "Failed to create configurer")
 
-		configTx, err := configurer.SetConfig(ctx, s.SuiTestSuite.mcmsObj, &mcmConfig, true)
+		configTx, err := configurer.SetConfig(ctx, s.mcmsObj, &mcmConfig, true)
 		s.Require().NoError(err, "Failed to set config")
 		s.T().Logf("✅ SetConfig in tx: %s", configTx.Hash)
 
@@ -120,7 +120,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 		s.T().Logf("✅ SetRoot in tx: %s", setRootResult.Hash)
 
 		// Verify the root was set by checking with inspector
-		root, validUntilActual, err := inspector.GetRoot(ctx, s.SuiTestSuite.mcmsObj)
+		root, validUntilActual, err := inspector.GetRoot(ctx, s.mcmsObj)
 		s.Require().NoError(err, "Failed to get root after setting")
 
 		// Root should not be empty after setting
@@ -128,7 +128,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 		s.Require().Greater(validUntilActual, uint32(0), "ValidUntil should be greater than 0 after SetRoot")
 
 		// Verify root metadata
-		rootMetadata, err := inspector.GetRootMetadata(ctx, s.SuiTestSuite.mcmsObj)
+		rootMetadata, err := inspector.GetRootMetadata(ctx, s.mcmsObj)
 		s.Require().NoError(err, "Failed to get root metadata")
 		s.Require().Equal(uint64(0), rootMetadata.StartingOpCount, "StartingOpCount should match metadata")
 		s.Require().NotEmpty(rootMetadata.MCMAddress, "MCMAddress should not be empty")
@@ -157,11 +157,11 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 	// Create metadata for this chain
 	metadata := types.ChainMetadata{
 		StartingOpCount: 0,
-		MCMAddress:      s.SuiTestSuite.mcmsObj,
+		MCMAddress:      s.mcmsObj,
 		AdditionalFields: []byte(fmt.Sprintf(`{
 			"role": 2,
 			"mcms_package_id": "%s"
-		}`, s.SuiTestSuite.mcmsPackageID)), // Use package address for proof verification
+		}`, s.mcmsPackageID)), // Use package address for proof verification
 	}
 
 	// Build a test proposal
@@ -175,7 +175,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 		AddOperation(types.Operation{
 			ChainSelector: s.chainSelector,
 			Transaction: types.Transaction{
-				To:   s.SuiTestSuite.accountObj,
+				To:   s.accountObj,
 				Data: []byte("multi-signer-test-data"),
 				AdditionalFields: json.RawMessage(`{
 					"module_name": "mcms_account",
@@ -214,7 +214,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 		s.Require().NoError(err, "Failed to create configurer for multi-signer test")
 
-		configTx, err := configurer.SetConfig(ctx, s.SuiTestSuite.mcmsObj, &mcmConfig, true)
+		configTx, err := configurer.SetConfig(ctx, s.mcmsObj, &mcmConfig, true)
 		s.Require().NoError(err, "Failed to set multi-signer config")
 		s.T().Logf("✅ Multi-signer SetConfig in tx: %s", configTx.Hash)
 
@@ -223,7 +223,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 		s.Require().NoError(err, "Failed to get encoders for multi-signer test")
 		encoder := encoders[s.chainSelector].(*suisdk.Encoder)
 
-		multiExecutor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.SuiTestSuite.mcmsPackageID, suisdk.TimelockRoleProposer, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
+		multiExecutor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.mcmsPackageID, suisdk.TimelockRoleProposer, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
 		s.Require().NoError(err, "Failed to create executor for multi-signer test")
 
 		multiExecutors := map[types.ChainSelector]sdk.Executor{
@@ -239,7 +239,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 		s.T().Logf("✅ Multi-signer SetRoot in tx: %s", setRootResult.Hash)
 
 		// Verify the root was set
-		root, validUntilActual, err := multiInspector.GetRoot(ctx, s.SuiTestSuite.mcmsObj)
+		root, validUntilActual, err := multiInspector.GetRoot(ctx, s.mcmsObj)
 		s.Require().NoError(err, "Failed to get root after multi-signer SetRoot")
 		s.Require().NotEqual(common.Hash{}, root, "Root should not be empty after multi-signer SetRoot")
 		s.Require().Greater(validUntilActual, uint32(0), "ValidUntil should be greater than 0 after multi-signer SetRoot")
