@@ -9,6 +9,8 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/stretchr/testify/suite"
 
+	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	moduleMcmsAccount "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_account"
@@ -31,7 +33,7 @@ type SuiTestSuite struct {
 	chainSelector types.ChainSelector
 
 	// MCMS
-	mcmsPackageId string
+	mcmsPackageID string
 	mcms          moduleMcms.IMcms
 	mcmsObj       string
 	timelockObj   string
@@ -69,7 +71,7 @@ func (s *SuiTestSuite) SetupSuite() {
 	s.client = s.SuiClient
 	// TODO: Find funded accounts
 	s.signer = testSigner
-	s.chainSelector = types.ChainSelector(18395503381733958356)
+	s.chainSelector = types.ChainSelector(cselectors.SUI_TESTNET.Selector)
 }
 
 func (s *SuiTestSuite) DeployMCMSContract() {
@@ -80,7 +82,7 @@ func (s *SuiTestSuite) DeployMCMSContract() {
 		WaitForExecution: true,
 	}, s.client)
 	s.Require().NoError(err, "Failed to publish MCMS package")
-	s.mcmsPackageId = mcmsPackage.Address()
+	s.mcmsPackageID = mcmsPackage.Address()
 	s.mcms = mcmsPackage.MCMS()
 
 	mcmsObject, err1 := bind.FindObjectIdFromPublishTx(*tx, "mcms", "MultisigState")
@@ -90,9 +92,12 @@ func (s *SuiTestSuite) DeployMCMSContract() {
 	acc, err5 := bind.FindObjectIdFromPublishTx(*tx, "mcms_account", "AccountState")
 	ownCap, err6 := bind.FindObjectIdFromPublishTx(*tx, "mcms_account", "OwnerCap")
 
-	if err1 != nil || err2 != nil || err3 != nil || err4 != nil || err5 != nil || err6 != nil {
-		s.T().Fatalf("Failed to find object IDs in publish tx: %v, %v, %v, %v, %v, %v", err1, err2, err3, err4, err5, err6)
-	}
+	s.Require().NoError(err1, "Failed to find object IDs in publish tx")
+	s.Require().NoError(err2, "Failed to find object IDs in publish tx")
+	s.Require().NoError(err3, "Failed to find object IDs in publish tx")
+	s.Require().NoError(err4, "Failed to find object IDs in publish tx")
+	s.Require().NoError(err5, "Failed to find object IDs in publish tx")
+	s.Require().NoError(err6, "Failed to find object IDs in publish tx")
 
 	s.mcmsObj = mcmsObject
 	s.timelockObj = timelockObj
@@ -101,7 +106,7 @@ func (s *SuiTestSuite) DeployMCMSContract() {
 	s.accountObj = acc
 	s.ownerCapObj = ownCap
 
-	s.mcmsAccount, err = moduleMcmsAccount.NewMcmsAccount(s.mcmsPackageId, s.client)
+	s.mcmsAccount, err = moduleMcmsAccount.NewMcmsAccount(s.mcmsPackageID, s.client)
 	s.Require().NoError(err, "Failed to create MCMS account instance")
 }
 
@@ -114,7 +119,7 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 		Signer:           s.signer,
 		GasBudget:        &gasBudget,
 		WaitForExecution: true,
-	}, s.client, s.mcmsPackageId, signerAddress)
+	}, s.client, s.mcmsPackageID, signerAddress)
 	s.Require().NoError(err, "Failed to publish MCMS user package")
 
 	s.mcmsUserPackageId = mcmsUserPackage.Address()
@@ -123,9 +128,8 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 	userDataObj, err1 := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "UserData")
 	mcmsUserOwnerCapObj, err2 := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "OwnerCap")
 
-	if err1 != nil || err2 != nil {
-		s.T().Fatalf("Failed to find object IDs in publish tx: %v, %v", err1, err2)
-	}
+	s.Require().NoError(err1, "Failed to find object IDs in publish tx")
+	s.Require().NoError(err2, "Failed to find object IDs in publish tx")
 
 	s.mcmsUserOwnerCapObj = mcmsUserOwnerCapObj
 	s.stateObj = userDataObj

@@ -44,11 +44,11 @@ func TestNewConfigurer(t *testing.T) {
 	mockSigner := mockBindUtils.NewSuiSigner(t)
 
 	// Test successful creation
-	mcmsPackageId := "0x123456789abcdef"
+	mcmsPackageID := "0x123456789abcdef"
 	ownerCap := "0xabcdef123456789"
 	chainSelector := uint64(cselectors.SUI_TESTNET.Selector)
 
-	configurer, err := NewConfigurer(mockClient, mockSigner, TimelockRoleBypasser, mcmsPackageId, ownerCap, chainSelector)
+	configurer, err := NewConfigurer(mockClient, mockSigner, TimelockRoleBypasser, mcmsPackageID, ownerCap, chainSelector)
 	assert.NoError(t, err)
 	assert.NotNil(t, configurer)
 	assert.Equal(t, mockClient, configurer.client)

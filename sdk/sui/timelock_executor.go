@@ -25,14 +25,14 @@ type TimelockExecutor struct {
 	TimelockInspector
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
-	mcmsPackageId string
+	mcmsPackageID string
 	registryObj   string
 	accountObj    string
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor
-func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageId string, registryObj string, accountObj string) (*TimelockExecutor, error) {
-	timelockInspector, err := NewTimelockInspector(client, signer, mcmsPackageId)
+func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageID string, registryObj string, accountObj string) (*TimelockExecutor, error) {
+	timelockInspector, err := NewTimelockInspector(client, signer, mcmsPackageID)
 	if err != nil {
 		return nil, err
 	}
@@ -41,7 +41,7 @@ func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPac
 		TimelockInspector: *timelockInspector,
 		client:            client,
 		signer:            signer,
-		mcmsPackageId:     mcmsPackageId,
+		mcmsPackageID:     mcmsPackageID,
 		registryObj:       registryObj,
 		accountObj:        accountObj,
 	}, nil
@@ -107,7 +107,7 @@ func (t *TimelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}
 
-	err = AppendPTBFromExecutingCallbackParams(ctx, t.client, t.mcms, ptb, t.mcmsPackageId, executeCallback, calls, t.registryObj, t.accountObj)
+	err = AppendPTBFromExecutingCallbackParams(ctx, t.client, t.mcms, ptb, t.mcmsPackageID, executeCallback, calls, t.registryObj, t.accountObj)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", err)
 	}

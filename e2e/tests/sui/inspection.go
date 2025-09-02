@@ -3,7 +3,6 @@
 package sui
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"slices"
 
@@ -27,10 +26,10 @@ func (s *InspectionTestSuite) SetupSuite() {
 
 // TestGetConfig checks contract configuration
 func (s *InspectionTestSuite) TestGetConfig() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
 	// First, set up a configuration to test with
-	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleProposer)
+	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, suisdk.TimelockRoleProposer)
 	s.Require().NoError(err, "Failed to create inspector")
 
 	proposers := [3]common.Address{}
@@ -49,7 +48,7 @@ func (s *InspectionTestSuite) TestGetConfig() {
 	}
 
 	// Set the configuration using the configurer
-	configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
+	configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 	s.Require().NoError(err, "Failed to create configurer")
 
 	configTx, err := configurer.SetConfig(ctx, s.mcmsObj, testConfig, true)
@@ -77,9 +76,9 @@ func (s *InspectionTestSuite) TestGetConfig() {
 
 // TestGetOpCount checks contract operation count
 func (s *InspectionTestSuite) TestGetOpCount() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleProposer)
+	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, suisdk.TimelockRoleProposer)
 	s.Require().NoError(err, "Failed to create inspector")
 
 	opCount, err := inspector.GetOpCount(ctx, s.mcmsObj)
@@ -89,9 +88,9 @@ func (s *InspectionTestSuite) TestGetOpCount() {
 
 // TestGetRoot checks contract root
 func (s *InspectionTestSuite) TestGetRoot() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleProposer)
+	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, suisdk.TimelockRoleProposer)
 	s.Require().NoError(err, "Failed to create inspector")
 
 	root, validUntil, err := inspector.GetRoot(ctx, s.mcmsObj)
@@ -102,9 +101,9 @@ func (s *InspectionTestSuite) TestGetRoot() {
 
 // TestGetRootMetadata checks contract root metadata
 func (s *InspectionTestSuite) TestGetRootMetadata() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleProposer)
+	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, suisdk.TimelockRoleProposer)
 	s.Require().NoError(err, "Failed to create inspector")
 
 	metadata, err := inspector.GetRootMetadata(ctx, s.mcmsObj)

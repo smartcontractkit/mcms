@@ -125,19 +125,19 @@ func (s *SuiTestSuite) Test_Sui_SetConfig() {
 
 	// Set config
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleBypasser, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleBypasser, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 		s.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, bypasserConfig, true)
 		s.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleCanceller, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleCanceller, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 		s.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, cancellerConfig, true)
 		s.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 		s.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, proposerConfig, true)
 		s.Require().NoError(err, "setting config on Sui mcms contract")
@@ -145,7 +145,7 @@ func (s *SuiTestSuite) Test_Sui_SetConfig() {
 
 	// Assert that config has been set
 	{
-		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleBypasser)
+		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, suisdk.TimelockRoleBypasser)
 		s.Require().NoError(err, "creating inspector for Sui mcms contract")
 
 		gotConfig, err := inspector.GetConfig(s.T().Context(), s.mcmsObj)
@@ -154,7 +154,7 @@ func (s *SuiTestSuite) Test_Sui_SetConfig() {
 		s.Require().Equal(bypasserConfig, gotConfig)
 	}
 	{
-		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleCanceller)
+		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, suisdk.TimelockRoleCanceller)
 		s.Require().NoError(err, "creating inspector for Sui mcms contract")
 
 		gotConfig, err := inspector.GetConfig(s.T().Context(), s.mcmsObj)
@@ -163,7 +163,7 @@ func (s *SuiTestSuite) Test_Sui_SetConfig() {
 		s.Require().Equal(cancellerConfig, gotConfig)
 	}
 	{
-		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleProposer)
+		inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, suisdk.TimelockRoleProposer)
 		s.Require().NoError(err, "creating inspector for Sui mcms contract")
 
 		gotConfig, err := inspector.GetConfig(s.T().Context(), s.mcmsObj)

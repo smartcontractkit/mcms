@@ -37,7 +37,7 @@ type Executor struct {
 	*Inspector
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
-	mcmsPackageId string
+	mcmsPackageID string
 	mcms          *moduleMcms.McmsContract
 
 	mcmsObj     string // MultisigState object ID
@@ -46,13 +46,13 @@ type Executor struct {
 	timelockObj string
 }
 
-func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageId string, role TimelockRole, mcmsObj string, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
-	mcms, err := moduleMcms.NewMcms(mcmsPackageId, client)
+func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageID string, role TimelockRole, mcmsObj string, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
+	mcms, err := moduleMcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err
 	}
 
-	inspector, err := NewInspector(client, signer, mcmsPackageId, role)
+	inspector, err := NewInspector(client, signer, mcmsPackageID, role)
 	if err != nil {
 		return nil, err
 	}
@@ -62,7 +62,7 @@ func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encode
 		Inspector:     inspector,
 		client:        client,
 		signer:        signer,
-		mcmsPackageId: mcmsPackageId,
+		mcmsPackageID: mcmsPackageID,
 		mcms:          mcms,
 		mcmsObj:       mcmsObj,
 		accountObj:    accountObj,
@@ -120,7 +120,7 @@ func (e Executor) ExecuteOperation(
 		clockObj,
 		additionalFieldsMetadata.Role.Byte(),
 		chainIDBig,
-		e.mcmsPackageId,
+		e.mcmsPackageID,
 		uint64(nonce),
 		toAddress.Hex(), // Needs to always be MCMS package id
 		additionalFields.ModuleName,
@@ -190,7 +190,7 @@ func (e Executor) ExecuteOperation(
 			}
 		}
 
-		if extendErr := AppendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, e.mcmsPackageId, executeCallback, calls, e.registryObj, e.accountObj); extendErr != nil {
+		if extendErr := AppendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, e.mcmsPackageID, executeCallback, calls, e.registryObj, e.accountObj); extendErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", extendErr)
 		}
 	}
@@ -252,7 +252,7 @@ func (e Executor) SetRoot(
 		uint64(validUntil), // the contract expects seconds
 		chainIDBig,
 		// Use the actual MCMS package address
-		e.mcmsPackageId,
+		e.mcmsPackageID,
 		metadata.StartingOpCount,
 		metadata.StartingOpCount+e.TxCount,
 		e.OverridePreviousRoot,
@@ -302,9 +302,9 @@ func encodeSignatures(signatures []types.Signature) [][]byte {
 	return sigs
 }
 
-func extractExecutingCallbackParams(mcmsPackageId string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
+func extractExecutingCallbackParams(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
 	// Convert the type string to TypeTag
-	executingCallbackParamsType := fmt.Sprintf("%s::mcms_registry::ExecutingCallbackParams", mcmsPackageId)
+	executingCallbackParamsType := fmt.Sprintf("%s::mcms_registry::ExecutingCallbackParams", mcmsPackageID)
 	typeTag, err := bindutils.ConvertTypeStringToTypeTag(executingCallbackParamsType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert type string to TypeTag: %w", err)
@@ -323,9 +323,9 @@ func extractExecutingCallbackParams(mcmsPackageId string, ptb *transaction.Trans
 	return &executingCallbackParams, nil
 }
 
-func closeExecutingCallbackParams(mcmsPackageId string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
+func closeExecutingCallbackParams(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
 	// Get the type tag for ExecutingCallbackParams
-	executingCallbackParamsType := fmt.Sprintf("%s::mcms_registry::ExecutingCallbackParams", mcmsPackageId)
+	executingCallbackParamsType := fmt.Sprintf("%s::mcms_registry::ExecutingCallbackParams", mcmsPackageID)
 	typeTag, err := bindutils.ConvertTypeStringToTypeTag(executingCallbackParamsType)
 	if err != nil {
 		return fmt.Errorf("failed to convert type string to TypeTag: %w", err)
@@ -347,7 +347,7 @@ func AppendPTBFromExecutingCallbackParams(
 	client sui.ISuiAPI,
 	mcms *moduleMcms.McmsContract,
 	ptb *transaction.Transaction,
-	mcmsPackageId string,
+	mcmsPackageID string,
 	executeCallback *transaction.Argument,
 	calls []Call,
 	registryObj string,
@@ -362,12 +362,12 @@ func AppendPTBFromExecutingCallbackParams(
 
 		// Ensure proper address formatting - convert bytes to hex with proper padding
 		targetString := fmt.Sprintf("0x%s", strings.ToLower(hex.EncodeToString(call.Target)))
-		isTargetMCMSPackage := targetString == mcmsPackageId
+		isTargetMCMSPackage := targetString == mcmsPackageID
 
 		// If the target is the MCMS package, we need to call ExecuteDispatchToAccount
 		if isTargetMCMSPackage {
 			// We need to extract individual ExecutingCallbackParams from the executeCallback vector
-			executingCallbackParams, extractErr := extractExecutingCallbackParams(mcmsPackageId, ptb, executeCallback)
+			executingCallbackParams, extractErr := extractExecutingCallbackParams(mcmsPackageID, ptb, executeCallback)
 			if extractErr != nil {
 				return fmt.Errorf("failed to extract executing callback params: %w", extractErr)
 			}
@@ -387,7 +387,7 @@ func AppendPTBFromExecutingCallbackParams(
 			}
 			// If this is a destination contract operation, we need to call mcms_entrypoint
 		} else {
-			executingCallbackParams, err := extractExecutingCallbackParams(mcmsPackageId, ptb, executeCallback)
+			executingCallbackParams, err := extractExecutingCallbackParams(mcmsPackageID, ptb, executeCallback)
 			if err != nil {
 				return fmt.Errorf("extracting ExecutingCallbackParams %d: %w", i, err)
 			}
@@ -418,7 +418,7 @@ func AppendPTBFromExecutingCallbackParams(
 	}
 
 	// After processing all elements, the vector should be empty, we need to close it
-	if err := closeExecutingCallbackParams(mcmsPackageId, ptb, executeCallback); err != nil {
+	if err := closeExecutingCallbackParams(mcmsPackageID, ptb, executeCallback); err != nil {
 		return fmt.Errorf("closing ExecutingCallbackParams vector: %w", err)
 	}
 

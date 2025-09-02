@@ -183,64 +183,11 @@ func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (
 	return configuration.CanSetRoot(recoveredSigners)
 }
 
-// CheckQuorum checks if the quorum for the proposal on the given chain has been reached. This will
-// fetch the current configuration for the chain and check if the recovered signers from the
-// proposal's signatures can set the root.
-func (s *Signable) CheckQuorumWithMCMAddress(ctx context.Context, chain types.ChainSelector, mcmAddress string) (bool, error) {
-	if s.inspectors == nil {
-		return false, ErrInspectorsNotProvided
-	}
-
-	inspector, ok := s.inspectors[chain]
-	if !ok {
-		return false, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
-	}
-
-	hash, err := s.proposal.SigningHash()
-	if err != nil {
-		return false, err
-	}
-
-	recoveredSigners := make([]common.Address, len(s.proposal.Signatures))
-	for i, sig := range s.proposal.Signatures {
-		recoveredAddr, rerr := sig.Recover(hash)
-		if rerr != nil {
-			return false, rerr
-		}
-
-		recoveredSigners[i] = recoveredAddr
-	}
-
-	configuration, err := inspector.GetConfig(ctx, mcmAddress)
-	if err != nil {
-		return false, err
-	}
-
-	return configuration.CanSetRoot(recoveredSigners)
-}
-
 // ValidateSignatures checks if the quorum for the proposal has been reached on the MCM contracts
 // across all chains in the proposal.
 func (s *Signable) ValidateSignatures(ctx context.Context) (bool, error) {
 	for chain := range s.proposal.ChainMetadata {
 		checkQuorum, err := s.CheckQuorum(ctx, chain)
-		if err != nil {
-			return false, err
-		}
-
-		if !checkQuorum {
-			return false, NewQuorumNotReachedError(chain)
-		}
-	}
-
-	return true, nil
-}
-
-// ValidateSignaturesWithMCMAddress checks if the quorum for the proposal has been reached on the MCM contracts
-// across all chains in the proposal.
-func (s *Signable) ValidateSignaturesWithMCMAddress(ctx context.Context, mcmAddress string) (bool, error) {
-	for chain := range s.proposal.ChainMetadata {
-		checkQuorum, err := s.CheckQuorumWithMCMAddress(ctx, chain, mcmAddress)
 		if err != nil {
 			return false, err
 		}

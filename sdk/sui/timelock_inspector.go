@@ -19,13 +19,13 @@ var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 type TimelockInspector struct {
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
-	mcmsPackageId string
+	mcmsPackageID string
 	mcms          *moduleMcms.McmsContract
 }
 
 // NewTimelockInspector creates a new TimelockInspector
-func NewTimelockInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageId string) (*TimelockInspector, error) {
-	mcms, err := moduleMcms.NewMcms(mcmsPackageId, client)
+func NewTimelockInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageID string) (*TimelockInspector, error) {
+	mcms, err := moduleMcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func NewTimelockInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPa
 	return &TimelockInspector{
 		client:        client,
 		signer:        signer,
-		mcmsPackageId: mcmsPackageId,
+		mcmsPackageID: mcmsPackageID,
 		mcms:          mcms,
 	}, nil
 }

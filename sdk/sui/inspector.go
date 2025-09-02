@@ -29,7 +29,7 @@ type Inspector struct {
 	ConfigTransformer
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
-	mcmsPackageId string
+	mcmsPackageID string
 	mcms          moduleMcms.IMcms
 	role          TimelockRole
 }
@@ -73,8 +73,8 @@ func (c *ConfigTransformer) ToConfig(config moduleMcms.Config) (*types.Config, e
 	return c.evmTransformer.ToConfig(evmConfig)
 }
 
-func NewInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageId string, role TimelockRole) (*Inspector, error) {
-	mcms, err := moduleMcms.NewMcms(mcmsPackageId, client)
+func NewInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageID string, role TimelockRole) (*Inspector, error) {
+	mcms, err := moduleMcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err
 	}
@@ -82,7 +82,7 @@ func NewInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageId 
 	return &Inspector{
 		client:        client,
 		signer:        signer,
-		mcmsPackageId: mcmsPackageId,
+		mcmsPackageID: mcmsPackageID,
 		mcms:          mcms,
 		role:          role,
 	}, nil

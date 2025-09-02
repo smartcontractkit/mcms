@@ -45,13 +45,13 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 
 	// Set config
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, role, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, role, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.mcmsObj, proposerConfig.Config, true)
 		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleBypasser, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleBypasser, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.mcmsObj, bypasserConfig.Config, true)
 		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
@@ -93,7 +93,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		Transactions:  []types.Transaction{transaction},
 	}
 
-	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, role)
+	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, role)
 	s.SuiTestSuite.Require().NoError(err, "creating inspector for op count query")
 
 	// Get the actual current operation count from the contract
@@ -120,7 +120,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		Version:        "v1",
 		Description:    "MCMS user function one",
 		ChainSelector:  s.SuiTestSuite.chainSelector,
-		MCMSPackageId:  s.SuiTestSuite.mcmsPackageId,
+		mcmsPackageID:  s.SuiTestSuite.mcmsPackageID,
 		Role:           role,
 		CurrentOpCount: currentOpCount,
 		Action:         action,
@@ -134,7 +134,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	// Sign the proposal, set root and execute proposal operations
 
 	// Convert the Timelock Proposal into a MCMS Proposal
-	timelockConverter, err := suisdk.NewTimelockConverter(s.SuiTestSuite.client, s.SuiTestSuite.signer, s.SuiTestSuite.mcmsPackageId)
+	timelockConverter, err := suisdk.NewTimelockConverter(s.SuiTestSuite.client, s.SuiTestSuite.signer, s.SuiTestSuite.mcmsPackageID)
 	s.SuiTestSuite.Require().NoError(err)
 
 	convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
@@ -167,7 +167,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	s.SuiTestSuite.Require().NoError(err)
 
 	// Need to query inspector with MCMS state object ID
-	quorumMet, err := signable.ValidateSignaturesWithMCMAddress(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)
+	quorumMet, err := signable.ValidateSignatures(s.SuiTestSuite.T().Context())
 	s.SuiTestSuite.Require().NoError(err, "Error validating signatures")
 	s.SuiTestSuite.Require().True(quorumMet, "Quorum not met")
 
@@ -176,7 +176,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	encoders, err := proposal.GetEncoders()
 	s.SuiTestSuite.Require().NoError(err)
 	suiEncoder := encoders[s.SuiTestSuite.chainSelector].(*suisdk.Encoder)
-	executor, err := suisdk.NewExecutor(s.SuiTestSuite.client, s.SuiTestSuite.signer, suiEncoder, s.SuiTestSuite.mcmsPackageId, role, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
+	executor, err := suisdk.NewExecutor(s.SuiTestSuite.client, s.SuiTestSuite.signer, suiEncoder, s.SuiTestSuite.mcmsPackageID, role, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
 	s.SuiTestSuite.Require().NoError(err, "creating executor for Sui mcms contract")
 
 	executors := map[types.ChainSelector]sdk.Executor{
@@ -208,7 +208,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	s.SuiTestSuite.Require().NoError(err, "Failed to get signing hash")
 	s.SuiTestSuite.T().Logf("Proposal Signing Hash: %x", signingHash)
 
-	quorumMet, err = signable.ValidateSignaturesWithMCMAddress(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)
+	quorumMet, err = signable.ValidateSignatures(s.SuiTestSuite.T().Context())
 	s.SuiTestSuite.Require().NoError(err, "Error validating signatures")
 	s.SuiTestSuite.Require().True(quorumMet, "Quorum not met")
 
@@ -233,7 +233,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		timelockExecutor, tErr := suisdk.NewTimelockExecutor(
 			s.SuiTestSuite.client,
 			s.SuiTestSuite.signer,
-			s.SuiTestSuite.mcmsPackageId,
+			s.SuiTestSuite.mcmsPackageID,
 			s.SuiTestSuite.registryObj,
 			s.SuiTestSuite.accountObj,
 		)

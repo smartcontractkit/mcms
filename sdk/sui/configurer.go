@@ -28,8 +28,8 @@ type Configurer struct {
 	chainSelector uint64
 }
 
-func NewConfigurer(client sui.ISuiAPI, signer bindutils.SuiSigner, role TimelockRole, mcmsPackageId string, ownerCap string, chainSelector uint64) (*Configurer, error) {
-	mcms, err := moduleMcms.NewMcms(mcmsPackageId, client)
+func NewConfigurer(client sui.ISuiAPI, signer bindutils.SuiSigner, role TimelockRole, mcmsPackageID string, ownerCap string, chainSelector uint64) (*Configurer, error) {
+	mcms, err := moduleMcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err
 	}

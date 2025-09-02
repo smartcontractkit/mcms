@@ -36,7 +36,7 @@ func NewTransaction(moduleName, function string, to string, data []byte, contrac
 	return NewTransactionWithStateObj(moduleName, function, to, data, contractType, tags, "")
 }
 
-func NewTransactionWithManyStateObj(internalStateObjects []string, moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string) (types.Transaction, error) {
+func NewTransactionWithManyStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string, internalStateObjects []string) (types.Transaction, error) {
 	additionalFields := AdditionalFields{
 		ModuleName:           moduleName,
 		Function:             function,
@@ -60,23 +60,5 @@ func NewTransactionWithManyStateObj(internalStateObjects []string, moduleName, f
 }
 
 func NewTransactionWithStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string) (types.Transaction, error) {
-	additionalFields := AdditionalFields{
-		ModuleName: moduleName,
-		Function:   function,
-		StateObj:   stateObj,
-	}
-	marshalledAdditionalFields, err := json.Marshal(additionalFields)
-	if err != nil {
-		return types.Transaction{}, fmt.Errorf("failed to marshal additional fields: %w", err)
-	}
-
-	return types.Transaction{
-		OperationMetadata: types.OperationMetadata{
-			ContractType: contractType,
-			Tags:         tags,
-		},
-		To:               to,
-		Data:             data,
-		AdditionalFields: marshalledAdditionalFields,
-	}, nil
+	return NewTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, nil)
 }

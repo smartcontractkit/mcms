@@ -23,15 +23,15 @@ func TestNewInspector(t *testing.T) {
 	t.Parallel()
 	mockClient := mockSui.NewISuiAPI(t)
 	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mcmsPackageId := "0x123456789abcdef"
+	mcmsPackageID := "0x123456789abcdef"
 	role := TimelockRoleProposer
 
-	inspector, err := NewInspector(mockClient, mockSigner, mcmsPackageId, role)
+	inspector, err := NewInspector(mockClient, mockSigner, mcmsPackageID, role)
 	require.NoError(t, err)
 	assert.NotNil(t, inspector)
 	assert.Equal(t, mockClient, inspector.client)
 	assert.Equal(t, mockSigner, inspector.signer)
-	assert.Equal(t, mcmsPackageId, inspector.mcmsPackageId)
+	assert.Equal(t, mcmsPackageID, inspector.mcmsPackageID)
 	assert.Equal(t, role, inspector.role)
 	assert.NotNil(t, inspector.mcms)
 }
@@ -181,7 +181,7 @@ func TestInspector_GetConfig(t *testing.T) {
 				ConfigTransformer: ConfigTransformer{},
 				client:            mockClient,
 				signer:            mockSigner,
-				mcmsPackageId:     "0x123456789abcdef",
+				mcmsPackageID:     "0x123456789abcdef",
 				mcms:              mockMcms,
 				role:              tt.role,
 			}
@@ -265,7 +265,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 				ConfigTransformer: ConfigTransformer{},
 				client:            mockClient,
 				signer:            mockSigner,
-				mcmsPackageId:     "0x123456789abcdef",
+				mcmsPackageID:     "0x123456789abcdef",
 				mcms:              mockMcms,
 				role:              tt.role,
 			}
@@ -412,7 +412,7 @@ func TestInspector_GetRoot(t *testing.T) {
 				ConfigTransformer: ConfigTransformer{},
 				client:            mockClient,
 				signer:            mockSigner,
-				mcmsPackageId:     "0x123456789abcdef",
+				mcmsPackageID:     "0x123456789abcdef",
 				mcms:              mockMcms,
 				role:              tt.role,
 			}
@@ -504,7 +504,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 				ConfigTransformer: ConfigTransformer{},
 				client:            mockClient,
 				signer:            mockSigner,
-				mcmsPackageId:     "0x123456789abcdef",
+				mcmsPackageID:     "0x123456789abcdef",
 				mcms:              mockMcms,
 				role:              tt.role,
 			}

@@ -15,14 +15,14 @@ func TestNewTimelockInspector(t *testing.T) {
 	t.Parallel()
 	mockClient := mockSui.NewISuiAPI(t)
 	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mcmsPackageId := "0x123456789abcdef"
+	mcmsPackageID := "0x123456789abcdef"
 
-	inspector, err := NewTimelockInspector(mockClient, mockSigner, mcmsPackageId)
+	inspector, err := NewTimelockInspector(mockClient, mockSigner, mcmsPackageID)
 	require.NoError(t, err)
 	assert.NotNil(t, inspector)
 	assert.Equal(t, mockClient, inspector.client)
 	assert.Equal(t, mockSigner, inspector.signer)
-	assert.Equal(t, mcmsPackageId, inspector.mcmsPackageId)
+	assert.Equal(t, mcmsPackageID, inspector.mcmsPackageID)
 	assert.NotNil(t, inspector.mcms)
 }
 
@@ -89,13 +89,3 @@ func TestTimelockInspector_GetCancellers(t *testing.T) {
 	assert.Nil(t, result)
 	assert.Contains(t, err.Error(), "unsupported on Sui")
 }
-
-// Note: The following methods require blockchain interaction and are better suited for integration tests:
-// - GetMinDelay(ctx, address) (uint64, error)
-// - IsOperation(ctx, address, opID) (bool, error)
-// - IsOperationPending(ctx, address, opID) (bool, error)
-// - IsOperationReady(ctx, address, opID) (bool, error)
-// - IsOperationDone(ctx, address, opID) (bool, error)
-//
-// These methods use concrete types (*moduleMcms.McmsContract) that make mocking difficult
-// in unit tests. They should be tested via integration tests with a live Sui network.

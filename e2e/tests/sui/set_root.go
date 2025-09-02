@@ -3,7 +3,6 @@
 package sui
 
 import (
-	"context"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -30,7 +29,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 
 // TestSetRoot tests the SetRoot functionality by setting a root on the MCMS contract
 func (s *SetRootTestSuite) TestSetRoot() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
 	// Create a test signer
 	signerKey, err := crypto.GenerateKey()
@@ -46,7 +45,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 	// Create metadata for this chain
 	metadata := types.ChainMetadata{
 		StartingOpCount: 0,
-		MCMAddress:      s.SuiTestSuite.mcmsPackageId, // Use package address for proof verification
+		MCMAddress:      s.SuiTestSuite.mcmsPackageID, // Use package address for proof verification
 		AdditionalFields: []byte(`{
 			"role": 2
 		}`),
@@ -75,7 +74,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 	s.Require().NoError(err, "Failed to build proposal")
 
 	// Create inspectors and encoders
-	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleProposer)
+	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, suisdk.TimelockRoleProposer)
 	s.Require().NoError(err, "Failed to create inspector")
 
 	inspectors := map[types.ChainSelector]sdk.Inspector{
@@ -86,7 +85,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 	s.Require().NoError(err, "Failed to get encoders")
 	encoder := encoders[s.chainSelector].(*suisdk.Encoder)
 
-	executor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.SuiTestSuite.mcmsPackageId, suisdk.TimelockRoleProposer, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
+	executor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.SuiTestSuite.mcmsPackageID, suisdk.TimelockRoleProposer, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
 	s.Require().NoError(err, "Failed to create executor")
 
 	executors := map[types.ChainSelector]sdk.Executor{
@@ -103,7 +102,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 
 	s.Run("SetConfig and SetRoot", func() {
 		// First, set the configuration
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 		s.Require().NoError(err, "Failed to create configurer")
 
 		configTx, err := configurer.SetConfig(ctx, s.SuiTestSuite.mcmsObj, &mcmConfig, true)
@@ -137,7 +136,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 
 // TestSetRootMultipleSigners tests SetRoot with multiple signers and higher quorum
 func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
 	// Create multiple test signers
 	signerKey1, err := crypto.GenerateKey()
@@ -157,7 +156,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 	// Create metadata for this chain
 	metadata := types.ChainMetadata{
 		StartingOpCount: 0,
-		MCMAddress:      s.SuiTestSuite.mcmsPackageId, // Use package address for proof verification
+		MCMAddress:      s.SuiTestSuite.mcmsPackageID, // Use package address for proof verification
 		AdditionalFields: []byte(`{
 			"role": 2
 		}`),
@@ -186,7 +185,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 	s.Require().NoError(err, "Failed to build multi-signer proposal")
 
 	// Create inspectors
-	multiInspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageId, suisdk.TimelockRoleProposer)
+	multiInspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, suisdk.TimelockRoleProposer)
 	s.Require().NoError(err, "Failed to create inspector for multi-signer test")
 
 	multiInspectors := map[types.ChainSelector]sdk.Inspector{
@@ -210,7 +209,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 
 	s.Run("SetConfig and SetRoot with multiple signers", func() {
 		// Set configuration with multiple signers
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageId, s.ownerCapObj, uint64(s.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 		s.Require().NoError(err, "Failed to create configurer for multi-signer test")
 
 		configTx, err := configurer.SetConfig(ctx, s.SuiTestSuite.mcmsObj, &mcmConfig, true)
@@ -222,7 +221,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 		s.Require().NoError(err, "Failed to get encoders for multi-signer test")
 		encoder := encoders[s.chainSelector].(*suisdk.Encoder)
 
-		multiExecutor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.SuiTestSuite.mcmsPackageId, suisdk.TimelockRoleProposer, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
+		multiExecutor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.SuiTestSuite.mcmsPackageID, suisdk.TimelockRoleProposer, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
 		s.Require().NoError(err, "Failed to create executor for multi-signer test")
 
 		multiExecutors := map[types.ChainSelector]sdk.Executor{

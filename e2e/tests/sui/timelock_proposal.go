@@ -43,13 +43,13 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 
 	// Set config
 	{
-		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, suisdk.TimelockRoleBypasser, s.SuiTestSuite.mcmsPackageId, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, suisdk.TimelockRoleBypasser, s.SuiTestSuite.mcmsPackageID, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
 		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj, bypasserConfig.Config, true)
 		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 	{
-		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, suisdk.TimelockRoleProposer, s.SuiTestSuite.mcmsPackageId, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
+		configurer, err := suisdk.NewConfigurer(s.SuiTestSuite.client, s.SuiTestSuite.signer, suisdk.TimelockRoleProposer, s.SuiTestSuite.mcmsPackageID, s.SuiTestSuite.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
 		s.SuiTestSuite.Require().NoError(err, "creating configurer for Sui mcms contract")
 		_, err = configurer.SetConfig(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj, proposerConfig.Config, true)
 		s.SuiTestSuite.Require().NoError(err, "setting config on Sui mcms contract")
@@ -99,7 +99,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		Transactions:  []types.Transaction{transaction},
 	}
 
-	inspector, err := suisdk.NewInspector(s.SuiTestSuite.client, s.SuiTestSuite.signer, s.SuiTestSuite.mcmsPackageId, role)
+	inspector, err := suisdk.NewInspector(s.SuiTestSuite.client, s.SuiTestSuite.signer, s.SuiTestSuite.mcmsPackageID, role)
 	s.SuiTestSuite.Require().NoError(err, "creating inspector for op count query")
 
 	// Get the actual current operation count from the contract
@@ -126,7 +126,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		Version:        "v1",
 		Description:    "Accept ownership via timelock",
 		ChainSelector:  s.SuiTestSuite.chainSelector,
-		MCMSPackageId:  s.SuiTestSuite.mcmsPackageId,
+		mcmsPackageID:  s.SuiTestSuite.mcmsPackageID,
 		Role:           role,
 		CurrentOpCount: currentOpCount,
 		Action:         action,
@@ -140,7 +140,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	// Sign the proposal, set root and execute proposal operations
 
 	// Convert the Timelock Proposal into a MCMS Proposal
-	timelockConverter, err := suisdk.NewTimelockConverter(s.SuiTestSuite.client, s.SuiTestSuite.signer, s.SuiTestSuite.mcmsPackageId)
+	timelockConverter, err := suisdk.NewTimelockConverter(s.SuiTestSuite.client, s.SuiTestSuite.signer, s.SuiTestSuite.mcmsPackageID)
 	s.SuiTestSuite.Require().NoError(err)
 
 	convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
@@ -173,7 +173,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	s.SuiTestSuite.Require().NoError(err)
 
 	// Need to query inspector with MCMS state object ID
-	quorumMet, err := signable.ValidateSignaturesWithMCMAddress(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)
+	quorumMet, err := signable.ValidateSignatures(s.SuiTestSuite.T().Context())
 	s.SuiTestSuite.Require().NoError(err, "Error validating signatures")
 	s.SuiTestSuite.Require().True(quorumMet, "Quorum not met")
 
@@ -182,7 +182,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	encoders, err := proposal.GetEncoders()
 	s.SuiTestSuite.Require().NoError(err)
 	suiEncoder := encoders[s.SuiTestSuite.chainSelector].(*suisdk.Encoder)
-	executor, err := suisdk.NewExecutor(s.SuiTestSuite.client, s.SuiTestSuite.signer, suiEncoder, s.SuiTestSuite.mcmsPackageId, role, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
+	executor, err := suisdk.NewExecutor(s.SuiTestSuite.client, s.SuiTestSuite.signer, suiEncoder, s.SuiTestSuite.mcmsPackageID, role, s.SuiTestSuite.mcmsObj, s.SuiTestSuite.accountObj, s.SuiTestSuite.registryObj, s.SuiTestSuite.timelockObj)
 	s.SuiTestSuite.Require().NoError(err, "creating executor for Sui mcms contract")
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.SuiTestSuite.chainSelector: executor,
@@ -213,7 +213,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	s.SuiTestSuite.Require().NoError(err, "Failed to get signing hash")
 	s.SuiTestSuite.T().Logf("Proposal Signing Hash: %x", signingHash)
 
-	quorumMet, err = signable.ValidateSignaturesWithMCMAddress(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)
+	quorumMet, err = signable.ValidateSignatures(s.SuiTestSuite.T().Context())
 	s.SuiTestSuite.Require().NoError(err, "Error validating signatures")
 	s.SuiTestSuite.Require().True(quorumMet, "Quorum not met")
 
@@ -239,7 +239,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		timelockExecutor, tErr := suisdk.NewTimelockExecutor(
 			s.SuiTestSuite.client,
 			s.SuiTestSuite.signer,
-			s.SuiTestSuite.mcmsPackageId,
+			s.SuiTestSuite.mcmsPackageID,
 			s.SuiTestSuite.registryObj,
 			s.SuiTestSuite.accountObj,
 		)
@@ -260,7 +260,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	tx, err := s.SuiTestSuite.mcmsAccount.ExecuteOwnershipTransfer(s.SuiTestSuite.T().Context(), &bind.CallOpts{
 		Signer:           s.SuiTestSuite.signer,
 		WaitForExecution: true,
-	}, bind.Object{Id: s.SuiTestSuite.ownerCapObj}, bind.Object{Id: s.SuiTestSuite.accountObj}, bind.Object{Id: s.SuiTestSuite.registryObj}, s.SuiTestSuite.mcmsPackageId)
+	}, bind.Object{Id: s.SuiTestSuite.ownerCapObj}, bind.Object{Id: s.SuiTestSuite.accountObj}, bind.Object{Id: s.SuiTestSuite.registryObj}, s.SuiTestSuite.mcmsPackageID)
 	s.SuiTestSuite.Require().NoError(err, "Failed to execute ownership transfer")
 	s.SuiTestSuite.Require().NotEmpty(tx, "Transaction should not be empty")
 	s.SuiTestSuite.T().Logf("✅ Executed ownership transfer in tx: %s", tx.Digest)
@@ -268,7 +268,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	// Check owner
 	owner, err := bind.ReadObject(s.SuiTestSuite.T().Context(), s.SuiTestSuite.accountObj, s.SuiTestSuite.client)
 	s.SuiTestSuite.Require().NoError(err)
-	s.SuiTestSuite.Require().Equal(s.SuiTestSuite.mcmsPackageId, owner.Data.Content.Fields["owner"], "Owner should be the mcms package ID")
+	s.SuiTestSuite.Require().Equal(s.SuiTestSuite.mcmsPackageID, owner.Data.Content.Fields["owner"], "Owner should be the mcms package ID")
 
 	// Check op count got incremented by 1
 	postOpCount, err := inspector.GetOpCount(s.SuiTestSuite.T().Context(), s.SuiTestSuite.mcmsObj)

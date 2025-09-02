@@ -26,12 +26,12 @@ var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 type TimelockConverter struct {
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
-	mcmsPackageId string
+	mcmsPackageID string
 	mcms          moduleMcms.IMcms
 }
 
-func NewTimelockConverter(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageId string) (*TimelockConverter, error) {
-	mcms, err := moduleMcms.NewMcms(mcmsPackageId, client)
+func NewTimelockConverter(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageID string) (*TimelockConverter, error) {
+	mcms, err := moduleMcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err
 	}
@@ -39,13 +39,13 @@ func NewTimelockConverter(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPa
 	return &TimelockConverter{
 		client:        client,
 		signer:        signer,
-		mcmsPackageId: mcmsPackageId,
+		mcmsPackageID: mcmsPackageID,
 		mcms:          mcms,
 	}, nil
 }
 
 // We need somehow to create an mcms tx that contains the timelock command. The execute will then create a PTB with execute and the command coming from the proposal, which has the timelock command
-// This thing should just return the part of the PTB calling the correspinding dispatch function
+// This thing should just return the part of the PTB calling the corresponding dispatch function
 func (t *TimelockConverter) ConvertBatchToChainOperations(
 	ctx context.Context,
 	metadata types.ChainMetadata,
@@ -109,14 +109,14 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 
 	// Create the transaction
 	tx, err := NewTransactionWithManyStateObj(
-		stateObjs,
 		"mcms", // can only be mcms
 		function,
-		t.mcmsPackageId, // can only call itself
+		t.mcmsPackageID, // can only call itself
 		data,
 		"MCMS",
 		tags,
 		timelockAddress,
+		stateObjs,
 	)
 	if err != nil {
 		return nil, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)

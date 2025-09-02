@@ -3,7 +3,6 @@
 package sui
 
 import (
-	"context"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -25,9 +24,9 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 
 // TestGetProposers tests that role-based queries are unsupported on Sui
 func (s *TimelockInspectionTestSuite) TestGetProposers() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageId)
+	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
 	s.Require().NoError(err, "Failed to create timelock inspector")
 
 	proposers, err := inspector.GetProposers(ctx, s.timelockObj)
@@ -38,9 +37,9 @@ func (s *TimelockInspectionTestSuite) TestGetProposers() {
 
 // TestGetExecutors tests that role-based queries are unsupported on Sui
 func (s *TimelockInspectionTestSuite) TestGetExecutors() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageId)
+	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
 	s.Require().NoError(err, "Failed to create timelock inspector")
 
 	executors, err := inspector.GetExecutors(ctx, s.timelockObj)
@@ -51,9 +50,9 @@ func (s *TimelockInspectionTestSuite) TestGetExecutors() {
 
 // TestGetBypassers tests that role-based queries are unsupported on Sui
 func (s *TimelockInspectionTestSuite) TestGetBypassers() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageId)
+	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
 	s.Require().NoError(err, "Failed to create timelock inspector")
 
 	bypassers, err := inspector.GetBypassers(ctx, s.timelockObj)
@@ -64,9 +63,9 @@ func (s *TimelockInspectionTestSuite) TestGetBypassers() {
 
 // TestGetCancellers tests that role-based queries are unsupported on Sui
 func (s *TimelockInspectionTestSuite) TestGetCancellers() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageId)
+	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
 	s.Require().NoError(err, "Failed to create timelock inspector")
 
 	cancellers, err := inspector.GetCancellers(ctx, s.timelockObj)
@@ -77,9 +76,9 @@ func (s *TimelockInspectionTestSuite) TestGetCancellers() {
 
 // TestIsOperation tests the IsOperation method with a non-existent operation
 func (s *TimelockInspectionTestSuite) TestIsOperation() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageId)
+	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
 	s.Require().NoError(err, "Failed to create timelock inspector")
 
 	// Test with a random operation ID that doesn't exist
@@ -93,9 +92,9 @@ func (s *TimelockInspectionTestSuite) TestIsOperation() {
 
 // TestIsOperationPending tests the IsOperationPending method with a non-existent operation
 func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageId)
+	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
 	s.Require().NoError(err, "Failed to create timelock inspector")
 
 	// Test with a random operation ID that doesn't exist
@@ -109,9 +108,9 @@ func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 
 // TestIsOperationReady tests the IsOperationReady method with a non-existent operation
 func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageId)
+	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
 	s.Require().NoError(err, "Failed to create timelock inspector")
 
 	// Test with a random operation ID that doesn't exist
@@ -125,9 +124,9 @@ func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 
 // TestIsOperationDone tests the IsOperationDone method with a non-existent operation
 func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageId)
+	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
 	s.Require().NoError(err, "Failed to create timelock inspector")
 
 	// Test with a random operation ID that doesn't exist
@@ -142,13 +141,13 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 // TestOperationLifecycle tests a complete operation lifecycle by scheduling an operation
 // and checking its status through various states
 func (s *TimelockInspectionTestSuite) TestOperationLifecycle() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
-	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageId)
+	inspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
 	s.Require().NoError(err, "Failed to create timelock inspector")
 
 	// Create a timelock converter to create a scheduled operation
-	converter, err := suisdk.NewTimelockConverter(s.client, s.signer, s.mcmsPackageId)
+	converter, err := suisdk.NewTimelockConverter(s.client, s.signer, s.mcmsPackageID)
 	s.Require().NoError(err, "Failed to create timelock converter")
 
 	// Create a simple batch operation for testing

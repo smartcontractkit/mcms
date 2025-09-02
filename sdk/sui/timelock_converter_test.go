@@ -18,14 +18,14 @@ func TestNewTimelockConverter(t *testing.T) {
 	t.Parallel()
 	mockClient := mockSui.NewISuiAPI(t)
 	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mcmsPackageId := "0x123456789abcdef"
+	mcmsPackageID := "0x123456789abcdef"
 
-	converter, err := NewTimelockConverter(mockClient, mockSigner, mcmsPackageId)
+	converter, err := NewTimelockConverter(mockClient, mockSigner, mcmsPackageID)
 	require.NoError(t, err)
 	assert.NotNil(t, converter)
 	assert.Equal(t, mockClient, converter.client)
 	assert.Equal(t, mockSigner, converter.signer)
-	assert.Equal(t, mcmsPackageId, converter.mcmsPackageId)
+	assert.Equal(t, mcmsPackageID, converter.mcmsPackageID)
 	assert.NotNil(t, converter.mcms)
 }
 
