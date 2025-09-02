@@ -9,15 +9,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	mock_bindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
-	mock_sui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
+	mockBindUtils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
+	mockSui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestNewTimelockConverter(t *testing.T) {
 	t.Parallel()
-	mockClient := mock_sui.NewISuiAPI(t)
-	mockSigner := mock_bindutils.NewSuiSigner(t)
+	mockClient := mockSui.NewISuiAPI(t)
+	mockSigner := mockBindUtils.NewSuiSigner(t)
 	mcmsPackageId := "0x123456789abcdef"
 
 	converter, err := NewTimelockConverter(mockClient, mockSigner, mcmsPackageId)
@@ -266,8 +266,8 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mock_sui.NewISuiAPI(t)
-			mockSigner := mock_bindutils.NewSuiSigner(t)
+			mockClient := mockSui.NewISuiAPI(t)
+			mockSigner := mockBindUtils.NewSuiSigner(t)
 
 			converter, err := NewTimelockConverter(mockClient, mockSigner, "0x123456789abcdef")
 			require.NoError(t, err)

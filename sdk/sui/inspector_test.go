@@ -8,21 +8,21 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	mock_bindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
-	mock_module_mcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
-	mock_sui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
+	mockBindUtils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
+	mockModuleMcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
+	mockSui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestNewInspector(t *testing.T) {
 	t.Parallel()
-	mockClient := mock_sui.NewISuiAPI(t)
-	mockSigner := mock_bindutils.NewSuiSigner(t)
+	mockClient := mockSui.NewISuiAPI(t)
+	mockSigner := mockBindUtils.NewSuiSigner(t)
 	mcmsPackageId := "0x123456789abcdef"
 	role := TimelockRoleProposer
 
@@ -43,8 +43,8 @@ func TestConfigTransformer_ToConfig(t *testing.T) {
 
 	t.Run("success - basic config transformation", func(t *testing.T) {
 		t.Parallel()
-		suiConfig := module_mcms.Config{
-			Signers: []module_mcms.Signer{
+		suiConfig := moduleMcms.Config{
+			Signers: []moduleMcms.Signer{
 				{
 					Addr:  []byte{0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44},
 					Index: 0,
@@ -72,8 +72,8 @@ func TestConfigTransformer_ToConfig(t *testing.T) {
 
 	t.Run("failure - empty config validation", func(t *testing.T) {
 		t.Parallel()
-		suiConfig := module_mcms.Config{
-			Signers:      []module_mcms.Signer{},
+		suiConfig := moduleMcms.Config{
+			Signers:      []moduleMcms.Signer{},
 			GroupQuorums: []uint8{},
 			GroupParents: []uint8{},
 		}
@@ -92,7 +92,7 @@ func TestInspector_GetConfig(t *testing.T) {
 		name      string
 		mcmsAddr  string
 		role      TimelockRole
-		mockSetup func(m *mock_module_mcms.IMcms)
+		mockSetup func(m *mockModuleMcms.IMcms)
 		want      *types.Config
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -100,8 +100,8 @@ func TestInspector_GetConfig(t *testing.T) {
 			name:     "success",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleProposer,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				mockDevInspect.EXPECT().GetConfig(
 					mock.Anything,
@@ -112,8 +112,8 @@ func TestInspector_GetConfig(t *testing.T) {
 						return obj.Id == "0x123"
 					}),
 					TimelockRoleProposer.Byte(),
-				).Return(module_mcms.Config{
-					Signers: []module_mcms.Signer{
+				).Return(moduleMcms.Config{
+					Signers: []moduleMcms.Signer{
 						{
 							Addr:  []byte{0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff, 0x00, 0x11, 0x22, 0x33, 0x44},
 							Index: 0,
@@ -150,8 +150,8 @@ func TestInspector_GetConfig(t *testing.T) {
 			name:     "failure - GetConfig failed",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleBypasser,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				mockDevInspect.EXPECT().GetConfig(
 					mock.Anything,
@@ -162,7 +162,7 @@ func TestInspector_GetConfig(t *testing.T) {
 						return obj.Id == "0x123"
 					}),
 					TimelockRoleBypasser.Byte(),
-				).Return(module_mcms.Config{}, errors.New("failed to get config"))
+				).Return(moduleMcms.Config{}, errors.New("failed to get config"))
 			},
 			want:    nil,
 			wantErr: AssertErrorContains("failed to GetConfig"),
@@ -173,9 +173,9 @@ func TestInspector_GetConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mock_sui.NewISuiAPI(t)
-			mockSigner := mock_bindutils.NewSuiSigner(t)
-			mockMcms := mock_module_mcms.NewIMcms(t)
+			mockClient := mockSui.NewISuiAPI(t)
+			mockSigner := mockBindUtils.NewSuiSigner(t)
+			mockMcms := mockModuleMcms.NewIMcms(t)
 
 			inspector := &Inspector{
 				ConfigTransformer: ConfigTransformer{},
@@ -206,7 +206,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 		name      string
 		mcmsAddr  string
 		role      TimelockRole
-		mockSetup func(m *mock_module_mcms.IMcms)
+		mockSetup func(m *mockModuleMcms.IMcms)
 		want      uint64
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -214,8 +214,8 @@ func TestInspector_GetOpCount(t *testing.T) {
 			name:     "success",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleCanceller,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				mockDevInspect.EXPECT().GetOpCount(
 					mock.Anything,
@@ -235,8 +235,8 @@ func TestInspector_GetOpCount(t *testing.T) {
 			name:     "failure - GetOpCount failed",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleBypasser,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				mockDevInspect.EXPECT().GetOpCount(
 					mock.Anything,
@@ -257,9 +257,9 @@ func TestInspector_GetOpCount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mock_sui.NewISuiAPI(t)
-			mockSigner := mock_bindutils.NewSuiSigner(t)
-			mockMcms := mock_module_mcms.NewIMcms(t)
+			mockClient := mockSui.NewISuiAPI(t)
+			mockSigner := mockBindUtils.NewSuiSigner(t)
+			mockMcms := mockModuleMcms.NewIMcms(t)
 
 			inspector := &Inspector{
 				ConfigTransformer: ConfigTransformer{},
@@ -290,7 +290,7 @@ func TestInspector_GetRoot(t *testing.T) {
 		name      string
 		mcmsAddr  string
 		role      TimelockRole
-		mockSetup func(m *mock_module_mcms.IMcms)
+		mockSetup func(m *mockModuleMcms.IMcms)
 		wantRoot  common.Hash
 		wantValid uint32
 		wantErr   assert.ErrorAssertionFunc
@@ -299,8 +299,8 @@ func TestInspector_GetRoot(t *testing.T) {
 			name:     "success",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleProposer,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				expectedRoot := common.HexToHash("0xabcdef1234567890")
 				mockDevInspect.EXPECT().GetRoot(
@@ -322,8 +322,8 @@ func TestInspector_GetRoot(t *testing.T) {
 			name:     "failure - GetRoot failed",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleCanceller,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				mockDevInspect.EXPECT().GetRoot(
 					mock.Anything,
@@ -342,8 +342,8 @@ func TestInspector_GetRoot(t *testing.T) {
 			name:     "failure - invalid root result length",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleProposer,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				mockDevInspect.EXPECT().GetRoot(
 					mock.Anything,
@@ -362,8 +362,8 @@ func TestInspector_GetRoot(t *testing.T) {
 			name:     "failure - invalid root type",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleProposer,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				mockDevInspect.EXPECT().GetRoot(
 					mock.Anything,
@@ -382,8 +382,8 @@ func TestInspector_GetRoot(t *testing.T) {
 			name:     "failure - invalid validUntil type",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleProposer,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				mockDevInspect.EXPECT().GetRoot(
 					mock.Anything,
@@ -404,9 +404,9 @@ func TestInspector_GetRoot(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mock_sui.NewISuiAPI(t)
-			mockSigner := mock_bindutils.NewSuiSigner(t)
-			mockMcms := mock_module_mcms.NewIMcms(t)
+			mockClient := mockSui.NewISuiAPI(t)
+			mockSigner := mockBindUtils.NewSuiSigner(t)
+			mockMcms := mockModuleMcms.NewIMcms(t)
 
 			inspector := &Inspector{
 				ConfigTransformer: ConfigTransformer{},
@@ -438,7 +438,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 		name      string
 		mcmsAddr  string
 		role      TimelockRole
-		mockSetup func(m *mock_module_mcms.IMcms)
+		mockSetup func(m *mockModuleMcms.IMcms)
 		want      types.ChainMetadata
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -446,8 +446,8 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 			name:     "success",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleProposer,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				mockDevInspect.EXPECT().GetRootMetadata(
 					mock.Anything,
@@ -458,7 +458,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 						return obj.Id == "0x123"
 					}),
 					TimelockRoleProposer.Byte(),
-				).Return(module_mcms.RootMetadata{
+				).Return(moduleMcms.RootMetadata{
 					PreOpCount: 42,
 					Multisig:   "0xabcdef123456",
 				}, nil)
@@ -473,8 +473,8 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 			name:     "failure - GetRootMetadata failed",
 			mcmsAddr: "0x123",
 			role:     TimelockRoleBypasser,
-			mockSetup: func(m *mock_module_mcms.IMcms) {
-				mockDevInspect := mock_module_mcms.NewIMcmsDevInspect(t)
+			mockSetup: func(m *mockModuleMcms.IMcms) {
+				mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
 				m.EXPECT().DevInspect().Return(mockDevInspect)
 				mockDevInspect.EXPECT().GetRootMetadata(
 					mock.Anything,
@@ -485,7 +485,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 						return obj.Id == "0x123"
 					}),
 					TimelockRoleBypasser.Byte(),
-				).Return(module_mcms.RootMetadata{}, errors.New("failed to get root metadata"))
+				).Return(moduleMcms.RootMetadata{}, errors.New("failed to get root metadata"))
 			},
 			want:    types.ChainMetadata{},
 			wantErr: AssertErrorContains("failed to GetRootMetadata"),
@@ -496,9 +496,9 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mock_sui.NewISuiAPI(t)
-			mockSigner := mock_bindutils.NewSuiSigner(t)
-			mockMcms := mock_module_mcms.NewIMcms(t)
+			mockClient := mockSui.NewISuiAPI(t)
+			mockSigner := mockBindUtils.NewSuiSigner(t)
+			mockMcms := mockModuleMcms.NewIMcms(t)
 
 			inspector := &Inspector{
 				ConfigTransformer: ConfigTransformer{},

@@ -7,14 +7,14 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	mock_bindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
-	mock_sui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
+	mockBindUtils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
+	mockSui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 )
 
 func TestNewTimelockInspector(t *testing.T) {
 	t.Parallel()
-	mockClient := mock_sui.NewISuiAPI(t)
-	mockSigner := mock_bindutils.NewSuiSigner(t)
+	mockClient := mockSui.NewISuiAPI(t)
+	mockSigner := mockBindUtils.NewSuiSigner(t)
 	mcmsPackageId := "0x123456789abcdef"
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, mcmsPackageId)
@@ -30,8 +30,8 @@ func TestTimelockInspector_GetProposers(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	mockClient := mock_sui.NewISuiAPI(t)
-	mockSigner := mock_bindutils.NewSuiSigner(t)
+	mockClient := mockSui.NewISuiAPI(t)
+	mockSigner := mockBindUtils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
 	require.NoError(t, err)
@@ -46,8 +46,8 @@ func TestTimelockInspector_GetExecutors(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	mockClient := mock_sui.NewISuiAPI(t)
-	mockSigner := mock_bindutils.NewSuiSigner(t)
+	mockClient := mockSui.NewISuiAPI(t)
+	mockSigner := mockBindUtils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
 	require.NoError(t, err)
@@ -62,8 +62,8 @@ func TestTimelockInspector_GetBypassers(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	mockClient := mock_sui.NewISuiAPI(t)
-	mockSigner := mock_bindutils.NewSuiSigner(t)
+	mockClient := mockSui.NewISuiAPI(t)
+	mockSigner := mockBindUtils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
 	require.NoError(t, err)
@@ -78,8 +78,8 @@ func TestTimelockInspector_GetCancellers(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	mockClient := mock_sui.NewISuiAPI(t)
-	mockSigner := mock_bindutils.NewSuiSigner(t)
+	mockClient := mockSui.NewISuiAPI(t)
+	mockSigner := mockBindUtils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
 	require.NoError(t, err)
@@ -97,5 +97,5 @@ func TestTimelockInspector_GetCancellers(t *testing.T) {
 // - IsOperationReady(ctx, address, opID) (bool, error)
 // - IsOperationDone(ctx, address, opID) (bool, error)
 //
-// These methods use concrete types (*module_mcms.McmsContract) that make mocking difficult
+// These methods use concrete types (*moduleMcms.McmsContract) that make mocking difficult
 // in unit tests. They should be tested via integration tests with a live Sui network.

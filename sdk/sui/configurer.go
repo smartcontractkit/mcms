@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"math/big"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 
 	"github.com/block-vision/sui-go-sdk/sui"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
@@ -23,13 +23,13 @@ type Configurer struct {
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
 	role          TimelockRole
-	mcms          module_mcms.IMcms
+	mcms          moduleMcms.IMcms
 	ownerCap      string
 	chainSelector uint64
 }
 
 func NewConfigurer(client sui.ISuiAPI, signer bindutils.SuiSigner, role TimelockRole, mcmsPackageId string, ownerCap string, chainSelector uint64) (*Configurer, error) {
-	mcms, err := module_mcms.NewMcms(mcmsPackageId, client)
+	mcms, err := moduleMcms.NewMcms(mcmsPackageId, client)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func NewConfigurer(client sui.ISuiAPI, signer bindutils.SuiSigner, role Timelock
 }
 
 func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
-	chainID, err := chain_selectors.SuiChainIdFromSelector(c.chainSelector)
+	chainID, err := cselectors.SuiChainIdFromSelector(c.chainSelector)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -82,7 +82,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
-		ChainFamily: chain_selectors.FamilySui,
+		ChainFamily: cselectors.FamilySui,
 		RawData:     tx,
 	}, nil
 }

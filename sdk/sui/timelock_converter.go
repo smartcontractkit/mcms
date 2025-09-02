@@ -8,7 +8,7 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -27,11 +27,11 @@ type TimelockConverter struct {
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
 	mcmsPackageId string
-	mcms          module_mcms.IMcms
+	mcms          moduleMcms.IMcms
 }
 
 func NewTimelockConverter(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageId string) (*TimelockConverter, error) {
-	mcms, err := module_mcms.NewMcms(mcmsPackageId, client)
+	mcms, err := moduleMcms.NewMcms(mcmsPackageId, client)
 	if err != nil {
 		return nil, err
 	}

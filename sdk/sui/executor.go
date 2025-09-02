@@ -12,11 +12,11 @@ import (
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	module_fee_quoter "github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter"
-	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	moduleFeeQuoter "github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter"
+	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -38,7 +38,7 @@ type Executor struct {
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
 	mcmsPackageId string
-	mcms          *module_mcms.McmsContract
+	mcms          *moduleMcms.McmsContract
 
 	mcmsObj     string // MultisigState object ID
 	accountObj  string
@@ -47,7 +47,7 @@ type Executor struct {
 }
 
 func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageId string, role TimelockRole, mcmsObj string, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
-	mcms, err := module_mcms.NewMcms(mcmsPackageId, client)
+	mcms, err := moduleMcms.NewMcms(mcmsPackageId, client)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +91,7 @@ func (e Executor) ExecuteOperation(
 		}
 	}
 
-	chainID, err := chain_selectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := cselectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -202,7 +202,7 @@ func (e Executor) ExecuteOperation(
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
-		ChainFamily: chain_selectors.FamilySui,
+		ChainFamily: cselectors.FamilySui,
 		RawData:     tx,
 	}, nil
 }
@@ -222,7 +222,7 @@ func (e Executor) SetRoot(
 		}
 	}
 
-	chainID, err := chain_selectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := cselectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -265,7 +265,7 @@ func (e Executor) SetRoot(
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
-		ChainFamily: chain_selectors.FamilySui,
+		ChainFamily: cselectors.FamilySui,
 		RawData:     tx,
 	}, nil
 }
@@ -345,7 +345,7 @@ func closeExecutingCallbackParams(mcmsPackageId string, ptb *transaction.Transac
 func AppendPTBFromExecutingCallbackParams(
 	ctx context.Context,
 	client sui.ISuiAPI,
-	mcms *module_mcms.McmsContract,
+	mcms *moduleMcms.McmsContract,
 	ptb *transaction.Transaction,
 	mcmsPackageId string,
 	executeCallback *transaction.Argument,
@@ -393,7 +393,7 @@ func AppendPTBFromExecutingCallbackParams(
 			}
 
 			// We can use any contract that implements the mcms_entrypoint function
-			entryPointContract, err := module_fee_quoter.NewFeeQuoter(targetString, client)
+			entryPointContract, err := moduleFeeQuoter.NewFeeQuoter(targetString, client)
 			if err != nil {
 				return fmt.Errorf("failed to create MCMS EntryPoint contract: %w", err)
 			}
