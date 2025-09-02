@@ -42,7 +42,8 @@ func TestEncoder_HashOperation(t *testing.T) {
 			args: args{
 				opCount: 3,
 				metadata: types.ChainMetadata{
-					MCMAddress: "0x111",
+					MCMAddress:       "0x111",
+					AdditionalFields: json.RawMessage(`{"role":0,"mcms_package_id":"0x111"}`),
 				},
 				op: types.Operation{
 					Transaction: types.Transaction{
@@ -71,7 +72,8 @@ func TestEncoder_HashOperation(t *testing.T) {
 			args: args{
 				opCount: 3,
 				metadata: types.ChainMetadata{
-					MCMAddress: "invalidaddress",
+					MCMAddress:       "0x0",
+					AdditionalFields: json.RawMessage(`{"role":0,"mcms_package_id":"invalidaddress"}`),
 				},
 				op: types.Operation{
 					Transaction: types.Transaction{
@@ -93,7 +95,8 @@ func TestEncoder_HashOperation(t *testing.T) {
 			args: args{
 				opCount: 3,
 				metadata: types.ChainMetadata{
-					MCMAddress: "0x111",
+					MCMAddress:       "0x0",
+					AdditionalFields: json.RawMessage(`{"role":0,"mcms_package_id":"invalid"}`),
 				},
 				op: types.Operation{
 					Transaction: types.Transaction{
@@ -169,8 +172,8 @@ func TestEncoder_HashMetadata(t *testing.T) {
 			args: args{
 				metadata: types.ChainMetadata{
 					StartingOpCount:  7,
-					MCMAddress:       "0x222",
-					AdditionalFields: json.RawMessage(`{"role":0}`),
+					MCMAddress:       "0x0",
+					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222"}`),
 				},
 			},
 			want:    common.HexToHash("0x455b5b8ec10c95fe066ca1736547d0758fa2a8356b39ca6aa9043ae1504fcc87"),
@@ -185,8 +188,8 @@ func TestEncoder_HashMetadata(t *testing.T) {
 			args: args{
 				metadata: types.ChainMetadata{
 					StartingOpCount:  7,
-					MCMAddress:       "0x222",
-					AdditionalFields: json.RawMessage(`{"role":0}`),
+					MCMAddress:       "0x0",
+					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222"}`),
 				},
 			},
 			want:    common.HexToHash("0xe7b0cb38489c34616ce7af39d6d22afe4269778337e037a43a476c5179259911"),
@@ -206,7 +209,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 			args: args{
 				metadata: types.ChainMetadata{
 					MCMAddress:       "invalidaddress!",
-					AdditionalFields: json.RawMessage(`{"role":0}`),
+					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"invalidaddress"}`),
 				},
 			},
 			wantErr: AssertErrorContains("failed to decode mcms package ID"),

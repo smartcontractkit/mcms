@@ -45,10 +45,11 @@ func (s *SetRootTestSuite) TestSetRoot() {
 	// Create metadata for this chain
 	metadata := types.ChainMetadata{
 		StartingOpCount: 0,
-		MCMAddress:      s.SuiTestSuite.mcmsPackageID, // Use package address for proof verification
-		AdditionalFields: []byte(`{
-			"role": 2
-		}`),
+		MCMAddress:      s.SuiTestSuite.mcmsObj,
+		AdditionalFields: []byte(fmt.Sprintf(`{
+			"role": 2,
+			"mcms_package_id": "%s"
+		}`, s.SuiTestSuite.mcmsPackageID)), // Use package address for proof verification
 	}
 
 	// Build a test proposal
@@ -156,10 +157,11 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 	// Create metadata for this chain
 	metadata := types.ChainMetadata{
 		StartingOpCount: 0,
-		MCMAddress:      s.SuiTestSuite.mcmsPackageID, // Use package address for proof verification
-		AdditionalFields: []byte(`{
-			"role": 2
-		}`),
+		MCMAddress:      s.SuiTestSuite.mcmsObj,
+		AdditionalFields: []byte(fmt.Sprintf(`{
+			"role": 2,
+			"mcms_package_id": "%s"
+		}`, s.SuiTestSuite.mcmsPackageID)), // Use package address for proof verification
 	}
 
 	// Build a test proposal

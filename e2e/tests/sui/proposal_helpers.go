@@ -78,7 +78,9 @@ type ProposalBuilderConfig struct {
 	Version        string
 	Description    string
 	ChainSelector  types.ChainSelector
-	mcmsPackageID  string
+	McmsObjID      string
+	TimelockObjID  string
+	McmsPackageID  string
 	Role           suisdk.TimelockRole
 	CurrentOpCount uint64
 	Action         types.TimelockAction
@@ -92,11 +94,11 @@ func CreateTimelockProposalBuilder(config ProposalBuilderConfig, operations []ty
 		SetVersion(config.Version).
 		SetValidUntil(validUntilMs).
 		SetDescription(config.Description).
-		AddTimelockAddress(config.ChainSelector, config.mcmsPackageID).
+		AddTimelockAddress(config.ChainSelector, config.TimelockObjID).
 		AddChainMetadata(config.ChainSelector, types.ChainMetadata{
 			StartingOpCount:  config.CurrentOpCount,
-			MCMAddress:       config.mcmsPackageID,
-			AdditionalFields: mustMarshal(suisdk.AdditionalFieldsMetadata{Role: config.Role}),
+			MCMAddress:       config.McmsObjID,
+			AdditionalFields: mustMarshal(suisdk.AdditionalFieldsMetadata{Role: config.Role, McmsPackageID: config.McmsPackageID}),
 		})
 
 	for _, op := range operations {

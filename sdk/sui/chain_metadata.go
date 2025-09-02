@@ -26,5 +26,6 @@ const (
 )
 
 type AdditionalFieldsMetadata struct {
-	Role TimelockRole `json:"role"`
+	Role          TimelockRole `json:"role"`
+	McmsPackageID string       `json:"mcms_package_id"`
 }

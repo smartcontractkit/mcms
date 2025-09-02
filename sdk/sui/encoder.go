@@ -71,7 +71,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		}
 	}
 
-	mcmsAddress, err := AddressFromHex(metadata.MCMAddress)
+	mcmsAddress, err := AddressFromHex(additionalFieldsMetadata.McmsPackageID)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to decode mcms package ID: %w", err)
 	}
@@ -105,7 +105,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", unmarshalErr)
 	}
 
-	mcmsAddress, err := AddressFromHex(metadata.MCMAddress)
+	mcmsAddress, err := AddressFromHex(additionalFieldsMetadata.McmsPackageID)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to decode mcms package ID: %w", err)
 	}

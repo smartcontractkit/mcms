@@ -3,6 +3,7 @@
 package sui
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -168,9 +169,10 @@ func (s *TimelockInspectionTestSuite) TestOperationLifecycle() {
 	metadata := types.ChainMetadata{
 		StartingOpCount: 0,
 		MCMAddress:      s.mcmsObj,
-		AdditionalFields: []byte(`{
-			"role": 2
-		}`),
+		AdditionalFields: []byte(fmt.Sprintf(`{
+			"role": 2,
+			"mcms_package_id": "%s"
+		}`, s.mcmsPackageID)),
 	}
 
 	// Convert batch operation to chain operations
