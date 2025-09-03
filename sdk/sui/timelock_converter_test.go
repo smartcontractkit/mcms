@@ -9,24 +9,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	mockBindUtils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
-	mockSui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestNewTimelockConverter(t *testing.T) {
 	t.Parallel()
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mcmsPackageID := "0x123456789abcdef"
 
-	converter, err := NewTimelockConverter(mockClient, mockSigner, mcmsPackageID)
+	converter, err := NewTimelockConverter()
 	require.NoError(t, err)
 	assert.NotNil(t, converter)
-	assert.Equal(t, mockClient, converter.client)
-	assert.Equal(t, mockSigner, converter.signer)
-	assert.Equal(t, mcmsPackageID, converter.mcmsPackageID)
-	assert.NotNil(t, converter.mcms)
 }
 
 func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
@@ -79,7 +70,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			salt:            common.HexToHash("0xdef"),
 			wantOpsCount:    1,
 			wantErr:         assert.NoError,
-			wantOpID:        "0xcfccf4442c7a31b202450b1941fe338a6a06aa0d9f5693a24f9b5a79c2ab6538",
+			wantOpID:        "0x08f9da5cdabfbd4d838312d342ea28bf922204c82b6bfdf26f057429f8f1d934",
 		},
 		{
 			name: "success - bypass action with multiple transactions",
@@ -126,7 +117,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			salt:            common.Hash{},
 			wantOpsCount:    1,
 			wantErr:         assert.NoError,
-			wantOpID:        "0x7e2234c04d2531b49b1dfdf00add4dc427d4e4b950e772da932934d3eed07b2c",
+			wantOpID:        "0xe9ec2c4882b9237ed30523ca69a5d2d4050d7994dea278a428a5879a30b86247",
 		},
 		{
 			name: "success - cancel action",
@@ -160,7 +151,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			salt:            common.Hash{},
 			wantOpsCount:    1,
 			wantErr:         assert.NoError,
-			wantOpID:        "0x9869491ff6c9c4be85141c712bb07ff22bc3089fbe5276494cee4e5791974d52",
+			wantOpID:        "0xb42e07404f27a487b296e607739520026adc536fb1a71f13c96ba1631918c1a5",
 		},
 		{
 			name: "failure - invalid additional fields JSON",
@@ -265,11 +256,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-
-			mockClient := mockSui.NewISuiAPI(t)
-			mockSigner := mockBindUtils.NewSuiSigner(t)
-
-			converter, err := NewTimelockConverter(mockClient, mockSigner, "0x123456789abcdef")
+			converter, err := NewTimelockConverter()
 			require.NoError(t, err)
 
 			ops, opID, err := converter.ConvertBatchToChainOperations(

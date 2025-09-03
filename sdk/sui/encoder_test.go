@@ -271,14 +271,14 @@ func TestSerializeTimelockBypasserExecuteBatch(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			data, err := SerializeTimelockBypasserExecuteBatch(tt.targets, tt.moduleNames, tt.functionNames, tt.datas)
-			if !tt.wantErr(t, err, "SerializeTimelockBypasserExecuteBatch should not error") {
+			data, err := serializeTimelockBypasserExecuteBatch(tt.targets, tt.moduleNames, tt.functionNames, tt.datas)
+			if !tt.wantErr(t, err, "serializeTimelockBypasserExecuteBatch should not error") {
 				return
 			}
 
 			// Verify the data can be deserialized back
 			if err == nil {
-				calls, deserializeErr := DeserializeTimelockBypasserExecuteBatch(data)
+				calls, deserializeErr := deserializeTimelockBypasserExecuteBatch(data)
 				require.NoError(t, deserializeErr, "Should be able to deserialize the serialized data")
 				assert.Len(t, calls, len(tt.targets), "Number of calls should match number of targets")
 

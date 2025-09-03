@@ -36,11 +36,11 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		}
 
 		// Use the same serialization function that the encoder uses
-		serializedData, err := SerializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
+		serializedData, err := serializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
 		require.NoError(t, err)
 
 		// Test deserialization
-		resultCalls, err := DeserializeTimelockBypasserExecuteBatch(serializedData)
+		resultCalls, err := deserializeTimelockBypasserExecuteBatch(serializedData)
 		require.NoError(t, err)
 
 		// Verify results
@@ -61,11 +61,11 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		functionNames := []string{}
 		datas := [][]byte{}
 
-		serializedData, err := SerializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
+		serializedData, err := serializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
 		require.NoError(t, err)
 
 		// Test deserialization
-		resultCalls, err := DeserializeTimelockBypasserExecuteBatch(serializedData)
+		resultCalls, err := deserializeTimelockBypasserExecuteBatch(serializedData)
 		require.NoError(t, err)
 
 		// Verify empty results
@@ -82,11 +82,11 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		functionNames := []string{"my_function"}
 		datas := [][]byte{{0xde, 0xad, 0xbe, 0xef}}
 
-		serializedData, err := SerializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
+		serializedData, err := serializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
 		require.NoError(t, err)
 
 		// Test deserialization
-		resultCalls, err := DeserializeTimelockBypasserExecuteBatch(serializedData)
+		resultCalls, err := deserializeTimelockBypasserExecuteBatch(serializedData)
 		require.NoError(t, err)
 
 		// Verify results
@@ -105,7 +105,7 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		functionNames := []string{"func1", "func2"}             // 2 elements
 		datas := [][]byte{{0x01}, {0x02}}                       // 2 elements
 
-		// We need to manually create the mismatched BCS data since SerializeTimelockBypasserExecuteBatch
+		// We need to manually create the mismatched BCS data since serializeTimelockBypasserExecuteBatch
 		// would validate the lengths before serializing
 		serializedData, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
 			// Serialize targets vector (2 elements)
@@ -143,7 +143,7 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		require.NoError(t, err)
 
 		// Test deserialization - should fail
-		_, err = DeserializeTimelockBypasserExecuteBatch(serializedData)
+		_, err = deserializeTimelockBypasserExecuteBatch(serializedData)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "vector lengths mismatch")
 	})
@@ -187,7 +187,7 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		require.NoError(t, err)
 
 		// Test deserialization - should fail
-		_, err = DeserializeTimelockBypasserExecuteBatch(serializedData)
+		_, err = deserializeTimelockBypasserExecuteBatch(serializedData)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "vector lengths mismatch")
 	})
@@ -231,7 +231,7 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		require.NoError(t, err)
 
 		// Test deserialization - should fail
-		_, err = DeserializeTimelockBypasserExecuteBatch(serializedData)
+		_, err = deserializeTimelockBypasserExecuteBatch(serializedData)
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "vector lengths mismatch")
 	})
@@ -241,7 +241,7 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		// Create incomplete BCS data - only length byte for targets but no content
 		serializedData := []byte{0x02} // ULEB128 encoding for length 2, but no actual address data
 
-		_, err := DeserializeTimelockBypasserExecuteBatch(serializedData)
+		_, err := deserializeTimelockBypasserExecuteBatch(serializedData)
 		require.Error(t, err)
 		// The error will come from the BCS unmarshaling trying to read beyond available data
 	})
@@ -262,7 +262,7 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 		})
 		require.NoError(t, err)
 
-		_, err = DeserializeTimelockBypasserExecuteBatch(serializedData)
+		_, err = deserializeTimelockBypasserExecuteBatch(serializedData)
 		require.Error(t, err)
 	})
 
@@ -289,11 +289,11 @@ func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 			{0xde, 0xad, 0xbe, 0xef, 0xca, 0xfe, 0xba, 0xbe}, // Proposal data
 		}
 
-		serializedData, err := SerializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
+		serializedData, err := serializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
 		require.NoError(t, err)
 
 		// Test deserialization
-		resultCalls, err := DeserializeTimelockBypasserExecuteBatch(serializedData)
+		resultCalls, err := deserializeTimelockBypasserExecuteBatch(serializedData)
 		require.NoError(t, err)
 
 		// Verify results

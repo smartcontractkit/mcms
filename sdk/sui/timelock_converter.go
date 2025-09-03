@@ -5,11 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
-	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -24,24 +22,11 @@ const (
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
 type TimelockConverter struct {
-	client        sui.ISuiAPI
-	signer        bindutils.SuiSigner
-	mcmsPackageID string
-	mcms          moduleMcms.IMcms
 }
 
-func NewTimelockConverter(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageID string) (*TimelockConverter, error) {
-	mcms, err := moduleMcms.NewMcms(mcmsPackageID, client)
-	if err != nil {
-		return nil, err
-	}
+func NewTimelockConverter() (*TimelockConverter, error) {
 
-	return &TimelockConverter{
-		client:        client,
-		signer:        signer,
-		mcmsPackageID: mcmsPackageID,
-		mcms:          mcms,
-	}, nil
+	return &TimelockConverter{}, nil
 }
 
 // We need somehow to create an mcms tx that contains the timelock command. The execute will then create a PTB with execute and the command coming from the proposal, which has the timelock command
@@ -64,6 +49,13 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	functionNames := make([]string, len(bop.Transactions))
 	datas := make([][]byte, len(bop.Transactions))
 	tags := make([]string, 0, len(bop.Transactions))
+
+	var additionalFieldsMetadata AdditionalFieldsMetadata
+	if len(metadata.AdditionalFields) > 0 {
+		if err := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
+			return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
+		}
+	}
 
 	for i, tx := range bop.Transactions {
 		var additionalFields AdditionalFields
@@ -91,15 +83,16 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	switch action {
 	case types.TimelockActionSchedule:
 		function = TimelockActionSchedule
-		data, err = SerializeTimelockScheduleBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes(), uint64(delay.Seconds()))
+		data, err = serializeTimelockScheduleBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes(), uint64(delay.Milliseconds()))
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock schedule batch: %w", err)
 		}
 	case types.TimelockActionCancel:
+		// TODO: Implement cancellation flow
 		function = TimelockActionCancel
 	case types.TimelockActionBypass:
 		function = TimelockActionBypass
-		data, err = SerializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
+		data, err = serializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock bypasser execute batch: %w", err)
 		}
@@ -111,7 +104,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	tx, err := NewTransactionWithManyStateObj(
 		"mcms", // can only be mcms
 		function,
-		t.mcmsPackageID, // can only call itself
+		additionalFieldsMetadata.McmsPackageID, // can only call itself
 		data,
 		"MCMS",
 		tags,
@@ -135,32 +128,29 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	return []types.Operation{op}, operationID, nil
 }
 
-// HashOperationBatch calculates the hash of a batch operation (public function for compatibility)
+// HashOperationBatch calculates the hash of a batch operation using BCS serialization
 func HashOperationBatch(targets [][]byte, moduleNames, functionNames []string, datas [][]byte, predecessor, salt []byte) (common.Hash, error) {
-	// Create a hash based on the operation parameters
-	hasher := crypto.NewKeccakState()
+	callsBytes, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
+		ser.Uleb128(uint32(len(targets)))
 
-	// Write number of targets
-	if _, err := fmt.Fprintf(hasher, "%d", len(targets)); err != nil {
-		return common.Hash{}, fmt.Errorf("failed to write targets length: %w", err)
+		for i := range targets {
+			ser.FixedBytes(targets[i])
+			ser.WriteString(moduleNames[i])
+			ser.WriteString(functionNames[i])
+
+			ser.WriteBytes(datas[i])
+		}
+	})
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to BCS serialize calls: %w", err)
 	}
 
-	// Write each target, module, function, and data
-	for i, target := range targets {
-		hasher.Write(target)
-		hasher.Write([]byte(moduleNames[i]))
-		hasher.Write([]byte(functionNames[i]))
-		hasher.Write(datas[i])
-	}
+	var packed []byte
+	packed = append(packed, callsBytes...)
+	packed = append(packed, predecessor...)
+	packed = append(packed, salt...)
 
-	// Write predecessor and salt
-	hasher.Write(predecessor)
-	hasher.Write(salt)
-
-	var hash common.Hash
-	if _, err := hasher.Read(hash[:]); err != nil {
-		return common.Hash{}, fmt.Errorf("failed to read hash: %w", err)
-	}
+	hash := crypto.Keccak256Hash(packed)
 
 	return hash, nil
 }

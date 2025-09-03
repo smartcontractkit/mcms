@@ -4,6 +4,7 @@ package sui
 
 import (
 	"crypto/ecdsa"
+	"testing"
 	"time"
 
 	"github.com/smartcontractkit/mcms"
@@ -29,19 +30,23 @@ func (s *MCMSUserTestSuite) SetupSuite() {
 
 // TestMCMSUserFunctionOne tests MCMS user function one
 func (s *MCMSUserTestSuite) Test_MCMSUser_Function_One() {
-	RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleProposer)
-	RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleBypasser)
+	s.T().Run("Proposer Role", func(t *testing.T) {
+		RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleProposer)
+	})
+
+	s.T().Run("Proposer Role", func(t *testing.T) {
+		RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleBypasser)
+	})
 }
 
 func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRole) {
-	s.T().Logf("Running MCMS user function one proposal with role: %v", role)
 
 	bypasserCount := 2
 	bypasserQuorum := 2
-	bypasserConfig := CreateBypasserConfig(bypasserCount, uint8(bypasserQuorum))
+	bypasserConfig := CreateConfig(bypasserCount, uint8(bypasserQuorum))
 	proposerCount := 3
 	proposerQuorum := 2
-	proposerConfig := CreateProposerConfig(proposerCount, uint8(proposerQuorum))
+	proposerConfig := CreateConfig(proposerCount, uint8(proposerQuorum))
 
 	// Set config
 	{
@@ -99,7 +104,6 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	// Get the actual current operation count from the contract
 	currentOpCount, err := inspector.GetOpCount(s.T().Context(), s.mcmsObj)
 	s.Require().NoError(err, "Failed to get current operation count")
-	s.T().Logf("🔍 CURRENT operation count: %d", currentOpCount)
 
 	var action types.TimelockAction
 	var delay *types.Duration
@@ -129,14 +133,14 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		Delay:          delay,
 	}
 
-	mcmsUserFunctionOneProposalBuilder := CreateTimelockProposalBuilder(proposalConfig, []types.BatchOperation{op})
+	mcmsUserFunctionOneProposalBuilder := CreateTimelockProposalBuilder(s.T(), proposalConfig, []types.BatchOperation{op})
 	timelockProposal, err = mcmsUserFunctionOneProposalBuilder.Build()
 	s.Require().NoError(err)
 
 	// Sign the proposal, set root and execute proposal operations
 
 	// Convert the Timelock Proposal into a MCMS Proposal
-	timelockConverter, err := suisdk.NewTimelockConverter(s.client, s.signer, s.mcmsPackageID)
+	timelockConverter, err := suisdk.NewTimelockConverter()
 	s.Require().NoError(err)
 
 	convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
@@ -148,8 +152,6 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	inspectorsMap := map[types.ChainSelector]sdk.Inspector{
 		s.chainSelector: inspector,
 	}
-
-	s.T().Logf("Signing the proposal...")
 
 	var keys []*ecdsa.PrivateKey
 	var quorum int
@@ -174,7 +176,6 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	s.Require().True(quorumMet, "Quorum not met")
 
 	// Set Root
-	s.T().Logf("Preparing to the root of the proposal...")
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	suiEncoder := encoders[s.chainSelector].(*suisdk.Encoder)
@@ -187,49 +188,19 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	executable, err := mcms.NewExecutable(&proposal, executors)
 	s.Require().NoError(err, "Error creating executable")
 
-	s.T().Logf("Setting the root of the proposal...")
-
-	s.T().Logf("=== DEBUG: Proposal Details ===")
-	merkleTree, err := proposal.MerkleTree()
-	s.Require().NoError(err, "Failed to get merkle tree")
-	s.T().Logf("Merkle Tree Root: %x", merkleTree.Root)
-	s.T().Logf("Proposal ValidUntil: %d", proposal.ValidUntil)
-	s.T().Logf("Number of Operations: %d", len(proposal.Operations))
-
-	for chainSel, metadata := range proposal.ChainMetadata {
-		s.T().Logf("Chain %d metadata - StartingOpCount: %d, MCMAddress: %s",
-			chainSel, metadata.StartingOpCount, metadata.MCMAddress)
-	}
-
-	for i, op := range proposal.Operations {
-		s.T().Logf("Operation %d: ChainSelector=%d, To=%s, DataLen=%d",
-			i, op.ChainSelector, op.Transaction.To, len(op.Transaction.Data))
-	}
-
-	signingHash, err := proposal.SigningHash()
-	s.Require().NoError(err, "Failed to get signing hash")
-	s.T().Logf("Proposal Signing Hash: %x", signingHash)
-
 	quorumMet, err = signable.ValidateSignatures(s.T().Context())
 	s.Require().NoError(err, "Error validating signatures")
 	s.Require().True(quorumMet, "Quorum not met")
 
-	result, err := executable.SetRoot(s.T().Context(), s.chainSelector)
+	_, err = executable.SetRoot(s.T().Context(), s.chainSelector)
 	s.Require().NoError(err)
 
-	s.T().Logf("✅ SetRoot in tx: %s", result.Hash)
-
-	s.T().Logf("Executing the proposal operations...")
-
 	for i := range proposal.Operations {
-		s.T().Logf("Executing operation: %v", i)
-		txOutput, execErr := executable.Execute(s.T().Context(), i)
+		_, execErr := executable.Execute(s.T().Context(), i)
 		s.Require().NoError(execErr)
-		s.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
 	}
 	if role == suisdk.TimelockRoleProposer {
 		// If proposer, some time needs to pass before the proposal can be executed sleep for delay_5_secs
-		s.T().Logf("Sleeping for %v before executing the proposal transfer...", delay_5_secs)
 		time.Sleep(delay_5_secs)
 
 		timelockExecutor, tErr := suisdk.NewTimelockExecutor(
@@ -247,10 +218,8 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		timelockExecutable, execErr := mcms.NewTimelockExecutable(s.T().Context(), timelockProposal, timelockExecutors)
 		s.Require().NoError(execErr)
 
-		s.T().Logf("Executing the operation through timelock...")
-		txOutput, terr := timelockExecutable.Execute(s.T().Context(), 0, mcms.WithCallProxy(s.timelockObj))
+		_, terr := timelockExecutable.Execute(s.T().Context(), 0, mcms.WithCallProxy(s.timelockObj))
 		s.Require().NoError(terr)
-		s.T().Logf("✅ Executed proposal transfer in tx: %s", txOutput.Hash)
 	}
 
 	// Check op count got incremented by 1
@@ -278,11 +247,8 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	)
 	s.Require().NoError(err, "Failed to get fieldB")
 
-	s.T().Logf("🔍 New fieldA: %s", fieldA)
-	s.T().Logf("🔍 New fieldB: %x", fieldB)
 	s.Require().Equal(arg1, fieldA, "FieldA should be equal to arg1")
 	s.Require().Equal(arg2, fieldB, "FieldB should be equal to arg2")
-	s.T().Logf("✅ Successfully executed MCMS user function one proposal with role: %v", role)
 }
 
 func (s *MCMSUserTestSuite) serializeFunctionOneData(arg1 string, arg2 []byte) ([]byte, error) {

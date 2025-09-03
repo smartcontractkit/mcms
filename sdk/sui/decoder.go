@@ -21,7 +21,7 @@ type Call struct {
 	StateObj     string
 }
 
-func DeserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
+func deserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {
 	deserializer := bcs.NewDeserializer(data)
 
 	// Deserialize targets vector

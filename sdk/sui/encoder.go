@@ -122,7 +122,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	return crypto.Keccak256Hash(ser.ToBytes()), nil
 }
 
-func SerializeTimelockScheduleBatch(targets [][]byte,
+func serializeTimelockScheduleBatch(targets [][]byte,
 	moduleNames []string,
 	functionNames []string,
 	datas [][]byte,
@@ -164,67 +164,10 @@ func SerializeTimelockScheduleBatch(targets [][]byte,
 	})
 }
 
-func SerializeTimelockBypasserExecuteBatch(targets [][]byte,
+func serializeTimelockBypasserExecuteBatch(targets [][]byte,
 	moduleNames []string,
 	functionNames []string,
 	datas [][]byte) ([]byte, error) {
-	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		// Serialize targets vector
-		//nolint:gosec
-		ser.Uleb128(uint32(len(targets)))
-		for _, target := range targets {
-			ser.FixedBytes(target)
-		}
-
-		// Write module names
-		//nolint:gosec
-		ser.Uleb128(uint32(len(moduleNames)))
-		for _, moduleName := range moduleNames {
-			ser.WriteString(moduleName)
-		}
-
-		// Write function names
-		//nolint:gosec
-		ser.Uleb128(uint32(len(functionNames)))
-		for _, functionName := range functionNames {
-			ser.WriteString(functionName)
-		}
-
-		// Write data
-		//nolint:gosec
-		ser.Uleb128(uint32(len(datas)))
-		for _, data := range datas {
-			ser.WriteBytes(data)
-		}
-	})
-}
-
-func RemoveStateObjectsFromBypassData(data []byte) ([]byte, error) {
-	calls, err := DeserializeTimelockBypasserExecuteBatch(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to deserialize timelock bypasser execute batch: %w", err)
-	}
-
-	targets := make([][]byte, len(calls))
-	for i, call := range calls {
-		targets[i] = call.Target
-	}
-
-	moduleNames := make([]string, len(calls))
-	for i, call := range calls {
-		moduleNames[i] = call.ModuleName
-	}
-
-	functionNames := make([]string, len(calls))
-	for i, call := range calls {
-		functionNames[i] = call.FunctionName
-	}
-
-	datas := make([][]byte, len(calls))
-	for i, call := range calls {
-		datas[i] = call.Data
-	}
-
 	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
 		// Serialize targets vector
 		//nolint:gosec

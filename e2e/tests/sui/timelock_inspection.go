@@ -148,7 +148,7 @@ func (s *TimelockInspectionTestSuite) TestOperationLifecycle() {
 	s.Require().NoError(err, "Failed to create timelock inspector")
 
 	// Create a timelock converter to create a scheduled operation
-	converter, err := suisdk.NewTimelockConverter(s.client, s.signer, s.mcmsPackageID)
+	converter, err := suisdk.NewTimelockConverter()
 	s.Require().NoError(err, "Failed to create timelock converter")
 
 	// Create a simple batch operation for testing

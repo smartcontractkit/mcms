@@ -3,8 +3,6 @@
 package sui
 
 import (
-	"context"
-
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/stretchr/testify/suite"
@@ -76,7 +74,7 @@ func (s *SuiTestSuite) SetupSuite() {
 
 func (s *SuiTestSuite) DeployMCMSContract() {
 	gasBudget := uint64(300_000_000)
-	mcmsPackage, tx, err := mcms.PublishMCMS(context.Background(), &bind.CallOpts{
+	mcmsPackage, tx, err := mcms.PublishMCMS(s.T().Context(), &bind.CallOpts{
 		Signer:           s.signer,
 		GasBudget:        &gasBudget,
 		WaitForExecution: true,
@@ -85,19 +83,18 @@ func (s *SuiTestSuite) DeployMCMSContract() {
 	s.mcmsPackageID = mcmsPackage.Address()
 	s.mcms = mcmsPackage.MCMS()
 
-	mcmsObject, err1 := bind.FindObjectIdFromPublishTx(*tx, "mcms", "MultisigState")
-	timelockObj, err2 := bind.FindObjectIdFromPublishTx(*tx, "mcms", "Timelock")
-	depState, err3 := bind.FindObjectIdFromPublishTx(*tx, "mcms_deployer", "DeployerState")
-	reg, err4 := bind.FindObjectIdFromPublishTx(*tx, "mcms_registry", "Registry")
-	acc, err5 := bind.FindObjectIdFromPublishTx(*tx, "mcms_account", "AccountState")
-	ownCap, err6 := bind.FindObjectIdFromPublishTx(*tx, "mcms_account", "OwnerCap")
-
-	s.Require().NoError(err1, "Failed to find object IDs in publish tx")
-	s.Require().NoError(err2, "Failed to find object IDs in publish tx")
-	s.Require().NoError(err3, "Failed to find object IDs in publish tx")
-	s.Require().NoError(err4, "Failed to find object IDs in publish tx")
-	s.Require().NoError(err5, "Failed to find object IDs in publish tx")
-	s.Require().NoError(err6, "Failed to find object IDs in publish tx")
+	mcmsObject, err := bind.FindObjectIdFromPublishTx(*tx, "mcms", "MultisigState")
+	s.Require().NoError(err, "Failed to find object IDs in publish tx")
+	timelockObj, err := bind.FindObjectIdFromPublishTx(*tx, "mcms", "Timelock")
+	s.Require().NoError(err, "Failed to find object IDs in publish tx")
+	depState, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_deployer", "DeployerState")
+	s.Require().NoError(err, "Failed to find object IDs in publish tx")
+	reg, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_registry", "Registry")
+	s.Require().NoError(err, "Failed to find object IDs in publish tx")
+	acc, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_account", "AccountState")
+	s.Require().NoError(err, "Failed to find object IDs in publish tx")
+	ownCap, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_account", "OwnerCap")
+	s.Require().NoError(err, "Failed to find object IDs in publish tx")
 
 	s.mcmsObj = mcmsObject
 	s.timelockObj = timelockObj
@@ -115,7 +112,7 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 	signerAddress, err := s.signer.GetAddress()
 	s.Require().NoError(err, "Failed to get address")
 
-	mcmsUserPackage, tx, err := mcmsuser.PublishMCMSUser(context.Background(), &bind.CallOpts{
+	mcmsUserPackage, tx, err := mcmsuser.PublishMCMSUser(s.T().Context(), &bind.CallOpts{
 		Signer:           s.signer,
 		GasBudget:        &gasBudget,
 		WaitForExecution: true,
@@ -125,11 +122,10 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 	s.mcmsUserPackageId = mcmsUserPackage.Address()
 	s.mcmsUser = mcmsUserPackage.MCMSUser()
 
-	userDataObj, err1 := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "UserData")
-	mcmsUserOwnerCapObj, err2 := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "OwnerCap")
-
-	s.Require().NoError(err1, "Failed to find object IDs in publish tx")
-	s.Require().NoError(err2, "Failed to find object IDs in publish tx")
+	userDataObj, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "UserData")
+	s.Require().NoError(err, "Failed to find object IDs in publish tx")
+	mcmsUserOwnerCapObj, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "OwnerCap")
+	s.Require().NoError(err, "Failed to find object IDs in publish tx")
 
 	s.mcmsUserOwnerCapObj = mcmsUserOwnerCapObj
 	s.stateObj = userDataObj

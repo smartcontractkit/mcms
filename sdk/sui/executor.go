@@ -173,7 +173,7 @@ func (e Executor) ExecuteOperation(
 			return types.TransactionResult{}, fmt.Errorf("building PTB for timelock call: %w", extendCallbackErr)
 		}
 		// Decode calls from transaction data
-		calls, desErr := DeserializeTimelockBypasserExecuteBatch(op.Transaction.Data)
+		calls, desErr := deserializeTimelockBypasserExecuteBatch(op.Transaction.Data)
 		if desErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("failed to deserialize timelock bypasser execute batch: %w", err)
 		}
