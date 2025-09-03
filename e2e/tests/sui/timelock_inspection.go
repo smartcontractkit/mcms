@@ -20,7 +20,7 @@ type TimelockInspectionTestSuite struct {
 // SetupSuite runs before the test suite
 func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.SuiTestSuite.SetupSuite()
-	s.SuiTestSuite.DeployMCMSContract()
+	s.DeployMCMSContract()
 }
 
 // TestGetProposers tests that role-based queries are unsupported on Sui

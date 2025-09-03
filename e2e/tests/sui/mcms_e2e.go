@@ -40,7 +40,6 @@ func (s *MCMSUserTestSuite) Test_MCMSUser_Function_One() {
 }
 
 func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRole) {
-
 	bypasserCount := 2
 	bypasserQuorum := 2
 	bypasserConfig := CreateConfig(bypasserCount, uint8(bypasserQuorum))

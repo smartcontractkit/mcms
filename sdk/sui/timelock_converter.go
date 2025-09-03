@@ -9,6 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -21,11 +22,9 @@ const (
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
-type TimelockConverter struct {
-}
+type TimelockConverter struct{}
 
 func NewTimelockConverter() (*TimelockConverter, error) {
-
 	return &TimelockConverter{}, nil
 }
 
@@ -83,7 +82,11 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	switch action {
 	case types.TimelockActionSchedule:
 		function = TimelockActionSchedule
-		data, err = serializeTimelockScheduleBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes(), uint64(delay.Milliseconds()))
+		delayMs, err := safecast.Int64ToUint64(delay.Milliseconds())
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to convert delay to uint64: %w", err)
+		}
+		data, err = serializeTimelockScheduleBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes(), delayMs)
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock schedule batch: %w", err)
 		}
@@ -130,8 +133,13 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 
 // HashOperationBatch calculates the hash of a batch operation using BCS serialization
 func HashOperationBatch(targets [][]byte, moduleNames, functionNames []string, datas [][]byte, predecessor, salt []byte) (common.Hash, error) {
+	targetsLen, err := safecast.IntToUint32(len(targets))
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to convert targets length to uint32: %w", err)
+	}
+
 	callsBytes, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		ser.Uleb128(uint32(len(targets)))
+		ser.Uleb128(targetsLen)
 
 		for i := range targets {
 			ser.FixedBytes(targets[i])

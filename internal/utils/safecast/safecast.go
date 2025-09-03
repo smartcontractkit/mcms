@@ -62,3 +62,12 @@ func Uint64ToInt64(value uint64) (int64, error) {
 
 	return cast.ToInt64E(value)
 }
+
+// Int64ToUint64 safely converts an int64 to uint64 using cast and checks for overflow
+func Int64ToUint64(value int64) (uint64, error) {
+	if value < 0 {
+		return 0, fmt.Errorf("value %d is negative, cannot convert to uint64", value)
+	}
+
+	return cast.ToUint64E(value)
+}

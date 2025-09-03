@@ -87,7 +87,7 @@ jobs:
           curl -L "https://github.com/MystenLabs/sui/releases/download/mainnet-v${SUI_VERSION}/sui-mainnet-v${SUI_VERSION}-ubuntu-x86_64.tgz" -o sui.tgz
           tar -xzf sui.tgz
           sudo mv sui /usr/local/bin/
-          sui --versionmartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
+          sui --version
 
       - name: Checkout code
         uses: actions/checkout@v4
