@@ -56,7 +56,7 @@ jobs:
       - name: Build and test
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
         with:
-          go-test-cmd: go test -coverpkg=../... -coverprofile=coverage.txt -test.gocoverdir=/tmp ./...
+          go-test-cmd: go test -v -cover -coverpkg=./... -coverprofile=coverage.txt ./...
           use-go-cache: true
 
   ci-test-e2e:
@@ -87,7 +87,7 @@ jobs:
           curl -L "https://github.com/MystenLabs/sui/releases/download/mainnet-v${SUI_VERSION}/sui-mainnet-v${SUI_VERSION}-ubuntu-x86_64.tgz" -o sui.tgz
           tar -xzf sui.tgz
           sudo mv sui /usr/local/bin/
-          sui --version
+          sui --versionmartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
 
       - name: Checkout code
         uses: actions/checkout@v4
