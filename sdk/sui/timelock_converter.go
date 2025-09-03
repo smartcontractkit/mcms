@@ -82,9 +82,9 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	switch action {
 	case types.TimelockActionSchedule:
 		function = TimelockActionSchedule
-		delayMs, err := safecast.Int64ToUint64(delay.Milliseconds())
-		if err != nil {
-			return nil, common.Hash{}, fmt.Errorf("failed to convert delay to uint64: %w", err)
+		delayMs, castErr := safecast.Int64ToUint64(delay.Milliseconds())
+		if castErr != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to convert delay to uint64: %w", castErr)
 		}
 		data, err = serializeTimelockScheduleBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes(), delayMs)
 		if err != nil {
