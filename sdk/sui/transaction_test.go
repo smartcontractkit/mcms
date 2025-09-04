@@ -246,6 +246,7 @@ func TestNewTransaction(t *testing.T) {
 			contractType: "TestContract",
 			tags:         []string{"tag1", "tag2"},
 			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
 				assert.Equal(t, "0x123456789abcdef", tx.To)
 				assert.Equal(t, []byte("test_data"), tx.Data)
 				assert.Equal(t, "TestContract", tx.ContractType)
@@ -269,9 +270,10 @@ func TestNewTransaction(t *testing.T) {
 			contractType: "",
 			tags:         []string{},
 			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
 				assert.Equal(t, "0xabc", tx.To)
 				assert.Equal(t, []byte{}, tx.Data)
-				assert.Equal(t, "", tx.ContractType)
+				assert.Empty(t, tx.ContractType)
 				assert.Equal(t, []string{}, tx.Tags)
 
 				var additionalFields AdditionalFields
@@ -290,6 +292,7 @@ func TestNewTransaction(t *testing.T) {
 			contractType: "Contract",
 			tags:         nil,
 			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
 				assert.Equal(t, "0xabc", tx.To)
 				assert.Equal(t, []byte("data"), tx.Data)
 				assert.Equal(t, "Contract", tx.ContractType)
@@ -334,6 +337,7 @@ func TestNewTransactionWithStateObj(t *testing.T) {
 			tags:         []string{"tag1", "tag2"},
 			stateObj:     "0x999",
 			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
 				assert.Equal(t, "0x123456789abcdef", tx.To)
 				assert.Equal(t, []byte("test_data"), tx.Data)
 				assert.Equal(t, "TestContract", tx.ContractType)
@@ -358,12 +362,13 @@ func TestNewTransactionWithStateObj(t *testing.T) {
 			tags:         []string{"tag"},
 			stateObj:     "",
 			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
 				var additionalFields AdditionalFields
 				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
 				require.NoError(t, err)
 				assert.Equal(t, "module", additionalFields.ModuleName)
 				assert.Equal(t, "func", additionalFields.Function)
-				assert.Equal(t, "", additionalFields.StateObj)
+				assert.Empty(t, additionalFields.StateObj)
 				assert.Nil(t, additionalFields.InternalStateObjects)
 			},
 		},
@@ -407,6 +412,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 			stateObj:             "0x999",
 			internalStateObjects: []string{"0x111", "0x222", "0x333"},
 			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
 				assert.Equal(t, "0x123456789abcdef", tx.To)
 				assert.Equal(t, []byte("test_data"), tx.Data)
 				assert.Equal(t, "TestContract", tx.ContractType)
@@ -432,6 +438,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 			stateObj:             "0x999",
 			internalStateObjects: []string{},
 			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
 				var additionalFields AdditionalFields
 				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
 				require.NoError(t, err)
@@ -439,7 +446,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 				assert.Equal(t, "func", additionalFields.Function)
 				assert.Equal(t, "0x999", additionalFields.StateObj)
 				// When marshaling/unmarshaling, empty slice becomes nil
-				assert.Len(t, additionalFields.InternalStateObjects, 0)
+				assert.Empty(t, additionalFields.InternalStateObjects)
 			},
 		},
 		{
@@ -453,6 +460,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 			stateObj:             "0x999",
 			internalStateObjects: nil,
 			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
 				var additionalFields AdditionalFields
 				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
 				require.NoError(t, err)
@@ -473,12 +481,13 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 			stateObj:             "",
 			internalStateObjects: []string{"0x111"},
 			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
 				var additionalFields AdditionalFields
 				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
 				require.NoError(t, err)
 				assert.Equal(t, "module", additionalFields.ModuleName)
 				assert.Equal(t, "func", additionalFields.Function)
-				assert.Equal(t, "", additionalFields.StateObj)
+				assert.Empty(t, additionalFields.StateObj)
 				assert.Equal(t, []string{"0x111"}, additionalFields.InternalStateObjects)
 			},
 		},

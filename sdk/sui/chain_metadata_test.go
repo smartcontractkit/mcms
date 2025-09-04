@@ -85,9 +85,9 @@ func TestTimelockRole_Constants(t *testing.T) {
 	t.Parallel()
 
 	// Test that the constants have the expected values
-	assert.Equal(t, TimelockRole(0), TimelockRoleBypasser)
-	assert.Equal(t, TimelockRole(1), TimelockRoleCanceller)
-	assert.Equal(t, TimelockRole(2), TimelockRoleProposer)
+	assert.Equal(t, TimelockRoleBypasser, TimelockRole(0))
+	assert.Equal(t, TimelockRoleCanceller, TimelockRole(1))
+	assert.Equal(t, TimelockRoleProposer, TimelockRole(2))
 }
 
 func TestAdditionalFieldsMetadata_JSON(t *testing.T) {

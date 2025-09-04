@@ -17,8 +17,8 @@ func TestAddressLen(t *testing.T) {
 
 	// Test that Address type has the correct size
 	var addr Address
-	assert.Equal(t, AddressLen, len(addr))
-	assert.Equal(t, 32, len(addr))
+	assert.Len(t, addr, AddressLen)
+	assert.Len(t, addr, 32)
 }
 
 func TestAddressFromHex(t *testing.T) {
@@ -121,7 +121,7 @@ func TestAddressFromHex(t *testing.T) {
 				require.NoError(t, err)
 				require.NotNil(t, addr)
 				assert.Equal(t, tt.expected, addr.Bytes())
-				assert.Equal(t, AddressLen, len(addr.Bytes()))
+				assert.Len(t, addr.Bytes(), AddressLen)
 			}
 		})
 	}
@@ -163,7 +163,7 @@ func TestAddress_Bytes(t *testing.T) {
 
 			result := tt.address.Bytes()
 			assert.Equal(t, tt.expected, result)
-			assert.Equal(t, AddressLen, len(result))
+			assert.Len(t, result, AddressLen)
 
 			// Verify that modifying the returned slice doesn't affect the original address
 			originalAddr := tt.address
@@ -214,7 +214,7 @@ func TestAddress_Hex(t *testing.T) {
 
 			result := tt.address.Hex()
 			assert.Equal(t, tt.expected, result)
-			assert.Equal(t, 64, len(result), "hex string should always be 64 characters (32 bytes * 2)")
+			assert.Len(t, result, 64, "hex string should always be 64 characters (32 bytes * 2)")
 
 			// Verify the result is valid hex
 			_, err := hex.DecodeString(result)
@@ -235,14 +235,14 @@ func TestAddressIntegration(t *testing.T) {
 
 	// Get bytes
 	bytes := addr.Bytes()
-	assert.Equal(t, AddressLen, len(bytes))
+	assert.Len(t, bytes, AddressLen)
 
 	// Get hex (without 0x prefix)
-	hex := addr.Hex()
-	assert.Equal(t, 64, len(hex))
+	addHex := addr.Hex()
+	assert.Len(t, addHex, 64)
 
 	// Verify round-trip consistency
-	addr2, err := AddressFromHex("0x" + hex)
+	addr2, err := AddressFromHex("0x" + addHex)
 	require.NoError(t, err)
 	assert.Equal(t, *addr, *addr2)
 
@@ -250,7 +250,7 @@ func TestAddressIntegration(t *testing.T) {
 	assert.Equal(t, bytes, addr2.Bytes())
 
 	// Test that the address maintains its structure
-	assert.Equal(t, AddressLen, len(*addr))
+	assert.Len(t, *addr, AddressLen)
 
 	// Test zero value
 	var zeroAddr Address
