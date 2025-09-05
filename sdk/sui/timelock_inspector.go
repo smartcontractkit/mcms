@@ -20,7 +20,7 @@ type TimelockInspector struct {
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
 	mcmsPackageID string
-	mcms          *moduleMcms.McmsContract
+	mcms          moduleMcms.IMcms
 }
 
 // NewTimelockInspector creates a new TimelockInspector

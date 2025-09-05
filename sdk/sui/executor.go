@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"strings"
 
+	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
@@ -38,12 +39,18 @@ type Executor struct {
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
 	mcmsPackageID string
-	mcms          *moduleMcms.McmsContract
+	mcms          moduleMcms.IMcms
 
 	mcmsObj     string // MultisigState object ID
 	accountObj  string
 	registryObj string
 	timelockObj string
+
+	// ExecutePTB function for dependency injection and testing
+	ExecutePTB func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error)
+
+	// AppendPTBFromExecutingCallbackParams function for dependency injection and testing
+	AppendPTBFromExecutingCallbackParams func(ctx context.Context, client sui.ISuiAPI, mcms moduleMcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error
 }
 
 func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageID string, role TimelockRole, mcmsObj string, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
@@ -58,16 +65,18 @@ func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encode
 	}
 
 	return &Executor{
-		Encoder:       encoder,
-		Inspector:     inspector,
-		client:        client,
-		signer:        signer,
-		mcmsPackageID: mcmsPackageID,
-		mcms:          mcms,
-		mcmsObj:       mcmsObj,
-		accountObj:    accountObj,
-		registryObj:   registryObj,
-		timelockObj:   timelockObj,
+		Encoder:                              encoder,
+		Inspector:                            inspector,
+		client:                               client,
+		signer:                               signer,
+		mcmsPackageID:                        mcmsPackageID,
+		mcms:                                 mcms,
+		mcmsObj:                              mcmsObj,
+		accountObj:                           accountObj,
+		registryObj:                          registryObj,
+		timelockObj:                          timelockObj,
+		ExecutePTB:                           bind.ExecutePTB,                      // Default implementation
+		AppendPTBFromExecutingCallbackParams: AppendPTBFromExecutingCallbackParams, // Default implementation
 	}, nil
 }
 
@@ -134,7 +143,7 @@ func (e Executor) ExecuteOperation(
 
 	ptb := transaction.NewTransaction()
 	// The execution needs to go in hand with the timelock operation in the same PTB transaction
-	timelockCallback, err := e.mcms.AppendPTB(ctx, opts, ptb, executeCall)
+	timelockCallback, err := e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeCall)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}
@@ -149,7 +158,7 @@ func (e Executor) ExecuteOperation(
 		if encodeErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", encodeErr)
 		}
-		_, err = e.mcms.AppendPTB(ctx, opts, ptb, timelockCall)
+		_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, timelockCall)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("adding timelock call to PTB: %w", err)
 		}
@@ -168,7 +177,7 @@ func (e Executor) ExecuteOperation(
 
 		// Add the timelock call to the same PTB
 		// If bypass, this a set of execute callbacks
-		executeCallback, extendCallbackErr := e.mcms.AppendPTB(ctx, opts, ptb, timelockCall)
+		executeCallback, extendCallbackErr := e.mcms.Bound().AppendPTB(ctx, opts, ptb, timelockCall)
 		if extendCallbackErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("building PTB for timelock call: %w", extendCallbackErr)
 		}
@@ -190,12 +199,12 @@ func (e Executor) ExecuteOperation(
 			}
 		}
 
-		if extendErr := AppendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, e.mcmsPackageID, executeCallback, calls, e.registryObj, e.accountObj); extendErr != nil {
+		if extendErr := e.AppendPTBFromExecutingCallbackParams(ctx, e.client, e.mcms, ptb, e.mcmsPackageID, executeCallback, calls, e.registryObj, e.accountObj); extendErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", extendErr)
 		}
 	}
 	// Execute the complete PTB with every call
-	tx, err := bind.ExecutePTB(ctx, opts, e.client, ptb)
+	tx, err := e.ExecutePTB(ctx, opts, e.client, ptb)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("op execution with PTB failed: %w", err)
 	}
@@ -345,7 +354,7 @@ func closeExecutingCallbackParams(mcmsPackageID string, ptb *transaction.Transac
 func AppendPTBFromExecutingCallbackParams(
 	ctx context.Context,
 	client sui.ISuiAPI,
-	mcms *moduleMcms.McmsContract,
+	mcms moduleMcms.IMcms,
 	ptb *transaction.Transaction,
 	mcmsPackageID string,
 	executeCallback *transaction.Argument,
@@ -381,7 +390,7 @@ func AppendPTBFromExecutingCallbackParams(
 			}
 
 			// Add the call to the PTB
-			_, err = mcms.AppendPTB(ctx, opts, ptb, executeDispatchCall)
+			_, err = mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
 			if err != nil {
 				return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
 			}
@@ -410,7 +419,7 @@ func AppendPTBFromExecutingCallbackParams(
 			// Override the module info with the actual target
 			entryPointCall.Module.ModuleName = call.ModuleName
 
-			_, err = mcms.AppendPTB(ctx, opts, ptb, entryPointCall)
+			_, err = mcms.Bound().AppendPTB(ctx, opts, ptb, entryPointCall)
 			if err != nil {
 				return fmt.Errorf("failed to append mcms_entrypoint call to PTB: %w", err)
 			}

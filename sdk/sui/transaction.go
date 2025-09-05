@@ -11,7 +11,7 @@ import (
 func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 	fields := AdditionalFields{}
 	if err := json.Unmarshal(additionalFields, &fields); err != nil {
-		return fmt.Errorf("failed to unmarshal Aptos additional fields: %w", err)
+		return fmt.Errorf("failed to unmarshal Sui additional fields: %w", err)
 	}
 
 	if err := fields.Validate(); err != nil {

@@ -55,7 +55,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 				"invalid": json
 			}`),
 			expectError: true,
-			errorMsg:    "failed to unmarshal Aptos additional fields",
+			errorMsg:    "failed to unmarshal Sui additional fields",
 		},
 		{
 			name: "empty module name",

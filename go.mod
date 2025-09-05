@@ -20,8 +20,9 @@ require (
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250626122206-319db248496a
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250805210128-7f8a0f403c3a
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20250805210128-7f8a0f403c3a
-	github.com/smartcontractkit/chainlink-sui v0.0.0-20250827173726-0a39c8233dab
+	github.com/smartcontractkit/chainlink-sui v0.0.0-20250904112214-915d37abc983
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.10.16
+	github.com/smartcontractkit/freeport v0.1.2
 	github.com/spf13/cast v1.7.1
 	github.com/stretchr/testify v1.10.0
 	go.uber.org/zap v1.27.0
@@ -200,7 +201,6 @@ require (
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smartcontractkit/chainlink-ccip v0.0.0-20250530084609-8529b8c89093 // indirect
 	github.com/smartcontractkit/chainlink-common v0.7.1-0.20250519161208-80bc8b13c0e7 // indirect
-	github.com/smartcontractkit/freeport v0.1.2 // indirect
 	github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20250220133800-f3b940c4f298 // indirect
 	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect

@@ -93,6 +93,15 @@ packages:
         config:
           dir: "./sdk/sui/mocks/bindutils"
           filename: "suisigner.go"
+  github.com/smartcontractkit/chainlink-sui/bindings/bind:
+    config:
+      all: false
+      outpkg: "mock_bindutils"
+    interfaces:
+      IBoundContract:
+        config:
+          dir: "./sdk/sui/mocks/bindutils"
+          filename: "iboundcontract.go"
   github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms:
     config:
       all: false
@@ -106,6 +115,10 @@ packages:
         config:
           dir: "./sdk/sui/mocks/mcms"
           filename: "imcmsdevinspect.go"
+      McmsEncoder:
+        config:
+          dir: "./sdk/sui/mocks/mcms"
+          filename: "mcmsencoder.go"
 
 # Required to fix the following deprecation warning:
 # https://vektra.github.io/mockery/v2.48/deprecations/#issue-845-fix
