@@ -1,22 +1,21 @@
 package sui
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	mockBindUtils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
-	mockModuleMcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
-	mockSui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
+	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
+	mockmodulemcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
+	mocksui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 )
 
 func TestNewTimelockInspector(t *testing.T) {
 	t.Parallel()
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 	mcmsPackageID := "0x123456789abcdef"
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, mcmsPackageID)
@@ -30,10 +29,10 @@ func TestNewTimelockInspector(t *testing.T) {
 
 func TestTimelockInspector_GetProposers(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
 	require.NoError(t, err)
@@ -46,10 +45,10 @@ func TestTimelockInspector_GetProposers(t *testing.T) {
 
 func TestTimelockInspector_GetExecutors(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
 	require.NoError(t, err)
@@ -62,10 +61,10 @@ func TestTimelockInspector_GetExecutors(t *testing.T) {
 
 func TestTimelockInspector_GetBypassers(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
 	require.NoError(t, err)
@@ -78,10 +77,10 @@ func TestTimelockInspector_GetBypassers(t *testing.T) {
 
 func TestTimelockInspector_GetCancellers(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
 	require.NoError(t, err)
@@ -94,19 +93,19 @@ func TestTimelockInspector_GetCancellers(t *testing.T) {
 
 func TestTimelockInspector_GetMinDelay(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Create a mock MCMS contract
-	mockMcms := mockModuleMcms.NewIMcms(t)
+	mockmcms := mockmodulemcms.NewIMcms(t)
 
 	// Create a mock DevInspect
-	mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
+	mockDevInspect := mockmodulemcms.NewIMcmsDevInspect(t)
 
 	// Set up the mock expectations
-	mockMcms.EXPECT().DevInspect().Return(mockDevInspect)
+	mockmcms.EXPECT().DevInspect().Return(mockDevInspect)
 	mockDevInspect.EXPECT().TimelockMinDelay(
 		mock.Anything, // context
 		mock.Anything, // *bind.CallOpts
@@ -118,7 +117,7 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 		client:        mockClient,
 		signer:        mockSigner,
 		mcmsPackageID: "0x123456789abcdef",
-		mcms:          mockMcms,
+		mcms:          mockmcms,
 	}
 
 	result, err := inspector.GetMinDelay(ctx, "0x123")
@@ -128,19 +127,19 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 
 func TestTimelockInspector_IsOperation(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Create a mock MCMS contract
-	mockMcms := mockModuleMcms.NewIMcms(t)
+	mockmcms := mockmodulemcms.NewIMcms(t)
 
 	// Create a mock DevInspect
-	mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
+	mockDevInspect := mockmodulemcms.NewIMcmsDevInspect(t)
 
 	// Set up the mock expectations
-	mockMcms.EXPECT().DevInspect().Return(mockDevInspect)
+	mockmcms.EXPECT().DevInspect().Return(mockDevInspect)
 	mockDevInspect.EXPECT().TimelockIsOperation(
 		mock.Anything, // context
 		mock.Anything, // *bind.CallOpts
@@ -153,7 +152,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 		client:        mockClient,
 		signer:        mockSigner,
 		mcmsPackageID: "0x123456789abcdef",
-		mcms:          mockMcms,
+		mcms:          mockmcms,
 	}
 
 	opID := [32]byte{1, 2, 3, 4, 5}
@@ -164,19 +163,19 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 
 func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Create a mock MCMS contract
-	mockMcms := mockModuleMcms.NewIMcms(t)
+	mockmcms := mockmodulemcms.NewIMcms(t)
 
 	// Create a mock DevInspect
-	mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
+	mockDevInspect := mockmodulemcms.NewIMcmsDevInspect(t)
 
 	// Set up the mock expectations
-	mockMcms.EXPECT().DevInspect().Return(mockDevInspect)
+	mockmcms.EXPECT().DevInspect().Return(mockDevInspect)
 	mockDevInspect.EXPECT().TimelockIsOperationPending(
 		mock.Anything, // context
 		mock.Anything, // *bind.CallOpts
@@ -189,7 +188,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 		client:        mockClient,
 		signer:        mockSigner,
 		mcmsPackageID: "0x123456789abcdef",
-		mcms:          mockMcms,
+		mcms:          mockmcms,
 	}
 
 	opID := [32]byte{1, 2, 3, 4, 5}
@@ -200,19 +199,19 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 
 func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Create a mock MCMS contract
-	mockMcms := mockModuleMcms.NewIMcms(t)
+	mockmcms := mockmodulemcms.NewIMcms(t)
 
 	// Create a mock DevInspect
-	mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
+	mockDevInspect := mockmodulemcms.NewIMcmsDevInspect(t)
 
 	// Set up the mock expectations
-	mockMcms.EXPECT().DevInspect().Return(mockDevInspect)
+	mockmcms.EXPECT().DevInspect().Return(mockDevInspect)
 	mockDevInspect.EXPECT().TimelockIsOperationReady(
 		mock.Anything, // context
 		mock.Anything, // *bind.CallOpts
@@ -226,7 +225,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 		client:        mockClient,
 		signer:        mockSigner,
 		mcmsPackageID: "0x123456789abcdef",
-		mcms:          mockMcms,
+		mcms:          mockmcms,
 	}
 
 	opID := [32]byte{1, 2, 3, 4, 5}
@@ -237,19 +236,19 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 
 func TestTimelockInspector_IsOperationDone(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Create a mock MCMS contract
-	mockMcms := mockModuleMcms.NewIMcms(t)
+	mockmcms := mockmodulemcms.NewIMcms(t)
 
 	// Create a mock DevInspect
-	mockDevInspect := mockModuleMcms.NewIMcmsDevInspect(t)
+	mockDevInspect := mockmodulemcms.NewIMcmsDevInspect(t)
 
 	// Set up the mock expectations
-	mockMcms.EXPECT().DevInspect().Return(mockDevInspect)
+	mockmcms.EXPECT().DevInspect().Return(mockDevInspect)
 	mockDevInspect.EXPECT().TimelockIsOperationDone(
 		mock.Anything, // context
 		mock.Anything, // *bind.CallOpts
@@ -262,7 +261,7 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 		client:        mockClient,
 		signer:        mockSigner,
 		mcmsPackageID: "0x123456789abcdef",
-		mcms:          mockMcms,
+		mcms:          mockmcms,
 	}
 
 	opID := [32]byte{1, 2, 3, 4, 5}

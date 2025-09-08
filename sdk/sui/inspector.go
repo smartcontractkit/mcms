@@ -7,7 +7,7 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -30,7 +30,7 @@ type Inspector struct {
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
 	mcmsPackageID string
-	mcms          moduleMcms.IMcms
+	mcms          modulemcms.IMcms
 	role          TimelockRole
 }
 
@@ -40,7 +40,7 @@ type ConfigTransformer struct {
 
 func NewConfigTransformer() *ConfigTransformer { return &ConfigTransformer{} }
 
-func (c *ConfigTransformer) ToConfig(config moduleMcms.Config) (*types.Config, error) {
+func (c *ConfigTransformer) ToConfig(config modulemcms.Config) (*types.Config, error) {
 	// Re-using the EVM implementation here, but need to convert input first
 	evmConfig := bindings.ManyChainMultiSigConfig{
 		Signers:      nil,
@@ -74,7 +74,7 @@ func (c *ConfigTransformer) ToConfig(config moduleMcms.Config) (*types.Config, e
 }
 
 func NewInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageID string, role TimelockRole) (*Inspector, error) {
-	mcms, err := moduleMcms.NewMcms(mcmsPackageID, client)
+	mcms, err := modulemcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err
 	}

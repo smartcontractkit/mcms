@@ -71,7 +71,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 
 	var timelockProposal *mcms.TimelockProposal
 
-	delay_5_secs := time.Second * 5
+	delay5s := time.Second * 5
 	// Create a timelock proposal accepting the ownership transfer
 
 	// Get the accept ownership call information and build the MCMS Operation
@@ -110,7 +110,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	switch role {
 	case suisdk.TimelockRoleProposer:
 		action = types.TimelockActionSchedule
-		delayDuration := types.NewDuration(delay_5_secs)
+		delayDuration := types.NewDuration(delay5s)
 		delay = &delayDuration
 	case suisdk.TimelockRoleBypasser:
 		action = types.TimelockActionBypass
@@ -200,7 +200,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		s.Require().NoError(execErr, "Error executing operation")
 
 		if role == suisdk.TimelockRoleProposer {
-			// If proposer, some time needs to pass before the proposal can be executed sleep for delay_5_secs
+			// If proposer, some time needs to pass before the proposal can be executed sleep for delay5s
 
 			// Create timelock inspector to check operation status
 			timelockInspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
@@ -244,7 +244,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 			s.Require().NoError(err, "IsOperationDone should not return an error")
 			s.Require().False(isDone, "Operation should not be done before execution")
 
-			time.Sleep(delay_5_secs)
+			time.Sleep(delay5s)
 
 			// The operation should still exist
 			exists, err = timelockInspector.IsOperation(s.T().Context(), s.timelockObj, scheduledOpID)

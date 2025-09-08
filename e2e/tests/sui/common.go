@@ -10,9 +10,9 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
-	moduleMcmsAccount "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_account"
-	moduleMcmsUser "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
+	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	modulemcmsaccount "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_account"
+	modulemcmsuser "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
 	"github.com/smartcontractkit/chainlink-sui/bindings/packages/mcms"
 	mcmsuser "github.com/smartcontractkit/chainlink-sui/bindings/packages/mcms/mcms_user"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
@@ -32,7 +32,7 @@ type SuiTestSuite struct {
 
 	// MCMS
 	mcmsPackageID string
-	mcms          moduleMcms.IMcms
+	mcms          modulemcms.IMcms
 	mcmsObj       string
 	timelockObj   string
 	depStateObj   string
@@ -41,11 +41,11 @@ type SuiTestSuite struct {
 	ownerCapObj   string
 
 	// MCMS Account
-	mcmsAccount moduleMcmsAccount.IMcmsAccount
+	mcmsAccount modulemcmsaccount.IMcmsAccount
 
 	// MCMS User
 	mcmsUserPackageId   string
-	mcmsUser            moduleMcmsUser.IMcmsUser
+	mcmsUser            modulemcmsuser.IMcmsUser
 	mcmsUserOwnerCapObj string
 
 	// State Object passed into `mcms_entrypoint`
@@ -103,7 +103,7 @@ func (s *SuiTestSuite) DeployMCMSContract() {
 	s.accountObj = acc
 	s.ownerCapObj = ownCap
 
-	s.mcmsAccount, err = moduleMcmsAccount.NewMcmsAccount(s.mcmsPackageID, s.client)
+	s.mcmsAccount, err = modulemcmsaccount.NewMcmsAccount(s.mcmsPackageID, s.client)
 	s.Require().NoError(err, "Failed to create MCMS account instance")
 }
 

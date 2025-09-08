@@ -1,7 +1,6 @@
 package sui
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -22,7 +21,7 @@ func TestNewTimelockConverter(t *testing.T) {
 
 func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
 	tests := []struct {
 		name            string

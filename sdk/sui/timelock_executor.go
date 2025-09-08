@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
@@ -35,7 +35,7 @@ type TimelockExecutor struct {
 	ExecutePTB func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error)
 
 	// AppendPTBFromExecutingCallbackParams function for dependency injection and testing
-	AppendPTBFromExecutingCallbackParams func(ctx context.Context, client sui.ISuiAPI, mcms moduleMcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error
+	AppendPTBFromExecutingCallbackParams func(ctx context.Context, client sui.ISuiAPI, mcms modulemcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor

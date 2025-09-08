@@ -63,7 +63,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 
 	var timelockProposal *mcms.TimelockProposal
 
-	delay_5_secs := time.Second * 5
+	delay5s := time.Second * 5
 
 	// Create a timelock proposal calling MCMS user function one
 	// Get the function one call information and build the MCMS Operation
@@ -109,7 +109,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	switch role {
 	case suisdk.TimelockRoleProposer:
 		action = types.TimelockActionSchedule
-		delayDuration := types.NewDuration(delay_5_secs)
+		delayDuration := types.NewDuration(delay5s)
 		delay = &delayDuration
 	case suisdk.TimelockRoleBypasser:
 		action = types.TimelockActionBypass
@@ -199,8 +199,8 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		s.Require().NoError(execErr)
 	}
 	if role == suisdk.TimelockRoleProposer {
-		// If proposer, some time needs to pass before the proposal can be executed sleep for delay_5_secs
-		time.Sleep(delay_5_secs)
+		// If proposer, some time needs to pass before the proposal can be executed sleep for delay5s
+		time.Sleep(delay5s)
 
 		timelockExecutor, tErr := suisdk.NewTimelockExecutor(
 			s.client,

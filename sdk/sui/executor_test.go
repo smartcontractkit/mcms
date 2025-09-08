@@ -16,11 +16,11 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 
-	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 
-	mockBindUtils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
-	mockMcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
-	mockSui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
+	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
+	mockmcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
+	mocksui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -32,8 +32,8 @@ var timelockObj = "0xtimelock"
 func TestNewExecutor(t *testing.T) {
 	t.Parallel()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	encoder := &Encoder{
 		ChainSelector: 1,
@@ -200,10 +200,10 @@ func TestExecutor_SetRoot_IfImplemented(t *testing.T) {
 
 func TestExecutor_SetRoot(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mockedMcms := mockMcms.NewIMcms(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockedMcms := mockmcms.NewIMcms(t)
 
 	executor := &Executor{
 		signer:        mockSigner,
@@ -268,15 +268,15 @@ func TestExecutor_SetRoot(t *testing.T) {
 
 func TestExecutor_ExecuteOperation_InvalidAdditionalFields(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mockMcmsContract := mockMcms.NewIMcms(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockmcmsContract := mockmcms.NewIMcms(t)
 
 	executor := &Executor{
 		signer:        mockSigner,
-		mcms:          mockMcmsContract,
+		mcms:          mockmcmsContract,
 		mcmsPackageID: "0x123456789abcdef",
 		mcmsObj:       mcmsObj,
 		client:        mockClient,
@@ -310,17 +310,17 @@ func TestExecutor_ExecuteOperation_InvalidAdditionalFields(t *testing.T) {
 
 func TestExecutor_ExecuteOperation_Success_ScheduleBatch(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mockMcmsContract := mockMcms.NewIMcms(t)
-	mockEncoder := mockMcms.NewMcmsEncoder(t)
-	mockBound := mockBindUtils.NewIBoundContract(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockmcmsContract := mockmcms.NewIMcms(t)
+	mockEncoder := mockmcms.NewMcmsEncoder(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
 
 	executor := &Executor{
 		signer:        mockSigner,
-		mcms:          mockMcmsContract,
+		mcms:          mockmcmsContract,
 		mcmsPackageID: "0x123456789abcdef",
 		mcmsObj:       mcmsObj,
 		timelockObj:   timelockObj,
@@ -362,7 +362,7 @@ func TestExecutor_ExecuteOperation_Success_ScheduleBatch(t *testing.T) {
 	}
 
 	// Mock expectations for ExecuteOperation flow
-	mockMcmsContract.EXPECT().Encoder().Return(mockEncoder).Times(2) // Called twice in the method
+	mockmcmsContract.EXPECT().Encoder().Return(mockEncoder).Times(2) // Called twice in the method
 
 	// Mock the first Execute encoder call
 	mockEncoder.EXPECT().Execute(
@@ -380,7 +380,7 @@ func TestExecutor_ExecuteOperation_Success_ScheduleBatch(t *testing.T) {
 	).Return(nil, nil)
 
 	// Mock the first Bound() call for AppendPTB
-	mockMcmsContract.EXPECT().Bound().Return(mockBound).Times(2) // Called twice
+	mockmcmsContract.EXPECT().Bound().Return(mockBound).Times(2) // Called twice
 	mockBound.EXPECT().AppendPTB(ctx, mock.Anything, mock.Anything, mock.Anything).Return(nil, nil).Times(2)
 
 	// Mock the timelock schedule call
@@ -395,17 +395,17 @@ func TestExecutor_ExecuteOperation_Success_ScheduleBatch(t *testing.T) {
 
 func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mockMcmsContract := mockMcms.NewIMcms(t)
-	mockEncoder := mockMcms.NewMcmsEncoder(t)
-	mockBound := mockBindUtils.NewIBoundContract(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockmcmsContract := mockmcms.NewIMcms(t)
+	mockEncoder := mockmcms.NewMcmsEncoder(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
 
 	executor := &Executor{
 		signer:        mockSigner,
-		mcms:          mockMcmsContract,
+		mcms:          mockmcmsContract,
 		mcmsPackageID: "0x123456789abcdef",
 		mcmsObj:       mcmsObj,
 		timelockObj:   timelockObj,
@@ -428,7 +428,7 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 			}, nil
 		},
 		// Mock AppendPTBFromExecutingCallbackParams function to avoid complex PTB building
-		AppendPTBFromExecutingCallbackParams: func(ctx context.Context, client sui.ISuiAPI, mcms moduleMcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error {
+		AppendPTBFromExecutingCallbackParams: func(ctx context.Context, client sui.ISuiAPI, mcms modulemcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error {
 			// For testing, just return success without actually building the complex PTB
 			return nil
 		},
@@ -465,7 +465,7 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 	}
 
 	// Mock expectations for ExecuteOperation flow
-	mockMcmsContract.EXPECT().Encoder().Return(mockEncoder).Times(2) // Called twice in the method
+	mockmcmsContract.EXPECT().Encoder().Return(mockEncoder).Times(2) // Called twice in the method
 
 	// Mock the first Execute encoder call
 	mockEncoder.EXPECT().Execute(
@@ -483,7 +483,7 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 	).Return(nil, nil)
 
 	// Mock the bound contract calls for the bypass flow
-	mockMcmsContract.EXPECT().Bound().Return(mockBound).Times(2) // Called twice for bypass flow
+	mockmcmsContract.EXPECT().Bound().Return(mockBound).Times(2) // Called twice for bypass flow
 
 	// Mock the first AppendPTB call for the execute call
 	mockBound.EXPECT().AppendPTB(ctx, mock.AnythingOfType("*bind.CallOpts"), mock.AnythingOfType("*transaction.Transaction"), mock.Anything).Return(&transaction.Argument{}, nil).Once()

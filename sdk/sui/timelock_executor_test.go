@@ -15,19 +15,19 @@ import (
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 
-	mockBindUtils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
-	mockMcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
-	mockSui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
+	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
+	mockmcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
+	mocksui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestNewTimelockExecutor(t *testing.T) {
 	t.Parallel()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	mcmsPackageID := "0x123456789abcdef"
 
@@ -46,8 +46,8 @@ func TestNewTimelockExecutor(t *testing.T) {
 func TestTimelockExecutor_Properties(t *testing.T) {
 	t.Parallel()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	mcmsPackageID := "0x123456789abcdef"
 
@@ -74,13 +74,13 @@ func TestTimelockExecutor_Properties(t *testing.T) {
 
 func TestTimelockExecutor_Execute_Success(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mockMcmsContract := mockMcms.NewIMcms(t)
-	mockEncoder := mockMcms.NewMcmsEncoder(t)
-	mockBound := mockBindUtils.NewIBoundContract(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockmcmsContract := mockmcms.NewIMcms(t)
+	mockEncoder := mockmcms.NewMcmsEncoder(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
 
 	// Create executor with dependency injection
 	executor := &TimelockExecutor{
@@ -88,7 +88,7 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 			client:        mockClient,
 			signer:        mockSigner,
 			mcmsPackageID: "0x123456789abcdef",
-			mcms:          mockMcmsContract,
+			mcms:          mockmcmsContract,
 		},
 		client:        mockClient,
 		signer:        mockSigner,
@@ -107,7 +107,7 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 			}, nil
 		},
 		// Mock AppendPTBFromExecutingCallbackParams function
-		AppendPTBFromExecutingCallbackParams: func(ctx context.Context, client sui.ISuiAPI, mcms moduleMcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error {
+		AppendPTBFromExecutingCallbackParams: func(ctx context.Context, client sui.ISuiAPI, mcms modulemcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error {
 			return nil // Success
 		},
 	}
@@ -138,8 +138,8 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 	salt := common.HexToHash("0x5678")
 
 	// Mock the MCMS contract calls
-	mockMcmsContract.On("Encoder").Return(mockEncoder)
-	mockMcmsContract.On("Bound").Return(mockBound)
+	mockmcmsContract.On("Encoder").Return(mockEncoder)
+	mockmcmsContract.On("Bound").Return(mockBound)
 
 	// Mock TimelockExecuteBatch call
 	timelockObject := bind.Object{Id: timelockObj}
@@ -173,27 +173,22 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 	assert.Equal(t, "9WzSXdwbky8tNbH7juvyaui4QzMUYEjdCEKMrMgLhXHT", result.Hash)
 	assert.Equal(t, cselectors.FamilySui, result.ChainFamily)
 	assert.NotNil(t, result.RawData)
-
-	// Verify all mocks were called
-	mockMcmsContract.AssertExpectations(t)
-	mockEncoder.AssertExpectations(t)
-	mockBound.AssertExpectations(t)
 }
 
 func TestTimelockExecutor_Execute_InvalidAdditionalFields(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mockMcmsContract := mockMcms.NewIMcms(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockmcmsContract := mockmcms.NewIMcms(t)
 
 	executor := &TimelockExecutor{
 		TimelockInspector: TimelockInspector{
 			client:        mockClient,
 			signer:        mockSigner,
 			mcmsPackageID: "0x123456789abcdef",
-			mcms:          mockMcmsContract,
+			mcms:          mockmcmsContract,
 		},
 		client:        mockClient,
 		signer:        mockSigner,
@@ -226,18 +221,18 @@ func TestTimelockExecutor_Execute_InvalidAdditionalFields(t *testing.T) {
 
 func TestTimelockExecutor_Execute_InvalidTargetAddress(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mockMcmsContract := mockMcms.NewIMcms(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockmcmsContract := mockmcms.NewIMcms(t)
 
 	executor := &TimelockExecutor{
 		TimelockInspector: TimelockInspector{
 			client:        mockClient,
 			signer:        mockSigner,
 			mcmsPackageID: "0x123456789abcdef",
-			mcms:          mockMcmsContract,
+			mcms:          mockmcmsContract,
 		},
 		client:        mockClient,
 		signer:        mockSigner,
@@ -282,19 +277,19 @@ func TestTimelockExecutor_Execute_InvalidTargetAddress(t *testing.T) {
 
 func TestTimelockExecutor_Execute_TimelockExecuteBatchFailure(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mockMcmsContract := mockMcms.NewIMcms(t)
-	mockEncoder := mockMcms.NewMcmsEncoder(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockmcmsContract := mockmcms.NewIMcms(t)
+	mockEncoder := mockmcms.NewMcmsEncoder(t)
 
 	executor := &TimelockExecutor{
 		TimelockInspector: TimelockInspector{
 			client:        mockClient,
 			signer:        mockSigner,
 			mcmsPackageID: "0x123456789abcdef",
-			mcms:          mockMcmsContract,
+			mcms:          mockmcmsContract,
 		},
 		client:        mockClient,
 		signer:        mockSigner,
@@ -330,7 +325,7 @@ func TestTimelockExecutor_Execute_TimelockExecuteBatchFailure(t *testing.T) {
 	salt := common.HexToHash("0x5678")
 
 	// Mock the MCMS contract calls
-	mockMcmsContract.On("Encoder").Return(mockEncoder)
+	mockmcmsContract.On("Encoder").Return(mockEncoder)
 
 	// Mock TimelockExecuteBatch call to fail
 	timelockObject := bind.Object{Id: timelockObj}
@@ -355,26 +350,26 @@ func TestTimelockExecutor_Execute_TimelockExecuteBatchFailure(t *testing.T) {
 	assert.Empty(t, result.Hash)
 
 	// Verify mocks were called
-	mockMcmsContract.AssertExpectations(t)
+	mockmcmsContract.AssertExpectations(t)
 	mockEncoder.AssertExpectations(t)
 }
 
 func TestTimelockExecutor_Execute_AppendPTBFailure(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
-	mockMcmsContract := mockMcms.NewIMcms(t)
-	mockEncoder := mockMcms.NewMcmsEncoder(t)
-	mockBound := mockBindUtils.NewIBoundContract(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockmcmsContract := mockmcms.NewIMcms(t)
+	mockEncoder := mockmcms.NewMcmsEncoder(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
 
 	executor := &TimelockExecutor{
 		TimelockInspector: TimelockInspector{
 			client:        mockClient,
 			signer:        mockSigner,
 			mcmsPackageID: "0x123456789abcdef",
-			mcms:          mockMcmsContract,
+			mcms:          mockmcmsContract,
 		},
 		client:        mockClient,
 		signer:        mockSigner,
@@ -410,8 +405,8 @@ func TestTimelockExecutor_Execute_AppendPTBFailure(t *testing.T) {
 	salt := common.HexToHash("0x5678")
 
 	// Mock the MCMS contract calls
-	mockMcmsContract.On("Encoder").Return(mockEncoder)
-	mockMcmsContract.On("Bound").Return(mockBound)
+	mockmcmsContract.On("Encoder").Return(mockEncoder)
+	mockmcmsContract.On("Bound").Return(mockBound)
 
 	// Mock TimelockExecuteBatch call to succeed
 	timelockObject := bind.Object{Id: timelockObj}
@@ -446,7 +441,7 @@ func TestTimelockExecutor_Execute_AppendPTBFailure(t *testing.T) {
 	assert.Empty(t, result.Hash)
 
 	// Verify mocks were called
-	mockMcmsContract.AssertExpectations(t)
+	mockmcmsContract.AssertExpectations(t)
 	mockEncoder.AssertExpectations(t)
 	mockBound.AssertExpectations(t)
 }

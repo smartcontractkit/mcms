@@ -16,8 +16,8 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	moduleFeeQuoter "github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter"
-	moduleMcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	mockmcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter"
+	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -39,7 +39,7 @@ type Executor struct {
 	client        sui.ISuiAPI
 	signer        bindutils.SuiSigner
 	mcmsPackageID string
-	mcms          moduleMcms.IMcms
+	mcms          modulemcms.IMcms
 
 	mcmsObj     string // MultisigState object ID
 	accountObj  string
@@ -50,11 +50,11 @@ type Executor struct {
 	ExecutePTB func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error)
 
 	// AppendPTBFromExecutingCallbackParams function for dependency injection and testing
-	AppendPTBFromExecutingCallbackParams func(ctx context.Context, client sui.ISuiAPI, mcms moduleMcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error
+	AppendPTBFromExecutingCallbackParams func(ctx context.Context, client sui.ISuiAPI, mcms modulemcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error
 }
 
 func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageID string, role TimelockRole, mcmsObj string, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
-	mcms, err := moduleMcms.NewMcms(mcmsPackageID, client)
+	mcms, err := modulemcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err
 	}
@@ -354,7 +354,7 @@ func closeExecutingCallbackParams(mcmsPackageID string, ptb *transaction.Transac
 func AppendPTBFromExecutingCallbackParams(
 	ctx context.Context,
 	client sui.ISuiAPI,
-	mcms moduleMcms.IMcms,
+	mcms modulemcms.IMcms,
 	ptb *transaction.Transaction,
 	mcmsPackageID string,
 	executeCallback *transaction.Argument,
@@ -402,7 +402,7 @@ func AppendPTBFromExecutingCallbackParams(
 			}
 
 			// We can use any contract that implements the mcms_entrypoint function
-			entryPointContract, err := moduleFeeQuoter.NewFeeQuoter(targetString, client)
+			entryPointContract, err := mockmcms.NewFeeQuoter(targetString, client)
 			if err != nil {
 				return fmt.Errorf("failed to create MCMS EntryPoint contract: %w", err)
 			}

@@ -1,7 +1,6 @@
 package sui
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,9 +16,9 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 
-	mockBindUtils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
-	mockModuleMcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
-	mockSui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
+	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
+	mockmodulemcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
+	mocksui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -42,8 +41,8 @@ func MustMarshalJSON(t *testing.T, v any) []byte {
 }
 func TestNewConfigurer(t *testing.T) {
 	t.Parallel()
-	mockClient := mockSui.NewISuiAPI(t)
-	mockSigner := mockBindUtils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Test successful creation
 	mcmsPackageID := "0x123456789abcdef"
@@ -63,7 +62,7 @@ func TestNewConfigurer(t *testing.T) {
 
 func TestConfigurer_SetConfig(t *testing.T) {
 	t.Parallel()
-	ctx := context.Background()
+	ctx := t.Context()
 	type args struct {
 		mcmsAddr  string
 		cfg       *types.Config
@@ -80,7 +79,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 		args         args
 		role         TimelockRole
 		chainID      uint64
-		mockSetup    func(mockMcms *mockModuleMcms.IMcms)
+		mockSetup    func(mockmcms *mockmodulemcms.IMcms)
 		want         types.TransactionResult
 		wantErr      assert.ErrorAssertionFunc
 		wantChainErr bool
@@ -117,7 +116,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			},
 			role:    TimelockRoleBypasser,
 			chainID: cselectors.SUI_TESTNET.Selector,
-			mockSetup: func(mockmcms *mockModuleMcms.IMcms) {
+			mockSetup: func(mockmcms *mockmodulemcms.IMcms) {
 				expectedChainID := new(big.Int).SetUint64(cselectors.SUI_TESTNET.ChainID)
 				mockmcms.EXPECT().SetConfig(
 					mock.Anything,
@@ -165,7 +164,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			},
 			role:    TimelockRoleCanceller,
 			chainID: cselectors.SUI_TESTNET.Selector,
-			mockSetup: func(mockmcms *mockModuleMcms.IMcms) {
+			mockSetup: func(mockmcms *mockmodulemcms.IMcms) {
 				expectedChainID := new(big.Int).SetUint64(cselectors.SUI_TESTNET.ChainID)
 				mockmcms.EXPECT().SetConfig(
 					mock.Anything,
@@ -215,7 +214,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			},
 			role:    TimelockRoleProposer,
 			chainID: cselectors.SUI_TESTNET.Selector,
-			mockSetup: func(mockmcms *mockModuleMcms.IMcms) {
+			mockSetup: func(mockmcms *mockmodulemcms.IMcms) {
 				mockmcms.EXPECT().SetConfig(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("transaction failed"))
 			},
 			wantErr: AssertErrorContains("failed to set config"),
@@ -226,21 +225,21 @@ func TestConfigurer_SetConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mockSui.NewISuiAPI(t)
-			mockSigner := mockBindUtils.NewSuiSigner(t)
-			ModulemockMcms := mockModuleMcms.NewIMcms(t)
+			mockClient := mocksui.NewISuiAPI(t)
+			mockSigner := mockbindutils.NewSuiSigner(t)
+			Modulemockmcms := mockmodulemcms.NewIMcms(t)
 
 			configurer := &Configurer{
 				client:        mockClient,
 				signer:        mockSigner,
 				role:          tt.role,
-				mcms:          ModulemockMcms,
+				mcms:          Modulemockmcms,
 				ownerCap:      "0xownerCap",
 				chainSelector: tt.chainID,
 			}
 
 			if tt.mockSetup != nil {
-				tt.mockSetup(ModulemockMcms)
+				tt.mockSetup(Modulemockmcms)
 			}
 
 			got, err := configurer.SetConfig(ctx, tt.args.mcmsAddr, tt.args.cfg, tt.args.clearRoot)
