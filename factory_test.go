@@ -11,6 +11,7 @@ import (
 	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
+	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -73,6 +74,16 @@ func Test_NewEncoder(t *testing.T) {
 			},
 		},
 		{
+			name:         "success: returns a Sui encoder",
+			giveSelector: chaintest.Chain6Selector,
+			giveIsSim:    false,
+			want: &suisdk.Encoder{
+				TxCount:              giveTxCount,
+				ChainSelector:        chaintest.Chain6Selector,
+				OverridePreviousRoot: false,
+			},
+		},
+		{
 			name:         "failure: chain not found for selector",
 			giveSelector: chaintest.ChainInvalidSelector,
 			giveIsSim:    true,
@@ -119,6 +130,11 @@ func Test_newTimelockConverter(t *testing.T) {
 			name:          "success: Solana executor",
 			chainSelector: chaintest.Chain4Selector,
 			want:          &solanasdk.TimelockConverter{},
+		},
+		{
+			name:          "success: Sui executor",
+			chainSelector: chaintest.Chain6Selector,
+			want:          &suisdk.TimelockConverter{},
 		},
 		{
 			name:          "failure: unknown selector",

@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/aptos-labs/aptos-go-sdk"
+	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/ws"
@@ -20,6 +21,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
+	"github.com/smartcontractkit/freeport"
 )
 
 // Shared test setup
@@ -36,7 +38,9 @@ type Config struct {
 	BlockchainB *blockchain.Input `toml:"evm_config_b"`
 	SolanaChain *blockchain.Input `toml:"solana_config"`
 	AptosChain  *blockchain.Input `toml:"aptos_config"`
-	Settings    struct {
+	SuiChain    *blockchain.Input `toml:"sui_config"`
+
+	Settings struct {
 		PrivateKeys []string `toml:"private_keys"`
 	} `toml:"settings"`
 }
@@ -50,6 +54,8 @@ type TestSetup struct {
 	AptosRPCClient   *aptos.NodeClient
 	SolanaBlockchain *blockchain.Output
 	AptosBlockchain  *blockchain.Output
+	SuiClient        sui.ISuiAPI
+	SuiBlockchain    *blockchain.Output
 	Config
 }
 
@@ -101,14 +107,14 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			}
 
 			// Initialize Ethereum client A
-			wsURLA := ethBlockChainOutputA.Nodes[0].HostWSUrl
+			wsURLA := ethBlockChainOutputA.Nodes[0].ExternalWSUrl
 			ethClientA, err = ethclient.DialContext(context.Background(), wsURLA)
 			if err != nil {
 				t.Fatalf("Failed to initialize Ethereum client: %v", err)
 			}
 
 			// Initialize Ethereum client B
-			wsURLB := ethBlockChainOutputB.Nodes[0].HostWSUrl
+			wsURLB := ethBlockChainOutputB.Nodes[0].ExternalWSUrl
 			ethClientB, err = ethclient.DialContext(context.Background(), wsURLB)
 			if err != nil {
 				t.Fatalf("Failed to initialize Ethereum client: %v", err)
@@ -129,8 +135,8 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 				t.Fatalf("Failed to initialize solana blockchain: %v", err)
 			}
 
-			solanaClient = rpc.New(solanaBlockChainOutput.Nodes[0].HostHTTPUrl)
-			solanaWsClient, err = ws.Connect(ctx, solanaBlockChainOutput.Nodes[0].HostWSUrl)
+			solanaClient = rpc.New(solanaBlockChainOutput.Nodes[0].ExternalHTTPUrl)
+			solanaWsClient, err = ws.Connect(ctx, solanaBlockChainOutput.Nodes[0].ExternalWSUrl)
 			if err != nil {
 				t.Fatalf("Failed to initialize Solana WS client: %v", err)
 			}
@@ -157,17 +163,38 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			aptosBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.AptosChain)
 			require.NoError(t, err, "Failed to initialize Aptos blockchain")
 
-			nodeUrl := fmt.Sprintf("%v/v1", aptosBlockchainOutput.Nodes[0].HostHTTPUrl)
+			nodeUrl := fmt.Sprintf("%v/v1", aptosBlockchainOutput.Nodes[0].ExternalHTTPUrl)
 
 			aptosClient, err = aptos.NewNodeClient(nodeUrl, 0)
 			require.NoError(t, err, "Failed to initialize Aptos RPC client")
 
 			// Test liveness, will also fetch ChainID
 			t.Logf("Initialized Aptos RPC client @ %s", nodeUrl)
-			info, err := aptosClient.Info()
-			require.NoError(t, err, "Failed to get Aptos node info")
-			require.NotEmpty(t, info.LedgerVersionStr)
-			in.AptosChain.ChainID = strconv.FormatUint(uint64(info.ChainId), 10)
+			nodeInfo, infoErr := aptosClient.Info()
+			require.NoError(t, infoErr, "Failed to get Aptos node info")
+			require.NotEmpty(t, nodeInfo.LedgerVersionStr)
+			in.AptosChain.ChainID = strconv.FormatUint(uint64(nodeInfo.ChainId), 10)
+		}
+
+		var (
+			suiClient           sui.ISuiAPI
+			suiBlockchainOutput *blockchain.Output
+		)
+		if in.SuiChain != nil {
+			ports := freeport.GetN(t, 2)
+			port := ports[0]
+			faucetPort := ports[1]
+			in.SuiChain.Port = strconv.Itoa(port)
+			in.SuiChain.FaucetPort = strconv.Itoa(faucetPort)
+
+			suiBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.SuiChain)
+			require.NoError(t, err, "Failed to initialize Sui blockchain")
+
+			nodeUrl := suiBlockchainOutput.Nodes[0].ExternalHTTPUrl
+			suiClient = sui.NewSuiClient(nodeUrl)
+
+			// Test liveness, will also fetch ChainID
+			t.Logf("Initialized Sui RPC client @ %s", nodeUrl)
 		}
 
 		sharedSetup = &TestSetup{
@@ -178,6 +205,8 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			AptosRPCClient:   aptosClient,
 			SolanaBlockchain: solanaBlockChainOutput,
 			AptosBlockchain:  aptosBlockchainOutput,
+			SuiClient:        suiClient,
+			SuiBlockchain:    suiBlockchainOutput,
 			Config:           *in,
 		}
 	})

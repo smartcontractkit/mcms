@@ -11,6 +11,7 @@ import (
 	aptose2e "github.com/smartcontractkit/mcms/e2e/tests/aptos"
 	evme2e "github.com/smartcontractkit/mcms/e2e/tests/evm"
 	solanae2e "github.com/smartcontractkit/mcms/e2e/tests/solana"
+	suie2e "github.com/smartcontractkit/mcms/e2e/tests/sui"
 )
 
 func TestEVMSuite(t *testing.T) {
@@ -28,4 +29,12 @@ func TestSolanaSuite(t *testing.T) {
 
 func TestAptosSuite(t *testing.T) {
 	suite.Run(t, new(aptose2e.AptosTestSuite))
+}
+
+func TestSuiSuite(t *testing.T) {
+	suite.Run(t, new(suie2e.TimelockProposalTestSuite))
+	suite.Run(t, new(suie2e.InspectionTestSuite))
+	suite.Run(t, new(suie2e.TimelockInspectionTestSuite))
+	suite.Run(t, new(suie2e.SetRootTestSuite))
+	suite.Run(t, new(suie2e.MCMSUserTestSuite))
 }

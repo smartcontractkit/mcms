@@ -56,7 +56,7 @@ jobs:
       - name: Build and test
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
         with:
-          go-test-cmd: go test -coverpkg=../... -coverprofile=coverage.txt -test.gocoverdir=/tmp ./...
+          go-test-cmd: go test -v -cover -coverpkg=./... -coverprofile=coverage.txt ./...
           use-go-cache: true
 
   ci-test-e2e:
@@ -79,6 +79,15 @@ jobs:
         uses: aptos-labs/actions/install-aptos-cli@ce57287eb852b9819c1d74fecc3be187677559fd # v0.1
         with:
           CLI_VERSION: 7.0.0
+
+      - name: Install Sui CLI
+        shell: bash
+        run: |
+          SUI_VERSION="1.50.1"
+          curl -L "https://github.com/MystenLabs/sui/releases/download/mainnet-v${SUI_VERSION}/sui-mainnet-v${SUI_VERSION}-ubuntu-x86_64.tgz" -o sui.tgz
+          tar -xzf sui.tgz
+          sudo mv sui /usr/local/bin/
+          sui --version
 
       - name: Checkout code
         uses: actions/checkout@v4
