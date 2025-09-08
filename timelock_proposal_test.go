@@ -1209,8 +1209,7 @@ func Test_TimelockProposal_Merge(t *testing.T) {
 					SetDescription("proposal 1\nproposal 2").
 					SetValidUntil(2051222400). // 2035-01-01 00:00:00 UTC
 					SetDelay(types.NewDuration(2*time.Minute)).
-					// SetSalt(pointerTo(common.HexToHash("0x123456"))).
-					AddSignature(sig2).
+					SetSignatures([]types.Signature(nil)).
 					AddTimelockAddress(chaintest.Chain2Selector, "0xchain2TimelockAddress").
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{
 						StartingOpCount:  2,
@@ -1289,8 +1288,7 @@ func Test_TimelockProposal_Merge(t *testing.T) {
 					SetDescription("proposal 1\nproposal 2").
 					SetValidUntil(2051222400). // 2035-01-01 00:00:00 UTC
 					SetDelay(types.NewDuration(1*time.Minute)).
-					AddSignature(sig2).
-					AddSignature(sig3).
+					SetSignatures([]types.Signature(nil)).
 					// chain 1
 					AddTimelockAddress(chaintest.Chain1Selector, "0xchain1TimelockAddress").
 					AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{
@@ -1411,16 +1409,6 @@ func Test_TimelockProposal_Merge(t *testing.T) {
 				t.Helper()
 				want := pointerTo(common.HexToHash("0x9955115599551155"))
 				require.Equal(t, want, merged.SaltOverride)
-			},
-		},
-		{
-			name:      "success: merge signatures without duplicates",
-			proposal1: mustBuild(t, baseProposalBuilder().SetSignatures([]types.Signature{sig1, sig2})),
-			proposal2: mustBuild(t, baseProposalBuilder().SetSignatures([]types.Signature{sig2, sig3})),
-			assert: func(t *testing.T, merged *TimelockProposal) {
-				t.Helper()
-				want := []types.Signature{sig1, sig2, sig3}
-				assert.Equal(t, want, merged.Signatures)
 			},
 		},
 		{

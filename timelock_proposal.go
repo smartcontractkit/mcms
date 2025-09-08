@@ -359,16 +359,7 @@ func (m *TimelockProposal) Merge(_ context.Context, other *TimelockProposal) (*T
 		m.Description += other.Description
 	}
 
-	signatureMap := map[types.Signature]struct{}{}
-	for _, signature := range m.Signatures {
-		signatureMap[signature] = struct{}{}
-	}
-	for _, signature := range other.Signatures {
-		_, exists := signatureMap[signature]
-		if !exists {
-			m.Signatures = append(m.Signatures, signature)
-		}
-	}
+	m.Signatures = nil // reset signatures, as existing ones are no longer valid
 
 	var err error
 	m.Metadata, err = mergeMetadata(m.Metadata, other.Metadata)
