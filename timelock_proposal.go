@@ -361,11 +361,7 @@ func (m *TimelockProposal) Merge(_ context.Context, other *TimelockProposal) (*T
 
 	m.Signatures = nil // reset signatures, as existing ones are no longer valid
 
-	var err error
-	m.Metadata, err = mergeMetadata(m.Metadata, other.Metadata)
-	if err != nil {
-		return nil, fmt.Errorf("failed to merge proposal metadata: %w", err)
-	}
+	m.Metadata = mergeMetadata(m.Metadata, other.Metadata)
 
 	for chainSelector, otherMetadata := range other.ChainMetadata {
 		thisMetadata, exists := m.ChainMetadata[chainSelector]
