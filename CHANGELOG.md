@@ -1,5 +1,17 @@
 # @smartcontractkit/mcms
 
+## 0.23.0
+
+### Minor Changes
+
+- [#424](https://github.com/smartcontractkit/mcms/pull/424) [`4f868e5`](https://github.com/smartcontractkit/mcms/commit/4f868e5b9cbba8e8e11c731b5cc1dc43b3c1ecaa) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Add Sui implementation and e2e tests
+
+### Patch Changes
+
+- [#462](https://github.com/smartcontractkit/mcms/pull/462) [`b7855e0`](https://github.com/smartcontractkit/mcms/commit/b7855e04e27f61c9bd44f7455bc1a8d095f4d350) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: signatures should be reset when merging proposals
+
+- [#463](https://github.com/smartcontractkit/mcms/pull/463) [`7f151a5`](https://github.com/smartcontractkit/mcms/commit/7f151a56dfc2c7ed3ba8b118d48fc989e6e1dbe8) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: use deep map merge when merging proposal Metadata
+
 ## 0.22.0
 
 ### Minor Changes
