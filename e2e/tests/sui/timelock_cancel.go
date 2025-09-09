@@ -148,52 +148,52 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 
 	// Execute
 	for i := range proposal.Operations {
-		_, execErr := executable.Execute(s.T().Context(), i)
-		s.Require().NoError(execErr, "Error executing operation")
+		_, eErr := executable.Execute(s.T().Context(), i)
+		s.Require().NoError(eErr, "Error executing operation")
 
 		// Create timelock inspector to check operation status
-		timelockInspector, tiErr := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
-		s.Require().NoError(tiErr, "Failed to create timelock inspector")
+		timelockInspector, eErr := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
+		s.Require().NoError(eErr, "Failed to create timelock inspector")
 
-		timelockExecutor, tErr := suisdk.NewTimelockExecutor(
+		timelockExecutor, eErr := suisdk.NewTimelockExecutor(
 			s.client,
 			s.signer,
 			s.mcmsPackageID,
 			s.registryObj,
 			s.accountObj,
 		)
-		s.Require().NoError(tErr, "creating timelock executor for Sui mcms contract")
+		s.Require().NoError(eErr, "creating timelock executor for Sui mcms contract")
 		timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 			s.chainSelector: timelockExecutor,
 		}
-		timelockExecutable, execErr := mcms.NewTimelockExecutable(s.T().Context(), timelockProposal, timelockExecutors)
-		s.Require().NoError(execErr)
+		timelockExecutable, eErr := mcms.NewTimelockExecutable(s.T().Context(), timelockProposal, timelockExecutors)
+		s.Require().NoError(eErr)
 
 		// Get the operation ID that was scheduled
-		scheduledOpID, err := timelockExecutable.GetOpID(s.T().Context(), 0, op, s.chainSelector)
-		s.Require().NoError(err, "Failed to get operation ID")
+		scheduledOpID, eErr := timelockExecutable.GetOpID(s.T().Context(), 0, op, s.chainSelector)
+		s.Require().NoError(eErr, "Failed to get operation ID")
 
 		// The operation should still exist
-		exists, err := timelockInspector.IsOperation(s.T().Context(), s.timelockObj, scheduledOpID)
-		s.Require().NoError(err, "IsOperation should not return an error")
+		exists, eErr := timelockInspector.IsOperation(s.T().Context(), s.timelockObj, scheduledOpID)
+		s.Require().NoError(eErr, "IsOperation should not return an error")
 		s.Require().True(exists, "Operation should still exist after delay")
 
 		// The operation should still be pending (scheduled but not executed)
-		isPending, err := timelockInspector.IsOperationPending(s.T().Context(), s.timelockObj, scheduledOpID)
-		s.Require().NoError(err, "IsOperationPending should not return an error")
+		isPending, eErr := timelockInspector.IsOperationPending(s.T().Context(), s.timelockObj, scheduledOpID)
+		s.Require().NoError(eErr, "IsOperationPending should not return an error")
 		s.Require().True(isPending, "Operation should still be pending after delay")
 
 		delay7s := time.Second * 7
 		time.Sleep(delay7s)
 
 		// The operation should NOW be ready (delay has passed)
-		isReady, err := timelockInspector.IsOperationReady(s.T().Context(), s.timelockObj, scheduledOpID)
-		s.Require().NoError(err, "IsOperationReady should not return an error")
+		isReady, eErr := timelockInspector.IsOperationReady(s.T().Context(), s.timelockObj, scheduledOpID)
+		s.Require().NoError(eErr, "IsOperationReady should not return an error")
 		s.Require().True(isReady, "Operation should be ready after delay passes")
 
 		// The operation should still NOT be done (not executed yet)
-		isDone, err := timelockInspector.IsOperationDone(s.T().Context(), s.timelockObj, scheduledOpID)
-		s.Require().NoError(err, "IsOperationDone should not return an error")
+		isDone, eErr := timelockInspector.IsOperationDone(s.T().Context(), s.timelockObj, scheduledOpID)
+		s.Require().NoError(eErr, "IsOperationDone should not return an error")
 		s.Require().False(isDone, "Operation should not be done before execution")
 	}
 
@@ -204,10 +204,10 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 
 	// Set config
 	{
-		configurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleCanceller, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
-		s.Require().NoError(err, "creating configurer for Sui mcms contract")
-		_, err = configurer.SetConfig(s.T().Context(), s.mcmsObj, cancellerConfig.Config, true)
-		s.Require().NoError(err, "setting config on Sui mcms contract")
+		configurer, cErr := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleCanceller, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
+		s.Require().NoError(cErr, "creating configurer for Sui mcms contract")
+		_, cErr = configurer.SetConfig(s.T().Context(), s.mcmsObj, cancellerConfig.Config, true)
+		s.Require().NoError(cErr, "setting config on Sui mcms contract")
 	}
 
 	// Get the current operation count for the cancellation proposal
