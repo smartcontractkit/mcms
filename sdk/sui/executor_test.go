@@ -501,3 +501,183 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 	assert.NotNil(t, result)
 	assert.Equal(t, "0xbypass_success_digest", result.Hash)
 }
+
+func TestExecutor_ExecuteOperation_Success_Cancel(t *testing.T) {
+	t.Parallel()
+	ctx := t.Context()
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockmcmsContract := mockmcms.NewIMcms(t)
+	mockEncoder := mockmcms.NewMcmsEncoder(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
+
+	executor := &Executor{
+		signer:        mockSigner,
+		mcms:          mockmcmsContract,
+		mcmsPackageID: "0x123456789abcdef",
+		mcmsObj:       mcmsObj,
+		timelockObj:   timelockObj,
+		registryObj:   registryObj,
+		accountObj:    accountObj,
+		client:        mockClient,
+		Encoder: &Encoder{
+			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			TxCount:       5,
+		},
+		// Mock ExecutePTB function directly in the struct
+		ExecutePTB: func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
+			return &models.SuiTransactionBlockResponse{
+				Digest: "0xcancel_success_digest",
+				Transaction: models.SuiTransactionBlock{
+					Data: models.SuiTransactionBlockData{
+						Sender: "0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789",
+					},
+				},
+			}, nil
+		},
+	}
+
+	// Test data for cancel operation
+	// Create a mock operation ID that represents a previously scheduled operation
+	operationID := []byte{0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20}
+
+	// Serialize the operation ID for cancellation (using the same function as the actual code)
+	cancelData, err := serializeTimelockCancel(operationID)
+	require.NoError(t, err)
+
+	metadata := types.ChainMetadata{
+		AdditionalFields: []byte(`{"role":3}`), // TimelockRoleCanceller = 3
+	}
+	nonce := uint32(789)
+	proof := []common.Hash{common.HexToHash("0x9abc")}
+	op := types.Operation{
+		Transaction: types.Transaction{
+			To:   "0x0000000000000000000000000000000000000000000000000000000000000789",
+			Data: cancelData,
+			AdditionalFields: []byte(`{
+				"module_name": "mcms",
+				"function": "timelock_cancel"
+			}`),
+		},
+	}
+
+	// Mock expectations for ExecuteOperation flow
+	mockmcmsContract.EXPECT().Encoder().Return(mockEncoder).Times(2) // Called twice in the method
+
+	// Mock the first Execute encoder call
+	mockEncoder.EXPECT().Execute(
+		mock.AnythingOfType("bind.Object"), // stateObj
+		mock.AnythingOfType("bind.Object"), // clockObj
+		byte(3),                            // TimelockRoleCanceller
+		mock.AnythingOfType("*big.Int"),    // chainId
+		executor.mcmsPackageID,
+		uint64(nonce),
+		"0000000000000000000000000000000000000000000000000000000000000789", // to address (without 0x prefix)
+		"mcms",
+		"timelock_cancel",
+		cancelData,
+		[][]byte{common.HexToHash("0x9abc").Bytes()},
+	).Return(nil, nil)
+
+	// Mock the Bound() call for AppendPTB
+	mockmcmsContract.EXPECT().Bound().Return(mockBound).Times(2) // Called twice
+
+	// Mock the first AppendPTB call for the execute call
+	mockBound.EXPECT().AppendPTB(ctx, mock.AnythingOfType("*bind.CallOpts"), mock.AnythingOfType("*transaction.Transaction"), mock.Anything).Return(&transaction.Argument{}, nil).Once()
+
+	// Mock the timelock cancel call
+	mockEncoder.EXPECT().DispatchTimelockCancelWithArgs(executor.timelockObj, mock.Anything).Return(nil, nil)
+
+	// Mock the second AppendPTB call for the timelock call
+	mockBound.EXPECT().AppendPTB(ctx, mock.AnythingOfType("*bind.CallOpts"), mock.AnythingOfType("*transaction.Transaction"), mock.Anything).Return(nil, nil).Once()
+
+	result, err := executor.ExecuteOperation(ctx, metadata, nonce, proof, op)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "0xcancel_success_digest", result.Hash)
+}
+
+func TestExecutor_ExecuteOperation_Cancel_InvalidOperationID(t *testing.T) {
+	t.Parallel()
+	ctx := t.Context()
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockmcmsContract := mockmcms.NewIMcms(t)
+
+	executor := &Executor{
+		signer:        mockSigner,
+		mcms:          mockmcmsContract,
+		mcmsPackageID: "0x123456789abcdef",
+		mcmsObj:       mcmsObj,
+		timelockObj:   timelockObj,
+		registryObj:   registryObj,
+		accountObj:    accountObj,
+		client:        mockClient,
+		Encoder: &Encoder{
+			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			TxCount:       5,
+		},
+	}
+
+	// Test data with invalid operation ID (too short)
+	invalidOperationID := []byte{0x01, 0x02} // Only 2 bytes instead of 32
+	cancelData, err := serializeTimelockCancel(invalidOperationID)
+	require.NoError(t, err)
+
+	metadata := types.ChainMetadata{
+		AdditionalFields: []byte(`{"role":3}`), // TimelockRoleCanceller = 3
+	}
+	nonce := uint32(999)
+	proof := []common.Hash{common.HexToHash("0xdef0")}
+	op := types.Operation{
+		Transaction: types.Transaction{
+			To:   "0x0000000000000000000000000000000000000000000000000000000000000999",
+			Data: cancelData,
+			AdditionalFields: []byte(`{
+				"module_name": "mcms",
+				"function": "timelock_cancel"
+			}`),
+		},
+	}
+
+	// The operation should still succeed as the validation happens at the contract level
+	// This test ensures our executor handles various operation ID sizes correctly
+	mockEncoder := mockmcms.NewMcmsEncoder(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
+
+	executor.ExecutePTB = func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
+		return &models.SuiTransactionBlockResponse{
+			Digest: "0xcancel_invalid_op_digest",
+		}, nil
+	}
+
+	mockmcmsContract.EXPECT().Encoder().Return(mockEncoder).Times(2)
+	mockmcmsContract.EXPECT().Bound().Return(mockBound).Times(2)
+
+	mockEncoder.EXPECT().Execute(
+		mock.AnythingOfType("bind.Object"),
+		mock.AnythingOfType("bind.Object"),
+		byte(3),
+		mock.AnythingOfType("*big.Int"),
+		executor.mcmsPackageID,
+		uint64(nonce),
+		"0000000000000000000000000000000000000000000000000000000000000999",
+		"mcms",
+		"timelock_cancel",
+		cancelData,
+		[][]byte{common.HexToHash("0xdef0").Bytes()},
+	).Return(nil, nil)
+
+	mockBound.EXPECT().AppendPTB(ctx, mock.AnythingOfType("*bind.CallOpts"), mock.AnythingOfType("*transaction.Transaction"), mock.Anything).Return(&transaction.Argument{}, nil).Once()
+	mockEncoder.EXPECT().DispatchTimelockCancelWithArgs(executor.timelockObj, mock.Anything).Return(nil, nil)
+	mockBound.EXPECT().AppendPTB(ctx, mock.AnythingOfType("*bind.CallOpts"), mock.AnythingOfType("*transaction.Transaction"), mock.Anything).Return(nil, nil).Once()
+
+	result, err := executor.ExecuteOperation(ctx, metadata, nonce, proof, op)
+
+	require.NoError(t, err)
+	assert.NotNil(t, result)
+	assert.Equal(t, "0xcancel_invalid_op_digest", result.Hash)
+}

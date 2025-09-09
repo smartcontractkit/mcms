@@ -37,4 +37,5 @@ func TestSuiSuite(t *testing.T) {
 	suite.Run(t, new(suie2e.TimelockInspectionTestSuite))
 	suite.Run(t, new(suie2e.SetRootTestSuite))
 	suite.Run(t, new(suie2e.MCMSUserTestSuite))
+	suite.Run(t, new(suie2e.TimelockCancelProposalTestSuite))
 }

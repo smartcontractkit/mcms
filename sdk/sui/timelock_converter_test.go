@@ -1,6 +1,7 @@
 package sui
 
 import (
+	"encoding/hex"
 	"testing"
 	"time"
 
@@ -35,6 +36,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 		salt            common.Hash
 		wantOpsCount    int
 		wantOpID        string
+		wantTxDataHex   string
 		wantErr         assert.ErrorAssertionFunc
 	}{
 		{
@@ -69,6 +71,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			salt:            common.HexToHash("0xdef"),
 			wantOpsCount:    1,
 			wantErr:         assert.NoError,
+			wantTxDataHex:   "011234567890123456789012345678901234567890123456789012345678901234010b746573745f6d6f64756c65010d746573745f66756e6374696f6e0103010203200000000000000000000000000000000000000000000000000000000000000abc200000000000000000000000000000000000000000000000000000000000000def80ee360000000000",
 			wantOpID:        "0x08f9da5cdabfbd4d838312d342ea28bf922204c82b6bfdf26f057429f8f1d934",
 		},
 		{
@@ -116,6 +119,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			salt:            common.Hash{},
 			wantOpsCount:    1,
 			wantErr:         assert.NoError,
+			wantTxDataHex:   "021234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567802076d6f64756c6531076d6f64756c6532020966756e6374696f6e310966756e6374696f6e3202020102020304",
 			wantOpID:        "0xe9ec2c4882b9237ed30523ca69a5d2d4050d7994dea278a428a5879a30b86247",
 		},
 		{
@@ -150,6 +154,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			salt:            common.Hash{},
 			wantOpsCount:    1,
 			wantErr:         assert.NoError,
+			wantTxDataHex:   "20b42e07404f27a487b296e607739520026adc536fb1a71f13c96ba1631918c1a5",
 			wantOpID:        "0xb42e07404f27a487b296e607739520026adc536fb1a71f13c96ba1631918c1a5",
 		},
 		{
@@ -277,6 +282,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			if err == nil {
 				assert.Len(t, ops, tt.wantOpsCount)
 				assert.Equal(t, tt.wantOpID, opID.String())
+				assert.Equal(t, tt.wantTxDataHex, hex.EncodeToString(ops[0].Transaction.Data[:]))
 
 				if len(ops) > 0 {
 					assert.Equal(t, tt.bop.ChainSelector, ops[0].ChainSelector)

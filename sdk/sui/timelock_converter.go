@@ -91,8 +91,16 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock schedule batch: %w", err)
 		}
 	case types.TimelockActionCancel:
-		// TODO: Implement cancellation flow
 		function = TimelockActionCancel
+		// For cancellation, we need to serialize the operation ID
+		operationID, hashErr := HashOperationBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes())
+		if hashErr != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to hash operation batch for cancellation: %w", hashErr)
+		}
+		data, err = serializeTimelockCancel(operationID.Bytes())
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock cancel: %w", err)
+		}
 	case types.TimelockActionBypass:
 		function = TimelockActionBypass
 		data, err = serializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)

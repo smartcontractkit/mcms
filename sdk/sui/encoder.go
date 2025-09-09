@@ -198,3 +198,11 @@ func serializeTimelockBypasserExecuteBatch(targets [][]byte,
 		}
 	})
 }
+
+// serializeTimelockCancel serializes the arguments for timelock_cancel function
+func serializeTimelockCancel(id []byte) ([]byte, error) {
+	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
+		// Serialize the operation ID
+		ser.WriteBytes(id)
+	})
+}
