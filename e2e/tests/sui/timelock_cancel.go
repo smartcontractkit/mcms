@@ -152,8 +152,8 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 		s.Require().NoError(execErr, "Error executing operation")
 
 		// Create timelock inspector to check operation status
-		timelockInspector, err := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
-		s.Require().NoError(err, "Failed to create timelock inspector")
+		timelockInspector, tiErr := suisdk.NewTimelockInspector(s.client, s.signer, s.mcmsPackageID)
+		s.Require().NoError(tiErr, "Failed to create timelock inspector")
 
 		timelockExecutor, tErr := suisdk.NewTimelockExecutor(
 			s.client,
