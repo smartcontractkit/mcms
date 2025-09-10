@@ -400,21 +400,21 @@ func AppendPTBFromExecutingCallbackParams(
 			if err != nil {
 				return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
 			}
-			// If this is a destination contract operation, we need to call mcms_entrypoint
+			// If this is a destination contract operation, we need to call the mcms_entrypoint like function
 		} else {
 			executingCallbackParams, err := extractExecutingCallbackParams(mcmsPackageID, ptb, executeCallback)
 			if err != nil {
 				return fmt.Errorf("extracting ExecutingCallbackParams %d: %w", i, err)
 			}
 
-			// We can use any contract that implements the mcms_entrypoint function
+			// We can use any contract that implements the mcms_entrypoint like function
 			entryPointContract, err := mockmcms.NewFeeQuoter(targetString, client)
 			if err != nil {
 				return fmt.Errorf("failed to create MCMS EntryPoint contract: %w", err)
 			}
 
-			// Prepare the mcms_entrypoint call
-			entryPointCall, err := entryPointContract.Encoder().McmsEntrypointWithArgs(
+			// Prepare the mcms_entrypoint like call. We can use any function to build the call
+			entryPointCall, err := entryPointContract.Encoder().McmsApplyFeeTokenUpdatesWithArgs(
 				call.StateObj,
 				registryObj,
 				executingCallbackParams,
@@ -424,6 +424,8 @@ func AppendPTBFromExecutingCallbackParams(
 			}
 			// Override the module info with the actual target
 			entryPointCall.Module.ModuleName = call.ModuleName
+			// mcms entrypoint like functions are the target function prefixed with `mcms_`
+			entryPointCall.Function = fmt.Sprintf("mcms_%s", call.FunctionName)
 
 			_, err = mcms.Bound().AppendPTB(ctx, opts, ptb, entryPointCall)
 			if err != nil {
