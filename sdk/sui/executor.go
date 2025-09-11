@@ -165,8 +165,14 @@ func (e Executor) ExecuteOperation(
 	}
 
 	if additionalFields.Function == TimelockActionCancel {
-		// TODO: Implement cancel functionality when needed
-		return types.TransactionResult{}, fmt.Errorf("cancel functionality not yet implemented")
+		timelockCall, encodeErr := encoder.DispatchTimelockCancelWithArgs(e.timelockObj, timelockCallback)
+		if encodeErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", encodeErr)
+		}
+		_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, timelockCall)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("adding timelock call to PTB: %w", err)
+		}
 	}
 
 	if additionalFields.Function == TimelockActionBypass {
