@@ -254,3 +254,57 @@ func TestExecutingCallbackParams_AppendPTB_ExtractError(t *testing.T) {
 	assert.Contains(t, err.Error(), "extracting ExecutingCallbackParams")
 	assert.Contains(t, err.Error(), "mock extract error")
 }
+
+func TestExtractExecutingCallbackParams(t *testing.T) {
+	t.Parallel()
+
+	ptb := transaction.NewTransaction()
+	vectorExecutingCallback := &transaction.Argument{}
+	mcmsPackageID := "0x123456789abcdef0" + strings.Repeat("0", 48) // 64 hex chars = 32 bytes
+
+	result, err := extractExecutingCallbackParams(mcmsPackageID, ptb, vectorExecutingCallback)
+
+	require.NoError(t, err, "extractExecutingCallbackParams should not return an error")
+	require.NotNil(t, result, "extractExecutingCallbackParams should return a non-nil result")
+
+	assert.IsType(t, &transaction.Argument{}, result, "result should be a *transaction.Argument")
+}
+
+func TestExtractExecutingCallbackParams_InvalidPackageID(t *testing.T) {
+	t.Parallel()
+
+	ptb := transaction.NewTransaction()
+	vectorExecutingCallback := &transaction.Argument{}
+	invalidPackageID := "invalid-package-id" // Invalid format
+
+	result, err := extractExecutingCallbackParams(invalidPackageID, ptb, vectorExecutingCallback)
+
+	require.Error(t, err, "extractExecutingCallbackParams should return an error for invalid package ID")
+	assert.Nil(t, result, "result should be nil when there's an error")
+	assert.Contains(t, err.Error(), "failed to convert type string to TypeTag", "error should mention TypeTag conversion failure")
+}
+
+func TestCloseExecutingCallbackParams(t *testing.T) {
+	t.Parallel()
+
+	ptb := transaction.NewTransaction()
+	vectorExecutingCallback := &transaction.Argument{}
+	mcmsPackageID := "0x123456789abcdef0" + strings.Repeat("0", 48) // 64 hex chars = 32 bytes
+
+	err := closeExecutingCallbackParams(mcmsPackageID, ptb, vectorExecutingCallback)
+
+	require.NoError(t, err, "closeExecutingCallbackParams should not return an error")
+}
+
+func TestCloseExecutingCallbackParams_InvalidPackageID(t *testing.T) {
+	t.Parallel()
+
+	ptb := transaction.NewTransaction()
+	vectorExecutingCallback := &transaction.Argument{}
+	invalidPackageID := "invalid-package-id" // Invalid format
+
+	err := closeExecutingCallbackParams(invalidPackageID, ptb, vectorExecutingCallback)
+
+	require.Error(t, err, "closeExecutingCallbackParams should return an error for invalid package ID")
+	assert.Contains(t, err.Error(), "failed to convert type string to TypeTag", "error should mention TypeTag conversion failure")
+}
