@@ -1,5 +1,15 @@
 # @smartcontractkit/mcms
 
+## 0.24.0
+
+### Minor Changes
+
+- [#464](https://github.com/smartcontractkit/mcms/pull/464) [`80431f2`](https://github.com/smartcontractkit/mcms/commit/80431f23e0b498b978409cb3b4d16ed0f62d7ce1) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Add cancellation support in Sui proposals
+
+### Patch Changes
+
+- [#466](https://github.com/smartcontractkit/mcms/pull/466) [`081f622`](https://github.com/smartcontractkit/mcms/commit/081f622ec62206776008e0f4cd07e385933e5a7f) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Adapt external calls to new mcms dispatch pattern
+
 ## 0.23.0
 
 ### Minor Changes
