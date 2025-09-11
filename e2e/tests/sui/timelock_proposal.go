@@ -78,10 +78,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	encodedCall, err := s.mcmsAccount.Encoder().AcceptOwnershipAsTimelock(bind.Object{Id: s.accountObj})
 	s.Require().NoError(err)
 
-	callBytes, err := s.extractByteArgsFromEncodedCall(*encodedCall)
-	if err != nil {
-		s.T().Fatalf("Failed to extract byte args from encoded call: %v", err)
-	}
+	callBytes := s.extractByteArgsFromEncodedCall(*encodedCall)
 
 	transaction, err := suisdk.NewTransaction(
 		encodedCall.Module.ModuleName,

@@ -149,7 +149,7 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 	}
 }
 
-func (s *SuiTestSuite) extractByteArgsFromEncodedCall(encodedCall bind.EncodedCall) ([]byte, error) {
+func (s *SuiTestSuite) extractByteArgsFromEncodedCall(encodedCall bind.EncodedCall) []byte {
 	var args []byte
 	for _, callArg := range encodedCall.CallArgs {
 		if callArg.CallArg.UnresolvedObject != nil {
@@ -159,7 +159,8 @@ func (s *SuiTestSuite) extractByteArgsFromEncodedCall(encodedCall bind.EncodedCa
 			args = append(args, callArg.CallArg.Pure.Bytes...)
 		}
 	}
-	return args, nil
+
+	return args
 }
 
 func Must[T any](t T, err error) T {

@@ -75,8 +75,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	)
 	s.Require().NoError(err)
 
-	callBytes, err := s.extractByteArgsFromEncodedCall(*encodedCall)
-	s.Require().NoError(err, "Failed to extract byte args from encoded call")
+	callBytes := s.extractByteArgsFromEncodedCall(*encodedCall)
 
 	transaction, err := suisdk.NewTransactionWithStateObj(
 		encodedCall.Module.ModuleName,
