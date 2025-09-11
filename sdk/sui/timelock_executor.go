@@ -11,7 +11,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	feequoter "github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
@@ -34,8 +34,7 @@ type TimelockExecutor struct {
 	// ExecutePTB function for dependency injection and testing
 	ExecutePTB func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error)
 
-	// AppendPTBFromExecutingCallbackParams function for dependency injection and testing
-	AppendPTBFromExecutingCallbackParams func(ctx context.Context, client sui.ISuiAPI, mcms modulemcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error
+	executingCallbackParams ExecutingCallbackAppender
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor
@@ -45,15 +44,23 @@ func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPac
 		return nil, err
 	}
 
+	// we can initialize the entryPointContract with any mcms receiver like contract
+	entryPointContract, err := feequoter.NewFeeQuoter(mcmsPackageID, client)
+	if err != nil {
+		return nil, err
+	}
+
+	executingCallbackParams := NewExecutingCallbackParams(client, timelockInspector.mcms, mcmsPackageID, entryPointContract.Encoder(), registryObj, accountObj)
+
 	return &TimelockExecutor{
-		TimelockInspector:                    *timelockInspector,
-		client:                               client,
-		signer:                               signer,
-		mcmsPackageID:                        mcmsPackageID,
-		registryObj:                          registryObj,
-		accountObj:                           accountObj,
-		ExecutePTB:                           bind.ExecutePTB,                      // Default implementation
-		AppendPTBFromExecutingCallbackParams: AppendPTBFromExecutingCallbackParams, // Default implementation
+		TimelockInspector:       *timelockInspector,
+		client:                  client,
+		signer:                  signer,
+		mcmsPackageID:           mcmsPackageID,
+		registryObj:             registryObj,
+		accountObj:              accountObj,
+		ExecutePTB:              bind.ExecutePTB, // Default implementation
+		executingCallbackParams: executingCallbackParams,
 	}, nil
 }
 
@@ -117,7 +124,7 @@ func (t *TimelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}
 
-	err = t.AppendPTBFromExecutingCallbackParams(ctx, t.client, t.mcms, ptb, t.mcmsPackageID, executeCallback, calls, t.registryObj, t.accountObj)
+	err = t.executingCallbackParams.AppendPTB(ctx, ptb, executeCallback, calls)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", err)
 	}

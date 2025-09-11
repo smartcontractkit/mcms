@@ -149,6 +149,20 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 	}
 }
 
+func (s *SuiTestSuite) extractByteArgsFromEncodedCall(encodedCall bind.EncodedCall) []byte {
+	var args []byte
+	for _, callArg := range encodedCall.CallArgs {
+		if callArg.CallArg.UnresolvedObject != nil {
+			args = append(args, callArg.CallArg.UnresolvedObject.ObjectId[:]...)
+		}
+		if callArg.CallArg.Pure != nil {
+			args = append(args, callArg.CallArg.Pure.Bytes...)
+		}
+	}
+
+	return args
+}
+
 func Must[T any](t T, err error) T {
 	if err != nil {
 		panic(err)

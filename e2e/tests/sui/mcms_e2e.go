@@ -12,8 +12,6 @@ import (
 	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/types"
 
-	"github.com/aptos-labs/aptos-go-sdk/bcs"
-
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 )
 
@@ -34,7 +32,7 @@ func (s *MCMSUserTestSuite) Test_MCMSUser_Function_One() {
 		RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleProposer)
 	})
 
-	s.T().Run("Proposer Role", func(t *testing.T) {
+	s.T().Run("Bypasser Role", func(t *testing.T) {
 		RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleBypasser)
 	})
 }
@@ -77,9 +75,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	)
 	s.Require().NoError(err)
 
-	// TODO: We should construct the mcms tx data using the bindings
-	callBytes, err := s.serializeFunctionOneData(arg1, arg2)
-	s.Require().NoError(err, "Failed to serialize function one data")
+	callBytes := s.extractByteArgsFromEncodedCall(*encodedCall)
 
 	transaction, err := suisdk.NewTransactionWithStateObj(
 		encodedCall.Module.ModuleName,
@@ -248,11 +244,4 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 
 	s.Require().Equal(arg1, fieldA, "FieldA should be equal to arg1")
 	s.Require().Equal(arg2, fieldB, "FieldB should be equal to arg2")
-}
-
-func (s *MCMSUserTestSuite) serializeFunctionOneData(arg1 string, arg2 []byte) ([]byte, error) {
-	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		ser.WriteString(arg1)
-		ser.WriteBytes(arg2)
-	})
 }

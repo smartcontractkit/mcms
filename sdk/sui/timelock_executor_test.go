@@ -15,13 +15,29 @@ import (
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 
 	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
 	mockmcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
 	mocksui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+// testExecutingCallbackParams is a test implementation that mocks the AppendPTB method
+type testExecutingCallbackParams struct {
+	client        sui.ISuiAPI
+	mcms          *mockmcms.IMcms
+	mcmsPackageID string
+	registryObj   string
+	accountObj    string
+}
+
+// AppendPTB is a mock implementation that always succeeds
+func (t *testExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transaction.Transaction, executeCallback *transaction.Argument, calls []Call) error {
+	return nil // Always succeed for tests
+}
+
+// Ensure it implements the interface
+var _ ExecutingCallbackAppender = (*testExecutingCallbackParams)(nil)
 
 func TestNewTimelockExecutor(t *testing.T) {
 	t.Parallel()
@@ -69,18 +85,27 @@ func TestTimelockExecutor_Properties(t *testing.T) {
 
 	// Test that dependency injection functions are properly initialized
 	assert.NotNil(t, executor.ExecutePTB)
-	assert.NotNil(t, executor.AppendPTBFromExecutingCallbackParams)
+	assert.NotNil(t, executor.executingCallbackParams)
 }
 
 func TestTimelockExecutor_Execute_Success(t *testing.T) {
 	t.Parallel()
-	ctx := t.Context()
+	ctx := context.Background()
 
 	mockClient := mocksui.NewISuiAPI(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 	mockEncoder := mockmcms.NewMcmsEncoder(t)
 	mockBound := mockbindutils.NewIBoundContract(t)
+
+	// Create a test ExecutingCallbackParams that mocks the AppendPTB method
+	testExecutingCallbackParams := &testExecutingCallbackParams{
+		client:        mockClient,
+		mcms:          mockmcmsContract,
+		mcmsPackageID: "0x123456789abcdef",
+		registryObj:   registryObj,
+		accountObj:    accountObj,
+	}
 
 	// Create executor with dependency injection
 	executor := &TimelockExecutor{
@@ -106,10 +131,7 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 				},
 			}, nil
 		},
-		// Mock AppendPTBFromExecutingCallbackParams function
-		AppendPTBFromExecutingCallbackParams: func(ctx context.Context, client sui.ISuiAPI, mcms modulemcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error {
-			return nil // Success
-		},
+		executingCallbackParams: testExecutingCallbackParams,
 	}
 
 	// Test data

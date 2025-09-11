@@ -16,13 +16,25 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 
-	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
-
 	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
 	mockmcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
 	mocksui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+// executorTestExecutingCallbackParams is a mock implementation of ExecutingCallbackAppender for testing
+type executorTestExecutingCallbackParams struct {
+	client        sui.ISuiAPI
+	mcms          *mockmcms.IMcms
+	mcmsPackageID string
+	registryObj   string
+	accountObj    string
+}
+
+func (t *executorTestExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transaction.Transaction, executeCallback *transaction.Argument, calls []Call) error {
+	// For testing, just return success without actually building the complex PTB
+	return nil
+}
 
 var accountObj = "0xaccount"
 var mcmsObj = "0xmcms"
@@ -403,6 +415,15 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 	mockEncoder := mockmcms.NewMcmsEncoder(t)
 	mockBound := mockbindutils.NewIBoundContract(t)
 
+	// Create a test ExecutingCallbackAppender
+	testExecutingCallbackParams := &executorTestExecutingCallbackParams{
+		client:        mockClient,
+		mcms:          mockmcmsContract,
+		mcmsPackageID: "0x123456789abcdef",
+		registryObj:   registryObj,
+		accountObj:    accountObj,
+	}
+
 	executor := &Executor{
 		signer:        mockSigner,
 		mcms:          mockmcmsContract,
@@ -427,11 +448,7 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 				},
 			}, nil
 		},
-		// Mock AppendPTBFromExecutingCallbackParams function to avoid complex PTB building
-		AppendPTBFromExecutingCallbackParams: func(ctx context.Context, client sui.ISuiAPI, mcms modulemcms.IMcms, ptb *transaction.Transaction, mcmsPackageID string, executeCallback *transaction.Argument, calls []Call, registryObj string, accountObj string) error {
-			// For testing, just return success without actually building the complex PTB
-			return nil
-		},
+		executingCallbackParams: testExecutingCallbackParams,
 	}
 
 	// Test data for bypass operation with valid serialized bypass batch data

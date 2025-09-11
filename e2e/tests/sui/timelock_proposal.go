@@ -78,11 +78,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	encodedCall, err := s.mcmsAccount.Encoder().AcceptOwnershipAsTimelock(bind.Object{Id: s.accountObj})
 	s.Require().NoError(err)
 
-	callBytes := []byte{}
-	if len(encodedCall.CallArgs) > 0 && encodedCall.CallArgs[0].CallArg.Pure != nil {
-		// TODO: Are we getting the right bytes here? callbytes are the entire bytes of the call
-		callBytes = encodedCall.CallArgs[0].CallArg.Pure.Bytes
-	}
+	callBytes := s.extractByteArgsFromEncodedCall(*encodedCall)
 
 	transaction, err := suisdk.NewTransaction(
 		encodedCall.Module.ModuleName,
