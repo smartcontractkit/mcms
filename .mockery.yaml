@@ -119,6 +119,15 @@ packages:
         config:
           dir: "./sdk/sui/mocks/mcms"
           filename: "mcmsencoder.go"
+  github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter:
+    config:
+      all: false
+      outpkg: "mock_module_feequoter"
+    interfaces:
+      FeeQuoterEncoder:
+        config:
+          dir: "./sdk/sui/mocks/feequoter"
+          filename: "feequoterencoder.go"
 
 # Required to fix the following deprecation warning:
 # https://vektra.github.io/mockery/v2.48/deprecations/#issue-845-fix
