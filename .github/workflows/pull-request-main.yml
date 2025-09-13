@@ -115,9 +115,38 @@ jobs:
       - name: Run e2e tests
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
         with:
-          go-test-cmd: CTF_CONFIGS=../config.toml go test -p=1 -tags=e2e -v ./e2e/tests/...
           checkout-repo: false
           use-go-cache: true
+          go-test-cmd: |
+            set +e
+            set -x
+
+            echo "::group::EVM"
+            CTF_CONFIGS=../config.evm.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestEVMSuite || evm_failure=true
+            echo "::endgroup::"
+
+            echo "::group::Solana"
+            CTF_CONFIGS=../config.solana.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestSolanaSuite || solana_failure=true
+            echo "::endgroup::"
+
+            echo "::group::Aptos"
+            CTF_CONFIGS=../config.aptos.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestAptosSuite || aptos_failure=true
+            echo "::endgroup::"
+
+            echo "::group::Sui"
+            CTF_CONFIGS=../config.sui.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestSuiSuite || sui_failure=true
+            echo "::endgroup::"
+
+            [[ -n "${evm_failure}" ]] && echo "🚨 EVM e2e tests failed."
+            [[ -n "${solana_failure}" ]] && echo "🚨 Solana e2e tests failed."
+            [[ -n "${aptos_failure}" ]] && echo "🚨 Aptos e2e tests failed."
+            [[ -n "${sui_failure}" ]] && echo "🚨 Sui e2e tests failed."
+            [[ -n "${evm_failure}" || -n "${solana_failure}" ]] && {
+              exit 1
+            } || {
+              echo "Exiting"
+              exit 0
+            }
 
   ci-sonarqube:
     name: Sonarqube Scan
