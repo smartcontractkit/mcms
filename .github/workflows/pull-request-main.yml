@@ -115,7 +115,7 @@ jobs:
       - name: Run e2e tests
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
         with:
-          go-test-cmd: CTF_CONFIGS=../config.toml go test -tags=e2e -v ./e2e/tests/...
+          go-test-cmd: CTF_CONFIGS=../config.toml go test -p=1 -tags=e2e -v ./e2e/tests/...
           checkout-repo: false
           use-go-cache: true
 
