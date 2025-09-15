@@ -16,10 +16,8 @@ import (
 )
 
 var (
-	// TODO: Change to SUI-specific domain separators when they are updated in the Move contract
-	// Currently using the same as Aptos as per the Move contract TODOs
-	mcmDomainSeparatorOp       = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP_APTOS"))
-	mcmDomainSeparatorMetadata = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_APTOS"))
+	mcmDomainSeparatorOp       = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP_SUI"))
+	mcmDomainSeparatorMetadata = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_SUI"))
 )
 
 // AdditionalFields represents the additional fields in Sui MCMS operations

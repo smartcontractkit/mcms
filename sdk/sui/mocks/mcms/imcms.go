@@ -3228,6 +3228,67 @@ func (_c *IMcms_SignerView_Call) RunAndReturn(run func(context.Context, *bind.Ca
 	return _c
 }
 
+// Signers provides a mock function with given fields: ctx, opts, state, role
+func (_m *IMcms) Signers(ctx context.Context, opts *bind.CallOpts, state bind.Object, role byte) (*models.SuiTransactionBlockResponse, error) {
+	ret := _m.Called(ctx, opts, state, role)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Signers")
+	}
+
+	var r0 *models.SuiTransactionBlockResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, bind.Object, byte) (*models.SuiTransactionBlockResponse, error)); ok {
+		return rf(ctx, opts, state, role)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, bind.Object, byte) *models.SuiTransactionBlockResponse); ok {
+		r0 = rf(ctx, opts, state, role)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.SuiTransactionBlockResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *bind.CallOpts, bind.Object, byte) error); ok {
+		r1 = rf(ctx, opts, state, role)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// IMcms_Signers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Signers'
+type IMcms_Signers_Call struct {
+	*mock.Call
+}
+
+// Signers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts *bind.CallOpts
+//   - state bind.Object
+//   - role byte
+func (_e *IMcms_Expecter) Signers(ctx interface{}, opts interface{}, state interface{}, role interface{}) *IMcms_Signers_Call {
+	return &IMcms_Signers_Call{Call: _e.mock.On("Signers", ctx, opts, state, role)}
+}
+
+func (_c *IMcms_Signers_Call) Run(run func(ctx context.Context, opts *bind.CallOpts, state bind.Object, role byte)) *IMcms_Signers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*bind.CallOpts), args[2].(bind.Object), args[3].(byte))
+	})
+	return _c
+}
+
+func (_c *IMcms_Signers_Call) Return(_a0 *models.SuiTransactionBlockResponse, _a1 error) *IMcms_Signers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IMcms_Signers_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, bind.Object, byte) (*models.SuiTransactionBlockResponse, error)) *IMcms_Signers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Target provides a mock function with given fields: ctx, opts, function
 func (_m *IMcms) Target(ctx context.Context, opts *bind.CallOpts, function module_mcms.Function) (*models.SuiTransactionBlockResponse, error) {
 	ret := _m.Called(ctx, opts, function)

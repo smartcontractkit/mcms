@@ -2170,6 +2170,65 @@ func (_c *IMcmsDevInspect_SignerView_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// Signers provides a mock function with given fields: ctx, opts, state, role
+func (_m *IMcmsDevInspect) Signers(ctx context.Context, opts *bind.CallOpts, state bind.Object, role byte) (bind.Object, error) {
+	ret := _m.Called(ctx, opts, state, role)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Signers")
+	}
+
+	var r0 bind.Object
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, bind.Object, byte) (bind.Object, error)); ok {
+		return rf(ctx, opts, state, role)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, bind.Object, byte) bind.Object); ok {
+		r0 = rf(ctx, opts, state, role)
+	} else {
+		r0 = ret.Get(0).(bind.Object)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *bind.CallOpts, bind.Object, byte) error); ok {
+		r1 = rf(ctx, opts, state, role)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// IMcmsDevInspect_Signers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Signers'
+type IMcmsDevInspect_Signers_Call struct {
+	*mock.Call
+}
+
+// Signers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts *bind.CallOpts
+//   - state bind.Object
+//   - role byte
+func (_e *IMcmsDevInspect_Expecter) Signers(ctx interface{}, opts interface{}, state interface{}, role interface{}) *IMcmsDevInspect_Signers_Call {
+	return &IMcmsDevInspect_Signers_Call{Call: _e.mock.On("Signers", ctx, opts, state, role)}
+}
+
+func (_c *IMcmsDevInspect_Signers_Call) Run(run func(ctx context.Context, opts *bind.CallOpts, state bind.Object, role byte)) *IMcmsDevInspect_Signers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*bind.CallOpts), args[2].(bind.Object), args[3].(byte))
+	})
+	return _c
+}
+
+func (_c *IMcmsDevInspect_Signers_Call) Return(_a0 bind.Object, _a1 error) *IMcmsDevInspect_Signers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IMcmsDevInspect_Signers_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, bind.Object, byte) (bind.Object, error)) *IMcmsDevInspect_Signers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Target provides a mock function with given fields: ctx, opts, function
 func (_m *IMcmsDevInspect) Target(ctx context.Context, opts *bind.CallOpts, function module_mcms.Function) (string, error) {
 	ret := _m.Called(ctx, opts, function)
