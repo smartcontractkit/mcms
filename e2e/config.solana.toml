@@ -1,31 +1,9 @@
-[evm_config_a]
-chain_id = "1337"
-image = "f4hrenh9it/foundry:latest"
-port = "8545"
-type = "anvil"
-
-[evm_config_a.out]
-family = "evm"
-
-
 [settings]
-
-# Predefined anvil keys for testing
 private_keys = [
     "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80",
     "0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d",
     "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
 ]
-
-[evm_config_b]
-chain_id = "2337"
-image = "f4hrenh9it/foundry:latest"
-port = "8546"
-type = "anvil"
-
-[evm_config_b.out]
-family = "evm"
-
 
 [solana_config]
 chain_id = "EtWTRABZaYq6iMfeYKouRu166VU2xqa1wcaWoxPkrZBG"  # devnet chain id; fixme: figure out how to use local solana-test-validator
@@ -39,10 +17,3 @@ mcm = "5vNJx78mz7KVMjhuipyr9jKBKcMrKYGdjGkgE4LUmjKk"
 timelock = "DoajfR5tK24xVw51fWcawUZWhAXD8yrBJVacc13neVQA"
 access_controller = "6KsN58MTnRQ8FfPaXHiFPPFGDRioikj9CdPvPxZJdCjb"
 external_program_cpi_stub = "2zZwzyptLqwFJFEFxjPvrdhiGpH9pJ3MfrrmZX6NTKxm"
-
-[aptos_config]
-type = "aptos"
-
-
-[sui_config]
-type = "sui"
