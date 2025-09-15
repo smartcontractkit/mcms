@@ -1,5 +1,13 @@
 # @smartcontractkit/mcms
 
+## 0.24.1
+
+### Patch Changes
+
+- [#469](https://github.com/smartcontractkit/mcms/pull/469) [`c82a8ff`](https://github.com/smartcontractkit/mcms/commit/c82a8ff06c9eb32464fda5b0d1d913267e693de6) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump chainlink-sui
+
+- [#470](https://github.com/smartcontractkit/mcms/pull/470) [`9ac4c3c`](https://github.com/smartcontractkit/mcms/commit/9ac4c3c519bbc108f2090a2e7168ae592762afd3) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Update Sui metadata hashes and delay time conversion
+
 ## 0.24.0
 
 ### Minor Changes
