@@ -75,3 +75,20 @@ func Int64ToUint64(value int64) (uint64, error) {
 
 	return cast.ToUint64E(value)
 }
+
+// Float64ToUint64 safely converts a float64 to uint64 using cast and checks for overflow
+func Float64ToUint64(value float64) (uint64, error) {
+	if value < 0 {
+		return 0, fmt.Errorf("value %g is negative, cannot convert to uint64", value)
+	}
+
+	if value > math.MaxUint64 {
+		return 0, fmt.Errorf("value %g exceeds uint64 range", value)
+	}
+
+	if value != math.Trunc(value) {
+		return 0, fmt.Errorf("value %g has fractional part, cannot convert to uint64", value)
+	}
+
+	return cast.ToUint64E(value)
+}

@@ -6333,6 +6333,132 @@ func (_c *McmsEncoder_SignerViewWithArgs_Call) RunAndReturn(run func(...interfac
 	return _c
 }
 
+// Signers provides a mock function with given fields: state, role
+func (_m *McmsEncoder) Signers(state bind.Object, role byte) (*bind.EncodedCall, error) {
+	ret := _m.Called(state, role)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Signers")
+	}
+
+	var r0 *bind.EncodedCall
+	var r1 error
+	if rf, ok := ret.Get(0).(func(bind.Object, byte) (*bind.EncodedCall, error)); ok {
+		return rf(state, role)
+	}
+	if rf, ok := ret.Get(0).(func(bind.Object, byte) *bind.EncodedCall); ok {
+		r0 = rf(state, role)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.EncodedCall)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(bind.Object, byte) error); ok {
+		r1 = rf(state, role)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// McmsEncoder_Signers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Signers'
+type McmsEncoder_Signers_Call struct {
+	*mock.Call
+}
+
+// Signers is a helper method to define mock.On call
+//   - state bind.Object
+//   - role byte
+func (_e *McmsEncoder_Expecter) Signers(state interface{}, role interface{}) *McmsEncoder_Signers_Call {
+	return &McmsEncoder_Signers_Call{Call: _e.mock.On("Signers", state, role)}
+}
+
+func (_c *McmsEncoder_Signers_Call) Run(run func(state bind.Object, role byte)) *McmsEncoder_Signers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bind.Object), args[1].(byte))
+	})
+	return _c
+}
+
+func (_c *McmsEncoder_Signers_Call) Return(_a0 *bind.EncodedCall, _a1 error) *McmsEncoder_Signers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *McmsEncoder_Signers_Call) RunAndReturn(run func(bind.Object, byte) (*bind.EncodedCall, error)) *McmsEncoder_Signers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SignersWithArgs provides a mock function with given fields: args
+func (_m *McmsEncoder) SignersWithArgs(args ...interface{}) (*bind.EncodedCall, error) {
+	var _ca []interface{}
+	_ca = append(_ca, args...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SignersWithArgs")
+	}
+
+	var r0 *bind.EncodedCall
+	var r1 error
+	if rf, ok := ret.Get(0).(func(...interface{}) (*bind.EncodedCall, error)); ok {
+		return rf(args...)
+	}
+	if rf, ok := ret.Get(0).(func(...interface{}) *bind.EncodedCall); ok {
+		r0 = rf(args...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.EncodedCall)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(...interface{}) error); ok {
+		r1 = rf(args...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// McmsEncoder_SignersWithArgs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SignersWithArgs'
+type McmsEncoder_SignersWithArgs_Call struct {
+	*mock.Call
+}
+
+// SignersWithArgs is a helper method to define mock.On call
+//   - args ...interface{}
+func (_e *McmsEncoder_Expecter) SignersWithArgs(args ...interface{}) *McmsEncoder_SignersWithArgs_Call {
+	return &McmsEncoder_SignersWithArgs_Call{Call: _e.mock.On("SignersWithArgs",
+		append([]interface{}{}, args...)...)}
+}
+
+func (_c *McmsEncoder_SignersWithArgs_Call) Run(run func(args ...interface{})) *McmsEncoder_SignersWithArgs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *McmsEncoder_SignersWithArgs_Call) Return(_a0 *bind.EncodedCall, _a1 error) *McmsEncoder_SignersWithArgs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *McmsEncoder_SignersWithArgs_Call) RunAndReturn(run func(...interface{}) (*bind.EncodedCall, error)) *McmsEncoder_SignersWithArgs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Target provides a mock function with given fields: function
 func (_m *McmsEncoder) Target(function module_mcms.Function) (*bind.EncodedCall, error) {
 	ret := _m.Called(function)
