@@ -54,7 +54,7 @@ jobs:
       actions: read
     steps:
       - name: Build and test
-        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
+        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.1
         with:
           go-test-cmd: go test -v -cover -coverpkg=./... -coverprofile=coverage.txt ./...
           use-go-cache: true
@@ -113,7 +113,7 @@ jobs:
           ./e2e/tests/solana/compile-mcm-contracts.sh
 
       - name: Run e2e tests
-        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
+        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.1
         with:
           checkout-repo: false
           use-go-cache: true
