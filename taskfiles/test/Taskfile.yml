@@ -34,7 +34,7 @@ tasks:
   e2e:sui:
     desc: "Run Sui e2e tests"
     env:
-      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.toml" }}'
+      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.sui.toml" }}'
     cmds:
       - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e -test.run TestSuiSuite {{.CLI_ARGS}} ./e2e/tests...
 

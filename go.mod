@@ -17,10 +17,10 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
 	github.com/smartcontractkit/chain-selectors v1.0.67
-	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250626122206-319db248496a
+	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250905094443-ac02b032b32b
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250805210128-7f8a0f403c3a
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20250805210128-7f8a0f403c3a
-	github.com/smartcontractkit/chainlink-sui v0.0.0-20250912200130-0974c080c6af
+	github.com/smartcontractkit/chainlink-sui v0.0.0-20250915131416-beb24f7fe9b9
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.10.16
 	github.com/smartcontractkit/freeport v0.1.2
 	github.com/spf13/cast v1.7.1
@@ -197,7 +197,7 @@ require (
 	github.com/shirou/gopsutil/v4 v4.25.1 // indirect
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
-	github.com/smartcontractkit/chainlink-ccip v0.0.0-20250530084609-8529b8c89093 // indirect
+	github.com/smartcontractkit/chainlink-ccip v0.0.0-20250805210128-7f8a0f403c3a // indirect
 	github.com/smartcontractkit/chainlink-common v0.9.1-0.20250815142532-64e0a7965958 // indirect
 	github.com/smartcontractkit/chainlink-common/pkg/chipingress v0.0.1 // indirect
 	github.com/smartcontractkit/chainlink-common/pkg/values v0.0.0-20250806152407-159881c7589c // indirect
