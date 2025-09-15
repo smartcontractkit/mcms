@@ -55,7 +55,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 					},
 				},
 			},
-			want:    common.HexToHash("0x083b481c650e1578f7be562e21f23a570b4943fead4b1ffc67ac548166d8cf5c"),
+			want:    common.HexToHash("0xe9cf46bb9713f69f811ed2c660958bc9e359011561f911c4c1ec75dbf6c00a97"),
 			wantErr: assert.NoError,
 		}, {
 			name: "failure - invalid Sui chain selector",
@@ -177,7 +177,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222"}`),
 				},
 			},
-			want:    common.HexToHash("0x455b5b8ec10c95fe066ca1736547d0758fa2a8356b39ca6aa9043ae1504fcc87"),
+			want:    common.HexToHash("0x7d803d8cc3d993dec63ec606578d1096512f6717d1415470888487ea16fd69c4"),
 			wantErr: assert.NoError,
 		}, {
 			name: "success - with override previous root",
@@ -193,7 +193,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222"}`),
 				},
 			},
-			want:    common.HexToHash("0xe7b0cb38489c34616ce7af39d6d22afe4269778337e037a43a476c5179259911"),
+			want:    common.HexToHash("0xf791111e424aa0e5c9290b391c160652202216194deeefc4bea62ee4efa3ee38"),
 			wantErr: assert.NoError,
 		}, {
 			name: "failure - invalid Sui chain selector",
