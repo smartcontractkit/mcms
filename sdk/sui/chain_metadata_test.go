@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestTimelockRole_String(t *testing.T) {
@@ -99,28 +101,37 @@ func TestAdditionalFieldsMetadata_JSON(t *testing.T) {
 		wantJSON string
 	}{
 		{
-			name: "bypasser role with package ID",
+			name: "complete metadata with all fields",
 			metadata: AdditionalFieldsMetadata{
 				Role:          TimelockRoleBypasser,
 				McmsPackageID: "0x123456789abcdef",
+				AccountObj:    "0xaccount123",
+				RegistryObj:   "0xregistry456",
+				TimelockObj:   "0xtimelock789",
 			},
-			wantJSON: `{"role":0,"mcms_package_id":"0x123456789abcdef"}`,
+			wantJSON: `{"role":0,"mcms_package_id":"0x123456789abcdef","account_obj":"0xaccount123","registry_obj":"0xregistry456","timelock_obj":"0xtimelock789"}`,
 		},
 		{
-			name: "proposer role with package ID",
+			name: "proposer role with all objects",
 			metadata: AdditionalFieldsMetadata{
 				Role:          TimelockRoleProposer,
 				McmsPackageID: "0xfedcba9876543210",
+				AccountObj:    "0xacc",
+				RegistryObj:   "0xreg",
+				TimelockObj:   "0xtimelock",
 			},
-			wantJSON: `{"role":2,"mcms_package_id":"0xfedcba9876543210"}`,
+			wantJSON: `{"role":2,"mcms_package_id":"0xfedcba9876543210","account_obj":"0xacc","registry_obj":"0xreg","timelock_obj":"0xtimelock"}`,
 		},
 		{
-			name: "canceller role with empty package ID",
+			name: "canceller role with empty values",
 			metadata: AdditionalFieldsMetadata{
 				Role:          TimelockRoleCanceller,
 				McmsPackageID: "",
+				AccountObj:    "",
+				RegistryObj:   "",
+				TimelockObj:   "",
 			},
-			wantJSON: `{"role":1,"mcms_package_id":""}`,
+			wantJSON: `{"role":1,"mcms_package_id":"","account_obj":"","registry_obj":"","timelock_obj":""}`,
 		},
 	}
 
@@ -148,6 +159,9 @@ func TestAdditionalFieldsMetadata_RoundTrip(t *testing.T) {
 	original := AdditionalFieldsMetadata{
 		Role:          TimelockRoleProposer,
 		McmsPackageID: "0x1234567890abcdef1234567890abcdef12345678",
+		AccountObj:    "0xaccount1234567890abcdef",
+		RegistryObj:   "0xregistry1234567890abcdef",
+		TimelockObj:   "0xtimelock1234567890abcdef",
 	}
 
 	// Marshal to JSON
@@ -163,4 +177,330 @@ func TestAdditionalFieldsMetadata_RoundTrip(t *testing.T) {
 	assert.Equal(t, original, roundTrip)
 	assert.Equal(t, original.Role, roundTrip.Role)
 	assert.Equal(t, original.McmsPackageID, roundTrip.McmsPackageID)
+	assert.Equal(t, original.AccountObj, roundTrip.AccountObj)
+	assert.Equal(t, original.RegistryObj, roundTrip.RegistryObj)
+	assert.Equal(t, original.TimelockObj, roundTrip.TimelockObj)
+}
+
+func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		metadata  AdditionalFieldsMetadata
+		wantErr   bool
+		errString string
+	}{
+		{
+			name: "valid metadata with all fields",
+			metadata: AdditionalFieldsMetadata{
+				Role:          TimelockRoleProposer,
+				McmsPackageID: "0x123456789abcdef",
+				AccountObj:    "0xaccount123",
+				RegistryObj:   "0xregistry456",
+				TimelockObj:   "0xtimelock789",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid metadata with bypasser role",
+			metadata: AdditionalFieldsMetadata{
+				Role:          TimelockRoleBypasser,
+				McmsPackageID: "0xpackage",
+				AccountObj:    "0xaccount",
+				RegistryObj:   "0xregistry",
+				TimelockObj:   "0xtimelock",
+			},
+			wantErr: false,
+		},
+		{
+			name: "valid metadata with canceller role",
+			metadata: AdditionalFieldsMetadata{
+				Role:          TimelockRoleCanceller,
+				McmsPackageID: "0xpackage",
+				AccountObj:    "0xaccount",
+				RegistryObj:   "0xregistry",
+				TimelockObj:   "0xtimelock",
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid role too high",
+			metadata: AdditionalFieldsMetadata{
+				Role:          TimelockRole(99),
+				McmsPackageID: "0x123456789abcdef",
+				AccountObj:    "0xaccount123",
+				RegistryObj:   "0xregistry456",
+				TimelockObj:   "0xtimelock789",
+			},
+			wantErr:   true,
+			errString: "invalid timelock role",
+		},
+		{
+			name: "missing mcms package ID",
+			metadata: AdditionalFieldsMetadata{
+				Role:          TimelockRoleProposer,
+				McmsPackageID: "",
+				AccountObj:    "0xaccount123",
+				RegistryObj:   "0xregistry456",
+				TimelockObj:   "0xtimelock789",
+			},
+			wantErr:   true,
+			errString: "mcms package ID is required",
+		},
+		{
+			name: "missing account object ID",
+			metadata: AdditionalFieldsMetadata{
+				Role:          TimelockRoleProposer,
+				McmsPackageID: "0x123456789abcdef",
+				AccountObj:    "",
+				RegistryObj:   "0xregistry456",
+				TimelockObj:   "0xtimelock789",
+			},
+			wantErr:   true,
+			errString: "account object ID is required",
+		},
+		{
+			name: "missing registry object ID",
+			metadata: AdditionalFieldsMetadata{
+				Role:          TimelockRoleProposer,
+				McmsPackageID: "0x123456789abcdef",
+				AccountObj:    "0xaccount123",
+				RegistryObj:   "",
+				TimelockObj:   "0xtimelock789",
+			},
+			wantErr:   true,
+			errString: "registry object ID is required",
+		},
+		{
+			name: "missing timelock object ID",
+			metadata: AdditionalFieldsMetadata{
+				Role:          TimelockRoleProposer,
+				McmsPackageID: "0x123456789abcdef",
+				AccountObj:    "0xaccount123",
+				RegistryObj:   "0xregistry456",
+				TimelockObj:   "",
+			},
+			wantErr:   true,
+			errString: "timelock object ID is required",
+		},
+		{
+			name: "all fields empty",
+			metadata: AdditionalFieldsMetadata{
+				Role:          TimelockRoleProposer,
+				McmsPackageID: "",
+				AccountObj:    "",
+				RegistryObj:   "",
+				TimelockObj:   "",
+			},
+			wantErr:   true,
+			errString: "mcms package ID is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			err := tt.metadata.Validate()
+
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errString)
+			} else {
+				require.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestNewChainMetadata(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name            string
+		startingOpCount uint64
+		role            TimelockRole
+		mcmsPackageID   string
+		mcmsObj         string
+		accountObj      string
+		registryObj     string
+		timelockObj     string
+		wantErr         bool
+		errString       string
+		expectedMeta    *types.ChainMetadata
+	}{
+		{
+			name:            "valid chain metadata with proposer role",
+			startingOpCount: 42,
+			role:            TimelockRoleProposer,
+			mcmsPackageID:   "0xpackage123",
+			mcmsObj:         "0xmcms123",
+			accountObj:      "0xaccount123",
+			registryObj:     "0xregistry123",
+			timelockObj:     "0xtimelock123",
+			wantErr:         false,
+			expectedMeta: &types.ChainMetadata{
+				StartingOpCount: 42,
+				MCMAddress:      "0xmcms123",
+			},
+		},
+		{
+			name:            "valid chain metadata with bypasser role",
+			startingOpCount: 0,
+			role:            TimelockRoleBypasser,
+			mcmsPackageID:   "0xpackage456",
+			mcmsObj:         "0xmcms456",
+			accountObj:      "0xaccount456",
+			registryObj:     "0xregistry456",
+			timelockObj:     "0xtimelock456",
+			wantErr:         false,
+			expectedMeta: &types.ChainMetadata{
+				StartingOpCount: 0,
+				MCMAddress:      "0xmcms456",
+			},
+		},
+		{
+			name:            "valid chain metadata with canceller role",
+			startingOpCount: 999,
+			role:            TimelockRoleCanceller,
+			mcmsPackageID:   "0xpackage789",
+			mcmsObj:         "0xmcms789",
+			accountObj:      "0xaccount789",
+			registryObj:     "0xregistry789",
+			timelockObj:     "0xtimelock789",
+			wantErr:         false,
+			expectedMeta: &types.ChainMetadata{
+				StartingOpCount: 999,
+				MCMAddress:      "0xmcms789",
+			},
+		},
+		{
+			name:            "empty mcms object ID",
+			startingOpCount: 1,
+			role:            TimelockRoleProposer,
+			mcmsPackageID:   "0xpackage123",
+			mcmsObj:         "",
+			accountObj:      "0xaccount123",
+			registryObj:     "0xregistry123",
+			timelockObj:     "0xtimelock123",
+			wantErr:         true,
+			errString:       "mcms object ID is required",
+		},
+		{
+			name:            "invalid role",
+			startingOpCount: 1,
+			role:            TimelockRole(99),
+			mcmsPackageID:   "0xpackage123",
+			mcmsObj:         "0xmcms123",
+			accountObj:      "0xaccount123",
+			registryObj:     "0xregistry123",
+			timelockObj:     "0xtimelock123",
+			wantErr:         true,
+			errString:       "additional fields are invalid: invalid timelock role",
+		},
+		{
+			name:            "missing mcms package ID",
+			startingOpCount: 1,
+			role:            TimelockRoleProposer,
+			mcmsPackageID:   "",
+			mcmsObj:         "0xmcms123",
+			accountObj:      "0xaccount123",
+			registryObj:     "0xregistry123",
+			timelockObj:     "0xtimelock123",
+			wantErr:         true,
+			errString:       "additional fields are invalid: mcms package ID is required",
+		},
+		{
+			name:            "missing account object ID",
+			startingOpCount: 1,
+			role:            TimelockRoleProposer,
+			mcmsPackageID:   "0xpackage123",
+			mcmsObj:         "0xmcms123",
+			accountObj:      "",
+			registryObj:     "0xregistry123",
+			timelockObj:     "0xtimelock123",
+			wantErr:         true,
+			errString:       "additional fields are invalid: account object ID is required",
+		},
+		{
+			name:            "missing registry object ID",
+			startingOpCount: 1,
+			role:            TimelockRoleProposer,
+			mcmsPackageID:   "0xpackage123",
+			mcmsObj:         "0xmcms123",
+			accountObj:      "0xaccount123",
+			registryObj:     "",
+			timelockObj:     "0xtimelock123",
+			wantErr:         true,
+			errString:       "additional fields are invalid: registry object ID is required",
+		},
+		{
+			name:            "missing timelock object ID",
+			startingOpCount: 1,
+			role:            TimelockRoleProposer,
+			mcmsPackageID:   "0xpackage123",
+			mcmsObj:         "0xmcms123",
+			accountObj:      "0xaccount123",
+			registryObj:     "0xregistry123",
+			timelockObj:     "",
+			wantErr:         true,
+			errString:       "additional fields are invalid: timelock object ID is required",
+		},
+		{
+			name:            "all object IDs empty except mcms",
+			startingOpCount: 1,
+			role:            TimelockRoleProposer,
+			mcmsPackageID:   "",
+			mcmsObj:         "0xmcms123",
+			accountObj:      "",
+			registryObj:     "",
+			timelockObj:     "",
+			wantErr:         true,
+			errString:       "additional fields are invalid: mcms package ID is required",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := NewChainMetadata(
+				tt.startingOpCount,
+				tt.role,
+				tt.mcmsPackageID,
+				tt.mcmsObj,
+				tt.accountObj,
+				tt.registryObj,
+				tt.timelockObj,
+			)
+
+			if tt.wantErr {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errString)
+				assert.Equal(t, types.ChainMetadata{}, got)
+			} else {
+				require.NoError(t, err)
+
+				// Check basic fields
+				assert.Equal(t, tt.expectedMeta.StartingOpCount, got.StartingOpCount)
+				assert.Equal(t, tt.expectedMeta.MCMAddress, got.MCMAddress)
+
+				// Check additional fields can be unmarshaled properly
+				var additionalFields AdditionalFieldsMetadata
+				err = json.Unmarshal(got.AdditionalFields, &additionalFields)
+				require.NoError(t, err)
+
+				assert.Equal(t, tt.role, additionalFields.Role)
+				assert.Equal(t, tt.mcmsPackageID, additionalFields.McmsPackageID)
+				assert.Equal(t, tt.accountObj, additionalFields.AccountObj)
+				assert.Equal(t, tt.registryObj, additionalFields.RegistryObj)
+				assert.Equal(t, tt.timelockObj, additionalFields.TimelockObj)
+
+				// Validate the created metadata
+				err = ValidateChainMetadata(got)
+				require.NoError(t, err)
+			}
+		})
+	}
 }

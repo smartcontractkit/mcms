@@ -36,6 +36,9 @@ const (
 type AdditionalFieldsMetadata struct {
 	Role          TimelockRole `json:"role"`
 	McmsPackageID string       `json:"mcms_package_id"`
+	AccountObj    string       `json:"account_obj"`
+	RegistryObj   string       `json:"registry_obj"`
+	TimelockObj   string       `json:"timelock_obj"`
 }
 
 func (f AdditionalFieldsMetadata) Validate() error {
@@ -44,6 +47,15 @@ func (f AdditionalFieldsMetadata) Validate() error {
 	}
 	if f.McmsPackageID == "" {
 		return errors.New("mcms package ID is required")
+	}
+	if f.AccountObj == "" {
+		return errors.New("account object ID is required")
+	}
+	if f.RegistryObj == "" {
+		return errors.New("registry object ID is required")
+	}
+	if f.TimelockObj == "" {
+		return errors.New("timelock object ID is required")
 	}
 
 	return nil
@@ -60,4 +72,33 @@ func ValidateChainMetadata(metadata types.ChainMetadata) error {
 	}
 
 	return nil
+}
+
+func NewChainMetadata(startingOpCount uint64, role TimelockRole, mcmsPackageID string, mcmsObj string, accountObj string, registryObj string, timelockObj string) (types.ChainMetadata, error) {
+	if mcmsObj == "" {
+		return types.ChainMetadata{}, errors.New("mcms object ID is required")
+	}
+
+	additionalFields := AdditionalFieldsMetadata{
+		Role:          role,
+		McmsPackageID: mcmsPackageID,
+		AccountObj:    accountObj,
+		RegistryObj:   registryObj,
+		TimelockObj:   timelockObj,
+	}
+
+	if err := additionalFields.Validate(); err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("additional fields are invalid: %w", err)
+	}
+
+	additionalFieldsBytes, err := json.Marshal(additionalFields)
+	if err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("unable to marshal additional fields: %w", err)
+	}
+
+	return types.ChainMetadata{
+		StartingOpCount:  startingOpCount,
+		AdditionalFields: additionalFieldsBytes,
+		MCMAddress:       mcmsObj,
+	}, nil
 }

@@ -43,14 +43,8 @@ func (s *SetRootTestSuite) TestSetRoot() {
 	}
 
 	// Create metadata for this chain
-	metadata := types.ChainMetadata{
-		StartingOpCount: 0,
-		MCMAddress:      s.mcmsObj,
-		AdditionalFields: []byte(fmt.Sprintf(`{
-			"role": 2,
-			"mcms_package_id": "%s"
-		}`, s.mcmsPackageID)), // Use package address for proof verification
-	}
+	metadata, err := suisdk.NewChainMetadata(0, 2, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	s.Require().NoError(err, "Failed to create chain metadata")
 
 	// Build a test proposal
 	validUntil := time.Now().Add(10 * time.Hour)
@@ -155,14 +149,8 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 	}
 
 	// Create metadata for this chain
-	metadata := types.ChainMetadata{
-		StartingOpCount: 0,
-		MCMAddress:      s.mcmsObj,
-		AdditionalFields: []byte(fmt.Sprintf(`{
-			"role": 2,
-			"mcms_package_id": "%s"
-		}`, s.mcmsPackageID)), // Use package address for proof verification
-	}
+	metadata, err := suisdk.NewChainMetadata(0, 2, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	s.Require().NoError(err, "Failed to create chain metadata")
 
 	// Build a test proposal
 	validUntil := time.Now().Add(10 * time.Hour)

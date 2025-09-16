@@ -122,6 +122,8 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		McmsObjID:      s.mcmsObj,
 		TimelockObjID:  s.timelockObj,
 		McmsPackageID:  s.mcmsPackageID,
+		AccountObjID:   s.accountObj,
+		RegistryObjID:  s.registryObj,
 		Role:           role,
 		CurrentOpCount: currentOpCount,
 		Action:         action,

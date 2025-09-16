@@ -47,6 +47,9 @@ func TestValidateChainMetadata(t *testing.T) {
 	validSuiMetadata := sui.AdditionalFieldsMetadata{
 		Role:          sui.TimelockRoleProposer,
 		McmsPackageID: "0x123456789abcdef",
+		AccountObj:    "0xacc",
+		RegistryObj:   "0xreg",
+		TimelockObj:   "0xtimelock",
 	}
 	validSuiMetadataJSON, err := json.Marshal(validSuiMetadata)
 	require.NoError(t, err)

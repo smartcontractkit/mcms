@@ -3,7 +3,6 @@
 package sui
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/smartcontractkit/mcms"
@@ -90,6 +89,8 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 		ChainSelector:  s.chainSelector,
 		McmsObjID:      s.mcmsObj,
 		TimelockObjID:  s.timelockObj,
+		AccountObjID:   s.accountObj,
+		RegistryObjID:  s.registryObj,
 		McmsPackageID:  s.mcmsPackageID,
 		Role:           suisdk.TimelockRoleProposer,
 		CurrentOpCount: currentOpCount,
@@ -217,11 +218,9 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 	currentCancelOpCount, err := cancelOpCountInspector.GetOpCount(s.T().Context(), s.mcmsObj)
 	s.Require().NoError(err, "Failed to get current operation count for cancellation")
 
-	metadata := types.ChainMetadata{
-		StartingOpCount:  currentCancelOpCount,
-		MCMAddress:       s.mcmsObj,
-		AdditionalFields: Must(json.Marshal(suisdk.AdditionalFieldsMetadata{Role: suisdk.TimelockRoleCanceller, McmsPackageID: s.mcmsPackageID})),
-	}
+	metadata, err := suisdk.NewChainMetadata(currentCancelOpCount, suisdk.TimelockRoleCanceller, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	s.Require().NoError(err, "Failed to create chain metadata for cancellation proposal")
+
 	cancelTimelockProposal, err := timelockProposal.DeriveCancellationProposal(map[types.ChainSelector]types.ChainMetadata{
 		s.chainSelector: metadata,
 	})
