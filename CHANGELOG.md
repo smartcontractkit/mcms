@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.25.0
+
+### Minor Changes
+
+- [#473](https://github.com/smartcontractkit/mcms/pull/473) [`f81bddb`](https://github.com/smartcontractkit/mcms/commit/f81bddbea933fef1e3654778b6915272d787e4b1) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Add object info to sui chain metadata
+
 ## 0.24.1
 
 ### Patch Changes
