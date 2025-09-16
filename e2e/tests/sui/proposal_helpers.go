@@ -2,7 +2,6 @@ package sui
 
 import (
 	"crypto/ecdsa"
-	"encoding/json"
 	"slices"
 	"testing"
 	"time"
@@ -54,6 +53,8 @@ type ProposalBuilderConfig struct {
 	ChainSelector  types.ChainSelector
 	McmsObjID      string
 	TimelockObjID  string
+	AccountObjID   string
+	RegistryObjID  string
 	McmsPackageID  string
 	Role           suisdk.TimelockRole
 	CurrentOpCount uint64
@@ -65,16 +66,15 @@ func CreateTimelockProposalBuilder(t *testing.T, config ProposalBuilderConfig, o
 	t.Helper()
 	validUntilMs := uint32(time.Now().Add(time.Hour * 24).Unix())
 
+	metadata, err := suisdk.NewChainMetadata(config.CurrentOpCount, config.Role, config.McmsPackageID, config.McmsObjID, config.AccountObjID, config.RegistryObjID, config.TimelockObjID)
+	require.NoError(t, err)
+
 	builder := mcms.NewTimelockProposalBuilder().
 		SetVersion(config.Version).
 		SetValidUntil(validUntilMs).
 		SetDescription(config.Description).
 		AddTimelockAddress(config.ChainSelector, config.TimelockObjID).
-		AddChainMetadata(config.ChainSelector, types.ChainMetadata{
-			StartingOpCount:  config.CurrentOpCount,
-			MCMAddress:       config.McmsObjID,
-			AdditionalFields: mustMarshal(t, suisdk.AdditionalFieldsMetadata{Role: config.Role, McmsPackageID: config.McmsPackageID}),
-		})
+		AddChainMetadata(config.ChainSelector, metadata)
 
 	for _, op := range operations {
 		builder.AddOperation(op)
@@ -102,12 +102,4 @@ func SignProposal(proposal *mcms.Proposal, inspectorsMap map[types.ChainSelector
 	}
 
 	return signable, nil
-}
-
-func mustMarshal(t *testing.T, v any) []byte {
-	t.Helper()
-	data, err := json.Marshal(v)
-	require.NoError(t, err)
-
-	return data
 }

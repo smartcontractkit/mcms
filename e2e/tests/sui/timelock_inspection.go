@@ -3,7 +3,6 @@
 package sui
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -166,14 +165,8 @@ func (s *TimelockInspectionTestSuite) TestOperationLifecycle() {
 		Transactions:  []types.Transaction{tx},
 	}
 
-	metadata := types.ChainMetadata{
-		StartingOpCount: 0,
-		MCMAddress:      s.mcmsObj,
-		AdditionalFields: []byte(fmt.Sprintf(`{
-			"role": 2,
-			"mcms_package_id": "%s"
-		}`, s.mcmsPackageID)),
-	}
+	metadata, err := suisdk.NewChainMetadata(0, 2, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	s.Require().NoError(err, "Failed to create chain metadata for cancellation proposal")
 
 	// Convert batch operation to chain operations
 	operations, opID, err := converter.ConvertBatchToChainOperations(

@@ -123,6 +123,8 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		McmsObjID:      s.mcmsObj,
 		TimelockObjID:  s.timelockObj,
 		McmsPackageID:  s.mcmsPackageID,
+		AccountObjID:   s.accountObj,
+		RegistryObjID:  s.registryObj,
 		Role:           role,
 		CurrentOpCount: currentOpCount,
 		Action:         action,
