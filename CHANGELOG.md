@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.25.1
+
+### Patch Changes
+
+- [#476](https://github.com/smartcontractkit/mcms/pull/476) [`ad1250c`](https://github.com/smartcontractkit/mcms/commit/ad1250c5842600846c74e67bd4e6efcf2c970132) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump chain selectors to v1.0.71
+
 ## 0.25.0
 
 ### Minor Changes
