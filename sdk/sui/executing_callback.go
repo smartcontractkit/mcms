@@ -13,6 +13,10 @@ import (
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 )
 
+const (
+	UpgradeGasBudget = 500_000_000
+)
+
 type EntrypointArgEncoder interface {
 	EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte) (*bind.EncodedCall, error)
 }

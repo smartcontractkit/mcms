@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"testing"
 
+	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -540,6 +541,17 @@ func TestAdditionalFieldsJSONMarshaling(t *testing.T) {
 				InternalStateObjects: []string{},
 			},
 			expected: `{"module_name":"module","function":"func"}`,
+		},
+		{
+			name: "with deployment fields populated",
+			fields: AdditionalFields{
+				ModuleName:       "deploy_module",
+				Function:         "deploy_func",
+				CompiledModules:  [][]byte{[]byte("module1"), []byte("module2")},
+				Dependencies:     []models.SuiAddress{"0xdep1", "0xdep2"},
+				PackageToUpgrade: "0xpackage123",
+			},
+			expected: `{"module_name":"deploy_module","function":"deploy_func","compiled_modules":["bW9kdWxlMQ==","bW9kdWxlMg=="],"dependencies":["0xdep1","0xdep2"],"package_to_upgrade":"0xpackage123"}`,
 		},
 	}
 

@@ -48,9 +48,10 @@ type SuiTestSuite struct {
 	mcmsAccount modulemcmsaccount.IMcmsAccount
 
 	// MCMS User
-	mcmsUserPackageId   string
-	mcmsUser            modulemcmsuser.IMcmsUser
-	mcmsUserOwnerCapObj string
+	mcmsUserPackageId     string
+	mcmsUser              modulemcmsuser.IMcmsUser
+	mcmsUserOwnerCapObj   string
+	mcmsUserUpgradeCapObj string
 
 	// State Object passed into `mcms_entrypoint`
 	stateObj string
@@ -136,11 +137,14 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 
 	userDataObj, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "UserData")
 	s.Require().NoError(err, "Failed to find object IDs in publish tx")
-	mcmsUserOwnerCapObj, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "OwnerCap")
+	mcmsUserOwnerCapObj, err := bind.FindObjectIdFromPublishTx(*tx, "ownable", "OwnerCap")
+	s.Require().NoError(err, "Failed to find object IDs in publish tx")
+	mcmsUserUpgradeCapObj, err := bind.FindObjectIdFromPublishTx(*tx, "package", "UpgradeCap")
 	s.Require().NoError(err, "Failed to find object IDs in publish tx")
 
 	s.mcmsUserOwnerCapObj = mcmsUserOwnerCapObj
 	s.stateObj = userDataObj
+	s.mcmsUserUpgradeCapObj = mcmsUserUpgradeCapObj
 
 	// For executing, We need to register OwnerCap with MCMS
 	{

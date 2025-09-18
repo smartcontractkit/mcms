@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/block-vision/sui-go-sdk/models"
+
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -61,4 +63,30 @@ func NewTransactionWithManyStateObj(moduleName, function string, to string, data
 
 func NewTransactionWithStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string) (types.Transaction, error) {
 	return NewTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, nil)
+}
+
+func NewTransactionWithUpgradeData(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string, internalStateObjects []string, compiledModules [][]byte, dependencies []models.SuiAddress, packageToUpgrade string) (types.Transaction, error) {
+	additionalFields := AdditionalFields{
+		ModuleName:           moduleName,
+		Function:             function,
+		StateObj:             stateObj,
+		InternalStateObjects: internalStateObjects,
+		CompiledModules:      compiledModules,
+		Dependencies:         dependencies,
+		PackageToUpgrade:     packageToUpgrade,
+	}
+	marshalledAdditionalFields, err := json.Marshal(additionalFields)
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("failed to marshal additional fields: %w", err)
+	}
+
+	return types.Transaction{
+		OperationMetadata: types.OperationMetadata{
+			ContractType: contractType,
+			Tags:         tags,
+		},
+		To:               to,
+		Data:             data,
+		AdditionalFields: marshalledAdditionalFields,
+	}, nil
 }

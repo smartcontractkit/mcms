@@ -689,9 +689,9 @@ func (_c *FeeQuoterEncoder_ConvertTokenAmountWithArgs_Call) RunAndReturn(run fun
 	return _c
 }
 
-// DestroyFeeQuoterCap provides a mock function with given fields: param, cap
-func (_m *FeeQuoterEncoder) DestroyFeeQuoterCap(param bind.Object, cap bind.Object) (*bind.EncodedCall, error) {
-	ret := _m.Called(param, cap)
+// DestroyFeeQuoterCap provides a mock function with given fields: ref, ownerCap, cap
+func (_m *FeeQuoterEncoder) DestroyFeeQuoterCap(ref bind.Object, ownerCap bind.Object, cap bind.Object) (*bind.EncodedCall, error) {
+	ret := _m.Called(ref, ownerCap, cap)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DestroyFeeQuoterCap")
@@ -699,19 +699,19 @@ func (_m *FeeQuoterEncoder) DestroyFeeQuoterCap(param bind.Object, cap bind.Obje
 
 	var r0 *bind.EncodedCall
 	var r1 error
-	if rf, ok := ret.Get(0).(func(bind.Object, bind.Object) (*bind.EncodedCall, error)); ok {
-		return rf(param, cap)
+	if rf, ok := ret.Get(0).(func(bind.Object, bind.Object, bind.Object) (*bind.EncodedCall, error)); ok {
+		return rf(ref, ownerCap, cap)
 	}
-	if rf, ok := ret.Get(0).(func(bind.Object, bind.Object) *bind.EncodedCall); ok {
-		r0 = rf(param, cap)
+	if rf, ok := ret.Get(0).(func(bind.Object, bind.Object, bind.Object) *bind.EncodedCall); ok {
+		r0 = rf(ref, ownerCap, cap)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*bind.EncodedCall)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(bind.Object, bind.Object) error); ok {
-		r1 = rf(param, cap)
+	if rf, ok := ret.Get(1).(func(bind.Object, bind.Object, bind.Object) error); ok {
+		r1 = rf(ref, ownerCap, cap)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -725,15 +725,16 @@ type FeeQuoterEncoder_DestroyFeeQuoterCap_Call struct {
 }
 
 // DestroyFeeQuoterCap is a helper method to define mock.On call
-//   - param bind.Object
+//   - ref bind.Object
+//   - ownerCap bind.Object
 //   - cap bind.Object
-func (_e *FeeQuoterEncoder_Expecter) DestroyFeeQuoterCap(param interface{}, cap interface{}) *FeeQuoterEncoder_DestroyFeeQuoterCap_Call {
-	return &FeeQuoterEncoder_DestroyFeeQuoterCap_Call{Call: _e.mock.On("DestroyFeeQuoterCap", param, cap)}
+func (_e *FeeQuoterEncoder_Expecter) DestroyFeeQuoterCap(ref interface{}, ownerCap interface{}, cap interface{}) *FeeQuoterEncoder_DestroyFeeQuoterCap_Call {
+	return &FeeQuoterEncoder_DestroyFeeQuoterCap_Call{Call: _e.mock.On("DestroyFeeQuoterCap", ref, ownerCap, cap)}
 }
 
-func (_c *FeeQuoterEncoder_DestroyFeeQuoterCap_Call) Run(run func(param bind.Object, cap bind.Object)) *FeeQuoterEncoder_DestroyFeeQuoterCap_Call {
+func (_c *FeeQuoterEncoder_DestroyFeeQuoterCap_Call) Run(run func(ref bind.Object, ownerCap bind.Object, cap bind.Object)) *FeeQuoterEncoder_DestroyFeeQuoterCap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(bind.Object), args[1].(bind.Object))
+		run(args[0].(bind.Object), args[1].(bind.Object), args[2].(bind.Object))
 	})
 	return _c
 }
@@ -743,7 +744,7 @@ func (_c *FeeQuoterEncoder_DestroyFeeQuoterCap_Call) Return(_a0 *bind.EncodedCal
 	return _c
 }
 
-func (_c *FeeQuoterEncoder_DestroyFeeQuoterCap_Call) RunAndReturn(run func(bind.Object, bind.Object) (*bind.EncodedCall, error)) *FeeQuoterEncoder_DestroyFeeQuoterCap_Call {
+func (_c *FeeQuoterEncoder_DestroyFeeQuoterCap_Call) RunAndReturn(run func(bind.Object, bind.Object, bind.Object) (*bind.EncodedCall, error)) *FeeQuoterEncoder_DestroyFeeQuoterCap_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1497,131 +1498,6 @@ func (_c *FeeQuoterEncoder_GetStaticConfig_Call) Return(_a0 *bind.EncodedCall, _
 }
 
 func (_c *FeeQuoterEncoder_GetStaticConfig_Call) RunAndReturn(run func(bind.Object) (*bind.EncodedCall, error)) *FeeQuoterEncoder_GetStaticConfig_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetStaticConfigFields provides a mock function with given fields: cfg
-func (_m *FeeQuoterEncoder) GetStaticConfigFields(cfg module_fee_quoter.StaticConfig) (*bind.EncodedCall, error) {
-	ret := _m.Called(cfg)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetStaticConfigFields")
-	}
-
-	var r0 *bind.EncodedCall
-	var r1 error
-	if rf, ok := ret.Get(0).(func(module_fee_quoter.StaticConfig) (*bind.EncodedCall, error)); ok {
-		return rf(cfg)
-	}
-	if rf, ok := ret.Get(0).(func(module_fee_quoter.StaticConfig) *bind.EncodedCall); ok {
-		r0 = rf(cfg)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*bind.EncodedCall)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(module_fee_quoter.StaticConfig) error); ok {
-		r1 = rf(cfg)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// FeeQuoterEncoder_GetStaticConfigFields_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStaticConfigFields'
-type FeeQuoterEncoder_GetStaticConfigFields_Call struct {
-	*mock.Call
-}
-
-// GetStaticConfigFields is a helper method to define mock.On call
-//   - cfg module_fee_quoter.StaticConfig
-func (_e *FeeQuoterEncoder_Expecter) GetStaticConfigFields(cfg interface{}) *FeeQuoterEncoder_GetStaticConfigFields_Call {
-	return &FeeQuoterEncoder_GetStaticConfigFields_Call{Call: _e.mock.On("GetStaticConfigFields", cfg)}
-}
-
-func (_c *FeeQuoterEncoder_GetStaticConfigFields_Call) Run(run func(cfg module_fee_quoter.StaticConfig)) *FeeQuoterEncoder_GetStaticConfigFields_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(module_fee_quoter.StaticConfig))
-	})
-	return _c
-}
-
-func (_c *FeeQuoterEncoder_GetStaticConfigFields_Call) Return(_a0 *bind.EncodedCall, _a1 error) *FeeQuoterEncoder_GetStaticConfigFields_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *FeeQuoterEncoder_GetStaticConfigFields_Call) RunAndReturn(run func(module_fee_quoter.StaticConfig) (*bind.EncodedCall, error)) *FeeQuoterEncoder_GetStaticConfigFields_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
-// GetStaticConfigFieldsWithArgs provides a mock function with given fields: args
-func (_m *FeeQuoterEncoder) GetStaticConfigFieldsWithArgs(args ...interface{}) (*bind.EncodedCall, error) {
-	var _ca []interface{}
-	_ca = append(_ca, args...)
-	ret := _m.Called(_ca...)
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetStaticConfigFieldsWithArgs")
-	}
-
-	var r0 *bind.EncodedCall
-	var r1 error
-	if rf, ok := ret.Get(0).(func(...interface{}) (*bind.EncodedCall, error)); ok {
-		return rf(args...)
-	}
-	if rf, ok := ret.Get(0).(func(...interface{}) *bind.EncodedCall); ok {
-		r0 = rf(args...)
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*bind.EncodedCall)
-		}
-	}
-
-	if rf, ok := ret.Get(1).(func(...interface{}) error); ok {
-		r1 = rf(args...)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
-// FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStaticConfigFieldsWithArgs'
-type FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call struct {
-	*mock.Call
-}
-
-// GetStaticConfigFieldsWithArgs is a helper method to define mock.On call
-//   - args ...interface{}
-func (_e *FeeQuoterEncoder_Expecter) GetStaticConfigFieldsWithArgs(args ...interface{}) *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call {
-	return &FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call{Call: _e.mock.On("GetStaticConfigFieldsWithArgs",
-		append([]interface{}{}, args...)...)}
-}
-
-func (_c *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call) Run(run func(args ...interface{})) *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		variadicArgs := make([]interface{}, len(args)-0)
-		for i, a := range args[0:] {
-			if a != nil {
-				variadicArgs[i] = a.(interface{})
-			}
-		}
-		run(variadicArgs...)
-	})
-	return _c
-}
-
-func (_c *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call) Return(_a0 *bind.EncodedCall, _a1 error) *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call {
-	_c.Call.Return(_a0, _a1)
-	return _c
-}
-
-func (_c *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call) RunAndReturn(run func(...interface{}) (*bind.EncodedCall, error)) *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3477,9 +3353,9 @@ func (_c *FeeQuoterEncoder_McmsUpdatePricesWithOwnerCapWithArgs_Call) RunAndRetu
 	return _c
 }
 
-// NewFeeQuoterCap provides a mock function with given fields: param
-func (_m *FeeQuoterEncoder) NewFeeQuoterCap(param bind.Object) (*bind.EncodedCall, error) {
-	ret := _m.Called(param)
+// NewFeeQuoterCap provides a mock function with given fields: ref, ownerCap
+func (_m *FeeQuoterEncoder) NewFeeQuoterCap(ref bind.Object, ownerCap bind.Object) (*bind.EncodedCall, error) {
+	ret := _m.Called(ref, ownerCap)
 
 	if len(ret) == 0 {
 		panic("no return value specified for NewFeeQuoterCap")
@@ -3487,19 +3363,19 @@ func (_m *FeeQuoterEncoder) NewFeeQuoterCap(param bind.Object) (*bind.EncodedCal
 
 	var r0 *bind.EncodedCall
 	var r1 error
-	if rf, ok := ret.Get(0).(func(bind.Object) (*bind.EncodedCall, error)); ok {
-		return rf(param)
+	if rf, ok := ret.Get(0).(func(bind.Object, bind.Object) (*bind.EncodedCall, error)); ok {
+		return rf(ref, ownerCap)
 	}
-	if rf, ok := ret.Get(0).(func(bind.Object) *bind.EncodedCall); ok {
-		r0 = rf(param)
+	if rf, ok := ret.Get(0).(func(bind.Object, bind.Object) *bind.EncodedCall); ok {
+		r0 = rf(ref, ownerCap)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*bind.EncodedCall)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(bind.Object) error); ok {
-		r1 = rf(param)
+	if rf, ok := ret.Get(1).(func(bind.Object, bind.Object) error); ok {
+		r1 = rf(ref, ownerCap)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -3513,14 +3389,15 @@ type FeeQuoterEncoder_NewFeeQuoterCap_Call struct {
 }
 
 // NewFeeQuoterCap is a helper method to define mock.On call
-//   - param bind.Object
-func (_e *FeeQuoterEncoder_Expecter) NewFeeQuoterCap(param interface{}) *FeeQuoterEncoder_NewFeeQuoterCap_Call {
-	return &FeeQuoterEncoder_NewFeeQuoterCap_Call{Call: _e.mock.On("NewFeeQuoterCap", param)}
+//   - ref bind.Object
+//   - ownerCap bind.Object
+func (_e *FeeQuoterEncoder_Expecter) NewFeeQuoterCap(ref interface{}, ownerCap interface{}) *FeeQuoterEncoder_NewFeeQuoterCap_Call {
+	return &FeeQuoterEncoder_NewFeeQuoterCap_Call{Call: _e.mock.On("NewFeeQuoterCap", ref, ownerCap)}
 }
 
-func (_c *FeeQuoterEncoder_NewFeeQuoterCap_Call) Run(run func(param bind.Object)) *FeeQuoterEncoder_NewFeeQuoterCap_Call {
+func (_c *FeeQuoterEncoder_NewFeeQuoterCap_Call) Run(run func(ref bind.Object, ownerCap bind.Object)) *FeeQuoterEncoder_NewFeeQuoterCap_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(bind.Object))
+		run(args[0].(bind.Object), args[1].(bind.Object))
 	})
 	return _c
 }
@@ -3530,7 +3407,7 @@ func (_c *FeeQuoterEncoder_NewFeeQuoterCap_Call) Return(_a0 *bind.EncodedCall, _
 	return _c
 }
 
-func (_c *FeeQuoterEncoder_NewFeeQuoterCap_Call) RunAndReturn(run func(bind.Object) (*bind.EncodedCall, error)) *FeeQuoterEncoder_NewFeeQuoterCap_Call {
+func (_c *FeeQuoterEncoder_NewFeeQuoterCap_Call) RunAndReturn(run func(bind.Object, bind.Object) (*bind.EncodedCall, error)) *FeeQuoterEncoder_NewFeeQuoterCap_Call {
 	_c.Call.Return(run)
 	return _c
 }

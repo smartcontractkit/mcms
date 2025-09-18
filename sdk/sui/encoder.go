@@ -6,6 +6,7 @@ import (
 	"math/big"
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
+	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -22,10 +23,13 @@ var (
 
 // AdditionalFields represents the additional fields in Sui MCMS operations
 type AdditionalFields struct {
-	ModuleName           string   `json:"module_name"`
-	Function             string   `json:"function"`
-	StateObj             string   `json:"state_obj,omitempty"`              // Needed for calling `mcms_entrypoint`
-	InternalStateObjects []string `json:"internal_state_objects,omitempty"` // Needed for calling `mcms_entrypoint`. When batching calls, this will contain all state objects
+	ModuleName           string              `json:"module_name"`
+	Function             string              `json:"function"`
+	StateObj             string              `json:"state_obj,omitempty"`              // Needed for calling `mcms_entrypoint`
+	InternalStateObjects []string            `json:"internal_state_objects,omitempty"` // Needed for calling `mcms_entrypoint`. When batching calls, this will contain all state objects
+	CompiledModules      [][]byte            `json:"compiled_modules,omitempty"`       // compiled Move modules, if deploying modules
+	Dependencies         []models.SuiAddress `json:"dependencies,omitempty"`           // dependencies for compiled Move modules, if deploying modules
+	PackageToUpgrade     string              `json:"package_to_upgrade,omitempty"`     // package to upgrade, if deploying modules
 }
 
 var _ sdk.Encoder = &Encoder{}
