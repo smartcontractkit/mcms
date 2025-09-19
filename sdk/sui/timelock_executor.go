@@ -90,12 +90,21 @@ func (t *TimelockExecutor) Execute(
 			return types.TransactionResult{}, fmt.Errorf("failed to parse target address %q: %w", tx.To, err)
 		}
 
+		// Use InternalStateObjects for StateObj (CCIPObjectRef), like the regular executor
+		stateObj := ""
+		if len(additionalFields.InternalStateObjects) > 0 {
+			stateObj = additionalFields.InternalStateObjects[0]
+		}
+
 		calls = append(calls, Call{
-			StateObj:     additionalFields.StateObj,
-			Target:       targetAddress.Bytes(),
-			ModuleName:   additionalFields.ModuleName,
-			FunctionName: additionalFields.Function,
-			Data:         tx.Data,
+			StateObj:         stateObj,
+			Target:           targetAddress.Bytes(),
+			ModuleName:       additionalFields.ModuleName,
+			FunctionName:     additionalFields.Function,
+			Data:             tx.Data,
+			CompiledModules:  additionalFields.CompiledModules,
+			Dependencies:     additionalFields.Dependencies,
+			PackageToUpgrade: additionalFields.PackageToUpgrade,
 		})
 	}
 
@@ -124,7 +133,16 @@ func (t *TimelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("building PTB for execute call: %w", err)
 	}
 
-	err = t.executingCallbackParams.AppendPTB(ctx, ptb, executeCallback, calls)
+	// For timelock execution, use the first transaction's StateObj as mainStateObj
+	// This is needed for onramp mcms_accept_ownership calls that require OnRampState as second parameter
+	mainStateObj := ""
+	if len(bop.Transactions) > 0 {
+		var additionalFields AdditionalFields
+		if err := json.Unmarshal(bop.Transactions[0].AdditionalFields, &additionalFields); err == nil {
+			mainStateObj = additionalFields.StateObj
+		}
+	}
+	err = t.executingCallbackParams.AppendPTB(ctx, ptb, executeCallback, calls, mainStateObj)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", err)
 	}

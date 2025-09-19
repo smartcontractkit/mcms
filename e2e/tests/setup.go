@@ -41,7 +41,8 @@ type Config struct {
 	SuiChain    *blockchain.Input `toml:"sui_config"`
 
 	Settings struct {
-		PrivateKeys []string `toml:"private_keys"`
+		PrivateKeys     []string `toml:"private_keys"`
+		LocalSuiNodeURL string   `toml:"local_sui_node_url,omitempty"`
 	} `toml:"settings"`
 }
 
@@ -180,7 +181,12 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			suiClient           sui.ISuiAPI
 			suiBlockchainOutput *blockchain.Output
 		)
-		if in.SuiChain != nil {
+		if in.Settings.LocalSuiNodeURL != "" {
+			// Connect to local Sui node (highest priority)
+			suiClient = sui.NewSuiClient(in.Settings.LocalSuiNodeURL)
+			t.Logf("Connected to local Sui node @ %s", in.Settings.LocalSuiNodeURL)
+		} else if in.SuiChain != nil {
+			// Use blockchain network setup (fallback)
 			ports := freeport.GetN(t, 2)
 			port := ports[0]
 			faucetPort := ports[1]
