@@ -12,18 +12,17 @@ import (
 	"testing"
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
-
-	"github.com/smartcontractkit/chainlink-sui/contracts"
-
 	"github.com/block-vision/sui-go-sdk/models"
-	mcmslib "github.com/smartcontractkit/mcms"
-	"github.com/smartcontractkit/mcms/sdk"
-	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
-	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	module_mcms_deployer "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_deployer"
 	module_mcms_user "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
+	"github.com/smartcontractkit/chainlink-sui/contracts"
+
+	mcmslib "github.com/smartcontractkit/mcms"
+	"github.com/smartcontractkit/mcms/sdk"
+	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 const (
@@ -69,7 +68,7 @@ func (e *MCMSProposalExecutor) ExecuteProposal(ctx context.Context, description 
 	proposalConfig := ProposalBuilderConfig{
 		Version:        "v1",
 		Description:    description,
-		ChainSelector:  e.suite.SuiTestSuite.chainSelector,
+		ChainSelector:  e.suite.chainSelector,
 		McmsObjID:      e.suite.mcmsObj,
 		TimelockObjID:  e.suite.timelockObj,
 		McmsPackageID:  e.suite.mcmsPackageID,
@@ -93,7 +92,7 @@ func (e *MCMSProposalExecutor) ExecuteProposal(ctx context.Context, description 
 	}
 
 	convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
-		e.suite.SuiTestSuite.chainSelector: timelockConverter,
+		e.suite.chainSelector: timelockConverter,
 	}
 	proposal, _, err := timelockProposal.Convert(ctx, convertersMap)
 	if err != nil {
@@ -101,7 +100,7 @@ func (e *MCMSProposalExecutor) ExecuteProposal(ctx context.Context, description 
 	}
 
 	inspectorsMap := map[types.ChainSelector]sdk.Inspector{
-		e.suite.SuiTestSuite.chainSelector: inspector,
+		e.suite.chainSelector: inspector,
 	}
 
 	quorum := int(e.config.Quorum)
@@ -122,7 +121,7 @@ func (e *MCMSProposalExecutor) ExecuteProposal(ctx context.Context, description 
 	if err != nil {
 		return nil, fmt.Errorf("getting encoders: %w", err)
 	}
-	suiEncoder := encoders[e.suite.SuiTestSuite.chainSelector].(*suisdk.Encoder)
+	suiEncoder := encoders[e.suite.chainSelector].(*suisdk.Encoder)
 
 	executor, err := suisdk.NewExecutor(e.suite.client, e.suite.signer, suiEncoder, e.suite.mcmsPackageID, e.role, e.suite.mcmsObj, e.suite.accountObj, e.suite.registryObj, e.suite.timelockObj)
 	if err != nil {
@@ -130,14 +129,14 @@ func (e *MCMSProposalExecutor) ExecuteProposal(ctx context.Context, description 
 	}
 
 	executors := map[types.ChainSelector]sdk.Executor{
-		e.suite.SuiTestSuite.chainSelector: executor,
+		e.suite.chainSelector: executor,
 	}
 	executable, err := mcmslib.NewExecutable(&proposal, executors)
 	if err != nil {
 		return nil, fmt.Errorf("creating executable: %w", err)
 	}
 
-	_, err = executable.SetRoot(ctx, e.suite.SuiTestSuite.chainSelector)
+	_, err = executable.SetRoot(ctx, e.suite.chainSelector)
 	if err != nil {
 		return nil, fmt.Errorf("setting root: %w", err)
 	}
@@ -170,27 +169,6 @@ func (e *MCMSProposalExecutor) ExecuteProposal(ctx context.Context, description 
 	}
 
 	return &executeRes, nil
-}
-
-func createMCMSUserAcceptOwnershipTransaction(suite *MCMSUserUpgradeTestSuite) (types.Transaction, error) {
-	// Create proper BCS-encoded data - mcms_user accept_ownership doesn't need parameters
-	data, err := bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		// No parameters needed for accept_ownership
-	})
-	if err != nil {
-		return types.Transaction{}, fmt.Errorf("failed to BCS encode: %w", err)
-	}
-
-	return suisdk.NewTransactionWithManyStateObj(
-		"mcms_user",             // Module name
-		"mcms_accept_ownership", // Function name
-		suite.mcmsUserPackageId, // Package ID
-		data,                    // BCS-encoded data (empty for this function)
-		"MCMS",                  // Contract type
-		[]string{},              // Tags
-		suite.stateObj,          // Main state object (UserData)
-		[]string{},              // No internal objects needed
-	)
 }
 
 func createMCMSAcceptOwnershipTransaction(suite *MCMSUserUpgradeTestSuite) (types.Transaction, error) {
@@ -240,7 +218,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 	proposerCount := 3
 	proposerQuorum := 2
 	proposerConfig := CreateConfig(proposerCount, uint8(proposerQuorum))
-	proposerConfigurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.SuiTestSuite.chainSelector))
+	proposerConfigurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 	s.Require().NoError(err, "creating proposer configurer")
 	_, err = proposerConfigurer.SetConfig(ctx, s.mcmsObj, proposerConfig.Config, true)
 	s.Require().NoError(err, "setting proposer config")
@@ -254,7 +232,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 	_, err = deployerContract.RegisterUpgradeCap(ctx, opts,
 		bind.Object{Id: s.depStateObj},
 		bind.Object{Id: s.registryObj},
-		bind.Object{Id: s.SuiTestSuite.mcmsUserUpgradeCapObj},
+		bind.Object{Id: s.mcmsUserUpgradeCapObj},
 	)
 	s.Require().NoError(err)
 
@@ -343,7 +321,7 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 	s.Require().NoError(err)
 
 	op := types.BatchOperation{
-		ChainSelector: s.SuiTestSuite.chainSelector,
+		ChainSelector: s.chainSelector,
 		Transactions:  []types.Transaction{transaction},
 	}
 
@@ -403,26 +381,21 @@ func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTest
 	})
 	s.Require().NoError(err)
 
-	newAddress, err := executeAtomicUpgradePTB(t, ctx, s, compiledPackage, proposerConfig)
-	if err != nil {
-		return "", fmt.Errorf("Atomic upgrade PTB failed: %w", err)
-	}
-
-	return newAddress, nil
+	return executeAtomicUpgradePTB(t, ctx, s, compiledPackage, proposerConfig)
 }
 
 // executeAtomicUpgradePTB creates a single atomic PTB that includes:
 // 1. MCMS timelock execution → produces UpgradeTicket
 // 2. Package upgrade using the UpgradeTicket → produces UpgradeReceipt
 // 3. Commit upgrade using the UpgradeReceipt
-func executeAtomicUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) (address string, err error) {
+func executeAtomicUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) address string {
 	t.Helper()
 
 	tx, err := createUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.mcmsUserPackageId)
 	s.Require().NoError(err)
 
 	op := types.BatchOperation{
-		ChainSelector: s.SuiTestSuite.chainSelector,
+		ChainSelector: s.chainSelector,
 		Transactions:  []types.Transaction{tx},
 	}
 
@@ -433,14 +406,16 @@ func executeAtomicUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgra
 	result, ok := executeRes.RawData.(*models.SuiTransactionBlockResponse)
 	s.Require().True(ok)
 
-	newAddress, err := getUpgradedAddress(result, s.mcmsPackageID)
+	newAddress, err := getUpgradedAddress(t, result, s.mcmsPackageID)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(newAddress)
 
-	return newAddress, nil
+	return newAddress
 }
 
-func getUpgradedAddress(result *models.SuiTransactionBlockResponse, mcmsPackageID string) (address string, err error) {
+func getUpgradedAddress(t *testing.T, result *models.SuiTransactionBlockResponse, mcmsPackageID string) (address string, err error) {
+	t.Helper()
+
 	if result == nil || result.Events == nil {
 		return "", fmt.Errorf("result is nil or events are nil")
 	}
@@ -451,14 +426,14 @@ func getUpgradedAddress(result *models.SuiTransactionBlockResponse, mcmsPackageI
 		if event.PackageId == mcmsPackageID &&
 			event.TransactionModule == "mcms_deployer" &&
 			strings.Contains(event.Type, "UpgradeReceiptCommitted") {
-			fmt.Printf("Found UpgradeReceiptCommitted event - PackageId: %s, Module: %s, Type: %s\n",
+			t.Logf("Found UpgradeReceiptCommitted event - PackageId: %s, Module: %s, Type: %s",
 				event.PackageId, event.TransactionModule, event.Type)
 
 			if event.ParsedJson == nil {
 				return "", fmt.Errorf("parsed json is nil")
 			}
 
-			fmt.Printf("MCMS User Package Upgrade Details:\n")
+			t.Log("MCMS User Package Upgrade Details:")
 
 			oldAddr := event.ParsedJson["old_package_address"]
 			newAddr := event.ParsedJson["new_package_address"]
@@ -470,11 +445,11 @@ func getUpgradedAddress(result *models.SuiTransactionBlockResponse, mcmsPackageI
 				newAddrStr := fmt.Sprintf("%v", newAddr)
 
 				if oldAddrStr == newAddrStr {
-					fmt.Printf("ERROR: Package address did not change! Old: %v, New: %v\n", oldAddr, newAddr)
+					t.Errorf("ERROR: Package address did not change! Old: %v, New: %v", oldAddr, newAddr)
 					return "", fmt.Errorf("package address did not change")
 				}
 				newAddress = newAddrStr
-				fmt.Printf("✅ MCMS User package address changed successfully: %s → %s\n", oldAddrStr, newAddrStr)
+				t.Logf("✅ MCMS User package address changed successfully: %s → %s", oldAddrStr, newAddrStr)
 			}
 
 			// Validate version increment
@@ -494,7 +469,7 @@ func getUpgradedAddress(result *models.SuiTransactionBlockResponse, mcmsPackageI
 						oldVersion = parsed
 						parseOk = true
 					} else {
-						fmt.Printf("Warning: Could not parse old version string '%s' as number: %v\n", v, err)
+						t.Logf("Warning: Could not parse old version string '%s' as number: %v", v, err)
 					}
 				}
 
@@ -508,7 +483,7 @@ func getUpgradedAddress(result *models.SuiTransactionBlockResponse, mcmsPackageI
 						if parsed, err := strconv.ParseFloat(v, 64); err == nil {
 							newVersion = parsed
 						} else {
-							fmt.Printf("Warning: Could not parse new version string '%s' as number: %v\n", v, err)
+							t.Logf("Warning: Could not parse new version string '%s' as number: %v", v, err)
 							parseOk = false
 						}
 					default:
@@ -519,12 +494,14 @@ func getUpgradedAddress(result *models.SuiTransactionBlockResponse, mcmsPackageI
 				if parseOk {
 					expectedVersion := oldVersion + 1
 					if newVersion != expectedVersion {
-						fmt.Printf("ERROR: Version did not increment correctly! Old: %.0f, New: %.0f (expected %.0f)\n",
+						t.Errorf("ERROR: Version did not increment correctly! Old: %.0f, New: %.0f (expected %.0f)",
 							oldVersion, newVersion, expectedVersion)
+
 						return "", fmt.Errorf("version did not increment correctly")
 					}
-					fmt.Printf("✅ MCMS User version incremented correctly: %.0f → %.0f\n", oldVersion, newVersion)
+					t.Logf("✅ MCMS User version incremented correctly: %.0f → %.0f", oldVersion, newVersion)
 				}
+
 				return newAddress, nil
 			}
 		}
