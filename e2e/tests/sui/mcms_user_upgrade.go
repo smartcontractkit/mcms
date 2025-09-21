@@ -17,6 +17,7 @@ import (
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	module_mcms_deployer "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_deployer"
 	module_mcms_user "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
+	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 	"github.com/smartcontractkit/chainlink-sui/contracts"
 
 	mcmslib "github.com/smartcontractkit/mcms"
@@ -29,6 +30,14 @@ const (
 	DefaultGasBudget = uint64(300_000_000)
 	UpgradeGasBudget = uint64(500_000_000)
 )
+
+func buildCallOpts(signer bindutils.SuiSigner, gasBudget uint64) *bind.CallOpts {
+	return &bind.CallOpts{
+		Signer:           signer,
+		GasBudget:        &gasBudget,
+		WaitForExecution: true,
+	}
+}
 
 type MCMSUserUpgradeTestSuite struct {
 	SuiTestSuite
@@ -190,18 +199,30 @@ func createMCMSAcceptOwnershipTransaction(suite *MCMSUserUpgradeTestSuite) (type
 }
 
 func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
-	s.DeployMCMSContract()
-	s.DeployMCMSUserContract()
-
 	ctx := context.Background()
 
-	gasBudget := UpgradeGasBudget
-	opts := &bind.CallOpts{
-		Signer:           s.signer,
-		GasBudget:        &gasBudget,
-		WaitForExecution: true,
-	}
+	// Phase 1: Deploy contracts
+	s.DeployMCMSContract()
+	s.DeployMCMSUserContract()
+	logDeploymentInfo(s)
 
+	// Phase 2: Configure proposer role
+	proposerConfig := setupProposerConfig(s, ctx)
+
+	// Phase 3: Setup ownership and registration
+	setupOwnershipAndRegistration(s, ctx, proposerConfig)
+
+	// Phase 4: Verify initial version
+	verifyInitialVersion(s, ctx)
+
+	// Phase 5: Execute upgrade
+	newAddress := executeUpgrade(s, ctx, proposerConfig)
+
+	// Phase 6: Verify upgrade completion
+	verifyUpgradeCompletion(s, ctx, newAddress)
+}
+
+func logDeploymentInfo(s *MCMSUserUpgradeTestSuite) {
 	s.T().Logf("MCMS Package deployed: %s", s.mcmsPackageID)
 	s.T().Logf("Registry Object ID: %s", s.registryObj)
 	s.T().Logf("Deployer State ID: %s", s.depStateObj)
@@ -214,39 +235,60 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 	s.T().Logf("MCMS User Package deployed: %s", s.mcmsUserPackageId)
 	s.T().Logf("MCMS User Owner Cap ID: %s", s.mcmsUserOwnerCapObj)
 	s.T().Logf("MCMS User State Object ID: %s", s.stateObj)
+}
 
+// setupProposerConfig creates and configures the proposer role
+func setupProposerConfig(s *MCMSUserUpgradeTestSuite, ctx context.Context) *RoleConfig {
 	proposerCount := 3
 	proposerQuorum := 2
 	proposerConfig := CreateConfig(proposerCount, uint8(proposerQuorum))
+
 	proposerConfigurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
 	s.Require().NoError(err, "creating proposer configurer")
+
 	_, err = proposerConfigurer.SetConfig(ctx, s.mcmsObj, proposerConfig.Config, true)
 	s.Require().NoError(err, "setting proposer config")
 
+	return proposerConfig
+}
+
+// setupOwnershipAndRegistration handles ownership transfer and upgrade capability registration
+func setupOwnershipAndRegistration(s *MCMSUserUpgradeTestSuite, ctx context.Context, proposerConfig *RoleConfig) {
 	executeMCMSSelfOwnershipTransfer(s.T(), ctx, s, proposerConfig)
 
 	deployerContract, err := module_mcms_deployer.NewMcmsDeployer(s.mcmsPackageID, s.client)
 	s.Require().NoError(err)
 
-	// Register UpgradeCap with MCMS deployer
+	opts := buildCallOpts(s.signer, UpgradeGasBudget)
 	_, err = deployerContract.RegisterUpgradeCap(ctx, opts,
 		bind.Object{Id: s.depStateObj},
 		bind.Object{Id: s.registryObj},
 		bind.Object{Id: s.mcmsUserUpgradeCapObj},
 	)
 	s.Require().NoError(err)
+}
 
-	// Check version
+// verifyInitialVersion checks that the initial version is correct before upgrade
+func verifyInitialVersion(s *MCMSUserUpgradeTestSuite, ctx context.Context) {
+	opts := buildCallOpts(s.signer, UpgradeGasBudget)
 	version, err := s.mcmsUser.DevInspect().TypeAndVersion(ctx, opts)
 	s.Require().NoError(err)
 	s.Require().Equal(version, "MCMSUser 1.0.0")
+}
 
+// executeUpgrade performs the actual upgrade and returns the new package address
+func executeUpgrade(s *MCMSUserUpgradeTestSuite, ctx context.Context, proposerConfig *RoleConfig) string {
 	s.T().Log("=== Phase 5: Execute MCMS User Upgrade ===")
 
-	newAddress, err := executeUpgradePTB(s.T(), ctx, s, proposerConfig, contracts.MCMSUserV2)
-	s.Require().NoError(err, "Failed to execute two-phase MCMS User upgrade")
+	newAddress := executeUpgradePTB(s.T(), ctx, s, proposerConfig, contracts.MCMSUserV2)
 
-	// Verify upgrade to Version 2.0.0
+	return newAddress
+}
+
+// verifyUpgradeCompletion verifies that the upgrade was successful
+func verifyUpgradeCompletion(s *MCMSUserUpgradeTestSuite, ctx context.Context, newAddress string) {
+	opts := buildCallOpts(s.signer, UpgradeGasBudget)
+
 	mcmsUserContract, err := module_mcms_user.NewMcmsUser(newAddress, s.client)
 	s.Require().NoError(err)
 
@@ -282,14 +324,9 @@ func serializeAuthorizeUpgradeParams(policy uint8, digest []byte, packageAddress
 func executeMCMSSelfOwnershipTransfer(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig) {
 	t.Helper()
 
-	gasBudget := DefaultGasBudget
 	tx, err := s.mcmsAccount.TransferOwnershipToSelf(
 		ctx,
-		&bind.CallOpts{
-			Signer:           s.signer,
-			GasBudget:        &gasBudget,
-			WaitForExecution: true,
-		},
+		buildCallOpts(s.signer, DefaultGasBudget),
 		bind.Object{Id: s.ownerCapObj},
 		bind.Object{Id: s.accountObj},
 	)
@@ -300,11 +337,7 @@ func executeMCMSSelfOwnershipTransfer(t *testing.T, ctx context.Context, s *MCMS
 
 	tx, err = s.mcmsAccount.ExecuteOwnershipTransfer(
 		ctx,
-		&bind.CallOpts{
-			Signer:           s.signer,
-			GasBudget:        &gasBudget,
-			WaitForExecution: true,
-		},
+		buildCallOpts(s.signer, DefaultGasBudget),
 		bind.Object{Id: s.ownerCapObj},
 		bind.Object{Id: s.accountObj},
 		bind.Object{Id: s.registryObj},
@@ -368,7 +401,7 @@ func createUpgradeTransaction(compiledPackage bind.PackageArtifact, mcmsPackageI
 	)
 }
 
-func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig, packageType contracts.Package) (address string, err error) {
+func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig, packageType contracts.Package) string {
 	t.Helper()
 
 	signerAddr, err := s.signer.GetAddress()
@@ -388,7 +421,7 @@ func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTest
 // 1. MCMS timelock execution → produces UpgradeTicket
 // 2. Package upgrade using the UpgradeTicket → produces UpgradeReceipt
 // 3. Commit upgrade using the UpgradeReceipt
-func executeAtomicUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) address string {
+func executeAtomicUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) string {
 	t.Helper()
 
 	tx, err := createUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.mcmsUserPackageId)
@@ -413,99 +446,127 @@ func executeAtomicUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgra
 	return newAddress
 }
 
-func getUpgradedAddress(t *testing.T, result *models.SuiTransactionBlockResponse, mcmsPackageID string) (address string, err error) {
+func getUpgradedAddress(t *testing.T, result *models.SuiTransactionBlockResponse, mcmsPackageID string) (string, error) {
 	t.Helper()
 
 	if result == nil || result.Events == nil {
 		return "", fmt.Errorf("result is nil or events are nil")
 	}
 
-	var newAddress string
-
 	for _, event := range result.Events {
-		if event.PackageId == mcmsPackageID &&
-			event.TransactionModule == "mcms_deployer" &&
-			strings.Contains(event.Type, "UpgradeReceiptCommitted") {
-			t.Logf("Found UpgradeReceiptCommitted event - PackageId: %s, Module: %s, Type: %s",
-				event.PackageId, event.TransactionModule, event.Type)
-
-			if event.ParsedJson == nil {
-				return "", fmt.Errorf("parsed json is nil")
-			}
-
-			t.Log("MCMS User Package Upgrade Details:")
-
-			oldAddr := event.ParsedJson["old_package_address"]
-			newAddr := event.ParsedJson["new_package_address"]
-			oldVer := event.ParsedJson["old_version"]
-			newVer := event.ParsedJson["new_version"]
-
-			if oldAddr != nil && newAddr != nil {
-				oldAddrStr := fmt.Sprintf("%v", oldAddr)
-				newAddrStr := fmt.Sprintf("%v", newAddr)
-
-				if oldAddrStr == newAddrStr {
-					t.Errorf("ERROR: Package address did not change! Old: %v, New: %v", oldAddr, newAddr)
-					return "", fmt.Errorf("package address did not change")
-				}
-				newAddress = newAddrStr
-				t.Logf("✅ MCMS User package address changed successfully: %s → %s", oldAddrStr, newAddrStr)
-			}
-
-			// Validate version increment
-			if oldVer != nil && newVer != nil {
-				var oldVersion, newVersion float64
-				var parseOk bool
-
-				switch v := oldVer.(type) {
-				case float64:
-					oldVersion = v
-					parseOk = true
-				case int:
-					oldVersion = float64(v)
-					parseOk = true
-				case string:
-					if parsed, err := strconv.ParseFloat(v, 64); err == nil {
-						oldVersion = parsed
-						parseOk = true
-					} else {
-						t.Logf("Warning: Could not parse old version string '%s' as number: %v", v, err)
-					}
-				}
-
-				if parseOk {
-					switch v := newVer.(type) {
-					case float64:
-						newVersion = v
-					case int:
-						newVersion = float64(v)
-					case string:
-						if parsed, err := strconv.ParseFloat(v, 64); err == nil {
-							newVersion = parsed
-						} else {
-							t.Logf("Warning: Could not parse new version string '%s' as number: %v", v, err)
-							parseOk = false
-						}
-					default:
-						parseOk = false
-					}
-				}
-
-				if parseOk {
-					expectedVersion := oldVersion + 1
-					if newVersion != expectedVersion {
-						t.Errorf("ERROR: Version did not increment correctly! Old: %.0f, New: %.0f (expected %.0f)",
-							oldVersion, newVersion, expectedVersion)
-
-						return "", fmt.Errorf("version did not increment correctly")
-					}
-					t.Logf("✅ MCMS User version incremented correctly: %.0f → %.0f", oldVersion, newVersion)
-				}
-
-				return newAddress, nil
-			}
+		if isUpgradeEvent(event, mcmsPackageID) {
+			return processUpgradeEvent(t, event)
 		}
 	}
 
 	return "", fmt.Errorf("upgrade receipt committed event not found")
+}
+
+// isUpgradeEvent checks if the event is an upgrade receipt committed event
+func isUpgradeEvent(event models.SuiEventResponse, mcmsPackageID string) bool {
+	return event.PackageId == mcmsPackageID &&
+		event.TransactionModule == "mcms_deployer" &&
+		strings.Contains(event.Type, "UpgradeReceiptCommitted")
+}
+
+// processUpgradeEvent processes an upgrade event and returns the new package address
+func processUpgradeEvent(t *testing.T, event models.SuiEventResponse) (string, error) {
+	t.Helper()
+
+	t.Logf("Found UpgradeReceiptCommitted event - PackageId: %s, Module: %s, Type: %s",
+		event.PackageId, event.TransactionModule, event.Type)
+
+	if event.ParsedJson == nil {
+		return "", fmt.Errorf("parsed json is nil")
+	}
+
+	t.Log("MCMS User Package Upgrade Details:")
+
+	oldAddr := event.ParsedJson["old_package_address"]
+	newAddr := event.ParsedJson["new_package_address"]
+	oldVer := event.ParsedJson["old_version"]
+	newVer := event.ParsedJson["new_version"]
+
+	newAddress, err := validateAddressChange(t, oldAddr, newAddr)
+	if err != nil {
+		return "", err
+	}
+
+	err = validateVersionIncrement(t, oldVer, newVer)
+	if err != nil {
+		return "", err
+	}
+
+	return newAddress, nil
+}
+
+// validateAddressChange validates that the package address changed correctly
+func validateAddressChange(t *testing.T, oldAddr, newAddr any) (string, error) {
+	t.Helper()
+
+	if oldAddr == nil || newAddr == nil {
+		return "", fmt.Errorf("package addresses are nil")
+	}
+
+	oldAddrStr := fmt.Sprintf("%v", oldAddr)
+	newAddrStr := fmt.Sprintf("%v", newAddr)
+
+	if oldAddrStr == newAddrStr {
+		t.Errorf("ERROR: Package address did not change! Old: %v, New: %v", oldAddr, newAddr)
+		return "", fmt.Errorf("package address did not change")
+	}
+
+	t.Logf("✅ MCMS User package address changed successfully: %s → %s", oldAddrStr, newAddrStr)
+
+	return newAddrStr, nil
+}
+
+// validateVersionIncrement validates that the version incremented correctly
+func validateVersionIncrement(t *testing.T, oldVer, newVer any) error {
+	t.Helper()
+
+	if oldVer == nil || newVer == nil {
+		return nil // Version validation is optional
+	}
+
+	oldVersion, oldParseOk := parseVersion(t, oldVer, "old")
+	newVersion, newParseOk := parseVersion(t, newVer, "new")
+
+	if !oldParseOk || !newParseOk {
+		return nil // Skip validation if parsing failed
+	}
+
+	expectedVersion := oldVersion + 1
+	if newVersion != expectedVersion {
+		t.Errorf("ERROR: Version did not increment correctly! Old: %.0f, New: %.0f (expected %.0f)",
+			oldVersion, newVersion, expectedVersion)
+
+		return fmt.Errorf("version did not increment correctly")
+	}
+
+	t.Logf("✅ MCMS User version incremented correctly: %.0f → %.0f", oldVersion, newVersion)
+
+	return nil
+}
+
+// parseVersion parses a version value from interface{} to float64
+func parseVersion(t *testing.T, version any, versionType string) (float64, bool) {
+	t.Helper()
+
+	switch v := version.(type) {
+	case float64:
+		return v, true
+	case int:
+		return float64(v), true
+	case string:
+		if parsed, err := strconv.ParseFloat(v, 64); err == nil {
+			return parsed, true
+		}
+		t.Logf("Warning: Could not parse %s version string '%s' as number", versionType, v)
+
+		return 0, false
+	default:
+		t.Logf("Warning: Unsupported %s version type: %T", versionType, v)
+		return 0, false
+	}
 }
