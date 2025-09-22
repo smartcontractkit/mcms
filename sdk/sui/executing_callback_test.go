@@ -147,7 +147,7 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
 	}
 
 	// Execute the method
-	err = params.AppendPTB(ctx, ptb, executeCallback, calls, "")
+	err = params.AppendPTB(ctx, ptb, executeCallback, calls)
 	assert.NoError(t, err)
 }
 
@@ -220,7 +220,7 @@ func TestExecutingCallbackParams_AppendPTB_WithNonMCMSTarget(t *testing.T) {
 	}
 
 	// Execute the method
-	err := params.AppendPTB(ctx, ptb, executeCallback, calls, "")
+	err := params.AppendPTB(ctx, ptb, executeCallback, calls)
 
 	// Should now succeed with mocked functions
 	assert.NoError(t, err)
@@ -269,7 +269,7 @@ func TestExecutingCallbackParams_AppendPTB_ExtractError(t *testing.T) {
 	}
 
 	// Execute the method
-	err := params.AppendPTB(ctx, ptb, executeCallback, calls, "")
+	err := params.AppendPTB(ctx, ptb, executeCallback, calls)
 
 	// Should fail with our mock error
 	require.Error(t, err)

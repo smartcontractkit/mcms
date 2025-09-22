@@ -31,7 +31,7 @@ type executorTestExecutingCallbackParams struct {
 	accountObj    string
 }
 
-func (t *executorTestExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transaction.Transaction, executeCallback *transaction.Argument, calls []Call, mainStateObj string) error {
+func (t *executorTestExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transaction.Transaction, executeCallback *transaction.Argument, calls []Call) error {
 	// For testing, just return success without actually building the complex PTB
 	return nil
 }

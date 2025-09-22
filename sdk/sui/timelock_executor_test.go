@@ -32,7 +32,7 @@ type testExecutingCallbackParams struct {
 }
 
 // AppendPTB is a mock implementation that always succeeds
-func (t *testExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transaction.Transaction, executeCallback *transaction.Argument, calls []Call, mainStateObj string) error {
+func (t *testExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transaction.Transaction, executeCallback *transaction.Argument, calls []Call) error {
 	return nil // Always succeed for tests
 }
 

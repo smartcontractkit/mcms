@@ -5,9 +5,8 @@ private_keys = [
     "0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a"
 ]
 
-# Optional: Connect to local Sui node instead of starting a new blockchain network
-local_sui_node_url = "http://127.0.0.1:9000"
-
+# Uncomment to connect to a local Sui node instead of starting Sui node in a Docker container
+# local_sui_node_url = "http://127.0.0.1:9000"
 
 [sui_config]
 type = "sui"

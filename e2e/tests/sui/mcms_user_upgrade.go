@@ -4,20 +4,16 @@ package sui
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
 	"strconv"
 	"strings"
 	"testing"
 
-	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/block-vision/sui-go-sdk/models"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	module_mcms_deployer "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_deployer"
 	module_mcms_user "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
-	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 	"github.com/smartcontractkit/chainlink-sui/contracts"
 
 	mcmslib "github.com/smartcontractkit/mcms"
@@ -31,14 +27,6 @@ const (
 	UpgradeGasBudget = uint64(500_000_000)
 )
 
-func buildCallOpts(signer bindutils.SuiSigner, gasBudget uint64) *bind.CallOpts {
-	return &bind.CallOpts{
-		Signer:           signer,
-		GasBudget:        &gasBudget,
-		WaitForExecution: true,
-	}
-}
-
 type MCMSUserUpgradeTestSuite struct {
 	SuiTestSuite
 }
@@ -47,137 +35,6 @@ func (s *MCMSUserUpgradeTestSuite) Test_Sui_MCMSUser_UpgradeProposal() {
 	s.T().Run("TimelockProposal - MCMS User Upgrade through Schedule", func(t *testing.T) {
 		RunMCMSUserUpgradeProposal(s)
 	})
-}
-
-type MCMSProposalExecutor struct {
-	suite  *MCMSUserUpgradeTestSuite
-	role   suisdk.TimelockRole
-	config *RoleConfig
-}
-
-func NewMCMSProposalExecutor(suite *MCMSUserUpgradeTestSuite, role suisdk.TimelockRole, config *RoleConfig) *MCMSProposalExecutor {
-	return &MCMSProposalExecutor{
-		suite:  suite,
-		role:   role,
-		config: config,
-	}
-}
-
-func (e *MCMSProposalExecutor) ExecuteProposal(ctx context.Context, description string, op types.BatchOperation) (*types.TransactionResult, error) {
-	inspector, err := suisdk.NewInspector(e.suite.client, e.suite.signer, e.suite.mcmsPackageID, e.role)
-	if err != nil {
-		return nil, fmt.Errorf("creating inspector: %w", err)
-	}
-
-	currentOpCount, err := inspector.GetOpCount(ctx, e.suite.mcmsObj)
-	if err != nil {
-		return nil, fmt.Errorf("getting op count: %w", err)
-	}
-
-	proposalConfig := ProposalBuilderConfig{
-		Version:        "v1",
-		Description:    description,
-		ChainSelector:  e.suite.chainSelector,
-		McmsObjID:      e.suite.mcmsObj,
-		TimelockObjID:  e.suite.timelockObj,
-		McmsPackageID:  e.suite.mcmsPackageID,
-		AccountObjID:   e.suite.accountObj,
-		RegistryObjID:  e.suite.registryObj,
-		Role:           e.role,
-		CurrentOpCount: currentOpCount,
-		Action:         types.TimelockActionSchedule,
-		Delay:          &types.Duration{}, // Zero delay for immediate execution
-	}
-
-	proposalBuilder := CreateTimelockProposalBuilder(e.suite.T(), proposalConfig, []types.BatchOperation{op})
-	timelockProposal, err := proposalBuilder.Build()
-	if err != nil {
-		return nil, fmt.Errorf("building timelock proposal: %w", err)
-	}
-
-	timelockConverter, err := suisdk.NewTimelockConverter()
-	if err != nil {
-		return nil, fmt.Errorf("creating timelock converter: %w", err)
-	}
-
-	convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
-		e.suite.chainSelector: timelockConverter,
-	}
-	proposal, _, err := timelockProposal.Convert(ctx, convertersMap)
-	if err != nil {
-		return nil, fmt.Errorf("converting proposal: %w", err)
-	}
-
-	inspectorsMap := map[types.ChainSelector]sdk.Inspector{
-		e.suite.chainSelector: inspector,
-	}
-
-	quorum := int(e.config.Quorum)
-	signable, err := SignProposal(&proposal, inspectorsMap, e.config.Keys, quorum)
-	if err != nil {
-		return nil, fmt.Errorf("signing proposal: %w", err)
-	}
-
-	quorumMet, err := signable.ValidateSignatures(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("validating signatures: %w", err)
-	}
-	if !quorumMet {
-		return nil, fmt.Errorf("quorum not met")
-	}
-
-	encoders, err := proposal.GetEncoders()
-	if err != nil {
-		return nil, fmt.Errorf("getting encoders: %w", err)
-	}
-	suiEncoder := encoders[e.suite.chainSelector].(*suisdk.Encoder)
-
-	executor, err := suisdk.NewExecutor(e.suite.client, e.suite.signer, suiEncoder, e.suite.mcmsPackageID, e.role, e.suite.mcmsObj, e.suite.accountObj, e.suite.registryObj, e.suite.timelockObj)
-	if err != nil {
-		return nil, fmt.Errorf("creating executor: %w", err)
-	}
-
-	executors := map[types.ChainSelector]sdk.Executor{
-		e.suite.chainSelector: executor,
-	}
-	executable, err := mcmslib.NewExecutable(&proposal, executors)
-	if err != nil {
-		return nil, fmt.Errorf("creating executable: %w", err)
-	}
-
-	_, err = executable.SetRoot(ctx, e.suite.chainSelector)
-	if err != nil {
-		return nil, fmt.Errorf("setting root: %w", err)
-	}
-
-	// Schedule Operations in Timelock
-	for i := range proposal.Operations {
-		_, execErr := executable.Execute(ctx, i)
-		if execErr != nil {
-			return nil, fmt.Errorf("executing operation %d: %w", i, execErr)
-		}
-	}
-
-	timelockExecutor, err := suisdk.NewTimelockExecutor(e.suite.client, e.suite.signer, e.suite.mcmsPackageID, e.suite.registryObj, e.suite.accountObj)
-	if err != nil {
-		return nil, fmt.Errorf("creating timelock executor: %w", err)
-	}
-
-	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
-		e.suite.chainSelector: timelockExecutor,
-	}
-	timelockExecutable, execErr := mcmslib.NewTimelockExecutable(ctx, timelockProposal, timelockExecutors)
-	if execErr != nil {
-		return nil, fmt.Errorf("creating timelock executable: %w", execErr)
-	}
-
-	// Execute the scheduled batch through the timelock
-	executeRes, terr := timelockExecutable.Execute(ctx, 0, mcmslib.WithCallProxy(e.suite.timelockObj))
-	if terr != nil {
-		return nil, fmt.Errorf("executing timelock batch: %w", terr)
-	}
-
-	return &executeRes, nil
 }
 
 func createMCMSAcceptOwnershipTransaction(suite *MCMSUserUpgradeTestSuite) (types.Transaction, error) {
@@ -199,7 +56,7 @@ func createMCMSAcceptOwnershipTransaction(suite *MCMSUserUpgradeTestSuite) (type
 }
 
 func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
-	ctx := context.Background()
+	ctx := s.T().Context()
 
 	// Phase 1: Deploy contracts
 	s.DeployMCMSContract()
@@ -207,19 +64,67 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 	logDeploymentInfo(s)
 
 	// Phase 2: Configure proposer role
-	proposerConfig := setupProposerConfig(s, ctx)
+	proposerCount := 3
+	proposerQuorum := 2
+	proposerConfig := CreateConfig(proposerCount, uint8(proposerQuorum))
+
+	proposerConfigurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
+	s.Require().NoError(err, "creating proposer configurer")
+
+	_, err = proposerConfigurer.SetConfig(ctx, s.mcmsObj, proposerConfig.Config, true)
+	s.Require().NoError(err, "setting proposer config")
 
 	// Phase 3: Setup ownership and registration
-	setupOwnershipAndRegistration(s, ctx, proposerConfig)
+	executeMCMSSelfOwnershipTransfer(s.T(), ctx, s, proposerConfig)
+
+	deployerContract, err := module_mcms_deployer.NewMcmsDeployer(s.mcmsPackageID, s.client)
+	s.Require().NoError(err)
+
+	gasBudget := UpgradeGasBudget
+	_, err = deployerContract.RegisterUpgradeCap(ctx, &bind.CallOpts{
+		Signer:           s.signer,
+		GasBudget:        &gasBudget,
+		WaitForExecution: true,
+	},
+		bind.Object{Id: s.depStateObj},
+		bind.Object{Id: s.registryObj},
+		bind.Object{Id: s.mcmsUserUpgradeCapObj},
+	)
+	s.Require().NoError(err)
 
 	// Phase 4: Verify initial version
-	verifyInitialVersion(s, ctx)
+	version, err := s.mcmsUser.DevInspect().TypeAndVersion(ctx, &bind.CallOpts{
+		Signer:           s.signer,
+		WaitForExecution: true,
+	})
+	s.Require().NoError(err)
+	s.Require().Equal(version, "MCMSUser 1.0.0")
 
 	// Phase 5: Execute upgrade
-	newAddress := executeUpgrade(s, ctx, proposerConfig)
+	signerAddr, err := s.signer.GetAddress()
+	s.Require().NoError(err)
+
+	compiledPackage, err := bind.CompilePackage(contracts.MCMSUserV2, map[string]string{
+		"mcms":       s.mcmsPackageID,
+		"mcms_owner": signerAddr,
+		"mcms_test":  "0x0",
+	})
+	s.Require().NoError(err)
+
+	newAddress := executeUpgradePTB(s.T(), ctx, s, compiledPackage, proposerConfig)
 
 	// Phase 6: Verify upgrade completion
-	verifyUpgradeCompletion(s, ctx, newAddress)
+	mcmsUserContract, err := module_mcms_user.NewMcmsUser(newAddress, s.client)
+	s.Require().NoError(err)
+
+	mcmsUserVersion, err := mcmsUserContract.DevInspect().TypeAndVersion(ctx, &bind.CallOpts{
+		Signer:           s.signer,
+		WaitForExecution: true,
+	})
+	s.Require().NoError(err)
+	s.Require().Equal(mcmsUserVersion, "MCMSUser 2.0.0")
+
+	s.T().Log("✅ MCMS User upgrade committed successfully - Complete MCMS → Upgrade workflow completed!")
 }
 
 func logDeploymentInfo(s *MCMSUserUpgradeTestSuite) {
@@ -237,96 +142,17 @@ func logDeploymentInfo(s *MCMSUserUpgradeTestSuite) {
 	s.T().Logf("MCMS User State Object ID: %s", s.stateObj)
 }
 
-// setupProposerConfig creates and configures the proposer role
-func setupProposerConfig(s *MCMSUserUpgradeTestSuite, ctx context.Context) *RoleConfig {
-	proposerCount := 3
-	proposerQuorum := 2
-	proposerConfig := CreateConfig(proposerCount, uint8(proposerQuorum))
-
-	proposerConfigurer, err := suisdk.NewConfigurer(s.client, s.signer, suisdk.TimelockRoleProposer, s.mcmsPackageID, s.ownerCapObj, uint64(s.chainSelector))
-	s.Require().NoError(err, "creating proposer configurer")
-
-	_, err = proposerConfigurer.SetConfig(ctx, s.mcmsObj, proposerConfig.Config, true)
-	s.Require().NoError(err, "setting proposer config")
-
-	return proposerConfig
-}
-
-// setupOwnershipAndRegistration handles ownership transfer and upgrade capability registration
-func setupOwnershipAndRegistration(s *MCMSUserUpgradeTestSuite, ctx context.Context, proposerConfig *RoleConfig) {
-	executeMCMSSelfOwnershipTransfer(s.T(), ctx, s, proposerConfig)
-
-	deployerContract, err := module_mcms_deployer.NewMcmsDeployer(s.mcmsPackageID, s.client)
-	s.Require().NoError(err)
-
-	opts := buildCallOpts(s.signer, UpgradeGasBudget)
-	_, err = deployerContract.RegisterUpgradeCap(ctx, opts,
-		bind.Object{Id: s.depStateObj},
-		bind.Object{Id: s.registryObj},
-		bind.Object{Id: s.mcmsUserUpgradeCapObj},
-	)
-	s.Require().NoError(err)
-}
-
-// verifyInitialVersion checks that the initial version is correct before upgrade
-func verifyInitialVersion(s *MCMSUserUpgradeTestSuite, ctx context.Context) {
-	opts := buildCallOpts(s.signer, UpgradeGasBudget)
-	version, err := s.mcmsUser.DevInspect().TypeAndVersion(ctx, opts)
-	s.Require().NoError(err)
-	s.Require().Equal(version, "MCMSUser 1.0.0")
-}
-
-// executeUpgrade performs the actual upgrade and returns the new package address
-func executeUpgrade(s *MCMSUserUpgradeTestSuite, ctx context.Context, proposerConfig *RoleConfig) string {
-	s.T().Log("=== Phase 5: Execute MCMS User Upgrade ===")
-
-	newAddress := executeUpgradePTB(s.T(), ctx, s, proposerConfig, contracts.MCMSUserV2)
-
-	return newAddress
-}
-
-// verifyUpgradeCompletion verifies that the upgrade was successful
-func verifyUpgradeCompletion(s *MCMSUserUpgradeTestSuite, ctx context.Context, newAddress string) {
-	opts := buildCallOpts(s.signer, UpgradeGasBudget)
-
-	mcmsUserContract, err := module_mcms_user.NewMcmsUser(newAddress, s.client)
-	s.Require().NoError(err)
-
-	mcmsUserVersion, err := mcmsUserContract.DevInspect().TypeAndVersion(ctx, opts)
-	s.Require().NoError(err)
-	s.Require().Equal(mcmsUserVersion, "MCMSUser 2.0.0")
-
-	s.T().Log("✅ MCMS User upgrade committed successfully - Complete MCMS → Upgrade workflow completed!")
-}
-
-// serializeAuthorizeUpgradeParams serializes parameters for authorize_upgrade function
-// This follows the BCS serialization format expected by the Sui move function
-func serializeAuthorizeUpgradeParams(policy uint8, digest []byte, packageAddress string) ([]byte, error) {
-	// The authorize_upgrade function expects:
-	// - policy: u8
-	// - digest: vector<u8>
-	// - package_address: address
-
-	// Convert package address to bytes for BCS serialization
-	packageAddrBytes, err := hex.DecodeString(strings.TrimPrefix(packageAddress, "0x"))
-	if err != nil {
-		return nil, fmt.Errorf("failed to decode package address: %w", err)
-	}
-
-	// Use proper BCS serialization like the existing codebase
-	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		ser.U8(policy)                   // u8 policy
-		ser.WriteBytes(digest)           // vector<u8> digest
-		ser.FixedBytes(packageAddrBytes) // address (32-byte fixed bytes)
-	})
-}
-
 func executeMCMSSelfOwnershipTransfer(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig) {
 	t.Helper()
 
+	gasBudget := DefaultGasBudget
 	tx, err := s.mcmsAccount.TransferOwnershipToSelf(
 		ctx,
-		buildCallOpts(s.signer, DefaultGasBudget),
+		&bind.CallOpts{
+			Signer:           s.signer,
+			GasBudget:        &gasBudget,
+			WaitForExecution: true,
+		},
 		bind.Object{Id: s.ownerCapObj},
 		bind.Object{Id: s.accountObj},
 	)
@@ -337,7 +163,11 @@ func executeMCMSSelfOwnershipTransfer(t *testing.T, ctx context.Context, s *MCMS
 
 	tx, err = s.mcmsAccount.ExecuteOwnershipTransfer(
 		ctx,
-		buildCallOpts(s.signer, DefaultGasBudget),
+		&bind.CallOpts{
+			Signer:           s.signer,
+			GasBudget:        &gasBudget,
+			WaitForExecution: true,
+		},
 		bind.Object{Id: s.ownerCapObj},
 		bind.Object{Id: s.accountObj},
 		bind.Object{Id: s.registryObj},
@@ -358,73 +188,97 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 		Transactions:  []types.Transaction{transaction},
 	}
 
-	proposalExecutor := NewMCMSProposalExecutor(s, suisdk.TimelockRoleProposer, proposerConfig)
-	_, err = proposalExecutor.ExecuteProposal(ctx, "Accept MCMS self-ownership transfer via proposer with zero delay", op)
-	s.Require().NoError(err, "Failed to execute MCMS self-ownership acceptance proposal")
-}
-
-func createUpgradeTransaction(compiledPackage bind.PackageArtifact, mcmsPackageID, depStateObj, registryObj, mcmsUserPackageId string) (types.Transaction, error) {
-	upgradePolicy := uint8(0) // Compatible upgrade policy
-	data, err := serializeAuthorizeUpgradeParams(upgradePolicy, compiledPackage.Digest, mcmsUserPackageId)
-	if err != nil {
-		return types.Transaction{}, fmt.Errorf("serializing authorize upgrade params: %w", err)
-	}
-
-	// Convert modules from base64 strings to raw bytes
-	moduleBytes := make([][]byte, len(compiledPackage.Modules))
-	for i, moduleBase64 := range compiledPackage.Modules {
-		decoded, err := base64.StdEncoding.DecodeString(moduleBase64)
-		if err != nil {
-			return types.Transaction{}, fmt.Errorf("decoding module %d: %w", i, err)
-		}
-		moduleBytes[i] = decoded
-	}
-
-	depAddresses := make([]models.SuiAddress, len(compiledPackage.Dependencies))
-	for i, dep := range compiledPackage.Dependencies {
-		depAddresses[i] = models.SuiAddress(dep)
-	}
-
-	// Create transaction targeting mcms_deployer::authorize_upgrade with upgrade data
-	return suisdk.NewTransactionWithUpgradeData(
-		"mcms_deployer",             // Module name
-		"authorize_upgrade",         // Function name
-		mcmsPackageID,               // Package ID (mcms_deployer is in MCMS package)
-		data,                        // BCS-encoded parameters
-		"MCMS",                      // Contract type
-		[]string{"upgrade", "mcms"}, // Tags
-		depStateObj,                 // Main state object (DeployerState)
-		[]string{registryObj},       // Internal objects (Registry for validation)
-		moduleBytes,                 // Compiled modules for upgrade
-		depAddresses,                // Dependencies for upgrade
-		mcmsUserPackageId,           // Package being upgraded
-	)
-}
-
-func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig, packageType contracts.Package) string {
-	t.Helper()
-
-	signerAddr, err := s.signer.GetAddress()
+	role := suisdk.TimelockRoleProposer
+	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, role)
 	s.Require().NoError(err)
 
-	compiledPackage, err := bind.CompilePackage(packageType, map[string]string{
-		"mcms":       s.mcmsPackageID,
-		"mcms_owner": signerAddr,
-		"mcms_test":  "0x0", // Will be replaced with actual address during compilation
-	})
+	currentOpCount, err := inspector.GetOpCount(ctx, s.mcmsObj)
 	s.Require().NoError(err)
 
-	return executeAtomicUpgradePTB(t, ctx, s, compiledPackage, proposerConfig)
+	proposalConfig := ProposalBuilderConfig{
+		Version:        "v1",
+		Description:    "Accept MCMS self-ownership transfer via proposer with zero delay",
+		ChainSelector:  s.chainSelector,
+		McmsObjID:      s.mcmsObj,
+		TimelockObjID:  s.timelockObj,
+		McmsPackageID:  s.mcmsPackageID,
+		AccountObjID:   s.accountObj,
+		RegistryObjID:  s.registryObj,
+		Role:           role,
+		CurrentOpCount: currentOpCount,
+		Action:         types.TimelockActionSchedule,
+		Delay:          &types.Duration{}, // Zero delay for immediate execution
+	}
+
+	proposalBuilder := CreateTimelockProposalBuilder(s.T(), proposalConfig, []types.BatchOperation{op})
+	timelockProposal, err := proposalBuilder.Build()
+	s.Require().NoError(err)
+
+	timelockConverter, err := suisdk.NewTimelockConverter()
+	s.Require().NoError(err)
+
+	convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
+		s.chainSelector: timelockConverter,
+	}
+	proposal, _, err := timelockProposal.Convert(ctx, convertersMap)
+	s.Require().NoError(err)
+
+	inspectorsMap := map[types.ChainSelector]sdk.Inspector{
+		s.chainSelector: inspector,
+	}
+
+	quorum := int(proposerConfig.Quorum)
+	signable, err := SignProposal(&proposal, inspectorsMap, proposerConfig.Keys, quorum)
+	s.Require().NoError(err)
+
+	quorumMet, err := signable.ValidateSignatures(ctx)
+	s.Require().NoError(err)
+	s.Require().True(quorumMet)
+
+	encoders, err := proposal.GetEncoders()
+	s.Require().NoError(err)
+	suiEncoder := encoders[s.chainSelector].(*suisdk.Encoder)
+
+	executor, err := suisdk.NewExecutor(s.client, s.signer, suiEncoder, s.mcmsPackageID, role, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	s.Require().NoError(err)
+
+	executors := map[types.ChainSelector]sdk.Executor{
+		s.chainSelector: executor,
+	}
+	executable, err := mcmslib.NewExecutable(&proposal, executors)
+	s.Require().NoError(err)
+
+	_, err = executable.SetRoot(ctx, s.chainSelector)
+	s.Require().NoError(err)
+
+	// Schedule Operations in Timelock
+	for i := range proposal.Operations {
+		_, execErr := executable.Execute(ctx, i)
+		s.Require().NoError(execErr)
+	}
+
+	timelockExecutor, err := suisdk.NewTimelockExecutor(s.client, s.signer, s.mcmsPackageID, s.registryObj, s.accountObj)
+	s.Require().NoError(err)
+
+	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
+		s.chainSelector: timelockExecutor,
+	}
+	timelockExecutable, execErr := mcmslib.NewTimelockExecutable(ctx, timelockProposal, timelockExecutors)
+	s.Require().NoError(execErr)
+
+	// Execute the scheduled batch through the timelock
+	_, terr := timelockExecutable.Execute(ctx, 0, mcmslib.WithCallProxy(s.timelockObj))
+	s.Require().NoError(terr)
 }
 
-// executeAtomicUpgradePTB creates a single atomic PTB that includes:
+// executeUpgradePTB creates a single atomic PTB that includes:
 // 1. MCMS timelock execution → produces UpgradeTicket
 // 2. Package upgrade using the UpgradeTicket → produces UpgradeReceipt
 // 3. Commit upgrade using the UpgradeReceipt
-func executeAtomicUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) string {
+func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) string {
 	t.Helper()
 
-	tx, err := createUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.mcmsUserPackageId)
+	tx, err := suisdk.CreateUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.mcmsUserPackageId)
 	s.Require().NoError(err)
 
 	op := types.BatchOperation{
@@ -432,9 +286,87 @@ func executeAtomicUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgra
 		Transactions:  []types.Transaction{tx},
 	}
 
-	proposalExecutor := NewMCMSProposalExecutor(s, suisdk.TimelockRoleProposer, proposerConfig)
-	executeRes, err := proposalExecutor.ExecuteProposal(ctx, "Authorize MCMS User package upgrade via MCMS proposer with zero delay", op)
-	s.Require().NoError(err, "Failed to execute upgrade authorization proposal")
+	role := suisdk.TimelockRoleProposer
+	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, role)
+	s.Require().NoError(err)
+
+	currentOpCount, err := inspector.GetOpCount(ctx, s.mcmsObj)
+	s.Require().NoError(err)
+
+	proposalConfig := ProposalBuilderConfig{
+		Version:        "v1",
+		Description:    "Authorize MCMS User package upgrade via MCMS proposer with zero delay",
+		ChainSelector:  s.chainSelector,
+		McmsObjID:      s.mcmsObj,
+		TimelockObjID:  s.timelockObj,
+		McmsPackageID:  s.mcmsPackageID,
+		AccountObjID:   s.accountObj,
+		RegistryObjID:  s.registryObj,
+		Role:           role,
+		CurrentOpCount: currentOpCount,
+		Action:         types.TimelockActionSchedule,
+		Delay:          &types.Duration{}, // Zero delay for immediate execution
+	}
+
+	proposalBuilder := CreateTimelockProposalBuilder(s.T(), proposalConfig, []types.BatchOperation{op})
+	timelockProposal, err := proposalBuilder.Build()
+	s.Require().NoError(err)
+
+	timelockConverter, err := suisdk.NewTimelockConverter()
+	s.Require().NoError(err)
+
+	convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
+		s.chainSelector: timelockConverter,
+	}
+	proposal, _, err := timelockProposal.Convert(ctx, convertersMap)
+	s.Require().NoError(err)
+
+	inspectorsMap := map[types.ChainSelector]sdk.Inspector{
+		s.chainSelector: inspector,
+	}
+
+	quorum := int(proposerConfig.Quorum)
+	signable, err := SignProposal(&proposal, inspectorsMap, proposerConfig.Keys, quorum)
+	s.Require().NoError(err)
+
+	quorumMet, err := signable.ValidateSignatures(ctx)
+	s.Require().NoError(err)
+	s.Require().True(quorumMet)
+
+	encoders, err := proposal.GetEncoders()
+	s.Require().NoError(err)
+	suiEncoder := encoders[s.chainSelector].(*suisdk.Encoder)
+
+	executor, err := suisdk.NewExecutor(s.client, s.signer, suiEncoder, s.mcmsPackageID, role, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	s.Require().NoError(err)
+
+	executors := map[types.ChainSelector]sdk.Executor{
+		s.chainSelector: executor,
+	}
+	executable, err := mcmslib.NewExecutable(&proposal, executors)
+	s.Require().NoError(err)
+
+	_, err = executable.SetRoot(ctx, s.chainSelector)
+	s.Require().NoError(err)
+
+	// Schedule Operations in Timelock
+	for i := range proposal.Operations {
+		_, execErr := executable.Execute(ctx, i)
+		s.Require().NoError(execErr)
+	}
+
+	timelockExecutor, err := suisdk.NewTimelockExecutor(s.client, s.signer, s.mcmsPackageID, s.registryObj, s.accountObj)
+	s.Require().NoError(err)
+
+	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
+		s.chainSelector: timelockExecutor,
+	}
+	timelockExecutable, execErr := mcmslib.NewTimelockExecutable(ctx, timelockProposal, timelockExecutors)
+	s.Require().NoError(execErr)
+
+	// Execute the scheduled batch through the timelock
+	executeRes, terr := timelockExecutable.Execute(ctx, 0, mcmslib.WithCallProxy(s.timelockObj))
+	s.Require().NoError(terr)
 
 	result, ok := executeRes.RawData.(*models.SuiTransactionBlockResponse)
 	s.Require().True(ok)

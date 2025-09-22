@@ -203,7 +203,7 @@ func (e Executor) ExecuteOperation(
 			}
 		}
 
-		if extendErr := e.executingCallbackParams.AppendPTB(ctx, ptb, executeCallback, calls, additionalFields.StateObj); extendErr != nil {
+		if extendErr := e.executingCallbackParams.AppendPTB(ctx, ptb, executeCallback, calls); extendErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("extending PTB from executing callback params: %w", extendErr)
 		}
 	}
