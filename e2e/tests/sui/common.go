@@ -197,6 +197,7 @@ func (e *TestEntrypointArgEncoder) EncodeEntryPointArg(executingCallbackParams *
 	if err != nil {
 		return nil, fmt.Errorf("failed to encode entrypoint arg (mcmsUser): %w", err)
 	}
+
 	return entryPointCall, nil
 }
 
