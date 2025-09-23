@@ -14,7 +14,6 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	feequoter "github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
@@ -50,7 +49,7 @@ type Executor struct {
 	executingCallbackParams ExecutingCallbackAppender
 }
 
-func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, mcmsPackageID string, role TimelockRole, mcmsObj string, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
+func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, entrypointEncoder EntrypointArgEncoder, mcmsPackageID string, role TimelockRole, mcmsObj string, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
 	mcms, err := modulemcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err
@@ -61,13 +60,7 @@ func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encode
 		return nil, err
 	}
 
-	// we can initialize the entryPointContract with any mcms receiver like contract
-	entryPointContract, err := feequoter.NewFeeQuoter(mcmsPackageID, client)
-	if err != nil {
-		return nil, err
-	}
-
-	executingCallbackParams := NewExecutingCallbackParams(client, mcms, mcmsPackageID, entryPointContract.Encoder(), registryObj, accountObj)
+	executingCallbackParams := NewExecutingCallbackParams(client, mcms, mcmsPackageID, entrypointEncoder, registryObj, accountObj)
 
 	return &Executor{
 		Encoder:                 encoder,

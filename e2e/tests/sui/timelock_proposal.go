@@ -177,7 +177,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	suiEncoder := encoders[s.chainSelector].(*suisdk.Encoder)
-	executor, err := suisdk.NewExecutor(s.client, s.signer, suiEncoder, s.mcmsPackageID, role, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	executor, err := suisdk.NewExecutor(s.client, s.signer, suiEncoder, s.entrypointArgEncoder, s.mcmsPackageID, role, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
 	s.Require().NoError(err, "creating executor for Sui mcms contract")
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
@@ -207,6 +207,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 			timelockExecutor, tErr := suisdk.NewTimelockExecutor(
 				s.client,
 				s.signer,
+				s.entrypointArgEncoder,
 				s.mcmsPackageID,
 				s.registryObj,
 				s.accountObj,

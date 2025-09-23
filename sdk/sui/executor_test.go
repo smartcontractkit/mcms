@@ -55,10 +55,13 @@ func TestNewExecutor(t *testing.T) {
 	mcmsPackageID := "0x123456789abcdef"
 	role := TimelockRoleProposer
 
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
+
 	executor, err := NewExecutor(
 		mockClient,
 		mockSigner,
 		encoder,
+		entrypointEncoder,
 		mcmsPackageID,
 		role,
 		mcmsObj,

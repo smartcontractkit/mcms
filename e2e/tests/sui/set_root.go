@@ -80,7 +80,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 	s.Require().NoError(err, "Failed to get encoders")
 	encoder := encoders[s.chainSelector].(*suisdk.Encoder)
 
-	executor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.mcmsPackageID, suisdk.TimelockRoleProposer, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	executor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.entrypointArgEncoder, s.mcmsPackageID, suisdk.TimelockRoleProposer, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
 	s.Require().NoError(err, "Failed to create executor")
 
 	executors := map[types.ChainSelector]sdk.Executor{
@@ -211,7 +211,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 		s.Require().NoError(err, "Failed to get encoders for multi-signer test")
 		encoder := encoders[s.chainSelector].(*suisdk.Encoder)
 
-		multiExecutor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.mcmsPackageID, suisdk.TimelockRoleProposer, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+		multiExecutor, err := suisdk.NewExecutor(s.client, s.signer, encoder, s.entrypointArgEncoder, s.mcmsPackageID, suisdk.TimelockRoleProposer, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
 		s.Require().NoError(err, "Failed to create executor for multi-signer test")
 
 		multiExecutors := map[types.ChainSelector]sdk.Executor{

@@ -47,7 +47,8 @@ func TestNewTimelockExecutor(t *testing.T) {
 
 	mcmsPackageID := "0x123456789abcdef"
 
-	executor, err := NewTimelockExecutor(mockClient, mockSigner, mcmsPackageID, registryObj, accountObj)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
+	executor, err := NewTimelockExecutor(mockClient, mockSigner, entrypointEncoder, mcmsPackageID, registryObj, accountObj)
 
 	require.NoError(t, err)
 	assert.NotNil(t, executor)
@@ -67,7 +68,8 @@ func TestTimelockExecutor_Properties(t *testing.T) {
 
 	mcmsPackageID := "0x123456789abcdef"
 
-	executor, err := NewTimelockExecutor(mockClient, mockSigner, mcmsPackageID, registryObj, accountObj)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
+	executor, err := NewTimelockExecutor(mockClient, mockSigner, entrypointEncoder, mcmsPackageID, registryObj, accountObj)
 	require.NoError(t, err)
 
 	// Test that the TimelockExecutor has all required properties

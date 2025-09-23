@@ -132,7 +132,7 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	suiEncoder := encoders[s.chainSelector].(*suisdk.Encoder)
-	executor, err := suisdk.NewExecutor(s.client, s.signer, suiEncoder, s.mcmsPackageID, suisdk.TimelockRoleProposer, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	executor, err := suisdk.NewExecutor(s.client, s.signer, suiEncoder, s.entrypointArgEncoder, s.mcmsPackageID, suisdk.TimelockRoleProposer, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
 	s.Require().NoError(err, "creating executor for Sui mcms contract")
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
@@ -159,6 +159,7 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 		timelockExecutor, eErr := suisdk.NewTimelockExecutor(
 			s.client,
 			s.signer,
+			s.entrypointArgEncoder,
 			s.mcmsPackageID,
 			s.registryObj,
 			s.accountObj,
@@ -249,7 +250,7 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 	cancelEncoders, err := cancelProposal.GetEncoders()
 	s.Require().NoError(err)
 	cancelSuiEncoder := cancelEncoders[s.chainSelector].(*suisdk.Encoder)
-	cancelExecutor, err := suisdk.NewExecutor(s.client, s.signer, cancelSuiEncoder, s.mcmsPackageID, suisdk.TimelockRoleCanceller, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	cancelExecutor, err := suisdk.NewExecutor(s.client, s.signer, cancelSuiEncoder, s.entrypointArgEncoder, s.mcmsPackageID, suisdk.TimelockRoleCanceller, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
 	s.Require().NoError(err, "creating canceller executor for Sui mcms contract")
 
 	cancelExecutors := map[types.ChainSelector]sdk.Executor{
@@ -274,6 +275,7 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 	timelockExecutor, tErr := suisdk.NewTimelockExecutor(
 		s.client,
 		s.signer,
+		s.entrypointArgEncoder,
 		s.mcmsPackageID,
 		s.registryObj,
 		s.accountObj,

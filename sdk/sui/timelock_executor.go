@@ -11,7 +11,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	feequoter "github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
@@ -38,19 +37,13 @@ type TimelockExecutor struct {
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor
-func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageID string, registryObj string, accountObj string) (*TimelockExecutor, error) {
+func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, entrypointEncoder EntrypointArgEncoder, mcmsPackageID string, registryObj string, accountObj string) (*TimelockExecutor, error) {
 	timelockInspector, err := NewTimelockInspector(client, signer, mcmsPackageID)
 	if err != nil {
 		return nil, err
 	}
 
-	// we can initialize the entryPointContract with any mcms receiver like contract
-	entryPointContract, err := feequoter.NewFeeQuoter(mcmsPackageID, client)
-	if err != nil {
-		return nil, err
-	}
-
-	executingCallbackParams := NewExecutingCallbackParams(client, timelockInspector.mcms, mcmsPackageID, entryPointContract.Encoder(), registryObj, accountObj)
+	executingCallbackParams := NewExecutingCallbackParams(client, timelockInspector.mcms, mcmsPackageID, entrypointEncoder, registryObj, accountObj)
 
 	return &TimelockExecutor{
 		TimelockInspector:       *timelockInspector,
