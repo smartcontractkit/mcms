@@ -594,6 +594,9 @@ func TestTransactionIntegration(t *testing.T) {
 	tags := []string{"integration", "test"}
 	stateObj := "0x999"
 	internalStateObjects := []string{"0x111", "0x222"}
+	compiledModules := [][]byte{{0xaa, 0xbb}, {0xcc, 0xdd}}
+	dependencies := []models.SuiAddress{"0x333", "0x444"}
+	packageToUpgrade := "0x555"
 
 	// Test NewTransaction
 	tx1, err := NewTransaction(moduleName, function, to, data, contractType, tags)
@@ -607,42 +610,196 @@ func TestTransactionIntegration(t *testing.T) {
 	tx3, err := NewTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, internalStateObjects)
 	require.NoError(t, err)
 
+	// Test NewTransactionWithUpgradeData
+	tx4, err := NewTransactionWithUpgradeData(moduleName, function, to, data, contractType, tags, stateObj, internalStateObjects, compiledModules, dependencies, packageToUpgrade)
+	require.NoError(t, err)
+
 	// Verify all transactions have the same basic structure
 	assert.Equal(t, tx1.To, tx2.To)
 	assert.Equal(t, tx1.To, tx3.To)
+	assert.Equal(t, tx1.To, tx4.To)
 	assert.Equal(t, tx1.Data, tx2.Data)
 	assert.Equal(t, tx1.Data, tx3.Data)
+	assert.Equal(t, tx1.Data, tx4.Data)
 	assert.Equal(t, tx1.ContractType, tx2.ContractType)
 	assert.Equal(t, tx1.ContractType, tx3.ContractType)
+	assert.Equal(t, tx1.ContractType, tx4.ContractType)
 	assert.Equal(t, tx1.Tags, tx2.Tags)
 	assert.Equal(t, tx1.Tags, tx3.Tags)
+	assert.Equal(t, tx1.Tags, tx4.Tags)
 
 	// Verify additional fields differ appropriately
-	var fields1, fields2, fields3 AdditionalFields
+	var fields1, fields2, fields3, fields4 AdditionalFields
 	err = json.Unmarshal(tx1.AdditionalFields, &fields1)
 	require.NoError(t, err)
 	err = json.Unmarshal(tx2.AdditionalFields, &fields2)
 	require.NoError(t, err)
 	err = json.Unmarshal(tx3.AdditionalFields, &fields3)
 	require.NoError(t, err)
+	err = json.Unmarshal(tx4.AdditionalFields, &fields4)
+	require.NoError(t, err)
 
 	// Basic fields should be the same
 	assert.Equal(t, fields1.ModuleName, fields2.ModuleName)
 	assert.Equal(t, fields1.ModuleName, fields3.ModuleName)
+	assert.Equal(t, fields1.ModuleName, fields4.ModuleName)
 	assert.Equal(t, fields1.Function, fields2.Function)
 	assert.Equal(t, fields1.Function, fields3.Function)
+	assert.Equal(t, fields1.Function, fields4.Function)
 
 	// State objects should differ
 	assert.Empty(t, fields1.StateObj)
 	assert.Equal(t, stateObj, fields2.StateObj)
 	assert.Equal(t, stateObj, fields3.StateObj)
+	assert.Equal(t, stateObj, fields4.StateObj)
 
 	assert.Empty(t, fields1.InternalStateObjects)
 	assert.Nil(t, fields2.InternalStateObjects)
 	assert.Equal(t, internalStateObjects, fields3.InternalStateObjects)
+	assert.Equal(t, internalStateObjects, fields4.InternalStateObjects)
+
+	// Upgrade-specific fields should only be in tx4
+	assert.Nil(t, fields1.CompiledModules)
+	assert.Nil(t, fields2.CompiledModules)
+	assert.Nil(t, fields3.CompiledModules)
+	assert.Equal(t, compiledModules, fields4.CompiledModules)
+
+	assert.Nil(t, fields1.Dependencies)
+	assert.Nil(t, fields2.Dependencies)
+	assert.Nil(t, fields3.Dependencies)
+	assert.Equal(t, dependencies, fields4.Dependencies)
+
+	assert.Empty(t, fields1.PackageToUpgrade)
+	assert.Empty(t, fields2.PackageToUpgrade)
+	assert.Empty(t, fields3.PackageToUpgrade)
+	assert.Equal(t, packageToUpgrade, fields4.PackageToUpgrade)
 
 	// Verify all additional fields are valid
 	require.NoError(t, ValidateAdditionalFields(tx1.AdditionalFields))
 	require.NoError(t, ValidateAdditionalFields(tx2.AdditionalFields))
 	require.NoError(t, ValidateAdditionalFields(tx3.AdditionalFields))
+	require.NoError(t, ValidateAdditionalFields(tx4.AdditionalFields))
+}
+
+func TestNewTransactionWithUpgradeData(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name                 string
+		moduleName           string
+		function             string
+		to                   string
+		data                 []byte
+		contractType         string
+		tags                 []string
+		stateObj             string
+		internalStateObjects []string
+		compiledModules      [][]byte
+		dependencies         []models.SuiAddress
+		packageToUpgrade     string
+		expected             func(t *testing.T, tx types.Transaction)
+	}{
+		{
+			name:                 "complete upgrade transaction",
+			moduleName:           "mcms_deployer",
+			function:             "authorize_upgrade",
+			to:                   "0x123456789abcdef",
+			data:                 []byte("upgrade_data"),
+			contractType:         "MCMS",
+			tags:                 []string{"upgrade", "mcms"},
+			stateObj:             "0x999",
+			internalStateObjects: []string{"0x111", "0x222"},
+			compiledModules:      [][]byte{{0xaa, 0xbb}, {0xcc, 0xdd}},
+			dependencies:         []models.SuiAddress{"0x333", "0x444"},
+			packageToUpgrade:     "0x555",
+			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
+				assert.Equal(t, "0x123456789abcdef", tx.To)
+				assert.Equal(t, []byte("upgrade_data"), tx.Data)
+				assert.Equal(t, "MCMS", tx.ContractType)
+				assert.Equal(t, []string{"upgrade", "mcms"}, tx.Tags)
+
+				var additionalFields AdditionalFields
+				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
+				require.NoError(t, err)
+				assert.Equal(t, "mcms_deployer", additionalFields.ModuleName)
+				assert.Equal(t, "authorize_upgrade", additionalFields.Function)
+				assert.Equal(t, "0x999", additionalFields.StateObj)
+				assert.Equal(t, []string{"0x111", "0x222"}, additionalFields.InternalStateObjects)
+				assert.Equal(t, [][]byte{{0xaa, 0xbb}, {0xcc, 0xdd}}, additionalFields.CompiledModules)
+				assert.Equal(t, []models.SuiAddress{"0x333", "0x444"}, additionalFields.Dependencies)
+				assert.Equal(t, "0x555", additionalFields.PackageToUpgrade)
+			},
+		},
+		{
+			name:                 "minimal upgrade transaction",
+			moduleName:           "module",
+			function:             "func",
+			to:                   "0xabc",
+			data:                 []byte{},
+			contractType:         "",
+			tags:                 []string{},
+			stateObj:             "",
+			internalStateObjects: nil,
+			compiledModules:      nil,
+			dependencies:         nil,
+			packageToUpgrade:     "",
+			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
+				assert.Equal(t, "0xabc", tx.To)
+				assert.Equal(t, []byte{}, tx.Data)
+				assert.Empty(t, tx.ContractType)
+				assert.Equal(t, []string{}, tx.Tags)
+
+				var additionalFields AdditionalFields
+				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
+				require.NoError(t, err)
+				assert.Equal(t, "module", additionalFields.ModuleName)
+				assert.Equal(t, "func", additionalFields.Function)
+				assert.Empty(t, additionalFields.StateObj)
+				assert.Nil(t, additionalFields.InternalStateObjects)
+				assert.Nil(t, additionalFields.CompiledModules)
+				assert.Nil(t, additionalFields.Dependencies)
+				assert.Empty(t, additionalFields.PackageToUpgrade)
+			},
+		},
+		{
+			name:                 "empty slices upgrade transaction",
+			moduleName:           "test_module",
+			function:             "test_func",
+			to:                   "0x123",
+			data:                 []byte("test"),
+			contractType:         "Test",
+			tags:                 []string{"test"},
+			stateObj:             "0x777",
+			internalStateObjects: []string{},
+			compiledModules:      [][]byte{},
+			dependencies:         []models.SuiAddress{},
+			packageToUpgrade:     "0x888",
+			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
+				var additionalFields AdditionalFields
+				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
+				require.NoError(t, err)
+				assert.Equal(t, "test_module", additionalFields.ModuleName)
+				assert.Equal(t, "test_func", additionalFields.Function)
+				assert.Equal(t, "0x777", additionalFields.StateObj)
+				assert.Empty(t, additionalFields.InternalStateObjects)
+				assert.Empty(t, additionalFields.CompiledModules)
+				assert.Empty(t, additionalFields.Dependencies)
+				assert.Equal(t, "0x888", additionalFields.PackageToUpgrade)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			tx, err := NewTransactionWithUpgradeData(tt.moduleName, tt.function, tt.to, tt.data, tt.contractType, tt.tags, tt.stateObj, tt.internalStateObjects, tt.compiledModules, tt.dependencies, tt.packageToUpgrade)
+			require.NoError(t, err)
+
+			tt.expected(t, tx)
+		})
+	}
 }
