@@ -137,7 +137,7 @@ func logDeploymentInfo(s *MCMSUserUpgradeTestSuite) {
 	s.T().Logf("Owner Cap ID: %s", s.ownerCapObj)
 
 	s.T().Log("=== Phase 2: MCMS User Test Package Deployed ===")
-	s.T().Logf("MCMS User Package deployed: %s", s.mcmsUserPackageId)
+	s.T().Logf("MCMS User Package deployed: %s", s.mcmsUserPackageID)
 	s.T().Logf("MCMS User Owner Cap ID: %s", s.mcmsUserOwnerCapObj)
 	s.T().Logf("MCMS User State Object ID: %s", s.stateObj)
 }
@@ -239,7 +239,7 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 	s.Require().NoError(err)
 	suiEncoder := encoders[s.chainSelector].(*suisdk.Encoder)
 
-	executor, err := suisdk.NewExecutor(s.client, s.signer, suiEncoder, s.mcmsPackageID, role, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	executor, err := suisdk.NewExecutor(s.client, s.signer, suiEncoder, s.entrypointArgEncoder, s.mcmsPackageID, role, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
 	s.Require().NoError(err)
 
 	executors := map[types.ChainSelector]sdk.Executor{
@@ -257,7 +257,7 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 		s.Require().NoError(execErr)
 	}
 
-	timelockExecutor, err := suisdk.NewTimelockExecutor(s.client, s.signer, s.mcmsPackageID, s.registryObj, s.accountObj)
+	timelockExecutor, err := suisdk.NewTimelockExecutor(s.client, s.signer, s.entrypointArgEncoder, s.mcmsPackageID, s.registryObj, s.accountObj)
 	s.Require().NoError(err)
 
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
@@ -278,7 +278,7 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) string {
 	t.Helper()
 
-	tx, err := suisdk.CreateUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.mcmsUserPackageId)
+	tx, err := suisdk.CreateUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.mcmsUserPackageID)
 	s.Require().NoError(err)
 
 	op := types.BatchOperation{
@@ -337,7 +337,7 @@ func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTest
 	s.Require().NoError(err)
 	suiEncoder := encoders[s.chainSelector].(*suisdk.Encoder)
 
-	executor, err := suisdk.NewExecutor(s.client, s.signer, suiEncoder, s.mcmsPackageID, role, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	executor, err := suisdk.NewExecutor(s.client, s.signer, suiEncoder, s.entrypointArgEncoder, s.mcmsPackageID, role, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
 	s.Require().NoError(err)
 
 	executors := map[types.ChainSelector]sdk.Executor{
@@ -355,7 +355,7 @@ func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTest
 		s.Require().NoError(execErr)
 	}
 
-	timelockExecutor, err := suisdk.NewTimelockExecutor(s.client, s.signer, s.mcmsPackageID, s.registryObj, s.accountObj)
+	timelockExecutor, err := suisdk.NewTimelockExecutor(s.client, s.signer, s.entrypointArgEncoder, s.mcmsPackageID, s.registryObj, s.accountObj)
 	s.Require().NoError(err)
 
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{

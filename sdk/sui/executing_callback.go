@@ -6,10 +6,13 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
+
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
+	module_mcms_deployer "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_deployer"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 )
 
@@ -34,6 +37,7 @@ type ExecutingCallbackParams struct {
 	accountObj                     string
 	extractExecutingCallbackParams func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error)
 	closeExecutingCallbackParams   func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error
+	createDeployerFunc             func(mcmsPackageID string, client sui.ISuiAPI) (module_mcms_deployer.IMcmsDeployer, error)
 }
 
 func NewExecutingCallbackParams(client sui.ISuiAPI, mcms modulemcms.IMcms, mcmsPackageID string, entryPointEncoder EntrypointArgEncoder, registryObj string, accountObj string) *ExecutingCallbackParams {
@@ -46,6 +50,7 @@ func NewExecutingCallbackParams(client sui.ISuiAPI, mcms modulemcms.IMcms, mcmsP
 		accountObj:                     accountObj,
 		extractExecutingCallbackParams: extractExecutingCallbackParams,
 		closeExecutingCallbackParams:   closeExecutingCallbackParams,
+		createDeployerFunc:             module_mcms_deployer.NewMcmsDeployer,
 	}
 }
 
@@ -68,19 +73,72 @@ func (e *ExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transactio
 			if extractErr != nil {
 				return fmt.Errorf("failed to extract executing callback params: %w", extractErr)
 			}
-			executeDispatchCall, err := e.mcms.Encoder().ExecuteDispatchToAccountWithArgs(
-				e.registryObj,
-				e.accountObj,
-				executingCallbackParams,
-			)
-			if err != nil {
-				return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", i, err)
-			}
 
-			// Add the call to the PTB
-			_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
-			if err != nil {
-				return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
+			// Route based on module name within MCMS package
+			if call.ModuleName == "mcms_deployer" {
+				// Validate that this is an authorize_upgrade call
+				if call.FunctionName != "authorize_upgrade" {
+					return fmt.Errorf("mcms_deployer calls must have FunctionName 'authorize_upgrade', got: %s", call.FunctionName)
+				}
+
+				executeDispatchCall, err := e.mcms.Encoder().ExecuteDispatchToDeployerWithArgs(
+					e.registryObj, // Registry object
+					call.StateObj, // DeployerState object
+					executingCallbackParams,
+				)
+				if err != nil {
+					return fmt.Errorf("creating ExecuteDispatchToDeployer call %d: %w", i, err)
+				}
+
+				// Add the call to the PTB and capture the UpgradeTicket result
+				upgradeTicketArg, err := e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
+				if err != nil {
+					return fmt.Errorf("adding ExecuteDispatchToDeployer call %d to PTB: %w", i, err)
+				}
+
+				// Increase gas budget for the upgrade steps
+				ptb.SetGasBudget(UpgradeGasBudget)
+
+				// Step 2: Use the UpgradeTicket in package upgrade → produces UpgradeReceipt
+				upgradeReceiptArg := ptb.Upgrade(
+					call.CompiledModules,                     // Raw bytes (from Call)
+					call.Dependencies,                        // Dependencies as addresses (from Call)
+					models.SuiAddress(call.PackageToUpgrade), // Package being upgraded (from Call)
+					*upgradeTicketArg,                        // UpgradeTicket from authorize step
+				)
+
+				deployerContract, err := e.createDeployerFunc(e.mcmsPackageID, e.client)
+				if err != nil {
+					return fmt.Errorf("failed to create deployer contract: %w", err)
+				}
+
+				commitEncoded, err := deployerContract.Encoder().CommitUpgradeWithArgs(
+					bind.Object{Id: call.StateObj}, // DeployerState
+					upgradeReceiptArg,              // UpgradeReceipt
+				)
+				if err != nil {
+					return fmt.Errorf("failed to encode commit upgrade: %w", err)
+				}
+
+				_, err = deployerContract.Bound().AppendPTB(ctx, opts, ptb, commitEncoded)
+				if err != nil {
+					return fmt.Errorf("failed to append commit upgrade to PTB: %w", err)
+				}
+			} else {
+				executeDispatchCall, err := e.mcms.Encoder().ExecuteDispatchToAccountWithArgs(
+					e.registryObj,
+					e.accountObj,
+					executingCallbackParams,
+				)
+				if err != nil {
+					return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", i, err)
+				}
+
+				// Add the call to the PTB
+				_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
+				if err != nil {
+					return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
+				}
 			}
 			// If this is a destination contract operation, we need to call the mcms_entrypoint like function
 		} else {

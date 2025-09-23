@@ -128,6 +128,19 @@ packages:
         config:
           dir: "./sdk/sui/mocks/feequoter"
           filename: "feequoterencoder.go"
+  github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_deployer:
+    config:
+      all: false
+      outpkg: "mock_module_mcmsdeployer"
+    interfaces:
+      IMcmsDeployer:
+        config:
+          dir: "./sdk/sui/mocks/mcmsdeployer"
+          filename: "imcmsdeployer.go"
+      McmsDeployerEncoder:
+        config:
+          dir: "./sdk/sui/mocks/mcmsdeployer"
+          filename: "mcmsdeployerencoder.go"
 
 # Required to fix the following deprecation warning:
 # https://vektra.github.io/mockery/v2.48/deprecations/#issue-845-fix

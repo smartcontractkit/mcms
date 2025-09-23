@@ -9,6 +9,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 )
 
 func TestValidateAdditionalFields(t *testing.T) {
@@ -800,6 +802,178 @@ func TestNewTransactionWithUpgradeData(t *testing.T) {
 			require.NoError(t, err)
 
 			tt.expected(t, tx)
+		})
+	}
+}
+
+func TestCreateUpgradeTransaction(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name              string
+		compiledPackage   func() bind.PackageArtifact
+		mcmsPackageID     string
+		depStateObj       string
+		registryObj       string
+		mcmsUserPackageID string
+		expectError       bool
+		errorMsg          string
+		expected          func(t *testing.T, tx types.Transaction)
+	}{
+		{
+			name: "valid upgrade transaction",
+			compiledPackage: func() bind.PackageArtifact {
+				return bind.PackageArtifact{
+					Digest:       []byte("test_digest_123"),
+					Modules:      []string{"bW9kdWxlMQ==", "bW9kdWxlMg=="}, // base64 encoded "module1", "module2"
+					Dependencies: []string{"0x1234567890abcdef123456789abcdef0123456789abcdef0123456789abcdef01", "0x234567890abcdef123456789abcdef0123456789abcdef0123456789abcdef01"},
+				}
+			},
+			mcmsPackageID:     "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
+			depStateObj:       "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
+			registryObj:       "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+			mcmsUserPackageID: "0x1111456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
+			expectError:       false,
+			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
+				assert.Equal(t, "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01", tx.To)
+				assert.Equal(t, "MCMS", tx.ContractType)
+				assert.Equal(t, []string{"upgrade", "mcms"}, tx.Tags)
+
+				var additionalFields AdditionalFields
+				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
+				require.NoError(t, err)
+				assert.Equal(t, "mcms_deployer", additionalFields.ModuleName)
+				assert.Equal(t, "authorize_upgrade", additionalFields.Function)
+				assert.Equal(t, "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345", additionalFields.StateObj)
+				assert.Equal(t, []string{"0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567"}, additionalFields.InternalStateObjects)
+				assert.Equal(t, "0x1111456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01", additionalFields.PackageToUpgrade)
+
+				assert.Len(t, additionalFields.CompiledModules, 2)
+				assert.Equal(t, []byte("module1"), additionalFields.CompiledModules[0])
+				assert.Equal(t, []byte("module2"), additionalFields.CompiledModules[1])
+
+				assert.Equal(t, []models.SuiAddress{"0x1234567890abcdef123456789abcdef0123456789abcdef0123456789abcdef01", "0x234567890abcdef123456789abcdef0123456789abcdef0123456789abcdef01"}, additionalFields.Dependencies)
+				assert.NotEmpty(t, tx.Data)
+			},
+		},
+		{
+			name: "empty modules upgrade transaction",
+			compiledPackage: func() bind.PackageArtifact {
+				return bind.PackageArtifact{
+					Digest:       []byte("empty_digest"),
+					Modules:      []string{},
+					Dependencies: []string{},
+				}
+			},
+			mcmsPackageID:     "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
+			depStateObj:       "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+			registryObj:       "0x012345678abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
+			mcmsUserPackageID: "0x2222456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			expectError:       false,
+			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
+				assert.Equal(t, "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345", tx.To)
+				assert.Equal(t, "MCMS", tx.ContractType)
+				assert.Equal(t, []string{"upgrade", "mcms"}, tx.Tags)
+
+				var additionalFields AdditionalFields
+				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
+				require.NoError(t, err)
+
+				assert.Equal(t, "mcms_deployer", additionalFields.ModuleName)
+				assert.Equal(t, "authorize_upgrade", additionalFields.Function)
+				assert.Equal(t, "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567", additionalFields.StateObj)
+				assert.Equal(t, []string{"0x012345678abcdef0123456789abcdef0123456789abcdef0123456789abcdef01"}, additionalFields.InternalStateObjects)
+				assert.Equal(t, "0x2222456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", additionalFields.PackageToUpgrade)
+				assert.Empty(t, additionalFields.CompiledModules)
+				assert.Empty(t, additionalFields.Dependencies)
+			},
+		},
+		{
+			name: "single module upgrade transaction",
+			compiledPackage: func() bind.PackageArtifact {
+				return bind.PackageArtifact{
+					Digest:       []byte("single_module_digest"),
+					Modules:      []string{"c2luZ2xlX21vZHVsZQ=="}, // base64 encoded "single_module"
+					Dependencies: []string{"0x567890abcdef123456789abcdef0123456789abcdef0123456789abcdef012345"},
+				}
+			},
+			mcmsPackageID:     "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+			depStateObj:       "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
+			registryObj:       "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
+			mcmsUserPackageID: "0x3333456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			expectError:       false,
+			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
+				var additionalFields AdditionalFields
+				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
+				require.NoError(t, err)
+
+				assert.Len(t, additionalFields.CompiledModules, 1)
+				assert.Equal(t, []byte("single_module"), additionalFields.CompiledModules[0])
+				assert.Equal(t, []models.SuiAddress{"0x567890abcdef123456789abcdef0123456789abcdef0123456789abcdef012345"}, additionalFields.Dependencies)
+			},
+		},
+		{
+			name: "invalid base64 module",
+			compiledPackage: func() bind.PackageArtifact {
+				return bind.PackageArtifact{
+					Digest:       []byte("invalid_digest"),
+					Modules:      []string{"invalid_base64!@#"},
+					Dependencies: []string{},
+				}
+			},
+			mcmsPackageID:     "0x999456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
+			depStateObj:       "0x999789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234",
+			registryObj:       "0x999012345abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
+			mcmsUserPackageID: "0x999333456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			expectError:       true,
+			errorMsg:          "decoding module 0",
+		},
+		{
+			name: "empty package id parameters",
+			compiledPackage: func() bind.PackageArtifact {
+				return bind.PackageArtifact{
+					Digest:       []byte("test_digest"),
+					Modules:      []string{"dGVzdA=="}, // base64 "test"
+					Dependencies: []string{},
+				}
+			},
+			mcmsPackageID:     "",
+			depStateObj:       "",
+			registryObj:       "",
+			mcmsUserPackageID: "",
+			expectError:       false,
+			expected: func(t *testing.T, tx types.Transaction) {
+				t.Helper()
+				assert.Empty(t, tx.To)
+				var additionalFields AdditionalFields
+				err := json.Unmarshal(tx.AdditionalFields, &additionalFields)
+				require.NoError(t, err)
+
+				assert.Empty(t, additionalFields.StateObj)
+				assert.Equal(t, []string{""}, additionalFields.InternalStateObjects)
+				assert.Empty(t, additionalFields.PackageToUpgrade)
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			compiledPackage := tt.compiledPackage()
+			tx, err := CreateUpgradeTransaction(compiledPackage, tt.mcmsPackageID, tt.depStateObj, tt.registryObj, tt.mcmsUserPackageID)
+
+			if tt.expectError {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.errorMsg)
+			} else {
+				require.NoError(t, err)
+				tt.expected(t, tx)
+				require.NoError(t, ValidateAdditionalFields(tx.AdditionalFields))
+			}
 		})
 	}
 }

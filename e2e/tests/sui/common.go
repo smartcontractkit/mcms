@@ -48,7 +48,7 @@ type SuiTestSuite struct {
 	mcmsAccount modulemcmsaccount.IMcmsAccount
 
 	// MCMS User
-	mcmsUserPackageId     string
+	mcmsUserPackageID     string
 	mcmsUser              modulemcmsuser.IMcmsUser
 	mcmsUserOwnerCapObj   string
 	mcmsUserUpgradeCapObj string
@@ -132,7 +132,7 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 	}, s.client, s.mcmsPackageID, signerAddress)
 	s.Require().NoError(err, "Failed to publish MCMS user package")
 
-	s.mcmsUserPackageId = mcmsUserPackage.Address()
+	s.mcmsUserPackageID = mcmsUserPackage.Address()
 	s.mcmsUser = mcmsUserPackage.MCMSUser()
 
 	userDataObj, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "UserData")
