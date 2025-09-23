@@ -3,8 +3,11 @@
 package sui
 
 import (
+	"fmt"
+
 	"github.com/block-vision/sui-go-sdk/signer"
 	"github.com/block-vision/sui-go-sdk/sui"
+	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/stretchr/testify/suite"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
@@ -18,6 +21,7 @@ import (
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
+	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -50,6 +54,9 @@ type SuiTestSuite struct {
 
 	// State Object passed into `mcms_entrypoint`
 	stateObj string
+
+	// Entrypoint Arg Encoder
+	entrypointArgEncoder suisdk.EntrypointArgEncoder
 }
 
 func (s *SuiTestSuite) SetupSuite() {
@@ -105,6 +112,11 @@ func (s *SuiTestSuite) DeployMCMSContract() {
 
 	s.mcmsAccount, err = modulemcmsaccount.NewMcmsAccount(s.mcmsPackageID, s.client)
 	s.Require().NoError(err, "Failed to create MCMS account instance")
+
+	s.entrypointArgEncoder = &TestEntrypointArgEncoder{
+		registryObj: s.registryObj,
+		client:      s.client,
+	}
 }
 
 func (s *SuiTestSuite) DeployMCMSUserContract() {
@@ -161,6 +173,32 @@ func (s *SuiTestSuite) extractByteArgsFromEncodedCall(encodedCall bind.EncodedCa
 	}
 
 	return args
+}
+
+type TestEntrypointArgEncoder struct {
+	registryObj string
+	client      sui.ISuiAPI
+}
+
+func (e *TestEntrypointArgEncoder) EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte) (*bind.EncodedCall, error) {
+	// For simplicity, we only support MCMSUser as target in this test encoder
+	if module != "MCMSUser" {
+		return nil, fmt.Errorf("unsupported module: %s", module)
+	}
+	mcmsUser, err := mcmsuser.NewMCMSUser(target, e.client)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create entrypoint encoder (mcmsUser) contract: %w", err)
+	}
+	entryPointCall, err := mcmsUser.MCMSUser().Encoder().McmsFunctionOneWithArgs(
+		stateObjID,
+		e.registryObj,
+		executingCallbackParams,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to encode entrypoint arg (mcmsUser): %w", err)
+	}
+
+	return entryPointCall, nil
 }
 
 func Must[T any](t T, err error) T {

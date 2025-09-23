@@ -9,10 +9,13 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	feequoter "github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 )
+
+type EntrypointArgEncoder interface {
+	EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte) (*bind.EncodedCall, error)
+}
 
 type ExecutingCallbackAppender interface {
 	AppendPTB(ctx context.Context, ptb *transaction.Transaction, executeCallback *transaction.Argument, calls []Call) error
@@ -22,19 +25,19 @@ type ExecutingCallbackParams struct {
 	client                         sui.ISuiAPI
 	mcms                           modulemcms.IMcms
 	mcmsPackageID                  string
-	entryPointContractEncoder      feequoter.FeeQuoterEncoder // Any contract implementing the `mcms_` entrypoint fn
+	entryPointEncoder              EntrypointArgEncoder // Encoder for the entrypoint function. Users can provide their own implementation
 	registryObj                    string
 	accountObj                     string
 	extractExecutingCallbackParams func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error)
 	closeExecutingCallbackParams   func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error
 }
 
-func NewExecutingCallbackParams(client sui.ISuiAPI, mcms modulemcms.IMcms, mcmsPackageID string, entryPointContractEncoder feequoter.FeeQuoterEncoder, registryObj string, accountObj string) *ExecutingCallbackParams {
+func NewExecutingCallbackParams(client sui.ISuiAPI, mcms modulemcms.IMcms, mcmsPackageID string, entryPointEncoder EntrypointArgEncoder, registryObj string, accountObj string) *ExecutingCallbackParams {
 	return &ExecutingCallbackParams{
 		client:                         client,
 		mcms:                           mcms,
 		mcmsPackageID:                  mcmsPackageID,
-		entryPointContractEncoder:      entryPointContractEncoder,
+		entryPointEncoder:              entryPointEncoder,
 		registryObj:                    registryObj,
 		accountObj:                     accountObj,
 		extractExecutingCallbackParams: extractExecutingCallbackParams,
@@ -82,20 +85,11 @@ func (e *ExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transactio
 				return fmt.Errorf("extracting ExecutingCallbackParams %d: %w", i, err)
 			}
 
-			// Prepare the mcms_entrypoint like call. We can use any function to build the call
-			entryPointCall, err := e.entryPointContractEncoder.McmsApplyFeeTokenUpdatesWithArgs(
-				call.StateObj,
-				e.registryObj,
-				executingCallbackParams,
-			)
+			// Encode the entrypoint call
+			entryPointCall, err := e.entryPointEncoder.EncodeEntryPointArg(executingCallbackParams, targetString, call.ModuleName, call.FunctionName, call.StateObj, call.Data)
 			if err != nil {
 				return fmt.Errorf("failed to create mcms_entrypoint call: %w", err)
 			}
-			// Override the module info with the actual target
-			entryPointCall.Module.ModuleName = call.ModuleName
-			entryPointCall.Module.PackageID = targetString
-			// mcms entrypoint like functions are the target function prefixed with `mcms_`
-			entryPointCall.Function = fmt.Sprintf("mcms_%s", call.FunctionName)
 
 			_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, entryPointCall)
 			if err != nil {

@@ -20,20 +20,42 @@ import (
 	mocksui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 )
 
+type MockEntrypointArgEncoder struct {
+	t           *testing.T
+	registryObj string
+	expected    *bind.EncodedCall
+}
+
+func (e *MockEntrypointArgEncoder) EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte) (*bind.EncodedCall, error) {
+	mockFeeQuoterEncoder := mockfeequoter.NewFeeQuoterEncoder(e.t)
+
+	mockFeeQuoterEncoder.EXPECT().McmsApplyFeeTokenUpdatesWithArgs(
+		"0xstate",
+		"0xregistry",
+		mock.AnythingOfType("*transaction.Argument"),
+	).Return(e.expected, nil)
+
+	return mockFeeQuoterEncoder.McmsApplyFeeTokenUpdatesWithArgs(
+		stateObjID,
+		e.registryObj,
+		executingCallbackParams,
+	)
+}
+
 func TestNewExecutingCallbackParams(t *testing.T) {
 	t.Parallel()
 
 	// Create mock objects
 	mockClient := mocksui.NewISuiAPI(t)
 	mockMcms := mockmcms.NewIMcms(t)
-	mockFeeQuoterEncoder := mockfeequoter.NewFeeQuoterEncoder(t)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
 
 	// Basic test to ensure the constructor works
 	params := NewExecutingCallbackParams(
 		mockClient,
 		mockMcms,
 		"0x123456789abcdef",
-		mockFeeQuoterEncoder,
+		entrypointEncoder,
 		"0xregistry",
 		"0xaccount",
 	)
@@ -44,7 +66,7 @@ func TestNewExecutingCallbackParams(t *testing.T) {
 	assert.Equal(t, "0xaccount", params.accountObj)
 	assert.Equal(t, mockClient, params.client)
 	assert.Equal(t, mockMcms, params.mcms)
-	assert.Equal(t, mockFeeQuoterEncoder, params.entryPointContractEncoder)
+	assert.Equal(t, entrypointEncoder, params.entryPointEncoder)
 }
 
 func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
@@ -53,7 +75,7 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
 	// Create mock objects
 	mockClient := mocksui.NewISuiAPI(t)
 	mockMcms := mockmcms.NewIMcms(t)
-	mockFeeQuoterEncoder := mockfeequoter.NewFeeQuoterEncoder(t)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
 	mockMcmsEncoder := mockmcms.NewMcmsEncoder(t)
 	mockBound := mockbindutils.NewIBoundContract(t)
 
@@ -94,7 +116,7 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
 		mockClient,
 		mockMcms,
 		mcmsPackageID,
-		mockFeeQuoterEncoder,
+		entrypointEncoder,
 		"0xregistry",
 		"0xaccount",
 	)
@@ -135,7 +157,6 @@ func TestExecutingCallbackParams_AppendPTB_WithNonMCMSTarget(t *testing.T) {
 	// Create mock objects
 	mockClient := mocksui.NewISuiAPI(t)
 	mockMcms := mockmcms.NewIMcms(t)
-	mockFeeQuoterEncoder := mockfeequoter.NewFeeQuoterEncoder(t)
 	mockBound := mockbindutils.NewIBoundContract(t)
 
 	// Setup mock expectations for the non-MCMS target path
@@ -150,12 +171,11 @@ func TestExecutingCallbackParams_AppendPTB_WithNonMCMSTarget(t *testing.T) {
 		},
 		Function: "mcms_test_function",
 	}
-	mockFeeQuoterEncoder.EXPECT().McmsApplyFeeTokenUpdatesWithArgs(
-		"0xstate",
-		"0xregistry",
-		mock.AnythingOfType("*transaction.Argument"),
-	).Return(expectedCall, nil)
-
+	entrypointEncoder := &MockEntrypointArgEncoder{
+		t:           t,
+		registryObj: "0xregistry",
+		expected:    expectedCall,
+	}
 	// Mock the AppendPTB call
 	mockBound.EXPECT().AppendPTB(
 		mock.Anything,
@@ -169,7 +189,7 @@ func TestExecutingCallbackParams_AppendPTB_WithNonMCMSTarget(t *testing.T) {
 		mockClient,
 		mockMcms,
 		"0x123456789abcdef",
-		mockFeeQuoterEncoder,
+		entrypointEncoder,
 		"0xregistry",
 		"0xaccount",
 	)
@@ -212,14 +232,16 @@ func TestExecutingCallbackParams_AppendPTB_ExtractError(t *testing.T) {
 	// Create mock objects
 	mockClient := mocksui.NewISuiAPI(t)
 	mockMcms := mockmcms.NewIMcms(t)
-	mockFeeQuoterEncoder := mockfeequoter.NewFeeQuoterEncoder(t)
-
+	entrypointEncoder := &MockEntrypointArgEncoder{
+		t:           t,
+		registryObj: "0xregistry",
+	}
 	// Create the ExecutingCallbackParams
 	params := NewExecutingCallbackParams(
 		mockClient,
 		mockMcms,
 		"0x123456789abcdef",
-		mockFeeQuoterEncoder,
+		entrypointEncoder,
 		"0xregistry",
 		"0xaccount",
 	)
