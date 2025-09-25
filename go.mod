@@ -7,7 +7,7 @@ toolchain go1.24.7
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
-	github.com/aptos-labs/aptos-go-sdk v1.7.1-0.20250602153733-bb1facae1d43
+	github.com/aptos-labs/aptos-go-sdk v1.10.0
 	github.com/block-vision/sui-go-sdk v1.1.1
 	github.com/ethereum/go-ethereum v1.15.7
 	github.com/gagliardetto/binary v0.8.0
