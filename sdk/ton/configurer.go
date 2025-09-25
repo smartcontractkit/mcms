@@ -47,9 +47,9 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}
 
-	signers := make([]mcms.SignerKey, len(signerAddresses))
+	signerKeys := make([]mcms.SignerKey, len(signerAddresses))
 	for i, addr := range signerAddresses {
-		signers[i] = mcms.SignerKey{
+		signerKeys[i] = mcms.SignerKey{
 			Value: addr.Big(),
 		}
 	}
@@ -69,7 +69,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	body, err := tlb.ToCell(mcms.SetConfig{
 		QueryID: rand.Uint64(),
 
-		SignerKeys:   common.SnakeData[mcms.SignerKey](signers),
+		SignerKeys:   common.SnakeData[mcms.SignerKey](signerKeys),
 		SignerGroups: common.SnakeData[uint8](signerGroups),
 		GroupQuorums: gqDict,
 		GroupParents: gpDict,
