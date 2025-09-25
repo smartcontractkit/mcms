@@ -307,3 +307,57 @@ func TestSerializeCancel(t *testing.T) {
 	resultHex := "200102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"
 	assert.Equal(t, hex.EncodeToString(data), resultHex)
 }
+
+func TestSerializeAuthorizeUpgradeParams(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name           string
+		policy         uint8
+		digest         []byte
+		packageAddress string
+		wantErr        assert.ErrorAssertionFunc
+	}{
+		{
+			name:           "success - valid params",
+			policy:         0,
+			digest:         []byte{0x01, 0x02, 0x03, 0x04},
+			packageAddress: "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+			wantErr:        assert.NoError,
+		},
+		{
+			name:           "success - different policy",
+			policy:         1,
+			digest:         []byte{0xaa, 0xbb, 0xcc, 0xdd},
+			packageAddress: "0x2122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40",
+			wantErr:        assert.NoError,
+		},
+		{
+			name:           "success - empty digest",
+			policy:         255,
+			digest:         []byte{},
+			packageAddress: "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+			wantErr:        assert.NoError,
+		},
+		{
+			name:           "failure - invalid package address",
+			policy:         0,
+			digest:         []byte{0x01, 0x02},
+			packageAddress: "invalid_address",
+			wantErr:        AssertErrorContains("failed to decode package address"),
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			data, err := serializeAuthorizeUpgradeParams(tt.policy, tt.digest, tt.packageAddress)
+			if !tt.wantErr(t, err, "serializeAuthorizeUpgradeParams should handle error correctly") {
+				return
+			}
+			if err == nil {
+				assert.NotEmpty(t, data, "Serialized data should not be empty")
+			}
+		})
+	}
+}

@@ -48,9 +48,10 @@ type SuiTestSuite struct {
 	mcmsAccount modulemcmsaccount.IMcmsAccount
 
 	// MCMS User
-	mcmsUserPackageId   string
-	mcmsUser            modulemcmsuser.IMcmsUser
-	mcmsUserOwnerCapObj string
+	mcmsUserPackageID     string
+	mcmsUser              modulemcmsuser.IMcmsUser
+	mcmsUserOwnerCapObj   string
+	mcmsUserUpgradeCapObj string
 
 	// State Object passed into `mcms_entrypoint`
 	stateObj string
@@ -131,16 +132,19 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 	}, s.client, s.mcmsPackageID, signerAddress)
 	s.Require().NoError(err, "Failed to publish MCMS user package")
 
-	s.mcmsUserPackageId = mcmsUserPackage.Address()
+	s.mcmsUserPackageID = mcmsUserPackage.Address()
 	s.mcmsUser = mcmsUserPackage.MCMSUser()
 
 	userDataObj, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "UserData")
 	s.Require().NoError(err, "Failed to find object IDs in publish tx")
-	mcmsUserOwnerCapObj, err := bind.FindObjectIdFromPublishTx(*tx, "mcms_user", "OwnerCap")
+	mcmsUserOwnerCapObj, err := bind.FindObjectIdFromPublishTx(*tx, "ownable", "OwnerCap")
+	s.Require().NoError(err, "Failed to find object IDs in publish tx")
+	mcmsUserUpgradeCapObj, err := bind.FindObjectIdFromPublishTx(*tx, "package", "UpgradeCap")
 	s.Require().NoError(err, "Failed to find object IDs in publish tx")
 
 	s.mcmsUserOwnerCapObj = mcmsUserOwnerCapObj
 	s.stateObj = userDataObj
+	s.mcmsUserUpgradeCapObj = mcmsUserUpgradeCapObj
 
 	// For executing, We need to register OwnerCap with MCMS
 	{
@@ -181,8 +185,8 @@ type TestEntrypointArgEncoder struct {
 }
 
 func (e *TestEntrypointArgEncoder) EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte) (*bind.EncodedCall, error) {
-	// For simplicity, we only support MCMSUser as target in this test encoder
-	if module != "MCMSUser" {
+	// For simplicity, we only support mcms_user as target in this test encoder
+	if module != "mcms_user" {
 		return nil, fmt.Errorf("unsupported module: %s", module)
 	}
 	mcmsUser, err := mcmsuser.NewMCMSUser(target, e.client)

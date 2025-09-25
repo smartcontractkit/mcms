@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
+	"github.com/block-vision/sui-go-sdk/models"
 )
 
 const (
@@ -14,11 +15,14 @@ const (
 )
 
 type Call struct {
-	Target       []byte
-	ModuleName   string
-	FunctionName string
-	Data         []byte
-	StateObj     string
+	Target           []byte
+	ModuleName       string
+	FunctionName     string
+	Data             []byte
+	StateObj         string
+	CompiledModules  [][]byte            // For upgrade operations
+	Dependencies     []models.SuiAddress // For upgrade operations
+	PackageToUpgrade string              // For upgrade operations
 }
 
 func deserializeTimelockBypasserExecuteBatch(data []byte) ([]Call, error) {

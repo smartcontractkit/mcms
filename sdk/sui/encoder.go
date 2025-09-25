@@ -1,11 +1,14 @@
 package sui
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
+	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
@@ -22,10 +25,13 @@ var (
 
 // AdditionalFields represents the additional fields in Sui MCMS operations
 type AdditionalFields struct {
-	ModuleName           string   `json:"module_name"`
-	Function             string   `json:"function"`
-	StateObj             string   `json:"state_obj,omitempty"`              // Needed for calling `mcms_entrypoint`
-	InternalStateObjects []string `json:"internal_state_objects,omitempty"` // Needed for calling `mcms_entrypoint`. When batching calls, this will contain all state objects
+	ModuleName           string              `json:"module_name"`
+	Function             string              `json:"function"`
+	StateObj             string              `json:"state_obj,omitempty"`              // Needed for calling `mcms_entrypoint`
+	InternalStateObjects []string            `json:"internal_state_objects,omitempty"` // Needed for calling `mcms_entrypoint`. When batching calls, this will contain all state objects
+	CompiledModules      [][]byte            `json:"compiled_modules,omitempty"`       // compiled Move modules, if deploying modules
+	Dependencies         []models.SuiAddress `json:"dependencies,omitempty"`           // dependencies for compiled Move modules, if deploying modules
+	PackageToUpgrade     string              `json:"package_to_upgrade,omitempty"`     // package to upgrade, if deploying modules
 }
 
 var _ sdk.Encoder = &Encoder{}
@@ -202,5 +208,26 @@ func serializeTimelockCancel(id []byte) ([]byte, error) {
 	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
 		// Serialize the operation ID
 		ser.WriteBytes(id)
+	})
+}
+
+// serializeAuthorizeUpgradeParams serializes parameters for `mcms_deployer::authorize_upgrade`
+func serializeAuthorizeUpgradeParams(policy uint8, digest []byte, packageAddress string) ([]byte, error) {
+	// The authorize_upgrade function expects:
+	// - policy: u8
+	// - digest: vector<u8>
+	// - package_address: address
+
+	// Convert package address to bytes for BCS serialization
+	packageAddrBytes, err := hex.DecodeString(strings.TrimPrefix(packageAddress, "0x"))
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode package address: %w", err)
+	}
+
+	// Use proper BCS serialization like the existing codebase
+	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
+		ser.U8(policy)                   // u8 policy
+		ser.WriteBytes(digest)           // vector<u8> digest
+		ser.FixedBytes(packageAddrBytes) // address (32-byte fixed bytes)
 	})
 }

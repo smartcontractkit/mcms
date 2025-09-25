@@ -84,11 +84,14 @@ func (t *TimelockExecutor) Execute(
 		}
 
 		calls = append(calls, Call{
-			StateObj:     additionalFields.StateObj,
-			Target:       targetAddress.Bytes(),
-			ModuleName:   additionalFields.ModuleName,
-			FunctionName: additionalFields.Function,
-			Data:         tx.Data,
+			StateObj:         additionalFields.StateObj,
+			Target:           targetAddress.Bytes(),
+			ModuleName:       additionalFields.ModuleName,
+			FunctionName:     additionalFields.Function,
+			Data:             tx.Data,
+			CompiledModules:  additionalFields.CompiledModules,
+			Dependencies:     additionalFields.Dependencies,
+			PackageToUpgrade: additionalFields.PackageToUpgrade,
 		})
 	}
 

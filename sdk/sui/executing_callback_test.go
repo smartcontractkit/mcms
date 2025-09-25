@@ -7,16 +7,20 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/block-vision/sui-go-sdk/models"
+	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	module_mcms_deployer "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_deployer"
 
 	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
 	mockfeequoter "github.com/smartcontractkit/mcms/sdk/sui/mocks/feequoter"
 	mockmcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
+	mockmcmsdeployer "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcmsdeployer"
 	mocksui "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 )
 
@@ -140,7 +144,7 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
 	calls := []Call{
 		{
 			Target:       mcmsPackageIDBytes,
-			StateObj:     "0xstate",
+			StateObj:     "0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789",
 			ModuleName:   "test_module",
 			FunctionName: "test_function",
 		},
@@ -262,7 +266,7 @@ func TestExecutingCallbackParams_AppendPTB_ExtractError(t *testing.T) {
 	calls := []Call{
 		{
 			Target:       mcmsTargetBytes,
-			StateObj:     "0xstate",
+			StateObj:     "0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789",
 			ModuleName:   "test_module",
 			FunctionName: "test_function",
 		},
@@ -329,4 +333,284 @@ func TestCloseExecutingCallbackParams_InvalidPackageID(t *testing.T) {
 
 	require.Error(t, err, "closeExecutingCallbackParams should return an error for invalid package ID")
 	assert.Contains(t, err.Error(), "failed to convert type string to TypeTag", "error should mention TypeTag conversion failure")
+}
+
+func TestExecutingCallbackParams_AppendPTB_WithMCMSDeployerTarget_Success(t *testing.T) {
+	t.Parallel()
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockMcms := mockmcms.NewIMcms(t)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
+	mockMcmsEncoder := mockmcms.NewMcmsEncoder(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
+	mockDeployer := mockmcmsdeployer.NewIMcmsDeployer(t)
+	mockDeployerEncoder := mockmcmsdeployer.NewMcmsDeployerEncoder(t)
+
+	mockMcms.EXPECT().Encoder().Return(mockMcmsEncoder)
+	mockMcms.EXPECT().Bound().Return(mockBound)
+
+	expectedDispatchCall := &bind.EncodedCall{
+		Module: bind.ModuleInformation{
+			PackageID:   "0x123456789abcdef",
+			PackageName: "mcms",
+			ModuleName:  "mcms",
+		},
+		Function: "execute_dispatch_to_deployer",
+	}
+	mockMcmsEncoder.EXPECT().ExecuteDispatchToDeployerWithArgs(
+		"0xregistry",
+		"0xdeployerstate",
+		mock.AnythingOfType("*transaction.Argument"),
+	).Return(expectedDispatchCall, nil)
+
+	upgradeTicketArg := &transaction.Argument{}
+	mockBound.EXPECT().AppendPTB(
+		mock.Anything,
+		mock.AnythingOfType("*bind.CallOpts"),
+		mock.AnythingOfType("*transaction.Transaction"),
+		expectedDispatchCall,
+	).Return(upgradeTicketArg, nil)
+
+	mockDeployer.EXPECT().Encoder().Return(mockDeployerEncoder)
+	mockDeployer.EXPECT().Bound().Return(mockBound)
+
+	expectedCommitCall := &bind.EncodedCall{}
+	mockDeployerEncoder.EXPECT().CommitUpgradeWithArgs(
+		bind.Object{Id: "0xdeployerstate"},
+		mock.AnythingOfType("transaction.Argument"),
+	).Return(expectedCommitCall, nil)
+
+	// Mock the second AppendPTB call for commit upgrade (this will be called by deployerContract.Bound())
+	mockBound.EXPECT().AppendPTB(
+		mock.Anything,
+		mock.AnythingOfType("*bind.CallOpts"),
+		mock.AnythingOfType("*transaction.Transaction"),
+		expectedCommitCall,
+	).Return(nil, nil)
+
+	mcmsPackageIDHex := "123456789abcdef0" + strings.Repeat("0", 48)
+	mcmsPackageIDBytes, err := hex.DecodeString(mcmsPackageIDHex)
+	require.NoError(t, err)
+	mcmsPackageID := "0x" + mcmsPackageIDHex
+
+	params := NewExecutingCallbackParams(
+		mockClient,
+		mockMcms,
+		mcmsPackageID,
+		entrypointEncoder,
+		"0xregistry",
+		"0xaccount",
+	)
+
+	params.extractExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
+		return &transaction.Argument{}, nil
+	}
+	params.closeExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
+		return nil
+	}
+	params.createDeployerFunc = func(mcmsPackageID string, client sui.ISuiAPI) (module_mcms_deployer.IMcmsDeployer, error) {
+		return mockDeployer, nil
+	}
+
+	ctx := context.Background()
+	ptb := transaction.NewTransaction()
+	executeCallback := &transaction.Argument{}
+
+	calls := []Call{
+		{
+			Target:           mcmsPackageIDBytes,
+			StateObj:         "0xdeployerstate",
+			ModuleName:       "mcms_deployer",
+			FunctionName:     "authorize_upgrade",
+			CompiledModules:  [][]byte{{0xaa, 0xbb}, {0xcc, 0xdd}},
+			Dependencies:     []models.SuiAddress{"0x0000000000000000000000000000000000000000000000000000000000000333", "0x0000000000000000000000000000000000000000000000000000000000000444"},
+			PackageToUpgrade: "0x0000000000000000000000000000000000000000000000000000000000000555",
+		},
+	}
+
+	err = params.AppendPTB(ctx, ptb, executeCallback, calls)
+
+	require.NoError(t, err)
+}
+
+func TestExecutingCallbackParams_AppendPTB_WithMCMSDeployerTarget_InvalidFunction(t *testing.T) {
+	t.Parallel()
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockMcms := mockmcms.NewIMcms(t)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
+	mockDeployer := mockmcmsdeployer.NewIMcmsDeployer(t)
+
+	mcmsPackageIDHex := "123456789abcdef0" + strings.Repeat("0", 48)
+	mcmsPackageIDBytes, err := hex.DecodeString(mcmsPackageIDHex)
+	require.NoError(t, err)
+	mcmsPackageID := "0x" + mcmsPackageIDHex
+
+	params := NewExecutingCallbackParams(
+		mockClient,
+		mockMcms,
+		mcmsPackageID,
+		entrypointEncoder,
+		"0xregistry",
+		"0xaccount",
+	)
+
+	params.extractExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
+		return &transaction.Argument{}, nil
+	}
+	params.closeExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
+		return nil
+	}
+	params.createDeployerFunc = func(mcmsPackageID string, client sui.ISuiAPI) (module_mcms_deployer.IMcmsDeployer, error) {
+		return mockDeployer, nil
+	}
+
+	ctx := context.Background()
+	ptb := transaction.NewTransaction()
+	executeCallback := &transaction.Argument{}
+
+	calls := []Call{
+		{
+			Target:       mcmsPackageIDBytes,
+			StateObj:     "0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789",
+			ModuleName:   "mcms_deployer",
+			FunctionName: "invalid_function", // Wrong function name
+		},
+	}
+
+	err = params.AppendPTB(ctx, ptb, executeCallback, calls)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "mcms_deployer calls must have FunctionName 'authorize_upgrade', got: invalid_function")
+}
+
+func TestExecutingCallbackParams_AppendPTB_WithMCMSDeployerTarget_ExecuteDispatchError(t *testing.T) {
+	t.Parallel()
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockMcms := mockmcms.NewIMcms(t)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
+	mockMcmsEncoder := mockmcms.NewMcmsEncoder(t)
+	mockDeployer := mockmcmsdeployer.NewIMcmsDeployer(t)
+
+	mockMcms.EXPECT().Encoder().Return(mockMcmsEncoder)
+	mockMcmsEncoder.EXPECT().ExecuteDispatchToDeployerWithArgs(
+		"0xregistry",
+		"0xdeployerstate",
+		mock.AnythingOfType("*transaction.Argument"),
+	).Return(nil, fmt.Errorf("mock dispatch error"))
+
+	mcmsPackageIDHex := "123456789abcdef0" + strings.Repeat("0", 48)
+	mcmsPackageIDBytes, err := hex.DecodeString(mcmsPackageIDHex)
+	require.NoError(t, err)
+	mcmsPackageID := "0x" + mcmsPackageIDHex
+
+	params := NewExecutingCallbackParams(
+		mockClient,
+		mockMcms,
+		mcmsPackageID,
+		entrypointEncoder,
+		"0xregistry",
+		"0xaccount",
+	)
+
+	params.extractExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
+		return &transaction.Argument{}, nil
+	}
+	params.closeExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
+		return nil
+	}
+	params.createDeployerFunc = func(mcmsPackageID string, client sui.ISuiAPI) (module_mcms_deployer.IMcmsDeployer, error) {
+		return mockDeployer, nil
+	}
+
+	ctx := context.Background()
+	ptb := transaction.NewTransaction()
+	executeCallback := &transaction.Argument{}
+
+	calls := []Call{
+		{
+			Target:       mcmsPackageIDBytes,
+			StateObj:     "0xdeployerstate",
+			ModuleName:   "mcms_deployer",
+			FunctionName: "authorize_upgrade",
+		},
+	}
+
+	err = params.AppendPTB(ctx, ptb, executeCallback, calls)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "creating ExecuteDispatchToDeployer call 0")
+	assert.Contains(t, err.Error(), "mock dispatch error")
+}
+
+func TestExecutingCallbackParams_AppendPTB_WithMCMSDeployerTarget_AppendPTBError(t *testing.T) {
+	t.Parallel()
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockMcms := mockmcms.NewIMcms(t)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
+	mockMcmsEncoder := mockmcms.NewMcmsEncoder(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
+	mockDeployer := mockmcmsdeployer.NewIMcmsDeployer(t)
+
+	mockMcms.EXPECT().Encoder().Return(mockMcmsEncoder)
+	mockMcms.EXPECT().Bound().Return(mockBound)
+
+	expectedDispatchCall := &bind.EncodedCall{}
+	mockMcmsEncoder.EXPECT().ExecuteDispatchToDeployerWithArgs(
+		"0xregistry",
+		"0xdeployerstate",
+		mock.AnythingOfType("*transaction.Argument"),
+	).Return(expectedDispatchCall, nil)
+
+	mockBound.EXPECT().AppendPTB(
+		mock.Anything,
+		mock.AnythingOfType("*bind.CallOpts"),
+		mock.AnythingOfType("*transaction.Transaction"),
+		expectedDispatchCall,
+	).Return(nil, fmt.Errorf("mock append error"))
+
+	mcmsPackageIDHex := "123456789abcdef0" + strings.Repeat("0", 48)
+	mcmsPackageIDBytes, err := hex.DecodeString(mcmsPackageIDHex)
+	require.NoError(t, err)
+	mcmsPackageID := "0x" + mcmsPackageIDHex
+
+	params := NewExecutingCallbackParams(
+		mockClient,
+		mockMcms,
+		mcmsPackageID,
+		entrypointEncoder,
+		"0xregistry",
+		"0xaccount",
+	)
+
+	params.extractExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
+		return &transaction.Argument{}, nil
+	}
+	params.closeExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
+		return nil
+	}
+	params.createDeployerFunc = func(mcmsPackageID string, client sui.ISuiAPI) (module_mcms_deployer.IMcmsDeployer, error) {
+		return mockDeployer, nil
+	}
+
+	ctx := context.Background()
+	ptb := transaction.NewTransaction()
+	executeCallback := &transaction.Argument{}
+
+	calls := []Call{
+		{
+			Target:       mcmsPackageIDBytes,
+			StateObj:     "0xdeployerstate",
+			ModuleName:   "mcms_deployer",
+			FunctionName: "authorize_upgrade",
+		},
+	}
+
+	err = params.AppendPTB(ctx, ptb, executeCallback, calls)
+
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "adding ExecuteDispatchToDeployer call 0 to PTB")
+	assert.Contains(t, err.Error(), "mock append error")
 }
