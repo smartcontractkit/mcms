@@ -5,6 +5,8 @@ import (
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/block-vision/sui-go-sdk/models"
+	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 const (
@@ -13,6 +15,18 @@ const (
 	// MinimumResultLength is the minimum expected length for certain results
 	MinimumResultLength = 2
 )
+
+type Decoder struct{}
+
+var _ sdk.Decoder = &Decoder{}
+
+func NewDecoder() *Decoder {
+	return &Decoder{}
+}
+
+func (d Decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.DecodedOperation, error) {
+	return nil, nil
+}
 
 type Call struct {
 	Target           []byte
