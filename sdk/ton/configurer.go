@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"math/rand/v2"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
@@ -18,6 +19,7 @@ import (
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 )
 
 var _ sdk.Configurer = &configurer{}
@@ -40,8 +42,6 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
-	// TODO: create MCMS contract binding (uses c.client)
-
 	groupQuorum, groupParents, signerAddresses, signerGroups, err := evm.ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
@@ -54,18 +54,25 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		}
 	}
 
-	// TODO: encode SetConfig message
+	// Encode SetConfig message
+	sz := uint(8)
+	gqDict := cell.NewDict(sz)
+	for i, g := range groupQuorum {
+		gqDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
+	}
 
-	fmt.Println("  groupQuorum:", groupQuorum)
-	fmt.Println("  groupParents:", groupParents)
+	gpDict := cell.NewDict(sz)
+	for i, g := range groupParents {
+		gpDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
+	}
 
 	body, err := tlb.ToCell(mcms.SetConfig{
 		QueryID: rand.Uint64(),
 
-		// TODO: ...
-
 		SignerKeys:   common.SnakeData[mcms.SignerKey](signers),
 		SignerGroups: common.SnakeData[uint8](signerGroups),
+		GroupQuorums: gqDict,
+		GroupParents: gpDict,
 
 		ClearRoot: clearRoot,
 	})
