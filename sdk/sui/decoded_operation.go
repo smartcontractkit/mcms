@@ -17,7 +17,7 @@ type DecodedOperation struct {
 
 var _ sdk.DecodedOperation = &DecodedOperation{}
 
-func NewDecodedOperation(packageName, moduleName, functionName string, inputKeys []string, inputArgs []any) (*DecodedOperation, error) {
+func NewDecodedOperation(moduleName, functionName string, inputKeys []string, inputArgs []any) (*DecodedOperation, error) {
 	if len(inputKeys) != len(inputArgs) {
 		return nil, fmt.Errorf("input keys and input args must have the same length")
 	}
