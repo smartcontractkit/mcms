@@ -1,10 +1,14 @@
 package sui
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/block-vision/sui-go-sdk/models"
+	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 const (
@@ -13,6 +17,74 @@ const (
 	// MinimumResultLength is the minimum expected length for certain results
 	MinimumResultLength = 2
 )
+
+// TODO: I'll copy this structure here for now, but we should import it from SUI package later
+type FunctionParameter struct {
+	Name string `json:"name"`
+	Type string `json:"type"`
+}
+
+type FunctionInfo struct {
+	Package    string              `json:"package"`
+	Module     string              `json:"module"`
+	Name       string              `json:"name"`
+	Parameters []FunctionParameter `json:"parameters"`
+}
+
+func (fi *FunctionInfo) GetParameters() ([]string, []string) {
+	names := make([]string, len(fi.Parameters))
+	types := make([]string, len(fi.Parameters))
+	for i, param := range fi.Parameters {
+		names[i] = param.Name
+		types[i] = param.Type
+	}
+
+	return names, types
+}
+
+type Decoder struct{}
+
+var _ sdk.Decoder = &Decoder{}
+
+func NewDecoder() *Decoder {
+	return &Decoder{}
+}
+
+func (d Decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.DecodedOperation, error) {
+	var fInfos []FunctionInfo
+	if err := json.Unmarshal([]byte(contractInterfaces), &fInfos); err != nil {
+		return nil, err
+	}
+
+	var additionalFields AdditionalFields
+	if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+	}
+	if err := additionalFields.Validate(); err != nil {
+		return nil, fmt.Errorf("failed to validate additional fields: %w", err)
+	}
+
+	// Find information about the function being called
+	var functionInfo *FunctionInfo
+	for _, fInfo := range fInfos {
+		if fInfo.Module == additionalFields.ModuleName && fInfo.Name == additionalFields.Function {
+			functionInfo = &fInfo
+			break
+		}
+	}
+	if functionInfo == nil {
+		return nil, fmt.Errorf("could not find function in contractInterfaces for %s::%s", additionalFields.ModuleName, additionalFields.Function)
+	}
+
+	// Extract parameters' names and types and deserialize transaction data
+	parNames, parTypes := functionInfo.GetParameters()
+	parValues, err := bind.DeserializeBCS(tx.Data, parTypes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to deserialize BCS data: %w", err)
+	}
+
+	return NewDecodedOperation(additionalFields.ModuleName, additionalFields.Function, parNames, parValues)
+}
 
 type Call struct {
 	Target           []byte
