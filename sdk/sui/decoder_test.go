@@ -1,14 +1,77 @@
 package sui
 
 import (
+	"math/big"
 	"testing"
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	mcmsuser "github.com/smartcontractkit/chainlink-sui/bindings/packages/mcms/mcms_user"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 )
+
+func TestDecoder(t *testing.T) {
+	// functionInfo := `[{"package":"mcms_test","module":"mcms_user","name":"function_one","parameters":[{"name":"user_data","type":"UserData"},{"name":"owner_cap","type":"OwnerCap"},{"name":"arg1","type":"0x1::string::String"},{"name":"arg2","type":"vector\u003cu8\u003e"}]},{"package":"mcms_test","module":"mcms_user","name":"function_two","parameters":[{"name":"user_data","type":"UserData"},{"name":"owner_cap","type":"OwnerCap"},{"name":"arg1","type":"address"},{"name":"arg2","type":"u128"}]},{"package":"mcms_test","module":"mcms_user","name":"get_field_a","parameters":[{"name":"user_data","type":"UserData"}]},{"package":"mcms_test","module":"mcms_user","name":"get_field_b","parameters":[{"name":"user_data","type":"UserData"}]},{"package":"mcms_test","module":"mcms_user","name":"get_field_c","parameters":[{"name":"user_data","type":"UserData"}]},{"package":"mcms_test","module":"mcms_user","name":"get_field_d","parameters":[{"name":"user_data","type":"UserData"}]},{"package":"mcms_test","module":"mcms_user","name":"get_invocations","parameters":[{"name":"user_data","type":"UserData"}]},{"package":"mcms_test","module":"mcms_user","name":"get_owner_cap","parameters":[{"name":"user_data","type":"UserData"}]},{"package":"mcms_test","module":"mcms_user","name":"register_mcms_entrypoint","parameters":[{"name":"owner_cap","type":"OwnerCap"},{"name":"registry","type":"Registry"},{"name":"user_data","type":"UserData"}]},{"package":"mcms_test","module":"mcms_user","name":"register_upgrade_cap","parameters":[{"name":"state","type":"DeployerState"},{"name":"upgrade_cap","type":"UpgradeCap"},{"name":"registry","type":"Registry"}]}]`
+
+	user, err := mcmsuser.NewMCMSUser("0x31ecd2c5d71b042fd4f1276316ed64c1f7e795606891a929ccf985576ed06577", nil)
+	require.NoError(t, err)
+
+	mcmsUserObjectID := "0x8bc59c2842f436c1221691a359dc42941c1f25eca13f4bad79f7b00e8df4b968"
+	mcmsUserOwnerCapObj := "0x5b97db59e5e5d7d2d5e0421173aaee6511dbb494bd23ba98d463591c5e8e4887"
+	// arg1 := "Updated Field A"
+	// arg2 := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	arg2 := new(big.Int)
+	arg2.SetString("12345678901234567890", 10)
+
+	encodedCall, err := user.MCMSUser().Encoder().FunctionTwo(
+		bind.Object{Id: mcmsUserObjectID},
+		bind.Object{Id: mcmsUserOwnerCapObj},
+		mcmsUserObjectID,
+		arg2,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, encodedCall)
+
+	callBytes := extractByteArgsFromEncodedCall(encodedCall)
+	tx, err := NewTransactionWithStateObj(
+		encodedCall.Module.ModuleName,
+		encodedCall.Function,
+		encodedCall.Module.PackageID,
+		callBytes,
+		"MCMSUser",
+		[]string{},
+		mcmsUserObjectID,
+	)
+	require.NotNil(t, tx)
+	// argTypes := []string{"UserData", "OwnerCap", "0x1::string::String", "vector\u003cu8\u003e"}
+	// desData, err := deserializeBCS(tx.Data, argTypes)
+	// require.NoError(t, err)
+	// require.Equal(t, []any{
+	// 	// mustHexToAddress(mcmsUserObjectID),
+	// 	// mustHexToAddress(mcmsUserOwnerCapObj),
+	// 	"Updated Field A",
+	// 	[]uint8{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
+	// }, desData)
+}
+
+// TODO: Why not handling UnresolvedPure and ...?
+func extractByteArgsFromEncodedCall(encodedCall *bind.EncodedCall) []byte {
+	var args []byte
+	for _, callArg := range encodedCall.CallArgs {
+		if callArg.CallArg.UnresolvedObject != nil {
+			args = append(args, callArg.CallArg.UnresolvedObject.ObjectId[:]...)
+		}
+		if callArg.CallArg.Pure != nil {
+			b := callArg.CallArg.Pure.Bytes
+			args = append(args, b...)
+		}
+	}
+
+	return args
+}
 
 func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 	t.Parallel()
