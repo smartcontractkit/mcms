@@ -16,7 +16,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-// TODO: import from github.com/smartcontractkit/chainlink-ton/bindings/mcms/mcms
+// TODO: mv and import from github.com/smartcontractkit/chainlink-ton/bindings/mcms/mcms
 // TODO: update "MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR...", add TON prefixes
 var (
 	mcmDomainSeparatorOp       = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP_TON"))
