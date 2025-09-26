@@ -25,7 +25,9 @@ type Signer struct {
 	Group uint8    `tlb:"## 8"`   // 0 <= group < NUM_GROUPS. Each signer can only be in one group.
 }
 
-var _ sdk.ConfigTransformer[mcms.Config, any] = &configTransformer{}
+type ConfigTransformer = sdk.ConfigTransformer[mcms.Config, any]
+
+var _ ConfigTransformer = &configTransformer{}
 
 type configTransformer struct {
 	evmTransformer evm.ConfigTransformer
