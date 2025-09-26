@@ -3,6 +3,7 @@ package ton
 import (
 	"context"
 	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -49,7 +50,7 @@ func (i *Inspector) GetOpCount(ctx context.Context, _address string) (uint64, er
 
 	result, err := i.client.RunGetMethod(ctx, block, mcmsAddr, "getOpCount")
 	if err != nil {
-		return 0, fmt.Errorf("error getting dynamicConfig: %w", err)
+		return 0, fmt.Errorf("error getting getOpCount: %w", err)
 	}
 
 	rs, err := result.Slice(0)
@@ -64,6 +65,39 @@ func (i *Inspector) GetRoot(ctx context.Context, address string) (common.Hash, u
 	return common.Hash{}, 0, fmt.Errorf("not implemented")
 }
 
-func (e *Inspector) GetRootMetadata(ctx context.Context, address string) (types.ChainMetadata, error) {
-	return types.ChainMetadata{}, fmt.Errorf("not implemented")
+func (i *Inspector) GetRootMetadata(ctx context.Context, _address string) (types.ChainMetadata, error) {
+	// Map to Ton Address type (mcms.address)
+	mcmsAddr, err := address.ParseAddr(_address)
+	if err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("invalid mcms address: %w", err)
+	}
+
+	// TODO: mv and import from github.com/smartcontractkit/chainlink-ton/bindings/mcms/mcms
+	block, err := i.client.CurrentMasterchainInfo(ctx)
+	if err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("failed to get current masterchain info: %w", err)
+	}
+
+	result, err := i.client.RunGetMethod(ctx, block, mcmsAddr, "getRootMetadata")
+	if err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("error getting getRootMetadata: %w", err)
+	}
+
+	var preOpCount *big.Int
+	{
+		rs, err := result.Slice(2)
+		if err != nil {
+			return types.ChainMetadata{}, fmt.Errorf("error getting slice: %w", err)
+		}
+
+		preOpCount, err = rs.LoadBigUInt(64)
+		if err != nil {
+			return types.ChainMetadata{}, fmt.Errorf("error getting preOpCount: %w", err)
+		}
+	}
+
+	return types.ChainMetadata{
+		StartingOpCount: preOpCount.Uint64(),
+		MCMAddress:      _address,
+	}, nil
 }
