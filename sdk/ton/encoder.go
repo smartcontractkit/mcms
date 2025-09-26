@@ -96,5 +96,40 @@ func (e *encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 }
 
 func (e *encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
-	return common.Hash{}, fmt.Errorf("not implemented")
+	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to get chain ID from selector: %w", err)
+	}
+
+	// Map to Ton Address type (mcms.address)
+	mcmsAddr, err := address.ParseAddr(metadata.MCMAddress)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("invalid mcms address: %w", err)
+	}
+
+	// Encode metadata according to TON specs
+	metaCell, err := tlb.ToCell(mcms.RootMetadata{
+		ChainID:              (&big.Int{}).SetInt64(int64(chainID)),
+		MultiSig:             *mcmsAddr,
+		PreOpCount:           metadata.StartingOpCount,
+		PostOpCount:          metadata.StartingOpCount + e.TxCount,
+		OverridePreviousRoot: e.OverridePreviousRoot,
+	})
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to encode op: %w", err)
+	}
+
+	// Hash metadata according to TON specs
+	// @dev we use the standard sha256 (cell) hash function to hash the leaf.
+	b := cell.BeginCell()
+	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcmDomainSeparatorMetadata), 256); err != nil {
+		return common.Hash{}, fmt.Errorf("failed to store domain separator: %w", err)
+	}
+	if err := b.StoreRef(metaCell); err != nil {
+		return common.Hash{}, fmt.Errorf("failed to store meta cell ref: %w", err)
+	}
+
+	var hash common.Hash
+	copy(hash[:], b.EndCell().Hash()[:32])
+	return hash, nil
 }
