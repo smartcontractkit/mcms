@@ -37,7 +37,7 @@ func (i *Inspector) GetConfig(ctx context.Context, address string) (*types.Confi
 
 func (i *Inspector) GetOpCount(ctx context.Context, _address string) (uint64, error) {
 	// Map to Ton Address type (mcms.address)
-	mcmsAddr, err := address.ParseAddr(_address)
+	addr, err := address.ParseAddr(_address)
 	if err != nil {
 		return 0, fmt.Errorf("invalid mcms address: %w", err)
 	}
@@ -48,7 +48,7 @@ func (i *Inspector) GetOpCount(ctx context.Context, _address string) (uint64, er
 		return 0, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	result, err := i.client.RunGetMethod(ctx, block, mcmsAddr, "getOpCount")
+	result, err := i.client.RunGetMethod(ctx, block, addr, "getOpCount")
 	if err != nil {
 		return 0, fmt.Errorf("error getting getOpCount: %w", err)
 	}
@@ -67,7 +67,7 @@ func (i *Inspector) GetRoot(ctx context.Context, address string) (common.Hash, u
 
 func (i *Inspector) GetRootMetadata(ctx context.Context, _address string) (types.ChainMetadata, error) {
 	// Map to Ton Address type (mcms.address)
-	mcmsAddr, err := address.ParseAddr(_address)
+	addr, err := address.ParseAddr(_address)
 	if err != nil {
 		return types.ChainMetadata{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
@@ -78,7 +78,7 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, _address string) (types
 		return types.ChainMetadata{}, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	result, err := i.client.RunGetMethod(ctx, block, mcmsAddr, "getRootMetadata")
+	result, err := i.client.RunGetMethod(ctx, block, addr, "getRootMetadata")
 	if err != nil {
 		return types.ChainMetadata{}, fmt.Errorf("error getting getRootMetadata: %w", err)
 	}
