@@ -4,10 +4,12 @@ import (
 	"testing"
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
+	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	"github.com/smartcontractkit/chainlink-sui/bindings/generated"
 	mcmsuser "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 )
@@ -42,8 +44,7 @@ func TestDecoder(t *testing.T) {
 	)
 	require.NotNil(t, tx)
 
-	// TODO: get this from generated global function info, as the analyzer would do
-	functionInfo := mcmsuser.FunctionInfo
+	functionInfo := generated.FunctionInfoByModule[encodedCall.Module.ModuleName]
 	decoder := NewDecoder()
 	decodedOp, err := decoder.Decode(tx, functionInfo)
 	require.NoError(t, err)
@@ -51,7 +52,7 @@ func TestDecoder(t *testing.T) {
 
 	require.Equal(t, "mcms_user::function_one", decodedOp.MethodName())
 	require.Equal(t, []string{"user_data", "owner_cap", "arg1", "arg2"}, decodedOp.Keys())
-	require.Equal(t, []any{mcmsUserObjectID, mcmsUserOwnerCapObj, arg1, arg2}, decodedOp.Args())
+	require.Equal(t, []any{models.SuiAddress(mcmsUserObjectID), models.SuiAddress(mcmsUserOwnerCapObj), arg1, arg2}, decodedOp.Args())
 }
 
 // TODO: make this a shared function
