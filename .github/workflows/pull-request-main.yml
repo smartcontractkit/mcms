@@ -119,7 +119,6 @@ jobs:
           use-go-cache: true
           go-test-cmd: |
             set +e
-            set -x
 
             echo "::group::EVM"
             CTF_CONFIGS=../config.evm.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestEVMSuite || evm_failure=true
@@ -141,7 +140,7 @@ jobs:
             [[ -n "${solana_failure}" ]] && echo "🚨 Solana e2e tests failed."
             [[ -n "${aptos_failure}" ]] && echo "🚨 Aptos e2e tests failed."
             [[ -n "${sui_failure}" ]] && echo "🚨 Sui e2e tests failed."
-            [[ -n "${evm_failure}" || -n "${solana_failure}" ]] && {
+            [[ -n "${evm_failure}" || -n "${solana_failure}" || -n "${sui_failure}" ]] && {
               exit 1
             } || {
               echo "Exiting"
