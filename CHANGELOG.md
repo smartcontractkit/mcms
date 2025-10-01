@@ -1,5 +1,15 @@
 # @smartcontractkit/mcms
 
+## 0.26.0
+
+### Minor Changes
+
+- [#480](https://github.com/smartcontractkit/mcms/pull/480) [`4ce2d7a`](https://github.com/smartcontractkit/mcms/commit/4ce2d7a247c7ed4c0f506ae5d93f67842feae9de) Thanks [@JohnChangUK](https://github.com/JohnChangUK)! - add support for Sui contract upgrades operations
+
+### Patch Changes
+
+- [#483](https://github.com/smartcontractkit/mcms/pull/483) [`aabbb32`](https://github.com/smartcontractkit/mcms/commit/aabbb320e004a0d306c0aed2af960767b9178527) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - add support for any sui mcms receiver function signature
+
 ## 0.25.1
 
 ### Patch Changes
