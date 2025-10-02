@@ -471,6 +471,16 @@ func Test_Proposal_Validate(t *testing.T) {
 				"Key: 'Proposal.Operations[0].Transaction.AdditionalFields' Error:Field validation for 'AdditionalFields' failed on the 'required' tag",
 			},
 		},
+		{
+			name: "duplicate signers",
+			giveFunc: func(p *Proposal) {
+				// Two identical signatures -> same ToBytes() -> duplicate
+				p.Signatures = []types.Signature{{}, {}}
+			},
+			wantErrs: []string{
+				"duplicate signer detected: 0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+			},
+		},
 	}
 
 	for _, tt := range tests {

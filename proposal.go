@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -153,6 +154,11 @@ func (p *Proposal) Validate() error {
 	// Run tag-based validation
 	validate := validator.New()
 	if err := validate.Struct(p); err != nil {
+		return err
+	}
+
+	// ensure there are no duplicate signers
+	if err := validateNoDuplicateSigners(p.Signatures); err != nil {
 		return err
 	}
 
@@ -416,4 +422,19 @@ func mergeMetadataMaps(a, b map[string]any) map[string]any {
 	}
 
 	return out
+}
+
+// validateNoDuplicateSigners ensures all signers are unique based on their raw bytes.
+func validateNoDuplicateSigners(sigs []types.Signature) error {
+	seen := make(map[string]struct{}, len(sigs))
+	for _, s := range sigs {
+		// Use bytes from the signature’s signer identity and encode to hex for a stable key.
+		key := hex.EncodeToString(s.ToBytes())
+		if _, ok := seen[key]; ok {
+			return &DuplicateSignersError{signer: key}
+		}
+		seen[key] = struct{}{}
+	}
+
+	return nil
 }
