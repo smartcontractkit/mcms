@@ -61,6 +61,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	operationId, errHash := HashOperationBatch(calls, predecessor, salt)
+
 	if errHash != nil {
 		return []types.Operation{}, common.Hash{}, errHash
 	}

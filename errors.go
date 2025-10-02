@@ -138,3 +138,12 @@ func (e *InvalidSignatureError) Error() string {
 func NewInvalidSignatureError(recoveredAddress common.Address) *InvalidSignatureError {
 	return &InvalidSignatureError{RecoveredAddress: recoveredAddress}
 }
+
+// DuplicateSignersError is returned when proposal signatures contain the same signer more than once.
+type DuplicateSignersError struct {
+	signer string
+}
+
+func (e *DuplicateSignersError) Error() string {
+	return fmt.Sprintf("duplicate signer detected: %s", e.signer)
+}
