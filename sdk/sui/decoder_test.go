@@ -4,11 +4,75 @@ import (
 	"testing"
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
+	"github.com/block-vision/sui-go-sdk/models"
+	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	"github.com/smartcontractkit/chainlink-sui/bindings/generated"
+	mcmsuser "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 )
+
+func TestDecoder(t *testing.T) {
+	t.Parallel()
+
+	user, err := mcmsuser.NewMcmsUser("0x31ecd2c5d71b042fd4f1276316ed64c1f7e795606891a929ccf985576ed06577", nil)
+	require.NoError(t, err)
+
+	mcmsUserObjectID := "0x8bc59c2842f436c1221691a359dc42941c1f25eca13f4bad79f7b00e8df4b968"
+	mcmsUserOwnerCapObj := "0x5b97db59e5e5d7d2d5e0421173aaee6511dbb494bd23ba98d463591c5e8e4887"
+	arg1 := "Updated Field A"
+	arg2 := []byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+	encodedCall, err := user.Encoder().FunctionOne(
+		bind.Object{Id: mcmsUserObjectID},
+		bind.Object{Id: mcmsUserOwnerCapObj},
+		arg1,
+		arg2,
+	)
+	require.NoError(t, err)
+	require.NotNil(t, encodedCall)
+
+	callBytes := extractByteArgsFromEncodedCall(encodedCall)
+	tx, err := NewTransactionWithStateObj(
+		encodedCall.Module.ModuleName,
+		encodedCall.Function,
+		encodedCall.Module.PackageID,
+		callBytes,
+		"MCMSUser",
+		[]string{},
+		mcmsUserObjectID,
+	)
+	require.NotNil(t, tx)
+	require.NoError(t, err)
+
+	functionInfo := generated.FunctionInfoByModule[encodedCall.Module.ModuleName]
+	decoder := NewDecoder()
+	decodedOp, err := decoder.Decode(tx, functionInfo)
+	require.NoError(t, err)
+	require.NotNil(t, decodedOp)
+
+	require.Equal(t, "mcms_user::function_one", decodedOp.MethodName())
+	require.Equal(t, []string{"user_data", "owner_cap", "arg1", "arg2"}, decodedOp.Keys())
+	require.Equal(t, []any{models.SuiAddress(mcmsUserObjectID), models.SuiAddress(mcmsUserOwnerCapObj), arg1, arg2}, decodedOp.Args())
+}
+
+// TODO: make this a shared function
+func extractByteArgsFromEncodedCall(encodedCall *bind.EncodedCall) []byte {
+	var args []byte
+	for _, callArg := range encodedCall.CallArgs {
+		if callArg.CallArg.UnresolvedObject != nil {
+			args = append(args, callArg.CallArg.UnresolvedObject.ObjectId[:]...)
+		}
+		if callArg.CallArg.Pure != nil {
+			b := callArg.CallArg.Pure.Bytes
+			args = append(args, b...)
+		}
+	}
+
+	return args
+}
 
 func TestDeserializeTimelockBypasserExecuteBatch(t *testing.T) {
 	t.Parallel()
