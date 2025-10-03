@@ -8,6 +8,7 @@ import (
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/smartcontractkit/chainlink-sui/bindgen/function"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )

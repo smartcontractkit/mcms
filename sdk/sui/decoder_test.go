@@ -5,16 +5,18 @@ import (
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/block-vision/sui-go-sdk/models"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	"github.com/smartcontractkit/chainlink-sui/bindings/generated"
 	mcmsuser "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 )
 
 func TestDecoder(t *testing.T) {
+	t.Parallel()
+
 	user, err := mcmsuser.NewMcmsUser("0x31ecd2c5d71b042fd4f1276316ed64c1f7e795606891a929ccf985576ed06577", nil)
 	require.NoError(t, err)
 
@@ -43,6 +45,7 @@ func TestDecoder(t *testing.T) {
 		mcmsUserObjectID,
 	)
 	require.NotNil(t, tx)
+	require.NoError(t, err)
 
 	functionInfo := generated.FunctionInfoByModule[encodedCall.Module.ModuleName]
 	decoder := NewDecoder()
