@@ -20,7 +20,7 @@ require (
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250905094443-ac02b032b32b
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250805210128-7f8a0f403c3a
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20250805210128-7f8a0f403c3a
-	github.com/smartcontractkit/chainlink-sui v0.0.0-20251001142809-3b6d4505fd5c
+	github.com/smartcontractkit/chainlink-sui v0.0.0-20251003184214-6b66b55d860b
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.10.16
 	github.com/smartcontractkit/freeport v0.1.2
 	github.com/spf13/cast v1.7.1
