@@ -168,9 +168,11 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 	// Mock TimelockExecuteBatch call
 	timelockObject := bind.Object{Id: timelockObj}
 	clockObj := bind.Object{Id: "0x6"}
+	registryObject := bind.Object{Id: registryObj}
 	mockEncoder.On("TimelockExecuteBatch",
 		timelockObject,
 		clockObj,
+		registryObject,
 		[]string{"0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789"},
 		[]string{"test_module"},
 		[]string{"test_function"},
@@ -354,9 +356,11 @@ func TestTimelockExecutor_Execute_TimelockExecuteBatchFailure(t *testing.T) {
 	// Mock TimelockExecuteBatch call to fail
 	timelockObject := bind.Object{Id: timelockObj}
 	clockObj := bind.Object{Id: "0x6"}
+	registryObject := bind.Object{Id: registryObj}
 	mockEncoder.On("TimelockExecuteBatch",
 		timelockObject,
 		clockObj,
+		registryObject,
 		[]string{"0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789"},
 		[]string{"test_module"},
 		[]string{"test_function"},
@@ -435,9 +439,11 @@ func TestTimelockExecutor_Execute_AppendPTBFailure(t *testing.T) {
 	// Mock TimelockExecuteBatch call to succeed
 	timelockObject := bind.Object{Id: timelockObj}
 	clockObj := bind.Object{Id: "0x6"}
+	registryObject := bind.Object{Id: registryObj}
 	mockEncoder.On("TimelockExecuteBatch",
 		timelockObject,
 		clockObj,
+		registryObject,
 		[]string{"0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789"},
 		[]string{"test_module"},
 		[]string{"test_function"},
