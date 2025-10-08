@@ -6,7 +6,7 @@ toolchain go1.24.7
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-replace github.com/smartcontractkit/chainlink-sui => github.com/smartcontractkit/chainlink-sui v0.0.0-20251008002405-8646ac38ba49
+replace github.com/smartcontractkit/chainlink-sui => github.com/smartcontractkit/chainlink-sui v0.0.0-20251008042511-60e64de57f60
 
 require (
 	github.com/aptos-labs/aptos-go-sdk v1.7.1-0.20250602153733-bb1facae1d43
