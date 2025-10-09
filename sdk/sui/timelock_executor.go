@@ -98,9 +98,12 @@ func (t *TimelockExecutor) Execute(
 	timelockObj := bind.Object{Id: timelockAddress}
 	clockObj := bind.Object{Id: "0x6"} // Clock object ID in Sui
 
+	registryObj := bind.Object{Id: t.registryObj}
+
 	timelockExecuteCall, err := t.mcms.Encoder().TimelockExecuteBatch(
 		timelockObj,
 		clockObj,
+		registryObj,
 		targets,
 		moduleNames,
 		functionNames,
