@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.26.1
+
+### Patch Changes
+
+- [#496](https://github.com/smartcontractkit/mcms/pull/496) [`bb6a47c`](https://github.com/smartcontractkit/mcms/commit/bb6a47c7284c5c7552f37d70c8ff55ec1b0d05a6) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Adapt Sui calls to latest contract changes
+
 ## 0.26.0
 
 ### Minor Changes
