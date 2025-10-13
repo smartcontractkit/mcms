@@ -87,18 +87,18 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
 	mockMcms.EXPECT().Encoder().Return(mockMcmsEncoder)
 	mockMcms.EXPECT().Bound().Return(mockBound)
 
-	// Mock the ExecuteDispatchToAccountWithArgs call
+	// Mock the McmsSetConfigWithArgs call (default case for non-mcms_deployer/mcms_account modules)
 	expectedCall := &bind.EncodedCall{
 		Module: bind.ModuleInformation{
 			PackageID:   "0x123456789abcdef",
 			PackageName: "mcms",
-			ModuleName:  "mcms",
+			ModuleName:  "test_module",
 		},
-		Function: "mcms_dispatch_to_account",
+		Function: "test_function",
 	}
-	mockMcmsEncoder.EXPECT().McmsDispatchToAccountWithArgs(
+	mockMcmsEncoder.EXPECT().McmsSetConfigWithArgs(
 		"0xregistry",
-		"0xaccount",
+		"0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789",
 		mock.AnythingOfType("*transaction.Argument"),
 	).Return(expectedCall, nil)
 
@@ -146,6 +146,88 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
 			Target:       mcmsPackageIDBytes,
 			StateObj:     "0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789",
 			ModuleName:   "test_module",
+			FunctionName: "test_function",
+		},
+	}
+
+	// Execute the method
+	err = params.AppendPTB(ctx, ptb, executeCallback, calls)
+	assert.NoError(t, err)
+}
+
+func TestExecutingCallbackParams_AppendPTB_WithMCMSAccountModule(t *testing.T) {
+	t.Parallel()
+
+	// Create mock objects
+	mockClient := mocksui.NewISuiAPI(t)
+	mockMcms := mockmcms.NewIMcms(t)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
+	mockMcmsEncoder := mockmcms.NewMcmsEncoder(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
+
+	// Setup mock expectations
+	mockMcms.EXPECT().Encoder().Return(mockMcmsEncoder)
+	mockMcms.EXPECT().Bound().Return(mockBound)
+
+	// Mock the McmsDispatchToAccountWithArgs call (mcms_account module case)
+	expectedCall := &bind.EncodedCall{
+		Module: bind.ModuleInformation{
+			PackageID:   "0x123456789abcdef",
+			PackageName: "mcms",
+			ModuleName:  "mcms_account",
+		},
+		Function: "mcms_dispatch_to_account",
+	}
+	mockMcmsEncoder.EXPECT().McmsDispatchToAccountWithArgs(
+		"0xregistry",
+		"0xaccount",
+		mock.AnythingOfType("*transaction.Argument"),
+	).Return(expectedCall, nil)
+
+	// Mock the AppendPTB call
+	mockBound.EXPECT().AppendPTB(
+		mock.Anything,
+		mock.AnythingOfType("*bind.CallOpts"),
+		mock.AnythingOfType("*transaction.Transaction"),
+		expectedCall,
+	).Return(nil, nil)
+
+	mcmsPackageIDHex := "123456789abcdef0" + strings.Repeat("0", 48)
+	mcmsPackageIDBytes, err := hex.DecodeString(mcmsPackageIDHex)
+	require.NoError(t, err)
+	mcmsPackageID := "0x" + mcmsPackageIDHex
+
+	// Create the ExecutingCallbackParams
+	params := NewExecutingCallbackParams(
+		mockClient,
+		mockMcms,
+		mcmsPackageID,
+		entrypointEncoder,
+		"0xregistry",
+		"0xaccount",
+	)
+
+	// Mock the helper functions
+	params.extractExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
+		// Return a mock transaction.Argument
+		return &transaction.Argument{}, nil
+	}
+	params.closeExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
+		// Just return success
+		return nil
+	}
+
+	// Create test data
+	ctx := context.Background()
+	ptb := &transaction.Transaction{}
+	executeCallback := &transaction.Argument{}
+
+	// Create a call that targets the MCMS package with mcms_account module
+	calls := []Call{
+		{
+			Target:       mcmsPackageIDBytes,
+			StateObj:     "0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789",
+			ModuleName:   "mcms_account",
 			FunctionName: "test_function",
 		},
 	}
