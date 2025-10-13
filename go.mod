@@ -6,8 +6,6 @@ toolchain go1.24.7
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-replace github.com/smartcontractkit/chainlink-sui => github.com/smartcontractkit/chainlink-sui v0.0.0-20251008042511-60e64de57f60
-
 require (
 	github.com/aptos-labs/aptos-go-sdk v1.7.1-0.20250602153733-bb1facae1d43
 	github.com/block-vision/sui-go-sdk v1.1.2
@@ -22,7 +20,7 @@ require (
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20250905094443-ac02b032b32b
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20250805210128-7f8a0f403c3a
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20250805210128-7f8a0f403c3a
-	github.com/smartcontractkit/chainlink-sui v0.0.0-20251008002405-8646ac38ba49
+	github.com/smartcontractkit/chainlink-sui v0.0.0-20251013155034-5f85c5f450ab
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.10.16
 	github.com/smartcontractkit/freeport v0.1.2
 	github.com/spf13/cast v1.7.1
