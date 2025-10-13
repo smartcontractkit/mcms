@@ -94,9 +94,9 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
 			PackageName: "mcms",
 			ModuleName:  "mcms",
 		},
-		Function: "execute_dispatch_to_account",
+		Function: "mcms_dispatch_to_account",
 	}
-	mockMcmsEncoder.EXPECT().ExecuteDispatchToAccountWithArgs(
+	mockMcmsEncoder.EXPECT().McmsDispatchToAccountWithArgs(
 		"0xregistry",
 		"0xaccount",
 		mock.AnythingOfType("*transaction.Argument"),
@@ -355,9 +355,9 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSDeployerTarget_Success(t *tes
 			PackageName: "mcms",
 			ModuleName:  "mcms",
 		},
-		Function: "execute_dispatch_to_deployer",
+		Function: "mcms_dispatch_to_deployer",
 	}
-	mockMcmsEncoder.EXPECT().ExecuteDispatchToDeployerWithArgs(
+	mockMcmsEncoder.EXPECT().McmsDispatchToDeployerWithArgs(
 		"0xregistry",
 		"0xdeployerstate",
 		mock.AnythingOfType("*transaction.Argument"),
@@ -494,7 +494,7 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSDeployerTarget_ExecuteDispatc
 	mockDeployer := mockmcmsdeployer.NewIMcmsDeployer(t)
 
 	mockMcms.EXPECT().Encoder().Return(mockMcmsEncoder)
-	mockMcmsEncoder.EXPECT().ExecuteDispatchToDeployerWithArgs(
+	mockMcmsEncoder.EXPECT().McmsDispatchToDeployerWithArgs(
 		"0xregistry",
 		"0xdeployerstate",
 		mock.AnythingOfType("*transaction.Argument"),
@@ -558,7 +558,7 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSDeployerTarget_AppendPTBError
 	mockMcms.EXPECT().Bound().Return(mockBound)
 
 	expectedDispatchCall := &bind.EncodedCall{}
-	mockMcmsEncoder.EXPECT().ExecuteDispatchToDeployerWithArgs(
+	mockMcmsEncoder.EXPECT().McmsDispatchToDeployerWithArgs(
 		"0xregistry",
 		"0xdeployerstate",
 		mock.AnythingOfType("*transaction.Argument"),

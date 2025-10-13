@@ -74,14 +74,14 @@ func (e *ExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transactio
 				return fmt.Errorf("failed to extract executing callback params: %w", extractErr)
 			}
 
-			// Route based on module name within MCMS package
-			if call.ModuleName == "mcms_deployer" {
-				// Validate that this is an authorize_upgrade call
+			switch call.ModuleName {
+			case "mcms_deployer":
+				// Handle mcms_deployer specific logic
 				if call.FunctionName != "authorize_upgrade" {
 					return fmt.Errorf("mcms_deployer calls must have FunctionName 'authorize_upgrade', got: %s", call.FunctionName)
 				}
 
-				executeDispatchCall, err := e.mcms.Encoder().ExecuteDispatchToDeployerWithArgs(
+				executeDispatchCall, err := e.mcms.Encoder().McmsDispatchToDeployerWithArgs(
 					e.registryObj, // Registry object
 					call.StateObj, // DeployerState object
 					executingCallbackParams,
@@ -124,12 +124,28 @@ func (e *ExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transactio
 				if err != nil {
 					return fmt.Errorf("failed to append commit upgrade to PTB: %w", err)
 				}
-			} else {
-				executeDispatchCall, err := e.mcms.Encoder().ExecuteDispatchToAccountWithArgs(
+			case "mcms_account":
+				executeDispatchCall, err := e.mcms.Encoder().McmsDispatchToAccountWithArgs(
 					e.registryObj,
 					e.accountObj,
 					executingCallbackParams,
 				)
+				if err != nil {
+					return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", i, err)
+				}
+
+				// Add the call to the PTB
+				_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
+				if err != nil {
+					return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
+				}
+			default:
+				executeDispatchCall, err := e.mcms.Encoder().McmsSetConfigWithArgs(
+					e.registryObj,
+					call.StateObj,
+					executingCallbackParams,
+				)
+				executeDispatchCall.Function = call.FunctionName // Override function name for flexibility
 				if err != nil {
 					return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", i, err)
 				}
