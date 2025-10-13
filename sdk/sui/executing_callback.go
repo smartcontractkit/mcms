@@ -140,12 +140,13 @@ func (e *ExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transactio
 					return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
 				}
 			default:
+				// any other module should be the mcms main module, we can use set_config as the template function to encode the call
 				executeDispatchCall, err := e.mcms.Encoder().McmsSetConfigWithArgs(
 					e.registryObj,
 					call.StateObj,
 					executingCallbackParams,
 				)
-				executeDispatchCall.Function = call.FunctionName // Override function name for flexibility
+				executeDispatchCall.Function = fmt.Sprintf("mcms_%s", strings.TrimPrefix(call.FunctionName, "mcms_")) // Override function name for flexibility
 				if err != nil {
 					return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", i, err)
 				}
