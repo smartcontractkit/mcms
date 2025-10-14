@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -169,7 +170,7 @@ func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (
 	for i, sig := range s.proposal.Signatures {
 		recoveredAddr, rerr := sig.Recover(hash)
 		if rerr != nil {
-			return false, rerr
+			return false, NewInvalidSignatureAtIndexError(i, sig, common.Address{}, rerr)
 		}
 
 		recoveredSigners[i] = recoveredAddr
@@ -180,7 +181,24 @@ func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (
 		return false, err
 	}
 
-	return configuration.CanSetRoot(recoveredSigners)
+	canSetRoot, err := configuration.CanSetRoot(recoveredSigners)
+	if err != nil {
+		return false, err
+	}
+
+	if !canSetRoot {
+		// Find which signatures are invalid by checking each recovered address individually
+		allSigners := configuration.GetAllSigners()
+		for i, recoveredAddr := range recoveredSigners {
+			if !slices.Contains(allSigners, recoveredAddr) {
+				return false, NewInvalidSignatureAtIndexError(i, s.proposal.Signatures[i], recoveredAddr, nil)
+			}
+		}
+		// If all signers are valid but quorum not reached, return the original error
+		return false, NewQuorumNotReachedError(chain)
+	}
+
+	return true, nil
 }
 
 // ValidateSignatures checks if the quorum for the proposal has been reached on the MCM contracts

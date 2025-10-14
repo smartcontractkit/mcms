@@ -138,3 +138,29 @@ func (e *InvalidSignatureError) Error() string {
 func NewInvalidSignatureError(recoveredAddress common.Address) *InvalidSignatureError {
 	return &InvalidSignatureError{RecoveredAddress: recoveredAddress}
 }
+
+// InvalidSignatureAtIndexError provides detailed information about which signature is invalid
+type InvalidSignatureAtIndexError struct {
+	Index            int
+	Signature        types.Signature
+	RecoveredAddress common.Address
+	RecoveryError    error
+}
+
+func (e *InvalidSignatureAtIndexError) Error() string {
+	if e.RecoveryError != nil {
+		return fmt.Sprintf("signature at index %d is invalid: failed to recover address from signature (r=%s, s=%s, v=%d): %v",
+			e.Index, e.Signature.R.Hex(), e.Signature.S.Hex(), e.Signature.V, e.RecoveryError)
+	}
+	return fmt.Sprintf("signature at index %d is invalid: recovered address %s is not a valid signer (signature: r=%s, s=%s, v=%d)",
+		e.Index, e.RecoveredAddress.Hex(), e.Signature.R.Hex(), e.Signature.S.Hex(), e.Signature.V)
+}
+
+func NewInvalidSignatureAtIndexError(index int, sig types.Signature, recoveredAddr common.Address, recoveryErr error) *InvalidSignatureAtIndexError {
+	return &InvalidSignatureAtIndexError{
+		Index:            index,
+		Signature:        sig,
+		RecoveredAddress: recoveredAddr,
+		RecoveryError:    recoveryErr,
+	}
+}
