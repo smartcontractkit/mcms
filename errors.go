@@ -152,6 +152,7 @@ func (e *InvalidSignatureAtIndexError) Error() string {
 		return fmt.Sprintf("signature at index %d is invalid: failed to recover address from signature (r=%s, s=%s, v=%d): %v",
 			e.Index, e.Signature.R.Hex(), e.Signature.S.Hex(), e.Signature.V, e.RecoveryError)
 	}
+
 	return fmt.Sprintf("signature at index %d is invalid: recovered address %s is not a valid signer (signature: r=%s, s=%s, v=%d)",
 		e.Index, e.RecoveredAddress.Hex(), e.Signature.R.Hex(), e.Signature.S.Hex(), e.Signature.V)
 }
