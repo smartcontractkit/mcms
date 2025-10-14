@@ -1,9 +1,11 @@
 package mcms
 
 import (
+	"errors"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/smartcontractkit/mcms/types"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -21,6 +23,7 @@ func TestErrorMessages(t *testing.T) {
 		{NewInvalidValidUntilError(1), "invalid valid until: 1"},
 		{NewInvalidSignatureError(common.HexToAddress("0x1")), "invalid signature: received signature for address 0x0000000000000000000000000000000000000001 is not a valid signer in the MCMS proposal"},
 		{NewQuorumNotReachedError(1), "quorum not reached for chain 1"},
+		{&DuplicateSignersError{signer: "0x1234567890123456789012345678901234567890"}, "duplicate signer detected: 0x1234567890123456789012345678901234567890"},
 	}
 
 	for _, tt := range tests {
@@ -29,4 +32,39 @@ func TestErrorMessages(t *testing.T) {
 			assert.Equal(t, tt.want, tt.err.Error())
 		}
 	}
+}
+
+func TestInvalidSignatureAtIndexError(t *testing.T) {
+	t.Parallel()
+
+	// Test signature for testing
+	sig := types.Signature{
+		R: common.HexToHash("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"),
+		S: common.HexToHash("0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321"),
+		V: 27,
+	}
+
+	t.Run("with recovery error", func(t *testing.T) {
+		recoveryErr := errors.New("invalid signature format")
+		err := NewInvalidSignatureAtIndexError(0, sig, common.Address{}, recoveryErr)
+
+		expected := "signature at index 0 is invalid: failed to recover address from signature (r=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef, s=0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321, v=27): invalid signature format"
+		assert.Equal(t, expected, err.Error())
+		assert.Equal(t, 0, err.Index)
+		assert.Equal(t, sig, err.Signature)
+		assert.Equal(t, common.Address{}, err.RecoveredAddress)
+		assert.Equal(t, recoveryErr, err.RecoveryError)
+	})
+
+	t.Run("with invalid signer", func(t *testing.T) {
+		recoveredAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
+		err := NewInvalidSignatureAtIndexError(2, sig, recoveredAddr, nil)
+
+		expected := "signature at index 2 is invalid: recovered address 0x1234567890123456789012345678901234567890 is not a valid signer (signature: r=0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef, s=0xfedcba0987654321fedcba0987654321fedcba0987654321fedcba0987654321, v=27)"
+		assert.Equal(t, expected, err.Error())
+		assert.Equal(t, 2, err.Index)
+		assert.Equal(t, sig, err.Signature)
+		assert.Equal(t, recoveredAddr, err.RecoveredAddress)
+		assert.Nil(t, err.RecoveryError)
+	})
 }

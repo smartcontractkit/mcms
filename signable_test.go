@@ -549,8 +549,10 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	// Validate the signatures
 	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.Error(t, err)
-	// TODO: This should be an InvalidSignatureError, but right now the error is untyped. Depends on the import issue
-	// require.IsType(t, &InvalidSignatureError{}, err)
+
+	var invalidSigErr *InvalidSignatureAtIndexError
+	require.ErrorAs(t, err, &invalidSigErr)
+	require.Equal(t, 3, invalidSigErr.Index) // Invalid signature should be at index 3 (after the 3 valid signers)
 	require.False(t, quorumMet)
 }
 
