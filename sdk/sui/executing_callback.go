@@ -59,9 +59,7 @@ func (e *ExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transactio
 	opts := &bind.CallOpts{}
 	// Process each ExecutingCallbackParams individually
 	// We need to process them in reverse order since we're using pop_back to extract elements
-	for i := len(calls) - 1; i >= 0; i-- {
-		call := calls[i]
-
+	for i, call := range calls {
 		// Ensure proper address formatting - convert bytes to hex with proper padding
 		targetString := fmt.Sprintf("0x%s", strings.ToLower(hex.EncodeToString(call.Target)))
 		isTargetMCMSPackage := targetString == e.mcmsPackageID
@@ -198,9 +196,9 @@ func extractExecutingCallbackParams(mcmsPackageID string, ptb *transaction.Trans
 	executingCallbackParams := ptb.MoveCall(
 		"0x1", // Standard library package for vector operations
 		"vector",
-		"pop_back",
+		"remove",
 		[]transaction.TypeTag{*typeTag}, // Type arguments
-		[]transaction.Argument{*vectorExecutingCallback}, // Arguments: just the vector
+		[]transaction.Argument{*vectorExecutingCallback, ptb.Pure(uint64(0))}, // Arguments: vector and position 0 to remove
 	)
 
 	return &executingCallbackParams, nil
