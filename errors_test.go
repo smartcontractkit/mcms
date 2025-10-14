@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/mcms/types"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestErrorMessages(t *testing.T) {
@@ -45,6 +46,8 @@ func TestInvalidSignatureAtIndexError(t *testing.T) {
 	}
 
 	t.Run("with recovery error", func(t *testing.T) {
+		t.Parallel()
+
 		recoveryErr := errors.New("invalid signature format")
 		err := NewInvalidSignatureAtIndexError(0, sig, common.Address{}, recoveryErr)
 
@@ -57,6 +60,8 @@ func TestInvalidSignatureAtIndexError(t *testing.T) {
 	})
 
 	t.Run("with invalid signer", func(t *testing.T) {
+		t.Parallel()
+
 		recoveredAddr := common.HexToAddress("0x1234567890123456789012345678901234567890")
 		err := NewInvalidSignatureAtIndexError(2, sig, recoveredAddr, nil)
 
@@ -65,6 +70,6 @@ func TestInvalidSignatureAtIndexError(t *testing.T) {
 		assert.Equal(t, 2, err.Index)
 		assert.Equal(t, sig, err.Signature)
 		assert.Equal(t, recoveredAddr, err.RecoveredAddress)
-		assert.Nil(t, err.RecoveryError)
+		assert.NoError(t, err.RecoveryError)
 	})
 }

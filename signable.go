@@ -181,19 +181,21 @@ func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (
 		return false, err
 	}
 
+	// Check each signer individually first to provide detailed error information
+	allSigners := configuration.GetAllSigners()
+	for i, recoveredAddr := range recoveredSigners {
+		if !slices.Contains(allSigners, recoveredAddr) {
+			return false, NewInvalidSignatureAtIndexError(i, s.proposal.Signatures[i], recoveredAddr, nil)
+		}
+	}
+
+	// All signers are valid, now check if quorum is reached
 	canSetRoot, err := configuration.CanSetRoot(recoveredSigners)
 	if err != nil {
 		return false, err
 	}
 
 	if !canSetRoot {
-		// Find which signatures are invalid by checking each recovered address individually
-		allSigners := configuration.GetAllSigners()
-		for i, recoveredAddr := range recoveredSigners {
-			if !slices.Contains(allSigners, recoveredAddr) {
-				return false, NewInvalidSignatureAtIndexError(i, s.proposal.Signatures[i], recoveredAddr, nil)
-			}
-		}
 		// If all signers are valid but quorum not reached, return the original error
 		return false, NewQuorumNotReachedError(chain)
 	}
