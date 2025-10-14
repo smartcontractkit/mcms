@@ -1209,8 +1209,7 @@ func Test_TimelockProposal_Merge(t *testing.T) {
 					SetDescription("proposal 1\nproposal 2").
 					SetValidUntil(2051222400). // 2035-01-01 00:00:00 UTC
 					SetDelay(types.NewDuration(2*time.Minute)).
-					// SetSalt(pointerTo(common.HexToHash("0x123456"))).
-					AddSignature(sig2).
+					SetSignatures([]types.Signature(nil)).
 					AddTimelockAddress(chaintest.Chain2Selector, "0xchain2TimelockAddress").
 					AddChainMetadata(chaintest.Chain2Selector, types.ChainMetadata{
 						StartingOpCount:  2,
@@ -1289,8 +1288,7 @@ func Test_TimelockProposal_Merge(t *testing.T) {
 					SetDescription("proposal 1\nproposal 2").
 					SetValidUntil(2051222400). // 2035-01-01 00:00:00 UTC
 					SetDelay(types.NewDuration(1*time.Minute)).
-					AddSignature(sig2).
-					AddSignature(sig3).
+					SetSignatures([]types.Signature(nil)).
 					// chain 1
 					AddTimelockAddress(chaintest.Chain1Selector, "0xchain1TimelockAddress").
 					AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{
@@ -1414,17 +1412,7 @@ func Test_TimelockProposal_Merge(t *testing.T) {
 			},
 		},
 		{
-			name:      "success: merge signatures without duplicates",
-			proposal1: mustBuild(t, baseProposalBuilder().SetSignatures([]types.Signature{sig1, sig2})),
-			proposal2: mustBuild(t, baseProposalBuilder().SetSignatures([]types.Signature{sig2, sig3})),
-			assert: func(t *testing.T, merged *TimelockProposal) {
-				t.Helper()
-				want := []types.Signature{sig1, sig2, sig3}
-				assert.Equal(t, want, merged.Signatures)
-			},
-		},
-		{
-			name: "success: merge Metadata", // implemented separately as the Metadata field is not used anywhere else
+			name: "success: merge Metadata",
 			proposal1: func() *TimelockProposal {
 				proposal := mustBuild(t, baseProposalBuilder())
 				proposal.Metadata = map[string]any{"key1": 1, "key2": "two"}
@@ -1433,13 +1421,13 @@ func Test_TimelockProposal_Merge(t *testing.T) {
 			}(),
 			proposal2: func() *TimelockProposal {
 				proposal := mustBuild(t, baseProposalBuilder())
-				proposal.Metadata = map[string]any{"key1": 1, "key3": 3.0}
+				proposal.Metadata = map[string]any{"key1": "one", "key3": 3.0}
 
 				return proposal
 			}(),
 			assert: func(t *testing.T, merged *TimelockProposal) {
 				t.Helper()
-				want := map[string]any{"key1": 1, "key2": "two", "key3": 3.0}
+				want := map[string]any{"key1": "one", "key2": "two", "key3": 3.0}
 				require.Equal(t, want, merged.Metadata)
 			},
 		},
@@ -1539,22 +1527,6 @@ func Test_TimelockProposal_Merge(t *testing.T) {
 				return proposal
 			}(),
 			wantErr: "cannot merge ChainMetadata with different value for key \"key\" in AdditionalFields: value1 vs value2",
-		},
-		{
-			name: "failure: conflicting values in Metadata", // implemented separately as the Metadata field is not used anywhere else
-			proposal1: func() *TimelockProposal {
-				proposal := mustBuild(t, baseProposalBuilder())
-				proposal.Metadata = map[string]any{"key1": 1}
-
-				return proposal
-			}(),
-			proposal2: func() *TimelockProposal {
-				proposal := mustBuild(t, baseProposalBuilder())
-				proposal.Metadata = map[string]any{"key1": "one"}
-
-				return proposal
-			}(),
-			wantErr: "failed to merge proposal metadata: conflicting metadata for key key1",
 		},
 	}
 

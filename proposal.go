@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -151,8 +152,13 @@ func WriteProposal(w io.Writer, proposal *Proposal) error {
 
 func (p *Proposal) Validate() error {
 	// Run tag-based validation
-	var validate = validator.New()
+	validate := validator.New()
 	if err := validate.Struct(p); err != nil {
+		return err
+	}
+
+	// ensure there are no duplicate signers
+	if err := validateNoDuplicateSigners(p.Signatures); err != nil {
 		return err
 	}
 
@@ -392,20 +398,43 @@ func wrapTreeGenErr(err error) error {
 	return fmt.Errorf("merkle tree generation error: %w", err)
 }
 
-func mergeMetadata(m1, m2 map[string]any) (map[string]any, error) {
+func mergeMetadata(m1, m2 map[string]any) map[string]any {
 	if len(m2) == 0 {
-		return m1, nil
+		return m1
 	}
 
-	merged := make(map[string]any, len(m1))
-	maps.Copy(merged, m1)
-	for k, v2 := range m2 {
-		v1, exists := m1[k]
-		if exists && v1 != v2 {
-			return nil, fmt.Errorf("conflicting metadata for key %s: %v vs %v (%T %T %v)", k, v1, v2, v1, v2, v1 == v2)
+	return mergeMetadataMaps(m1, m2)
+}
+
+func mergeMetadataMaps(a, b map[string]any) map[string]any {
+	out := make(map[string]any, len(a))
+	maps.Copy(out, a)
+	for k, v := range b {
+		if v, ok := v.(map[string]any); ok {
+			if bv, ok := out[k]; ok {
+				if bv, ok := bv.(map[string]any); ok {
+					out[k] = mergeMetadataMaps(bv, v)
+					continue
+				}
+			}
 		}
-		merged[k] = v2
+		out[k] = v
 	}
 
-	return merged, nil
+	return out
+}
+
+// validateNoDuplicateSigners ensures all signers are unique based on their raw bytes.
+func validateNoDuplicateSigners(sigs []types.Signature) error {
+	seen := make(map[string]struct{}, len(sigs))
+	for _, s := range sigs {
+		// Use bytes from the signature’s signer identity and encode to hex for a stable key.
+		key := hex.EncodeToString(s.ToBytes())
+		if _, ok := seen[key]; ok {
+			return &DuplicateSignersError{signer: key}
+		}
+		seen[key] = struct{}{}
+	}
+
+	return nil
 }

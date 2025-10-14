@@ -56,7 +56,7 @@ jobs:
       - name: Build and test
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
         with:
-          go-test-cmd: go test -coverpkg=../... -coverprofile=coverage.txt -test.gocoverdir=/tmp ./...
+          go-test-cmd: go test -v -cover -coverpkg=./... -coverprofile=coverage.txt ./...
           use-go-cache: true
 
   ci-test-e2e:
@@ -79,6 +79,15 @@ jobs:
         uses: aptos-labs/actions/install-aptos-cli@ce57287eb852b9819c1d74fecc3be187677559fd # v0.1
         with:
           CLI_VERSION: 7.0.0
+
+      - name: Install Sui CLI
+        shell: bash
+        run: |
+          SUI_VERSION="1.57.2"
+          curl -L "https://github.com/MystenLabs/sui/releases/download/mainnet-v${SUI_VERSION}/sui-mainnet-v${SUI_VERSION}-ubuntu-x86_64.tgz" -o sui.tgz
+          tar -xzf sui.tgz
+          sudo mv sui /usr/local/bin/
+          sui --version
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -106,9 +115,37 @@ jobs:
       - name: Run e2e tests
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
         with:
-          go-test-cmd: CTF_CONFIGS=../config.toml go test -tags=e2e -v ./e2e/tests/...
           checkout-repo: false
           use-go-cache: true
+          go-test-cmd: |
+            set +e
+
+            echo "::group::EVM"
+            CTF_CONFIGS=../config.evm.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestEVMSuite || evm_failure=true
+            echo "::endgroup::"
+
+            echo "::group::Solana"
+            CTF_CONFIGS=../config.solana.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestSolanaSuite || solana_failure=true
+            echo "::endgroup::"
+
+            echo "::group::Aptos"
+            CTF_CONFIGS=../config.aptos.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestAptosSuite || aptos_failure=true
+            echo "::endgroup::"
+
+            echo "::group::Sui"
+            CTF_CONFIGS=../config.sui.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestSuiSuite || sui_failure=true
+            echo "::endgroup::"
+
+            [[ -n "${evm_failure}" ]] && echo "🚨 EVM e2e tests failed."
+            [[ -n "${solana_failure}" ]] && echo "🚨 Solana e2e tests failed."
+            [[ -n "${aptos_failure}" ]] && echo "🚨 Aptos e2e tests failed."
+            [[ -n "${sui_failure}" ]] && echo "🚨 Sui e2e tests failed."
+            [[ -n "${evm_failure}" || -n "${solana_failure}" || -n "${sui_failure}" ]] && {
+              exit 1
+            } || {
+              echo "Exiting"
+              exit 0
+            }
 
   ci-sonarqube:
     name: Sonarqube Scan

@@ -65,7 +65,7 @@ packages:
       all: false
       outpkg: "mock_aptossdk"
       replace-type:
-      - "github.com/aptos-labs/aptos-go-sdk/internal/types.AccountAddress=aptos:github.com/aptos-labs/aptos-go-sdk.AccountAddress"
+        - "github.com/aptos-labs/aptos-go-sdk/internal/types.AccountAddress=aptos:github.com/aptos-labs/aptos-go-sdk.AccountAddress"
     interfaces:
       AptosRpcClient:
         config:
@@ -75,6 +75,72 @@ packages:
         config:
           dir: "./sdk/aptos/mocks/aptos"
           filename: "transactionsigner.go"
+  github.com/block-vision/sui-go-sdk/sui:
+    config:
+      all: false
+      outpkg: "mock_sui"
+    interfaces:
+      ISuiAPI:
+        config:
+          dir: "./sdk/sui/mocks/sui"
+          filename: "isuiapi.go"
+  github.com/smartcontractkit/chainlink-sui/bindings/utils:
+    config:
+      all: false
+      outpkg: "mock_bindutils"
+    interfaces:
+      SuiSigner:
+        config:
+          dir: "./sdk/sui/mocks/bindutils"
+          filename: "suisigner.go"
+  github.com/smartcontractkit/chainlink-sui/bindings/bind:
+    config:
+      all: false
+      outpkg: "mock_bindutils"
+    interfaces:
+      IBoundContract:
+        config:
+          dir: "./sdk/sui/mocks/bindutils"
+          filename: "iboundcontract.go"
+  github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms:
+    config:
+      all: false
+      outpkg: "mock_module_mcms"
+    interfaces:
+      IMcms:
+        config:
+          dir: "./sdk/sui/mocks/mcms"
+          filename: "imcms.go"
+      IMcmsDevInspect:
+        config:
+          dir: "./sdk/sui/mocks/mcms"
+          filename: "imcmsdevinspect.go"
+      McmsEncoder:
+        config:
+          dir: "./sdk/sui/mocks/mcms"
+          filename: "mcmsencoder.go"
+  github.com/smartcontractkit/chainlink-sui/bindings/generated/ccip/ccip/fee_quoter:
+    config:
+      all: false
+      outpkg: "mock_module_feequoter"
+    interfaces:
+      FeeQuoterEncoder:
+        config:
+          dir: "./sdk/sui/mocks/feequoter"
+          filename: "feequoterencoder.go"
+  github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_deployer:
+    config:
+      all: false
+      outpkg: "mock_module_mcmsdeployer"
+    interfaces:
+      IMcmsDeployer:
+        config:
+          dir: "./sdk/sui/mocks/mcmsdeployer"
+          filename: "imcmsdeployer.go"
+      McmsDeployerEncoder:
+        config:
+          dir: "./sdk/sui/mocks/mcmsdeployer"
+          filename: "mcmsdeployerencoder.go"
 
 # Required to fix the following deprecation warning:
 # https://vektra.github.io/mockery/v2.48/deprecations/#issue-845-fix

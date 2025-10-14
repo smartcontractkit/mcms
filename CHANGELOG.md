@@ -1,5 +1,63 @@
 # @smartcontractkit/mcms
 
+## 0.26.1
+
+### Patch Changes
+
+- [#496](https://github.com/smartcontractkit/mcms/pull/496) [`bb6a47c`](https://github.com/smartcontractkit/mcms/commit/bb6a47c7284c5c7552f37d70c8ff55ec1b0d05a6) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Adapt Sui calls to latest contract changes
+
+## 0.26.0
+
+### Minor Changes
+
+- [#480](https://github.com/smartcontractkit/mcms/pull/480) [`4ce2d7a`](https://github.com/smartcontractkit/mcms/commit/4ce2d7a247c7ed4c0f506ae5d93f67842feae9de) Thanks [@JohnChangUK](https://github.com/JohnChangUK)! - add support for Sui contract upgrades operations
+
+### Patch Changes
+
+- [#483](https://github.com/smartcontractkit/mcms/pull/483) [`aabbb32`](https://github.com/smartcontractkit/mcms/commit/aabbb320e004a0d306c0aed2af960767b9178527) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - add support for any sui mcms receiver function signature
+
+## 0.25.1
+
+### Patch Changes
+
+- [#476](https://github.com/smartcontractkit/mcms/pull/476) [`ad1250c`](https://github.com/smartcontractkit/mcms/commit/ad1250c5842600846c74e67bd4e6efcf2c970132) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump chain selectors to v1.0.71
+
+## 0.25.0
+
+### Minor Changes
+
+- [#473](https://github.com/smartcontractkit/mcms/pull/473) [`f81bddb`](https://github.com/smartcontractkit/mcms/commit/f81bddbea933fef1e3654778b6915272d787e4b1) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Add object info to sui chain metadata
+
+## 0.24.1
+
+### Patch Changes
+
+- [#469](https://github.com/smartcontractkit/mcms/pull/469) [`c82a8ff`](https://github.com/smartcontractkit/mcms/commit/c82a8ff06c9eb32464fda5b0d1d913267e693de6) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump chainlink-sui
+
+- [#470](https://github.com/smartcontractkit/mcms/pull/470) [`9ac4c3c`](https://github.com/smartcontractkit/mcms/commit/9ac4c3c519bbc108f2090a2e7168ae592762afd3) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Update Sui metadata hashes and delay time conversion
+
+## 0.24.0
+
+### Minor Changes
+
+- [#464](https://github.com/smartcontractkit/mcms/pull/464) [`80431f2`](https://github.com/smartcontractkit/mcms/commit/80431f23e0b498b978409cb3b4d16ed0f62d7ce1) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Add cancellation support in Sui proposals
+
+### Patch Changes
+
+- [#466](https://github.com/smartcontractkit/mcms/pull/466) [`081f622`](https://github.com/smartcontractkit/mcms/commit/081f622ec62206776008e0f4cd07e385933e5a7f) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Adapt external calls to new mcms dispatch pattern
+
+## 0.23.0
+
+### Minor Changes
+
+- [#424](https://github.com/smartcontractkit/mcms/pull/424) [`4f868e5`](https://github.com/smartcontractkit/mcms/commit/4f868e5b9cbba8e8e11c731b5cc1dc43b3c1ecaa) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Add Sui implementation and e2e tests
+
+### Patch Changes
+
+- [#462](https://github.com/smartcontractkit/mcms/pull/462) [`b7855e0`](https://github.com/smartcontractkit/mcms/commit/b7855e04e27f61c9bd44f7455bc1a8d095f4d350) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: signatures should be reset when merging proposals
+
+- [#463](https://github.com/smartcontractkit/mcms/pull/463) [`7f151a5`](https://github.com/smartcontractkit/mcms/commit/7f151a56dfc2c7ed3ba8b118d48fc989e6e1dbe8) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: use deep map merge when merging proposal Metadata
+
 ## 0.22.0
 
 ### Minor Changes

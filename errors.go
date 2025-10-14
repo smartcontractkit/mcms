@@ -164,3 +164,12 @@ func NewInvalidSignatureAtIndexError(index int, sig types.Signature, recoveredAd
 		RecoveryError:    recoveryErr,
 	}
 }
+
+// DuplicateSignersError is returned when proposal signatures contain the same signer more than once.
+type DuplicateSignersError struct {
+	signer string
+}
+
+func (e *DuplicateSignersError) Error() string {
+	return fmt.Sprintf("duplicate signer detected: %s", e.signer)
+}
