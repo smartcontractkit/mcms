@@ -115,11 +115,11 @@ func (t *TimelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("failed to execute batch: %w", err)
 	}
 
-	b := uint64(500_000_000)
+	gasBudget := uint64(UpgradeGasBudget)
 	opts := &bind.CallOpts{
 		Signer:           t.signer,
 		WaitForExecution: true,
-		GasBudget:        &b,
+		GasBudget:        &gasBudget,
 	}
 
 	ptb := transaction.NewTransaction()

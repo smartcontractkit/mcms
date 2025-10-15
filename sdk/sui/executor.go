@@ -112,11 +112,11 @@ func (e Executor) ExecuteOperation(
 	stateObj := bind.Object{Id: e.mcmsObj}
 	clockObj := bind.Object{Id: "0x6"} // Clock object ID in Sui
 
-	b := uint64(500_000_000)
+	gasBudget := uint64(UpgradeGasBudget)
 	opts := &bind.CallOpts{
 		Signer:           e.signer,
 		WaitForExecution: true,
-		GasBudget:        &b,
+		GasBudget:        &gasBudget,
 	}
 
 	toAddress, err := AddressFromHex(op.Transaction.To)
