@@ -94,7 +94,7 @@ func (e *ExecutingCallbackParams) processMCMSPackageCall(ctx context.Context, pt
 	case "mcms_deployer":
 		return e.processMCMSDeployerCall(ctx, ptb, opts, executingCallbackParams, call, index)
 	case "mcms_account":
-		return e.processMCMSAccountCall(ctx, ptb, opts, executingCallbackParams, call, index)
+		return e.processMCMSAccountCall(ctx, ptb, opts, executingCallbackParams, index)
 	default:
 		return e.processMCMSMainModuleCall(ctx, ptb, opts, executingCallbackParams, call, index)
 	}
@@ -112,10 +112,7 @@ func (e *ExecutingCallbackParams) processMCMSDeployerCall(ctx context.Context, p
 	}
 
 	// Step 2: Perform package upgrade
-	upgradeReceiptArg, err := e.performPackageUpgrade(ptb, call, upgradeTicketArg)
-	if err != nil {
-		return err
-	}
+	upgradeReceiptArg := e.performPackageUpgrade(ptb, call, upgradeTicketArg)
 
 	// Step 3: Commit upgrade
 	return e.commitUpgrade(ctx, ptb, opts, call, upgradeReceiptArg)
@@ -139,7 +136,7 @@ func (e *ExecutingCallbackParams) executeDispatchToDeployer(ctx context.Context,
 	return upgradeTicketArg, nil
 }
 
-func (e *ExecutingCallbackParams) performPackageUpgrade(ptb *transaction.Transaction, call Call, upgradeTicketArg *transaction.Argument) (*transaction.Argument, error) {
+func (e *ExecutingCallbackParams) performPackageUpgrade(ptb *transaction.Transaction, call Call, upgradeTicketArg *transaction.Argument) *transaction.Argument {
 	ptb.SetGasBudget(UpgradeGasBudget)
 
 	upgradeReceiptArg := ptb.Upgrade(
@@ -149,7 +146,7 @@ func (e *ExecutingCallbackParams) performPackageUpgrade(ptb *transaction.Transac
 		*upgradeTicketArg,
 	)
 
-	return &upgradeReceiptArg, nil
+	return &upgradeReceiptArg
 }
 
 func (e *ExecutingCallbackParams) commitUpgrade(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, call Call, upgradeReceiptArg *transaction.Argument) error {
@@ -174,7 +171,7 @@ func (e *ExecutingCallbackParams) commitUpgrade(ctx context.Context, ptb *transa
 	return nil
 }
 
-func (e *ExecutingCallbackParams) processMCMSAccountCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, call Call, index int) error {
+func (e *ExecutingCallbackParams) processMCMSAccountCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, index int) error {
 	executeDispatchCall, err := e.mcms.Encoder().McmsDispatchToAccountWithArgs(
 		e.registryObj,
 		e.accountObj,
