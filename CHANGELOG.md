@@ -1,5 +1,15 @@
 # @smartcontractkit/mcms
 
+## 0.27.0
+
+### Minor Changes
+
+- [#500](https://github.com/smartcontractkit/mcms/pull/500) [`dc330c2`](https://github.com/smartcontractkit/mcms/commit/dc330c290db01f1c48d42589fc0a5db9601d033c) Thanks [@ecPablo](https://github.com/ecPablo)! - improve error message for check quorum to show offending signature
+
+### Patch Changes
+
+- [#502](https://github.com/smartcontractkit/mcms/pull/502) [`c883009`](https://github.com/smartcontractkit/mcms/commit/c8830096bbccaf7b1ba9f835bff1d5774ee93407) Thanks [@rodrigombsoares](https://github.com/rodrigombsoares)! - fix the execution order of batch calls in Sui
+
 ## 0.26.1
 
 ### Patch Changes
