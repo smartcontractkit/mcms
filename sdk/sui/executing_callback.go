@@ -55,129 +55,180 @@ func NewExecutingCallbackParams(client sui.ISuiAPI, mcms modulemcms.IMcms, mcmsP
 }
 
 func (e *ExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transaction.Transaction, executeCallback *transaction.Argument, calls []Call) error {
-	// Only used for object resolving caching
 	opts := &bind.CallOpts{}
-	// Process each ExecutingCallbackParams individually
-	// We need to process them in reverse order since we're using pop_back to extract elements
+
 	for i, call := range calls {
-		// Ensure proper address formatting - convert bytes to hex with proper padding
-		targetString := fmt.Sprintf("0x%s", strings.ToLower(hex.EncodeToString(call.Target)))
-		isTargetMCMSPackage := targetString == e.mcmsPackageID
-
-		// If the target is the MCMS package, we need to call ExecuteDispatchToAccount
-		if isTargetMCMSPackage {
-			// We need to extract individual ExecutingCallbackParams from the executeCallback vector
-			executingCallbackParams, extractErr := e.extractExecutingCallbackParams(e.mcmsPackageID, ptb, executeCallback)
-			if extractErr != nil {
-				return fmt.Errorf("failed to extract executing callback params: %w", extractErr)
-			}
-
-			switch call.ModuleName {
-			case "mcms_deployer":
-				// Handle mcms_deployer specific logic
-				if call.FunctionName != "authorize_upgrade" {
-					return fmt.Errorf("mcms_deployer calls must have FunctionName 'authorize_upgrade', got: %s", call.FunctionName)
-				}
-
-				executeDispatchCall, err := e.mcms.Encoder().McmsDispatchToDeployerWithArgs(
-					e.registryObj, // Registry object
-					call.StateObj, // DeployerState object
-					executingCallbackParams,
-				)
-				if err != nil {
-					return fmt.Errorf("creating ExecuteDispatchToDeployer call %d: %w", i, err)
-				}
-
-				// Add the call to the PTB and capture the UpgradeTicket result
-				upgradeTicketArg, err := e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
-				if err != nil {
-					return fmt.Errorf("adding ExecuteDispatchToDeployer call %d to PTB: %w", i, err)
-				}
-
-				// Increase gas budget for the upgrade steps
-				ptb.SetGasBudget(UpgradeGasBudget)
-
-				// Step 2: Use the UpgradeTicket in package upgrade → produces UpgradeReceipt
-				upgradeReceiptArg := ptb.Upgrade(
-					call.CompiledModules,                     // Raw bytes (from Call)
-					call.Dependencies,                        // Dependencies as addresses (from Call)
-					models.SuiAddress(call.PackageToUpgrade), // Package being upgraded (from Call)
-					*upgradeTicketArg,                        // UpgradeTicket from authorize step
-				)
-
-				deployerContract, err := e.createDeployerFunc(e.mcmsPackageID, e.client)
-				if err != nil {
-					return fmt.Errorf("failed to create deployer contract: %w", err)
-				}
-
-				commitEncoded, err := deployerContract.Encoder().CommitUpgradeWithArgs(
-					bind.Object{Id: call.StateObj}, // DeployerState
-					upgradeReceiptArg,              // UpgradeReceipt
-				)
-				if err != nil {
-					return fmt.Errorf("failed to encode commit upgrade: %w", err)
-				}
-
-				_, err = deployerContract.Bound().AppendPTB(ctx, opts, ptb, commitEncoded)
-				if err != nil {
-					return fmt.Errorf("failed to append commit upgrade to PTB: %w", err)
-				}
-			case "mcms_account":
-				executeDispatchCall, err := e.mcms.Encoder().McmsDispatchToAccountWithArgs(
-					e.registryObj,
-					e.accountObj,
-					executingCallbackParams,
-				)
-				if err != nil {
-					return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", i, err)
-				}
-
-				// Add the call to the PTB
-				_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
-				if err != nil {
-					return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
-				}
-			default:
-				// any other module should be the mcms main module, we can use set_config as the template function to encode the call
-				executeDispatchCall, err := e.mcms.Encoder().McmsSetConfigWithArgs(
-					e.registryObj,
-					call.StateObj,
-					executingCallbackParams,
-				)
-				executeDispatchCall.Function = fmt.Sprintf("mcms_%s", strings.TrimPrefix(call.FunctionName, "mcms_")) // Override function name for flexibility
-				if err != nil {
-					return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", i, err)
-				}
-
-				// Add the call to the PTB
-				_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
-				if err != nil {
-					return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", i, err)
-				}
-			}
-			// If this is a destination contract operation, we need to call the mcms_entrypoint like function
-		} else {
-			executingCallbackParams, err := e.extractExecutingCallbackParams(e.mcmsPackageID, ptb, executeCallback)
-			if err != nil {
-				return fmt.Errorf("extracting ExecutingCallbackParams %d: %w", i, err)
-			}
-
-			// Encode the entrypoint call
-			entryPointCall, err := e.entryPointEncoder.EncodeEntryPointArg(executingCallbackParams, targetString, call.ModuleName, call.FunctionName, call.StateObj, call.Data)
-			if err != nil {
-				return fmt.Errorf("failed to create mcms_entrypoint call: %w", err)
-			}
-
-			_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, entryPointCall)
-			if err != nil {
-				return fmt.Errorf("failed to append mcms_entrypoint call to PTB: %w", err)
-			}
+		if err := e.processCall(ctx, ptb, opts, executeCallback, call, i); err != nil {
+			return err
 		}
 	}
 
-	// After processing all elements, the vector should be empty, we need to close it
-	if err := e.closeExecutingCallbackParams(e.mcmsPackageID, ptb, executeCallback); err != nil {
-		return fmt.Errorf("closing ExecutingCallbackParams vector: %w", err)
+	return e.closeExecutingCallbackParams(e.mcmsPackageID, ptb, executeCallback)
+}
+
+func (e *ExecutingCallbackParams) processCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executeCallback *transaction.Argument, call Call, index int) error {
+	targetString := e.formatTargetAddress(call.Target)
+
+	executingCallbackParams, err := e.extractExecutingCallbackParams(e.mcmsPackageID, ptb, executeCallback)
+	if err != nil {
+		return fmt.Errorf("extracting ExecutingCallbackParams %d: %w", index, err)
+	}
+
+	if e.isTargetMCMSPackage(targetString) {
+		return e.processMCMSPackageCall(ctx, ptb, opts, executingCallbackParams, call, index)
+	}
+
+	return e.processDestinationContractCall(ctx, ptb, opts, executingCallbackParams, call, targetString)
+}
+
+func (e *ExecutingCallbackParams) formatTargetAddress(target []byte) string {
+	return fmt.Sprintf("0x%s", strings.ToLower(hex.EncodeToString(target)))
+}
+
+func (e *ExecutingCallbackParams) isTargetMCMSPackage(targetString string) bool {
+	return targetString == e.mcmsPackageID
+}
+
+func (e *ExecutingCallbackParams) processMCMSPackageCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, call Call, index int) error {
+	switch call.ModuleName {
+	case "mcms_deployer":
+		return e.processMCMSDeployerCall(ctx, ptb, opts, executingCallbackParams, call, index)
+	case "mcms_account":
+		return e.processMCMSAccountCall(ctx, ptb, opts, executingCallbackParams, call, index)
+	default:
+		return e.processMCMSMainModuleCall(ctx, ptb, opts, executingCallbackParams, call, index)
+	}
+}
+
+func (e *ExecutingCallbackParams) processMCMSDeployerCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, call Call, index int) error {
+	if call.FunctionName != "authorize_upgrade" {
+		return fmt.Errorf("mcms_deployer calls must have FunctionName 'authorize_upgrade', got: %s", call.FunctionName)
+	}
+
+	// Step 1: Create and execute dispatch call
+	upgradeTicketArg, err := e.executeDispatchToDeployer(ctx, ptb, opts, executingCallbackParams, call, index)
+	if err != nil {
+		return err
+	}
+
+	// Step 2: Perform package upgrade
+	upgradeReceiptArg, err := e.performPackageUpgrade(ptb, call, upgradeTicketArg)
+	if err != nil {
+		return err
+	}
+
+	// Step 3: Commit upgrade
+	return e.commitUpgrade(ctx, ptb, opts, call, upgradeReceiptArg)
+}
+
+func (e *ExecutingCallbackParams) executeDispatchToDeployer(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, call Call, index int) (*transaction.Argument, error) {
+	executeDispatchCall, err := e.mcms.Encoder().McmsDispatchToDeployerWithArgs(
+		e.registryObj,
+		call.StateObj,
+		executingCallbackParams,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("creating ExecuteDispatchToDeployer call %d: %w", index, err)
+	}
+
+	upgradeTicketArg, err := e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
+	if err != nil {
+		return nil, fmt.Errorf("adding ExecuteDispatchToDeployer call %d to PTB: %w", index, err)
+	}
+
+	return upgradeTicketArg, nil
+}
+
+func (e *ExecutingCallbackParams) performPackageUpgrade(ptb *transaction.Transaction, call Call, upgradeTicketArg *transaction.Argument) (*transaction.Argument, error) {
+	ptb.SetGasBudget(UpgradeGasBudget)
+
+	upgradeReceiptArg := ptb.Upgrade(
+		call.CompiledModules,
+		call.Dependencies,
+		models.SuiAddress(call.PackageToUpgrade),
+		*upgradeTicketArg,
+	)
+
+	return &upgradeReceiptArg, nil
+}
+
+func (e *ExecutingCallbackParams) commitUpgrade(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, call Call, upgradeReceiptArg *transaction.Argument) error {
+	deployerContract, err := e.createDeployerFunc(e.mcmsPackageID, e.client)
+	if err != nil {
+		return fmt.Errorf("failed to create deployer contract: %w", err)
+	}
+
+	commitEncoded, err := deployerContract.Encoder().CommitUpgradeWithArgs(
+		bind.Object{Id: call.StateObj},
+		*upgradeReceiptArg,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to encode commit upgrade: %w", err)
+	}
+
+	_, err = deployerContract.Bound().AppendPTB(ctx, opts, ptb, commitEncoded)
+	if err != nil {
+		return fmt.Errorf("failed to append commit upgrade to PTB: %w", err)
+	}
+
+	return nil
+}
+
+func (e *ExecutingCallbackParams) processMCMSAccountCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, call Call, index int) error {
+	executeDispatchCall, err := e.mcms.Encoder().McmsDispatchToAccountWithArgs(
+		e.registryObj,
+		e.accountObj,
+		executingCallbackParams,
+	)
+	if err != nil {
+		return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", index, err)
+	}
+
+	_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
+	if err != nil {
+		return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", index, err)
+	}
+
+	return nil
+}
+
+func (e *ExecutingCallbackParams) processMCMSMainModuleCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, call Call, index int) error {
+	executeDispatchCall, err := e.mcms.Encoder().McmsSetConfigWithArgs(
+		e.registryObj,
+		call.StateObj,
+		executingCallbackParams,
+	)
+	if err != nil {
+		return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", index, err)
+	}
+
+	// Adjust function name to match mcms_ prefix
+	executeDispatchCall.Function = fmt.Sprintf("mcms_%s", strings.TrimPrefix(call.FunctionName, "mcms_"))
+
+	_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
+	if err != nil {
+		return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", index, err)
+	}
+
+	return nil
+}
+
+func (e *ExecutingCallbackParams) processDestinationContractCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, call Call, targetString string) error {
+	entryPointCall, err := e.entryPointEncoder.EncodeEntryPointArg(
+		executingCallbackParams,
+		targetString,
+		call.ModuleName,
+		call.FunctionName,
+		call.StateObj,
+		call.Data,
+	)
+	if err != nil {
+		return fmt.Errorf("failed to create mcms_entrypoint call: %w", err)
+	}
+
+	_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, entryPointCall)
+	if err != nil {
+		return fmt.Errorf("failed to append mcms_entrypoint call to PTB: %w", err)
 	}
 
 	return nil
