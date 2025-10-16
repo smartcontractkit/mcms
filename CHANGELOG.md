@@ -1,5 +1,13 @@
 # @smartcontractkit/mcms
 
+## 0.28.0
+
+### Minor Changes
+
+- [#508](https://github.com/smartcontractkit/mcms/pull/508) [`e46e00a`](https://github.com/smartcontractkit/mcms/commit/e46e00ac4f515f18b825271969b4b0d75515acb8) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Bumps chainlink-sui version
+
+- [#506](https://github.com/smartcontractkit/mcms/pull/506) [`7637afd`](https://github.com/smartcontractkit/mcms/commit/7637afd4a7dfe93b9fbe6735206d1dc1a2fa4fd8) Thanks [@rodrigombsoares](https://github.com/rodrigombsoares)! - Increase gas budget for SUI
+
 ## 0.27.0
 
 ### Minor Changes
