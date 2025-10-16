@@ -564,9 +564,9 @@ func (_c *IMcmsDevInspect_Data_Call) RunAndReturn(run func(context.Context, *bin
 	return _c
 }
 
-// DispatchTimelockBypasserExecuteBatch provides a mock function with given fields: ctx, opts, timelockCallbackParams
-func (_m *IMcmsDevInspect) DispatchTimelockBypasserExecuteBatch(ctx context.Context, opts *bind.CallOpts, timelockCallbackParams module_mcms.TimelockCallbackParams) ([]bind.Object, error) {
-	ret := _m.Called(ctx, opts, timelockCallbackParams)
+// DispatchTimelockBypasserExecuteBatch provides a mock function with given fields: ctx, opts, timelockCallbackParams, registry
+func (_m *IMcmsDevInspect) DispatchTimelockBypasserExecuteBatch(ctx context.Context, opts *bind.CallOpts, timelockCallbackParams module_mcms.TimelockCallbackParams, registry bind.Object) ([]bind.Object, error) {
+	ret := _m.Called(ctx, opts, timelockCallbackParams, registry)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DispatchTimelockBypasserExecuteBatch")
@@ -574,19 +574,19 @@ func (_m *IMcmsDevInspect) DispatchTimelockBypasserExecuteBatch(ctx context.Cont
 
 	var r0 []bind.Object
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams) ([]bind.Object, error)); ok {
-		return rf(ctx, opts, timelockCallbackParams)
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams, bind.Object) ([]bind.Object, error)); ok {
+		return rf(ctx, opts, timelockCallbackParams, registry)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams) []bind.Object); ok {
-		r0 = rf(ctx, opts, timelockCallbackParams)
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams, bind.Object) []bind.Object); ok {
+		r0 = rf(ctx, opts, timelockCallbackParams, registry)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).([]bind.Object)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams) error); ok {
-		r1 = rf(ctx, opts, timelockCallbackParams)
+	if rf, ok := ret.Get(1).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams, bind.Object) error); ok {
+		r1 = rf(ctx, opts, timelockCallbackParams, registry)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -603,13 +603,14 @@ type IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call struct {
 //   - ctx context.Context
 //   - opts *bind.CallOpts
 //   - timelockCallbackParams module_mcms.TimelockCallbackParams
-func (_e *IMcmsDevInspect_Expecter) DispatchTimelockBypasserExecuteBatch(ctx interface{}, opts interface{}, timelockCallbackParams interface{}) *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call {
-	return &IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call{Call: _e.mock.On("DispatchTimelockBypasserExecuteBatch", ctx, opts, timelockCallbackParams)}
+//   - registry bind.Object
+func (_e *IMcmsDevInspect_Expecter) DispatchTimelockBypasserExecuteBatch(ctx interface{}, opts interface{}, timelockCallbackParams interface{}, registry interface{}) *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call {
+	return &IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call{Call: _e.mock.On("DispatchTimelockBypasserExecuteBatch", ctx, opts, timelockCallbackParams, registry)}
 }
 
-func (_c *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call) Run(run func(ctx context.Context, opts *bind.CallOpts, timelockCallbackParams module_mcms.TimelockCallbackParams)) *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call {
+func (_c *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call) Run(run func(ctx context.Context, opts *bind.CallOpts, timelockCallbackParams module_mcms.TimelockCallbackParams, registry bind.Object)) *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*bind.CallOpts), args[2].(module_mcms.TimelockCallbackParams))
+		run(args[0].(context.Context), args[1].(*bind.CallOpts), args[2].(module_mcms.TimelockCallbackParams), args[3].(bind.Object))
 	})
 	return _c
 }
@@ -619,7 +620,7 @@ func (_c *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call) Return(_a0 
 	return _c
 }
 
-func (_c *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams) ([]bind.Object, error)) *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call {
+func (_c *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams, bind.Object) ([]bind.Object, error)) *IMcmsDevInspect_DispatchTimelockBypasserExecuteBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }

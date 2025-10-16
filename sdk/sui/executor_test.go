@@ -509,7 +509,7 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 	mockBound.EXPECT().AppendPTB(ctx, mock.AnythingOfType("*bind.CallOpts"), mock.AnythingOfType("*transaction.Transaction"), mock.Anything).Return(&transaction.Argument{}, nil).Once()
 
 	// Mock the bypass timelock call
-	mockEncoder.EXPECT().DispatchTimelockBypasserExecuteBatchWithArgs(mock.Anything).Return(nil, nil)
+	mockEncoder.EXPECT().DispatchTimelockBypasserExecuteBatchWithArgs(mock.AnythingOfType("*transaction.Argument"), mock.AnythingOfType("string")).Return(nil, nil)
 
 	// Mock the second AppendPTB call for the timelock call - return a mock executeCallback
 	executeCallback := &transaction.Argument{}

@@ -1277,9 +1277,9 @@ func (_c *McmsEncoder_DispatchTimelockBlockFunctionWithArgs_Call) RunAndReturn(r
 	return _c
 }
 
-// DispatchTimelockBypasserExecuteBatch provides a mock function with given fields: timelockCallbackParams
-func (_m *McmsEncoder) DispatchTimelockBypasserExecuteBatch(timelockCallbackParams module_mcms.TimelockCallbackParams) (*bind.EncodedCall, error) {
-	ret := _m.Called(timelockCallbackParams)
+// DispatchTimelockBypasserExecuteBatch provides a mock function with given fields: timelockCallbackParams, registry
+func (_m *McmsEncoder) DispatchTimelockBypasserExecuteBatch(timelockCallbackParams module_mcms.TimelockCallbackParams, registry bind.Object) (*bind.EncodedCall, error) {
+	ret := _m.Called(timelockCallbackParams, registry)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DispatchTimelockBypasserExecuteBatch")
@@ -1287,19 +1287,19 @@ func (_m *McmsEncoder) DispatchTimelockBypasserExecuteBatch(timelockCallbackPara
 
 	var r0 *bind.EncodedCall
 	var r1 error
-	if rf, ok := ret.Get(0).(func(module_mcms.TimelockCallbackParams) (*bind.EncodedCall, error)); ok {
-		return rf(timelockCallbackParams)
+	if rf, ok := ret.Get(0).(func(module_mcms.TimelockCallbackParams, bind.Object) (*bind.EncodedCall, error)); ok {
+		return rf(timelockCallbackParams, registry)
 	}
-	if rf, ok := ret.Get(0).(func(module_mcms.TimelockCallbackParams) *bind.EncodedCall); ok {
-		r0 = rf(timelockCallbackParams)
+	if rf, ok := ret.Get(0).(func(module_mcms.TimelockCallbackParams, bind.Object) *bind.EncodedCall); ok {
+		r0 = rf(timelockCallbackParams, registry)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*bind.EncodedCall)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(module_mcms.TimelockCallbackParams) error); ok {
-		r1 = rf(timelockCallbackParams)
+	if rf, ok := ret.Get(1).(func(module_mcms.TimelockCallbackParams, bind.Object) error); ok {
+		r1 = rf(timelockCallbackParams, registry)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -1314,13 +1314,14 @@ type McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call struct {
 
 // DispatchTimelockBypasserExecuteBatch is a helper method to define mock.On call
 //   - timelockCallbackParams module_mcms.TimelockCallbackParams
-func (_e *McmsEncoder_Expecter) DispatchTimelockBypasserExecuteBatch(timelockCallbackParams interface{}) *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call {
-	return &McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call{Call: _e.mock.On("DispatchTimelockBypasserExecuteBatch", timelockCallbackParams)}
+//   - registry bind.Object
+func (_e *McmsEncoder_Expecter) DispatchTimelockBypasserExecuteBatch(timelockCallbackParams interface{}, registry interface{}) *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call {
+	return &McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call{Call: _e.mock.On("DispatchTimelockBypasserExecuteBatch", timelockCallbackParams, registry)}
 }
 
-func (_c *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call) Run(run func(timelockCallbackParams module_mcms.TimelockCallbackParams)) *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call {
+func (_c *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call) Run(run func(timelockCallbackParams module_mcms.TimelockCallbackParams, registry bind.Object)) *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(module_mcms.TimelockCallbackParams))
+		run(args[0].(module_mcms.TimelockCallbackParams), args[1].(bind.Object))
 	})
 	return _c
 }
@@ -1330,7 +1331,7 @@ func (_c *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call) Return(_a0 *bin
 	return _c
 }
 
-func (_c *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call) RunAndReturn(run func(module_mcms.TimelockCallbackParams) (*bind.EncodedCall, error)) *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call {
+func (_c *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call) RunAndReturn(run func(module_mcms.TimelockCallbackParams, bind.Object) (*bind.EncodedCall, error)) *McmsEncoder_DispatchTimelockBypasserExecuteBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -3677,6 +3678,132 @@ func (_c *McmsEncoder_McmsDispatchToDeployerWithArgs_Call) Return(_a0 *bind.Enco
 }
 
 func (_c *McmsEncoder_McmsDispatchToDeployerWithArgs_Call) RunAndReturn(run func(...interface{}) (*bind.EncodedCall, error)) *McmsEncoder_McmsDispatchToDeployerWithArgs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// McmsDispatchToRegistry provides a mock function with given fields: registry, executingCallbackParams
+func (_m *McmsEncoder) McmsDispatchToRegistry(registry bind.Object, executingCallbackParams bind.Object) (*bind.EncodedCall, error) {
+	ret := _m.Called(registry, executingCallbackParams)
+
+	if len(ret) == 0 {
+		panic("no return value specified for McmsDispatchToRegistry")
+	}
+
+	var r0 *bind.EncodedCall
+	var r1 error
+	if rf, ok := ret.Get(0).(func(bind.Object, bind.Object) (*bind.EncodedCall, error)); ok {
+		return rf(registry, executingCallbackParams)
+	}
+	if rf, ok := ret.Get(0).(func(bind.Object, bind.Object) *bind.EncodedCall); ok {
+		r0 = rf(registry, executingCallbackParams)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.EncodedCall)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(bind.Object, bind.Object) error); ok {
+		r1 = rf(registry, executingCallbackParams)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// McmsEncoder_McmsDispatchToRegistry_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'McmsDispatchToRegistry'
+type McmsEncoder_McmsDispatchToRegistry_Call struct {
+	*mock.Call
+}
+
+// McmsDispatchToRegistry is a helper method to define mock.On call
+//   - registry bind.Object
+//   - executingCallbackParams bind.Object
+func (_e *McmsEncoder_Expecter) McmsDispatchToRegistry(registry interface{}, executingCallbackParams interface{}) *McmsEncoder_McmsDispatchToRegistry_Call {
+	return &McmsEncoder_McmsDispatchToRegistry_Call{Call: _e.mock.On("McmsDispatchToRegistry", registry, executingCallbackParams)}
+}
+
+func (_c *McmsEncoder_McmsDispatchToRegistry_Call) Run(run func(registry bind.Object, executingCallbackParams bind.Object)) *McmsEncoder_McmsDispatchToRegistry_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bind.Object), args[1].(bind.Object))
+	})
+	return _c
+}
+
+func (_c *McmsEncoder_McmsDispatchToRegistry_Call) Return(_a0 *bind.EncodedCall, _a1 error) *McmsEncoder_McmsDispatchToRegistry_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *McmsEncoder_McmsDispatchToRegistry_Call) RunAndReturn(run func(bind.Object, bind.Object) (*bind.EncodedCall, error)) *McmsEncoder_McmsDispatchToRegistry_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// McmsDispatchToRegistryWithArgs provides a mock function with given fields: args
+func (_m *McmsEncoder) McmsDispatchToRegistryWithArgs(args ...interface{}) (*bind.EncodedCall, error) {
+	var _ca []interface{}
+	_ca = append(_ca, args...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for McmsDispatchToRegistryWithArgs")
+	}
+
+	var r0 *bind.EncodedCall
+	var r1 error
+	if rf, ok := ret.Get(0).(func(...interface{}) (*bind.EncodedCall, error)); ok {
+		return rf(args...)
+	}
+	if rf, ok := ret.Get(0).(func(...interface{}) *bind.EncodedCall); ok {
+		r0 = rf(args...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.EncodedCall)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(...interface{}) error); ok {
+		r1 = rf(args...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// McmsEncoder_McmsDispatchToRegistryWithArgs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'McmsDispatchToRegistryWithArgs'
+type McmsEncoder_McmsDispatchToRegistryWithArgs_Call struct {
+	*mock.Call
+}
+
+// McmsDispatchToRegistryWithArgs is a helper method to define mock.On call
+//   - args ...interface{}
+func (_e *McmsEncoder_Expecter) McmsDispatchToRegistryWithArgs(args ...interface{}) *McmsEncoder_McmsDispatchToRegistryWithArgs_Call {
+	return &McmsEncoder_McmsDispatchToRegistryWithArgs_Call{Call: _e.mock.On("McmsDispatchToRegistryWithArgs",
+		append([]interface{}{}, args...)...)}
+}
+
+func (_c *McmsEncoder_McmsDispatchToRegistryWithArgs_Call) Run(run func(args ...interface{})) *McmsEncoder_McmsDispatchToRegistryWithArgs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *McmsEncoder_McmsDispatchToRegistryWithArgs_Call) Return(_a0 *bind.EncodedCall, _a1 error) *McmsEncoder_McmsDispatchToRegistryWithArgs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *McmsEncoder_McmsDispatchToRegistryWithArgs_Call) RunAndReturn(run func(...interface{}) (*bind.EncodedCall, error)) *McmsEncoder_McmsDispatchToRegistryWithArgs_Call {
 	_c.Call.Return(run)
 	return _c
 }
