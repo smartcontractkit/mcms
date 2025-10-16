@@ -115,7 +115,12 @@ func (t *TimelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("failed to execute batch: %w", err)
 	}
 
-	opts := &bind.CallOpts{Signer: t.signer, WaitForExecution: true}
+	gasBudget := uint64(UpgradeGasBudget)
+	opts := &bind.CallOpts{
+		Signer:           t.signer,
+		WaitForExecution: true,
+		GasBudget:        &gasBudget,
+	}
 
 	ptb := transaction.NewTransaction()
 	executeCallback, err := t.mcms.Bound().AppendPTB(ctx, opts, ptb, timelockExecuteCall)
