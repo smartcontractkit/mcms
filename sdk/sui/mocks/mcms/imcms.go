@@ -725,9 +725,9 @@ func (_c *IMcms_DispatchTimelockBlockFunction_Call) RunAndReturn(run func(contex
 	return _c
 }
 
-// DispatchTimelockBypasserExecuteBatch provides a mock function with given fields: ctx, opts, timelockCallbackParams
-func (_m *IMcms) DispatchTimelockBypasserExecuteBatch(ctx context.Context, opts *bind.CallOpts, timelockCallbackParams module_mcms.TimelockCallbackParams) (*models.SuiTransactionBlockResponse, error) {
-	ret := _m.Called(ctx, opts, timelockCallbackParams)
+// DispatchTimelockBypasserExecuteBatch provides a mock function with given fields: ctx, opts, timelockCallbackParams, registry
+func (_m *IMcms) DispatchTimelockBypasserExecuteBatch(ctx context.Context, opts *bind.CallOpts, timelockCallbackParams module_mcms.TimelockCallbackParams, registry bind.Object) (*models.SuiTransactionBlockResponse, error) {
+	ret := _m.Called(ctx, opts, timelockCallbackParams, registry)
 
 	if len(ret) == 0 {
 		panic("no return value specified for DispatchTimelockBypasserExecuteBatch")
@@ -735,19 +735,19 @@ func (_m *IMcms) DispatchTimelockBypasserExecuteBatch(ctx context.Context, opts 
 
 	var r0 *models.SuiTransactionBlockResponse
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams) (*models.SuiTransactionBlockResponse, error)); ok {
-		return rf(ctx, opts, timelockCallbackParams)
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams, bind.Object) (*models.SuiTransactionBlockResponse, error)); ok {
+		return rf(ctx, opts, timelockCallbackParams, registry)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams) *models.SuiTransactionBlockResponse); ok {
-		r0 = rf(ctx, opts, timelockCallbackParams)
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams, bind.Object) *models.SuiTransactionBlockResponse); ok {
+		r0 = rf(ctx, opts, timelockCallbackParams, registry)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*models.SuiTransactionBlockResponse)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams) error); ok {
-		r1 = rf(ctx, opts, timelockCallbackParams)
+	if rf, ok := ret.Get(1).(func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams, bind.Object) error); ok {
+		r1 = rf(ctx, opts, timelockCallbackParams, registry)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -764,13 +764,14 @@ type IMcms_DispatchTimelockBypasserExecuteBatch_Call struct {
 //   - ctx context.Context
 //   - opts *bind.CallOpts
 //   - timelockCallbackParams module_mcms.TimelockCallbackParams
-func (_e *IMcms_Expecter) DispatchTimelockBypasserExecuteBatch(ctx interface{}, opts interface{}, timelockCallbackParams interface{}) *IMcms_DispatchTimelockBypasserExecuteBatch_Call {
-	return &IMcms_DispatchTimelockBypasserExecuteBatch_Call{Call: _e.mock.On("DispatchTimelockBypasserExecuteBatch", ctx, opts, timelockCallbackParams)}
+//   - registry bind.Object
+func (_e *IMcms_Expecter) DispatchTimelockBypasserExecuteBatch(ctx interface{}, opts interface{}, timelockCallbackParams interface{}, registry interface{}) *IMcms_DispatchTimelockBypasserExecuteBatch_Call {
+	return &IMcms_DispatchTimelockBypasserExecuteBatch_Call{Call: _e.mock.On("DispatchTimelockBypasserExecuteBatch", ctx, opts, timelockCallbackParams, registry)}
 }
 
-func (_c *IMcms_DispatchTimelockBypasserExecuteBatch_Call) Run(run func(ctx context.Context, opts *bind.CallOpts, timelockCallbackParams module_mcms.TimelockCallbackParams)) *IMcms_DispatchTimelockBypasserExecuteBatch_Call {
+func (_c *IMcms_DispatchTimelockBypasserExecuteBatch_Call) Run(run func(ctx context.Context, opts *bind.CallOpts, timelockCallbackParams module_mcms.TimelockCallbackParams, registry bind.Object)) *IMcms_DispatchTimelockBypasserExecuteBatch_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(*bind.CallOpts), args[2].(module_mcms.TimelockCallbackParams))
+		run(args[0].(context.Context), args[1].(*bind.CallOpts), args[2].(module_mcms.TimelockCallbackParams), args[3].(bind.Object))
 	})
 	return _c
 }
@@ -780,7 +781,7 @@ func (_c *IMcms_DispatchTimelockBypasserExecuteBatch_Call) Return(_a0 *models.Su
 	return _c
 }
 
-func (_c *IMcms_DispatchTimelockBypasserExecuteBatch_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams) (*models.SuiTransactionBlockResponse, error)) *IMcms_DispatchTimelockBypasserExecuteBatch_Call {
+func (_c *IMcms_DispatchTimelockBypasserExecuteBatch_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, module_mcms.TimelockCallbackParams, bind.Object) (*models.SuiTransactionBlockResponse, error)) *IMcms_DispatchTimelockBypasserExecuteBatch_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -1937,6 +1938,67 @@ func (_c *IMcms_McmsDispatchToDeployer_Call) Return(_a0 *models.SuiTransactionBl
 }
 
 func (_c *IMcms_McmsDispatchToDeployer_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, bind.Object, bind.Object, bind.Object) (*models.SuiTransactionBlockResponse, error)) *IMcms_McmsDispatchToDeployer_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// McmsDispatchToRegistry provides a mock function with given fields: ctx, opts, registry, executingCallbackParams
+func (_m *IMcms) McmsDispatchToRegistry(ctx context.Context, opts *bind.CallOpts, registry bind.Object, executingCallbackParams bind.Object) (*models.SuiTransactionBlockResponse, error) {
+	ret := _m.Called(ctx, opts, registry, executingCallbackParams)
+
+	if len(ret) == 0 {
+		panic("no return value specified for McmsDispatchToRegistry")
+	}
+
+	var r0 *models.SuiTransactionBlockResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, bind.Object, bind.Object) (*models.SuiTransactionBlockResponse, error)); ok {
+		return rf(ctx, opts, registry, executingCallbackParams)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, bind.Object, bind.Object) *models.SuiTransactionBlockResponse); ok {
+		r0 = rf(ctx, opts, registry, executingCallbackParams)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.SuiTransactionBlockResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *bind.CallOpts, bind.Object, bind.Object) error); ok {
+		r1 = rf(ctx, opts, registry, executingCallbackParams)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// IMcms_McmsDispatchToRegistry_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'McmsDispatchToRegistry'
+type IMcms_McmsDispatchToRegistry_Call struct {
+	*mock.Call
+}
+
+// McmsDispatchToRegistry is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts *bind.CallOpts
+//   - registry bind.Object
+//   - executingCallbackParams bind.Object
+func (_e *IMcms_Expecter) McmsDispatchToRegistry(ctx interface{}, opts interface{}, registry interface{}, executingCallbackParams interface{}) *IMcms_McmsDispatchToRegistry_Call {
+	return &IMcms_McmsDispatchToRegistry_Call{Call: _e.mock.On("McmsDispatchToRegistry", ctx, opts, registry, executingCallbackParams)}
+}
+
+func (_c *IMcms_McmsDispatchToRegistry_Call) Run(run func(ctx context.Context, opts *bind.CallOpts, registry bind.Object, executingCallbackParams bind.Object)) *IMcms_McmsDispatchToRegistry_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*bind.CallOpts), args[2].(bind.Object), args[3].(bind.Object))
+	})
+	return _c
+}
+
+func (_c *IMcms_McmsDispatchToRegistry_Call) Return(_a0 *models.SuiTransactionBlockResponse, _a1 error) *IMcms_McmsDispatchToRegistry_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IMcms_McmsDispatchToRegistry_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, bind.Object, bind.Object) (*models.SuiTransactionBlockResponse, error)) *IMcms_McmsDispatchToRegistry_Call {
 	_c.Call.Return(run)
 	return _c
 }

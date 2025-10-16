@@ -1502,6 +1502,131 @@ func (_c *FeeQuoterEncoder_GetStaticConfig_Call) RunAndReturn(run func(bind.Obje
 	return _c
 }
 
+// GetStaticConfigFields provides a mock function with given fields: ref
+func (_m *FeeQuoterEncoder) GetStaticConfigFields(ref bind.Object) (*bind.EncodedCall, error) {
+	ret := _m.Called(ref)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStaticConfigFields")
+	}
+
+	var r0 *bind.EncodedCall
+	var r1 error
+	if rf, ok := ret.Get(0).(func(bind.Object) (*bind.EncodedCall, error)); ok {
+		return rf(ref)
+	}
+	if rf, ok := ret.Get(0).(func(bind.Object) *bind.EncodedCall); ok {
+		r0 = rf(ref)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.EncodedCall)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(bind.Object) error); ok {
+		r1 = rf(ref)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FeeQuoterEncoder_GetStaticConfigFields_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStaticConfigFields'
+type FeeQuoterEncoder_GetStaticConfigFields_Call struct {
+	*mock.Call
+}
+
+// GetStaticConfigFields is a helper method to define mock.On call
+//   - ref bind.Object
+func (_e *FeeQuoterEncoder_Expecter) GetStaticConfigFields(ref interface{}) *FeeQuoterEncoder_GetStaticConfigFields_Call {
+	return &FeeQuoterEncoder_GetStaticConfigFields_Call{Call: _e.mock.On("GetStaticConfigFields", ref)}
+}
+
+func (_c *FeeQuoterEncoder_GetStaticConfigFields_Call) Run(run func(ref bind.Object)) *FeeQuoterEncoder_GetStaticConfigFields_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bind.Object))
+	})
+	return _c
+}
+
+func (_c *FeeQuoterEncoder_GetStaticConfigFields_Call) Return(_a0 *bind.EncodedCall, _a1 error) *FeeQuoterEncoder_GetStaticConfigFields_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *FeeQuoterEncoder_GetStaticConfigFields_Call) RunAndReturn(run func(bind.Object) (*bind.EncodedCall, error)) *FeeQuoterEncoder_GetStaticConfigFields_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetStaticConfigFieldsWithArgs provides a mock function with given fields: args
+func (_m *FeeQuoterEncoder) GetStaticConfigFieldsWithArgs(args ...interface{}) (*bind.EncodedCall, error) {
+	var _ca []interface{}
+	_ca = append(_ca, args...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetStaticConfigFieldsWithArgs")
+	}
+
+	var r0 *bind.EncodedCall
+	var r1 error
+	if rf, ok := ret.Get(0).(func(...interface{}) (*bind.EncodedCall, error)); ok {
+		return rf(args...)
+	}
+	if rf, ok := ret.Get(0).(func(...interface{}) *bind.EncodedCall); ok {
+		r0 = rf(args...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.EncodedCall)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(...interface{}) error); ok {
+		r1 = rf(args...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetStaticConfigFieldsWithArgs'
+type FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call struct {
+	*mock.Call
+}
+
+// GetStaticConfigFieldsWithArgs is a helper method to define mock.On call
+//   - args ...interface{}
+func (_e *FeeQuoterEncoder_Expecter) GetStaticConfigFieldsWithArgs(args ...interface{}) *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call {
+	return &FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call{Call: _e.mock.On("GetStaticConfigFieldsWithArgs",
+		append([]interface{}{}, args...)...)}
+}
+
+func (_c *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call) Run(run func(args ...interface{})) *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call) Return(_a0 *bind.EncodedCall, _a1 error) *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call) RunAndReturn(run func(...interface{}) (*bind.EncodedCall, error)) *FeeQuoterEncoder_GetStaticConfigFieldsWithArgs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetStaticConfigWithArgs provides a mock function with given fields: args
 func (_m *FeeQuoterEncoder) GetStaticConfigWithArgs(args ...interface{}) (*bind.EncodedCall, error) {
 	var _ca []interface{}

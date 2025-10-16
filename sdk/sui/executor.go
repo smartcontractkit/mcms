@@ -176,7 +176,7 @@ func (e Executor) ExecuteOperation(
 	}
 
 	if additionalFields.Function == TimelockActionBypass {
-		timelockCall, timelockErr := encoder.DispatchTimelockBypasserExecuteBatchWithArgs(timelockCallback)
+		timelockCall, timelockErr := encoder.DispatchTimelockBypasserExecuteBatchWithArgs(timelockCallback, e.registryObj)
 		if timelockErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", timelockErr)
 		}
