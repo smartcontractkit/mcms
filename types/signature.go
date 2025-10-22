@@ -1,6 +1,7 @@
 package types
 
 import (
+	"crypto/ecdsa"
 	"fmt"
 	"slices"
 
@@ -50,13 +51,25 @@ func (s Signature) ToBytes() []byte {
 	)
 }
 
-// Recover returns the address of the hash that been recovered from the signature.
+// Recover returns the address recovered from the signature and the message hash
 func (s Signature) Recover(hash common.Hash) (common.Address, error) {
+	// Recover the public key from the signature and the message hash
+	pubKey, err := s.RecoverPublicKey(hash)
+	if err != nil {
+		return common.Address{}, fmt.Errorf("failed to recover public key: %w", err)
+	}
+
+	// Derive the (recovered) Ethereum address from the public key
+	return crypto.PubkeyToAddress(*pubKey), nil
+}
+
+// Recover returns the public key recovered from the signature and the message hash
+func (s Signature) RecoverPublicKey(hash common.Hash) (*ecdsa.PublicKey, error) {
 	sig := s.ToBytes()
 
 	// The signature should be 65 bytes, and the last byte is the recovery id (v).
 	if len(sig) != SignatureBytesLength {
-		return common.Address{}, fmt.Errorf("invalid signature length")
+		return &ecdsa.PublicKey{}, fmt.Errorf("invalid signature length")
 	}
 
 	// Adjust the recovery id (v) if needed. Ethereum signatures expect 27 or 28.
@@ -66,13 +79,5 @@ func (s Signature) Recover(hash common.Hash) (common.Address, error) {
 	}
 
 	// Recover the public key from the signature and the message hash
-	pubKey, err := crypto.SigToPub(hash.Bytes(), sig)
-	if err != nil {
-		return common.Address{}, err
-	}
-
-	// Derive the Ethereum address from the public key
-	recoveredAddr := crypto.PubkeyToAddress(*pubKey)
-
-	return recoveredAddr, nil
+	return crypto.SigToPub(hash.Bytes(), sig)
 }
