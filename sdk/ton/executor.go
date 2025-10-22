@@ -74,10 +74,9 @@ func (e *executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("failed to assert ProofEncoder")
 	}
 
-	bindProof := make([]mcms.Proof, 0, len(proof))
-	for _, p := range proof {
-		bindP, _ := pe.ToProof(p)
-		bindProof = append(bindProof, bindP)
+	bindProof, err := pe.ToProof(proof)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to encode proof: %w", err)
 	}
 
 	body, err := tlb.ToCell(mcms.Execute{
@@ -154,22 +153,20 @@ func (e *executor) SetRoot(
 		return types.TransactionResult{}, fmt.Errorf("failed to assert ProofEncoder")
 	}
 
-	bindProof := make([]mcms.Proof, 0, len(proof))
-	for _, p := range proof {
-		bindP, _ := pe.ToProof(p)
-		bindProof = append(bindProof, bindP)
+	bindProof, err := pe.ToProof(proof)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to encode proof: %w", err)
 	}
 
 	// Encode signatures
-	se, ok := e.Encoder.(SignatureEncoder[ocr.SignatureEd25519])
+	se, ok := e.Encoder.(SignaturesEncoder[ocr.SignatureEd25519])
 	if !ok {
 		return types.TransactionResult{}, fmt.Errorf("failed to assert SignatureEncoder")
 	}
 
-	bindSignatures := make([]ocr.SignatureEd25519, 0, len(sortedSignatures))
-	for _, s := range sortedSignatures {
-		bindSig, _ := se.ToSignature(s, root)
-		bindSignatures = append(bindSignatures, bindSig)
+	bindSignatures, err := se.ToSignatures(sortedSignatures, root)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to encode signatures: %w", err)
 	}
 
 	body, err := tlb.ToCell(mcms.SetRoot{
