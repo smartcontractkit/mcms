@@ -21,7 +21,7 @@ const (
 )
 
 type EntrypointArgEncoder interface {
-	EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte) (*bind.EncodedCall, error)
+	EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte, typeArgs []string) (*bind.EncodedCall, error)
 }
 
 type ExecutingCallbackAppender interface {
@@ -218,6 +218,7 @@ func (e *ExecutingCallbackParams) processDestinationContractCall(ctx context.Con
 		call.FunctionName,
 		call.StateObj,
 		call.Data,
+		call.TypeArgs,
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create mcms_entrypoint call: %w", err)

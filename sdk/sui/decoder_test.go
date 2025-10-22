@@ -43,6 +43,7 @@ func TestDecoder(t *testing.T) {
 		"MCMSUser",
 		[]string{},
 		mcmsUserObjectID,
+		[]string{},
 	)
 	require.NotNil(t, tx)
 	require.NoError(t, err)

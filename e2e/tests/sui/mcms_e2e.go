@@ -85,6 +85,7 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 		"MCMSUser",
 		[]string{},
 		s.stateObj,
+		[]string{},
 	)
 	s.Require().NoError(err)
 

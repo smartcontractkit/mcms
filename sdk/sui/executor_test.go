@@ -479,7 +479,8 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 			AdditionalFields: []byte(`{
 				"module_name": "test_module",
 				"function": "timelock_bypasser_execute_batch",
-				"internal_state_objects": ["0xstate1"]
+				"internal_state_objects": ["0xstate1"],
+				"internal_type_args": [["0xType1"]]
 			}`),
 		},
 	}

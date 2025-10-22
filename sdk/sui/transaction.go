@@ -38,15 +38,17 @@ func (af AdditionalFields) Validate() error {
 }
 
 func NewTransaction(moduleName, function string, to string, data []byte, contractType string, tags []string) (types.Transaction, error) {
-	return NewTransactionWithStateObj(moduleName, function, to, data, contractType, tags, "")
+	return NewTransactionWithStateObj(moduleName, function, to, data, contractType, tags, "", nil)
 }
 
-func NewTransactionWithManyStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string, internalStateObjects []string) (types.Transaction, error) {
+func newTransactionWithManyStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string, typeArgs []string, internalStateObjects []string, internalTypeArgs [][]string) (types.Transaction, error) {
 	additionalFields := AdditionalFields{
 		ModuleName:           moduleName,
 		Function:             function,
 		StateObj:             stateObj,
 		InternalStateObjects: internalStateObjects,
+		TypeArgs:             typeArgs,
+		InternalTypeArgs:     internalTypeArgs,
 	}
 	marshalledAdditionalFields, err := json.Marshal(additionalFields)
 	if err != nil {
@@ -64,8 +66,8 @@ func NewTransactionWithManyStateObj(moduleName, function string, to string, data
 	}, nil
 }
 
-func NewTransactionWithStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string) (types.Transaction, error) {
-	return NewTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, nil)
+func NewTransactionWithStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string, typeArgs []string) (types.Transaction, error) {
+	return newTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, typeArgs, nil, nil)
 }
 
 func NewTransactionWithUpgradeData(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string, internalStateObjects []string, compiledModules [][]byte, dependencies []models.SuiAddress, packageToUpgrade string) (types.Transaction, error) {

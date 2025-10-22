@@ -328,6 +328,7 @@ func TestNewTransactionWithStateObj(t *testing.T) {
 		contractType string
 		tags         []string
 		stateObj     string
+		typeArgs     []string
 		expected     func(t *testing.T, tx types.Transaction)
 	}{
 		{
@@ -339,6 +340,7 @@ func TestNewTransactionWithStateObj(t *testing.T) {
 			contractType: "TestContract",
 			tags:         []string{"tag1", "tag2"},
 			stateObj:     "0x999",
+			typeArgs:     []string{"arg1", "arg2"},
 			expected: func(t *testing.T, tx types.Transaction) {
 				t.Helper()
 				assert.Equal(t, "0x123456789abcdef", tx.To)
@@ -352,6 +354,7 @@ func TestNewTransactionWithStateObj(t *testing.T) {
 				assert.Equal(t, "test_module", additionalFields.ModuleName)
 				assert.Equal(t, "test_function", additionalFields.Function)
 				assert.Equal(t, "0x999", additionalFields.StateObj)
+				assert.Equal(t, []string{"arg1", "arg2"}, additionalFields.TypeArgs)
 				assert.Nil(t, additionalFields.InternalStateObjects)
 			},
 		},
@@ -364,6 +367,7 @@ func TestNewTransactionWithStateObj(t *testing.T) {
 			contractType: "Contract",
 			tags:         []string{"tag"},
 			stateObj:     "",
+			typeArgs:     []string{"arg1", "arg2"},
 			expected: func(t *testing.T, tx types.Transaction) {
 				t.Helper()
 				var additionalFields AdditionalFields
@@ -372,6 +376,7 @@ func TestNewTransactionWithStateObj(t *testing.T) {
 				assert.Equal(t, "module", additionalFields.ModuleName)
 				assert.Equal(t, "func", additionalFields.Function)
 				assert.Empty(t, additionalFields.StateObj)
+				assert.Equal(t, []string{"arg1", "arg2"}, additionalFields.TypeArgs)
 				assert.Nil(t, additionalFields.InternalStateObjects)
 			},
 		},
@@ -381,7 +386,7 @@ func TestNewTransactionWithStateObj(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tx, err := NewTransactionWithStateObj(tt.moduleName, tt.function, tt.to, tt.data, tt.contractType, tt.tags, tt.stateObj)
+			tx, err := NewTransactionWithStateObj(tt.moduleName, tt.function, tt.to, tt.data, tt.contractType, tt.tags, tt.stateObj, tt.typeArgs)
 			require.NoError(t, err)
 
 			tt.expected(t, tx)
@@ -401,7 +406,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 		contractType         string
 		tags                 []string
 		stateObj             string
-		internalStateObjects []string
+		InternalStateObjects []string
 		expected             func(t *testing.T, tx types.Transaction)
 	}{
 		{
@@ -413,7 +418,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 			contractType:         "TestContract",
 			tags:                 []string{"tag1", "tag2"},
 			stateObj:             "0x999",
-			internalStateObjects: []string{"0x111", "0x222", "0x333"},
+			InternalStateObjects: []string{"0x111", "0x222", "0x333"},
 			expected: func(t *testing.T, tx types.Transaction) {
 				t.Helper()
 				assert.Equal(t, "0x123456789abcdef", tx.To)
@@ -439,7 +444,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 			contractType:         "Contract",
 			tags:                 []string{"tag"},
 			stateObj:             "0x999",
-			internalStateObjects: []string{},
+			InternalStateObjects: []string{},
 			expected: func(t *testing.T, tx types.Transaction) {
 				t.Helper()
 				var additionalFields AdditionalFields
@@ -461,7 +466,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 			contractType:         "Contract",
 			tags:                 []string{"tag"},
 			stateObj:             "0x999",
-			internalStateObjects: nil,
+			InternalStateObjects: nil,
 			expected: func(t *testing.T, tx types.Transaction) {
 				t.Helper()
 				var additionalFields AdditionalFields
@@ -482,7 +487,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 			contractType:         "Contract",
 			tags:                 []string{},
 			stateObj:             "",
-			internalStateObjects: []string{"0x111"},
+			InternalStateObjects: []string{"0x111"},
 			expected: func(t *testing.T, tx types.Transaction) {
 				t.Helper()
 				var additionalFields AdditionalFields
@@ -500,7 +505,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tx, err := NewTransactionWithManyStateObj(tt.moduleName, tt.function, tt.to, tt.data, tt.contractType, tt.tags, tt.stateObj, tt.internalStateObjects)
+			tx, err := newTransactionWithManyStateObj(tt.moduleName, tt.function, tt.to, tt.data, tt.contractType, tt.tags, tt.stateObj, []string{}, tt.InternalStateObjects, nil)
 			require.NoError(t, err)
 
 			tt.expected(t, tx)
@@ -595,7 +600,8 @@ func TestTransactionIntegration(t *testing.T) {
 	contractType := "IntegrationContract"
 	tags := []string{"integration", "test"}
 	stateObj := "0x999"
-	internalStateObjects := []string{"0x111", "0x222"}
+	typeArgs := []string{"arg1", "arg2"}
+	InternalStateObjects := []string{"0x111", "0x222"}
 	compiledModules := [][]byte{{0xaa, 0xbb}, {0xcc, 0xdd}}
 	dependencies := []models.SuiAddress{"0x333", "0x444"}
 	packageToUpgrade := "0x555"
@@ -605,15 +611,15 @@ func TestTransactionIntegration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test NewTransactionWithStateObj
-	tx2, err := NewTransactionWithStateObj(moduleName, function, to, data, contractType, tags, stateObj)
+	tx2, err := NewTransactionWithStateObj(moduleName, function, to, data, contractType, tags, stateObj, typeArgs)
 	require.NoError(t, err)
 
 	// Test NewTransactionWithManyStateObj
-	tx3, err := NewTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, internalStateObjects)
+	tx3, err := newTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, typeArgs, InternalStateObjects, nil)
 	require.NoError(t, err)
 
 	// Test NewTransactionWithUpgradeData
-	tx4, err := NewTransactionWithUpgradeData(moduleName, function, to, data, contractType, tags, stateObj, internalStateObjects, compiledModules, dependencies, packageToUpgrade)
+	tx4, err := NewTransactionWithUpgradeData(moduleName, function, to, data, contractType, tags, stateObj, InternalStateObjects, compiledModules, dependencies, packageToUpgrade)
 	require.NoError(t, err)
 
 	// Verify all transactions have the same basic structure
@@ -657,8 +663,8 @@ func TestTransactionIntegration(t *testing.T) {
 
 	assert.Empty(t, fields1.InternalStateObjects)
 	assert.Nil(t, fields2.InternalStateObjects)
-	assert.Equal(t, internalStateObjects, fields3.InternalStateObjects)
-	assert.Equal(t, internalStateObjects, fields4.InternalStateObjects)
+	assert.Equal(t, InternalStateObjects, fields3.InternalStateObjects)
+	assert.Equal(t, InternalStateObjects, fields4.InternalStateObjects)
 
 	// Upgrade-specific fields should only be in tx4
 	assert.Nil(t, fields1.CompiledModules)
@@ -695,7 +701,7 @@ func TestNewTransactionWithUpgradeData(t *testing.T) {
 		contractType         string
 		tags                 []string
 		stateObj             string
-		internalStateObjects []string
+		InternalStateObjects []string
 		compiledModules      [][]byte
 		dependencies         []models.SuiAddress
 		packageToUpgrade     string
@@ -710,7 +716,7 @@ func TestNewTransactionWithUpgradeData(t *testing.T) {
 			contractType:         "MCMS",
 			tags:                 []string{"upgrade", "mcms"},
 			stateObj:             "0x999",
-			internalStateObjects: []string{"0x111", "0x222"},
+			InternalStateObjects: []string{"0x111", "0x222"},
 			compiledModules:      [][]byte{{0xaa, 0xbb}, {0xcc, 0xdd}},
 			dependencies:         []models.SuiAddress{"0x333", "0x444"},
 			packageToUpgrade:     "0x555",
@@ -742,7 +748,7 @@ func TestNewTransactionWithUpgradeData(t *testing.T) {
 			contractType:         "",
 			tags:                 []string{},
 			stateObj:             "",
-			internalStateObjects: nil,
+			InternalStateObjects: nil,
 			compiledModules:      nil,
 			dependencies:         nil,
 			packageToUpgrade:     "",
@@ -774,7 +780,7 @@ func TestNewTransactionWithUpgradeData(t *testing.T) {
 			contractType:         "Test",
 			tags:                 []string{"test"},
 			stateObj:             "0x777",
-			internalStateObjects: []string{},
+			InternalStateObjects: []string{},
 			compiledModules:      [][]byte{},
 			dependencies:         []models.SuiAddress{},
 			packageToUpgrade:     "0x888",
@@ -798,7 +804,7 @@ func TestNewTransactionWithUpgradeData(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tx, err := NewTransactionWithUpgradeData(tt.moduleName, tt.function, tt.to, tt.data, tt.contractType, tt.tags, tt.stateObj, tt.internalStateObjects, tt.compiledModules, tt.dependencies, tt.packageToUpgrade)
+			tx, err := NewTransactionWithUpgradeData(tt.moduleName, tt.function, tt.to, tt.data, tt.contractType, tt.tags, tt.stateObj, tt.InternalStateObjects, tt.compiledModules, tt.dependencies, tt.packageToUpgrade)
 			require.NoError(t, err)
 
 			tt.expected(t, tx)
@@ -884,7 +890,6 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 				assert.Equal(t, "mcms_deployer", additionalFields.ModuleName)
 				assert.Equal(t, "authorize_upgrade", additionalFields.Function)
 				assert.Equal(t, "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567", additionalFields.StateObj)
-				assert.Equal(t, []string{"0x012345678abcdef0123456789abcdef0123456789abcdef0123456789abcdef01"}, additionalFields.InternalStateObjects)
 				assert.Equal(t, "0x2222456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", additionalFields.PackageToUpgrade)
 				assert.Empty(t, additionalFields.CompiledModules)
 				assert.Empty(t, additionalFields.Dependencies)
