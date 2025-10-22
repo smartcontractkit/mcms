@@ -100,6 +100,6 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	return types.TransactionResult{
 		Hash:        hex.EncodeToString(tx.Hash),
 		ChainFamily: cselectors.FamilyTon,
-		RawData:     nil,
+		RawData:     tx,
 	}, nil
 }
