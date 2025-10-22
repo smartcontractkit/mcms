@@ -92,6 +92,7 @@ func (t *TimelockExecutor) Execute(
 			CompiledModules:  additionalFields.CompiledModules,
 			Dependencies:     additionalFields.Dependencies,
 			PackageToUpgrade: additionalFields.PackageToUpgrade,
+			TypeArgs:         additionalFields.TypeArgs,
 		})
 	}
 

@@ -184,7 +184,7 @@ type TestEntrypointArgEncoder struct {
 	client      sui.ISuiAPI
 }
 
-func (e *TestEntrypointArgEncoder) EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte) (*bind.EncodedCall, error) {
+func (e *TestEntrypointArgEncoder) EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte, typeArgs []string) (*bind.EncodedCall, error) {
 	// For simplicity, we only support mcms_user as target in this test encoder
 	if module != "mcms_user" {
 		return nil, fmt.Errorf("unsupported module: %s", module)

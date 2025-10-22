@@ -202,6 +202,7 @@ func (e Executor) ExecuteOperation(
 				StateObj:     additionalFields.InternalStateObjects[i],
 				Data:         call.Data,
 				Target:       call.Target,
+				TypeArgs:     additionalFields.InternalTypeArgs[i],
 			}
 		}
 

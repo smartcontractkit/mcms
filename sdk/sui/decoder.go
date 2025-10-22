@@ -70,6 +70,7 @@ type Call struct {
 	FunctionName     string
 	Data             []byte
 	StateObj         string
+	TypeArgs         []string
 	CompiledModules  [][]byte            // For upgrade operations
 	Dependencies     []models.SuiAddress // For upgrade operations
 	PackageToUpgrade string              // For upgrade operations

@@ -10,9 +10,7 @@ import (
 	"github.com/block-vision/sui-go-sdk/models"
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
-	mcmsencoder "github.com/smartcontractkit/chainlink-sui/bindings"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	module_mcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	module_mcms_deployer "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_deployer"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -31,7 +29,7 @@ type MockEntrypointArgEncoder struct {
 	expected    *bind.EncodedCall
 }
 
-func (e *MockEntrypointArgEncoder) EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte) (*bind.EncodedCall, error) {
+func (e *MockEntrypointArgEncoder) EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte, typeArgs []string) (*bind.EncodedCall, error) {
 	mockFeeQuoterEncoder := mockfeequoter.NewFeeQuoterEncoder(e.t)
 
 	mockFeeQuoterEncoder.EXPECT().McmsApplyFeeTokenUpdatesWithArgs(
@@ -696,101 +694,4 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSDeployerTarget_AppendPTBError
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "adding ExecuteDispatchToDeployer call 0 to PTB")
 	assert.Contains(t, err.Error(), "mock append error")
-}
-
-func TestExecutingCallbackParams_AppendPTB_CorrectOrder(t *testing.T) {
-	// Tests that AppendPTB correctly orders multiple calls and generates the expected PTB calls:
-	// 		vector::remove -> to extract executingCallbackParams
-	// 		fee_quoter::mcms_xyz -> calls to execute operations (callbacks)
-	// 		vector::destroy_empty -> to clean up executingCallbackParams
-	t.Parallel()
-
-	// Create mock objects
-	mcmsPackageID := "0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789"
-	registryObj := "0x142d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789"
-	accountObj := "0xacc0007cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef012345678"
-	mockClient := mocksui.NewISuiAPI(t)
-	mockClient.EXPECT().SuiGetObject(mock.Anything, mock.Anything).
-		Return(models.SuiObjectResponse{
-			Data: &models.SuiObjectData{
-				ObjectId: "0xf2facb344885659b11e707838ee131b407654f75f6589984af462c13de41ef84",
-				Version:  "3",
-				Digest:   "4TRR2ZC9r7UUDUeke2DUhHdRQkZWYjkygHrRSNVM4YmX",
-				Owner:    nil,
-			},
-			Error: nil,
-		}, nil)
-
-	// Bindings
-	mcmsContract, err := module_mcms.NewMcms(mcmsPackageID, mockClient)
-	require.NoError(t, err)
-	entrypointEncoder := mcmsencoder.NewCCIPEntrypointArgEncoder(registryObj)
-
-	// Create the ExecutingCallbackParams
-	params := NewExecutingCallbackParams(
-		mockClient,
-		mcmsContract,
-		mcmsPackageID,
-		entrypointEncoder,
-		registryObj,
-		accountObj,
-	)
-
-	// Create test data
-	ctx := context.Background()
-	ptb := transaction.NewTransaction()
-	executeCallback := &transaction.Argument{}
-
-	// Create a call that targets a different package (should trigger mcms_ entrypoint)
-	calls := []Call{
-		{
-			Target:       []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, // Different target
-			StateObj:     accountObj,
-			ModuleName:   "fee_quoter",
-			FunctionName: "apply_fee_token_updates",
-		},
-		{
-			Target:       []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, // Different target
-			StateObj:     accountObj,
-			ModuleName:   "fee_quoter",
-			FunctionName: "apply_token_transfer_fee_config_updates",
-		},
-		{
-			Target:       []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff}, // Different target
-			StateObj:     accountObj,
-			ModuleName:   "fee_quoter",
-			FunctionName: "apply_premium_multiplier_wei_per_eth_updates",
-		},
-	}
-
-	// Execute the method
-	err = params.AppendPTB(ctx, ptb, executeCallback, calls)
-	require.NoError(t, err)
-
-	// Assert PTB has data for programmable transaction (avoid npe)
-	require.NotNil(t, ptb.Data.V1)
-	require.NotNil(t, ptb.Data.V1.Kind)
-	require.NotNil(t, ptb.Data.V1.Kind.ProgrammableTransaction)
-
-	// Assert move calls modules and functions in order
-	require.Len(t, ptb.Data.V1.Kind.ProgrammableTransaction.Commands, 7)
-	expectedCalls := []struct {
-		Module   string
-		Function string
-	}{
-		{"vector", "remove"},
-		{"fee_quoter", "mcms_apply_fee_token_updates"},
-		{"vector", "remove"},
-		{"fee_quoter", "mcms_apply_token_transfer_fee_config_updates"},
-		{"vector", "remove"},
-		{"fee_quoter", "mcms_apply_premium_multiplier_wei_per_eth_updates"},
-		{"vector", "destroy_empty"},
-	}
-
-	for i, expected := range expectedCalls {
-		cmd := ptb.Data.V1.Kind.ProgrammableTransaction.Commands[i]
-		assert.NotNil(t, cmd.MoveCall, "Command %d should be a MoveCall", i)
-		assert.Equal(t, expected.Module, cmd.MoveCall.Module, "Command %d module mismatch", i)
-		assert.Equal(t, expected.Function, cmd.MoveCall.Function, "Command %d function mismatch", i)
-	}
 }

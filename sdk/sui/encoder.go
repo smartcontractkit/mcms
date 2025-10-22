@@ -29,6 +29,8 @@ type AdditionalFields struct {
 	Function             string              `json:"function"`
 	StateObj             string              `json:"state_obj,omitempty"`              // Needed for calling `mcms_entrypoint`
 	InternalStateObjects []string            `json:"internal_state_objects,omitempty"` // Needed for calling `mcms_entrypoint`. When batching calls, this will contain all state objects
+	TypeArgs             []string            `json:"type_args,omitempty"`              // Needed for generic functions
+	InternalTypeArgs     [][]string          `json:"internal_type_args,omitempty"`     // Needed for batching generic functions.  When batching calls, this will contain all typeargs
 	CompiledModules      [][]byte            `json:"compiled_modules,omitempty"`       // compiled Move modules, if deploying modules
 	Dependencies         []models.SuiAddress `json:"dependencies,omitempty"`           // dependencies for compiled Move modules, if deploying modules
 	PackageToUpgrade     string              `json:"package_to_upgrade,omitempty"`     // package to upgrade, if deploying modules

@@ -46,6 +46,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	targets := make([][]byte, len(bop.Transactions))
 	moduleNames := make([]string, len(bop.Transactions))
 	functionNames := make([]string, len(bop.Transactions))
+	typesArgs := make([][]string, len(bop.Transactions))
 	datas := make([][]byte, len(bop.Transactions))
 	tags := make([]string, 0, len(bop.Transactions))
 
@@ -72,6 +73,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		moduleNames[i] = additionalFields.ModuleName
 		functionNames[i] = additionalFields.Function
 		datas[i] = tx.Data
+		typesArgs[i] = additionalFields.TypeArgs
 		tags = append(tags, tx.Tags...)
 	}
 
@@ -112,7 +114,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	// Create the transaction
-	tx, err := NewTransactionWithManyStateObj(
+	tx, err := newTransactionWithManyStateObj(
 		"mcms", // can only be mcms
 		function,
 		additionalFieldsMetadata.McmsPackageID, // can only call itself
@@ -120,7 +122,9 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		"MCMS",
 		tags,
 		timelockAddress,
+		[]string{},
 		stateObjs,
+		typesArgs,
 	)
 	if err != nil {
 		return nil, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)
