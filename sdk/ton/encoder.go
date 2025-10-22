@@ -1,6 +1,7 @@
 package ton
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 
@@ -24,6 +25,20 @@ var (
 )
 
 var _ sdk.Encoder = &encoder{}
+var _ RootMetadataEncoder[mcms.RootMetadata] = &encoder{}
+var _ OperationEncoder[mcms.Op] = &encoder{}
+
+// TODO: bubble up to sdk, use in evm as well
+// Defines encoding from sdk types.ChainMetadata to chain type RootMetadata T
+type RootMetadataEncoder[T any] interface {
+	ToRootMetadata(metadata types.ChainMetadata) (T, error)
+}
+
+// TODO: bubble up to sdk, use in evm as well
+// Defines encoding from sdk types.ChainMetadata + types.Operation to chain type Operation T
+type OperationEncoder[T any] interface {
+	ToOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (T, error)
+}
 
 type encoder struct {
 	ChainSelector        types.ChainSelector
@@ -96,25 +111,13 @@ func (e *encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 }
 
 func (e *encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
-	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
+	rm, err := e.ToRootMetadata(metadata)
 	if err != nil {
-		return common.Hash{}, fmt.Errorf("failed to get chain ID from selector: %w", err)
-	}
-
-	// Map to Ton Address type (mcms.address)
-	mcmsAddr, err := address.ParseAddr(metadata.MCMAddress)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("invalid mcms address: %w", err)
+		return common.Hash{}, fmt.Errorf("failed to convert to root metadata: %w", err)
 	}
 
 	// Encode metadata according to TON specs
-	metaCell, err := tlb.ToCell(mcms.RootMetadata{
-		ChainID:              (&big.Int{}).SetInt64(int64(chainID)),
-		MultiSig:             *mcmsAddr,
-		PreOpCount:           metadata.StartingOpCount,
-		PostOpCount:          metadata.StartingOpCount + e.TxCount,
-		OverridePreviousRoot: e.OverridePreviousRoot,
-	})
+	metaCell, err := tlb.ToCell(rm)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to encode op: %w", err)
 	}
@@ -132,4 +135,63 @@ func (e *encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	var hash common.Hash
 	copy(hash[:], b.EndCell().Hash()[:32])
 	return hash, nil
+}
+
+func (e *encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (mcms.Op, error) {
+	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
+	if err != nil {
+		return mcms.Op{}, fmt.Errorf("failed to get chain ID from selector: %w", err)
+	}
+
+	// Unmarshal the AdditionalFields from the operation
+	var additionalFields AdditionalFields
+	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
+		return mcms.Op{}, err
+	}
+
+	// Map to Ton Address types
+	mcmsAddr, err := address.ParseAddr(metadata.MCMAddress)
+	if err != nil {
+		return mcms.Op{}, fmt.Errorf("invalid mcms address: %w", err)
+	}
+
+	toAddr, err := address.ParseAddr(op.Transaction.To)
+	if err != nil {
+		return mcms.Op{}, fmt.Errorf("invalid to address: %w", err)
+	}
+
+	datac, err := cell.FromBOC(op.Transaction.Data)
+	if err != nil {
+		return mcms.Op{}, fmt.Errorf("invalid cell BOC data: %w", err)
+	}
+
+	return mcms.Op{
+		ChainID:  (&big.Int{}).SetInt64(int64(chainID)),
+		MultiSig: mcmsAddr,
+		Nonce:    uint64(opCount),
+		To:       toAddr,
+		Data:     datac,
+		Value:    tlb.FromNanoTON(additionalFields.Value),
+	}, nil
+}
+
+func (e *encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadata, error) {
+	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
+	if err != nil {
+		return mcms.RootMetadata{}, fmt.Errorf("failed to get chain ID from selector: %w", err)
+	}
+
+	// Map to Ton Address type (mcms.address)
+	mcmsAddr, err := address.ParseAddr(metadata.MCMAddress)
+	if err != nil {
+		return mcms.RootMetadata{}, fmt.Errorf("invalid mcms address: %w", err)
+	}
+
+	return mcms.RootMetadata{
+		ChainID:              (&big.Int{}).SetInt64(int64(chainID)),
+		MultiSig:             *mcmsAddr,
+		PreOpCount:           metadata.StartingOpCount,
+		PostOpCount:          metadata.StartingOpCount + e.TxCount,
+		OverridePreviousRoot: e.OverridePreviousRoot,
+	}, nil
 }
