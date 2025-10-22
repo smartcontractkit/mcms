@@ -15,13 +15,13 @@ import (
 
 var _ sdk.TimelockInspector = (*timelockInspector)(nil)
 
-// TimelockInspector is an Inspector implementation for Sui, for accessing the MCMS-Timelock contract
+// TimelockInspector is an Inspector implementation for TON, for accessing the MCMS-Timelock contract
 type timelockInspector struct {
 	client *ton.APIClient
 }
 
-func NewTimelockInspector(client *ton.APIClient) (sdk.TimelockInspector, error) {
-	return &timelockInspector{client}, nil
+func NewTimelockInspector(client *ton.APIClient) sdk.TimelockInspector {
+	return &timelockInspector{client}
 }
 
 func (i timelockInspector) GetMinDelay(ctx context.Context, _address string) (uint64, error) {
