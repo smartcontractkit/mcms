@@ -81,7 +81,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	}
 
 	msg := &wallet.Message{
-		Mode: 1,
+		Mode: wallet.PayGasSeparately,
 		InternalMessage: &tlb.InternalMessage{
 			IHRDisabled: true,
 			Bounce:      true,
