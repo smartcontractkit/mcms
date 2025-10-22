@@ -60,7 +60,7 @@ func (e *executor) ExecuteOperation(
 
 	oe, ok := e.Encoder.(OperationEncoder[mcms.Op])
 	if !ok {
-		return types.TransactionResult{}, fmt.Errorf("failed to assert RootMetadataEncoder: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to assert OperationEncoder")
 	}
 
 	bindOp, err := oe.ToOperation(nonce, metadata, op)
@@ -68,11 +68,23 @@ func (e *executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("failed to convert to operation: %w", err)
 	}
 
+	// Encode proofs
+	pe, ok := e.Encoder.(ProofEncoder[mcms.Proof])
+	if !ok {
+		return types.TransactionResult{}, fmt.Errorf("failed to assert ProofEncoder")
+	}
+
+	bindProof := make([]mcms.Proof, 0, len(proof))
+	for _, p := range proof {
+		bindP, _ := pe.ToProof(p)
+		bindProof = append(bindProof, bindP)
+	}
+
 	body, err := tlb.ToCell(mcms.Execute{
 		QueryID: rand.Uint64(),
 
 		Op:    bindOp,
-		Proof: commonton.SnakeData[mcms.Proof](transformHashes(proof)),
+		Proof: commonton.SnakeData[mcms.Proof](bindProof),
 	})
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
@@ -128,12 +140,36 @@ func (e *executor) SetRoot(
 
 	rme, ok := e.Encoder.(RootMetadataEncoder[mcms.RootMetadata])
 	if !ok {
-		return types.TransactionResult{}, fmt.Errorf("failed to assert RootMetadataEncoder: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to assert RootMetadataEncoder")
 	}
 
 	rm, err := rme.ToRootMetadata(metadata)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to convert to root metadata: %w", err)
+	}
+
+	// Encode proofs
+	pe, ok := e.Encoder.(ProofEncoder[mcms.Proof])
+	if !ok {
+		return types.TransactionResult{}, fmt.Errorf("failed to assert ProofEncoder")
+	}
+
+	bindProof := make([]mcms.Proof, 0, len(proof))
+	for _, p := range proof {
+		bindP, _ := pe.ToProof(p)
+		bindProof = append(bindProof, bindP)
+	}
+
+	// Encode signatures
+	se, ok := e.Encoder.(SignatureEncoder[ocr.SignatureEd25519])
+	if !ok {
+		return types.TransactionResult{}, fmt.Errorf("failed to assert SignatureEncoder")
+	}
+
+	bindSignatures := make([]ocr.SignatureEd25519, 0, len(sortedSignatures))
+	for _, s := range sortedSignatures {
+		bindSig, _ := se.ToSignature(s, root)
+		bindSignatures = append(bindSignatures, bindSig)
 	}
 
 	body, err := tlb.ToCell(mcms.SetRoot{
@@ -143,8 +179,8 @@ func (e *executor) SetRoot(
 		ValidUntil: validUntil,
 		Metadata:   rm,
 
-		MetadataProof: commonton.SnakeData[mcms.Proof](transformHashes(proof)),
-		Signatures:    commonton.SnakeData[ocr.SignatureEd25519](transformSignatures(sortedSignatures)),
+		MetadataProof: commonton.SnakeData[mcms.Proof](bindProof),
+		Signatures:    commonton.SnakeData[ocr.SignatureEd25519](bindSignatures),
 	})
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
