@@ -13,6 +13,7 @@ import (
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/ocr"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -25,8 +26,12 @@ var (
 )
 
 var _ sdk.Encoder = &encoder{}
+
+// Implementations of various encoding interfaces for TON MCMS
 var _ RootMetadataEncoder[mcms.RootMetadata] = &encoder{}
 var _ OperationEncoder[mcms.Op] = &encoder{}
+var _ ProofEncoder[mcms.Proof] = &encoder{}
+var _ SignatureEncoder[ocr.SignatureEd25519] = &encoder{}
 
 // TODO: bubble up to sdk, use in evm as well
 // Defines encoding from sdk types.ChainMetadata to chain type RootMetadata T
@@ -38,6 +43,18 @@ type RootMetadataEncoder[T any] interface {
 // Defines encoding from sdk types.ChainMetadata + types.Operation to chain type Operation T
 type OperationEncoder[T any] interface {
 	ToOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (T, error)
+}
+
+// TODO: bubble up to sdk, use in evm as well
+// Defines encoding from sdk common.Hash to chain type Proof T
+type ProofEncoder[T any] interface {
+	ToProof(p common.Hash) (T, error)
+}
+
+// TODO: bubble up to sdk, use in evm as well
+// Defines encoding from sdk types.Signature to chain type Signature T
+type SignatureEncoder[T any] interface {
+	ToSignature(s types.Signature, hash common.Hash) (T, error)
 }
 
 type encoder struct {
@@ -193,5 +210,35 @@ func (e *encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadat
 		PreOpCount:           metadata.StartingOpCount,
 		PostOpCount:          metadata.StartingOpCount + e.TxCount,
 		OverridePreviousRoot: e.OverridePreviousRoot,
+	}, nil
+}
+
+func (e *encoder) ToProof(p common.Hash) (mcms.Proof, error) {
+	return mcms.Proof{Value: p.Big()}, nil
+}
+
+const (
+	SignatureVOffset    = 27
+	SignatureVThreshold = 2
+)
+
+func (e *encoder) ToSignature(s types.Signature, hash common.Hash) (ocr.SignatureEd25519, error) {
+	if s.V < SignatureVThreshold {
+		s.V += SignatureVOffset
+	}
+
+	// Notice: to verify the signature on TON we need to recover/publish the public key
+	pubKey, err := s.RecoverPublicKey(hash)
+	if err != nil {
+		return ocr.SignatureEd25519{}, fmt.Errorf("failed to recover public key: %w", err)
+	}
+
+	pubKeyBytes := crypto.FromECDSAPub(pubKey)
+
+	return ocr.SignatureEd25519{
+		// TODO: use [32]byte arrays
+		R:      []byte(s.R.Bytes()),
+		S:      []byte(s.S.Bytes()),
+		Signer: pubKeyBytes,
 	}, nil
 }
