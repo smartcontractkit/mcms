@@ -31,7 +31,7 @@ var _ sdk.Encoder = &encoder{}
 var _ RootMetadataEncoder[mcms.RootMetadata] = &encoder{}
 var _ OperationEncoder[mcms.Op] = &encoder{}
 var _ ProofEncoder[mcms.Proof] = &encoder{}
-var _ SignatureEncoder[ocr.SignatureEd25519] = &encoder{}
+var _ SignaturesEncoder[ocr.SignatureEd25519] = &encoder{}
 
 // TODO: bubble up to sdk, use in evm as well
 // Defines encoding from sdk types.ChainMetadata to chain type RootMetadata T
@@ -46,15 +46,15 @@ type OperationEncoder[T any] interface {
 }
 
 // TODO: bubble up to sdk, use in evm as well
-// Defines encoding from sdk common.Hash to chain type Proof T
+// Defines encoding from sdk []common.Hash to chain type Proof []T
 type ProofEncoder[T any] interface {
-	ToProof(p common.Hash) (T, error)
+	ToProof(p []common.Hash) ([]T, error)
 }
 
 // TODO: bubble up to sdk, use in evm as well
-// Defines encoding from sdk types.Signature to chain type Signature T
-type SignatureEncoder[T any] interface {
-	ToSignature(s types.Signature, hash common.Hash) (T, error)
+// Defines encoding from sdk []types.Signature to chain type Signature []T
+type SignaturesEncoder[T any] interface {
+	ToSignatures(s []types.Signature, hash common.Hash) ([]T, error)
 }
 
 type encoder struct {
@@ -213,8 +213,12 @@ func (e *encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadat
 	}, nil
 }
 
-func (e *encoder) ToProof(p common.Hash) (mcms.Proof, error) {
-	return mcms.Proof{Value: p.Big()}, nil
+func (e *encoder) ToProof(p []common.Hash) ([]mcms.Proof, error) {
+	proofs := make([]mcms.Proof, 0, len(p))
+	for _, hash := range p {
+		proofs = append(proofs, mcms.Proof{Value: hash.Big()})
+	}
+	return proofs, nil
 }
 
 const (
@@ -222,23 +226,28 @@ const (
 	SignatureVThreshold = 2
 )
 
-func (e *encoder) ToSignature(s types.Signature, hash common.Hash) (ocr.SignatureEd25519, error) {
-	if s.V < SignatureVThreshold {
-		s.V += SignatureVOffset
+func (e *encoder) ToSignatures(ss []types.Signature, hash common.Hash) ([]ocr.SignatureEd25519, error) {
+	bindSignatures := make([]ocr.SignatureEd25519, 0, len(ss))
+	for _, s := range ss {
+		if s.V < SignatureVThreshold {
+			s.V += SignatureVOffset
+		}
+
+		// Notice: to verify the signature on TON we need to recover/publish the public key
+		pubKey, err := s.RecoverPublicKey(hash)
+		if err != nil {
+			return []ocr.SignatureEd25519{}, fmt.Errorf("failed to recover public key: %w", err)
+		}
+
+		pubKeyBytes := crypto.FromECDSAPub(pubKey)
+
+		bindSignatures = append(bindSignatures, ocr.SignatureEd25519{
+			// TODO: use [32]byte arrays
+			R:      []byte(s.R.Bytes()),
+			S:      []byte(s.S.Bytes()),
+			Signer: pubKeyBytes,
+		})
 	}
 
-	// Notice: to verify the signature on TON we need to recover/publish the public key
-	pubKey, err := s.RecoverPublicKey(hash)
-	if err != nil {
-		return ocr.SignatureEd25519{}, fmt.Errorf("failed to recover public key: %w", err)
-	}
-
-	pubKeyBytes := crypto.FromECDSAPub(pubKey)
-
-	return ocr.SignatureEd25519{
-		// TODO: use [32]byte arrays
-		R:      []byte(s.R.Bytes()),
-		S:      []byte(s.S.Bytes()),
-		Signer: pubKeyBytes,
-	}, nil
+	return bindSignatures, nil
 }
