@@ -57,7 +57,7 @@ func (t *timelockExecutor) Execute(
 		// Unmarshal the AdditionalFields from the operation
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return types.TransactionResult{}, err
+			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 		}
 
 		// Map to Ton Address type
@@ -90,7 +90,7 @@ func (t *timelockExecutor) Execute(
 	}
 
 	msg := &wallet.Message{
-		Mode: 1,
+		Mode: wallet.PayGasSeparately,
 		InternalMessage: &tlb.InternalMessage{
 			IHRDisabled: true,
 			Bounce:      true,
