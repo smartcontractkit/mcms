@@ -1,5 +1,15 @@
 # @smartcontractkit/mcms
 
+## 0.29.0
+
+### Minor Changes
+
+- [#512](https://github.com/smartcontractkit/mcms/pull/512) [`a7ac4a4`](https://github.com/smartcontractkit/mcms/commit/a7ac4a4da5effc1eb7186fbcb5c248a353468786) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Add support for typeargs in Sui implementation
+
+### Patch Changes
+
+- [#515](https://github.com/smartcontractkit/mcms/pull/515) [`e3ec0b2`](https://github.com/smartcontractkit/mcms/commit/e3ec0b27edc55d14d6ba70ab3e736a39fff3bdb2) Thanks [@friedemannf](https://github.com/friedemannf)! - Add WithDoNotSendInstructionsOnChain to Aptos configurer
+
 ## 0.28.0
 
 ### Minor Changes
