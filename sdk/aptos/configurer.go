@@ -22,14 +22,39 @@ type Configurer struct {
 	role   TimelockRole
 
 	bindingFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms.MCMS
+
+	skipSend bool
 }
 
-func NewConfigurer(client aptos.AptosRpcClient, auth aptos.TransactionSigner, role TimelockRole) *Configurer {
-	return &Configurer{
+// NewConfigurer creates a new Configurer for an Aptos MCMS instance.
+//
+// options:
+//
+//	WithDoNotSendInstructionsOnChain: when selected, the Configurer instance will not
+//			send the Aptos transaction to the blockchain but will return a prepared
+//			MCMS types.Transaction instead.
+func NewConfigurer(client aptos.AptosRpcClient, auth aptos.TransactionSigner, role TimelockRole, options ...configurerOption) *Configurer {
+	c := &Configurer{
 		client:    client,
 		auth:      auth,
 		role:      role,
 		bindingFn: mcms.Bind,
+	}
+	for _, option := range options {
+		option(c)
+	}
+
+	return c
+}
+
+type configurerOption func(*Configurer)
+
+// WithDoNotSendInstructionsOnChain sets the configurer to not sign and send the configuration transaction
+// but rather make it return a prepared MCMS types.Transaction instead.
+// If set, the Hash field in the result will be empty.
+func WithDoNotSendInstructionsOnChain() configurerOption {
+	return func(c *Configurer) {
+		c.skipSend = true
 	}
 }
 
@@ -50,6 +75,38 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		signers[i] = addr.Bytes()
 	}
 
+	if c.skipSend {
+		moduleInfo, function, _, args, err2 := mcmsBinding.MCMS().Encoder().SetConfig(
+			c.role.Byte(),
+			signers,
+			signerGroups,
+			groupQuorum[:],
+			groupParents[:],
+			clearRoot,
+		)
+		if err2 != nil {
+			return types.TransactionResult{}, fmt.Errorf("encoding SetConfig call on Aptos mcms contract: %w", err2)
+		}
+		tx, err3 := NewTransaction(
+			moduleInfo.PackageName,
+			moduleInfo.ModuleName,
+			function,
+			mcmsAddress,
+			ArgsToData(args),
+			"",
+			nil,
+		)
+		if err3 != nil {
+			return types.TransactionResult{}, fmt.Errorf("creating mcms transaction: %w", err3)
+		}
+
+		return types.TransactionResult{
+			Hash:        "", // Returning no hash since the transaction hasn't been sent yet.
+			ChainFamily: chain_selectors.FamilyAptos,
+			RawData:     tx, // will be of type types.Transaction
+		}, nil
+	}
+
 	tx, err := mcmsBinding.MCMS().SetConfig(
 		opts,
 		c.role.Byte(),
@@ -66,6 +123,6 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	return types.TransactionResult{
 		Hash:        tx.Hash,
 		ChainFamily: chain_selectors.FamilyAptos,
-		RawData:     tx,
+		RawData:     tx, // will be of type *api.PendingTransaction
 	}, nil
 }
