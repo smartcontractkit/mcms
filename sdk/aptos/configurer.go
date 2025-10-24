@@ -43,6 +43,7 @@ func NewConfigurer(client aptos.AptosRpcClient, auth aptos.TransactionSigner, ro
 	for _, option := range options {
 		option(c)
 	}
+
 	return c
 }
 
@@ -87,6 +88,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err)
 		}
+
 		return types.TransactionResult{
 			Hash:        tx.Hash,
 			ChainFamily: chain_selectors.FamilyAptos,
@@ -100,7 +102,6 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 			groupQuorum[:],
 			groupParents[:],
 			clearRoot,
-
 		)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("encoding SetConfig call on Aptos mcms contract: %w", err)
@@ -117,6 +118,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("creating mcms transaction: %w", err)
 		}
+
 		return types.TransactionResult{
 			Hash:        "", // Returning no hash since the transaction hasn't been sent yet.
 			ChainFamily: chain_selectors.FamilyAptos,
