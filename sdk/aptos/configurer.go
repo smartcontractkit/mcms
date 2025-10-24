@@ -107,7 +107,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		}, nil
 	}
 
-	tx, err4 := mcmsBinding.MCMS().SetConfig(
+	tx, err := mcmsBinding.MCMS().SetConfig(
 		opts,
 		c.role.Byte(),
 		signers,
@@ -116,8 +116,8 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		groupParents[:],
 		clearRoot,
 	)
-	if err4 != nil {
-		return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err4)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err)
 	}
 
 	return types.TransactionResult{
