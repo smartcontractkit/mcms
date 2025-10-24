@@ -1,6 +1,6 @@
 golang 1.24.4
 golangci-lint 2.1.6
-mockery 2.53.5
+mockery 2.53.4
 nodejs 20.16.0
 pnpm 9.6.0
 task 3.40.0

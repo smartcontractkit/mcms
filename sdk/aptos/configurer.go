@@ -85,7 +85,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 			clearRoot,
 		)
 		if err2 != nil {
-			return types.TransactionResult{}, fmt.Errorf("encoding SetConfig call on Aptos mcms contract: %w", err)
+			return types.TransactionResult{}, fmt.Errorf("encoding SetConfig call on Aptos mcms contract: %w", err2)
 		}
 		tx, err3 := NewTransaction(
 			moduleInfo.PackageName,
@@ -97,7 +97,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 			nil,
 		)
 		if err3 != nil {
-			return types.TransactionResult{}, fmt.Errorf("creating mcms transaction: %w", err)
+			return types.TransactionResult{}, fmt.Errorf("creating mcms transaction: %w", err3)
 		}
 
 		return types.TransactionResult{
@@ -117,7 +117,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		clearRoot,
 	)
 	if err4 != nil {
-		return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err4)
 	}
 
 	return types.TransactionResult{
