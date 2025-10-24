@@ -75,26 +75,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		signers[i] = addr.Bytes()
 	}
 
-	if !c.skipSend {
-		tx, err := mcmsBinding.MCMS().SetConfig(
-			opts,
-			c.role.Byte(),
-			signers,
-			signerGroups,
-			groupQuorum[:],
-			groupParents[:],
-			clearRoot,
-		)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err)
-		}
-
-		return types.TransactionResult{
-			Hash:        tx.Hash,
-			ChainFamily: chain_selectors.FamilyAptos,
-			RawData:     tx, // will be of type *api.PendingTransaction
-		}, nil
-	} else {
+	if c.skipSend {
 		moduleInfo, function, _, args, err := mcmsBinding.MCMS().Encoder().SetConfig(
 			c.role.Byte(),
 			signers,
@@ -125,4 +106,23 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 			RawData:     tx, // will be of type types.Transaction
 		}, nil
 	}
+
+	tx, err := mcmsBinding.MCMS().SetConfig(
+		opts,
+		c.role.Byte(),
+		signers,
+		signerGroups,
+		groupQuorum[:],
+		groupParents[:],
+		clearRoot,
+	)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("setting config on Aptos mcms contract: %w", err)
+	}
+
+	return types.TransactionResult{
+		Hash:        tx.Hash,
+		ChainFamily: chain_selectors.FamilyAptos,
+		RawData:     tx, // will be of type *api.PendingTransaction
+	}, nil
 }
