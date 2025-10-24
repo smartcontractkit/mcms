@@ -2,6 +2,7 @@ package aptos
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"testing"
@@ -13,6 +14,7 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 
 	mock_aptossdk "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
@@ -26,12 +28,13 @@ func TestNewConfigurer(t *testing.T) {
 	mockClient := mock_aptossdk.NewAptosRpcClient(t)
 	mockSigner := mock_aptossdk.NewTransactionSigner(t)
 
-	configurer := NewConfigurer(mockClient, mockSigner, TimelockRoleBypasser)
+	configurer := NewConfigurer(mockClient, mockSigner, TimelockRoleBypasser, WithDoNotSendInstructionsOnChain())
 	assert.NotNil(t, configurer)
 	assert.Equal(t, mockClient, configurer.client)
 	assert.Equal(t, mockSigner, configurer.auth)
 	assert.Equal(t, TimelockRoleBypasser, configurer.role)
 	assert.NotNil(t, configurer.bindingFn)
+	assert.True(t, configurer.skipSend)
 }
 
 func TestConfigurer_SetConfig(t *testing.T) {
@@ -47,6 +50,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 		args      args
 		role      TimelockRole
 		mockSetup func(m *mock_mcms.MCMS)
+		options   []configurerOption
 		want      types.TransactionResult
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -138,6 +142,92 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				mockMCMSModule.EXPECT().SetConfig(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("error during SetConfig"))
 			},
 			wantErr: AssertErrorContains("error during SetConfig"),
+		}, {
+			name: "success - WithDoNotSendInstructionsOnChain option",
+			args: args{
+				mcmsAddress: "0x1234",
+				cfg: &types.Config{
+					Quorum: 2,
+					Signers: []common.Address{
+						common.HexToAddress("0x333"),
+						common.HexToAddress("0x111"),
+					},
+					GroupSigners: []types.Config{
+						{
+							Quorum: 1,
+							Signers: []common.Address{
+								common.HexToAddress("0x222"),
+							},
+							GroupSigners: []types.Config{
+								{
+									Quorum: 2,
+									Signers: []common.Address{
+										common.HexToAddress("0x444"),
+										common.HexToAddress("0x555"),
+									},
+								},
+							},
+						},
+					},
+				},
+				clearRoot: false,
+			},
+			role: TimelockRoleProposer,
+			mockSetup: func(m *mock_mcms.MCMS) {
+				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
+				mcmsEncoder := mock_module_mcms.NewMCMSEncoder(t)
+				m.EXPECT().MCMS().Return(mockMCMSModule)
+				mockMCMSModule.EXPECT().Encoder().Return(mcmsEncoder)
+				mcmsEncoder.EXPECT().SetConfig(
+					TimelockRoleProposer.Byte(),
+					// Ordered addresses
+					[][]byte{
+						common.HexToAddress("0x111").Bytes(),
+						common.HexToAddress("0x222").Bytes(),
+						common.HexToAddress("0x333").Bytes(),
+						common.HexToAddress("0x444").Bytes(),
+						common.HexToAddress("0x555").Bytes(),
+					},
+					// Groups - 0x111 & 0x333 are in group 0, 0x222 is in group 1, 0x444 & 0x555 is in group 2
+					[]uint8{0, 1, 0, 2, 2},
+					// Quorums - group 0 has 2, group 1 has 1
+					[]uint8{2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+					// Group Parents -
+					//   group 0 => group 0
+					//   group 1 => group 0
+					//   group 2 => group 1
+					[]uint8{0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+					false,
+				).Return(
+					bind.ModuleInformation{
+						PackageName: "package1",
+						ModuleName:  "module1",
+						Address:     aptos.AccountAddress{},
+					},
+					"function",
+					nil,
+					[][]byte{{1, 2, 3}, {4, 5, 6}, {7, 8, 9}},
+					nil,
+				)
+			},
+			options: []configurerOption{
+				WithDoNotSendInstructionsOnChain(),
+			},
+			want: types.TransactionResult{
+				Hash:        "", // Hash is empty when not sending transaction
+				ChainFamily: cselectors.FamilyAptos,
+				RawData: types.Transaction{
+					OperationMetadata: types.OperationMetadata{},
+					To:                mustHexToAddress("0x1234").StringLong(),
+					Data:              []byte{1, 2, 3, 4, 5, 6, 7, 8, 9},
+					AdditionalFields: Must(json.Marshal(AdditionalFields{
+						PackageName: "package1",
+						ModuleName:  "module1",
+						Function:    "function",
+					})),
+				},
+			},
+			wantErr: assert.NoError,
 		},
 	}
 
@@ -151,6 +241,9 @@ func TestConfigurer_SetConfig(t *testing.T) {
 					return mcmsBinding
 				},
 				role: tt.role,
+			}
+			for _, option := range tt.options {
+				option(&configurer)
 			}
 
 			if tt.mockSetup != nil {
