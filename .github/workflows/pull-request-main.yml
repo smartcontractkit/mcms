@@ -140,7 +140,7 @@ jobs:
             [[ -n "${solana_failure}" ]] && echo "🚨 Solana e2e tests failed."
             [[ -n "${aptos_failure}" ]] && echo "🚨 Aptos e2e tests failed."
             [[ -n "${sui_failure}" ]] && echo "🚨 Sui e2e tests failed."
-            [[ -n "${evm_failure}" || -n "${solana_failure}" || -n "${sui_failure}" ]] && {
+            [[ -n "${evm_failure}" || -n "${solana_failure}" || -n "${aptos_failure}" || -n "${sui_failure}" ]] && {
               exit 1
             } || {
               echo "Exiting"
