@@ -246,7 +246,7 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 			func(collect *assert.CollectT) {
 				assert.NoErrorf(collect, timelockExecutable.IsReady(a.T().Context()), "Proposal is not ready")
 			},
-			time.Second*4,
+			time.Second*10,
 			time.Millisecond*500,
 		)
 		elapsed := time.Since(start)

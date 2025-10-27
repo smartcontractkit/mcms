@@ -78,7 +78,7 @@ jobs:
       - name: Install Aptos CLI
         uses: aptos-labs/actions/install-aptos-cli@ce57287eb852b9819c1d74fecc3be187677559fd # v0.1
         with:
-          CLI_VERSION: 7.0.0
+          CLI_VERSION: 7.10.0
 
       - name: Install Sui CLI
         shell: bash
@@ -140,7 +140,7 @@ jobs:
             [[ -n "${solana_failure}" ]] && echo "🚨 Solana e2e tests failed."
             [[ -n "${aptos_failure}" ]] && echo "🚨 Aptos e2e tests failed."
             [[ -n "${sui_failure}" ]] && echo "🚨 Sui e2e tests failed."
-            [[ -n "${evm_failure}" || -n "${solana_failure}" || -n "${sui_failure}" ]] && {
+            [[ -n "${evm_failure}" || -n "${solana_failure}" || -n "${aptos_failure}" || -n "${sui_failure}" ]] && {
               exit 1
             } || {
               echo "Exiting"
