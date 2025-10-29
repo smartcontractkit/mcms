@@ -8,11 +8,13 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
-	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
-	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
-	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
-	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/types"
+
+	aptos "github.com/smartcontractkit/mcms/sdk/aptos"
+	evm "github.com/smartcontractkit/mcms/sdk/evm"
+	solana "github.com/smartcontractkit/mcms/sdk/solana"
+	sui "github.com/smartcontractkit/mcms/sdk/sui"
+	ton "github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 func Test_NewEncoder(t *testing.T) {
@@ -35,7 +37,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns an EVM encoder (not simulated)",
 			giveSelector: chaintest.Chain2Selector,
 			giveIsSim:    false,
-			want: &evmsdk.Encoder{
+			want: &evm.Encoder{
 				TxCount:              giveTxCount,
 				ChainSelector:        chaintest.Chain2Selector,
 				OverridePreviousRoot: false,
@@ -46,7 +48,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns an EVM encoder (simulated)",
 			giveSelector: chaintest.Chain2Selector,
 			giveIsSim:    true,
-			want: &evmsdk.Encoder{
+			want: &evm.Encoder{
 				ChainSelector:        chaintest.Chain2Selector,
 				TxCount:              giveTxCount,
 				OverridePreviousRoot: false,
@@ -57,7 +59,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns a Solana encoder (not simulated)",
 			giveSelector: chaintest.Chain4Selector,
 			giveIsSim:    false,
-			want: &solanasdk.Encoder{
+			want: &solana.Encoder{
 				TxCount:              giveTxCount,
 				ChainSelector:        chaintest.Chain4Selector,
 				OverridePreviousRoot: false,
@@ -67,7 +69,7 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns an Aptos encoder (not simulated)",
 			giveSelector: chaintest.Chain5Selector,
 			giveIsSim:    false,
-			want: &aptossdk.Encoder{
+			want: &aptos.Encoder{
 				TxCount:              giveTxCount,
 				ChainSelector:        chaintest.Chain5Selector,
 				OverridePreviousRoot: false,
@@ -77,7 +79,17 @@ func Test_NewEncoder(t *testing.T) {
 			name:         "success: returns a Sui encoder",
 			giveSelector: chaintest.Chain6Selector,
 			giveIsSim:    false,
-			want: &suisdk.Encoder{
+			want: &sui.Encoder{
+				TxCount:              giveTxCount,
+				ChainSelector:        chaintest.Chain6Selector,
+				OverridePreviousRoot: false,
+			},
+		},
+		{
+			name:         "success: returns a TON encoder",
+			giveSelector: chaintest.Chain7Selector,
+			giveIsSim:    false,
+			want: &ton.Encoder{
 				TxCount:              giveTxCount,
 				ChainSelector:        chaintest.Chain6Selector,
 				OverridePreviousRoot: false,
@@ -124,17 +136,22 @@ func Test_newTimelockConverter(t *testing.T) {
 		{
 			name:          "success: EVM executor",
 			chainSelector: chaintest.Chain1Selector,
-			want:          &evmsdk.TimelockConverter{},
+			want:          &evm.TimelockConverter{},
 		},
 		{
 			name:          "success: Solana executor",
 			chainSelector: chaintest.Chain4Selector,
-			want:          &solanasdk.TimelockConverter{},
+			want:          &solana.TimelockConverter{},
 		},
 		{
 			name:          "success: Sui executor",
 			chainSelector: chaintest.Chain6Selector,
-			want:          &suisdk.TimelockConverter{},
+			want:          &sui.TimelockConverter{},
+		},
+		{
+			name:          "success: TON executor",
+			chainSelector: chaintest.Chain6Selector,
+			want:          ton.NewTimelockConverter(),
 		},
 		{
 			name:          "failure: unknown selector",
