@@ -43,7 +43,7 @@ func (f AdditionalFields) Validate() error {
 
 // TODO: should use a generic type and an interface to define this (method to create generic types.Transaction from a specific type [S])
 func NewTransaction(
-	to address.Address,
+	to *address.Address,
 	body *cell.Slice,
 	value *big.Int,
 	contractType string,
