@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
+	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -19,7 +20,7 @@ import (
 )
 
 // TODO: mv and import from github.com/smartcontractkit/chainlink-ton/bindings/mcms/mcms
-// TODO: update "MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR...", add TON prefixes
+// TODO: a different hash fn is used in TON sha256
 var (
 	mcmDomainSeparatorOp       = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP_TON"))
 	mcmDomainSeparatorMetadata = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_TON"))
@@ -240,12 +241,8 @@ func (e *encoder) ToSignatures(ss []types.Signature, hash common.Hash) ([]ocr.Si
 		}
 
 		pubKeyBytes := crypto.FromECDSAPub(pubKey)
-
 		bindSignatures = append(bindSignatures, ocr.SignatureEd25519{
-			// TODO: use [32]byte arrays
-			R:      []byte(s.R.Bytes()),
-			S:      []byte(s.S.Bytes()),
-			Signer: pubKeyBytes,
+			Data: slices.Concat(s.R.Bytes(), s.S.Bytes(), pubKeyBytes),
 		})
 	}
 

@@ -72,7 +72,7 @@ func (t *timelockExecutor) Execute(
 		}
 
 		calls[i] = timelock.Call{
-			Target: *to,
+			Target: to,
 			Data:   datac,
 			Value:  additionalFields.Value,
 		}
@@ -81,7 +81,7 @@ func (t *timelockExecutor) Execute(
 	body, err := tlb.ToCell(timelock.ExecuteBatch{
 		QueryID: rand.Uint64(),
 
-		Calls:       commonton.SnakeData[timelock.Call](calls),
+		Calls:       commonton.SnakeRef[timelock.Call](calls),
 		Predecessor: predecessor.Big(),
 		Salt:        salt.Big(),
 	})
