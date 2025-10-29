@@ -117,7 +117,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 	}
 
 	// TODO: remove hardcoded value
-	tx, err := NewTransaction(*dstAddr, data.BeginParse(), big.NewInt(0), "RBACTimelock", tags)
+	tx, err := NewTransaction(dstAddr, data.BeginParse(), big.NewInt(0), "RBACTimelock", tags)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)
 	}
