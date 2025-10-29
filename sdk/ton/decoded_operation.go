@@ -29,7 +29,7 @@ func NewDecodedOperation(contractType string, msgType string, msgOpcode uint64, 
 }
 
 func (o *decodedOperation) MethodName() string {
-	return fmt.Sprintf("%s::%s(%x)", o.contractType, o.msgType, o.msgOpcode)
+	return fmt.Sprintf("%s::%s(0x%x)", o.contractType, o.msgType, o.msgOpcode)
 }
 
 func (o *decodedOperation) Keys() []string {
