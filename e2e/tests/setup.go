@@ -18,6 +18,9 @@ import (
 	"github.com/gagliardetto/solana-go/rpc/ws"
 	"github.com/joho/godotenv"
 	"github.com/stretchr/testify/require"
+	"github.com/xssnick/tonutils-go/ton"
+
+	tonchain "github.com/smartcontractkit/chainlink-ton/pkg/ton/chain"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
@@ -39,6 +42,7 @@ type Config struct {
 	SolanaChain *blockchain.Input `toml:"solana_config"`
 	AptosChain  *blockchain.Input `toml:"aptos_config"`
 	SuiChain    *blockchain.Input `toml:"sui_config"`
+	TonChain    *blockchain.Input `toml:"ton_config"`
 
 	Settings struct {
 		PrivateKeys     []string `toml:"private_keys"`
@@ -57,6 +61,8 @@ type TestSetup struct {
 	AptosBlockchain  *blockchain.Output
 	SuiClient        sui.ISuiAPI
 	SuiBlockchain    *blockchain.Output
+	TonClient        *ton.APIClient
+	TonBlockchain    *blockchain.Output
 	Config
 }
 
@@ -203,6 +209,30 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			t.Logf("Initialized Sui RPC client @ %s", nodeUrl)
 		}
 
+		var (
+			tonClient           *ton.APIClient
+			tonBlockchainOutput *blockchain.Output
+		)
+		if in.TonChain != nil {
+			// Use blockchain network setup (fallback)
+			ports := freeport.GetN(t, 2)
+			port := ports[0]
+			faucetPort := ports[1]
+			in.TonChain.Port = strconv.Itoa(port)
+			in.TonChain.FaucetPort = strconv.Itoa(faucetPort)
+
+			tonBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.TonChain)
+			require.NoError(t, err, "Failed to initialize TON blockchain")
+
+			nodeUrl := tonBlockchainOutput.Nodes[0].ExternalHTTPUrl
+			pool, err := tonchain.CreateLiteserverConnectionPool(ctx, nodeUrl)
+			require.NoError(t, err, "Failed to initialize TON client - failed to create liteserver connection pool")
+			tonClient = ton.NewAPIClient(pool, ton.ProofCheckPolicyFast)
+
+			// Test liveness, will also fetch ChainID
+			t.Logf("Initialized TON RPC client @ %s", nodeUrl)
+		}
+
 		sharedSetup = &TestSetup{
 			ClientA:          ethClientA,
 			ClientB:          ethClientB,
@@ -213,6 +243,8 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			AptosBlockchain:  aptosBlockchainOutput,
 			SuiClient:        suiClient,
 			SuiBlockchain:    suiBlockchainOutput,
+			TonClient:        tonClient,
+			TonBlockchain:    tonBlockchainOutput,
 			Config:           *in,
 		}
 	})
