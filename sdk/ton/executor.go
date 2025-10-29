@@ -55,7 +55,7 @@ func (e *executor) ExecuteOperation(
 	op types.Operation,
 ) (types.TransactionResult, error) {
 	if e.Encoder == nil {
-		return types.TransactionResult{}, errors.New("Executor was created without an encoder")
+		return types.TransactionResult{}, errors.New("executor was created without an encoder")
 	}
 
 	oe, ok := e.Encoder.(OperationEncoder[mcms.Op])
