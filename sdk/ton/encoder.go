@@ -13,8 +13,10 @@ import (
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/ocr"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -26,13 +28,13 @@ var (
 	mcmDomainSeparatorMetadata = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_TON"))
 )
 
-var _ sdk.Encoder = &encoder{}
+var _ sdk.Encoder = &Encoder{}
 
 // Implementations of various encoding interfaces for TON MCMS
-var _ RootMetadataEncoder[mcms.RootMetadata] = &encoder{}
-var _ OperationEncoder[mcms.Op] = &encoder{}
-var _ ProofEncoder[mcms.Proof] = &encoder{}
-var _ SignaturesEncoder[ocr.SignatureEd25519] = &encoder{}
+var _ RootMetadataEncoder[mcms.RootMetadata] = &Encoder{}
+var _ OperationEncoder[mcms.Op] = &Encoder{}
+var _ ProofEncoder[mcms.Proof] = &Encoder{}
+var _ SignaturesEncoder[ocr.SignatureEd25519] = &Encoder{}
 
 // TODO: bubble up to sdk, use in evm as well
 // Defines encoding from sdk types.ChainMetadata to chain type RootMetadata T
@@ -58,26 +60,22 @@ type SignaturesEncoder[T any] interface {
 	ToSignatures(s []types.Signature, hash common.Hash) ([]T, error)
 }
 
-type encoder struct {
+// Encoder encoding MCMS operations and metadata into hashes.
+type Encoder struct {
 	ChainSelector        types.ChainSelector
 	TxCount              uint64
 	OverridePreviousRoot bool
 }
 
-// Encoder encoding MCMS operations and metadata into hashes.
-func NewEncoder(
-	chainSelector types.ChainSelector,
-	txCount uint64,
-	overridePreviousRoot bool,
-) sdk.Encoder {
-	return &encoder{
+func NewEncoder(chainSelector types.ChainSelector, txCount uint64, overridePreviousRoot bool) sdk.Encoder {
+	return &Encoder{
 		ChainSelector:        chainSelector,
 		TxCount:              txCount,
 		OverridePreviousRoot: overridePreviousRoot,
 	}
 }
 
-func (e *encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
+func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
 	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to get chain ID from selector: %w", err)
@@ -128,7 +126,7 @@ func (e *encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 	return hash, nil
 }
 
-func (e *encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
+func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
 	rm, err := e.ToRootMetadata(metadata)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to convert to root metadata: %w", err)
@@ -155,7 +153,7 @@ func (e *encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	return hash, nil
 }
 
-func (e *encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (mcms.Op, error) {
+func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (mcms.Op, error) {
 	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return mcms.Op{}, fmt.Errorf("failed to get chain ID from selector: %w", err)
@@ -193,7 +191,7 @@ func (e *encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op t
 	}, nil
 }
 
-func (e *encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadata, error) {
+func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadata, error) {
 	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return mcms.RootMetadata{}, fmt.Errorf("failed to get chain ID from selector: %w", err)
@@ -214,7 +212,7 @@ func (e *encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadat
 	}, nil
 }
 
-func (e *encoder) ToProof(p []common.Hash) ([]mcms.Proof, error) {
+func (e *Encoder) ToProof(p []common.Hash) ([]mcms.Proof, error) {
 	proofs := make([]mcms.Proof, 0, len(p))
 	for _, hash := range p {
 		proofs = append(proofs, mcms.Proof{Value: hash.Big()})
@@ -227,7 +225,7 @@ const (
 	SignatureVThreshold = 2
 )
 
-func (e *encoder) ToSignatures(ss []types.Signature, hash common.Hash) ([]ocr.SignatureEd25519, error) {
+func (e *Encoder) ToSignatures(ss []types.Signature, hash common.Hash) ([]ocr.SignatureEd25519, error) {
 	bindSignatures := make([]ocr.SignatureEd25519, 0, len(ss))
 	for _, s := range ss {
 		if s.V < SignatureVThreshold {
