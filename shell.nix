@@ -35,8 +35,13 @@ pkgs.mkShell {
       git
       jq
       yq-go # for manipulating golangci-lint config
+      go-task
     ]
     ++ lib.optionals stdenv.hostPlatform.isDarwin [
       libiconv
+
+      # Required to support go build inside a nix devshell (c compiler dependency on SecTrustCopyCertificateChain/macOS 12+)
+      # https://github.com/NixOS/nixpkgs/issues/433688#issuecomment-3231551949
+      pkgs.apple-sdk_15
     ];
 }
