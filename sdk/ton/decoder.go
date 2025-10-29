@@ -58,10 +58,15 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 		return nil, fmt.Errorf("invalid cell BOC data: %w", err)
 	}
 
+	v, err := lib.DecodeTLBCellToAny(datac, tlbs)
+	if err != nil {
+		return nil, fmt.Errorf("error while decoding message (cell) for contract %s: %w", idTLBs, err)
+	}
+
 	// TODO: handle empty cell
 	msgType, msgDecoded, err := lib.DecodeTLBValToJSON(datac, tlbs)
 	if err != nil {
-		return nil, fmt.Errorf("error while decoding message for contract %s: %w", idTLBs, err)
+		return nil, fmt.Errorf("error while decoding message (struct) for contract %s: %w", idTLBs, err)
 	}
 
 	if msgType == "Cell" || msgType == "<nil>" { // on decoder fallback (not decoded)
@@ -69,18 +74,19 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 	}
 
 	// Extract the input keys and args (tree/map lvl 0)
-	inputKeys := make([]string, 0)
-	inputArgs := make([]any, 0)
+	keys, err := lib.DecodeTLBStructKeys(v, tlbs)
+	inputKeys := make([]string, len(keys))
+	inputArgs := make([]any, len(keys))
 
 	m, ok := msgDecoded.(map[string]interface{}) // JSON normalized
 	if !ok {
-		return nil, fmt.Errorf("failed to decode message for contract %s: %w", idTLBs, err)
+		return nil, fmt.Errorf("failed to cast as map %s: %w", idTLBs, err)
 	}
 
-	// TODO: do we consider sorting these based on TL-B order? (decoded map is unsorted)
-	for k, v := range m {
-		inputKeys = append(inputKeys, k)
-		inputArgs = append(inputArgs, v)
+	// Notice: sorting keys based on TL-B order (decoded map is unsorted)
+	for i, k := range keys {
+		inputKeys[i] = k
+		inputArgs[i] = m[k]
 	}
 
 	msgOpcode := uint64(0) // not exposed currently
