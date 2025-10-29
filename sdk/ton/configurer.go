@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"math/rand/v2"
 
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
@@ -29,10 +30,35 @@ type configurer struct {
 
 	// Transaction opts
 	amount tlb.Coins
+
+	skipSend bool
 }
 
-func NewConfigurer(wallet *wallet.Wallet, amount tlb.Coins) (configurer, error) {
-	return configurer{wallet, amount}, nil
+// NewConfigurer creates a new Configurer for TON chains.
+//
+// options:
+//
+//	WithDoNotSendInstructionsOnChain: when selected, the Configurer instance will not
+//			send the TON instructions to the blockchain.
+func NewConfigurer(wallet *wallet.Wallet, amount tlb.Coins, opts ...configurerOption) (sdk.Configurer, error) {
+	c := configurer{wallet, amount, false}
+
+	for _, o := range opts {
+		o(&c)
+	}
+
+	return c, nil
+}
+
+type configurerOption func(*configurer)
+
+// WithDoNotSendInstructionsOnChain sets the configurer to not sign and send the configuration transaction
+// but rather make it return a prepared MCMS types.Transaction instead.
+// If set, the Hash field in the result will be empty.
+func WithDoNotSendInstructionsOnChain() configurerOption {
+	return func(c *configurer) {
+		c.skipSend = true
+	}
 }
 
 func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
@@ -80,6 +106,19 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("failed to encode SetConfig body: %w", err)
 	}
 
+	if c.skipSend {
+		tx, err := NewTransaction(*dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), "", nil)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("error encoding mcms setConfig transaction: %w", err)
+		}
+
+		return types.TransactionResult{
+			Hash:        "", // Returning no hash since the transaction hasn't been sent yet.
+			ChainFamily: chain_selectors.FamilyTon,
+			RawData:     tx, // will be of type types.Transaction
+		}, nil
+	}
+
 	msg := &wallet.Message{
 		Mode: wallet.PayGasSeparately,
 		InternalMessage: &tlb.InternalMessage{
@@ -100,6 +139,6 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	return types.TransactionResult{
 		Hash:        hex.EncodeToString(tx.Hash),
 		ChainFamily: cselectors.FamilyTon,
-		RawData:     tx,
+		RawData:     tx, // *tlb.Transaction
 	}, nil
 }
