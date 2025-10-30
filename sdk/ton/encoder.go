@@ -18,6 +18,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/ocr"
 
 	"github.com/smartcontractkit/mcms/sdk"
+	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -76,37 +77,12 @@ func NewEncoder(chainSelector types.ChainSelector, txCount uint64, overridePrevi
 }
 
 func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
-	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
+	opBind, err := e.ToOperation(opCount, metadata, op)
 	if err != nil {
-		return common.Hash{}, fmt.Errorf("failed to get chain ID from selector: %w", err)
+		return common.Hash{}, fmt.Errorf("failed to convert operation: %w", err)
 	}
 
-	// Map to Ton Address type (mcms.address)
-	mcmsAddr, err := address.ParseAddr(metadata.MCMAddress)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("invalid mcms address: %w", err)
-	}
-
-	// Map to Ton Address type (op.to)
-	toAddr, err := address.ParseAddr(op.Transaction.To)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("invalid op.Transaction.To address: %w", err)
-	}
-
-	// Encode operation according to TON specs
-	// TODO: unpack configured value
-	var value tlb.Coins
-	// TODO: unpack op.Transaction.Data,
-	var data *cell.Cell
-
-	opCell, err := tlb.ToCell(mcms.Op{
-		ChainID:  (&big.Int{}).SetInt64(int64(chainID)),
-		MultiSig: mcmsAddr,
-		Nonce:    uint64(opCount),
-		To:       toAddr,
-		Value:    value,
-		Data:     data,
-	})
+	opCell, err := tlb.ToCell(opBind)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to encode op: %w", err)
 	}
@@ -156,7 +132,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (mcms.Op, error) {
 	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
-		return mcms.Op{}, fmt.Errorf("failed to get chain ID from selector: %w", err)
+		return mcms.Op{}, &sdkerrors.InvalidChainIDError{ReceivedChainID: e.ChainSelector}
 	}
 
 	// Unmarshal the AdditionalFields from the operation
@@ -194,7 +170,7 @@ func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op t
 func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadata, error) {
 	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
-		return mcms.RootMetadata{}, fmt.Errorf("failed to get chain ID from selector: %w", err)
+		return mcms.RootMetadata{}, &sdkerrors.InvalidChainIDError{ReceivedChainID: e.ChainSelector}
 	}
 
 	// Map to Ton Address type (mcms.address)
@@ -205,7 +181,7 @@ func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadat
 
 	return mcms.RootMetadata{
 		ChainID:              (&big.Int{}).SetInt64(int64(chainID)),
-		MultiSig:             *mcmsAddr,
+		MultiSig:             mcmsAddr,
 		PreOpCount:           metadata.StartingOpCount,
 		PostOpCount:          metadata.StartingOpCount + e.TxCount,
 		OverridePreviousRoot: e.OverridePreviousRoot,
