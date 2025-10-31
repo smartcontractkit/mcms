@@ -12,18 +12,22 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 
+	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-// TODO: move to github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms#Signer
-// Signer information
-type Signer struct {
-	Key   *big.Int `tlb:"## 256"` // The public key of the signer.
-	Index uint8    `tlb:"## 8"`   // The index of the signer in data.config.signers
-	Group uint8    `tlb:"## 8"`   // 0 <= group < NUM_GROUPS. Each signer can only be in one group.
+func AsUnsigned(v *big.Int, sz uint) *big.Int {
+	if sz == 0 {
+		return new(big.Int)
+	}
+	mask := new(big.Int).Lsh(big.NewInt(1), sz)
+	mask.Sub(mask, big.NewInt(1))
+	return new(big.Int).And(v, mask) // interpret as uint sz
 }
+
+const maxUint8Value = 255
 
 type ConfigTransformer = sdk.ConfigTransformer[mcms.Config, any]
 
@@ -33,7 +37,7 @@ type configTransformer struct {
 	evmTransformer evm.ConfigTransformer
 }
 
-func NewConfigTransformer() *configTransformer { return &configTransformer{} }
+func NewConfigTransformer() ConfigTransformer { return &configTransformer{} }
 
 // ToChainConfig converts the chain agnostic config to the chain-specific config
 func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config, error) {
@@ -42,21 +46,34 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 		return mcms.Config{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}
 
+	// Check the length of signerAddresses up-front
+	if len(signerAddrs) > maxUint8Value {
+		return mcms.Config{}, sdkerrors.NewTooManySignersError(uint64(len(signerAddrs)))
+	}
+
+	// Figure out the number of groups
+	var groupMax uint8
+	for _, v := range signerGroups {
+		if v > groupMax {
+			groupMax = v
+		}
+	}
+
 	// Convert to the binding config
-	signers := make([]Signer, len(signerAddrs))
+	signers := make([]mcms.Signer, len(signerAddrs))
 	idx := uint8(0)
 	for i, signerAddr := range signerAddrs {
-		signers[i] = Signer{
-			Key:   signerAddr.Big(),
+		signers[i] = mcms.Signer{
+			Key:   signerAddr.Big(), // TODO: address vs public key required for TON
 			Group: signerGroups[i],
 			Index: idx,
 		}
 		idx += 1
 	}
 
-	szSigner := uint(256 + 8 + 8)
-	signersDict := cell.NewDict(szSigner)
-	for i, s := range groupQuorum {
+	keySz := uint(8)
+	signersDict := cell.NewDict(keySz)
+	for i, s := range signers {
 		sc, err := tlb.ToCell(s)
 		if err != nil {
 			return mcms.Config{}, fmt.Errorf("unable to encode signer %d: %w", i, err)
@@ -66,14 +83,20 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	}
 
 	sz := uint(8)
-	gqDict := cell.NewDict(sz)
+	gqDict := cell.NewDict(keySz)
 	for i, g := range groupQuorum {
-		gqDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
+		if uint8(i) <= groupMax { // don't set unnecessary groups
+			v := cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell()
+			gqDict.SetIntKey(big.NewInt(int64(i)), v)
+		}
 	}
 
-	gpDict := cell.NewDict(sz)
+	gpDict := cell.NewDict(keySz)
 	for i, g := range groupParents {
-		gpDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
+		if uint8(i) <= groupMax { // don't set unnecessary groups
+			v := cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell()
+			gpDict.SetIntKey(big.NewInt(int64(i)), v)
+		}
 	}
 
 	return mcms.Config{
@@ -85,35 +108,36 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 
 // ToConfig Maps the chain-specific config to the chain-agnostic config
 func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) {
-	// Re-using the EVM implementation here, but need to convert input first
-	evmConfig := bindings.ManyChainMultiSigConfig{
-		Signers:      make([]bindings.ManyChainMultiSigSigner, 0),
-		GroupQuorums: [32]uint8{},
-		GroupParents: [32]uint8{},
-	}
-
 	kvSigners, err := config.Signers.LoadAll()
 	if err != nil {
 		return nil, fmt.Errorf("unable to load signers: %w", err)
 	}
 
-	for _, kvSigner := range kvSigners {
-		var signer Signer
+	// Re-using the EVM implementation here, but need to convert input first
+	evmConfig := bindings.ManyChainMultiSigConfig{
+		Signers:      make([]bindings.ManyChainMultiSigSigner, len(kvSigners)),
+		GroupQuorums: [32]uint8{},
+		GroupParents: [32]uint8{},
+	}
+
+	for i, kvSigner := range kvSigners {
+		var signer mcms.Signer
 		err = tlb.LoadFromCell(&signer, kvSigner.Value)
 		if err != nil {
 			return nil, fmt.Errorf("unable to decode signer: %w", err)
 		}
 
-		evmConfig.Signers = append(evmConfig.Signers, bindings.ManyChainMultiSigSigner{
-			Addr:  common.BytesToAddress(signer.Key.Bytes()),
+		evmConfig.Signers[i] = bindings.ManyChainMultiSigSigner{
+			// big.Int loading doesn't work for me
+			Addr:  common.Address([20]byte(AsUnsigned(signer.Key, 256).Bytes())),
 			Index: signer.Index,
 			Group: signer.Group,
-		})
+		}
 	}
 
 	kvGroupQuorums, err := config.GroupQuorums.LoadAll()
 	if err != nil {
-		return nil, fmt.Errorf("unable to load group quorums: %w", err)
+		return nil, fmt.Errorf("unable to laaoad group aa quorums: %w", err)
 	}
 
 	for i, kvGroupQuorum := range kvGroupQuorums {
