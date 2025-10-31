@@ -111,6 +111,7 @@ func (e *Inspector) GetRootMetadata(ctx context.Context, mcmAddress string) (typ
 
 	return types.ChainMetadata{
 		StartingOpCount: newRootMetadata.PreOpCount,
+		EndingOpCount:   newRootMetadata.PostOpCount,
 		MCMAddress:      mcmAddress,
 	}, nil
 }

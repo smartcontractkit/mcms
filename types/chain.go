@@ -8,6 +8,7 @@ import (
 // ChainMetadata defines the metadata for a chain.
 type ChainMetadata struct {
 	StartingOpCount  uint64          `json:"startingOpCount"`
+	EndingOpCount    uint64          `json:"-"`
 	MCMAddress       string          `json:"mcmAddress"`
 	AdditionalFields json.RawMessage `json:"additionalFields,omitempty" validate:"omitempty"`
 }
