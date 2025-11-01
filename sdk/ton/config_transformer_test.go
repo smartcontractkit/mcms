@@ -32,6 +32,8 @@ func makeRandomTestWallet(client *ton.APIClient, networkGlobalID int32) (*wallet
 	return wallet.FromSeed(client, wallet.NewSeed(), v5r1Config)
 }
 
+const KEY_UINT8 = 8
+
 func makeDict[T any](m map[*big.Int]T, keySz uint) (*cell.Dictionary, error) {
 	dict := cell.NewDict(keySz)
 
@@ -47,16 +49,12 @@ func makeDict[T any](m map[*big.Int]T, keySz uint) (*cell.Dictionary, error) {
 	return dict, nil
 }
 
-func makeDictUint8[T any](m map[*big.Int]T) (*cell.Dictionary, error) {
-	return makeDict(m, 8)
-}
-
-func makeDictFrom[T any](data []T) (*cell.Dictionary, error) {
+func makeDictFrom[T any](data []T, keySz uint) (*cell.Dictionary, error) {
 	m := make(map[*big.Int]T, len(data))
 	for i, v := range data {
 		m[big.NewInt(int64(i))] = v
 	}
-	return makeDict(m, 8)
+	return makeDict(m, keySz)
 }
 
 func PublicKeyToBigInt(pub crypto.PublicKey) (*big.Int, error) {
@@ -126,15 +124,15 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 				Signers: must(makeDictFrom([]mcms.Signer{
 					{Key: mustKey(signer1), Group: 0, Index: 0},
 					{Key: mustKey(signer2), Group: 1, Index: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupQuorums: must(makeDictFrom([]GroupQuorumItem{
 					{Val: 1},
 					{Val: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupParents: must(makeDictFrom([]GroupParentItem{
 					{Val: 0},
 					{Val: 0},
-				})),
+				}, KEY_UINT8)),
 			},
 			want: &types.Config{
 				Quorum:  1,
@@ -158,7 +156,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					{Val: 1},
 					{Val: 3},
 					{Val: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupParents: must(makeDictFrom([]GroupParentItem{
 					{Val: 0},
 					{Val: 0},
@@ -166,7 +164,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					{Val: 2},
 					{Val: 0},
 					{Val: 4},
-				})),
+				}, KEY_UINT8)),
 				Signers: must(makeDictFrom([]mcms.Signer{
 					{Key: mustKey(wallets[0]), Index: 0, Group: 0},
 					{Key: mustKey(wallets[1]), Index: 1, Group: 0},
@@ -184,7 +182,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					{Key: mustKey(wallets[13]), Index: 13, Group: 4},
 					{Key: mustKey(wallets[14]), Index: 14, Group: 4},
 					{Key: mustKey(wallets[15]), Index: 15, Group: 5},
-				})),
+				}, KEY_UINT8)),
 			},
 			want: &types.Config{
 				Quorum: 2,
@@ -249,15 +247,15 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 				Signers: must(makeDictFrom([]mcms.Signer{
 					{Key: mustKey(signer1), Group: 0, Index: 0},
 					{Key: mustKey(signer2), Group: 1, Index: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupQuorums: must(makeDictFrom([]GroupQuorumItem{
 					{Val: 0}, // A zero quorum makes this invalid
 					{Val: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupParents: must(makeDictFrom([]GroupParentItem{
 					{Val: 0},
 					{Val: 0},
-				})),
+				}, KEY_UINT8)),
 			},
 			wantErr: "invalid MCMS config: Quorum must be greater than 0",
 		},
@@ -329,15 +327,15 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer1), Group: 0, Index: 0},
 					{Key: mustKey(signer2), Group: 0, Index: 1},
 					{Key: mustKey(signer3), Group: 1, Index: 2},
-				})),
+				}, KEY_UINT8)),
 				GroupQuorums: must(makeDictFrom([]GroupQuorumItem{
 					{Val: 1},
 					{Val: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupParents: must(makeDictFrom([]GroupParentItem{
 					{Val: 0},
 					{Val: 0},
-				})),
+				}, KEY_UINT8)),
 			},
 		},
 		{
@@ -357,15 +355,15 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer1), Group: 0, Index: 0},
 					{Key: mustKey(signer2), Group: 0, Index: 1},
 					{Key: mustKey(signer3), Group: 1, Index: 2},
-				})),
+				}, KEY_UINT8)),
 				GroupQuorums: must(makeDictFrom([]GroupQuorumItem{
 					{Val: 2},
 					{Val: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupParents: must(makeDictFrom([]GroupParentItem{
 					{Val: 0},
 					{Val: 0},
-				})),
+				}, KEY_UINT8)),
 			},
 		},
 		{
@@ -382,13 +380,13 @@ func Test_SetConfigInputs(t *testing.T) {
 				Signers: must(makeDictFrom([]mcms.Signer{
 					{Key: mustKey(signer1), Group: 0, Index: 0},
 					{Key: mustKey(signer2), Group: 0, Index: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupQuorums: must(makeDictFrom([]GroupQuorumItem{
 					{Val: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupParents: must(makeDictFrom([]GroupParentItem{
 					{Val: 0},
-				})),
+				}, KEY_UINT8)),
 			},
 		},
 		{
@@ -407,19 +405,19 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer1), Group: 1, Index: 0},
 					{Key: mustKey(signer2), Group: 2, Index: 1},
 					{Key: mustKey(signer3), Group: 3, Index: 2},
-				})),
+				}, KEY_UINT8)),
 				GroupQuorums: must(makeDictFrom([]GroupQuorumItem{
 					{Val: 2},
 					{Val: 1},
 					{Val: 1},
 					{Val: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupParents: must(makeDictFrom([]GroupParentItem{
 					{Val: 0},
 					{Val: 0},
 					{Val: 0},
 					{Val: 0},
-				})),
+				}, KEY_UINT8)),
 			},
 		},
 		{
@@ -451,19 +449,19 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer3), Group: 1, Index: 2},
 					{Key: mustKey(signer4), Group: 2, Index: 3},
 					{Key: mustKey(signer5), Group: 3, Index: 4},
-				})),
+				}, KEY_UINT8)),
 				GroupQuorums: must(makeDictFrom([]GroupQuorumItem{
 					{Val: 2},
 					{Val: 1},
 					{Val: 1},
 					{Val: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupParents: must(makeDictFrom([]GroupParentItem{
 					{Val: 0},
 					{Val: 0},
 					{Val: 1},
 					{Val: 0},
-				})),
+				}, KEY_UINT8)),
 			},
 		},
 		{
@@ -497,19 +495,19 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer3), Group: 1, Index: 2},
 					{Key: mustKey(signer4), Group: 3, Index: 3},
 					{Key: mustKey(signer5), Group: 2, Index: 4},
-				})),
+				}, KEY_UINT8)),
 				GroupQuorums: must(makeDictFrom([]GroupQuorumItem{
 					{Val: 2},
 					{Val: 1},
 					{Val: 1},
 					{Val: 1},
-				})),
+				}, KEY_UINT8)),
 				GroupParents: must(makeDictFrom([]GroupParentItem{
 					{Val: 0},
 					{Val: 0},
 					{Val: 1},
 					{Val: 0},
-				})),
+				}, KEY_UINT8)),
 			},
 		},
 		{
