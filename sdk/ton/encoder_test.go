@@ -1,4 +1,4 @@
-package ton
+package ton_test
 
 import (
 	"math/big"
@@ -10,6 +10,7 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/xssnick/tonutils-go/address"
@@ -41,7 +42,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 			name: "success: hash operation",
 			giveOp: types.Operation{
 				ChainSelector: chaintest.Chain7Selector,
-				Transaction: must(NewTransaction(
+				Transaction: must(ton.NewTransaction(
 					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 					cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 					new(big.Int).SetUint64(1000000000000000000),
@@ -67,7 +68,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			encoder := NewEncoder(chaintest.Chain7Selector, 5, false)
+			encoder := ton.NewEncoder(chaintest.Chain7Selector, 5, false)
 			got, err := encoder.HashOperation(giveOpCount, giveMetadata, tt.giveOp)
 
 			if tt.wantErr != "" {
@@ -112,7 +113,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			encoder := NewEncoder(tt.giveSelector, 1, false)
+			encoder := ton.NewEncoder(tt.giveSelector, 1, false)
 			got, err := encoder.HashMetadata(tt.giveMeta)
 
 			if tt.wantErr != "" {
@@ -152,7 +153,7 @@ func TestEncoder_ToOperation(t *testing.T) {
 			giveSelector: chaintest.Chain7Selector,
 			giveOp: types.Operation{
 				ChainSelector: chainSelector,
-				Transaction: must(NewTransaction(
+				Transaction: must(ton.NewTransaction(
 					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 					cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 					new(big.Int).SetUint64(1000000000000000000),
@@ -195,8 +196,8 @@ func TestEncoder_ToOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			encoder := NewEncoder(tt.giveSelector, 5, false)
-			got, err := encoder.(OperationEncoder[mcms.Op]).ToOperation(giveOpCount, giveMetadata, tt.giveOp)
+			encoder := ton.NewEncoder(tt.giveSelector, 5, false)
+			got, err := encoder.(ton.OperationEncoder[mcms.Op]).ToOperation(giveOpCount, giveMetadata, tt.giveOp)
 
 			if tt.wantErr != "" {
 				require.Error(t, err)
@@ -244,8 +245,8 @@ func TestEncoder_ToRootMetadata(t *testing.T) {
 
 	txCount := uint64(5)
 	for _, tt := range tests {
-		encoder := NewEncoder(tt.giveSelector, txCount, false)
-		got, err := encoder.(RootMetadataEncoder[mcms.RootMetadata]).ToRootMetadata(tt.giveMetadata)
+		encoder := ton.NewEncoder(tt.giveSelector, txCount, false)
+		got, err := encoder.(ton.RootMetadataEncoder[mcms.RootMetadata]).ToRootMetadata(tt.giveMetadata)
 
 		if tt.wantErr != "" {
 			require.EqualError(t, err, tt.wantErr)

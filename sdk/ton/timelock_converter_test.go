@@ -1,4 +1,4 @@
-package ton
+package ton_test
 
 import (
 	"context"
@@ -13,6 +13,7 @@ import (
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -37,7 +38,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 		{
 			name: "Schedule operation",
 			op: types.BatchOperation{
-				Transactions: []types.Transaction{must(NewTransaction(
+				Transactions: []types.Transaction{must(ton.NewTransaction(
 					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 					cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 					new(big.Int).SetUint64(1000),
@@ -55,7 +56,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 		{
 			name: "Cancel operation",
 			op: types.BatchOperation{
-				Transactions: []types.Transaction{must(NewTransaction(
+				Transactions: []types.Transaction{must(ton.NewTransaction(
 					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 					cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 					new(big.Int).SetUint64(1000),
@@ -73,7 +74,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 		{
 			name: "Invalid operation",
 			op: types.BatchOperation{
-				Transactions: []types.Transaction{must(NewTransaction(
+				Transactions: []types.Transaction{must(ton.NewTransaction(
 					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 					cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 					new(big.Int).SetUint64(1000),
@@ -112,7 +113,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			converter := NewTimelockConverter()
+			converter := ton.NewTimelockConverter()
 			chainOperations, operationID, err := converter.ConvertBatchToChainOperations(
 				ctx,
 				tc.metadata,

@@ -1,4 +1,4 @@
-package ton
+package ton_test
 
 import (
 	"math/big"
@@ -13,6 +13,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 
+	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -48,14 +49,14 @@ func TestDecoder(t *testing.T) {
 		name               string
 		give               types.Operation
 		contractInterfaces string
-		want               *DecodedOperation
+		want               *ton.DecodedOperation
 		wantErr            string
 	}{
 		{
 			name: "success",
 			give: types.Operation{
 				ChainSelector: 1,
-				Transaction: must(NewTransaction(
+				Transaction: must(ton.NewTransaction(
 					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 					grantRoleData.ToBuilder().ToSlice(),
 					big.NewInt(0),
@@ -64,7 +65,7 @@ func TestDecoder(t *testing.T) {
 				)),
 			},
 			contractInterfaces: "com.chainlink.ton.lib.access.RBAC",
-			want: &DecodedOperation{
+			want: &ton.DecodedOperation{
 				ContractType: "com.chainlink.ton.lib.access.RBAC",
 				MsgType:      "GrantRole",
 				MsgDecoded: map[string]interface{}{
@@ -83,7 +84,7 @@ func TestDecoder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			d := NewDecoder()
+			d := ton.NewDecoder()
 			got, err := d.Decode(tt.give.Transaction, tt.contractInterfaces)
 			if tt.wantErr != "" {
 				require.Error(t, err)

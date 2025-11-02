@@ -68,16 +68,19 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
-	groupQuorum, groupParents, signerAddresses, signerGroups, err := evm.ExtractSetConfigInputs(cfg)
+	groupQuorum, groupParents, signerAddresses, _signerGroups, err := evm.ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}
 
 	signerKeys := make([]mcms.SignerKey, len(signerAddresses))
 	for i, addr := range signerAddresses {
-		signerKeys[i] = mcms.SignerKey{
-			Value: addr.Big(),
-		}
+		signerKeys[i] = mcms.SignerKey{Value: addr.Big()}
+	}
+
+	signerGroups := make([]mcms.SignerGroup, len(_signerGroups))
+	for i, g := range _signerGroups {
+		signerGroups[i] = mcms.SignerGroup{Value: g}
 	}
 
 	// Encode SetConfig message
@@ -96,7 +99,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		QueryID: rand.Uint64(),
 
 		SignerKeys:   common.SnakeData[mcms.SignerKey](signerKeys),
-		SignerGroups: common.SnakeData[uint8](signerGroups),
+		SignerGroups: common.SnakeData[mcms.SignerGroup](signerGroups),
 		GroupQuorums: gqDict,
 		GroupParents: gpDict,
 
