@@ -23,6 +23,15 @@ packages:
         config:
           dir: "./sdk/ton/mocks"
           filename: "wallet.go"
+  github.com/xssnick/tonutils-go/ton:
+    config:
+      all: false
+      outpkg: "mock_ton"
+    interfaces:
+      APIClientWrapped:
+        config:
+          dir: "./sdk/ton/mocks"
+          filename: "api.go"
   github.com/smartcontractkit/mcms/sdk:
   github.com/smartcontractkit/mcms/sdk/evm:
   github.com/smartcontractkit/mcms/sdk/evm/bindings:
