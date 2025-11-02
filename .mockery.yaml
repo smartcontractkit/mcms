@@ -14,6 +14,15 @@ mockname: "{{.InterfaceName}}"
 inpackage: false
 outpkg: mocks
 packages:
+  github.com/xssnick/tonutils-go/ton/wallet:
+    config:
+      all: false
+      outpkg: "mock_ton"
+    interfaces:
+      TonAPI:
+        config:
+          dir: "./sdk/ton/mocks"
+          filename: "wallet.go"
   github.com/smartcontractkit/mcms/sdk:
   github.com/smartcontractkit/mcms/sdk/evm:
   github.com/smartcontractkit/mcms/sdk/evm/bindings:
