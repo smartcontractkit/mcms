@@ -1,4 +1,4 @@
-package ton
+package ton_test
 
 import (
 	"fmt"
@@ -6,6 +6,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 func TestNewDecodedOperation(t *testing.T) {
@@ -65,7 +67,7 @@ func TestNewDecodedOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := NewDecodedOperation(tt.contractType, tt.msgType, tt.msgOpcode, tt.msgDecoded, tt.inputKeys, tt.inputArgs)
+			got, err := ton.NewDecodedOperation(tt.contractType, tt.msgType, tt.msgOpcode, tt.msgDecoded, tt.inputKeys, tt.inputArgs)
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)

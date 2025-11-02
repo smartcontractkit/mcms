@@ -1,4 +1,4 @@
-package ton
+package ton_test
 
 import (
 	"crypto"
@@ -21,15 +21,17 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
+
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 )
 
-func makeRandomTestWallet(client *ton.APIClient, networkGlobalID int32) (*wallet.Wallet, error) {
+func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wallet, error) {
 	v5r1Config := wallet.ConfigV5R1Final{
 		NetworkGlobalID: networkGlobalID,
 		Workchain:       0,
 	}
-	return wallet.FromSeed(client, wallet.NewSeed(), v5r1Config)
+	return wallet.FromSeed(api, wallet.NewSeed(), v5r1Config)
 }
 
 const KEY_UINT8 = 8
@@ -265,7 +267,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			transformer := NewConfigTransformer()
+			transformer := tonmcms.NewConfigTransformer()
 			got, err := transformer.ToConfig(tt.give)
 
 			if tt.wantErr != "" {
@@ -524,7 +526,7 @@ func Test_SetConfigInputs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			transformer := NewConfigTransformer()
+			transformer := tonmcms.NewConfigTransformer()
 			got, err := transformer.ToChainConfig(tt.giveConfig, nil)
 
 			if tt.wantErr != "" {
