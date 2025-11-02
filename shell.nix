@@ -15,7 +15,7 @@ pkgs.mkShell {
       delve
       golangci-lint
       gotools
-      go-mockery
+      go-mockery_2
       go-task # taskfile runner
 
       # Rust + tools
