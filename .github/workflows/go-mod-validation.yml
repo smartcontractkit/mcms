@@ -15,4 +15,4 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Validate go.mod
-        uses: smartcontractkit/.github/apps/go-mod-validator@go-mod-validator/v1
+        uses: smartcontractkit/.github/apps/go-mod-validator@845035d315a5067b67c951deab51db019aaf7137 # go-mod-validator/v1
