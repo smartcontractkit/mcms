@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"math/big"
 	"math/rand/v2"
+	"reflect"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -38,13 +39,25 @@ type executor struct {
 }
 
 // NewExecutor creates a new Executor for TON chains
-func NewExecutor(encoder sdk.Encoder, client *ton.APIClient, wallet *wallet.Wallet, amount tlb.Coins) sdk.Executor {
+func NewExecutor(encoder sdk.Encoder, client ton.APIClientWrapped, wallet *wallet.Wallet, amount tlb.Coins) (sdk.Executor, error) {
+	if IsNil(encoder) {
+		return nil, errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil")
+	}
+
+	if IsNil(client) {
+		return nil, errors.New("failed to create sdk.Executor - client (ton.APIClientWrapped) is nil")
+	}
+
+	if wallet == nil {
+		return nil, errors.New("failed to create sdk.Executor - wallet (*wallet.Wallet) is nil")
+	}
+
 	return &executor{
 		Encoder:   encoder,
 		Inspector: NewInspector(client, NewConfigTransformer()),
 		wallet:    wallet,
 		amount:    amount,
-	}
+	}, nil
 }
 
 func (e *executor) ExecuteOperation(
@@ -54,10 +67,6 @@ func (e *executor) ExecuteOperation(
 	proof []common.Hash,
 	op types.Operation,
 ) (types.TransactionResult, error) {
-	if e.Encoder == nil {
-		return types.TransactionResult{}, errors.New("executor was created without an encoder")
-	}
-
 	oe, ok := e.Encoder.(OperationEncoder[mcms.Op])
 	if !ok {
 		return types.TransactionResult{}, fmt.Errorf("failed to assert OperationEncoder")
@@ -109,7 +118,7 @@ func (e *executor) ExecuteOperation(
 	// TODO: do we wait for execution trace?
 	tx, _, err := e.wallet.SendWaitTransaction(ctx, msg)
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to set config: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to execute op: %w", err)
 	}
 
 	return types.TransactionResult{
@@ -127,16 +136,6 @@ func (e *executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
-	if e.Encoder == nil {
-		return types.TransactionResult{}, errors.New("Executor was created without an encoder")
-	}
-
-	// Map to Ton Address type
-	dstAddr, err := address.ParseAddr(metadata.MCMAddress)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %w", err)
-	}
-
 	rme, ok := e.Encoder.(RootMetadataEncoder[mcms.RootMetadata])
 	if !ok {
 		return types.TransactionResult{}, fmt.Errorf("failed to assert RootMetadataEncoder")
@@ -145,6 +144,12 @@ func (e *executor) SetRoot(
 	rm, err := rme.ToRootMetadata(metadata)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to convert to root metadata: %w", err)
+	}
+
+	// Map to Ton Address type
+	dstAddr, err := address.ParseAddr(metadata.MCMAddress)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %w", err)
 	}
 
 	// Encode proofs
@@ -197,7 +202,7 @@ func (e *executor) SetRoot(
 	// TODO: do we wait for execution trace?
 	tx, _, err := e.wallet.SendWaitTransaction(ctx, msg)
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to set config: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to set root: %w", err)
 	}
 
 	return types.TransactionResult{
@@ -205,4 +210,19 @@ func (e *executor) SetRoot(
 		ChainFamily: chain_selectors.FamilyTon,
 		RawData:     tx,
 	}, nil
+}
+
+// IsNil checks if a value is nil or if it's a reference type with a nil underlying value.
+// Notice: vendoring github:samber/lo
+func IsNil(x any) bool {
+	if x == nil {
+		return true
+	}
+	v := reflect.ValueOf(x)
+	switch v.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer, reflect.UnsafePointer, reflect.Interface, reflect.Slice:
+		return v.IsNil()
+	default:
+		return false
+	}
 }
