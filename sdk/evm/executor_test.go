@@ -162,7 +162,7 @@ func TestExecutorExecuteOperation(t *testing.T) {
 			encoder:    nil,
 			mockSetup:  func(m *evm_mocks.ContractDeployBackend) {},
 			wantTxHash: "",
-			wantErr:    errors.New("Executor was created without an encoder"),
+			wantErr:    errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil"),
 		},
 		{
 			name: "failure in geth operation conversion due to invalid chain ID",
@@ -654,7 +654,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 			encoder:    nil,
 			mockSetup:  func(m *evm_mocks.ContractDeployBackend) {},
 			wantTxHash: "",
-			wantErr:    errors.New("Executor was created without an encoder"),
+			wantErr:    errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil"),
 		},
 		{
 			name: "failure in geth operation conversion due to invalid chain ID",

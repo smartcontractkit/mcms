@@ -17,10 +17,10 @@ var _ sdk.TimelockInspector = (*timelockInspector)(nil)
 
 // TimelockInspector is an Inspector implementation for TON, for accessing the MCMS-Timelock contract
 type timelockInspector struct {
-	client *ton.APIClient
+	client ton.APIClientWrapped
 }
 
-func NewTimelockInspector(client *ton.APIClient) sdk.TimelockInspector {
+func NewTimelockInspector(client ton.APIClientWrapped) sdk.TimelockInspector {
 	return &timelockInspector{client}
 }
 
