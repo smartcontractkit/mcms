@@ -2,6 +2,7 @@ package mcms
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
@@ -117,4 +118,12 @@ func (e *Executable) Execute(ctx context.Context, index int) (types.TransactionR
 		proof,
 		op,
 	)
+}
+
+func (e *Executable) TxNonce(index int) (uint64, error) {
+	if index >= len(e.txNonces) {
+		return 0, fmt.Errorf("index out of range: %d >= %d", index, len(e.txNonces))
+	}
+
+	return e.txNonces[index], nil
 }
