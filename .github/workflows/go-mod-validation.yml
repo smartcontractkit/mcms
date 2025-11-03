@@ -1,4 +1,6 @@
 name: Validate Go Mod Files
+permissions:
+  contents: read
 
 on:
   pull_request:
