@@ -85,10 +85,14 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, _address string) (types
 
 	var preOpCount *big.Int
 	{
-		rs, err := result.Slice(2)
+		rs, err := result.Slice(0)
 		if err != nil {
 			return types.ChainMetadata{}, fmt.Errorf("error getting slice: %w", err)
 		}
+
+		// skip two data points
+		rs.LoadBigInt(256)
+		rs.LoadAddr()
 
 		preOpCount, err = rs.LoadBigUInt(64)
 		if err != nil {
