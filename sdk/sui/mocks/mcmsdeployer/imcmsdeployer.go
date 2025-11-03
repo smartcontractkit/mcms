@@ -293,6 +293,67 @@ func (_c *IMcmsDeployer_Encoder_Call) RunAndReturn(run func() module_mcms_deploy
 	return _c
 }
 
+// HasUpgradeCap provides a mock function with given fields: ctx, opts, state, packageAddress
+func (_m *IMcmsDeployer) HasUpgradeCap(ctx context.Context, opts *bind.CallOpts, state bind.Object, packageAddress string) (*models.SuiTransactionBlockResponse, error) {
+	ret := _m.Called(ctx, opts, state, packageAddress)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasUpgradeCap")
+	}
+
+	var r0 *models.SuiTransactionBlockResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, bind.Object, string) (*models.SuiTransactionBlockResponse, error)); ok {
+		return rf(ctx, opts, state, packageAddress)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, bind.Object, string) *models.SuiTransactionBlockResponse); ok {
+		r0 = rf(ctx, opts, state, packageAddress)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.SuiTransactionBlockResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *bind.CallOpts, bind.Object, string) error); ok {
+		r1 = rf(ctx, opts, state, packageAddress)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// IMcmsDeployer_HasUpgradeCap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasUpgradeCap'
+type IMcmsDeployer_HasUpgradeCap_Call struct {
+	*mock.Call
+}
+
+// HasUpgradeCap is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts *bind.CallOpts
+//   - state bind.Object
+//   - packageAddress string
+func (_e *IMcmsDeployer_Expecter) HasUpgradeCap(ctx interface{}, opts interface{}, state interface{}, packageAddress interface{}) *IMcmsDeployer_HasUpgradeCap_Call {
+	return &IMcmsDeployer_HasUpgradeCap_Call{Call: _e.mock.On("HasUpgradeCap", ctx, opts, state, packageAddress)}
+}
+
+func (_c *IMcmsDeployer_HasUpgradeCap_Call) Run(run func(ctx context.Context, opts *bind.CallOpts, state bind.Object, packageAddress string)) *IMcmsDeployer_HasUpgradeCap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*bind.CallOpts), args[2].(bind.Object), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *IMcmsDeployer_HasUpgradeCap_Call) Return(_a0 *models.SuiTransactionBlockResponse, _a1 error) *IMcmsDeployer_HasUpgradeCap_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IMcmsDeployer_HasUpgradeCap_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, bind.Object, string) (*models.SuiTransactionBlockResponse, error)) *IMcmsDeployer_HasUpgradeCap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RegisterUpgradeCap provides a mock function with given fields: ctx, opts, state, registry, upgradeCap
 func (_m *IMcmsDeployer) RegisterUpgradeCap(ctx context.Context, opts *bind.CallOpts, state bind.Object, registry bind.Object, upgradeCap bind.Object) (*models.SuiTransactionBlockResponse, error) {
 	ret := _m.Called(ctx, opts, state, registry, upgradeCap)
@@ -351,6 +412,69 @@ func (_c *IMcmsDeployer_RegisterUpgradeCap_Call) Return(_a0 *models.SuiTransacti
 }
 
 func (_c *IMcmsDeployer_RegisterUpgradeCap_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, bind.Object, bind.Object, bind.Object) (*models.SuiTransactionBlockResponse, error)) *IMcmsDeployer_RegisterUpgradeCap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReleaseUpgradeCap provides a mock function with given fields: ctx, opts, typeArgs, state, registry, proof
+func (_m *IMcmsDeployer) ReleaseUpgradeCap(ctx context.Context, opts *bind.CallOpts, typeArgs []string, state bind.Object, registry bind.Object, proof bind.Object) (*models.SuiTransactionBlockResponse, error) {
+	ret := _m.Called(ctx, opts, typeArgs, state, registry, proof)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReleaseUpgradeCap")
+	}
+
+	var r0 *models.SuiTransactionBlockResponse
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, []string, bind.Object, bind.Object, bind.Object) (*models.SuiTransactionBlockResponse, error)); ok {
+		return rf(ctx, opts, typeArgs, state, registry, proof)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, *bind.CallOpts, []string, bind.Object, bind.Object, bind.Object) *models.SuiTransactionBlockResponse); ok {
+		r0 = rf(ctx, opts, typeArgs, state, registry, proof)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*models.SuiTransactionBlockResponse)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, *bind.CallOpts, []string, bind.Object, bind.Object, bind.Object) error); ok {
+		r1 = rf(ctx, opts, typeArgs, state, registry, proof)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// IMcmsDeployer_ReleaseUpgradeCap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReleaseUpgradeCap'
+type IMcmsDeployer_ReleaseUpgradeCap_Call struct {
+	*mock.Call
+}
+
+// ReleaseUpgradeCap is a helper method to define mock.On call
+//   - ctx context.Context
+//   - opts *bind.CallOpts
+//   - typeArgs []string
+//   - state bind.Object
+//   - registry bind.Object
+//   - proof bind.Object
+func (_e *IMcmsDeployer_Expecter) ReleaseUpgradeCap(ctx interface{}, opts interface{}, typeArgs interface{}, state interface{}, registry interface{}, proof interface{}) *IMcmsDeployer_ReleaseUpgradeCap_Call {
+	return &IMcmsDeployer_ReleaseUpgradeCap_Call{Call: _e.mock.On("ReleaseUpgradeCap", ctx, opts, typeArgs, state, registry, proof)}
+}
+
+func (_c *IMcmsDeployer_ReleaseUpgradeCap_Call) Run(run func(ctx context.Context, opts *bind.CallOpts, typeArgs []string, state bind.Object, registry bind.Object, proof bind.Object)) *IMcmsDeployer_ReleaseUpgradeCap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*bind.CallOpts), args[2].([]string), args[3].(bind.Object), args[4].(bind.Object), args[5].(bind.Object))
+	})
+	return _c
+}
+
+func (_c *IMcmsDeployer_ReleaseUpgradeCap_Call) Return(_a0 *models.SuiTransactionBlockResponse, _a1 error) *IMcmsDeployer_ReleaseUpgradeCap_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *IMcmsDeployer_ReleaseUpgradeCap_Call) RunAndReturn(run func(context.Context, *bind.CallOpts, []string, bind.Object, bind.Object, bind.Object) (*models.SuiTransactionBlockResponse, error)) *IMcmsDeployer_ReleaseUpgradeCap_Call {
 	_c.Call.Return(run)
 	return _c
 }

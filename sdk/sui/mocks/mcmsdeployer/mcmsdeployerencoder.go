@@ -275,6 +275,132 @@ func (_c *McmsDeployerEncoder_CommitUpgradeWithArgs_Call) RunAndReturn(run func(
 	return _c
 }
 
+// HasUpgradeCap provides a mock function with given fields: state, packageAddress
+func (_m *McmsDeployerEncoder) HasUpgradeCap(state bind.Object, packageAddress string) (*bind.EncodedCall, error) {
+	ret := _m.Called(state, packageAddress)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasUpgradeCap")
+	}
+
+	var r0 *bind.EncodedCall
+	var r1 error
+	if rf, ok := ret.Get(0).(func(bind.Object, string) (*bind.EncodedCall, error)); ok {
+		return rf(state, packageAddress)
+	}
+	if rf, ok := ret.Get(0).(func(bind.Object, string) *bind.EncodedCall); ok {
+		r0 = rf(state, packageAddress)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.EncodedCall)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(bind.Object, string) error); ok {
+		r1 = rf(state, packageAddress)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// McmsDeployerEncoder_HasUpgradeCap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasUpgradeCap'
+type McmsDeployerEncoder_HasUpgradeCap_Call struct {
+	*mock.Call
+}
+
+// HasUpgradeCap is a helper method to define mock.On call
+//   - state bind.Object
+//   - packageAddress string
+func (_e *McmsDeployerEncoder_Expecter) HasUpgradeCap(state interface{}, packageAddress interface{}) *McmsDeployerEncoder_HasUpgradeCap_Call {
+	return &McmsDeployerEncoder_HasUpgradeCap_Call{Call: _e.mock.On("HasUpgradeCap", state, packageAddress)}
+}
+
+func (_c *McmsDeployerEncoder_HasUpgradeCap_Call) Run(run func(state bind.Object, packageAddress string)) *McmsDeployerEncoder_HasUpgradeCap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(bind.Object), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *McmsDeployerEncoder_HasUpgradeCap_Call) Return(_a0 *bind.EncodedCall, _a1 error) *McmsDeployerEncoder_HasUpgradeCap_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *McmsDeployerEncoder_HasUpgradeCap_Call) RunAndReturn(run func(bind.Object, string) (*bind.EncodedCall, error)) *McmsDeployerEncoder_HasUpgradeCap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// HasUpgradeCapWithArgs provides a mock function with given fields: args
+func (_m *McmsDeployerEncoder) HasUpgradeCapWithArgs(args ...interface{}) (*bind.EncodedCall, error) {
+	var _ca []interface{}
+	_ca = append(_ca, args...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for HasUpgradeCapWithArgs")
+	}
+
+	var r0 *bind.EncodedCall
+	var r1 error
+	if rf, ok := ret.Get(0).(func(...interface{}) (*bind.EncodedCall, error)); ok {
+		return rf(args...)
+	}
+	if rf, ok := ret.Get(0).(func(...interface{}) *bind.EncodedCall); ok {
+		r0 = rf(args...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.EncodedCall)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(...interface{}) error); ok {
+		r1 = rf(args...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// McmsDeployerEncoder_HasUpgradeCapWithArgs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HasUpgradeCapWithArgs'
+type McmsDeployerEncoder_HasUpgradeCapWithArgs_Call struct {
+	*mock.Call
+}
+
+// HasUpgradeCapWithArgs is a helper method to define mock.On call
+//   - args ...interface{}
+func (_e *McmsDeployerEncoder_Expecter) HasUpgradeCapWithArgs(args ...interface{}) *McmsDeployerEncoder_HasUpgradeCapWithArgs_Call {
+	return &McmsDeployerEncoder_HasUpgradeCapWithArgs_Call{Call: _e.mock.On("HasUpgradeCapWithArgs",
+		append([]interface{}{}, args...)...)}
+}
+
+func (_c *McmsDeployerEncoder_HasUpgradeCapWithArgs_Call) Run(run func(args ...interface{})) *McmsDeployerEncoder_HasUpgradeCapWithArgs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-0)
+		for i, a := range args[0:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *McmsDeployerEncoder_HasUpgradeCapWithArgs_Call) Return(_a0 *bind.EncodedCall, _a1 error) *McmsDeployerEncoder_HasUpgradeCapWithArgs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *McmsDeployerEncoder_HasUpgradeCapWithArgs_Call) RunAndReturn(run func(...interface{}) (*bind.EncodedCall, error)) *McmsDeployerEncoder_HasUpgradeCapWithArgs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // RegisterUpgradeCap provides a mock function with given fields: state, registry, upgradeCap
 func (_m *McmsDeployerEncoder) RegisterUpgradeCap(state bind.Object, registry bind.Object, upgradeCap bind.Object) (*bind.EncodedCall, error) {
 	ret := _m.Called(state, registry, upgradeCap)
@@ -398,6 +524,136 @@ func (_c *McmsDeployerEncoder_RegisterUpgradeCapWithArgs_Call) Return(_a0 *bind.
 }
 
 func (_c *McmsDeployerEncoder_RegisterUpgradeCapWithArgs_Call) RunAndReturn(run func(...interface{}) (*bind.EncodedCall, error)) *McmsDeployerEncoder_RegisterUpgradeCapWithArgs_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReleaseUpgradeCap provides a mock function with given fields: typeArgs, state, registry, proof
+func (_m *McmsDeployerEncoder) ReleaseUpgradeCap(typeArgs []string, state bind.Object, registry bind.Object, proof bind.Object) (*bind.EncodedCall, error) {
+	ret := _m.Called(typeArgs, state, registry, proof)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReleaseUpgradeCap")
+	}
+
+	var r0 *bind.EncodedCall
+	var r1 error
+	if rf, ok := ret.Get(0).(func([]string, bind.Object, bind.Object, bind.Object) (*bind.EncodedCall, error)); ok {
+		return rf(typeArgs, state, registry, proof)
+	}
+	if rf, ok := ret.Get(0).(func([]string, bind.Object, bind.Object, bind.Object) *bind.EncodedCall); ok {
+		r0 = rf(typeArgs, state, registry, proof)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.EncodedCall)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func([]string, bind.Object, bind.Object, bind.Object) error); ok {
+		r1 = rf(typeArgs, state, registry, proof)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// McmsDeployerEncoder_ReleaseUpgradeCap_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReleaseUpgradeCap'
+type McmsDeployerEncoder_ReleaseUpgradeCap_Call struct {
+	*mock.Call
+}
+
+// ReleaseUpgradeCap is a helper method to define mock.On call
+//   - typeArgs []string
+//   - state bind.Object
+//   - registry bind.Object
+//   - proof bind.Object
+func (_e *McmsDeployerEncoder_Expecter) ReleaseUpgradeCap(typeArgs interface{}, state interface{}, registry interface{}, proof interface{}) *McmsDeployerEncoder_ReleaseUpgradeCap_Call {
+	return &McmsDeployerEncoder_ReleaseUpgradeCap_Call{Call: _e.mock.On("ReleaseUpgradeCap", typeArgs, state, registry, proof)}
+}
+
+func (_c *McmsDeployerEncoder_ReleaseUpgradeCap_Call) Run(run func(typeArgs []string, state bind.Object, registry bind.Object, proof bind.Object)) *McmsDeployerEncoder_ReleaseUpgradeCap_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]string), args[1].(bind.Object), args[2].(bind.Object), args[3].(bind.Object))
+	})
+	return _c
+}
+
+func (_c *McmsDeployerEncoder_ReleaseUpgradeCap_Call) Return(_a0 *bind.EncodedCall, _a1 error) *McmsDeployerEncoder_ReleaseUpgradeCap_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *McmsDeployerEncoder_ReleaseUpgradeCap_Call) RunAndReturn(run func([]string, bind.Object, bind.Object, bind.Object) (*bind.EncodedCall, error)) *McmsDeployerEncoder_ReleaseUpgradeCap_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ReleaseUpgradeCapWithArgs provides a mock function with given fields: typeArgs, args
+func (_m *McmsDeployerEncoder) ReleaseUpgradeCapWithArgs(typeArgs []string, args ...interface{}) (*bind.EncodedCall, error) {
+	var _ca []interface{}
+	_ca = append(_ca, typeArgs)
+	_ca = append(_ca, args...)
+	ret := _m.Called(_ca...)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ReleaseUpgradeCapWithArgs")
+	}
+
+	var r0 *bind.EncodedCall
+	var r1 error
+	if rf, ok := ret.Get(0).(func([]string, ...interface{}) (*bind.EncodedCall, error)); ok {
+		return rf(typeArgs, args...)
+	}
+	if rf, ok := ret.Get(0).(func([]string, ...interface{}) *bind.EncodedCall); ok {
+		r0 = rf(typeArgs, args...)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*bind.EncodedCall)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func([]string, ...interface{}) error); ok {
+		r1 = rf(typeArgs, args...)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// McmsDeployerEncoder_ReleaseUpgradeCapWithArgs_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ReleaseUpgradeCapWithArgs'
+type McmsDeployerEncoder_ReleaseUpgradeCapWithArgs_Call struct {
+	*mock.Call
+}
+
+// ReleaseUpgradeCapWithArgs is a helper method to define mock.On call
+//   - typeArgs []string
+//   - args ...interface{}
+func (_e *McmsDeployerEncoder_Expecter) ReleaseUpgradeCapWithArgs(typeArgs interface{}, args ...interface{}) *McmsDeployerEncoder_ReleaseUpgradeCapWithArgs_Call {
+	return &McmsDeployerEncoder_ReleaseUpgradeCapWithArgs_Call{Call: _e.mock.On("ReleaseUpgradeCapWithArgs",
+		append([]interface{}{typeArgs}, args...)...)}
+}
+
+func (_c *McmsDeployerEncoder_ReleaseUpgradeCapWithArgs_Call) Run(run func(typeArgs []string, args ...interface{})) *McmsDeployerEncoder_ReleaseUpgradeCapWithArgs_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		variadicArgs := make([]interface{}, len(args)-1)
+		for i, a := range args[1:] {
+			if a != nil {
+				variadicArgs[i] = a.(interface{})
+			}
+		}
+		run(args[0].([]string), variadicArgs...)
+	})
+	return _c
+}
+
+func (_c *McmsDeployerEncoder_ReleaseUpgradeCapWithArgs_Call) Return(_a0 *bind.EncodedCall, _a1 error) *McmsDeployerEncoder_ReleaseUpgradeCapWithArgs_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *McmsDeployerEncoder_ReleaseUpgradeCapWithArgs_Call) RunAndReturn(run func([]string, ...interface{}) (*bind.EncodedCall, error)) *McmsDeployerEncoder_ReleaseUpgradeCapWithArgs_Call {
 	_c.Call.Return(run)
 	return _c
 }
