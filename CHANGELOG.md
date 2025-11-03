@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.30.0
+
+### Minor Changes
+
+- [#523](https://github.com/smartcontractkit/mcms/pull/523) [`574da8e`](https://github.com/smartcontractkit/mcms/commit/574da8e6383f60ef538bdae78a88265789565e13) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add `executable.TxNonce(i)` method
+
 ## 0.29.0
 
 ### Minor Changes
