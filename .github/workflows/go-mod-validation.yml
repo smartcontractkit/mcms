@@ -4,7 +4,6 @@ permissions:
 
 on:
   pull_request:
-    type: synchronize
   merge_group:
 
 jobs:
