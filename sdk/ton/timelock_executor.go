@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/rand/v2"
 
@@ -35,15 +36,19 @@ type timelockExecutor struct {
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor
-func NewTimelockExecutor(client ton.APIClientWrapped, wallet *wallet.Wallet, amount tlb.Coins) sdk.TimelockExecutor {
+func NewTimelockExecutor(client ton.APIClientWrapped, wallet *wallet.Wallet, amount tlb.Coins) (sdk.TimelockExecutor, error) {
+	if IsNil(client) {
+		return nil, errors.New("failed to create sdk.Executor - client (ton.APIClientWrapped) is nil")
+	}
+
 	return &timelockExecutor{
 		TimelockInspector: NewTimelockInspector(client),
 		wallet:            wallet,
 		amount:            amount,
-	}
+	}, nil
 }
 
-func (t *timelockExecutor) Execute(
+func (e *timelockExecutor) Execute(
 	ctx context.Context, bop types.BatchOperation, timelockAddress string, predecessor common.Hash, salt common.Hash,
 ) (types.TransactionResult, error) {
 	// Map to Ton Address type
@@ -95,13 +100,13 @@ func (t *timelockExecutor) Execute(
 			IHRDisabled: true,
 			Bounce:      true,
 			DstAddr:     dstAddr,
-			Amount:      t.amount,
+			Amount:      e.amount,
 			Body:        body,
 		},
 	}
 
 	// TODO: do we wait for execution trace?
-	tx, _, err := t.wallet.SendWaitTransaction(ctx, msg)
+	tx, _, err := e.wallet.SendWaitTransaction(ctx, msg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to execute batch: %w", err)
 	}

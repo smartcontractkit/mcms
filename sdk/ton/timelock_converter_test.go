@@ -7,14 +7,17 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
-	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
