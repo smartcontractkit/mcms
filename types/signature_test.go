@@ -132,7 +132,7 @@ func Test_Recover(t *testing.T) {
 				V: 1,
 			},
 			giveHash: hash,
-			wantErr:  "recovery failed",
+			wantErr:  "failed to recover public key: recovery failed",
 		},
 	}
 
