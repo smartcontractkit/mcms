@@ -118,3 +118,11 @@ func (e *Executable) Execute(ctx context.Context, index int) (types.TransactionR
 		op,
 	)
 }
+
+func (e *Executable) TxNonce(index int) uint64 {
+	if index >= len(e.txNonces) {
+		return uint64(0)
+	}
+
+	return e.txNonces[index]
+}

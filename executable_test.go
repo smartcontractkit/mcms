@@ -8,6 +8,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
@@ -22,9 +23,7 @@ import (
 func Test_NewExecutable(t *testing.T) {
 	t.Parallel()
 
-	var (
-		executor = mocks.NewExecutor(t) // We only need this to fulfill the interface argument requirements
-	)
+	executor := mocks.NewExecutor(t) // We only need this to fulfill the interface argument requirements
 
 	tests := []struct {
 		name          string
@@ -638,5 +637,89 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 		roleMember, err := timelockC.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
 		require.NoError(t, err)
 		require.Equal(t, mcmC.Address().Hex(), roleMember.Hex())
+	}
+}
+
+func TestExecutable_TxNonce(t *testing.T) {
+	t.Parallel()
+
+	chainSelector1 := types.ChainSelector(cselectors.GETH_TESTNET.Selector)
+	chainSelector2 := types.ChainSelector(cselectors.GETH_DEVNET_2.Selector)
+	executor := mocks.NewExecutor(t)
+	executors := map[types.ChainSelector]sdk.Executor{
+		chainSelector1: executor,
+		chainSelector2: executor,
+	}
+	proposal := &Proposal{
+		BaseProposal: BaseProposal{
+			OverridePreviousRoot: false,
+			Kind:                 types.KindProposal,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				chainSelector1: {},
+				chainSelector2: {},
+			},
+		},
+		Operations: []types.Operation{
+			{
+				ChainSelector: chainSelector1,
+				Transaction:   evm.NewTransaction(common.Address{}, []byte{}, big.NewInt(1), "", []string{}),
+			},
+			{
+				ChainSelector: chainSelector2,
+				Transaction:   evm.NewTransaction(common.Address{}, []byte{}, big.NewInt(2), "", []string{}),
+			},
+			{
+				ChainSelector: chainSelector1,
+				Transaction:   evm.NewTransaction(common.Address{}, []byte{}, big.NewInt(3), "", []string{}),
+			},
+		},
+	}
+
+	tests := []struct {
+		name      string
+		proposal  *Proposal
+		executors map[types.ChainSelector]sdk.Executor
+		index     int
+		want      uint64
+	}{
+		{
+			name:      "index 0",
+			index:     0,
+			executors: executors,
+			proposal:  proposal,
+			want:      0,
+		},
+		{
+			name:      "index 1",
+			index:     1,
+			executors: executors,
+			proposal:  proposal,
+			want:      0,
+		},
+		{
+			name:      "index 2",
+			index:     2,
+			executors: executors,
+			proposal:  proposal,
+			want:      1,
+		},
+		{
+			name:      "index 3 - out of bounds",
+			index:     3,
+			executors: executors,
+			proposal:  proposal,
+			want:      0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			executable, err := NewExecutable(tt.proposal, tt.executors)
+			require.NoError(t, err)
+
+			got := executable.TxNonce(tt.index)
+			require.Equal(t, tt.want, got)
+		})
 	}
 }
