@@ -681,6 +681,7 @@ func TestExecutable_TxNonce(t *testing.T) {
 		executors map[types.ChainSelector]sdk.Executor
 		index     int
 		want      uint64
+		wantErr   string
 	}{
 		{
 			name:      "index 0",
@@ -708,7 +709,7 @@ func TestExecutable_TxNonce(t *testing.T) {
 			index:     3,
 			executors: executors,
 			proposal:  proposal,
-			want:      0,
+			wantErr:   "index out of range: 3 >= 3",
 		},
 	}
 	for _, tt := range tests {
@@ -718,8 +719,14 @@ func TestExecutable_TxNonce(t *testing.T) {
 			executable, err := NewExecutable(tt.proposal, tt.executors)
 			require.NoError(t, err)
 
-			got := executable.TxNonce(tt.index)
-			require.Equal(t, tt.want, got)
+			got, err := executable.TxNonce(tt.index)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
 		})
 	}
 }
