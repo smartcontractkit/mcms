@@ -11,14 +11,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/types"
+
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 
-	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
-	"github.com/smartcontractkit/mcms/types"
 )
 
 // TestConfigurer_SetConfig tests the SetConfig method of the Configurer.
@@ -127,7 +129,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 
 				// Mock SendTransaction to return an error
 				m.EXPECT().SendExternalMessageWaitTransaction(mock.Anything, mock.Anything).
-					Return(&tlb.Transaction{Hash: []byte{1, 2, 3, 4, 15}}, &ton.BlockIDExt{}, []byte{}, errors.New("transaction failed"))
+					Return(&tlb.Transaction{Hash: []byte{1, 2, 3, 4, 14}}, &ton.BlockIDExt{}, []byte{}, errors.New("transaction failed"))
 			},
 			want:    "",
 			wantErr: errors.New("transaction failed"),

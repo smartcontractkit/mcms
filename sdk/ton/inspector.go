@@ -18,13 +18,13 @@ var _ sdk.Inspector = (*Inspector)(nil)
 
 // Inspector is an interface for inspecting on chain state of MCMS contracts.
 type Inspector struct {
-	client *ton.APIClient
+	client ton.APIClientWrapped
 
 	configTransformer ConfigTransformer
 }
 
 // NewInspector creates a new Inspector for EVM chains
-func NewInspector(client *ton.APIClient, configTransformer ConfigTransformer) *Inspector {
+func NewInspector(client ton.APIClientWrapped, configTransformer ConfigTransformer) *Inspector {
 	return &Inspector{
 		client:            client,
 		configTransformer: configTransformer,

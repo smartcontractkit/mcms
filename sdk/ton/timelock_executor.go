@@ -35,7 +35,7 @@ type timelockExecutor struct {
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor
-func NewTimelockExecutor(client *ton.APIClient, wallet *wallet.Wallet, amount tlb.Coins) sdk.TimelockExecutor {
+func NewTimelockExecutor(client ton.APIClientWrapped, wallet *wallet.Wallet, amount tlb.Coins) sdk.TimelockExecutor {
 	return &timelockExecutor{
 		TimelockInspector: NewTimelockInspector(client),
 		wallet:            wallet,
@@ -103,7 +103,7 @@ func (t *timelockExecutor) Execute(
 	// TODO: do we wait for execution trace?
 	tx, _, err := t.wallet.SendWaitTransaction(ctx, msg)
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to set config: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to execute batch: %w", err)
 	}
 
 	return types.TransactionResult{
