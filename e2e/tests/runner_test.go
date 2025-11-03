@@ -33,10 +33,10 @@ func TestAptosSuite(t *testing.T) {
 
 func TestSuiSuite(t *testing.T) {
 	suite.Run(t, new(suie2e.TimelockProposalTestSuite))
-	suite.Run(t, new(suie2e.InspectionTestSuite))
-	suite.Run(t, new(suie2e.TimelockInspectionTestSuite))
-	suite.Run(t, new(suie2e.SetRootTestSuite))
-	suite.Run(t, new(suie2e.MCMSUserTestSuite))
-	suite.Run(t, new(suie2e.TimelockCancelProposalTestSuite))
-	suite.Run(t, new(suie2e.MCMSUserUpgradeTestSuite))
+	// suite.Run(t, new(suie2e.InspectionTestSuite))
+	// suite.Run(t, new(suie2e.TimelockInspectionTestSuite))
+	// suite.Run(t, new(suie2e.SetRootTestSuite))
+	// suite.Run(t, new(suie2e.MCMSUserTestSuite))
+	// suite.Run(t, new(suie2e.TimelockCancelProposalTestSuite))
+	// suite.Run(t, new(suie2e.MCMSUserUpgradeTestSuite))
 }

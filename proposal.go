@@ -231,6 +231,8 @@ func (p *Proposal) MerkleTree() (*merkle.Tree, error) {
 		}
 
 		hashLeaves = append(hashLeaves, encodedRootMetadata)
+
+		fmt.Println("MCMS_TEST_DATA: METADATA HASH LEAF: ", encodedRootMetadata.Hex())
 	}
 
 	for i, op := range p.Operations {
@@ -258,6 +260,8 @@ func (p *Proposal) MerkleTree() (*merkle.Tree, error) {
 			return nil, wrapTreeGenErr(txerr)
 		}
 		hashLeaves = append(hashLeaves, encodedOp)
+
+		fmt.Println("MCMS_TEST_DATA: OPERATION HASH LEAF: ", encodedOp.Hex())
 	}
 
 	// sort the hashes and sort the pairs

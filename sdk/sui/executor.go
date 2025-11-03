@@ -2,6 +2,7 @@ package sui
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -239,6 +240,14 @@ func (e Executor) SetRoot(
 	chainID, err := cselectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
+	}
+	fmt.Println("MCMS_TEST_DATA: SUI CHAIN ID: ", chainID)
+	fmt.Println("MCMS_TEST_DATA: ROOT: ", hex.EncodeToString(root[:]))
+	for i, hash := range proof {
+		fmt.Printf("MCMS_TEST_DATA: PROOF[%d]: %s\n", i, hash.Hex())
+	}
+	for i, sig := range sortedSignatures {
+		fmt.Printf("MCMS_TEST_DATA: SIGNATURE[%d]: %s\n", i, hex.EncodeToString(sig.ToBytes()))
 	}
 	chainIDBig := new(big.Int).SetUint64(chainID)
 

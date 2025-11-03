@@ -2,6 +2,7 @@ package mcms
 
 import (
 	"context"
+	"fmt"
 	"slices"
 
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
@@ -60,6 +61,8 @@ func (e *Executable) SetRoot(ctx context.Context, chainSelector types.ChainSelec
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
+
+	fmt.Println("MCMS_TEST_DATA: METADATA HASH: ", metadataHash.Hex())
 
 	proof, err := e.tree.GetProof(metadataHash)
 	if err != nil {

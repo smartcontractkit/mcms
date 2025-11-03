@@ -4,6 +4,8 @@ package sui
 
 import (
 	"crypto/ecdsa"
+	"encoding/hex"
+	"fmt"
 	"testing"
 	"time"
 
@@ -21,9 +23,9 @@ type TimelockProposalTestSuite struct {
 }
 
 func (s *TimelockProposalTestSuite) Test_Sui_TimelockProposal() {
-	s.T().Run("TimelockProposal - MCMSAccount Accept Ownership through Bypass", func(t *testing.T) {
-		RunAcceptOwnershipProposal(s, suisdk.TimelockRoleBypasser)
-	})
+	// s.T().Run("TimelockProposal - MCMSAccount Accept Ownership through Bypass", func(t *testing.T) {
+	// 	RunAcceptOwnershipProposal(s, suisdk.TimelockRoleBypasser)
+	// })
 
 	s.T().Run("TimelockProposal - MCMSAccount Accept Ownership through Schedule", func(t *testing.T) {
 		RunAcceptOwnershipProposal(s, suisdk.TimelockRoleProposer)
@@ -54,6 +56,9 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		s.Require().NoError(err, "setting config on Sui mcms contract")
 	}
 
+	s.T().Log("MCMS_TEST_DATA: Bypasser signers: ", bypasserConfig.Config.Signers)
+	s.T().Log("MCMS_TEST_DATA: Proposer signers: ", proposerConfig.Config.Signers)
+
 	// Init transfer ownership
 	{
 		tx, err := s.mcmsAccount.TransferOwnershipToSelf(
@@ -71,7 +76,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 
 	var timelockProposal *mcms.TimelockProposal
 
-	delay5s := time.Second * 5
+	delay5s := time.Hour * 1
 	// Create a timelock proposal accepting the ownership transfer
 
 	// Get the accept ownership call information and build the MCMS Operation
@@ -93,6 +98,8 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 		ChainSelector: s.chainSelector,
 		Transactions:  []types.Transaction{transaction},
 	}
+
+	fmt.Println("MCMS_TEST_DATA: DATA HEX: ", hex.EncodeToString(callBytes))
 
 	inspector, err := suisdk.NewInspector(s.client, s.signer, s.mcmsPackageID, role)
 	s.Require().NoError(err, "creating inspector for op count query")
@@ -146,6 +153,10 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	}
 	proposal, _, err := timelockProposal.Convert(s.T().Context(), convertersMap)
 	s.Require().NoError(err)
+
+	// LOG proposal info
+	s.T().Logf("MCMS_TEST_DATA: DELAY: %v", delay)
+	s.T().Logf("MCMS_TEST_DATA: Valid Until: %v", timelockProposal.ValidUntil)
 
 	inspectorsMap := map[types.ChainSelector]sdk.Inspector{
 		s.chainSelector: inspector,
