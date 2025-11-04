@@ -8,19 +8,26 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+
 	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
 
+// TODO: extract as shared setup
 var chainID = chaintest.Chain7ToniID
 var client *ton.APIClient = nil
 var wallets = []*wallet.Wallet{
+	must(makeRandomTestWallet(client, chainID)),
+	must(makeRandomTestWallet(client, chainID)),
+	must(makeRandomTestWallet(client, chainID)),
+	must(makeRandomTestWallet(client, chainID)),
 	must(makeRandomTestWallet(client, chainID)),
 	must(makeRandomTestWallet(client, chainID)),
 	must(makeRandomTestWallet(client, chainID)),
