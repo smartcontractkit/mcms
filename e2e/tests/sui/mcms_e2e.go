@@ -117,18 +117,19 @@ func RunMCMSUserFunctionOneProposal(s *MCMSUserTestSuite, role suisdk.TimelockRo
 	}
 
 	proposalConfig := ProposalBuilderConfig{
-		Version:        "v1",
-		Description:    "MCMS user function one",
-		ChainSelector:  s.chainSelector,
-		McmsObjID:      s.mcmsObj,
-		TimelockObjID:  s.timelockObj,
-		McmsPackageID:  s.mcmsPackageID,
-		AccountObjID:   s.accountObj,
-		RegistryObjID:  s.registryObj,
-		Role:           role,
-		CurrentOpCount: currentOpCount,
-		Action:         action,
-		Delay:          delay,
+		Version:            "v1",
+		Description:        "MCMS user function one",
+		ChainSelector:      s.chainSelector,
+		McmsObjID:          s.mcmsObj,
+		TimelockObjID:      s.timelockObj,
+		McmsPackageID:      s.mcmsPackageID,
+		AccountObjID:       s.accountObj,
+		RegistryObjID:      s.registryObj,
+		DeployerStateObjID: s.depStateObj,
+		Role:               role,
+		CurrentOpCount:     currentOpCount,
+		Action:             action,
+		Delay:              delay,
 	}
 
 	mcmsUserFunctionOneProposalBuilder := CreateTimelockProposalBuilder(s.T(), proposalConfig, []types.BatchOperation{op})

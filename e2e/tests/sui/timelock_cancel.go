@@ -84,18 +84,19 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 	delay := types.NewDuration(delay5s)
 
 	proposalConfig := ProposalBuilderConfig{
-		Version:        "v1",
-		Description:    "Accept ownership via timelock",
-		ChainSelector:  s.chainSelector,
-		McmsObjID:      s.mcmsObj,
-		TimelockObjID:  s.timelockObj,
-		AccountObjID:   s.accountObj,
-		RegistryObjID:  s.registryObj,
-		McmsPackageID:  s.mcmsPackageID,
-		Role:           suisdk.TimelockRoleProposer,
-		CurrentOpCount: currentOpCount,
-		Action:         action,
-		Delay:          &delay,
+		Version:            "v1",
+		Description:        "Accept ownership via timelock",
+		ChainSelector:      s.chainSelector,
+		McmsObjID:          s.mcmsObj,
+		TimelockObjID:      s.timelockObj,
+		AccountObjID:       s.accountObj,
+		RegistryObjID:      s.registryObj,
+		DeployerStateObjID: s.depStateObj,
+		McmsPackageID:      s.mcmsPackageID,
+		Role:               suisdk.TimelockRoleProposer,
+		CurrentOpCount:     currentOpCount,
+		Action:             action,
+		Delay:              &delay,
 	}
 
 	acceptOwnershipProposalBuilder := CreateTimelockProposalBuilder(s.T(), proposalConfig, []types.BatchOperation{op})
@@ -219,7 +220,7 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 	currentCancelOpCount, err := cancelOpCountInspector.GetOpCount(s.T().Context(), s.mcmsObj)
 	s.Require().NoError(err, "Failed to get current operation count for cancellation")
 
-	metadata, err := suisdk.NewChainMetadata(currentCancelOpCount, suisdk.TimelockRoleCanceller, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	metadata, err := suisdk.NewChainMetadata(currentCancelOpCount, suisdk.TimelockRoleCanceller, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj, s.depStateObj)
 	s.Require().NoError(err, "Failed to create chain metadata for cancellation proposal")
 
 	cancelTimelockProposal, err := timelockProposal.DeriveCancellationProposal(map[types.ChainSelector]types.ChainMetadata{

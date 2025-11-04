@@ -196,18 +196,19 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 	s.Require().NoError(err)
 
 	proposalConfig := ProposalBuilderConfig{
-		Version:        "v1",
-		Description:    "Accept MCMS self-ownership transfer via proposer with zero delay",
-		ChainSelector:  s.chainSelector,
-		McmsObjID:      s.mcmsObj,
-		TimelockObjID:  s.timelockObj,
-		McmsPackageID:  s.mcmsPackageID,
-		AccountObjID:   s.accountObj,
-		RegistryObjID:  s.registryObj,
-		Role:           role,
-		CurrentOpCount: currentOpCount,
-		Action:         types.TimelockActionSchedule,
-		Delay:          &types.Duration{}, // Zero delay for immediate execution
+		Version:            "v1",
+		Description:        "Accept MCMS self-ownership transfer via proposer with zero delay",
+		ChainSelector:      s.chainSelector,
+		McmsObjID:          s.mcmsObj,
+		TimelockObjID:      s.timelockObj,
+		McmsPackageID:      s.mcmsPackageID,
+		AccountObjID:       s.accountObj,
+		RegistryObjID:      s.registryObj,
+		DeployerStateObjID: s.depStateObj,
+		Role:               role,
+		CurrentOpCount:     currentOpCount,
+		Action:             types.TimelockActionSchedule,
+		Delay:              &types.Duration{}, // Zero delay for immediate execution
 	}
 
 	proposalBuilder := CreateTimelockProposalBuilder(s.T(), proposalConfig, []types.BatchOperation{op})
@@ -294,18 +295,19 @@ func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTest
 	s.Require().NoError(err)
 
 	proposalConfig := ProposalBuilderConfig{
-		Version:        "v1",
-		Description:    "Authorize MCMS User package upgrade via MCMS proposer with zero delay",
-		ChainSelector:  s.chainSelector,
-		McmsObjID:      s.mcmsObj,
-		TimelockObjID:  s.timelockObj,
-		McmsPackageID:  s.mcmsPackageID,
-		AccountObjID:   s.accountObj,
-		RegistryObjID:  s.registryObj,
-		Role:           role,
-		CurrentOpCount: currentOpCount,
-		Action:         types.TimelockActionSchedule,
-		Delay:          &types.Duration{}, // Zero delay for immediate execution
+		Version:            "v1",
+		Description:        "Authorize MCMS User package upgrade via MCMS proposer with zero delay",
+		ChainSelector:      s.chainSelector,
+		McmsObjID:          s.mcmsObj,
+		TimelockObjID:      s.timelockObj,
+		McmsPackageID:      s.mcmsPackageID,
+		AccountObjID:       s.accountObj,
+		RegistryObjID:      s.registryObj,
+		DeployerStateObjID: s.depStateObj,
+		Role:               role,
+		CurrentOpCount:     currentOpCount,
+		Action:             types.TimelockActionSchedule,
+		Delay:              &types.Duration{}, // Zero delay for immediate execution
 	}
 
 	proposalBuilder := CreateTimelockProposalBuilder(s.T(), proposalConfig, []types.BatchOperation{op})

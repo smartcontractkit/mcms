@@ -117,18 +117,19 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 	}
 
 	proposalConfig := ProposalBuilderConfig{
-		Version:        "v1",
-		Description:    "Accept ownership via timelock",
-		ChainSelector:  s.chainSelector,
-		McmsObjID:      s.mcmsObj,
-		TimelockObjID:  s.timelockObj,
-		McmsPackageID:  s.mcmsPackageID,
-		AccountObjID:   s.accountObj,
-		RegistryObjID:  s.registryObj,
-		Role:           role,
-		CurrentOpCount: currentOpCount,
-		Action:         action,
-		Delay:          delay,
+		Version:            "v1",
+		Description:        "Accept ownership via timelock",
+		ChainSelector:      s.chainSelector,
+		McmsObjID:          s.mcmsObj,
+		TimelockObjID:      s.timelockObj,
+		McmsPackageID:      s.mcmsPackageID,
+		AccountObjID:       s.accountObj,
+		RegistryObjID:      s.registryObj,
+		DeployerStateObjID: s.depStateObj,
+		Role:               role,
+		CurrentOpCount:     currentOpCount,
+		Action:             action,
+		Delay:              delay,
 	}
 
 	acceptOwnershipProposalBuilder := CreateTimelockProposalBuilder(s.T(), proposalConfig, []types.BatchOperation{op})
