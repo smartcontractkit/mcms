@@ -43,7 +43,13 @@ func createMCMSAcceptOwnershipTransaction(suite *MCMSUserUpgradeTestSuite) (type
 		return types.Transaction{}, fmt.Errorf("encoding accept ownership call: %w", err)
 	}
 
-	callBytes := suite.extractByteArgsFromEncodedCall(*encodedCall)
+	accountStateAddr, err := suisdk.AddressFromHex(suite.accountObj)
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("decoding account state address: %w", err)
+	}
+
+	// The data for MCMS dispatch should be the properly padded 32-byte account_state address
+	callBytes := accountStateAddr.Bytes()
 
 	return suisdk.NewTransaction(
 		encodedCall.Module.ModuleName,

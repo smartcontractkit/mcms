@@ -174,7 +174,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 				metadata: types.ChainMetadata{
 					StartingOpCount:  7,
 					MCMAddress:       "0x0",
-					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222"}`),
+					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222", "deployer_state_obj":"0x333", "account_obj":"0x444", "registry_obj":"0x555", "timelock_obj":"0x666"}`),
 				},
 			},
 			want:    common.HexToHash("0x7d803d8cc3d993dec63ec606578d1096512f6717d1415470888487ea16fd69c4"),
@@ -190,7 +190,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 				metadata: types.ChainMetadata{
 					StartingOpCount:  7,
 					MCMAddress:       "0x0",
-					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222"}`),
+					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222", "deployer_state_obj":"0x333", "account_obj":"0x444", "registry_obj":"0x555", "timelock_obj":"0x666"}`),
 				},
 			},
 			want:    common.HexToHash("0xf791111e424aa0e5c9290b391c160652202216194deeefc4bea62ee4efa3ee38"),

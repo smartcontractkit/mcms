@@ -61,6 +61,7 @@ func (f AdditionalFieldsMetadata) Validate() error {
 	if f.DeployerStateObj == "" {
 		return errors.New("deployer state object ID is required")
 	}
+
 	return nil
 }
 
