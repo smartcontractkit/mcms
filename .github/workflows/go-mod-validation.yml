@@ -1,0 +1,18 @@
+name: Validate Go Mod Files
+permissions:
+  contents: read
+
+on:
+  pull_request:
+  merge_group:
+
+jobs:
+  go-mod-validation:
+    name: Validate go.mod dependencies
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate go.mod
+        uses: smartcontractkit/.github/apps/go-mod-validator@845035d315a5067b67c951deab51db019aaf7137 # go-mod-validator/v1
