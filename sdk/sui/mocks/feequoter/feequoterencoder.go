@@ -2199,9 +2199,9 @@ func (_c *FeeQuoterEncoder_GetTokenPricesWithArgs_Call) RunAndReturn(run func(..
 	return _c
 }
 
-// GetTokenReceiver provides a mock function with given fields: ref, destChainSelector, extraArgs, messageReceiver
-func (_m *FeeQuoterEncoder) GetTokenReceiver(ref bind.Object, destChainSelector uint64, extraArgs []byte, messageReceiver []byte) (*bind.EncodedCall, error) {
-	ret := _m.Called(ref, destChainSelector, extraArgs, messageReceiver)
+// GetTokenReceiver provides a mock function with given fields: ref, destChainSelector, extraArgs, defaultTokenReceiver
+func (_m *FeeQuoterEncoder) GetTokenReceiver(ref bind.Object, destChainSelector uint64, extraArgs []byte, defaultTokenReceiver []byte) (*bind.EncodedCall, error) {
+	ret := _m.Called(ref, destChainSelector, extraArgs, defaultTokenReceiver)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetTokenReceiver")
@@ -2210,10 +2210,10 @@ func (_m *FeeQuoterEncoder) GetTokenReceiver(ref bind.Object, destChainSelector 
 	var r0 *bind.EncodedCall
 	var r1 error
 	if rf, ok := ret.Get(0).(func(bind.Object, uint64, []byte, []byte) (*bind.EncodedCall, error)); ok {
-		return rf(ref, destChainSelector, extraArgs, messageReceiver)
+		return rf(ref, destChainSelector, extraArgs, defaultTokenReceiver)
 	}
 	if rf, ok := ret.Get(0).(func(bind.Object, uint64, []byte, []byte) *bind.EncodedCall); ok {
-		r0 = rf(ref, destChainSelector, extraArgs, messageReceiver)
+		r0 = rf(ref, destChainSelector, extraArgs, defaultTokenReceiver)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*bind.EncodedCall)
@@ -2221,7 +2221,7 @@ func (_m *FeeQuoterEncoder) GetTokenReceiver(ref bind.Object, destChainSelector 
 	}
 
 	if rf, ok := ret.Get(1).(func(bind.Object, uint64, []byte, []byte) error); ok {
-		r1 = rf(ref, destChainSelector, extraArgs, messageReceiver)
+		r1 = rf(ref, destChainSelector, extraArgs, defaultTokenReceiver)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -2238,12 +2238,12 @@ type FeeQuoterEncoder_GetTokenReceiver_Call struct {
 //   - ref bind.Object
 //   - destChainSelector uint64
 //   - extraArgs []byte
-//   - messageReceiver []byte
-func (_e *FeeQuoterEncoder_Expecter) GetTokenReceiver(ref interface{}, destChainSelector interface{}, extraArgs interface{}, messageReceiver interface{}) *FeeQuoterEncoder_GetTokenReceiver_Call {
-	return &FeeQuoterEncoder_GetTokenReceiver_Call{Call: _e.mock.On("GetTokenReceiver", ref, destChainSelector, extraArgs, messageReceiver)}
+//   - defaultTokenReceiver []byte
+func (_e *FeeQuoterEncoder_Expecter) GetTokenReceiver(ref interface{}, destChainSelector interface{}, extraArgs interface{}, defaultTokenReceiver interface{}) *FeeQuoterEncoder_GetTokenReceiver_Call {
+	return &FeeQuoterEncoder_GetTokenReceiver_Call{Call: _e.mock.On("GetTokenReceiver", ref, destChainSelector, extraArgs, defaultTokenReceiver)}
 }
 
-func (_c *FeeQuoterEncoder_GetTokenReceiver_Call) Run(run func(ref bind.Object, destChainSelector uint64, extraArgs []byte, messageReceiver []byte)) *FeeQuoterEncoder_GetTokenReceiver_Call {
+func (_c *FeeQuoterEncoder_GetTokenReceiver_Call) Run(run func(ref bind.Object, destChainSelector uint64, extraArgs []byte, defaultTokenReceiver []byte)) *FeeQuoterEncoder_GetTokenReceiver_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(bind.Object), args[1].(uint64), args[2].([]byte), args[3].([]byte))
 	})
