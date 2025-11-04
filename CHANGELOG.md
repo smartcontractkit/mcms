@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.30.1
+
+### Patch Changes
+
+- [#526](https://github.com/smartcontractkit/mcms/pull/526) [`92ba137`](https://github.com/smartcontractkit/mcms/commit/92ba1373ef5437d2f3a85dbfa7452b4f74f182af) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump chainlink-sui
+
 ## 0.30.0
 
 ### Minor Changes
