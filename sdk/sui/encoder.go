@@ -214,11 +214,25 @@ func serializeTimelockCancel(id []byte) ([]byte, error) {
 }
 
 // serializeAuthorizeUpgradeParams serializes parameters for `mcms_deployer::authorize_upgrade`
-func serializeAuthorizeUpgradeParams(policy uint8, digest []byte, packageAddress string) ([]byte, error) {
-	// The authorize_upgrade function expects:
+func serializeAuthorizeUpgradeParams(ownerCapID, deployerStateID string, policy uint8, digest []byte, packageAddress string) ([]byte, error) {
+	// The authorize_upgrade function expects (as validated in mcms_dispatch_to_deployer):
+	// - owner_cap_address: address
+	// - deployer_state_address: address
 	// - policy: u8
 	// - digest: vector<u8>
 	// - package_address: address
+
+	// Convert owner cap address to bytes
+	ownerCapAddr, err := AddressFromHex(ownerCapID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode owner cap address: %w", err)
+	}
+
+	// Convert deployer state address to bytes
+	deployerStateAddr, err := AddressFromHex(deployerStateID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to decode deployer state address: %w", err)
+	}
 
 	// Convert package address to bytes for BCS serialization
 	packageAddrBytes, err := hex.DecodeString(strings.TrimPrefix(packageAddress, "0x"))
@@ -228,8 +242,10 @@ func serializeAuthorizeUpgradeParams(policy uint8, digest []byte, packageAddress
 
 	// Use proper BCS serialization like the existing codebase
 	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
-		ser.U8(policy)                   // u8 policy
-		ser.WriteBytes(digest)           // vector<u8> digest
-		ser.FixedBytes(packageAddrBytes) // address (32-byte fixed bytes)
+		ser.FixedBytes(ownerCapAddr.Bytes())      // address (32-byte fixed bytes) - owner cap
+		ser.FixedBytes(deployerStateAddr.Bytes()) // address (32-byte fixed bytes) - deployer state
+		ser.U8(policy)                            // u8 policy
+		ser.WriteBytes(digest)                    // vector<u8> digest
+		ser.FixedBytes(packageAddrBytes)          // address (32-byte fixed bytes) - package to upgrade
 	})
 }

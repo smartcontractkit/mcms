@@ -285,7 +285,7 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) string {
 	t.Helper()
 
-	tx, err := suisdk.CreateUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.mcmsUserPackageID)
+	tx, err := suisdk.CreateUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.ownerCapObj, s.mcmsUserPackageID)
 	s.Require().NoError(err)
 
 	op := types.BatchOperation{

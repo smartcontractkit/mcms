@@ -97,9 +97,9 @@ func NewTransactionWithUpgradeData(moduleName, function string, to string, data 
 }
 
 // CreateUpgradeTransaction creates a transaction for upgrading a package through MCMS
-func CreateUpgradeTransaction(compiledPackage bind.PackageArtifact, mcmsPackageID, depStateObj, registryObj, mcmsUserPackageId string) (types.Transaction, error) {
+func CreateUpgradeTransaction(compiledPackage bind.PackageArtifact, mcmsPackageID, depStateObj, registryObj, ownerCapObj, mcmsUserPackageId string) (types.Transaction, error) {
 	upgradePolicy := uint8(0) // Compatible upgrade policy
-	data, err := serializeAuthorizeUpgradeParams(upgradePolicy, compiledPackage.Digest, mcmsUserPackageId)
+	data, err := serializeAuthorizeUpgradeParams(ownerCapObj, depStateObj, upgradePolicy, compiledPackage.Digest, mcmsUserPackageId)
 	if err != nil {
 		return types.Transaction{}, fmt.Errorf("serializing authorize upgrade params: %w", err)
 	}
