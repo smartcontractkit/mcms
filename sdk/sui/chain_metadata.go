@@ -34,11 +34,12 @@ const (
 )
 
 type AdditionalFieldsMetadata struct {
-	Role          TimelockRole `json:"role"`
-	McmsPackageID string       `json:"mcms_package_id"`
-	AccountObj    string       `json:"account_obj"`
-	RegistryObj   string       `json:"registry_obj"`
-	TimelockObj   string       `json:"timelock_obj"`
+	Role             TimelockRole `json:"role"`
+	McmsPackageID    string       `json:"mcms_package_id"`
+	AccountObj       string       `json:"account_obj"`
+	RegistryObj      string       `json:"registry_obj"`
+	TimelockObj      string       `json:"timelock_obj"`
+	DeployerStateObj string       `json:"deployer_state_obj"`
 }
 
 func (f AdditionalFieldsMetadata) Validate() error {
@@ -57,6 +58,9 @@ func (f AdditionalFieldsMetadata) Validate() error {
 	if f.TimelockObj == "" {
 		return errors.New("timelock object ID is required")
 	}
+	if f.DeployerStateObj == "" {
+		return errors.New("deployer state object ID is required")
+	}
 
 	return nil
 }
@@ -74,17 +78,18 @@ func ValidateChainMetadata(metadata types.ChainMetadata) error {
 	return nil
 }
 
-func NewChainMetadata(startingOpCount uint64, role TimelockRole, mcmsPackageID string, mcmsObj string, accountObj string, registryObj string, timelockObj string) (types.ChainMetadata, error) {
+func NewChainMetadata(startingOpCount uint64, role TimelockRole, mcmsPackageID string, mcmsObj string, accountObj string, registryObj string, timelockObj string, deployerStateObj string) (types.ChainMetadata, error) {
 	if mcmsObj == "" {
 		return types.ChainMetadata{}, errors.New("mcms object ID is required")
 	}
 
 	additionalFields := AdditionalFieldsMetadata{
-		Role:          role,
-		McmsPackageID: mcmsPackageID,
-		AccountObj:    accountObj,
-		RegistryObj:   registryObj,
-		TimelockObj:   timelockObj,
+		Role:             role,
+		McmsPackageID:    mcmsPackageID,
+		AccountObj:       accountObj,
+		RegistryObj:      registryObj,
+		TimelockObj:      timelockObj,
+		DeployerStateObj: deployerStateObj,
 	}
 
 	if err := additionalFields.Validate(); err != nil {

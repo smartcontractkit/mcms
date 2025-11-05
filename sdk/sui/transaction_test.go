@@ -821,6 +821,7 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 		mcmsPackageID     string
 		depStateObj       string
 		registryObj       string
+		ownerCapObj       string
 		mcmsUserPackageID string
 		expectError       bool
 		errorMsg          string
@@ -836,8 +837,9 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 				}
 			},
 			mcmsPackageID:     "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
-			depStateObj:       "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
-			registryObj:       "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+			depStateObj:       "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123",
+			registryObj:       "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
+			ownerCapObj:       "0xaaa789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123",
 			mcmsUserPackageID: "0x1111456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
 			expectError:       false,
 			expected: func(t *testing.T, tx types.Transaction) {
@@ -851,8 +853,8 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, "mcms_deployer", additionalFields.ModuleName)
 				assert.Equal(t, "authorize_upgrade", additionalFields.Function)
-				assert.Equal(t, "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345", additionalFields.StateObj)
-				assert.Equal(t, []string{"0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567"}, additionalFields.InternalStateObjects)
+				assert.Equal(t, "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123", additionalFields.StateObj)
+				assert.Equal(t, []string{"0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345"}, additionalFields.InternalStateObjects)
 				assert.Equal(t, "0x1111456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01", additionalFields.PackageToUpgrade)
 
 				assert.Len(t, additionalFields.CompiledModules, 2)
@@ -873,9 +875,10 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 				}
 			},
 			mcmsPackageID:     "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
-			depStateObj:       "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
+			depStateObj:       "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
 			registryObj:       "0x012345678abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
-			mcmsUserPackageID: "0x2222456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			ownerCapObj:       "0xbbb789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123",
+			mcmsUserPackageID: "0x2222456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef00",
 			expectError:       false,
 			expected: func(t *testing.T, tx types.Transaction) {
 				t.Helper()
@@ -889,8 +892,8 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 
 				assert.Equal(t, "mcms_deployer", additionalFields.ModuleName)
 				assert.Equal(t, "authorize_upgrade", additionalFields.Function)
-				assert.Equal(t, "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567", additionalFields.StateObj)
-				assert.Equal(t, "0x2222456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef", additionalFields.PackageToUpgrade)
+				assert.Equal(t, "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345", additionalFields.StateObj)
+				assert.Equal(t, "0x2222456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef00", additionalFields.PackageToUpgrade)
 				assert.Empty(t, additionalFields.CompiledModules)
 				assert.Empty(t, additionalFields.Dependencies)
 			},
@@ -901,13 +904,14 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 				return bind.PackageArtifact{
 					Digest:       []byte("single_module_digest"),
 					Modules:      []string{"c2luZ2xlX21vZHVsZQ=="}, // base64 encoded "single_module"
-					Dependencies: []string{"0x567890abcdef123456789abcdef0123456789abcdef0123456789abcdef012345"},
+					Dependencies: []string{"0x567890abcdef123456789abcdef0123456789abcdef0123456789abcdef0123"},
 				}
 			},
-			mcmsPackageID:     "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234567",
-			depStateObj:       "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
-			registryObj:       "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
-			mcmsUserPackageID: "0x3333456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			mcmsPackageID:     "0x789abcdef0123456789abcdef0123456789abcdef0123456789abcdef012345",
+			depStateObj:       "0x123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0",
+			registryObj:       "0x456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123",
+			ownerCapObj:       "0xccc789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123",
+			mcmsUserPackageID: "0x3333456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef00",
 			expectError:       false,
 			expected: func(t *testing.T, tx types.Transaction) {
 				t.Helper()
@@ -917,7 +921,7 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 
 				assert.Len(t, additionalFields.CompiledModules, 1)
 				assert.Equal(t, []byte("single_module"), additionalFields.CompiledModules[0])
-				assert.Equal(t, []models.SuiAddress{"0x567890abcdef123456789abcdef0123456789abcdef0123456789abcdef012345"}, additionalFields.Dependencies)
+				assert.Equal(t, []models.SuiAddress{"0x567890abcdef123456789abcdef0123456789abcdef0123456789abcdef0123"}, additionalFields.Dependencies)
 			},
 		},
 		{
@@ -930,8 +934,9 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 				}
 			},
 			mcmsPackageID:     "0x999456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
-			depStateObj:       "0x999789abcdef0123456789abcdef0123456789abcdef0123456789abcdef01234",
+			depStateObj:       "0x999789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123",
 			registryObj:       "0x999012345abcdef0123456789abcdef0123456789abcdef0123456789abcdef01",
+			ownerCapObj:       "0xddd789abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123",
 			mcmsUserPackageID: "0x999333456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 			expectError:       true,
 			errorMsg:          "decoding module 0",
@@ -948,6 +953,7 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 			mcmsPackageID:     "",
 			depStateObj:       "",
 			registryObj:       "",
+			ownerCapObj:       "",
 			mcmsUserPackageID: "",
 			expectError:       false,
 			expected: func(t *testing.T, tx types.Transaction) {
@@ -969,7 +975,7 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 			t.Parallel()
 
 			compiledPackage := tt.compiledPackage()
-			tx, err := CreateUpgradeTransaction(compiledPackage, tt.mcmsPackageID, tt.depStateObj, tt.registryObj, tt.mcmsUserPackageID)
+			tx, err := CreateUpgradeTransaction(compiledPackage, tt.mcmsPackageID, tt.depStateObj, tt.registryObj, tt.ownerCapObj, tt.mcmsUserPackageID)
 
 			if tt.expectError {
 				require.Error(t, err)

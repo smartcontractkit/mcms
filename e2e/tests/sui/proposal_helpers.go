@@ -48,25 +48,26 @@ func CreateConfig(count int, quorum uint8) *RoleConfig {
 }
 
 type ProposalBuilderConfig struct {
-	Version        string
-	Description    string
-	ChainSelector  types.ChainSelector
-	McmsObjID      string
-	TimelockObjID  string
-	AccountObjID   string
-	RegistryObjID  string
-	McmsPackageID  string
-	Role           suisdk.TimelockRole
-	CurrentOpCount uint64
-	Action         types.TimelockAction
-	Delay          *types.Duration
+	Version            string
+	Description        string
+	ChainSelector      types.ChainSelector
+	McmsObjID          string
+	TimelockObjID      string
+	AccountObjID       string
+	RegistryObjID      string
+	DeployerStateObjID string
+	McmsPackageID      string
+	Role               suisdk.TimelockRole
+	CurrentOpCount     uint64
+	Action             types.TimelockAction
+	Delay              *types.Duration
 }
 
 func CreateTimelockProposalBuilder(t *testing.T, config ProposalBuilderConfig, operations []types.BatchOperation) *mcms.TimelockProposalBuilder {
 	t.Helper()
 	validUntilMs := uint32(time.Now().Add(time.Hour * 24).Unix())
 
-	metadata, err := suisdk.NewChainMetadata(config.CurrentOpCount, config.Role, config.McmsPackageID, config.McmsObjID, config.AccountObjID, config.RegistryObjID, config.TimelockObjID)
+	metadata, err := suisdk.NewChainMetadata(config.CurrentOpCount, config.Role, config.McmsPackageID, config.McmsObjID, config.AccountObjID, config.RegistryObjID, config.TimelockObjID, config.DeployerStateObjID)
 	require.NoError(t, err)
 
 	builder := mcms.NewTimelockProposalBuilder().

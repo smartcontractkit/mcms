@@ -43,7 +43,13 @@ func createMCMSAcceptOwnershipTransaction(suite *MCMSUserUpgradeTestSuite) (type
 		return types.Transaction{}, fmt.Errorf("encoding accept ownership call: %w", err)
 	}
 
-	callBytes := suite.extractByteArgsFromEncodedCall(*encodedCall)
+	accountStateAddr, err := suisdk.AddressFromHex(suite.accountObj)
+	if err != nil {
+		return types.Transaction{}, fmt.Errorf("decoding account state address: %w", err)
+	}
+
+	// The data for MCMS dispatch should be the properly padded 32-byte account_state address
+	callBytes := accountStateAddr.Bytes()
 
 	return suisdk.NewTransaction(
 		encodedCall.Module.ModuleName,
@@ -196,18 +202,19 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 	s.Require().NoError(err)
 
 	proposalConfig := ProposalBuilderConfig{
-		Version:        "v1",
-		Description:    "Accept MCMS self-ownership transfer via proposer with zero delay",
-		ChainSelector:  s.chainSelector,
-		McmsObjID:      s.mcmsObj,
-		TimelockObjID:  s.timelockObj,
-		McmsPackageID:  s.mcmsPackageID,
-		AccountObjID:   s.accountObj,
-		RegistryObjID:  s.registryObj,
-		Role:           role,
-		CurrentOpCount: currentOpCount,
-		Action:         types.TimelockActionSchedule,
-		Delay:          &types.Duration{}, // Zero delay for immediate execution
+		Version:            "v1",
+		Description:        "Accept MCMS self-ownership transfer via proposer with zero delay",
+		ChainSelector:      s.chainSelector,
+		McmsObjID:          s.mcmsObj,
+		TimelockObjID:      s.timelockObj,
+		McmsPackageID:      s.mcmsPackageID,
+		AccountObjID:       s.accountObj,
+		RegistryObjID:      s.registryObj,
+		DeployerStateObjID: s.depStateObj,
+		Role:               role,
+		CurrentOpCount:     currentOpCount,
+		Action:             types.TimelockActionSchedule,
+		Delay:              &types.Duration{}, // Zero delay for immediate execution
 	}
 
 	proposalBuilder := CreateTimelockProposalBuilder(s.T(), proposalConfig, []types.BatchOperation{op})
@@ -278,7 +285,7 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) string {
 	t.Helper()
 
-	tx, err := suisdk.CreateUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.mcmsUserPackageID)
+	tx, err := suisdk.CreateUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.ownerCapObj, s.mcmsUserPackageID)
 	s.Require().NoError(err)
 
 	op := types.BatchOperation{
@@ -294,18 +301,19 @@ func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTest
 	s.Require().NoError(err)
 
 	proposalConfig := ProposalBuilderConfig{
-		Version:        "v1",
-		Description:    "Authorize MCMS User package upgrade via MCMS proposer with zero delay",
-		ChainSelector:  s.chainSelector,
-		McmsObjID:      s.mcmsObj,
-		TimelockObjID:  s.timelockObj,
-		McmsPackageID:  s.mcmsPackageID,
-		AccountObjID:   s.accountObj,
-		RegistryObjID:  s.registryObj,
-		Role:           role,
-		CurrentOpCount: currentOpCount,
-		Action:         types.TimelockActionSchedule,
-		Delay:          &types.Duration{}, // Zero delay for immediate execution
+		Version:            "v1",
+		Description:        "Authorize MCMS User package upgrade via MCMS proposer with zero delay",
+		ChainSelector:      s.chainSelector,
+		McmsObjID:          s.mcmsObj,
+		TimelockObjID:      s.timelockObj,
+		McmsPackageID:      s.mcmsPackageID,
+		AccountObjID:       s.accountObj,
+		RegistryObjID:      s.registryObj,
+		DeployerStateObjID: s.depStateObj,
+		Role:               role,
+		CurrentOpCount:     currentOpCount,
+		Action:             types.TimelockActionSchedule,
+		Delay:              &types.Duration{}, // Zero delay for immediate execution
 	}
 
 	proposalBuilder := CreateTimelockProposalBuilder(s.T(), proposalConfig, []types.BatchOperation{op})

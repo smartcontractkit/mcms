@@ -43,7 +43,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 	}
 
 	// Create metadata for this chain
-	metadata, err := suisdk.NewChainMetadata(0, 2, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	metadata, err := suisdk.NewChainMetadata(0, 2, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj, s.depStateObj)
 	s.Require().NoError(err, "Failed to create chain metadata")
 
 	// Build a test proposal
@@ -149,7 +149,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 	}
 
 	// Create metadata for this chain
-	metadata, err := suisdk.NewChainMetadata(0, 2, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	metadata, err := suisdk.NewChainMetadata(0, 2, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj, s.depStateObj)
 	s.Require().NoError(err, "Failed to create chain metadata")
 
 	// Build a test proposal

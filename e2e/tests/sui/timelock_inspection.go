@@ -165,7 +165,7 @@ func (s *TimelockInspectionTestSuite) TestOperationLifecycle() {
 		Transactions:  []types.Transaction{tx},
 	}
 
-	metadata, err := suisdk.NewChainMetadata(0, 2, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj)
+	metadata, err := suisdk.NewChainMetadata(0, 2, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj, s.depStateObj)
 	s.Require().NoError(err, "Failed to create chain metadata for cancellation proposal")
 
 	// Convert batch operation to chain operations

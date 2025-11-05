@@ -174,7 +174,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 				metadata: types.ChainMetadata{
 					StartingOpCount:  7,
 					MCMAddress:       "0x0",
-					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222"}`),
+					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222", "deployer_state_obj":"0x333", "account_obj":"0x444", "registry_obj":"0x555", "timelock_obj":"0x666"}`),
 				},
 			},
 			want:    common.HexToHash("0x7d803d8cc3d993dec63ec606578d1096512f6717d1415470888487ea16fd69c4"),
@@ -190,7 +190,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 				metadata: types.ChainMetadata{
 					StartingOpCount:  7,
 					MCMAddress:       "0x0",
-					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222"}`),
+					AdditionalFields: json.RawMessage(`{"role":0, "mcms_package_id":"0x222", "deployer_state_obj":"0x333", "account_obj":"0x444", "registry_obj":"0x555", "timelock_obj":"0x666"}`),
 				},
 			},
 			want:    common.HexToHash("0xf791111e424aa0e5c9290b391c160652202216194deeefc4bea62ee4efa3ee38"),
@@ -312,46 +312,74 @@ func TestSerializeAuthorizeUpgradeParams(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name           string
-		policy         uint8
-		digest         []byte
-		packageAddress string
-		wantErr        assert.ErrorAssertionFunc
+		name            string
+		ownerCapID      string
+		deployerStateID string
+		policy          uint8
+		digest          []byte
+		packageAddress  string
+		wantErr         assert.ErrorAssertionFunc
 	}{
 		{
-			name:           "success - valid params",
-			policy:         0,
-			digest:         []byte{0x01, 0x02, 0x03, 0x04},
-			packageAddress: "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
-			wantErr:        assert.NoError,
+			name:            "success - valid params",
+			ownerCapID:      "0x1111111111111111111111111111111111111111111111111111111111111111",
+			deployerStateID: "0x2222222222222222222222222222222222222222222222222222222222222222",
+			policy:          0,
+			digest:          []byte{0x01, 0x02, 0x03, 0x04},
+			packageAddress:  "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+			wantErr:         assert.NoError,
 		},
 		{
-			name:           "success - different policy",
-			policy:         1,
-			digest:         []byte{0xaa, 0xbb, 0xcc, 0xdd},
-			packageAddress: "0x2122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40",
-			wantErr:        assert.NoError,
+			name:            "success - different policy",
+			ownerCapID:      "0x3333333333333333333333333333333333333333333333333333333333333333",
+			deployerStateID: "0x4444444444444444444444444444444444444444444444444444444444444444",
+			policy:          1,
+			digest:          []byte{0xaa, 0xbb, 0xcc, 0xdd},
+			packageAddress:  "0x2122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f40",
+			wantErr:         assert.NoError,
 		},
 		{
-			name:           "success - empty digest",
-			policy:         255,
-			digest:         []byte{},
-			packageAddress: "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
-			wantErr:        assert.NoError,
+			name:            "success - empty digest",
+			ownerCapID:      "0x5555555555555555555555555555555555555555555555555555555555555555",
+			deployerStateID: "0x6666666666666666666666666666666666666666666666666666666666666666",
+			policy:          255,
+			digest:          []byte{},
+			packageAddress:  "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+			wantErr:         assert.NoError,
 		},
 		{
-			name:           "failure - invalid package address",
-			policy:         0,
-			digest:         []byte{0x01, 0x02},
-			packageAddress: "invalid_address",
-			wantErr:        AssertErrorContains("failed to decode package address"),
+			name:            "failure - invalid package address",
+			ownerCapID:      "0x7777777777777777777777777777777777777777777777777777777777777777",
+			deployerStateID: "0x8888888888888888888888888888888888888888888888888888888888888888",
+			policy:          0,
+			digest:          []byte{0x01, 0x02},
+			packageAddress:  "invalid_address",
+			wantErr:         AssertErrorContains("failed to decode package address"),
+		},
+		{
+			name:            "failure - invalid owner cap address",
+			ownerCapID:      "invalid_address",
+			deployerStateID: "0x9999999999999999999999999999999999999999999999999999999999999999",
+			policy:          0,
+			digest:          []byte{0x01, 0x02},
+			packageAddress:  "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+			wantErr:         AssertErrorContains("failed to decode owner cap address"),
+		},
+		{
+			name:            "failure - invalid deployer state address",
+			ownerCapID:      "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			deployerStateID: "invalid_address",
+			policy:          0,
+			digest:          []byte{0x01, 0x02},
+			packageAddress:  "0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+			wantErr:         AssertErrorContains("failed to decode deployer state address"),
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			data, err := serializeAuthorizeUpgradeParams(tt.policy, tt.digest, tt.packageAddress)
+			data, err := serializeAuthorizeUpgradeParams(tt.ownerCapID, tt.deployerStateID, tt.policy, tt.digest, tt.packageAddress)
 			if !tt.wantErr(t, err, "serializeAuthorizeUpgradeParams should handle error correctly") {
 				return
 			}
