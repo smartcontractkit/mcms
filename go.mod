@@ -25,7 +25,7 @@ require (
 	github.com/smartcontractkit/freeport v0.1.2
 	github.com/spf13/cast v1.7.1
 	github.com/stretchr/testify v1.11.1
-	github.com/zksync-sdk/zksync2-go v1.0.0
+	github.com/zksync-sdk/zksync2-go v1.1.0
 	go.uber.org/zap v1.27.0
 	golang.org/x/crypto v0.43.0
 	golang.org/x/tools v0.37.0
@@ -46,7 +46,7 @@ require (
 	github.com/beorn7/perks v1.0.1 // indirect
 	github.com/bits-and-blooms/bitset v1.20.0 // indirect
 	github.com/blendle/zapdriver v1.3.1 // indirect
-	github.com/btcsuite/btcd v0.24.0 // indirect
+	github.com/btcsuite/btcd v0.24.2 // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.3.2 // indirect
 	github.com/btcsuite/btcd/btcutil v1.1.5 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.1.0 // indirect
