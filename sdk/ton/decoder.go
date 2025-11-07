@@ -58,15 +58,10 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 		return nil, fmt.Errorf("invalid cell BOC data: %w", err)
 	}
 
-	v, err := lib.DecodeTLBCellToAny(datac, tlbs)
-	if err != nil {
-		return nil, fmt.Errorf("error while decoding message (cell) for contract %s: %w", idTLBs, err)
-	}
-
 	// TODO: handle empty cell
 	msgType, msgDecoded, err := lib.DecodeTLBValToJSON(datac, tlbs)
 	if err != nil {
-		return nil, fmt.Errorf("error while decoding message (struct) for contract %s: %w", idTLBs, err)
+		return nil, fmt.Errorf("error while JSON decoding message (cell) for contract %s: %w", idTLBs, err)
 	}
 
 	if msgType == "Cell" || msgType == "<nil>" { // on decoder fallback (not decoded)
@@ -74,7 +69,10 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 	}
 
 	// Extract the input keys and args (tree/map lvl 0)
-	keys, err := lib.DecodeTLBStructKeys(v, tlbs)
+	keys, err := lib.DecodeTLBStructKeys(datac, tlbs)
+	if err != nil {
+		return nil, fmt.Errorf("error while (struct) decoding message (cell) for contract %s: %w", idTLBs, err)
+	}
 	inputKeys := make([]string, len(keys))
 	inputArgs := make([]any, len(keys))
 

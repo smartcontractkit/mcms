@@ -30,7 +30,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	ctx := context.Background()
 
 	// Initialize the mock
-	chainID := chaintest.Chain7ToniID
+	chainID := chaintest.Chain7TONID
 	api := ton_mocks.NewTonAPI(t)
 	wallets := []*wallet.Wallet{
 		must(makeRandomTestWallet(api, chainID)),

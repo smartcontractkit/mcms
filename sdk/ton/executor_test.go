@@ -28,7 +28,7 @@ func TestNewExecutor(t *testing.T) {
 	t.Parallel()
 
 	encoder := &tonmcms.Encoder{}
-	chainID := chaintest.Chain7ToniID
+	chainID := chaintest.Chain7TONID
 
 	_api := ton_mocks.NewTonAPI(t)
 	walletOperator := must(makeRandomTestWallet(_api, chainID))
@@ -161,7 +161,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			t.Parallel()
 
 			// Initialize the mock
-			chainID := chaintest.Chain7ToniID
+			chainID := chaintest.Chain7TONID
 			_api := ton_mocks.NewTonAPI(t)
 			walletOperator := must(makeRandomTestWallet(_api, chainID))
 
@@ -181,11 +181,11 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 
 			tx, err := executor.ExecuteOperation(ctx, tt.metadata, tt.nonce, tt.proof, tt.op)
 
-			assert.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				assert.NoError(t, err)
+				assert.Equal(t, tt.wantTxHash, tx.Hash)
 			}
 		})
 	}
@@ -303,7 +303,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 			t.Parallel()
 
 			// Initialize the mock
-			chainID := chaintest.Chain7ToniID
+			chainID := chaintest.Chain7TONID
 			_api := ton_mocks.NewTonAPI(t)
 			walletOperator := must(makeRandomTestWallet(_api, chainID))
 

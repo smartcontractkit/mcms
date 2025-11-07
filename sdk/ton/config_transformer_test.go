@@ -86,7 +86,7 @@ type GroupParentItem struct {
 func Test_ConfigTransformer_ToConfig(t *testing.T) {
 	t.Parallel()
 
-	chainID := chaintest.Chain7ToniID
+	chainID := chaintest.Chain7TONID
 	var client *ton.APIClient = nil
 	wallets := []*wallet.Wallet{
 		must(makeRandomTestWallet(client, chainID)),
@@ -283,7 +283,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 func Test_SetConfigInputs(t *testing.T) {
 	t.Parallel()
 
-	chainID := chaintest.Chain7ToniID
+	chainID := chaintest.Chain7TONID
 	var client *ton.APIClient = nil
 	wallets := []*wallet.Wallet{
 		must(makeRandomTestWallet(client, chainID)),

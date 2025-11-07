@@ -185,11 +185,11 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			executor := evm.NewExecutor(tt.encoder, client, tt.auth)
 			tx, err := executor.ExecuteOperation(ctx, tt.metadata, tt.nonce, tt.proof, tt.op)
 
-			assert.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
 				assert.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				assert.NoError(t, err)
+				assert.Equal(t, tt.wantTxHash, tx.Hash)
 			}
 		})
 	}

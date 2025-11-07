@@ -21,7 +21,7 @@ import (
 )
 
 // TODO: extract as shared setup
-var chainID = chaintest.Chain7ToniID
+var chainID = chaintest.Chain7TONID
 var client *ton.APIClient = nil
 var wallets = []*wallet.Wallet{
 	must(makeRandomTestWallet(client, chainID)),
