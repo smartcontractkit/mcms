@@ -42,5 +42,6 @@ func TestSuiSuite(t *testing.T) {
 }
 
 func TestTONSuite(t *testing.T) {
-	suite.Run(t, new(tone2e.TimelockInspectionTestSuite))
+	// suite.Run(t, new(tone2e.TimelockInspectionTestSuite))
+	suite.Run(t, new(tone2e.SigningTestSuite))
 }

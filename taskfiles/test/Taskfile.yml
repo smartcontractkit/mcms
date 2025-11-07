@@ -55,7 +55,7 @@ tasks:
     env:
       CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.ton.toml" }}'
     cmds:
-      - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e -test.run TestTonSuite {{.CLI_ARGS}} ./e2e/tests...
+      - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e -test.run TestTONSuite {{.CLI_ARGS}} ./e2e/tests...
 
   coverage:
     desc: "Run unit test suite with coverage"
