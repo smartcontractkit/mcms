@@ -2,6 +2,8 @@
   stdenv,
   pkgs,
   lib,
+  # smart contract pkgs to load
+  pkgsContracts,
 }:
 pkgs.mkShell {
   buildInputs = with pkgs;
@@ -37,6 +39,7 @@ pkgs.mkShell {
       yq-go # for manipulating golangci-lint config
       go-task
     ]
+    ++ builtins.attrValues pkgsContracts
     ++ lib.optionals stdenv.hostPlatform.isDarwin [
       libiconv
 
@@ -44,4 +47,10 @@ pkgs.mkShell {
       # https://github.com/NixOS/nixpkgs/issues/433688#issuecomment-3231551949
       pkgs.apple-sdk_15
     ];
+
+  PATH_CONTRACTS_TON = "${pkgsContracts.chainlink-ton-contracts}/lib/node_modules/@chainlink/contracts-ton/build/";
+
+  shellHook = ''
+    echo "TON contracts located here: $PATH_CONTRACTS_TON"
+  '';
 }
