@@ -3,6 +3,8 @@
 package tone2e
 
 import (
+	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 
@@ -16,12 +18,20 @@ import (
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 
 	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
+)
+
+const (
+	EnvPathContracts = "PATH_CONTRACTS_TON"
+
+	PathContractsMCMS     = "mcms.MCMS.compiled.json"
+	PathContractsTimelock = "mcms.RBACTimelock.compiled.json"
 )
 
 func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wallet, error) {
@@ -56,8 +66,12 @@ func (t *SetConfigTestSuite) SetupSuite() {
 
 func (t *SetConfigTestSuite) deployMCMSContract() {
 	amount := tlb.MustFromTON("10")
-	msgBody := cell.BeginCell().EndCell()      // empty cell
-	var contractCode *cell.Cell                // TODO: load contract code
+	msgBody := cell.BeginCell().EndCell() // empty cell
+
+	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsMCMS)
+	contractCode, err := wrappers.ParseCompiledContract(contractPath)
+	t.Require().NoError(err)
+
 	contractData := cell.BeginCell().EndCell() // TODO: replace empty cell with init storage
 	workchain := int8(0)
 
