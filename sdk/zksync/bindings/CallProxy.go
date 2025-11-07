@@ -17,7 +17,7 @@ import (
 	gethwrappers "github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
-func DeployCallProxyZk(deployOpts *accounts.TransactOpts, client *clients.Client, wallet *accounts.Wallet, backend bind.ContractBackend, args ...interface{}) (common.Address, *types.Receipt, *gethwrappers.CallProxy, error) {
+func DeployCallProxyZk(deployOpts *accounts.TransactOpts, client *clients.Client, wallet *accounts.Wallet, backend bind.ContractBackend, args ...any) (common.Address, *types.Receipt, *gethwrappers.CallProxy, error) {
 	var calldata []byte
 	if len(args) > 0 {
 		abi, err := gethwrappers.CallProxyMetaData.GetAbi()
@@ -30,7 +30,8 @@ func DeployCallProxyZk(deployOpts *accounts.TransactOpts, client *clients.Client
 		}
 	}
 
-	salt := make([]byte, 32)
+	const saltLength = 32
+	salt := make([]byte, saltLength)
 	n, err := rand.Read(salt)
 	if err != nil {
 		return common.Address{}, nil, nil, err

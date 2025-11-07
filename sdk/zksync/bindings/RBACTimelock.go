@@ -17,7 +17,7 @@ import (
 	gethwrappers "github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
-func DeployRBACTimelockZk(deployOpts *accounts.TransactOpts, client *clients.Client, wallet *accounts.Wallet, backend bind.ContractBackend, args ...interface{}) (common.Address, *types.Receipt, *gethwrappers.RBACTimelock, error) {
+func DeployRBACTimelockZk(deployOpts *accounts.TransactOpts, client *clients.Client, wallet *accounts.Wallet, backend bind.ContractBackend, args ...any) (common.Address, *types.Receipt, *gethwrappers.RBACTimelock, error) {
 	var calldata []byte
 	if len(args) > 0 {
 		abi, err := gethwrappers.RBACTimelockMetaData.GetAbi()
@@ -30,7 +30,8 @@ func DeployRBACTimelockZk(deployOpts *accounts.TransactOpts, client *clients.Cli
 		}
 	}
 
-	salt := make([]byte, 32)
+	saltLength := 32
+	salt := make([]byte, saltLength)
 	n, err := rand.Read(salt)
 	if err != nil {
 		return common.Address{}, nil, nil, err
