@@ -162,7 +162,7 @@ func TestEncoder_ToOperation(t *testing.T) {
 				)),
 			},
 			want: mcms.Op{
-				ChainID:  new(big.Int).SetInt64(int64(chaintest.Chain7ToniID)),
+				ChainID:  new(big.Int).SetInt64(int64(chaintest.Chain7TONID)),
 				MultiSig: address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 				Nonce:    uint64(0),
 				To:       address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
@@ -228,7 +228,7 @@ func TestEncoder_ToRootMetadata(t *testing.T) {
 				MCMAddress:      "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			},
 			want: mcms.RootMetadata{
-				ChainID:              new(big.Int).SetInt64(int64(chaintest.Chain7ToniID)),
+				ChainID:              new(big.Int).SetInt64(int64(chaintest.Chain7TONID)),
 				MultiSig:             address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 				PreOpCount:           uint64(0),
 				PostOpCount:          uint64(5),

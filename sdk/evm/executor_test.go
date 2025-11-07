@@ -195,7 +195,6 @@ func TestExecutorExecuteOperation(t *testing.T) {
 			executor := evm.NewExecutor(tt.encoder, client, tt.auth)
 			tx, err := executor.ExecuteOperation(ctx, tt.metadata, tt.nonce, tt.proof, tt.op)
 
-			require.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
 				require.Error(t, err)
 				// When error occurs after tx sending, check for ExecutionError with transaction data
@@ -211,7 +210,8 @@ func TestExecutorExecuteOperation(t *testing.T) {
 					require.EqualError(t, err, tt.wantErr.Error())
 				}
 			} else {
-				require.NoError(t, err)
+				assert.NoError(t, err)
+				assert.Equal(t, tt.wantTxHash, tx.Hash)
 			}
 		})
 	}

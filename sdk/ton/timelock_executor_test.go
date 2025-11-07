@@ -27,7 +27,7 @@ import (
 func TestNewTimelockExecutor(t *testing.T) {
 	t.Parallel()
 
-	chainID := chaintest.Chain7ToniID
+	chainID := chaintest.Chain7TONID
 
 	_api := ton_mocks.NewTonAPI(t)
 	walletOperator := must(makeRandomTestWallet(_api, chainID))
@@ -125,7 +125,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			t.Parallel()
 
 			// Initialize the mock
-			chainID := chaintest.Chain7ToniID
+			chainID := chaintest.Chain7TONID
 			_api := ton_mocks.NewTonAPI(t)
 			walletOperator := must(makeRandomTestWallet(_api, chainID))
 
