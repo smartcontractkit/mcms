@@ -28,6 +28,7 @@ var supportedFamilies = []string{
 	cselectors.FamilySolana,
 	cselectors.FamilyAptos,
 	cselectors.FamilySui,
+	cselectors.FamilyTon,
 }
 
 // GetChainSelectorFamily returns the family of the chain selector.

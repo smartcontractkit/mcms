@@ -31,6 +31,10 @@ var (
 	Chain6Selector    = types.ChainSelector(Chain6RawSelector)
 	Chain6SuiID       = cselectors.SUI_TESTNET.ChainID
 
+	Chain7RawSelector = cselectors.TON_TESTNET.Selector
+	Chain7Selector    = types.ChainSelector(Chain7RawSelector)
+	Chain7TONID       = cselectors.TON_TESTNET.ChainID
+
 	// ChainInvalidSelector is a chain selector that doesn't exist.
 	ChainInvalidSelector = types.ChainSelector(0)
 )

@@ -1,7 +1,7 @@
 //go:build e2e
 // +build e2e
 
-package evme2e
+package tone2e
 
 import (
 	"context"
