@@ -22,13 +22,6 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-// TODO: mv and import from github.com/smartcontractkit/chainlink-ton/bindings/mcms/mcms
-// TODO: a different hash fn is used in TON sha256
-var (
-	mcmDomainSeparatorOp       = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP_TON"))
-	mcmDomainSeparatorMetadata = crypto.Keccak256([]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_TON"))
-)
-
 var _ sdk.Encoder = &Encoder{}
 
 // Implementations of various encoding interfaces for TON MCMS
@@ -90,7 +83,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 	// Hash operation according to TON specs
 	// @dev we use the standard sha256 (cell) hash function to hash the leaf.
 	b := cell.BeginCell()
-	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcmDomainSeparatorOp), 256); err != nil {
+	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorOp[:]), 256); err != nil {
 		return common.Hash{}, fmt.Errorf("failed to store domain separator: %w", err)
 	}
 	if err := b.StoreRef(opCell); err != nil {
@@ -117,7 +110,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	// Hash metadata according to TON specs
 	// @dev we use the standard sha256 (cell) hash function to hash the leaf.
 	b := cell.BeginCell()
-	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcmDomainSeparatorMetadata), 256); err != nil {
+	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorMetadata[:]), 256); err != nil {
 		return common.Hash{}, fmt.Errorf("failed to store domain separator: %w", err)
 	}
 	if err := b.StoreRef(metaCell); err != nil {
