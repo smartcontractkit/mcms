@@ -3,7 +3,6 @@
 package tone2e
 
 import (
-	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
@@ -16,7 +15,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
@@ -24,6 +22,7 @@ import (
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
@@ -43,56 +42,11 @@ const (
 
 // TODO: duplicated utils with unit tests [START]
 
-const TONZeroAddressStr = "0:0000000000000000000000000000000000000000000000000000000000000000"
-
-var TONZeroAddress = address.MustParseRawAddr(TONZeroAddressStr)
-
 func must[E any](out E, err error) E {
 	if err != nil {
 		panic(err)
 	}
 	return out
-}
-
-const KEY_UINT8 = 8
-const KEY_UINT256 = 256
-
-func makeDict[T any](m map[*big.Int]T, keySz uint) (*cell.Dictionary, error) {
-	dict := cell.NewDict(keySz)
-
-	for k, v := range m {
-		c, err := tlb.ToCell(v)
-		if err != nil {
-			return nil, fmt.Errorf("failed to encode value as cell: %w", err)
-		}
-
-		dict.SetIntKey(k, c)
-	}
-
-	return dict, nil
-}
-
-func makeDictFrom[T any](data []T, keySz uint) (*cell.Dictionary, error) {
-	m := make(map[*big.Int]T, len(data))
-	for i, v := range data {
-		m[big.NewInt(int64(i))] = v
-	}
-	return makeDict(m, keySz)
-}
-
-// Config.GroupQuorums value wrapper
-type GroupQuorumItem struct {
-	Val uint8 `tlb:"## 8"`
-}
-
-// Config.GroupParents value wrapper
-type GroupParentItem struct {
-	Val uint8 `tlb:"## 8"`
-}
-
-// Data.SeenSignedHashes value wrapper
-type SeenSignedHashesItem struct {
-	Val bool `tlb:"bool"`
 }
 
 // TODO: duplicated utils with unit tests [END]
@@ -140,14 +94,14 @@ func (t *SetConfigTestSuite) deployMCMSContract() {
 			Owner:        t.wallet.Address(),
 			PendingOwner: nil,
 		},
-		Oracle:  TONZeroAddress,
-		Signers: must(makeDict(map[*big.Int]mcms.Signer{}, KEY_UINT256)),
+		Oracle:  tvm.ZeroAddress,
+		Signers: must(tvm.MakeDict(map[*big.Int]mcms.Signer{}, tvm.KeyUINT256)),
 		Config: mcms.Config{
-			Signers:      must(makeDictFrom([]mcms.Signer{}, KEY_UINT8)),
-			GroupQuorums: must(makeDictFrom([]GroupQuorumItem{}, KEY_UINT8)),
-			GroupParents: must(makeDictFrom([]GroupParentItem{}, KEY_UINT8)),
+			Signers:      must(tvm.MakeDictFrom([]mcms.Signer{}, tvm.KeyUINT8)),
+			GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{}, tvm.KeyUINT8)),
+			GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{}, tvm.KeyUINT8)),
 		},
-		SeenSignedHashes: must(makeDict(map[*big.Int]SeenSignedHashesItem{}, KEY_UINT256)),
+		SeenSignedHashes: must(tvm.MakeDict(map[*big.Int]mcms.SeenSignedHashesItem{}, tvm.KeyUINT256)),
 		RootInfo: mcms.RootInfo{
 			ExpiringRootAndOpCount: mcms.ExpiringRootAndOpCount{
 				Root:       big.NewInt(0),
@@ -156,13 +110,13 @@ func (t *SetConfigTestSuite) deployMCMSContract() {
 				OpPendingInfo: mcms.OpPendingInfo{
 					ValidAfter:             0,
 					OpFinalizationTimeout:  0,
-					OpPendingReceiver:      TONZeroAddress,
+					OpPendingReceiver:      tvm.ZeroAddress,
 					OpPendingBodyTruncated: big.NewInt(0),
 				},
 			},
 			RootMetadata: mcms.RootMetadata{
 				ChainID:              big.NewInt(-217),
-				MultiSig:             TONZeroAddress,
+				MultiSig:             tvm.ZeroAddress,
 				PreOpCount:           17,
 				PostOpCount:          17,
 				OverridePreviousRoot: false,

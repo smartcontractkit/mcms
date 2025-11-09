@@ -17,6 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/smartcontractkit/mcms/types"
 
 	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
@@ -39,22 +40,22 @@ func TestInspector_GetConfig(t *testing.T) {
 			name:    "getConfig call success",
 			address: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockResult: mcms.Config{
-				Signers: must(makeDictFrom([]mcms.Signer{
+				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
 					{Key: mustKey(wallets[0]), Index: 0, Group: 0},
 					{Key: mustKey(wallets[1]), Index: 1, Group: 0},
 					{Key: mustKey(wallets[2]), Index: 2, Group: 0},
 					{Key: mustKey(wallets[3]), Index: 0, Group: 1},
 					{Key: mustKey(wallets[4]), Index: 1, Group: 1},
 					{Key: mustKey(wallets[5]), Index: 2, Group: 1},
-				}, KEY_UINT8)),
-				GroupQuorums: must(makeDictFrom([]GroupQuorumItem{
+				}, tvm.KeyUINT8)),
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
 					{Val: 3},
 					{Val: 2},
-				}, KEY_UINT8)), // Valid configuration
-				GroupParents: must(makeDictFrom([]GroupParentItem{
+				}, tvm.KeyUINT8)), // Valid configuration
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
 					{Val: 0},
 					{Val: 0},
-				}, KEY_UINT8)),
+				}, tvm.KeyUINT8)),
 			},
 			want: &types.Config{
 				Quorum: 3,
@@ -87,15 +88,15 @@ func TestInspector_GetConfig(t *testing.T) {
 			name:    "Empty Signers list",
 			address: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockResult: mcms.Config{
-				Signers: must(makeDictFrom([]mcms.Signer{}, KEY_UINT8)),
-				GroupQuorums: must(makeDictFrom([]GroupQuorumItem{
+				Signers: must(tvm.MakeDictFrom([]mcms.Signer{}, tvm.KeyUINT8)),
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
 					{Val: 3},
 					{Val: 2},
-				}, KEY_UINT8)),
-				GroupParents: must(makeDictFrom([]GroupParentItem{
+				}, tvm.KeyUINT8)),
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
 					{Val: 0},
 					{Val: 0},
-				}, KEY_UINT8)),
+				}, tvm.KeyUINT8)),
 			},
 			want:    nil,
 			wantErr: fmt.Errorf("invalid MCMS config: Quorum must be greater than 0"),
