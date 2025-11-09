@@ -50,7 +50,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 					[]string{},
 				)),
 			},
-			want: "0xc6d17bac676615dd0e6e854e41066557366c71bed4c75401741e231050196361",
+			want: "0x5f473c83be95f5666ec098506843a1b03878dab0dba84bb5ba9fa52172b87138",
 		},
 		{
 			name: "failure: cannot unmarshal additional fields",
@@ -99,7 +99,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 				StartingOpCount: 0,
 				MCMAddress:      "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			},
-			want: "0x5e0ca25000083f3d564a2a5db871488550c1915b42fda858df95018a40e881ff",
+			want: "0x4e376893226a88f610e5e741ec88ada4deff4c29b7c0611c7f7c80ce0a847924",
 		},
 		{
 			name:         "failure: could not get TON chain id",
