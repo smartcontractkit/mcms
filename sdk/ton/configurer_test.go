@@ -149,7 +149,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			}
 
 			// Create the Configurer instance
-			configurer, err := tonmcms.NewConfigurer(walletOperator, tlb.MustFromTON("0"))
+			configurer, err := tonmcms.NewConfigurer(walletOperator, tlb.MustFromTON("0.1"))
 			require.NoError(t, err)
 
 			// Call SetConfig

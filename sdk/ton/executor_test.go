@@ -34,7 +34,7 @@ func TestNewExecutor(t *testing.T) {
 	walletOperator := must(makeRandomTestWallet(_api, chainID))
 	client := ton_mocks.NewAPIClientWrapped(t)
 
-	executor, err := tonmcms.NewExecutor(encoder, client, walletOperator, tlb.MustFromTON("0"))
+	executor, err := tonmcms.NewExecutor(encoder, client, walletOperator, tlb.MustFromTON("0.1"))
 	assert.NotNil(t, executor, "expected Executor")
 	assert.NoError(t, err)
 }
@@ -171,7 +171,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				tt.mockSetup(_api, client)
 			}
 
-			executor, err := tonmcms.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0"))
+			executor, err := tonmcms.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0.1"))
 			if tt.wantErrNew != nil {
 				assert.EqualError(t, err, tt.wantErrNew.Error())
 				return
@@ -313,7 +313,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 				tt.mockSetup(_api, client)
 			}
 
-			executor, err := tonmcms.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0"))
+			executor, err := tonmcms.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0.1"))
 			if tt.wantErrNew != nil {
 				assert.EqualError(t, err, tt.wantErrNew.Error())
 				return

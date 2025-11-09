@@ -6,5 +6,10 @@ private_keys = [
 ]
 
 [ton_config]
+chain_id = "-217"
 type = "ton"
-image = "ghcr.io/neodix42/mylocalton-docker:v3.7"
+image = "ghcr.io/neodix42/mylocalton-docker:v3.95"
+
+[ton_config.custom_env]
+GLOBAL_ID = "-217"
+NEXT_BLOCK_GENERATION_DELAY = "0.5"

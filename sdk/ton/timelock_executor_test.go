@@ -33,7 +33,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	walletOperator := must(makeRandomTestWallet(_api, chainID))
 	client := ton_mocks.NewAPIClientWrapped(t)
 
-	executor, err := tonmcms.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0"))
+	executor, err := tonmcms.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
 	assert.NotNil(t, executor, "expected Executor")
 	assert.NoError(t, err)
 }
@@ -135,7 +135,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				tt.mockSetup(_api, client)
 			}
 
-			executor, err := tonmcms.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0"))
+			executor, err := tonmcms.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
 			assert.NoError(t, err)
 
 			tx, err := executor.Execute(ctx, tt.bop, tt.timelockAddress, tt.predecessor, tt.salt)
