@@ -133,7 +133,6 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		},
 	}
 
-	// TODO: do we wait for execution trace?
 	tx, _, err := c.wallet.SendWaitTransaction(ctx, msg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to set config: %w", err)
