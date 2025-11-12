@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.30.3
+
+### Patch Changes
+
+- [#539](https://github.com/smartcontractkit/mcms/pull/539) [`b5515e2`](https://github.com/smartcontractkit/mcms/commit/b5515e25ebc1f30637269292c61464c7834bccc4) Thanks [@jkongie](https://github.com/jkongie)! - Bump chain-selectors dependency to v1.0.81
+
 ## 0.30.2
 
 ### Patch Changes
