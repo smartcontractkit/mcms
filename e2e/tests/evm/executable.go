@@ -47,7 +47,6 @@ type ExecutionTestSuite struct {
 	ChainA          EVMChainMeta
 	ChainB          EVMChainMeta
 	signerAddresses []common.Address
-	deployerKey     common.Address
 	e2e.TestSetup
 }
 
@@ -64,7 +63,6 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	privateKeyHex := s.Settings.PrivateKeys[0]
 	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
 	s.Require().NoError(err, "Invalid private key")
-	s.deployerKey = crypto.PubkeyToAddress(privateKey.PublicKey)
 
 	// Define signer addresses
 	s.signerAddresses = []common.Address{

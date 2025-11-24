@@ -10,7 +10,6 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
@@ -23,7 +22,6 @@ import (
 type InspectionTestSuite struct {
 	suite.Suite
 	contractAddress string
-	deployerKey     common.Address
 	signerAddresses []common.Address
 	auth            *bind.TransactOpts
 	e2e.TestSetup
@@ -52,7 +50,6 @@ func (s *InspectionTestSuite) SetupSuite() {
 	s.auth = auth
 
 	s.contractAddress = s.deployContract()
-	s.deployerKey = crypto.PubkeyToAddress(privateKey.PublicKey)
 }
 
 // deployContract is a helper to deploy the contract
