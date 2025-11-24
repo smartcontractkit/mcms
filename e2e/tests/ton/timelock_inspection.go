@@ -24,7 +24,6 @@ import (
 // TimelockInspectionTestSuite is a suite of tests for the RBACTimelock contract inspection.
 type TimelockInspectionTestSuite struct {
 	suite.Suite
-	deployerKey      common.Address
 	signerAddresses  []common.Address
 	auth             *bind.TransactOpts
 	publicKey        common.Address
@@ -74,7 +73,6 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.publicKey = address
 
 	s.timelockContract = testutils.DeployTimelockContract(&s.Suite, s.ClientA, s.auth, address.String())
-	s.deployerKey = crypto.PubkeyToAddress(privateKey.PublicKey)
 
 	// Grant Some Roles for testing
 	// Proposers
