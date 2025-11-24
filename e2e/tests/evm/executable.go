@@ -55,14 +55,6 @@ func uniqAddresses(addrs []common.Address) []common.Address {
 	})
 }
 
-func ensureRoleSet(input []common.Address, fallback []common.Address) []common.Address {
-	if len(input) == 0 {
-		return fallback
-	}
-
-	return uniqAddresses(input)
-}
-
 // SetupSuite runs before the test suite
 func (s *ExecutionTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
@@ -707,10 +699,10 @@ func (s *ExecutionTestSuite) deployTimelockContract(auth *bind.TransactOpts, cli
 	mcmsAddr := common.HexToAddress(mcmsAddress)
 	defaultRoles := s.defaultTimelockRoleConfig(mcmsAddr, auth.From)
 	roleSet := timelockRoleConfig{
-		Proposers:  ensureRoleSet(roles.Proposers, defaultRoles.Proposers),
-		Executors:  ensureRoleSet(roles.Executors, defaultRoles.Executors),
-		Cancellers: ensureRoleSet(roles.Cancellers, defaultRoles.Cancellers),
-		Bypassers:  ensureRoleSet(roles.Bypassers, defaultRoles.Bypassers),
+		Proposers:  uniqAddresses(append(defaultRoles.Proposers, roles.Proposers...)),
+		Executors:  uniqAddresses(append(defaultRoles.Executors, roles.Executors...)),
+		Cancellers: uniqAddresses(append(defaultRoles.Cancellers, roles.Cancellers...)),
+		Bypassers:  uniqAddresses(append(defaultRoles.Bypassers, roles.Bypassers...)),
 	}
 	_, tx, instance, err := bindings.DeployRBACTimelock(
 		auth,

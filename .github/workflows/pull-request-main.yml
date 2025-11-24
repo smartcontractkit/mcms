@@ -83,7 +83,7 @@ jobs:
       - name: Install Sui CLI
         shell: bash
         run: |
-          SUI_VERSION="1.57.2"
+          SUI_VERSION="1.61.1"
           curl -L "https://github.com/MystenLabs/sui/releases/download/mainnet-v${SUI_VERSION}/sui-mainnet-v${SUI_VERSION}-ubuntu-x86_64.tgz" -o sui.tgz
           tar -xzf sui.tgz
           sudo mv sui /usr/local/bin/
