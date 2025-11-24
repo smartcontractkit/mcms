@@ -101,7 +101,7 @@ func (t *SetConfigTestSuite) deployMCMSContract() {
 			GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{}, tvm.KeyUINT8)),
 			GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{}, tvm.KeyUINT8)),
 		},
-		SeenSignedHashes: must(tvm.MakeDict(map[*big.Int]mcms.SeenSignedHashesItem{}, tvm.KeyUINT256)),
+		SeenSignedHashes: must(tvm.MakeDict(map[*big.Int]mcms.SeenSignedHash{}, tvm.KeyUINT256)),
 		RootInfo: mcms.RootInfo{
 			ExpiringRootAndOpCount: mcms.ExpiringRootAndOpCount{
 				Root:       big.NewInt(0),
