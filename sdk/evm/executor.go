@@ -3,9 +3,12 @@ package evm
 import (
 	"context"
 	"errors"
+	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
@@ -45,17 +48,31 @@ func (e *Executor) ExecuteOperation(
 		return types.TransactionResult{}, err
 	}
 
+	opts := *e.auth
+	opts.Context = ctx
+
+	// Pre-pack calldata so we always have something to return on failure.
+	// This is useful if the tx fails to give the user the calldata to retry or simulate.
+	mcmsAddr := common.HexToAddress(metadata.MCMAddress)
+	txPreview, err := buildExecuteTxData(&opts, mcmsAddr, bindOp, transformHashes(proof))
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to build execute call data: %w", err)
+	}
+
 	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
 
-	opts := *e.auth
-	opts.Context = ctx
-
 	tx, err := mcmsC.Execute(&opts, bindOp, transformHashes(proof))
 	if err != nil {
-		return types.TransactionResult{}, err
+		// Extract timelock address and call data from the operation for bypass error handling
+		timelockAddr := common.HexToAddress(op.Transaction.To)
+		timelockCallData := op.Transaction.Data
+		execErr := BuildExecutionError(ctx, err, txPreview, &opts, mcmsAddr, e.client, timelockAddr, timelockCallData)
+		return types.TransactionResult{
+			ChainFamily: chain_selectors.FamilyEVM,
+		}, execErr
 	}
 
 	return types.TransactionResult{
@@ -82,13 +99,28 @@ func (e *Executor) SetRoot(
 		return types.TransactionResult{}, err
 	}
 
-	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
+	opts := *e.auth
+	opts.Context = ctx
+
+	// Pre-pack calldata so we always have something to return on failure.
+	// This is useful if the tx fails to give the user the calldata to retry or simulate.
+	mcmsAddr := common.HexToAddress(metadata.MCMAddress)
+	txPreview, err := buildSetRootCallData(
+		&opts,
+		mcmsAddr,
+		root,
+		validUntil,
+		bindMeta,
+		transformHashes(proof),
+		transformSignatures(sortedSignatures))
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
 
-	opts := *e.auth
-	opts.Context = ctx
+	mcmsC, err := bindings.NewManyChainMultiSig(common.HexToAddress(metadata.MCMAddress), e.client)
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
 
 	tx, err := mcmsC.SetRoot(
 		&opts,
@@ -99,7 +131,11 @@ func (e *Executor) SetRoot(
 		transformSignatures(sortedSignatures),
 	)
 	if err != nil {
-		return types.TransactionResult{}, err
+		// SetRoot doesn't involve timelock, so pass empty values
+		execErr := BuildExecutionError(ctx, err, txPreview, &opts, mcmsAddr, e.client, common.Address{}, nil)
+		return types.TransactionResult{
+			ChainFamily: chain_selectors.FamilyEVM,
+		}, execErr
 	}
 
 	return types.TransactionResult{
@@ -107,4 +143,104 @@ func (e *Executor) SetRoot(
 		ChainFamily: chain_selectors.FamilyEVM,
 		RawData:     tx,
 	}, err
+}
+
+// buildExecuteCallData packs calldata for ManyChainMultiSig.execute(...)
+func buildExecuteTxData(
+	opts *bind.TransactOpts,
+	mcmsAddr common.Address,
+	op bindings.ManyChainMultiSigOp,
+	proof [][32]byte,
+) (*gethtypes.Transaction, error) {
+	abi, err := bindings.ManyChainMultiSigMetaData.GetAbi()
+	if err != nil {
+		return nil, err
+	}
+	data, err := abi.Pack("execute", op, proof)
+	if err != nil {
+		return nil, err
+	}
+	tx := buildUnsignedTxFromOpts(opts, mcmsAddr, data)
+
+	return tx, nil
+}
+
+// buildSetRootCallData packs call data for ManyChainMultiSig.setRoot(...)
+func buildSetRootCallData(
+	opts *bind.TransactOpts,
+	mcmsAddr common.Address,
+	root [32]byte,
+	validUntil uint32,
+	meta bindings.ManyChainMultiSigRootMetadata,
+	metaProof [][32]byte,
+	sigs []bindings.ManyChainMultiSigSignature,
+) (*gethtypes.Transaction, error) {
+	abi, err := bindings.ManyChainMultiSigMetaData.GetAbi()
+	if err != nil {
+		return nil, err
+	}
+	data, err := abi.Pack("setRoot", root, validUntil, meta, metaProof, sigs)
+	if err != nil {
+		return nil, err
+	}
+	tx := buildUnsignedTxFromOpts(opts, mcmsAddr, data)
+
+	return tx, nil
+}
+
+func buildUnsignedTxFromOpts(
+	opts *bind.TransactOpts,
+	to common.Address,
+	data []byte,
+) *gethtypes.Transaction {
+	// Read gas/fee/nonce from opts when present; fall back to sane zeroes for a portable payload.
+	nonce := uint64(0)
+	if opts != nil && opts.Nonce != nil {
+		nonce = opts.Nonce.Uint64()
+	}
+
+	var gas uint64
+	var gasPrice, gasTipCap, gasFeeCap *big.Int
+
+	if opts != nil {
+		gas = opts.GasLimit
+		gasPrice = opts.GasPrice   // legacy
+		gasTipCap = opts.GasTipCap // 1559
+		gasFeeCap = opts.GasFeeCap // 1559
+	}
+
+	// Prefer DynamicFee if FeeCap/TipCap are provided (EIP-1559). Otherwise fall back to Legacy.
+	if gasFeeCap != nil || gasTipCap != nil {
+		// Ensure non-nil fee pointers for DynamicFeeTx
+		if gasFeeCap == nil {
+			gasFeeCap = big.NewInt(0)
+		}
+		if gasTipCap == nil {
+			gasTipCap = big.NewInt(0)
+		}
+
+		tx := gethtypes.NewTx(&gethtypes.DynamicFeeTx{
+			Nonce:     nonce,
+			GasTipCap: gasTipCap,
+			GasFeeCap: gasFeeCap,
+			Gas:       gas,
+			To:        &to,
+			Data:      data,
+		})
+
+		return tx
+	}
+
+	if gasPrice == nil {
+		gasPrice = big.NewInt(0)
+	}
+	tx := gethtypes.NewTx(&gethtypes.LegacyTx{
+		Nonce:    nonce,
+		To:       &to,
+		Gas:      gas,
+		GasPrice: gasPrice,
+		Data:     data,
+	})
+
+	return tx
 }

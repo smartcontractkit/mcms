@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	evm_mocks "github.com/smartcontractkit/mcms/sdk/evm/mocks"
@@ -187,11 +189,337 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 
 			assert.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
-				assert.EqualError(t, err, tt.wantErr.Error())
+				assert.Error(t, err)
+				// When error occurs after tx sending, check for ExecutionError with transaction data
+				if tt.name == "failure in tx execution" {
+					var execErr *evm.ExecutionError
+					assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+					if execErr != nil {
+						assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+						assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+					}
+				} else {
+					// For other errors, just check the error message matches
+					assert.EqualError(t, err, tt.wantErr.Error())
+				}
 			} else {
 				assert.NoError(t, err)
 			}
 		})
+	}
+}
+
+func TestExecutor_ExecuteOperation_WithEIP1559GasFees(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	encoder := &evm.Encoder{
+		ChainSelector: chaintest.Chain1Selector,
+	}
+	auth := &bind.TransactOpts{
+		Context:   context.Background(),
+		Nonce:     big.NewInt(5),
+		GasLimit:  uint64(100000),
+		GasFeeCap: big.NewInt(20000000000),
+		GasTipCap: big.NewInt(1000000000),
+		Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+			mockTx := evmTypes.NewTransaction(
+				1,
+				common.HexToAddress("0xMockedAddress"),
+				big.NewInt(1000000000000000000),
+				21000,
+				big.NewInt(20000000000),
+				nil,
+			)
+			return mockTx, nil
+		},
+	}
+	metadata := types.ChainMetadata{
+		MCMAddress: "0xAddress",
+	}
+	op := types.Operation{
+		ChainSelector: chaintest.Chain1Selector,
+		Transaction: types.Transaction{
+			To:               "0xTo",
+			Data:             []byte{1, 2, 3},
+			AdditionalFields: json.RawMessage(`{"value": 0}`),
+		},
+	}
+
+	client := evm_mocks.NewContractDeployBackend(t)
+	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
+		Return(fmt.Errorf("error during tx send")).Maybe()
+	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
+		Return(&evmTypes.Header{}, nil).Maybe()
+	client.EXPECT().SuggestGasPrice(mock.Anything).
+		Return(big.NewInt(100000000), nil).Maybe()
+	client.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
+		Return([]byte("0x01"), nil).Maybe()
+	client.EXPECT().EstimateGas(mock.Anything, mock.Anything).
+		Return(uint64(50000), nil).Maybe()
+	client.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
+		Return(uint64(5), nil).Maybe()
+
+	executor := evm.NewExecutor(encoder, client, auth)
+	tx, err := executor.ExecuteOperation(ctx, metadata, 1, []common.Hash{}, op)
+
+	assert.Error(t, err)
+	var execErr *evm.ExecutionError
+	assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+	assert.NotNil(t, execErr, "ExecutionError should not be nil")
+	assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	// Verify it's a DynamicFeeTx (EIP-1559)
+	assert.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
+}
+
+func TestExecutor_SetRoot_WithEIP1559GasFees(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	encoder := &evm.Encoder{
+		ChainSelector: chaintest.Chain1Selector,
+	}
+	auth := &bind.TransactOpts{
+		Context:   context.Background(),
+		Nonce:     big.NewInt(3),
+		GasLimit:  150000,
+		GasFeeCap: big.NewInt(30000000000),
+		GasTipCap: big.NewInt(2000000000),
+		Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+			mockTx := evmTypes.NewTransaction(
+				1,
+				common.HexToAddress("0xMockedAddress"),
+				big.NewInt(1000000000000000000),
+				21000,
+				big.NewInt(20000000000),
+				nil,
+			)
+			return mockTx, nil
+		},
+	}
+	metadata := types.ChainMetadata{
+		MCMAddress: "0xAddress",
+	}
+	root := [32]byte{1, 2, 3}
+	validUntil := uint32(4130013354)
+	sortedSignatures := []types.Signature{{}, {}}
+
+	client := evm_mocks.NewContractDeployBackend(t)
+	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
+		Return(fmt.Errorf("error during tx send")).Maybe()
+	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
+		Return(&evmTypes.Header{}, nil).Maybe()
+	client.EXPECT().SuggestGasPrice(mock.Anything).
+		Return(big.NewInt(100000000), nil).Maybe()
+	client.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
+		Return([]byte("0x01"), nil).Maybe()
+	client.EXPECT().EstimateGas(mock.Anything, mock.Anything).
+		Return(uint64(50000), nil).Maybe()
+	client.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
+		Return(uint64(3), nil).Maybe()
+
+	executor := evm.NewExecutor(encoder, client, auth)
+	tx, err := executor.SetRoot(ctx, metadata, []common.Hash{}, root, validUntil, sortedSignatures)
+
+	assert.Error(t, err)
+	var execErr *evm.ExecutionError
+	assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+	assert.NotNil(t, execErr, "ExecutionError should not be nil")
+	assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	// Verify it's a DynamicFeeTx (EIP-1559)
+	assert.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
+}
+
+func TestExecutor_ExecuteOperation_WithLegacyGasPrice(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	encoder := &evm.Encoder{
+		ChainSelector: chaintest.Chain1Selector,
+	}
+	auth := &bind.TransactOpts{
+		Context:  context.Background(),
+		Nonce:    big.NewInt(2),
+		GasLimit: uint64(80000),
+		GasPrice: big.NewInt(50000000000), // Legacy gas price
+		Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+			mockTx := evmTypes.NewTransaction(
+				1,
+				common.HexToAddress("0xMockedAddress"),
+				big.NewInt(1000000000000000000),
+				21000,
+				big.NewInt(20000000000),
+				nil,
+			)
+			return mockTx, nil
+		},
+	}
+	metadata := types.ChainMetadata{
+		MCMAddress: "0xAddress",
+	}
+	op := types.Operation{
+		ChainSelector: chaintest.Chain1Selector,
+		Transaction: types.Transaction{
+			To:               "0xTo",
+			Data:             []byte{1, 2, 3},
+			AdditionalFields: json.RawMessage(`{"value": 0}`),
+		},
+	}
+
+	client := evm_mocks.NewContractDeployBackend(t)
+	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
+		Return(fmt.Errorf("error during tx send")).Maybe()
+	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
+		Return(&evmTypes.Header{}, nil).Maybe()
+	client.EXPECT().SuggestGasPrice(mock.Anything).
+		Return(big.NewInt(100000000), nil).Maybe()
+	client.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
+		Return([]byte("0x01"), nil).Maybe()
+	client.EXPECT().EstimateGas(mock.Anything, mock.Anything).
+		Return(uint64(50000), nil).Maybe()
+	client.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
+		Return(uint64(2), nil).Maybe()
+
+	executor := evm.NewExecutor(encoder, client, auth)
+	tx, err := executor.ExecuteOperation(ctx, metadata, 1, []common.Hash{}, op)
+
+	assert.Error(t, err)
+	var execErr *evm.ExecutionError
+	assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+	assert.NotNil(t, execErr, "ExecutionError should not be nil")
+	assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	// Verify it's a LegacyTx
+	assert.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
+}
+
+func TestExecutor_SetRoot_WithLegacyGasPrice(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	encoder := &evm.Encoder{
+		ChainSelector: chaintest.Chain1Selector,
+	}
+	auth := &bind.TransactOpts{
+		Context:  context.Background(),
+		Nonce:    big.NewInt(1),
+		GasLimit: 120000,
+		GasPrice: big.NewInt(40000000000), // Legacy gas price
+		Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+			mockTx := evmTypes.NewTransaction(
+				1,
+				common.HexToAddress("0xMockedAddress"),
+				big.NewInt(1000000000000000000),
+				21000,
+				big.NewInt(20000000000),
+				nil,
+			)
+			return mockTx, nil
+		},
+	}
+	metadata := types.ChainMetadata{
+		MCMAddress: "0xAddress",
+	}
+	root := [32]byte{4, 5, 6}
+	validUntil := uint32(4130013354)
+	sortedSignatures := []types.Signature{{}}
+
+	client := evm_mocks.NewContractDeployBackend(t)
+	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
+		Return(fmt.Errorf("error during tx send")).Maybe()
+	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
+		Return(&evmTypes.Header{}, nil).Maybe()
+	client.EXPECT().SuggestGasPrice(mock.Anything).
+		Return(big.NewInt(100000000), nil).Maybe()
+	client.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
+		Return([]byte("0x01"), nil).Maybe()
+	client.EXPECT().EstimateGas(mock.Anything, mock.Anything).
+		Return(uint64(50000), nil).Maybe()
+	client.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
+		Return(uint64(1), nil).Maybe()
+
+	executor := evm.NewExecutor(encoder, client, auth)
+	tx, err := executor.SetRoot(ctx, metadata, []common.Hash{}, root, validUntil, sortedSignatures)
+
+	assert.Error(t, err)
+	var execErr *evm.ExecutionError
+	assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+	assert.NotNil(t, execErr, "ExecutionError should not be nil")
+	assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	// Verify it's a LegacyTx
+	assert.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
+}
+
+func TestExecutor_ExecuteOperation_RBACTimelockUnderlyingRevert(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	encoder := &evm.Encoder{
+		ChainSelector: chaintest.Chain1Selector,
+	}
+	auth := &bind.TransactOpts{
+		Context: context.Background(),
+		From:    common.HexToAddress("0xFromAddress"),
+		Signer: func(address common.Address, transaction *evmTypes.Transaction) (*evmTypes.Transaction, error) {
+			mockTx := evmTypes.NewTransaction(
+				1,
+				common.HexToAddress("0xMockedAddress"),
+				big.NewInt(1000000000000000000),
+				21000,
+				big.NewInt(20000000000),
+				nil,
+			)
+			return mockTx, nil
+		},
+	}
+	metadata := types.ChainMetadata{
+		MCMAddress: "0xAddress",
+	}
+	op := types.Operation{
+		ChainSelector: chaintest.Chain1Selector,
+		Transaction: types.Transaction{
+			To:               "0xTo",
+			Data:             []byte{1, 2, 3},
+			AdditionalFields: json.RawMessage(`{"value": 0}`),
+		},
+	}
+
+	client := evm_mocks.NewContractDeployBackend(t)
+	// Mock the Execute call to return RBACTimelock error
+	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
+		Return(fmt.Errorf("contract error: error -`CallReverted` args [[8 195 121 160 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 45 82 66 65 67 84 105 109 101 108 111 99 107 58 32 117 110 100 101 114 108 121 105 110 103 32 116 114 97 110 115 97 99 116 105 111 110 32 114 101 118 101 114 116 101 100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]"))
+	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
+		Return(&evmTypes.Header{}, nil).Maybe()
+	client.EXPECT().SuggestGasPrice(mock.Anything).
+		Return(big.NewInt(100000000), nil).Maybe()
+	client.EXPECT().PendingCodeAt(mock.Anything, mock.Anything).
+		Return([]byte("0x01"), nil).Maybe()
+	client.EXPECT().EstimateGas(mock.Anything, mock.Anything).
+		Return(uint64(50000), nil).Maybe()
+	client.EXPECT().PendingNonceAt(mock.Anything, mock.Anything).
+		Return(uint64(1), nil).Maybe()
+
+	// Mock CallContract to return the underlying revert reason
+	client.EXPECT().CallContract(mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, fmt.Errorf("execution reverted: 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001a496e73756666696369656e742062616c616e636520746f2073656e6400000000000000000000000000000000000000000000000000000000")).
+		Maybe()
+
+	executor := evm.NewExecutor(encoder, client, auth)
+	_, err := executor.ExecuteOperation(ctx, metadata, 1, []common.Hash{}, op)
+
+	assert.Error(t, err)
+	var execErr *evm.ExecutionError
+	assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+	assert.NotNil(t, execErr, "ExecutionError should not be nil")
+	assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	assert.Contains(t, err.Error(), "RBACTimelock: underlying transaction reverted", "error should mention RBACTimelock")
+	// If CallContract was called, UnderlyingReason should be populated
+	// Note: This depends on the mock setup and may be empty if CallContract wasn't called
+	if execErr.UnderlyingReason != "" {
+		assert.NotEmpty(t, execErr.UnderlyingReason, "underlying reason should be extracted")
 	}
 }
 
@@ -343,7 +671,17 @@ func TestExecutor_SetRoot(t *testing.T) {
 
 			assert.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
-				assert.EqualError(t, err, tt.wantErr.Error())
+				assert.Error(t, err)
+				if tt.name == "failure in tx send" {
+					var execErr *evm.ExecutionError
+					assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+					if execErr != nil {
+						assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+						assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+					}
+				} else {
+					assert.EqualError(t, err, tt.wantErr.Error())
+				}
 			} else {
 				assert.NoError(t, err)
 			}

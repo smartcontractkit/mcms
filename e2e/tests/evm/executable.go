@@ -12,6 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/samber/lo"
 	"github.com/stretchr/testify/suite"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
@@ -32,6 +33,13 @@ type EVMChainMeta struct {
 	chainSelector    mcmtypes.ChainSelector
 }
 
+type timelockRoleConfig struct {
+	Proposers  []common.Address
+	Executors  []common.Address
+	Cancellers []common.Address
+	Bypassers  []common.Address
+}
+
 type ExecutionTestSuite struct {
 	suite.Suite
 	ChainA          EVMChainMeta
@@ -39,6 +47,19 @@ type ExecutionTestSuite struct {
 	signerAddresses []common.Address
 	deployerKey     common.Address
 	e2e.TestSetup
+}
+
+func uniqAddresses(addrs []common.Address) []common.Address {
+	return lo.Filter(lo.Uniq(addrs), func(addr common.Address, _ int) bool {
+		return addr != (common.Address{})
+	})
+}
+
+func ensureRoleSet(input []common.Address, fallback []common.Address) []common.Address {
+	if len(input) == 0 {
+		return fallback
+	}
+	return uniqAddresses(input)
 }
 
 // SetupSuite runs before the test suite
@@ -80,57 +101,12 @@ func (s *ExecutionTestSuite) SetupSuite() {
 
 	// Deploy contracts on both chains
 	s.ChainA.mcmsContract = s.deployMCMSContract(s.ChainA.auth, s.ClientA)
-	s.ChainA.timelockContract = s.deployTimelockContract(s.ChainA.auth, s.ClientA, s.ChainA.mcmsContract.Address().Hex())
+	roleCfgA := s.defaultTimelockRoleConfig(s.ChainA.mcmsContract.Address(), s.ChainA.auth.From)
+	s.ChainA.timelockContract = s.deployTimelockContract(s.ChainA.auth, s.ClientA, s.ChainA.mcmsContract.Address().Hex(), roleCfgA)
 
 	s.ChainB.mcmsContract = s.deployMCMSContract(s.ChainB.auth, s.ClientB)
-	s.ChainB.timelockContract = s.deployTimelockContract(s.ChainB.auth, s.ClientB, s.ChainB.mcmsContract.Address().Hex())
-}
-
-// deployMCMSContract deploys ManyChainMultiSig on the given chain
-func (s *ExecutionTestSuite) deployMCMSContract(auth *bind.TransactOpts, client *ethclient.Client) *bindings.ManyChainMultiSig {
-	_, tx, instance, err := bindings.DeployManyChainMultiSig(auth, client)
-	s.Require().NoError(err, "Failed to deploy MCMS contract")
-
-	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(context.Background(), client, tx)
-	s.Require().NoError(err, "Failed to mine MCMS deployment transaction")
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
-
-	// Set configurations
-	signerGroups := []uint8{0, 1}   // Two groups: Group 0 and Group 1
-	groupQuorums := [32]uint8{1, 1} // Quorum 1 for both groups
-	groupParents := [32]uint8{0, 0} // Group 0 is its own parent; Group 1's parent is Group 0
-	clearRoot := true
-
-	tx, err = instance.SetConfig(auth, s.signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
-	s.Require().NoError(err, "Failed to set MCMS contract configuration")
-	receipt, err = bind.WaitMined(context.Background(), client, tx)
-	s.Require().NoError(err, "Failed to mine MCMS config transaction")
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
-
-	return instance
-}
-
-// deployContract is a helper to deploy the contract
-func (s *ExecutionTestSuite) deployTimelockContract(auth *bind.TransactOpts, client *ethclient.Client, mcmsAddress string) *bindings.RBACTimelock {
-	_, tx, instance, err := bindings.DeployRBACTimelock(
-		auth,
-		client,
-		big.NewInt(0),
-		common.HexToAddress(mcmsAddress),
-		[]common.Address{},
-		[]common.Address{common.HexToAddress("0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266")},
-		[]common.Address{},
-		[]common.Address{},
-	)
-	s.Require().NoError(err, "Failed to deploy Timelock contract")
-
-	// Wait for the transaction to be mined
-	receipt, err := bind.WaitMined(context.Background(), client, tx)
-	s.Require().NoError(err, "Failed to mine deployment transaction")
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
-
-	return instance
+	roleCfgB := s.defaultTimelockRoleConfig(s.ChainB.mcmsContract.Address(), s.ChainB.auth.From)
+	s.ChainB.timelockContract = s.deployTimelockContract(s.ChainB.auth, s.ClientB, s.ChainB.mcmsContract.Address().Hex(), roleCfgB)
 }
 
 // TestExecuteProposal executes a proposal after setting the root
@@ -486,7 +462,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().Equal(s.ChainA.mcmsContract.Address().Hex(), proposer.Hex())
 }
 
-// TestExecuteProposalMultiChain executes a proposal with operations on two different chains
+// TestExecuteProposalMultipleChains executes a proposal with operations on two different chains
 func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	ctx := context.Background()
 
@@ -713,4 +689,69 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	timelockReceiptB, err := testutils.WaitMinedWithTxHash(ctx, s.ClientB, common.HexToHash(txB.Hash))
 	s.Require().NoError(err, "Failed to mine execution transaction on Chain A")
 	s.Require().Equal(types.ReceiptStatusSuccessful, timelockReceiptB.Status)
+}
+
+func (s *ExecutionTestSuite) defaultTimelockRoleConfig(mcmsAddr common.Address, operator common.Address) timelockRoleConfig {
+	base := uniqAddresses([]common.Address{mcmsAddr, operator})
+	return timelockRoleConfig{
+		Proposers:  append([]common.Address{}, base...),
+		Executors:  append([]common.Address{}, base...),
+		Cancellers: append([]common.Address{}, base...),
+		Bypassers:  uniqAddresses([]common.Address{operator, mcmsAddr}),
+	}
+}
+
+// deployContract is a helper to deploy the contract
+func (s *ExecutionTestSuite) deployTimelockContract(auth *bind.TransactOpts, client *ethclient.Client, mcmsAddress string, roles timelockRoleConfig) *bindings.RBACTimelock {
+	mcmsAddr := common.HexToAddress(mcmsAddress)
+	defaultRoles := s.defaultTimelockRoleConfig(mcmsAddr, auth.From)
+	roleSet := timelockRoleConfig{
+		Proposers:  ensureRoleSet(roles.Proposers, defaultRoles.Proposers),
+		Executors:  ensureRoleSet(roles.Executors, defaultRoles.Executors),
+		Cancellers: ensureRoleSet(roles.Cancellers, defaultRoles.Cancellers),
+		Bypassers:  ensureRoleSet(roles.Bypassers, defaultRoles.Bypassers),
+	}
+	_, tx, instance, err := bindings.DeployRBACTimelock(
+		auth,
+		client,
+		big.NewInt(0),
+		mcmsAddr,
+		roleSet.Proposers,
+		roleSet.Executors,
+		roleSet.Cancellers,
+		roleSet.Bypassers,
+	)
+	s.Require().NoError(err, "Failed to deploy Timelock contract")
+
+	// Wait for the transaction to be mined
+	receipt, err := bind.WaitMined(context.Background(), client, tx)
+	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+
+	return instance
+}
+
+// deployMCMSContract deploys ManyChainMultiSig on the given chain
+func (s *ExecutionTestSuite) deployMCMSContract(auth *bind.TransactOpts, client *ethclient.Client) *bindings.ManyChainMultiSig {
+	_, tx, instance, err := bindings.DeployManyChainMultiSig(auth, client)
+	s.Require().NoError(err, "Failed to deploy MCMS contract")
+
+	// Wait for the transaction to be mined
+	receipt, err := bind.WaitMined(context.Background(), client, tx)
+	s.Require().NoError(err, "Failed to mine MCMS deployment transaction")
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+
+	// Set configurations
+	signerGroups := []uint8{0, 1}   // Two groups: Group 0 and Group 1
+	groupQuorums := [32]uint8{1, 1} // Quorum 1 for both groups
+	groupParents := [32]uint8{0, 0} // Group 0 is its own parent; Group 1's parent is Group 0
+	clearRoot := true
+
+	tx, err = instance.SetConfig(auth, s.signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot)
+	s.Require().NoError(err, "Failed to set MCMS contract configuration")
+	receipt, err = bind.WaitMined(context.Background(), client, tx)
+	s.Require().NoError(err, "Failed to mine MCMS config transaction")
+	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+
+	return instance
 }
