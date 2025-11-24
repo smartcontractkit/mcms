@@ -19,6 +19,8 @@ import (
 )
 
 func TestExecutionError_Error(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name                string
 		execErr             *ExecutionError
@@ -173,6 +175,8 @@ func TestExecutionError_Error(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := tt.execErr.Error()
 
 			// Check that all expected substrings are present
@@ -189,6 +193,8 @@ func TestExecutionError_Error(t *testing.T) {
 }
 
 func TestExecutionError_Unwrap(t *testing.T) {
+	t.Parallel()
+
 	originalErr := errors.New("original error")
 	execErr := &ExecutionError{
 		OriginalError: originalErr,
@@ -199,6 +205,8 @@ func TestExecutionError_Unwrap(t *testing.T) {
 }
 
 func TestCustomErrorData(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		customErr        *CustomErrorData
@@ -251,6 +259,8 @@ func TestCustomErrorData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			// Test HexSelector()
 			hexSelector := tt.customErr.HexSelector()
 			assert.Equal(t, tt.expectedHex, hexSelector, "HexSelector() mismatch")
@@ -263,6 +273,8 @@ func TestCustomErrorData(t *testing.T) {
 }
 
 func TestExtractHexEncodedRevertData(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		errStr      string
@@ -321,6 +333,8 @@ func TestExtractHexEncodedRevertData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := extractHexEncodedRevertData(tt.errStr)
 
 			if !tt.shouldMatch {
@@ -335,6 +349,8 @@ func TestExtractHexEncodedRevertData(t *testing.T) {
 }
 
 func TestExtractBytesArrayRevertData(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		errStr      string
@@ -387,6 +403,7 @@ func TestExtractBytesArrayRevertData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			result := extractBytesArrayRevertData(tt.errStr)
 
 			if !tt.shouldMatch {
@@ -401,6 +418,8 @@ func TestExtractBytesArrayRevertData(t *testing.T) {
 }
 
 func TestExtractCustomErrorRevertData(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		errStr      string
@@ -477,6 +496,8 @@ func TestExtractCustomErrorRevertData(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := extractCustomErrorRevertData(tt.errStr)
 
 			if !tt.shouldMatch {
@@ -492,6 +513,8 @@ func TestExtractCustomErrorRevertData(t *testing.T) {
 }
 
 func TestParseBytesFromString(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name     string
 		input    string
@@ -531,6 +554,8 @@ func TestParseBytesFromString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := parseBytesFromString(tt.input)
 			assert.Equal(t, tt.expected, result, "Parsed bytes mismatch for input: %q", tt.input)
 		})
@@ -538,6 +563,8 @@ func TestParseBytesFromString(t *testing.T) {
 }
 
 func TestExtractRevertReasonFromError(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name             string
 		err              error
@@ -608,11 +635,14 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := extractRevertReasonFromError(tt.err)
 
 			if !tt.shouldHaveData {
 				assert.Nil(t, result.RawData, "Expected nil RawData for error: %v", tt.err)
 				assert.Nil(t, result.CustomError, "Expected nil CustomError for error: %v", tt.err)
+
 				return
 			}
 
@@ -632,6 +662,8 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 }
 
 func TestDecodeRevertReasonFromCustomError(t *testing.T) {
+	t.Parallel()
+
 	// Error(string) selector: keccak256("Error(string)")[:4] = 0x08c379a0
 	errorStringSelector := [4]byte{0x08, 0xc3, 0x79, 0xa0}
 
@@ -713,6 +745,8 @@ func TestDecodeRevertReasonFromCustomError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := decodeRevertReasonFromCustomError(tt.customErr)
 
 			if !tt.shouldDecode {
@@ -728,6 +762,8 @@ func TestDecodeRevertReasonFromCustomError(t *testing.T) {
 }
 
 func TestFormatDecodedError(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name           string
 		errorName      string
@@ -786,6 +822,8 @@ func TestFormatDecodedError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := formatDecodedError(tt.errorName, tt.decodedValues)
 			assert.Equal(t, tt.expectedResult, result, "Format mismatch for errorName=%q, values=%v", tt.errorName, tt.decodedValues)
 		})
@@ -793,6 +831,8 @@ func TestFormatDecodedError(t *testing.T) {
 }
 
 func TestExtractRevertDataFromCallError(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		err         error
@@ -833,6 +873,8 @@ func TestExtractRevertDataFromCallError(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := extractRevertDataFromCallError(tt.err)
 
 			if !tt.shouldMatch {
@@ -847,6 +889,8 @@ func TestExtractRevertDataFromCallError(t *testing.T) {
 }
 
 func TestExtractCallFields(t *testing.T) {
+	t.Parallel()
+
 	testTarget := common.HexToAddress("0x1234567890123456789012345678901234567890")
 
 	tests := []struct {
@@ -925,6 +969,8 @@ func TestExtractCallFields(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := extractCallFields(tt.input)
 
 			if !tt.shouldMatch {
@@ -946,6 +992,8 @@ func TestExtractCallFields(t *testing.T) {
 }
 
 func TestExtractCallFromMethod(t *testing.T) {
+	t.Parallel()
+
 	// Get the real timelock ABI for testing
 	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get RBACTimelock ABI")
@@ -1020,6 +1068,8 @@ func TestExtractCallFromMethod(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := extractCallFromMethod(tt.callData, tt.method)
 
 			if !tt.shouldMatch {
@@ -1036,6 +1086,8 @@ func TestExtractCallFromMethod(t *testing.T) {
 }
 
 func TestExtractUnderlyingCall(t *testing.T) {
+	t.Parallel()
+
 	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get RBACTimelock ABI")
 
@@ -1085,6 +1137,8 @@ func TestExtractUnderlyingCall(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result := extractUnderlyingCall(tt.callData)
 
 			if !tt.shouldMatch {
@@ -1101,6 +1155,8 @@ func TestExtractUnderlyingCall(t *testing.T) {
 }
 
 func TestGetUnderlyingRevertReason(t *testing.T) {
+	t.Parallel()
+
 	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err, "Failed to get RBACTimelock ABI")
 
@@ -1217,6 +1273,8 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			var client ContractDeployBackend
 			if tt.setupMock != nil {
 				mockClient := mocks.NewContractDeployBackend(t)
@@ -1295,22 +1353,24 @@ func encodeErrorStringManual(s string) []byte {
 	return encoded
 }
 
-func packBypasserExecuteBatch(t *testing.T, abi *abi.ABI, calls []bindings.RBACTimelockCall) []byte {
+func packBypasserExecuteBatch(t *testing.T, timelockAbi *abi.ABI, calls []bindings.RBACTimelockCall) []byte {
 	t.Helper()
-	method, exists := abi.Methods["bypasserExecuteBatch"]
+	method, exists := timelockAbi.Methods["bypasserExecuteBatch"]
 	require.True(t, exists, "bypasserExecuteBatch method not found")
 
 	data, err := method.Inputs.Pack(calls)
 	require.NoError(t, err, "Failed to pack bypasserExecuteBatch")
+
 	return append(method.ID, data...)
 }
 
-func packExecuteBatch(t *testing.T, abi *abi.ABI, calls []bindings.RBACTimelockCall, predecessor, salt common.Hash) []byte {
+func packExecuteBatch(t *testing.T, timelockAbi *abi.ABI, calls []bindings.RBACTimelockCall, predecessor, salt common.Hash) []byte {
 	t.Helper()
-	method, exists := abi.Methods["executeBatch"]
+	method, exists := timelockAbi.Methods["executeBatch"]
 	require.True(t, exists, "executeBatch method not found")
 
 	data, err := method.Inputs.Pack(calls, predecessor, salt)
 	require.NoError(t, err, "Failed to pack executeBatch")
+
 	return append(method.ID, data...)
 }

@@ -74,6 +74,7 @@ func (t *TimelockExecutor) Execute(
 	if err != nil {
 		timelockCallData := txPreview.Data()
 		execErr := BuildExecutionError(ctx, err, txPreview, &opts, timelockAddr, t.client, timelockAddr, timelockCallData)
+
 		return types.TransactionResult{
 			ChainFamily: chain_selectors.FamilyEVM,
 		}, execErr

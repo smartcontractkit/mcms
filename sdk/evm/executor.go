@@ -70,6 +70,7 @@ func (e *Executor) ExecuteOperation(
 		timelockAddr := common.HexToAddress(op.Transaction.To)
 		timelockCallData := op.Transaction.Data
 		execErr := BuildExecutionError(ctx, err, txPreview, &opts, mcmsAddr, e.client, timelockAddr, timelockCallData)
+
 		return types.TransactionResult{
 			ChainFamily: chain_selectors.FamilyEVM,
 		}, execErr

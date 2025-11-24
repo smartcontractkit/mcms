@@ -13,6 +13,7 @@ import (
 	evmTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
@@ -187,23 +188,23 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			executor := evm.NewExecutor(tt.encoder, client, tt.auth)
 			tx, err := executor.ExecuteOperation(ctx, tt.metadata, tt.nonce, tt.proof, tt.op)
 
-			assert.Equal(t, tt.wantTxHash, tx.Hash)
+			require.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
-				assert.Error(t, err)
+				require.Error(t, err)
 				// When error occurs after tx sending, check for ExecutionError with transaction data
 				if tt.name == "failure in tx execution" {
 					var execErr *evm.ExecutionError
-					assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+					require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
 					if execErr != nil {
-						assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
-						assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+						require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+						require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 					}
 				} else {
 					// For other errors, just check the error message matches
-					assert.EqualError(t, err, tt.wantErr.Error())
+					require.EqualError(t, err, tt.wantErr.Error())
 				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 		})
 	}
@@ -231,6 +232,7 @@ func TestExecutor_ExecuteOperation_WithEIP1559GasFees(t *testing.T) {
 				big.NewInt(20000000000),
 				nil,
 			)
+
 			return mockTx, nil
 		},
 	}
@@ -263,14 +265,14 @@ func TestExecutor_ExecuteOperation_WithEIP1559GasFees(t *testing.T) {
 	executor := evm.NewExecutor(encoder, client, auth)
 	tx, err := executor.ExecuteOperation(ctx, metadata, 1, []common.Hash{}, op)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	var execErr *evm.ExecutionError
-	assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
-	assert.NotNil(t, execErr, "ExecutionError should not be nil")
-	assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
-	assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+	require.NotNil(t, execErr, "ExecutionError should not be nil")
+	require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 	// Verify it's a DynamicFeeTx (EIP-1559)
-	assert.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
+	require.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
 }
 
 func TestExecutor_SetRoot_WithEIP1559GasFees(t *testing.T) {
@@ -295,6 +297,7 @@ func TestExecutor_SetRoot_WithEIP1559GasFees(t *testing.T) {
 				big.NewInt(20000000000),
 				nil,
 			)
+
 			return mockTx, nil
 		},
 	}
@@ -322,14 +325,14 @@ func TestExecutor_SetRoot_WithEIP1559GasFees(t *testing.T) {
 	executor := evm.NewExecutor(encoder, client, auth)
 	tx, err := executor.SetRoot(ctx, metadata, []common.Hash{}, root, validUntil, sortedSignatures)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	var execErr *evm.ExecutionError
-	assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
-	assert.NotNil(t, execErr, "ExecutionError should not be nil")
-	assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
-	assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+	require.NotNil(t, execErr, "ExecutionError should not be nil")
+	require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 	// Verify it's a DynamicFeeTx (EIP-1559)
-	assert.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
+	require.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
 }
 
 func TestExecutor_ExecuteOperation_WithLegacyGasPrice(t *testing.T) {
@@ -353,6 +356,7 @@ func TestExecutor_ExecuteOperation_WithLegacyGasPrice(t *testing.T) {
 				big.NewInt(20000000000),
 				nil,
 			)
+
 			return mockTx, nil
 		},
 	}
@@ -385,14 +389,14 @@ func TestExecutor_ExecuteOperation_WithLegacyGasPrice(t *testing.T) {
 	executor := evm.NewExecutor(encoder, client, auth)
 	tx, err := executor.ExecuteOperation(ctx, metadata, 1, []common.Hash{}, op)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	var execErr *evm.ExecutionError
-	assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
-	assert.NotNil(t, execErr, "ExecutionError should not be nil")
-	assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
-	assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+	require.NotNil(t, execErr, "ExecutionError should not be nil")
+	require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 	// Verify it's a LegacyTx
-	assert.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
+	require.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
 }
 
 func TestExecutor_SetRoot_WithLegacyGasPrice(t *testing.T) {
@@ -416,6 +420,7 @@ func TestExecutor_SetRoot_WithLegacyGasPrice(t *testing.T) {
 				big.NewInt(20000000000),
 				nil,
 			)
+
 			return mockTx, nil
 		},
 	}
@@ -443,14 +448,14 @@ func TestExecutor_SetRoot_WithLegacyGasPrice(t *testing.T) {
 	executor := evm.NewExecutor(encoder, client, auth)
 	tx, err := executor.SetRoot(ctx, metadata, []common.Hash{}, root, validUntil, sortedSignatures)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	var execErr *evm.ExecutionError
-	assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
-	assert.NotNil(t, execErr, "ExecutionError should not be nil")
-	assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
-	assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+	require.NotNil(t, execErr, "ExecutionError should not be nil")
+	require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 	// Verify it's a LegacyTx
-	assert.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
+	require.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
 }
 
 func TestExecutor_ExecuteOperation_RBACTimelockUnderlyingRevert(t *testing.T) {
@@ -472,6 +477,7 @@ func TestExecutor_ExecuteOperation_RBACTimelockUnderlyingRevert(t *testing.T) {
 				big.NewInt(20000000000),
 				nil,
 			)
+
 			return mockTx, nil
 		},
 	}
@@ -510,16 +516,16 @@ func TestExecutor_ExecuteOperation_RBACTimelockUnderlyingRevert(t *testing.T) {
 	executor := evm.NewExecutor(encoder, client, auth)
 	_, err := executor.ExecuteOperation(ctx, metadata, 1, []common.Hash{}, op)
 
-	assert.Error(t, err)
+	require.Error(t, err)
 	var execErr *evm.ExecutionError
-	assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
-	assert.NotNil(t, execErr, "ExecutionError should not be nil")
-	assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
-	assert.Contains(t, err.Error(), "RBACTimelock: underlying transaction reverted", "error should mention RBACTimelock")
+	require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+	require.NotNil(t, execErr, "ExecutionError should not be nil")
+	require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	require.Contains(t, err.Error(), "RBACTimelock: underlying transaction reverted", "error should mention RBACTimelock")
 	// If CallContract was called, UnderlyingReason should be populated
 	// Note: This depends on the mock setup and may be empty if CallContract wasn't called
 	if execErr.UnderlyingReason != "" {
-		assert.NotEmpty(t, execErr.UnderlyingReason, "underlying reason should be extracted")
+		require.NotEmpty(t, execErr.UnderlyingReason, "underlying reason should be extracted")
 	}
 }
 
@@ -669,21 +675,21 @@ func TestExecutor_SetRoot(t *testing.T) {
 				tt.validUntil,
 				tt.sortedSignatures)
 
-			assert.Equal(t, tt.wantTxHash, tx.Hash)
+			require.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
-				assert.Error(t, err)
+				require.Error(t, err)
 				if tt.name == "failure in tx send" {
 					var execErr *evm.ExecutionError
-					assert.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+					require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
 					if execErr != nil {
-						assert.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
-						assert.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+						require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+						require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 					}
 				} else {
-					assert.EqualError(t, err, tt.wantErr.Error())
+					require.EqualError(t, err, tt.wantErr.Error())
 				}
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 		})
 	}

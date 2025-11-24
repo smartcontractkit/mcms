@@ -31,6 +31,8 @@ var (
 	customErrorPattern = regexp.MustCompile(`custom error 0x([0-9a-fA-F]{8}):\s*([0-9a-fA-F\s]+)`)
 )
 
+const selectorSize = 4
+
 // CustomErrorData contains the error selector and its arguments separately.
 type CustomErrorData struct {
 	Selector [4]byte // 4-byte error selector
@@ -42,6 +44,7 @@ func (c *CustomErrorData) Combined() []byte {
 	if c == nil {
 		return nil
 	}
+
 	return append(c.Selector[:], c.Data...)
 }
 
@@ -50,6 +53,7 @@ func (c *CustomErrorData) HexSelector() string {
 	if c == nil {
 		return ""
 	}
+
 	return common.Bytes2Hex(c.Selector[:])
 }
 
@@ -80,6 +84,7 @@ func (e *ExecutionError) Error() string {
 	if e.RawRevertReason != nil && len(e.RawRevertReason.Combined()) > 0 {
 		return fmt.Sprintf("execution failed: %v (raw revert data: %s)", e.OriginalError, common.Bytes2Hex(e.RawRevertReason.Combined()))
 	}
+
 	return fmt.Sprintf("execution failed: %v", e.OriginalError)
 }
 
@@ -119,16 +124,16 @@ func BuildExecutionError(
 		execErr.RawRevertReason = revertData.CustomError
 	} else if len(revertData.RawData) > 0 {
 		// Extract selector and data separately from raw data
-		if len(revertData.RawData) >= 4 {
-			var selector [4]byte
-			copy(selector[:], revertData.RawData[:4])
+		if len(revertData.RawData) >= selectorSize {
+			var selector [selectorSize]byte
+			copy(selector[:], revertData.RawData[:selectorSize])
 			execErr.RawRevertReason = &CustomErrorData{
 				Selector: selector,
-				Data:     revertData.RawData[4:],
+				Data:     revertData.RawData[selectorSize:],
 			}
 		} else {
 			execErr.RawRevertReason = &CustomErrorData{
-				Selector: [4]byte{},
+				Selector: [selectorSize]byte{},
 				Data:     revertData.RawData,
 			}
 		}
@@ -143,7 +148,7 @@ func BuildExecutionError(
 	// In this case, we need to use CallContract to get the actual underlying revert reason.
 	// If extraction fails, just leave UnderlyingReason empty
 	rawRevertReasonHasCallRevertedSelector := execErr.RawRevertReason != nil && execErr.RawRevertReason.Selector == CallRevertedSelector
-	rawDataHasCallRevertedSelector := len(revertData.RawData) >= 4 && string(revertData.RawData[:4]) == string(CallRevertedSelector[:])
+	rawDataHasCallRevertedSelector := len(revertData.RawData) >= selectorSize && string(revertData.RawData[:4]) == string(CallRevertedSelector[:])
 	isCallReverted := strings.Contains(errStr, "CallReverted") ||
 		strings.Contains(execErr.DecodedRevertReason, "CallReverted") ||
 		rawRevertReasonHasCallRevertedSelector ||
@@ -178,7 +183,7 @@ func extractHexEncodedRevertData(errStr string) []byte {
 // Returns the extracted bytes if found, nil otherwise.
 func extractBytesArrayRevertData(errStr string) []byte {
 	matches := bytesArrayPattern.FindStringSubmatch(errStr)
-	if len(matches) < 2 {
+	if len(matches) < 2 { //nolint
 		return nil
 	}
 
@@ -196,14 +201,14 @@ func extractBytesArrayRevertData(errStr string) []byte {
 // Returns the error selector and data separately, or nil if not found.
 func extractCustomErrorRevertData(errStr string) *CustomErrorData {
 	matches := customErrorPattern.FindStringSubmatch(errStr)
-	if len(matches) < 3 {
+	if len(matches) < 3 { //nolint
 		return nil
 	}
 
 	// Extract selector (8 hex chars = 4 bytes)
 	selectorHex := "0x" + matches[1]
 	selectorBytes := common.FromHex(selectorHex)
-	if len(selectorBytes) != 4 {
+	if len(selectorBytes) != selectorSize {
 		return nil
 	}
 
@@ -213,11 +218,10 @@ func extractCustomErrorRevertData(errStr string) *CustomErrorData {
 	// Stop at first non-hex character
 	var cleanData strings.Builder
 	for _, r := range dataHex {
-		if unicode.Is(unicode.Hex_Digit, r) {
-			cleanData.WriteRune(r)
-		} else {
+		if !unicode.Is(unicode.Hex_Digit, r) {
 			break
 		}
+		cleanData.WriteRune(r)
 	}
 	dataHex = cleanData.String()
 	if dataHex == "" {
@@ -231,6 +235,7 @@ func extractCustomErrorRevertData(errStr string) *CustomErrorData {
 
 	var selector [4]byte
 	copy(selector[:], selectorBytes)
+
 	return &CustomErrorData{
 		Selector: selector,
 		Data:     data,
@@ -276,6 +281,7 @@ func extractRevertReasonFromError(err error) revertReasonData {
 		if customErr != nil {
 			rawData := customErr.Combined()
 			decoded := decodeRevertReasonFromCustomError(customErr)
+
 			return revertReasonData{
 				RawData:     rawData,
 				Decoded:     decoded,
@@ -323,6 +329,7 @@ func parseBytesFromString(s string) []byte {
 			bytes = append(bytes, byte(val))
 		}
 	}
+
 	return bytes
 }
 
@@ -355,12 +362,12 @@ func decodeRevertReasonFromCustomError(customErr *CustomErrorData) string {
 // If that fails, falls back to Error(string) decoding.
 // Returns empty string if all decoding fails (so we can return the original error).
 func decodeRevertReason(data []byte) string {
-	if len(data) < 4 {
+	if len(data) < selectorSize {
 		return ""
 	}
 
 	// Try to decode using contract ABIs (MCMS first, then Timelock)
-	selector := data[:4]
+	selector := data[:selectorSize]
 	if decoded := tryDecodeWithContractABIs(selector, data[4:]); decoded != "" {
 		return decoded
 	}
@@ -376,7 +383,7 @@ func decodeRevertReason(data []byte) string {
 // tryDecodeWithContractABIs attempts to decode an error using MCMS and RBACTimelock ABIs.
 // Returns the first successful decode, or empty string if all attempts fail.
 func tryDecodeWithContractABIs(selector []byte, data []byte) string {
-	if len(selector) != 4 {
+	if len(selector) != selectorSize {
 		return ""
 	}
 
@@ -406,10 +413,10 @@ func decodeErrorBySelector(selector []byte, data []byte, contractABI *abi.ABI) s
 
 	// Find the error in the ABI by matching the selector
 	for name, errDef := range contractABI.Errors {
-		if len(errDef.ID) < 4 {
+		if len(errDef.ID) < selectorSize {
 			continue
 		}
-		errSelector := errDef.ID[:4]
+		errSelector := errDef.ID[:selectorSize]
 
 		// Match the selector
 		if string(errSelector) != string(selector) {
@@ -425,6 +432,7 @@ func decodeErrorBySelector(selector []byte, data []byte, contractABI *abi.ABI) s
 			if name == "CallReverted" && strings.Contains(err.Error(), "length insufficient") {
 				return "CallReverted(truncated)"
 			}
+
 			continue
 		}
 
@@ -466,6 +474,7 @@ func formatDecodedError(errorName string, decodedValues []any) string {
 	if len(parts) > 0 {
 		return fmt.Sprintf("%s(%s)", errorName, strings.Join(parts, ", "))
 	}
+
 	return errorName
 }
 
@@ -556,7 +565,7 @@ func extractRevertDataFromCallError(err error) []byte {
 // executeBatch(calls RBACTimelockCall[], predecessor, salt).
 // This is a modular helper that can be reused for both bypass and regular timelock execute cases.
 func extractUnderlyingCall(timelockCallData []byte) *bindings.RBACTimelockCall {
-	if len(timelockCallData) < 4 {
+	if len(timelockCallData) < selectorSize {
 		return nil
 	}
 
