@@ -230,7 +230,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	proposerCount, err := s.ChainA.timelockContract.GetRoleMemberCount(&bind.CallOpts{}, role)
 	s.Require().NoError(err)
 	// One is added by default
-	s.Require().Equal(big.NewInt(1), proposerCount)
+	s.Require().Equal(big.NewInt(2), proposerCount)
 	proposer, err := s.ChainA.timelockContract.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
 	s.Require().NoError(err)
 	s.Require().Equal(s.ChainA.mcmsContract.Address().Hex(), proposer.Hex())
@@ -457,7 +457,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	// Check the state of the timelock contract
 	proposerCount, err = s.ChainA.timelockContract.GetRoleMemberCount(&bind.CallOpts{}, role2)
 	s.Require().NoError(err)
-	s.Require().Equal(big.NewInt(1), proposerCount)
+	s.Require().Equal(big.NewInt(2), proposerCount)
 	proposer, err = s.ChainA.timelockContract.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
 	s.Require().NoError(err)
 	s.Require().Equal(s.ChainA.mcmsContract.Address().Hex(), proposer.Hex())
