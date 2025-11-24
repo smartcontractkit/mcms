@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms"
@@ -60,7 +59,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	// Create a transaction that calls SetConfig on MCMS with invalid data
 	// This will revert when executed by the timelock, allowing us to test error decoding
-	revertingTx := createRevertingTransaction(s.T(), mcmsContract.Address(), mcmsContract)
+	revertingTx := createRevertingTransaction(s.T(), mcmsContract.Address())
 
 	chainMetadata := map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
 		s.ChainA.chainSelector: {
@@ -110,7 +109,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 	executable, err := mcms.NewExecutable(&proposal, executors)
 	s.Require().NoError(err)
 
-	_ = setRootAndVerify(
+	setRootAndVerify(
 		s.T(),
 		ctx,
 		executable,
@@ -123,7 +122,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	_, err = executable.Execute(ctx, 0)
 	s.T().Logf("[TestTimelockExecute] MCMS Execute returned error: %v", err)
-	s.Require().Nil(err)
+	s.Require().NoError(err)
 
 	timelockExecutors := map[mcmtypes.ChainSelector]sdk.TimelockExecutor{
 		s.ChainA.chainSelector: evm.NewTimelockExecutor(
@@ -137,7 +136,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	_, err = timelockExecutable.Execute(s.T().Context(), 0)
 	s.T().Logf("[TestTimelockExecute] Timelock Execute returned error: %v", err)
-	require.Error(s.T(), err)
+	s.Require().Error(err)
 
 	mcmsABI, abiErr := bindings.ManyChainMultiSigMetaData.GetAbi()
 	s.Require().NoError(abiErr, "Failed to get MCMS ABI")
@@ -158,8 +157,8 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 	s.Require().NotNil(timelockExecErr.Transaction, "Transaction should be set in ExecutionError")
 	s.Require().NotEmpty(timelockExecErr.UnderlyingReason, "UnderlyingReason should be extracted")
 
-	assert.Contains(s.T(), err.Error(), "OutOfBoundsGroup")
-	assert.Equal(s.T(), outOfBoundsGroupError.Name, timelockExecErr.UnderlyingReason, "Underlying reason should match decoded MCMS error")
+	s.Contains(err.Error(), "OutOfBoundsGroup")
+	s.Equal(outOfBoundsGroupError.Name, timelockExecErr.UnderlyingReason, "Underlying reason should match decoded MCMS error")
 	s.T().Logf("[TestTimelockExecute] ExecutionError details: Transaction=%v RawRevert=%v Decoded=%q Underlying=%q",
 		timelockExecErr.Transaction, timelockExecErr.RawRevertReason, timelockExecErr.DecodedRevertReason, timelockExecErr.UnderlyingReason)
 }
@@ -199,7 +198,7 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	opCount, err := mcmsContract.GetOpCount(opts)
 	s.Require().NoError(err)
 
-	revertingTx := createRevertingTransaction(s.T(), mcmsContract.Address(), mcmsContract)
+	revertingTx := createRevertingTransaction(s.T(), mcmsContract.Address())
 
 	chainMetadata := map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
 		s.ChainA.chainSelector: {
@@ -248,7 +247,7 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	executable, err := mcms.NewExecutable(&proposal, executors)
 	s.Require().NoError(err)
 
-	_ = setRootAndVerify(
+	setRootAndVerify(
 		s.T(),
 		ctx,
 		executable,
@@ -279,65 +278,21 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	s.Require().NotNil(execErr.Transaction, "Transaction should be set in ExecutionError")
 	s.Require().NotEmpty(execErr.UnderlyingReason, "UnderlyingReason should be extracted")
 
-	assert.Contains(s.T(), err.Error(), "OutOfBoundsGroup")
-	assert.NotEmpty(s.T(), execErr.UnderlyingReason, "UnderlyingReason should not be empty")
-	assert.NotNil(s.T(), execErr.RawRevertReason, "RawRevertReason should be set")
+	s.Contains(err.Error(), "OutOfBoundsGroup")
+	s.NotEmpty(execErr.UnderlyingReason, "UnderlyingReason should not be empty")
+	s.NotNil(execErr.RawRevertReason, "RawRevertReason should be set")
 	s.T().Logf("[TestBypassProposal] ExecutionError details: Transaction=%v RawRevert=%v Decoded=%q Underlying=%q",
 		execErr.Transaction, execErr.RawRevertReason, execErr.DecodedRevertReason, execErr.UnderlyingReason)
-	assert.Equal(
-		s.T(),
+	s.Equal(
 		outOfBoundsGroupError.Name,
 		execErr.UnderlyingReason,
 		"Underlying reason should match decoded MCMS error",
 	)
-	assert.Equal(
-		s.T(),
+	s.Equal(
 		"CallReverted(truncated)",
 		execErr.DecodedRevertReason,
 		"Decoded revert reason should capture CallReverted wrapper",
 	)
-}
-
-// grantTimelockBypasserRoleThroughMCMS grants bypasser role to an address.
-// Since MCMS is the timelock admin, this should ideally be done through MCMS,
-// but for test setup simplicity, we try direct grant first.
-// If that fails, the timelock deployment should include the deployer as a bypasser.
-func grantTimelockBypasserRoleThroughMCMS(
-	t *testing.T,
-	ctx context.Context,
-	mcmsContract *bindings.ManyChainMultiSig,
-	timelockContract *bindings.RBACTimelock,
-	beneficiary common.Address,
-	mcmsOwnerAuth *bind.TransactOpts,
-	client *ethclient.Client,
-) {
-	t.Helper()
-
-	bypasserRole, err := timelockContract.BYPASSERROLE(&bind.CallOpts{Context: ctx})
-	require.NoError(t, err, "Failed to get BYPASSER_ROLE")
-
-	// Check if beneficiary already has bypasser role
-	hasRole, err := timelockContract.HasRole(&bind.CallOpts{Context: ctx}, bypasserRole, beneficiary)
-	require.NoError(t, err, "Failed to check bypasser role")
-
-	if hasRole {
-		t.Logf("Beneficiary %v already has bypasser role", beneficiary)
-		return
-	}
-
-	// Try to grant directly - this will fail if MCMS is the admin and caller is not MCMS
-	// For a proper implementation, this should be done through MCMS.execute with a proposal
-	tx, err := timelockContract.GrantRole(mcmsOwnerAuth, bypasserRole, beneficiary)
-	if err != nil {
-		t.Logf("Warning: Cannot grant bypasser role directly (MCMS is admin). "+
-			"Ensure deployer is included in bypassers array during timelock deployment. Error: %v", err)
-		// For now, we'll continue - the test might work if deployer already has the role from deployment
-		return
-	}
-
-	receipt, err := testutils.WaitMinedWithTxHash(ctx, client, tx.Hash())
-	require.NoError(t, err)
-	require.Equal(t, types.ReceiptStatusSuccessful, receipt.Status, "GrantRole transaction failed")
 }
 
 // transferMCMSOwnershipToTimelock transfers ownership of MCMS from the current owner to the timelock contract.
@@ -406,7 +361,7 @@ func acceptMCMSOwnership(
 // createRevertingTransaction creates a transaction that will revert when executed.
 // It calls SetConfig on the MCMS contract with invalid data (out-of-bounds group index)
 // which will trigger an OutOfBoundsGroup error.
-func createRevertingTransaction(t *testing.T, target common.Address, mcmsContract *bindings.ManyChainMultiSig) mcmtypes.Transaction {
+func createRevertingTransaction(t *testing.T, target common.Address) mcmtypes.Transaction {
 	t.Helper()
 
 	// Get the SetConfig method from the ABI
@@ -514,6 +469,7 @@ func convertTimelockProposal(
 	t.Helper()
 	proposal, hashes, err := timelockProposal.Convert(ctx, converters)
 	require.NoError(t, err)
+
 	return proposal, hashes
 }
 
@@ -558,8 +514,9 @@ func setRootAndVerify(
 	expectedValidUntil uint32,
 	client *ethclient.Client,
 	mcmsContract *bindings.ManyChainMultiSig,
-) *mcmtypes.TransactionResult {
+) {
 	t.Helper()
+
 	tx, err := executable.SetRoot(ctx, chainSelector)
 	require.NoError(t, err, "SetRoot failed")
 	require.NotEmpty(t, tx.Hash, "SetRoot returned empty transaction hash")
@@ -572,8 +529,6 @@ func setRootAndVerify(
 	require.NoError(t, err)
 	require.Equal(t, expectedRoot, root.Root, "root mismatch after SetRoot")
 	require.Equal(t, expectedValidUntil, root.ValidUntil, "validUntil mismatch after SetRoot")
-
-	return &tx
 }
 
 // assertExecutionError asserts that an error is an ExecutionError with expected fields.
@@ -587,7 +542,7 @@ func assertExecutionError(
 	expectedSelector [4]byte,
 ) *evm.ExecutionError {
 	t.Helper()
-	require.NotNil(t, err, "expected error but got nil")
+	require.Error(t, err, "expected error but got nil")
 
 	var execErr *evm.ExecutionError
 	require.ErrorAs(t, err, &execErr, "error is not of type *evm.ExecutionError")

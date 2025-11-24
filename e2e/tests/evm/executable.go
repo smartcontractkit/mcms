@@ -59,6 +59,7 @@ func ensureRoleSet(input []common.Address, fallback []common.Address) []common.A
 	if len(input) == 0 {
 		return fallback
 	}
+
 	return uniqAddresses(input)
 }
 
