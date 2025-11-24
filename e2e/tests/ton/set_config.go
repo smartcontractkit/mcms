@@ -98,8 +98,8 @@ func (t *SetConfigTestSuite) deployMCMSContract() {
 		Signers: must(tvm.MakeDict(map[*big.Int]mcms.Signer{}, tvm.KeyUINT256)),
 		Config: mcms.Config{
 			Signers:      must(tvm.MakeDictFrom([]mcms.Signer{}, tvm.KeyUINT8)),
-			GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{}, tvm.KeyUINT8)),
-			GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{}, tvm.KeyUINT8)),
+			GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{}, tvm.KeyUINT8)),
+			GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{}, tvm.KeyUINT8)),
 		},
 		SeenSignedHashes: must(tvm.MakeDict(map[*big.Int]mcms.SeenSignedHashesItem{}, tvm.KeyUINT256)),
 		RootInfo: mcms.RootInfo{

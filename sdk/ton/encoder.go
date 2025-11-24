@@ -184,7 +184,7 @@ func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadat
 func (e *Encoder) ToProof(p []common.Hash) ([]mcms.Proof, error) {
 	proofs := make([]mcms.Proof, 0, len(p))
 	for _, hash := range p {
-		proofs = append(proofs, mcms.Proof{Value: hash.Big()})
+		proofs = append(proofs, mcms.Proof{Val: hash.Big()})
 	}
 	return proofs, nil
 }

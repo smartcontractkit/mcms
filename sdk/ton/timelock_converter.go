@@ -88,7 +88,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 			Calls:       commonton.SnakeRef[timelock.Call](calls),
 			Predecessor: predecessor.Big(),
 			Salt:        salt.Big(),
-			Delay:       uint64(delay.Seconds()),
+			Delay:       uint32(delay.Seconds()),
 		})
 	case types.TimelockActionCancel:
 		data, err = tlb.ToCell(timelock.Cancel{

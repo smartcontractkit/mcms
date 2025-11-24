@@ -75,12 +75,12 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 	signerKeys := make([]mcms.SignerKey, len(signerAddresses))
 	for i, addr := range signerAddresses {
-		signerKeys[i] = mcms.SignerKey{Value: addr.Big()}
+		signerKeys[i] = mcms.SignerKey{Val: addr.Big()}
 	}
 
 	signerGroups := make([]mcms.SignerGroup, len(_signerGroups))
 	for i, g := range _signerGroups {
-		signerGroups[i] = mcms.SignerGroup{Value: g}
+		signerGroups[i] = mcms.SignerGroup{Val: g}
 	}
 
 	// Encode SetConfig message

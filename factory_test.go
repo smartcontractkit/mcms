@@ -150,7 +150,7 @@ func TestNewTimelockConverter(t *testing.T) {
 		},
 		{
 			name:          "success: TON executor",
-			chainSelector: chaintest.Chain6Selector,
+			chainSelector: chaintest.Chain7Selector,
 			want:          ton.NewTimelockConverter(),
 		},
 		{
