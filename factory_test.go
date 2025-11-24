@@ -91,7 +91,7 @@ func Test_NewEncoder(t *testing.T) {
 			giveIsSim:    false,
 			want: &ton.Encoder{
 				TxCount:              giveTxCount,
-				ChainSelector:        chaintest.Chain6Selector,
+				ChainSelector:        chaintest.Chain7Selector,
 				OverridePreviousRoot: false,
 			},
 		},
@@ -150,7 +150,7 @@ func Test_newTimelockConverter(t *testing.T) {
 		},
 		{
 			name:          "success: TON executor",
-			chainSelector: chaintest.Chain6Selector,
+			chainSelector: chaintest.Chain7Selector,
 			want:          ton.NewTimelockConverter(),
 		},
 		{

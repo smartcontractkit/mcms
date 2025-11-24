@@ -91,11 +91,11 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					{Key: mustKey(signer1), Group: 0, Index: 0},
 					{Key: mustKey(signer2), Group: 1, Index: 1},
 				}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
 					{Val: 1},
 				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 					{Val: 0},
 				}, tvm.KeyUINT8)),
@@ -115,7 +115,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 		{
 			name: "success: nested configs",
 			give: mcms.Config{
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
 					{Val: 4},
 					{Val: 1},
@@ -123,7 +123,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					{Val: 3},
 					{Val: 1},
 				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 					{Val: 0},
 					{Val: 1},
@@ -214,11 +214,11 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					{Key: mustKey(signer1), Group: 0, Index: 0},
 					{Key: mustKey(signer2), Group: 1, Index: 1},
 				}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 0}, // A zero quorum makes this invalid
 					{Val: 1},
 				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 					{Val: 0},
 				}, tvm.KeyUINT8)),
@@ -294,11 +294,11 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer2), Group: 0, Index: 1},
 					{Key: mustKey(signer3), Group: 1, Index: 2},
 				}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
 					{Val: 1},
 				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 					{Val: 0},
 				}, tvm.KeyUINT8)),
@@ -322,11 +322,11 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer2), Group: 0, Index: 1},
 					{Key: mustKey(signer3), Group: 1, Index: 2},
 				}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
 					{Val: 1},
 				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 					{Val: 0},
 				}, tvm.KeyUINT8)),
@@ -347,10 +347,10 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer1), Group: 0, Index: 0},
 					{Key: mustKey(signer2), Group: 0, Index: 1},
 				}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
 				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 				}, tvm.KeyUINT8)),
 			},
@@ -372,13 +372,13 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer2), Group: 2, Index: 1},
 					{Key: mustKey(signer3), Group: 3, Index: 2},
 				}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
 					{Val: 1},
 					{Val: 1},
 					{Val: 1},
 				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 					{Val: 0},
 					{Val: 0},
@@ -416,13 +416,13 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer4), Group: 2, Index: 3},
 					{Key: mustKey(signer5), Group: 3, Index: 4},
 				}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
 					{Val: 1},
 					{Val: 1},
 					{Val: 1},
 				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 					{Val: 0},
 					{Val: 1},
@@ -462,13 +462,13 @@ func Test_SetConfigInputs(t *testing.T) {
 					{Key: mustKey(signer4), Group: 3, Index: 3},
 					{Key: mustKey(signer5), Group: 2, Index: 4},
 				}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
 					{Val: 1},
 					{Val: 1},
 					{Val: 1},
 				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 					{Val: 0},
 					{Val: 1},

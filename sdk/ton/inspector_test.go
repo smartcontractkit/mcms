@@ -48,11 +48,11 @@ func TestInspector_GetConfig(t *testing.T) {
 					{Key: mustKey(wallets[4]), Index: 1, Group: 1},
 					{Key: mustKey(wallets[5]), Index: 2, Group: 1},
 				}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 3},
 					{Val: 2},
 				}, tvm.KeyUINT8)), // Valid configuration
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 					{Val: 0},
 				}, tvm.KeyUINT8)),
@@ -89,11 +89,11 @@ func TestInspector_GetConfig(t *testing.T) {
 			address: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockResult: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorumItem{
+				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 3},
 					{Val: 2},
 				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParentItem{
+				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
 					{Val: 0},
 					{Val: 0},
 				}, tvm.KeyUINT8)),
