@@ -28,7 +28,29 @@ func TestExecutionError_Error(t *testing.T) {
 		expectedNotContains []string // substrings that should NOT be in the error message
 	}{
 		{
-			name: "with underlying reason - highest priority",
+			name: "with decoded underlying reason - highest priority",
+			execErr: &ExecutionError{
+				OriginalError:           errors.New("original error"),
+				UnderlyingReason:        "0x1234",
+				DecodedUnderlyingReason: "decoded underlying revert reason",
+				DecodedRevertReason:     "decoded reason",
+				RawRevertReason: &CustomErrorData{
+					Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
+					Data:     []byte{0xaa, 0xbb, 0xcc},
+				},
+			},
+			expectedContains: []string{
+				"execution failed",
+				"original error",
+				"underlying reason: decoded underlying revert reason",
+			},
+			expectedNotContains: []string{
+				"revert reason: decoded reason", // should not show decoded revert reason
+				"raw revert data",               // should not show raw data
+			},
+		},
+		{
+			name: "with raw underlying reason when decoded unavailable",
 			execErr: &ExecutionError{
 				OriginalError:       errors.New("original error"),
 				UnderlyingReason:    "underlying revert reason",
@@ -1173,49 +1195,49 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 	}
 
 	tests := []struct {
-		name           string
-		timelockAddr   common.Address
-		callData       []byte
-		opts           *bind.TransactOpts
-		setupMock      func(*mocks.ContractDeployBackend)
-		expectedResult string
-		shouldDecode   bool
+		name            string
+		timelockAddr    common.Address
+		callData        []byte
+		opts            *bind.TransactOpts
+		setupMock       func(*mocks.ContractDeployBackend)
+		expectedRaw     string
+		expectedDecoded string
 	}{
 		{
-			name:           "nil client",
-			timelockAddr:   timelockAddr,
-			callData:       callData,
-			opts:           opts,
-			setupMock:      nil, // nil client
-			expectedResult: "",
-			shouldDecode:   false,
+			name:            "nil client",
+			timelockAddr:    timelockAddr,
+			callData:        callData,
+			opts:            opts,
+			setupMock:       nil, // nil client
+			expectedRaw:     "",
+			expectedDecoded: "",
 		},
 		{
-			name:           "nil opts",
-			timelockAddr:   timelockAddr,
-			callData:       callData,
-			opts:           nil,
-			setupMock:      func(m *mocks.ContractDeployBackend) {},
-			expectedResult: "",
-			shouldDecode:   false,
+			name:            "nil opts",
+			timelockAddr:    timelockAddr,
+			callData:        callData,
+			opts:            nil,
+			setupMock:       func(m *mocks.ContractDeployBackend) {},
+			expectedRaw:     "",
+			expectedDecoded: "",
 		},
 		{
-			name:           "empty timelock address",
-			timelockAddr:   common.Address{},
-			callData:       callData,
-			opts:           opts,
-			setupMock:      func(m *mocks.ContractDeployBackend) {},
-			expectedResult: "",
-			shouldDecode:   false,
+			name:            "empty timelock address",
+			timelockAddr:    common.Address{},
+			callData:        callData,
+			opts:            opts,
+			setupMock:       func(m *mocks.ContractDeployBackend) {},
+			expectedRaw:     "",
+			expectedDecoded: "",
 		},
 		{
-			name:           "empty callData",
-			timelockAddr:   timelockAddr,
-			callData:       []byte{},
-			opts:           opts,
-			setupMock:      func(m *mocks.ContractDeployBackend) {},
-			expectedResult: "",
-			shouldDecode:   false,
+			name:            "empty callData",
+			timelockAddr:    timelockAddr,
+			callData:        []byte{},
+			opts:            opts,
+			setupMock:       func(m *mocks.ContractDeployBackend) {},
+			expectedRaw:     "",
+			expectedDecoded: "",
 		},
 		{
 			name:         "call succeeds - no revert",
@@ -1228,8 +1250,8 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 					return true // Match any CallMsg
 				}), mock.Anything).Return([]byte{}, nil).Maybe()
 			},
-			expectedResult: "",
-			shouldDecode:   false,
+			expectedRaw:     "",
+			expectedDecoded: "",
 		},
 		{
 			name:         "call reverts with decoded error",
@@ -1240,8 +1262,8 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, errors.New("execution reverted: custom error 0x70de1b4b: aabbccdd")).Maybe()
 			},
-			expectedResult: "CallReverted(truncated)", // CallReverted with insufficient data returns truncated marker
-			shouldDecode:   true,
+			expectedRaw:     "0x70de1b4b",
+			expectedDecoded: "CallReverted(truncated)", // CallReverted with insufficient data returns truncated marker
 		},
 		{
 			name:         "call reverts with plain string",
@@ -1254,8 +1276,8 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, errors.New("execution reverted: revert: Ownable: caller is not the owner")).Maybe()
 			},
-			expectedResult: "Ownable: caller is not the owner",
-			shouldDecode:   true,
+			expectedRaw:     "Ownable: caller is not the owner",
+			expectedDecoded: "Ownable: caller is not the owner",
 		},
 		{
 			name:         "non-revert error",
@@ -1266,8 +1288,8 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, errors.New("network error")).Maybe()
 			},
-			expectedResult: "",
-			shouldDecode:   false,
+			expectedRaw:     "",
+			expectedDecoded: "",
 		},
 	}
 
@@ -1282,7 +1304,7 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 				client = mockClient
 			}
 
-			result := getUnderlyingRevertReason(context.Background(), tt.timelockAddr, tt.callData, tt.opts, client)
+			rawReason, decodedReason := getUnderlyingRevertReason(context.Background(), tt.timelockAddr, tt.callData, tt.opts, client)
 
 			// Verify mock expectations were met (if mock was set up)
 			if tt.setupMock != nil {
@@ -1290,14 +1312,8 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 				mockClient.AssertExpectations(t)
 			}
 
-			if !tt.shouldDecode {
-				assert.Empty(t, result, "Expected empty result for test: %s. Got: %q", tt.name, result)
-			} else {
-				assert.NotEmpty(t, result, "Expected non-empty result for test: %s", tt.name)
-				if tt.expectedResult != "" {
-					assert.Equal(t, tt.expectedResult, result, "Result mismatch for test: %s", tt.name)
-				}
-			}
+			assert.Equal(t, tt.expectedRaw, rawReason, "Raw reason mismatch for test: %s", tt.name)
+			assert.Equal(t, tt.expectedDecoded, decodedReason, "Decoded reason mismatch for test: %s", tt.name)
 		})
 	}
 }

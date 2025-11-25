@@ -2,6 +2,8 @@ package evm
 
 import (
 	"context"
+	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -39,6 +41,25 @@ type CustomErrorData struct {
 	Data     []byte  // Error arguments (ABI-encoded)
 }
 
+// MarshalJSON renders the selector/data as hex strings for readability.
+func (c *CustomErrorData) MarshalJSON() ([]byte, error) {
+	if c == nil {
+		return []byte("null"), nil
+	}
+
+	payload := map[string]string{
+		"selector": "0x" + hex.EncodeToString(c.Selector[:]),
+		"data":     "0x" + hex.EncodeToString(c.Data),
+		"raw":      "0x" + hex.EncodeToString(append([]byte{}, c.Selector[:]...)),
+	}
+
+	if len(c.Data) > 0 {
+		payload["raw"] = "0x" + hex.EncodeToString(append(c.Selector[:], c.Data...))
+	}
+
+	return json.Marshal(payload)
+}
+
 // Combined returns the full revert data (selector + data) as a byte slice.
 func (c *CustomErrorData) Combined() []byte {
 	if c == nil {
@@ -68,13 +89,19 @@ type ExecutionError struct {
 	// DecodedRevertReason is the human-readable decoded revert reason from the contract (e.g., "InsufficientSigners()")
 	// This is only populated if the revert data could be decoded using contract ABIs
 	DecodedRevertReason string
-	// UnderlyingReason is the actual revert reason from nested contract calls (e.g., RBACTimelock)
+	// UnderlyingReason contains the raw revert reason returned by a nested contract call.
+	// This is typically the hex-encoded revert data or plain revert string before decoding.
 	UnderlyingReason string
+	// DecodedUnderlyingReason contains the human-readable decoded underlying revert reason (if decoding succeeded).
+	DecodedUnderlyingReason string
 	// OriginalError is the original error from the contract binding
 	OriginalError error
 }
 
 func (e *ExecutionError) Error() string {
+	if e.DecodedUnderlyingReason != "" {
+		return fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.DecodedUnderlyingReason)
+	}
 	if e.UnderlyingReason != "" {
 		return fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.UnderlyingReason)
 	}
@@ -157,7 +184,9 @@ func BuildExecutionError(
 	if strings.Contains(errStr, "RBACTimelock: underlying transaction reverted") ||
 		strings.Contains(execErr.DecodedRevertReason, "RBACTimelock: underlying transaction reverted") ||
 		(isCallReverted && timelockAddr != (common.Address{}) && len(timelockCallData) > 0) {
-		execErr.UnderlyingReason = getUnderlyingRevertReason(ctx, timelockAddr, timelockCallData, opts, client)
+		rawUnderlyingReason, decodedUnderlyingReason := getUnderlyingRevertReason(ctx, timelockAddr, timelockCallData, opts, client)
+		execErr.UnderlyingReason = rawUnderlyingReason
+		execErr.DecodedUnderlyingReason = decodedUnderlyingReason
 	}
 
 	return execErr
@@ -478,26 +507,27 @@ func formatDecodedError(errorName string, decodedValues []any) string {
 	return errorName
 }
 
-// getUnderlyingRevertReason extracts the underlying revert reason when MCMS calls
+// getUnderlyingRevertReason extracts both the raw and decoded underlying revert reasons when MCMS calls
 // RBACTimelock's bypasserExecuteBatch or executeBatch and one of the underlying transactions reverts.
 // This function:
 // 1. Extracts the underlying call from the timelock execute calls array
 // 2. Simulates the underlying call using the timelock address as From (since that's msg.sender)
+// 3. Returns the raw revert data/message and the decoded revert reason (if decoding succeeds)
 func getUnderlyingRevertReason(
 	ctx context.Context,
 	timelockAddr common.Address,
 	timelockCallData []byte,
 	opts *bind.TransactOpts,
 	client ContractDeployBackend,
-) string {
+) (string, string) {
 	if timelockAddr == (common.Address{}) || len(timelockCallData) == 0 || client == nil || opts == nil {
-		return ""
+		return "", ""
 	}
 
 	// Extract the underlying call from timelock execute calls array
 	underlyingCall := extractUnderlyingCall(timelockCallData)
 	if underlyingCall == nil {
-		return ""
+		return "", ""
 	}
 
 	// Simulate the underlying transaction using CallContract (best-effort)
@@ -511,31 +541,49 @@ func getUnderlyingRevertReason(
 	}, nil)
 
 	if err == nil {
-		return ""
+		return "", ""
 	}
 
 	errStr := err.Error()
 
 	// Check if error contains revert data
 	if !strings.Contains(errStr, "execution reverted") && !strings.Contains(errStr, "revert") {
-		return ""
+		return "", ""
 	}
+
+	var rawReason string
+	var decodedReason string
 
 	// Try to extract revert data from error string (best-effort)
 	// First try direct extraction, then fall back to full error parsing
 	if revertDataBytes := extractRevertDataFromCallError(err); len(revertDataBytes) > 0 {
+		rawReason = "0x" + common.Bytes2Hex(revertDataBytes)
 		if reason := decodeRevertReason(revertDataBytes); reason != "" {
-			return reason
+			decodedReason = reason
 		}
 	}
 
 	// Fall back to full error parsing
 	revertData := extractRevertReasonFromError(err)
-	if revertData.Decoded != "" {
-		return revertData.Decoded
+	if len(revertData.RawData) > 0 && rawReason == "" {
+		rawReason = "0x" + common.Bytes2Hex(revertData.RawData)
+	}
+	if decodedReason == "" && revertData.Decoded != "" {
+		decodedReason = revertData.Decoded
+	}
+	if rawReason == "" && revertData.Decoded != "" {
+		rawReason = revertData.Decoded
+	}
+	if rawReason == "" {
+		if idx := strings.Index(errStr, "revert:"); idx != -1 {
+			rawReason = strings.TrimSpace(errStr[idx+len("revert:"):])
+		}
+	}
+	if rawReason == "" {
+		rawReason = errStr
 	}
 
-	return ""
+	return rawReason, decodedReason
 }
 
 // extractRevertDataFromCallError extracts revert data from a CallContract error.
