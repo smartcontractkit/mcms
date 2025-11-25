@@ -20,6 +20,9 @@ type Config struct {
 	// Signers is a list of all single signers in the config
 	Signers []common.Address `json:"signers"`
 
+	// SignerKeys is an optional field that holds the public keys of the signers in the config (required for TON).
+	SignerKeys [][]byte `json:"signerKeys,omitempty"`
+
 	// GroupSigners is a list of all group signers. This is a recursive structure where each group
 	// signer can have its own signers and group signers.
 	GroupSigners []Config `json:"groupSigners"`
