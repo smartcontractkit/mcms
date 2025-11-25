@@ -3,6 +3,7 @@ package evm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
@@ -15,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
@@ -60,6 +62,39 @@ func (c *CustomErrorData) MarshalJSON() ([]byte, error) {
 	return json.Marshal(payload)
 }
 
+// UnmarshalJSON unmarshals JSON into CustomErrorData, handling hex string fields.
+func (c *CustomErrorData) UnmarshalJSON(data []byte) error {
+	if c == nil {
+		return nil
+	}
+
+	var payload struct {
+		Selector string `json:"selector"`
+		Data     string `json:"data,omitempty"`
+		Raw      string `json:"raw,omitempty"`
+	}
+
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return err
+	}
+
+	if payload.Selector != "" {
+		selectorBytes, err := hexutil.Decode(payload.Selector)
+		if err == nil && len(selectorBytes) >= 4 {
+			copy(c.Selector[:], selectorBytes[:4])
+		}
+	}
+
+	if payload.Data != "" {
+		dataBytes, err := hexutil.Decode(payload.Data)
+		if err == nil {
+			c.Data = dataBytes
+		}
+	}
+
+	return nil
+}
+
 // Combined returns the full revert data (selector + data) as a byte slice.
 func (c *CustomErrorData) Combined() []byte {
 	if c == nil {
@@ -94,7 +129,7 @@ type ExecutionError struct {
 	// DecodedUnderlyingReason is the human-readable decoded underlying revert reason (if decoding succeeded)
 	DecodedUnderlyingReason string
 	// OriginalError is the original error from the contract binding
-	OriginalError error
+	OriginalError error `json:"-"`
 }
 
 func (e *ExecutionError) Error() string {
@@ -140,6 +175,57 @@ func (e *ExecutionError) MarshalJSON() ([]byte, error) {
 	}
 
 	return json.Marshal(payload)
+}
+
+// UnmarshalJSON unmarshals JSON into ExecutionError, handling OriginalError as a string.
+func (e *ExecutionError) UnmarshalJSON(data []byte) error {
+	if e == nil {
+		return nil
+	}
+
+	var jsonMap map[string]any
+	if err := json.Unmarshal(data, &jsonMap); err != nil {
+		return err
+	}
+
+	var originalErr error
+	if origErrVal, ok := jsonMap["OriginalError"]; ok {
+		if origErrStr, ok := origErrVal.(string); ok && origErrStr != "" {
+			originalErr = errors.New(origErrStr)
+		} else if origErrMap, ok := origErrVal.(map[string]any); ok && len(origErrMap) == 0 {
+			originalErr = nil
+		}
+		delete(jsonMap, "OriginalError")
+	}
+
+	cleanData, err := json.Marshal(jsonMap)
+	if err != nil {
+		return err
+	}
+
+	type executionErrorAlias struct {
+		Transaction             *gethtypes.Transaction `json:"Transaction"`
+		RawRevertReason         *CustomErrorData       `json:"RawRevertReason"`
+		DecodedRevertReason     string                 `json:"DecodedRevertReason"`
+		UnderlyingReason        string                 `json:"UnderlyingReason"`
+		DecodedUnderlyingReason string                 `json:"DecodedUnderlyingReason"`
+	}
+
+	var temp executionErrorAlias
+	if err := json.Unmarshal(cleanData, &temp); err != nil {
+		return err
+	}
+
+	e.Transaction = temp.Transaction
+	e.RawRevertReason = temp.RawRevertReason
+	e.DecodedRevertReason = temp.DecodedRevertReason
+	e.UnderlyingReason = temp.UnderlyingReason
+	e.DecodedUnderlyingReason = temp.DecodedUnderlyingReason
+	if originalErr != nil {
+		e.OriginalError = originalErr
+	}
+
+	return nil
 }
 
 // BuildExecutionError creates an ExecutionError from a contract execution error.
