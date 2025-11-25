@@ -68,6 +68,8 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
+	// Extract the set config inputs using the EVM implementation
+	keysMap := ConfigRemapSignerKeys(cfg)
 	groupQuorum, groupParents, signerAddresses, _signerGroups, err := evm.ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
@@ -75,7 +77,8 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 	signerKeys := make([]mcms.SignerKey, len(signerAddresses))
 	for i, addr := range signerAddresses {
-		signerKeys[i] = mcms.SignerKey{Val: addr.Big()}
+		key := keysMap[addr] // retrieve the public key corresponding to the address
+		signerKeys[i] = mcms.SignerKey{Val: new(big.Int).SetBytes(key)}
 	}
 
 	signerGroups := make([]mcms.SignerGroup, len(_signerGroups))

@@ -8,14 +8,14 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
-	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
-
 	"github.com/smartcontractkit/mcms/sdk"
-
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
+	"github.com/smartcontractkit/mcms/types"
+
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 )
 
 func AsUnsigned(v *big.Int, sz uint) *big.Int {
@@ -41,6 +41,12 @@ func NewConfigTransformer() ConfigTransformer { return &configTransformer{} }
 
 // ToChainConfig converts the chain agnostic config to the chain-specific config
 func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config, error) {
+	// Note: for TON, we will get the signer keys (public keys) instead of addresses
+	// Re-using the EVM implementation here, we first need to map a set of signer keys to addresses
+	// (by taking the first 20 bytes of the public key)
+
+	// Extract the set config inputs using the EVM implementation
+	keysMap := ConfigRemapSignerKeys(&cfg)
 	groupQuorum, groupParents, signerAddrs, signerGroups, err := evm.ExtractSetConfigInputs(&cfg)
 	if err != nil {
 		return mcms.Config{}, fmt.Errorf("unable to extract set config inputs: %w", err)
@@ -63,8 +69,10 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	signers := make([]mcms.Signer, len(signerAddrs))
 	idx := uint8(0)
 	for i, signerAddr := range signerAddrs {
+		// retrieve the public key corresponding to the address
+		key := keysMap[signerAddr]
 		signers[i] = mcms.Signer{
-			Key:   signerAddr.Big(), // TODO: address vs public key required for TON
+			Key:   new(big.Int).SetBytes(key),
 			Group: signerGroups[i],
 			Index: idx,
 		}
@@ -120,6 +128,11 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 		GroupParents: [32]uint8{},
 	}
 
+	// Note: for TON, we will get the signer keys (public keys) instead of addresses
+	// Re-using the EVM implementation here, we first need to map a set of signer keys to addresses
+	// (by taking the first 20 bytes of the public key)
+	keysMap := make(map[common.Address][]byte)
+
 	for i, kvSigner := range kvSigners {
 		var signer mcms.Signer
 		err = tlb.LoadFromCell(&signer, kvSigner.Value)
@@ -127,9 +140,14 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 			return nil, fmt.Errorf("unable to decode signer: %w", err)
 		}
 
+		// TODO: big.Int loading doesn't work for me
+		key := AsUnsigned(signer.Key, 256).Bytes()
+
+		addr := common.Address(key[0:20])
+		keysMap[addr] = key
+
 		evmConfig.Signers[i] = bindings.ManyChainMultiSigSigner{
-			// big.Int loading doesn't work for me
-			Addr:  common.Address([20]byte(AsUnsigned(signer.Key, 256).Bytes())),
+			Addr:  addr,
 			Index: signer.Index,
 			Group: signer.Group,
 		}
@@ -161,5 +179,66 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 		evmConfig.GroupParents[i] = uint8(val)
 	}
 
-	return e.evmTransformer.ToConfig(evmConfig)
+	outc, err := e.evmTransformer.ToConfig(evmConfig)
+	if err != nil {
+		return nil, fmt.Errorf("unable to convert to SDK config type: %w", err)
+	}
+
+	// recursively map group signers' keys as well
+	ConfigRemapSigners(outc, keysMap)
+
+	return outc, nil
+}
+
+// Recursively remaps the SignerKeys field in the config into Signers by taking the first 20 bytes of each key
+func ConfigRemapSignerKeys(cfg *types.Config) map[common.Address][]byte {
+	var _remap func(cfg *types.Config)
+	keysMap := make(map[common.Address][]byte)
+
+	_remap = func(cfg *types.Config) {
+		if cfg == nil {
+			return
+		}
+
+		cfg.Signers = make([]common.Address, len(cfg.SignerKeys))
+		for i, key := range cfg.SignerKeys {
+			if len(key) < 20 {
+				// pad zeros if key is less than 20 bytes
+				paddedKey := make([]byte, 20)
+				copy(paddedKey[20-len(key):], key)
+				key = paddedKey
+			}
+
+			cfg.Signers[i] = common.Address(key[0:20])
+			keysMap[cfg.Signers[i]] = key
+		}
+
+		for i := range cfg.GroupSigners {
+			_remap(&cfg.GroupSigners[i])
+		}
+	}
+
+	_remap(cfg)
+	return keysMap
+}
+
+// Recursively remaps the Signers field in the config into SignerKeys based on the provided keysMap
+func ConfigRemapSigners(cfg *types.Config, keysMap map[common.Address][]byte) {
+	// recursively map group signers' keys as well
+	var _remap func(cfg *types.Config)
+	_remap = func(cfg *types.Config) {
+		if cfg == nil {
+			return
+		}
+
+		cfg.SignerKeys = make([][]byte, len(cfg.Signers))
+		for i, signerAddr := range cfg.Signers {
+			cfg.SignerKeys[i] = keysMap[signerAddr]
+		}
+
+		for i := range cfg.GroupSigners {
+			_remap(&cfg.GroupSigners[i])
+		}
+	}
+	_remap(cfg)
 }
