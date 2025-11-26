@@ -380,7 +380,7 @@ func TestExtractHexEncodedRevertData(t *testing.T) {
 				return
 			}
 
-			require.NotNil(t, result, "Expected non-nil result for input: %q", tt.errStr)
+			require.NotNil(t, result, errMsgExpectedNonNilFmt, tt.errStr)
 			assert.Equal(t, tt.expected, result, "Extracted hex data mismatch for input: %q", tt.errStr)
 		})
 	}
@@ -449,7 +449,7 @@ func TestExtractBytesArrayRevertData(t *testing.T) {
 				return
 			}
 
-			require.NotNil(t, result, "Expected non-nil result for input: %q", tt.errStr)
+			require.NotNil(t, result, errMsgExpectedNonNilFmt, tt.errStr)
 			assert.Equal(t, tt.expected, result, "Extracted bytes mismatch for input: %q", tt.errStr)
 		})
 	}
