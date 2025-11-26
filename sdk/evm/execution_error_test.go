@@ -376,7 +376,7 @@ func TestExtractHexEncodedRevertData(t *testing.T) {
 			result := extractHexEncodedRevertData(tt.errStr)
 
 			if !tt.shouldMatch {
-				assert.Nil(t, result, "Expected nil for input: %q", tt.errStr)
+				assert.Nil(t, result, errMsgExpectedNilFmt, tt.errStr)
 				return
 			}
 
@@ -445,7 +445,7 @@ func TestExtractBytesArrayRevertData(t *testing.T) {
 			result := extractBytesArrayRevertData(tt.errStr)
 
 			if !tt.shouldMatch {
-				assert.Nil(t, result, "Expected nil for input: %q", tt.errStr)
+				assert.Nil(t, result, errMsgExpectedNilFmt, tt.errStr)
 				return
 			}
 

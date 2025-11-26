@@ -781,95 +781,151 @@ func firstTimelockCallArgument(callData []byte, method *abi.Method) any {
 // - Map format (from UnpackIntoMap or named tuples)
 // - Tuple slice format (positional tuples with unnamed fields)
 func extractCallFields(call any) *bindings.RBACTimelockCall {
-	// Direct struct type (most common case)
 	if callStruct, ok := call.(bindings.RBACTimelockCall); ok {
 		return &callStruct
 	}
 
-	// Try reflection-based extraction for struct-like types (anonymous structs from UnpackValues)
+	if callStruct := extractCallFromStruct(call); callStruct != nil {
+		return callStruct
+	}
+
+	if callStruct := extractCallFromMap(call); callStruct != nil {
+		return callStruct
+	}
+
+	return extractCallFromTuple(call)
+}
+
+func extractCallFromStruct(call any) *bindings.RBACTimelockCall {
 	callValue := reflect.ValueOf(call)
-	if callValue.IsValid() && callValue.Kind() == reflect.Struct {
-		var target common.Address
-		var value *big.Int
-		var data []byte
+	if !callValue.IsValid() || callValue.Kind() != reflect.Struct {
+		return nil
+	}
 
-		if targetField := callValue.FieldByName("Target"); targetField.IsValid() && targetField.CanInterface() {
-			if t, ok := targetField.Interface().(common.Address); ok {
-				target = t
-			}
-		}
-		if valueField := callValue.FieldByName("Value"); valueField.IsValid() && valueField.CanInterface() {
-			if v, ok := valueField.Interface().(*big.Int); ok {
-				value = v
-			}
-		}
-		if dataField := callValue.FieldByName("Data"); dataField.IsValid() && dataField.CanInterface() {
-			if d, ok := dataField.Interface().([]byte); ok {
-				data = d
-			} else if d, ok := dataField.Interface().([]uint8); ok {
-				data = make([]byte, len(d))
-				copy(data, d)
-			}
-		}
+	target := addressFromField(callValue, "Target")
+	if target == (common.Address{}) {
+		return nil
+	}
 
-		if target != (common.Address{}) {
-			return &bindings.RBACTimelockCall{
-				Target: target,
-				Value:  value,
-				Data:   data,
-			}
+	value := bigIntFromField(callValue, "Value")
+	data := bytesFromField(callValue, "Data")
+
+	return newTimelockCall(target, value, data)
+}
+
+func extractCallFromMap(call any) *bindings.RBACTimelockCall {
+	callMap, ok := call.(map[string]any)
+	if !ok {
+		return nil
+	}
+
+	target := addressFromMap(callMap, "target", "Target")
+	if target == (common.Address{}) {
+		return nil
+	}
+
+	value := bigIntFromMap(callMap, "value", "Value")
+	data := bytesFromMap(callMap, "data", "Data")
+
+	return newTimelockCall(target, value, data)
+}
+
+func extractCallFromTuple(call any) *bindings.RBACTimelockCall {
+	callSlice, ok := call.([]any)
+	if !ok || len(callSlice) < 3 {
+		return nil
+	}
+
+	target, _ := callSlice[0].(common.Address)
+	if target == (common.Address{}) {
+		return nil
+	}
+
+	value, _ := callSlice[1].(*big.Int)
+	data := bytesFromValue(callSlice[2])
+
+	return newTimelockCall(target, value, data)
+}
+
+func addressFromField(value reflect.Value, fieldName string) common.Address {
+	field := value.FieldByName(fieldName)
+	if !field.IsValid() || !field.CanInterface() {
+		return common.Address{}
+	}
+	addr, _ := field.Interface().(common.Address)
+
+	return addr
+}
+
+func bigIntFromField(value reflect.Value, fieldName string) *big.Int {
+	field := value.FieldByName(fieldName)
+	if !field.IsValid() || !field.CanInterface() {
+		return nil
+	}
+	bigVal, _ := field.Interface().(*big.Int)
+
+	return bigVal
+}
+
+func bytesFromField(value reflect.Value, fieldName string) []byte {
+	field := value.FieldByName(fieldName)
+	if !field.IsValid() || !field.CanInterface() {
+		return nil
+	}
+
+	return bytesFromValue(field.Interface())
+}
+
+func addressFromMap(m map[string]any, keys ...string) common.Address {
+	for _, key := range keys {
+		if addr, ok := m[key].(common.Address); ok {
+			return addr
 		}
 	}
 
-	// Map format (common from UnpackIntoMap or named tuples)
-	if callMap, ok := call.(map[string]any); ok {
-		target, _ := callMap["target"].(common.Address)
-		if target == (common.Address{}) {
-			target, _ = callMap["Target"].(common.Address)
-		}
-		if target == (common.Address{}) {
-			return nil
-		}
+	return common.Address{}
+}
 
-		value, _ := callMap["value"].(*big.Int)
-		if value == nil {
-			value, _ = callMap["Value"].(*big.Int)
-		}
-
-		data, _ := callMap["data"].([]byte)
-		if data == nil {
-			data, _ = callMap["Data"].([]byte)
-		}
-
-		return &bindings.RBACTimelockCall{
-			Target: target,
-			Value:  value,
-			Data:   data,
-		}
-	}
-
-	// Tuple slice format (positional: target, value, data)
-	if callSlice, ok := call.([]any); ok && len(callSlice) >= 3 {
-		target, _ := callSlice[0].(common.Address)
-		if target == (common.Address{}) {
-			return nil
-		}
-
-		value, _ := callSlice[1].(*big.Int)
-		data, _ := callSlice[2].([]byte)
-		if data == nil {
-			if d, ok := callSlice[2].([]uint8); ok {
-				data = make([]byte, len(d))
-				copy(data, d)
-			}
-		}
-
-		return &bindings.RBACTimelockCall{
-			Target: target,
-			Value:  value,
-			Data:   data,
+func bigIntFromMap(m map[string]any, keys ...string) *big.Int {
+	for _, key := range keys {
+		if val, ok := m[key].(*big.Int); ok {
+			return val
 		}
 	}
 
 	return nil
+}
+
+func bytesFromMap(m map[string]any, keys ...string) []byte {
+	for _, key := range keys {
+		if data := bytesFromValue(m[key]); len(data) > 0 {
+			return data
+		}
+	}
+
+	return nil
+}
+
+func bytesFromValue(value any) []byte {
+	data, ok := value.([]byte)
+	if !ok || len(data) == 0 {
+		return data
+	}
+
+	copied := make([]byte, len(data))
+	copy(copied, data)
+
+	return copied
+}
+
+func newTimelockCall(target common.Address, value *big.Int, data []byte) *bindings.RBACTimelockCall {
+	if target == (common.Address{}) {
+		return nil
+	}
+
+	return &bindings.RBACTimelockCall{
+		Target: target,
+		Value:  value,
+		Data:   data,
+	}
 }
