@@ -18,184 +18,200 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm/mocks"
 )
 
-func TestExecutionError_Error(t *testing.T) {
+const (
+	errMsgOriginalError        = "original error"
+	errMsgExecutionFailed      = "execution failed"
+	errMsgRawRevertData        = "raw revert data"
+	errMsgUnderlyingReason     = "underlying reason"
+	errMsgRevertReason         = "revert reason"
+	errMsgExecutionRevertedHex = "execution reverted: 0x1234567890abcdef"
+	errMsgCustomError          = "execution reverted: custom error 0x70de1b4b: aabbccdd"
+	errMsgExpectedNilFmt       = "Expected nil for input: %q"
+	errMsgExpectedNonNilFmt    = "Expected non-nil result for input: %q"
+	descriptionEmptyString     = "empty string"
+	errMsgFailedTimelockABI    = "Failed to get RBACTimelock ABI"
+)
+
+type executionErrorErrorCase struct {
+	name                string
+	execErr             *ExecutionError
+	expectedContains    []string
+	expectedNotContains []string
+}
+
+var executionErrorErrorCases = []executionErrorErrorCase{
+	{
+		name: "with decoded underlying reason - highest priority",
+		execErr: &ExecutionError{
+			OriginalError:           errors.New(errMsgOriginalError),
+			UnderlyingReason:        "0x1234",
+			DecodedUnderlyingReason: "decoded underlying revert reason",
+			DecodedRevertReason:     "decoded reason",
+			RawRevertReason: &CustomErrorData{
+				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
+				Data:     []byte{0xaa, 0xbb, 0xcc},
+			},
+		},
+		expectedContains: []string{
+			errMsgExecutionFailed,
+			errMsgOriginalError,
+			errMsgUnderlyingReason + ": decoded underlying revert reason",
+		},
+		expectedNotContains: []string{
+			errMsgRevertReason + ": decoded reason",
+			errMsgRawRevertData,
+		},
+	},
+	{
+		name: "with raw underlying reason when decoded unavailable",
+		execErr: &ExecutionError{
+			OriginalError:       errors.New(errMsgOriginalError),
+			UnderlyingReason:    "underlying revert reason",
+			DecodedRevertReason: "decoded reason",
+			RawRevertReason: &CustomErrorData{
+				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
+				Data:     []byte{0xaa, 0xbb, 0xcc},
+			},
+		},
+		expectedContains: []string{
+			errMsgExecutionFailed,
+			errMsgOriginalError,
+			errMsgUnderlyingReason + ": underlying revert reason",
+		},
+		expectedNotContains: []string{
+			errMsgRevertReason + ": decoded reason",
+			errMsgRawRevertData,
+		},
+	},
+	{
+		name: "with decoded revert reason - second priority",
+		execErr: &ExecutionError{
+			OriginalError:       errors.New(errMsgOriginalError),
+			DecodedRevertReason: "OutOfBoundsGroup",
+			RawRevertReason: &CustomErrorData{
+				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
+				Data:     []byte{0xaa, 0xbb, 0xcc},
+			},
+		},
+		expectedContains: []string{
+			errMsgExecutionFailed,
+			errMsgOriginalError,
+			errMsgRevertReason + ": OutOfBoundsGroup",
+		},
+		expectedNotContains: []string{
+			errMsgUnderlyingReason,
+			errMsgRawRevertData,
+		},
+	},
+	{
+		name: "with raw revert reason - third priority",
+		execErr: &ExecutionError{
+			OriginalError: errors.New(errMsgOriginalError),
+			RawRevertReason: &CustomErrorData{
+				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
+				Data:     []byte{0xaa, 0xbb, 0xcc},
+			},
+		},
+		expectedContains: []string{
+			errMsgExecutionFailed,
+			errMsgOriginalError,
+			errMsgRawRevertData,
+			"12345678aabbcc",
+		},
+		expectedNotContains: []string{
+			errMsgUnderlyingReason,
+			errMsgRevertReason,
+		},
+	},
+	{
+		name: "with empty raw revert reason - selector only still shows raw data",
+		execErr: &ExecutionError{
+			OriginalError: errors.New(errMsgOriginalError),
+			RawRevertReason: &CustomErrorData{
+				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
+				Data:     []byte{},
+			},
+		},
+		expectedContains: []string{
+			errMsgExecutionFailed,
+			errMsgOriginalError,
+			errMsgRawRevertData,
+			"12345678",
+		},
+		expectedNotContains: []string{
+			errMsgUnderlyingReason,
+			errMsgRevertReason + ":",
+		},
+	},
+	{
+		name: "with nil raw revert reason - should not show raw data",
+		execErr: &ExecutionError{
+			OriginalError:   errors.New(errMsgOriginalError),
+			RawRevertReason: nil,
+		},
+		expectedContains: []string{
+			errMsgExecutionFailed,
+			errMsgOriginalError,
+		},
+		expectedNotContains: []string{
+			errMsgUnderlyingReason,
+			errMsgRevertReason,
+			errMsgRawRevertData,
+		},
+	},
+	{
+		name: "only original error - fallback case",
+		execErr: &ExecutionError{
+			OriginalError: errors.New(errMsgOriginalError),
+		},
+		expectedContains: []string{
+			errMsgExecutionFailed,
+			errMsgOriginalError,
+		},
+		expectedNotContains: []string{
+			errMsgUnderlyingReason,
+			errMsgRevertReason,
+			errMsgRawRevertData,
+		},
+	},
+	{
+		name: "with CallReverted selector",
+		execErr: &ExecutionError{
+			OriginalError: errors.New(errMsgOriginalError),
+			RawRevertReason: &CustomErrorData{
+				Selector: CallRevertedSelector,
+				Data:     []byte{0xaa, 0xbb, 0xcc},
+			},
+		},
+		expectedContains: []string{
+			errMsgExecutionFailed,
+			errMsgOriginalError,
+			errMsgRawRevertData,
+			"70de1b4b",
+		},
+	},
+	{
+		name: "with decoded reason but no underlying reason",
+		execErr: &ExecutionError{
+			OriginalError:       errors.New("contract call failed"),
+			DecodedRevertReason: "InsufficientSigners",
+		},
+		expectedContains: []string{
+			errMsgExecutionFailed,
+			"contract call failed",
+			errMsgRevertReason + ": InsufficientSigners",
+		},
+		expectedNotContains: []string{
+			errMsgUnderlyingReason,
+			errMsgRawRevertData,
+		},
+	},
+}
+
+func TestExecutionErrorError(t *testing.T) {
 	t.Parallel()
 
-	tests := []struct {
-		name                string
-		execErr             *ExecutionError
-		expectedContains    []string // substrings that should be in the error message
-		expectedNotContains []string // substrings that should NOT be in the error message
-	}{
-		{
-			name: "with decoded underlying reason - highest priority",
-			execErr: &ExecutionError{
-				OriginalError:           errors.New("original error"),
-				UnderlyingReason:        "0x1234",
-				DecodedUnderlyingReason: "decoded underlying revert reason",
-				DecodedRevertReason:     "decoded reason",
-				RawRevertReason: &CustomErrorData{
-					Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
-					Data:     []byte{0xaa, 0xbb, 0xcc},
-				},
-			},
-			expectedContains: []string{
-				"execution failed",
-				"original error",
-				"underlying reason: decoded underlying revert reason",
-			},
-			expectedNotContains: []string{
-				"revert reason: decoded reason", // should not show decoded revert reason
-				"raw revert data",               // should not show raw data
-			},
-		},
-		{
-			name: "with raw underlying reason when decoded unavailable",
-			execErr: &ExecutionError{
-				OriginalError:       errors.New("original error"),
-				UnderlyingReason:    "underlying revert reason",
-				DecodedRevertReason: "decoded reason",
-				RawRevertReason: &CustomErrorData{
-					Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
-					Data:     []byte{0xaa, 0xbb, 0xcc},
-				},
-			},
-			expectedContains: []string{
-				"execution failed",
-				"original error",
-				"underlying reason: underlying revert reason",
-			},
-			expectedNotContains: []string{
-				"revert reason: decoded reason", // should not show decoded reason
-				"raw revert data",               // should not show raw data
-			},
-		},
-		{
-			name: "with decoded revert reason - second priority",
-			execErr: &ExecutionError{
-				OriginalError:       errors.New("original error"),
-				DecodedRevertReason: "OutOfBoundsGroup",
-				RawRevertReason: &CustomErrorData{
-					Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
-					Data:     []byte{0xaa, 0xbb, 0xcc},
-				},
-			},
-			expectedContains: []string{
-				"execution failed",
-				"original error",
-				"revert reason: OutOfBoundsGroup",
-			},
-			expectedNotContains: []string{
-				"underlying reason",
-				"raw revert data",
-			},
-		},
-		{
-			name: "with raw revert reason - third priority",
-			execErr: &ExecutionError{
-				OriginalError: errors.New("original error"),
-				RawRevertReason: &CustomErrorData{
-					Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
-					Data:     []byte{0xaa, 0xbb, 0xcc},
-				},
-			},
-			expectedContains: []string{
-				"execution failed",
-				"original error",
-				"raw revert data",
-				"12345678aabbcc", // hex representation of selector + data
-			},
-			expectedNotContains: []string{
-				"underlying reason",
-				"revert reason",
-			},
-		},
-		{
-			name: "with empty raw revert reason - selector only still shows raw data",
-			execErr: &ExecutionError{
-				OriginalError: errors.New("original error"),
-				RawRevertReason: &CustomErrorData{
-					Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
-					Data:     []byte{}, // empty data, but selector is present
-				},
-			},
-			expectedContains: []string{
-				"execution failed",
-				"original error",
-				"raw revert data",
-				"12345678", // selector hex
-			},
-			expectedNotContains: []string{
-				"underlying reason",
-				"revert reason:",
-			},
-		},
-		{
-			name: "with nil raw revert reason - should not show raw data",
-			execErr: &ExecutionError{
-				OriginalError:   errors.New("original error"),
-				RawRevertReason: nil,
-			},
-			expectedContains: []string{
-				"execution failed",
-				"original error",
-			},
-			expectedNotContains: []string{
-				"underlying reason",
-				"revert reason",
-				"raw revert data",
-			},
-		},
-		{
-			name: "only original error - fallback case",
-			execErr: &ExecutionError{
-				OriginalError: errors.New("original error"),
-			},
-			expectedContains: []string{
-				"execution failed",
-				"original error",
-			},
-			expectedNotContains: []string{
-				"underlying reason",
-				"revert reason",
-				"raw revert data",
-			},
-		},
-		{
-			name: "with CallReverted selector",
-			execErr: &ExecutionError{
-				OriginalError: errors.New("original error"),
-				RawRevertReason: &CustomErrorData{
-					Selector: CallRevertedSelector,
-					Data:     []byte{0xaa, 0xbb, 0xcc},
-				},
-			},
-			expectedContains: []string{
-				"execution failed",
-				"original error",
-				"raw revert data",
-				"70de1b4b", // CallReverted selector
-			},
-		},
-		{
-			name: "with decoded reason but no underlying reason",
-			execErr: &ExecutionError{
-				OriginalError:       errors.New("contract call failed"),
-				DecodedRevertReason: "InsufficientSigners",
-			},
-			expectedContains: []string{
-				"execution failed",
-				"contract call failed",
-				"revert reason: InsufficientSigners",
-			},
-			expectedNotContains: []string{
-				"underlying reason",
-				"raw revert data",
-			},
-		},
-	}
-
-	for _, tt := range tests {
+	for _, tt := range executionErrorErrorCases {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -214,10 +230,10 @@ func TestExecutionError_Error(t *testing.T) {
 	}
 }
 
-func TestExecutionError_Unwrap(t *testing.T) {
+func TestExecutionErrorUnwrap(t *testing.T) {
 	t.Parallel()
 
-	originalErr := errors.New("original error")
+	originalErr := errors.New(errMsgOriginalError)
 	execErr := &ExecutionError{
 		OriginalError: originalErr,
 	}
@@ -305,7 +321,7 @@ func TestExtractHexEncodedRevertData(t *testing.T) {
 	}{
 		{
 			name:        "valid hex string",
-			errStr:      "execution reverted: 0x1234567890abcdef",
+			errStr:      errMsgExecutionRevertedHex,
 			expected:    common.FromHex("0x1234567890abcdef"),
 			shouldMatch: true,
 		},
@@ -328,7 +344,7 @@ func TestExtractHexEncodedRevertData(t *testing.T) {
 			shouldMatch: true,
 		},
 		{
-			name:        "empty string",
+			name:        descriptionEmptyString,
 			errStr:      "",
 			expected:    nil,
 			shouldMatch: false,
@@ -450,7 +466,7 @@ func TestExtractCustomErrorRevertData(t *testing.T) {
 	}{
 		{
 			name:   "valid custom error",
-			errStr: "execution reverted: custom error 0x70de1b4b: aabbccdd",
+			errStr: errMsgCustomError,
 			expected: &CustomErrorData{
 				Selector: CallRevertedSelector,
 				Data:     common.FromHex("0xaabbccdd"),
@@ -485,7 +501,7 @@ func TestExtractCustomErrorRevertData(t *testing.T) {
 			shouldMatch: true,
 		},
 		{
-			name:        "empty string",
+			name:        descriptionEmptyString,
 			errStr:      "",
 			expected:    nil,
 			shouldMatch: false,
@@ -523,11 +539,11 @@ func TestExtractCustomErrorRevertData(t *testing.T) {
 			result := extractCustomErrorRevertData(tt.errStr)
 
 			if !tt.shouldMatch {
-				assert.Nil(t, result, "Expected nil for input: %q", tt.errStr)
+				assert.Nil(t, result, errMsgExpectedNilFmt, tt.errStr)
 				return
 			}
 
-			require.NotNil(t, result, "Expected non-nil result for input: %q", tt.errStr)
+			require.NotNil(t, result, errMsgExpectedNonNilFmt, tt.errStr)
 			assert.Equal(t, tt.expected.Selector, result.Selector, "Selector mismatch for input: %q", tt.errStr)
 			assert.Equal(t, tt.expected.Data, result.Data, "Data mismatch for input: %q", tt.errStr)
 		})
@@ -558,7 +574,7 @@ func TestParseBytesFromString(t *testing.T) {
 			expected: []byte{0, 128, 255},
 		},
 		{
-			name:     "empty string",
+			name:     descriptionEmptyString,
 			input:    "",
 			expected: nil,
 		},
@@ -604,7 +620,7 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 		},
 		{
 			name:             "custom error format - highest priority",
-			err:              errors.New("execution reverted: custom error 0x70de1b4b: aabbccdd"),
+			err:              errors.New(errMsgCustomError),
 			expectedRawData:  append(CallRevertedSelector[:], common.FromHex("0xaabbccdd")...),
 			hasCustomError:   true,
 			expectedSelector: CallRevertedSelector,
@@ -619,7 +635,7 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 		},
 		{
 			name:            "hex-encoded format",
-			err:             errors.New("execution reverted: 0x1234567890abcdef"),
+			err:             errors.New(errMsgExecutionRevertedHex),
 			expectedRawData: common.FromHex("0x1234567890abcdef"),
 			hasCustomError:  false,
 			shouldHaveData:  true,
@@ -861,7 +877,7 @@ func TestExtractRevertDataFromCallError(t *testing.T) {
 		},
 		{
 			name:        "error with hex-encoded revert data",
-			err:         errors.New("execution reverted: 0x1234567890abcdef"),
+			err:         errors.New(errMsgExecutionRevertedHex),
 			expected:    common.FromHex("0x1234567890abcdef"),
 			shouldMatch: true,
 		},
@@ -1010,7 +1026,7 @@ func TestExtractCallFromMethod(t *testing.T) {
 
 	// Get the real timelock ABI for testing
 	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
-	require.NoError(t, err, "Failed to get RBACTimelock ABI")
+	require.NoError(t, err, errMsgFailedTimelockABI)
 
 	bypassMethod, exists := timelockABI.Methods["bypasserExecuteBatch"]
 	require.True(t, exists, "bypasserExecuteBatch method not found")
@@ -1103,7 +1119,7 @@ func TestExtractUnderlyingCall(t *testing.T) {
 	t.Parallel()
 
 	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
-	require.NoError(t, err, "Failed to get RBACTimelock ABI")
+	require.NoError(t, err, errMsgFailedTimelockABI)
 
 	testCall := bindings.RBACTimelockCall{
 		Target: common.HexToAddress("0x1234567890123456789012345678901234567890"),
@@ -1172,7 +1188,7 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 	t.Parallel()
 
 	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
-	require.NoError(t, err, "Failed to get RBACTimelock ABI")
+	require.NoError(t, err, errMsgFailedTimelockABI)
 
 	testCall := bindings.RBACTimelockCall{
 		Target: common.HexToAddress("0x1234567890123456789012345678901234567890"),
@@ -1252,7 +1268,7 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 			opts:         opts,
 			setupMock: func(m *mocks.ContractDeployBackend) {
 				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
-					Return(nil, errors.New("execution reverted: custom error 0x70de1b4b: aabbccdd")).Maybe()
+					Return(nil, errors.New(errMsgCustomError)).Maybe()
 			},
 			expectedRaw:     "0x70de1b4b",
 			expectedDecoded: "CallReverted(truncated)", // CallReverted with insufficient data returns truncated marker

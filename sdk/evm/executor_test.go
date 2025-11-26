@@ -23,6 +23,13 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+const (
+	errMsgTxSend        = "error during tx send"
+	errMsgExecErrType   = "error should be ExecutionError type"
+	errMsgExecErrTxData = "ExecutionError should contain pre-packed transaction"
+	errMsgExecErrNotNil = "ExecutionError should not be nil"
+)
+
 func TestNewExecutor(t *testing.T) {
 	t.Parallel()
 
@@ -36,7 +43,7 @@ func TestNewExecutor(t *testing.T) {
 	assert.NotNil(t, executor.Inspector, "expected Inspector to be initialized")
 }
 
-func TestExecutor_ExecuteOperation(t *testing.T) {
+func TestExecutorExecuteOperation(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -135,7 +142,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			mockSetup: func(m *evm_mocks.ContractDeployBackend) {
 				// Successful tx send
 				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-					Return(fmt.Errorf("error during tx send"))
+					Return(errors.New(errMsgTxSend))
 				m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
 					Return(&evmTypes.Header{}, nil)
 				m.EXPECT().SuggestGasPrice(mock.Anything).
@@ -148,7 +155,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					Return(uint64(1), nil)
 			},
 			wantTxHash: "",
-			wantErr:    fmt.Errorf("error during tx send"),
+			wantErr:    errors.New(errMsgTxSend),
 		},
 		{
 			name:       "failure - nil encoder",
@@ -194,9 +201,9 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				// When error occurs after tx sending, check for ExecutionError with transaction data
 				if tt.name == "failure in tx execution" {
 					var execErr *evm.ExecutionError
-					require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+					require.ErrorAs(t, err, &execErr, errMsgExecErrType)
 					if execErr != nil {
-						require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+						require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
 						require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 					}
 				} else {
@@ -210,7 +217,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	}
 }
 
-func TestExecutor_ExecuteOperation_WithEIP1559GasFees(t *testing.T) {
+func TestExecutorExecuteOperationWithEIP1559GasFees(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -250,7 +257,7 @@ func TestExecutor_ExecuteOperation_WithEIP1559GasFees(t *testing.T) {
 
 	client := evm_mocks.NewContractDeployBackend(t)
 	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-		Return(fmt.Errorf("error during tx send")).Maybe()
+		Return(errors.New(errMsgTxSend)).Maybe()
 	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
 		Return(&evmTypes.Header{}, nil).Maybe()
 	client.EXPECT().SuggestGasPrice(mock.Anything).
@@ -267,15 +274,15 @@ func TestExecutor_ExecuteOperation_WithEIP1559GasFees(t *testing.T) {
 
 	require.Error(t, err)
 	var execErr *evm.ExecutionError
-	require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
-	require.NotNil(t, execErr, "ExecutionError should not be nil")
-	require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	require.ErrorAs(t, err, &execErr, errMsgExecErrType)
+	require.NotNil(t, execErr, errMsgExecErrNotNil)
+	require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
 	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 	// Verify it's a DynamicFeeTx (EIP-1559)
 	require.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
 }
 
-func TestExecutor_SetRoot_WithEIP1559GasFees(t *testing.T) {
+func TestExecutorSetRootWithEIP1559GasFees(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -310,7 +317,7 @@ func TestExecutor_SetRoot_WithEIP1559GasFees(t *testing.T) {
 
 	client := evm_mocks.NewContractDeployBackend(t)
 	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-		Return(fmt.Errorf("error during tx send")).Maybe()
+		Return(errors.New(errMsgTxSend)).Maybe()
 	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
 		Return(&evmTypes.Header{}, nil).Maybe()
 	client.EXPECT().SuggestGasPrice(mock.Anything).
@@ -327,15 +334,15 @@ func TestExecutor_SetRoot_WithEIP1559GasFees(t *testing.T) {
 
 	require.Error(t, err)
 	var execErr *evm.ExecutionError
-	require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
-	require.NotNil(t, execErr, "ExecutionError should not be nil")
-	require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	require.ErrorAs(t, err, &execErr, errMsgExecErrType)
+	require.NotNil(t, execErr, errMsgExecErrNotNil)
+	require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
 	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 	// Verify it's a DynamicFeeTx (EIP-1559)
 	require.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
 }
 
-func TestExecutor_ExecuteOperation_WithLegacyGasPrice(t *testing.T) {
+func TestExecutorExecuteOperationWithLegacyGasPrice(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -374,7 +381,7 @@ func TestExecutor_ExecuteOperation_WithLegacyGasPrice(t *testing.T) {
 
 	client := evm_mocks.NewContractDeployBackend(t)
 	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-		Return(fmt.Errorf("error during tx send")).Maybe()
+		Return(errors.New(errMsgTxSend)).Maybe()
 	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
 		Return(&evmTypes.Header{}, nil).Maybe()
 	client.EXPECT().SuggestGasPrice(mock.Anything).
@@ -391,15 +398,15 @@ func TestExecutor_ExecuteOperation_WithLegacyGasPrice(t *testing.T) {
 
 	require.Error(t, err)
 	var execErr *evm.ExecutionError
-	require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
-	require.NotNil(t, execErr, "ExecutionError should not be nil")
-	require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	require.ErrorAs(t, err, &execErr, errMsgExecErrType)
+	require.NotNil(t, execErr, errMsgExecErrNotNil)
+	require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
 	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 	// Verify it's a LegacyTx
 	require.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
 }
 
-func TestExecutor_SetRoot_WithLegacyGasPrice(t *testing.T) {
+func TestExecutorSetRootWithLegacyGasPrice(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -433,7 +440,7 @@ func TestExecutor_SetRoot_WithLegacyGasPrice(t *testing.T) {
 
 	client := evm_mocks.NewContractDeployBackend(t)
 	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-		Return(fmt.Errorf("error during tx send")).Maybe()
+		Return(errors.New(errMsgTxSend)).Maybe()
 	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
 		Return(&evmTypes.Header{}, nil).Maybe()
 	client.EXPECT().SuggestGasPrice(mock.Anything).
@@ -450,15 +457,15 @@ func TestExecutor_SetRoot_WithLegacyGasPrice(t *testing.T) {
 
 	require.Error(t, err)
 	var execErr *evm.ExecutionError
-	require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
-	require.NotNil(t, execErr, "ExecutionError should not be nil")
-	require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	require.ErrorAs(t, err, &execErr, errMsgExecErrType)
+	require.NotNil(t, execErr, errMsgExecErrNotNil)
+	require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
 	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 	// Verify it's a LegacyTx
 	require.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
 }
 
-func TestExecutor_ExecuteOperation_RBACTimelockUnderlyingRevert(t *testing.T) {
+func TestExecutorExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -518,9 +525,9 @@ func TestExecutor_ExecuteOperation_RBACTimelockUnderlyingRevert(t *testing.T) {
 
 	require.Error(t, err)
 	var execErr *evm.ExecutionError
-	require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
-	require.NotNil(t, execErr, "ExecutionError should not be nil")
-	require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+	require.ErrorAs(t, err, &execErr, errMsgExecErrType)
+	require.NotNil(t, execErr, errMsgExecErrNotNil)
+	require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
 	require.Contains(t, err.Error(), "RBACTimelock: underlying transaction reverted", "error should mention RBACTimelock")
 	// If CallContract was called, both raw and decoded underlying reasons should be populated when available.
 	if execErr.UnderlyingReason != "" {
@@ -627,7 +634,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 			mockSetup: func(m *evm_mocks.ContractDeployBackend) {
 				// Successful tx send
 				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-					Return(fmt.Errorf("error during tx send"))
+					Return(errors.New(errMsgTxSend))
 				m.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
 					Return(&evmTypes.Header{}, nil)
 				m.EXPECT().SuggestGasPrice(mock.Anything).
@@ -640,7 +647,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 					Return(uint64(1), nil)
 			},
 			wantTxHash: "",
-			wantErr:    fmt.Errorf("error during tx send"),
+			wantErr:    errors.New(errMsgTxSend),
 		},
 		{
 			name:       "failure - nil encoder",
@@ -682,9 +689,9 @@ func TestExecutor_SetRoot(t *testing.T) {
 				require.Error(t, err)
 				if tt.name == "failure in tx send" {
 					var execErr *evm.ExecutionError
-					require.ErrorAs(t, err, &execErr, "error should be ExecutionError type")
+					require.ErrorAs(t, err, &execErr, errMsgExecErrType)
 					if execErr != nil {
-						require.NotNil(t, execErr.Transaction, "ExecutionError should contain pre-packed transaction")
+						require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
 						require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
 					}
 				} else {

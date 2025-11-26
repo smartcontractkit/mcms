@@ -33,7 +33,10 @@ var (
 	customErrorPattern = regexp.MustCompile(`custom error 0x([0-9a-fA-F]{8}):\s*([0-9a-fA-F\s]+)`)
 )
 
-const selectorSize = 4
+const (
+	selectorSize = 4
+	revertPrefix = "revert:"
+)
 
 // CustomErrorData contains the error selector and its arguments separately.
 type CustomErrorData struct {
@@ -383,13 +386,13 @@ func extractRevertReasonFromError(err error) revertReasonData {
 
 	// Check for plain string reverts first
 	// (e.g., "execution reverted: revert: Ownable: caller is not the owner")
-	if strings.Contains(errStr, "revert:") {
+	if strings.Contains(errStr, revertPrefix) {
 		// Try to extract the plain string revert reason
 		// Format: "execution reverted: revert: <reason>" or "revert: <reason>"
-		revertIdx := strings.Index(errStr, "revert:")
+		revertIdx := strings.Index(errStr, revertPrefix)
 		if revertIdx != -1 {
 			// Extract everything after "revert: "
-			reason := strings.TrimSpace(errStr[revertIdx+len("revert:"):])
+			reason := strings.TrimSpace(errStr[revertIdx+len(revertPrefix):])
 			if reason != "" {
 				return revertReasonData{
 					Decoded: reason,
@@ -669,8 +672,8 @@ func getUnderlyingRevertReason(
 		rawReason = revertData.Decoded
 	}
 	if rawReason == "" {
-		if idx := strings.Index(errStr, "revert:"); idx != -1 {
-			rawReason = strings.TrimSpace(errStr[idx+len("revert:"):])
+		if idx := strings.Index(errStr, revertPrefix); idx != -1 {
+			rawReason = strings.TrimSpace(errStr[idx+len(revertPrefix):])
 		}
 	}
 	if rawReason == "" {
@@ -740,43 +743,35 @@ func extractUnderlyingCall(timelockCallData []byte) *bindings.RBACTimelockCall {
 // Both bypasserExecuteBatch and executeBatch have calls as their first parameter.
 // Best-effort: returns nil if extraction fails.
 func extractCallFromMethod(callData []byte, method *abi.Method) *bindings.RBACTimelockCall {
-	if method == nil || len(callData) < 4 {
+	firstCall := firstTimelockCallArgument(callData, method)
+	if firstCall == nil {
 		return nil
 	}
 
-	// Unpack the arguments (skip the 4-byte selector)
-	args, err := method.Inputs.UnpackValues(callData[4:])
+	if call, ok := firstCall.(bindings.RBACTimelockCall); ok {
+		return &call
+	}
+
+	return extractCallFields(firstCall)
+}
+
+// firstTimelockCallArgument returns the first element of the timelock calls slice extracted from calldata.
+func firstTimelockCallArgument(callData []byte, method *abi.Method) any {
+	if method == nil || len(callData) < selectorSize {
+		return nil
+	}
+
+	args, err := method.Inputs.UnpackValues(callData[selectorSize:])
 	if err != nil || len(args) == 0 {
 		return nil
 	}
 
-	// The first argument is the calls array
-	// Use reflection to handle different return types from UnpackValues
 	argValue := reflect.ValueOf(args[0])
-	if !argValue.IsValid() || argValue.Kind() != reflect.Slice {
+	if !argValue.IsValid() || argValue.Kind() != reflect.Slice || argValue.Len() == 0 {
 		return nil
 	}
 
-	if argValue.Len() == 0 {
-		return nil
-	}
-
-	// Get the first element
-	firstElem := argValue.Index(0)
-	firstElemInterface := firstElem.Interface()
-
-	// Try direct type assertion first (most common case)
-	if call, ok := firstElemInterface.(bindings.RBACTimelockCall); ok {
-		return &call
-	}
-
-	// Otherwise, extract fields using type assertions
-	call := extractCallFields(firstElemInterface)
-	if call == nil {
-		return nil
-	}
-
-	return call
+	return argValue.Index(0).Interface()
 }
 
 // extractCallFields extracts target, value, and data from a call structure.

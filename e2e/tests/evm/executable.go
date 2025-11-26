@@ -26,6 +26,8 @@ import (
 	mcmtypes "github.com/smartcontractkit/mcms/types"
 )
 
+const errFailedToMineDeploymentTx = "Failed to mine deployment transaction"
+
 type EVMChainMeta struct {
 	auth             *bind.TransactOpts
 	mcmsContract     *bindings.ManyChainMultiSig
@@ -195,7 +197,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NotEmpty(tx.Hash)
 
 	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.ClientA, common.HexToHash(tx.Hash))
-	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().NoError(err, errFailedToMineDeploymentTx)
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
 	root, err := s.ChainA.mcmsContract.GetRoot(&bind.CallOpts{})
@@ -209,7 +211,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NotEmpty(tx.Hash)
 
 	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.ClientA, common.HexToHash(tx.Hash))
-	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().NoError(err, errFailedToMineDeploymentTx)
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Check the state of the MCMS contract
@@ -318,7 +320,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NotEmpty(tx.Hash)
 
 	receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.ClientA, common.HexToHash(tx.Hash))
-	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().NoError(err, errFailedToMineDeploymentTx)
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
 	root, err := s.ChainA.mcmsContract.GetRoot(&bind.CallOpts{})
@@ -332,7 +334,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NotEmpty(tx.Hash)
 
 	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.ClientA, common.HexToHash(tx.Hash))
-	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().NoError(err, errFailedToMineDeploymentTx)
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Check the state of the MCMS contract
@@ -420,7 +422,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NotEmpty(tx.Hash)
 
 	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.ClientA, common.HexToHash(tx.Hash))
-	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().NoError(err, errFailedToMineDeploymentTx)
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
 	tree2, err := proposal2.MerkleTree()
@@ -437,7 +439,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NotEmpty(tx.Hash)
 
 	receipt, err = testutils.WaitMinedWithTxHash(context.Background(), s.ClientA, common.HexToHash(tx.Hash))
-	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().NoError(err, errFailedToMineDeploymentTx)
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
 	// Check the state of the MCMS contract
@@ -718,7 +720,7 @@ func (s *ExecutionTestSuite) deployTimelockContract(auth *bind.TransactOpts, cli
 
 	// Wait for the transaction to be mined
 	receipt, err := bind.WaitMined(context.Background(), client, tx)
-	s.Require().NoError(err, "Failed to mine deployment transaction")
+	s.Require().NoError(err, errFailedToMineDeploymentTx)
 	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 
 	return instance

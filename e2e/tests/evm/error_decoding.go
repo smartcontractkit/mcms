@@ -22,6 +22,8 @@ import (
 	mcmtypes "github.com/smartcontractkit/mcms/types"
 )
 
+const mcmsABIErrorMsg = "Failed to get MCMS ABI"
+
 // TestTimelockExecuteRevertErrorDecoding tests that error decoding works correctly
 // for timelock execute calls
 func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
@@ -139,7 +141,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 	s.Require().Error(err)
 
 	mcmsABI, abiErr := bindings.ManyChainMultiSigMetaData.GetAbi()
-	s.Require().NoError(abiErr, "Failed to get MCMS ABI")
+	s.Require().NoError(abiErr, mcmsABIErrorMsg)
 	outOfBoundsGroupError, exists := mcmsABI.Errors["OutOfBoundsGroup"]
 	s.Require().True(exists, "OutOfBoundsGroup error not found in MCMS ABI")
 	var expectedSelector [4]byte
@@ -268,7 +270,7 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	s.Require().Error(err, "Execute should fail with revert")
 
 	mcmsABI, errABI := bindings.ManyChainMultiSigMetaData.GetAbi()
-	s.Require().NoError(errABI, "Failed to get MCMS ABI")
+	s.Require().NoError(errABI, mcmsABIErrorMsg)
 	outOfBoundsGroupError, exists := mcmsABI.Errors["OutOfBoundsGroup"]
 	s.Require().True(exists, "OutOfBoundsGroup error not found in MCMS ABI")
 
@@ -344,7 +346,7 @@ func acceptMCMSOwnership(
 
 	// Get the acceptOwnership method from MCMS ABI
 	mcmsABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()
-	require.NoError(t, err, "Failed to get MCMS ABI")
+	require.NoError(t, err, mcmsABIErrorMsg)
 
 	method, exists := mcmsABI.Methods["acceptOwnership"]
 	require.True(t, exists, "acceptOwnership method not found in MCMS ABI")
@@ -378,7 +380,7 @@ func createRevertingTransaction(t *testing.T, target common.Address) mcmtypes.Tr
 
 	// Get the SetConfig method from the ABI
 	mcmsABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()
-	require.NoError(t, err, "Failed to get MCMS ABI")
+	require.NoError(t, err, mcmsABIErrorMsg)
 
 	method, exists := mcmsABI.Methods["setConfig"]
 	require.True(t, exists, "SetConfig method not found in ABI")
