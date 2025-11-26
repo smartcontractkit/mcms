@@ -117,7 +117,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				sharedMockSetup(m)
 			},
 			wantTxHash: "",
-			wantErr:    fmt.Errorf("error during tx send"),
+			wantErr:    fmt.Errorf("execution failed: error during tx send"),
 		},
 	}
 
