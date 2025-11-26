@@ -10,7 +10,6 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"unicode"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -87,9 +86,10 @@ func (c *CustomErrorData) UnmarshalJSON(data []byte) error {
 
 	if payload.Data != "" {
 		dataBytes, err := hexutil.Decode(payload.Data)
-		if err == nil {
-			c.Data = dataBytes
+		if err != nil {
+			return err
 		}
+		c.Data = dataBytes
 	}
 
 	return nil
@@ -343,30 +343,15 @@ func extractCustomErrorRevertData(errStr string) *CustomErrorData {
 		return nil
 	}
 
-	// Extract selector (8 hex chars = 4 bytes)
-	selectorHex := "0x" + matches[1]
-	selectorBytes := common.FromHex(selectorHex)
+	// Extract selector (8 hex chars = 4 bytes) using shared hex extractor
+	selectorBytes := extractHexEncodedRevertData("0x" + matches[1])
 	if len(selectorBytes) != selectorSize {
 		return nil
 	}
 
-	// Extract and clean data (remove spaces, handle ellipsis)
+	// Extract and clean data (remove spaces) before reusing the hex extractor
 	dataHex := strings.ReplaceAll(matches[2], " ", "")
-
-	// Stop at first non-hex character
-	var cleanData strings.Builder
-	for _, r := range dataHex {
-		if !unicode.Is(unicode.Hex_Digit, r) {
-			break
-		}
-		cleanData.WriteRune(r)
-	}
-	dataHex = cleanData.String()
-	if dataHex == "" {
-		return nil
-	}
-
-	data := common.FromHex("0x" + dataHex)
+	data := extractHexEncodedRevertData("0x" + dataHex)
 	if len(data) == 0 {
 		return nil
 	}

@@ -594,7 +594,6 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 		hasCustomError   bool
 		expectedSelector [4]byte
 		shouldHaveData   bool
-		priority         string // "custom", "callreverted", "hex", "bytesarray", "none"
 	}{
 		{
 			name:            "nil error",
@@ -602,7 +601,6 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 			expectedRawData: nil,
 			hasCustomError:  false,
 			shouldHaveData:  false,
-			priority:        "none",
 		},
 		{
 			name:             "custom error format - highest priority",
@@ -611,7 +609,6 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 			hasCustomError:   true,
 			expectedSelector: CallRevertedSelector,
 			shouldHaveData:   true,
-			priority:         "custom",
 		},
 		{
 			name:            "CallReverted format with bytes array",
@@ -619,7 +616,6 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 			expectedRawData: []byte{8, 195, 121, 160},
 			hasCustomError:  false,
 			shouldHaveData:  true,
-			priority:        "callreverted",
 		},
 		{
 			name:            "hex-encoded format",
@@ -627,7 +623,6 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 			expectedRawData: common.FromHex("0x1234567890abcdef"),
 			hasCustomError:  false,
 			shouldHaveData:  true,
-			priority:        "hex",
 		},
 		{
 			name:            "bytes array format (without CallReverted)",
@@ -635,7 +630,6 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 			expectedRawData: []byte{8, 195, 121, 160},
 			hasCustomError:  false,
 			shouldHaveData:  true,
-			priority:        "bytesarray",
 		},
 		{
 			name:            "plain error without revert data",
@@ -643,7 +637,6 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 			expectedRawData: nil,
 			hasCustomError:  false,
 			shouldHaveData:  false,
-			priority:        "none",
 		},
 		{
 			name:            "invalid formats fall through",
@@ -651,7 +644,6 @@ func TestExtractRevertReasonFromError(t *testing.T) {
 			expectedRawData: nil,
 			hasCustomError:  false,
 			shouldHaveData:  false,
-			priority:        "none",
 		},
 	}
 
@@ -692,9 +684,9 @@ func TestDecodeRevertReasonFromCustomError(t *testing.T) {
 	tests := []struct {
 		name           string
 		customErr      *CustomErrorData
-		expectedResult string // Expected decoded result (empty string means decoding failed)
-		shouldDecode   bool   // Whether we expect a non-empty decoded result
-		description    string // Description of what we're testing
+		expectedResult string
+		shouldDecode   bool
+		description    string
 	}{
 		{
 			name:           "nil CustomErrorData",
@@ -709,17 +701,17 @@ func TestDecodeRevertReasonFromCustomError(t *testing.T) {
 				Selector: CallRevertedSelector,
 				Data:     []byte{},
 			},
-			expectedResult: "",    // May decode to "CallReverted([])" or empty depending on ABI
-			shouldDecode:   false, // Empty data might not decode properly
+			expectedResult: "",
+			shouldDecode:   false,
 			description:    "CallReverted with empty data",
 		},
 		{
 			name: "CallReverted with valid data",
 			customErr: &CustomErrorData{
 				Selector: CallRevertedSelector,
-				Data:     []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}, // Some valid data
+				Data:     []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 			},
-			expectedResult: "CallReverted(truncated)", // Returns truncated marker when data is insufficient
+			expectedResult: "CallReverted(truncated)",
 			shouldDecode:   true,
 			description:    "CallReverted with insufficient data returns truncated marker",
 		},
@@ -729,7 +721,7 @@ func TestDecodeRevertReasonFromCustomError(t *testing.T) {
 				Selector: errorStringSelector,
 				Data:     encodeErrorString("test error message"),
 			},
-			expectedResult: "test error message", // Now works with proper ABI encoding
+			expectedResult: "test error message",
 			shouldDecode:   true,
 			description:    "Error(string) decoding with proper ABI encoding",
 		},
@@ -740,7 +732,7 @@ func TestDecodeRevertReasonFromCustomError(t *testing.T) {
 				Data:     encodeErrorString(""),
 			},
 			expectedResult: "",
-			shouldDecode:   false, // May not decode with manual encoding
+			shouldDecode:   false,
 			description:    "Error(string) with empty string",
 		},
 		{
@@ -757,7 +749,7 @@ func TestDecodeRevertReasonFromCustomError(t *testing.T) {
 			name: "Error(string) with malformed data",
 			customErr: &CustomErrorData{
 				Selector: errorStringSelector,
-				Data:     []byte{0x00, 0x00, 0x00, 0x00}, // Too short for proper encoding
+				Data:     []byte{0x00, 0x00, 0x00, 0x00},
 			},
 			expectedResult: "",
 			shouldDecode:   false,
@@ -1049,7 +1041,7 @@ func TestExtractCallFromMethod(t *testing.T) {
 		},
 		{
 			name:        "callData too short",
-			callData:    []byte{0x12, 0x34}, // Less than 4 bytes
+			callData:    []byte{0x12, 0x34},
 			method:      &bypassMethod,
 			expected:    nil,
 			shouldMatch: false,
@@ -1074,7 +1066,7 @@ func TestExtractCallFromMethod(t *testing.T) {
 		},
 		{
 			name:        "invalid calldata - unpack fails",
-			callData:    append(bypassMethod.ID, make([]byte, 100)...), // Valid selector but invalid data
+			callData:    append(bypassMethod.ID, make([]byte, 100)...),
 			method:      &bypassMethod,
 			expected:    nil,
 			shouldMatch: false,
