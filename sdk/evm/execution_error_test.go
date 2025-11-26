@@ -2,6 +2,7 @@ package evm
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"math/big"
 	"strings"
@@ -308,6 +309,99 @@ func TestCustomErrorData(t *testing.T) {
 			assert.Equal(t, tt.expectedCombined, combined, "Combined() mismatch")
 		})
 	}
+}
+
+func TestCustomErrorDataJSON(t *testing.T) {
+	t.Parallel()
+
+	t.Run("marshal_and_unmarshal_with_data", func(t *testing.T) {
+		t.Parallel()
+
+		custom := &CustomErrorData{
+			Selector: [4]byte{0xde, 0xad, 0xbe, 0xef},
+			Data:     []byte{0xaa, 0xbb, 0xcc},
+		}
+
+		bytes, err := json.Marshal(custom)
+		require.NoError(t, err)
+		assert.JSONEq(t, `{"selector":"0xdeadbeef","data":"0xaabbcc"}`, string(bytes))
+
+		var decoded CustomErrorData
+		require.NoError(t, json.Unmarshal(bytes, &decoded))
+		assert.Equal(t, custom.Selector, decoded.Selector)
+		assert.Equal(t, custom.Data, decoded.Data)
+	})
+
+	t.Run("marshal_without_data", func(t *testing.T) {
+		t.Parallel()
+
+		custom := &CustomErrorData{
+			Selector: [4]byte{0x70, 0xde, 0x1b, 0x4b},
+		}
+
+		bytes, err := json.Marshal(custom)
+		require.NoError(t, err)
+		assert.JSONEq(t, `{"selector":"0x70de1b4b"}`, string(bytes))
+	})
+
+	t.Run("unmarshal_invalid_hex_data", func(t *testing.T) {
+		t.Parallel()
+
+		var decoded CustomErrorData
+		err := json.Unmarshal([]byte(`{"selector":"0xdeadbeef","data":"0xzz"}`), &decoded)
+		require.Error(t, err)
+	})
+}
+
+func TestExecutionErrorJSON(t *testing.T) {
+	t.Parallel()
+
+	t.Run("marshal_strips_original_error", func(t *testing.T) {
+		t.Parallel()
+
+		execErr := &ExecutionError{
+			RawRevertReason: &CustomErrorData{
+				Selector: CallRevertedSelector,
+				Data:     []byte{0x01, 0x02},
+			},
+			DecodedRevertReason:     "CallReverted(truncated)",
+			UnderlyingReason:        "0xdeadbeef",
+			DecodedUnderlyingReason: "OutOfBoundsGroup()",
+			OriginalError:           errors.New("execution reverted: custom error"),
+		}
+
+		bytes, err := json.Marshal(execErr)
+		require.NoError(t, err)
+
+		var parsed map[string]any
+		require.NoError(t, json.Unmarshal(bytes, &parsed))
+
+		require.Equal(t, "execution reverted: custom error", parsed["OriginalError"])
+		require.Equal(t, "CallReverted(truncated)", parsed["DecodedRevertReason"])
+		require.Equal(t, "OutOfBoundsGroup()", parsed["DecodedUnderlyingReason"])
+	})
+
+	t.Run("unmarshal_restores_original_error", func(t *testing.T) {
+		t.Parallel()
+
+		payload := `{
+			"Transaction": null,
+			"RawRevertReason": {"selector": "0x70de1b4b", "data": "0x"},
+			"DecodedRevertReason": "CallReverted(truncated)",
+			"UnderlyingReason": "0xdeadbeef",
+			"DecodedUnderlyingReason": "OutOfBoundsGroup()",
+			"OriginalError": "execution reverted: custom error"
+		}`
+
+		var execErr ExecutionError
+		require.NoError(t, json.Unmarshal([]byte(payload), &execErr))
+
+		require.EqualError(t, execErr.OriginalError, "execution reverted: custom error")
+		require.Equal(t, "CallReverted(truncated)", execErr.DecodedRevertReason)
+		require.Equal(t, "OutOfBoundsGroup()", execErr.DecodedUnderlyingReason)
+		require.NotNil(t, execErr.RawRevertReason)
+		assert.Equal(t, CallRevertedSelector, execErr.RawRevertReason.Selector)
+	})
 }
 
 func TestExtractHexEncodedRevertData(t *testing.T) {
