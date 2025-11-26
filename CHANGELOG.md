@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.31.0
+
+### Minor Changes
+
+- [#547](https://github.com/smartcontractkit/mcms/pull/547) [`ac20450`](https://github.com/smartcontractkit/mcms/commit/ac2045096b999fbe1f138eadc05a0d01ae1ca14e) Thanks [@ecPablo](https://github.com/ecPablo)! - improve error decoding in transaction reversion for executors in evm sdk
+
 ## 0.30.3
 
 ### Patch Changes
