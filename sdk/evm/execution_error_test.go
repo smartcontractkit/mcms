@@ -45,7 +45,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 		name: "with decoded underlying reason - highest priority",
 		execErr: &ExecutionError{
 			OriginalError:           errors.New(errMsgOriginalError),
-			UnderlyingReason:        "0x1234",
+			RawUnderlyingReason:     "0x1234",
 			DecodedUnderlyingReason: "decoded underlying revert reason",
 			DecodedRevertReason:     "decoded reason",
 			RawRevertReason: &CustomErrorData{
@@ -67,7 +67,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 		name: "with raw underlying reason when decoded unavailable",
 		execErr: &ExecutionError{
 			OriginalError:       errors.New(errMsgOriginalError),
-			UnderlyingReason:    "underlying revert reason",
+			RawUnderlyingReason: "underlying revert reason",
 			DecodedRevertReason: "decoded reason",
 			RawRevertReason: &CustomErrorData{
 				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
@@ -365,7 +365,7 @@ func TestExecutionErrorJSON(t *testing.T) {
 				Data:     []byte{0x01, 0x02},
 			},
 			DecodedRevertReason:     "CallReverted(truncated)",
-			UnderlyingReason:        "0xdeadbeef",
+			RawUnderlyingReason:     "0xdeadbeef",
 			DecodedUnderlyingReason: "OutOfBoundsGroup()",
 			OriginalError:           errors.New("execution reverted: custom error"),
 		}
@@ -388,7 +388,7 @@ func TestExecutionErrorJSON(t *testing.T) {
 			"Transaction": null,
 			"RawRevertReason": {"selector": "0x70de1b4b", "data": "0x"},
 			"DecodedRevertReason": "CallReverted(truncated)",
-			"UnderlyingReason": "0xdeadbeef",
+			"RawUnderlyingReason": "0xdeadbeef",
 			"DecodedUnderlyingReason": "OutOfBoundsGroup()",
 			"OriginalError": "execution reverted: custom error"
 		}`

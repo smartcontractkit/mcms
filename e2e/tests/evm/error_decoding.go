@@ -157,7 +157,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	s.Require().NotNil(timelockExecErr, "ExecutionError should not be nil")
 	s.Require().NotNil(timelockExecErr.Transaction, "Transaction should be set in ExecutionError")
-	s.Require().NotEmpty(timelockExecErr.UnderlyingReason, "UnderlyingReason should be extracted")
+	s.Require().NotEmpty(timelockExecErr.RawUnderlyingReason, "RawUnderlyingReason should be extracted")
 	s.Require().NotEmpty(timelockExecErr.DecodedUnderlyingReason, "DecodedUnderlyingReason should be extracted")
 
 	s.Contains(err.Error(), "OutOfBoundsGroup")
@@ -166,7 +166,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 		timelockExecErr.Transaction,
 		timelockExecErr.RawRevertReason,
 		timelockExecErr.DecodedRevertReason,
-		timelockExecErr.UnderlyingReason,
+		timelockExecErr.RawUnderlyingReason,
 		timelockExecErr.DecodedUnderlyingReason,
 	)
 }
@@ -284,17 +284,17 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	)
 	s.Require().NotNil(execErr, "ExecutionError should not be nil")
 	s.Require().NotNil(execErr.Transaction, "Transaction should be set in ExecutionError")
-	s.Require().NotEmpty(execErr.UnderlyingReason, "UnderlyingReason should be extracted")
+	s.Require().NotEmpty(execErr.RawUnderlyingReason, "RawUnderlyingReason should be extracted")
 	s.Require().NotEmpty(execErr.DecodedUnderlyingReason, "DecodedUnderlyingReason should be extracted")
 
 	s.Contains(err.Error(), "OutOfBoundsGroup")
-	s.NotEmpty(execErr.UnderlyingReason, "UnderlyingReason should not be empty")
+	s.NotEmpty(execErr.RawUnderlyingReason, "RawUnderlyingReason should not be empty")
 	s.NotNil(execErr.RawRevertReason, "RawRevertReason should be set")
 	s.T().Logf("[TestBypassProposal] ExecutionError details: Transaction=%v RawRevert=%v Decoded=%q UnderlyingRaw=%q UnderlyingDecoded=%q",
 		execErr.Transaction,
 		execErr.RawRevertReason,
 		execErr.DecodedRevertReason,
-		execErr.UnderlyingReason,
+		execErr.RawUnderlyingReason,
 		execErr.DecodedUnderlyingReason,
 	)
 	s.Equal(
@@ -566,7 +566,7 @@ func assertExecutionError(
 	}
 
 	if hasUnderlyingReason {
-		require.NotEmpty(t, execErr.UnderlyingReason, "ExecutionError.UnderlyingReason is empty but expected to be set")
+		require.NotEmpty(t, execErr.RawUnderlyingReason, "ExecutionError.RawUnderlyingReason is empty but expected to be set")
 	}
 
 	if containsMessage != "" {
@@ -585,7 +585,7 @@ func assertExecutionError(
 				execErr.RawRevertReason.Selector,
 				common.Bytes2Hex(execErr.RawRevertReason.Combined()),
 				execErr.DecodedRevertReason,
-				execErr.UnderlyingReason,
+				execErr.RawUnderlyingReason,
 				execErr.DecodedUnderlyingReason,
 				execErr.OriginalError,
 			)
