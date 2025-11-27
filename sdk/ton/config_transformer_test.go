@@ -1,23 +1,15 @@
 package ton_test
 
 import (
-	"crypto"
-	"crypto/ed25519"
-	"fmt"
 	"math"
-	"math/big"
-	"slices"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/types"
-
-	"github.com/xssnick/tonutils-go/ton"
-	"github.com/xssnick/tonutils-go/ton/wallet"
 
 	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
 
@@ -25,59 +17,10 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
-func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wallet, error) {
-	v5r1Config := wallet.ConfigV5R1Final{
-		NetworkGlobalID: networkGlobalID,
-		Workchain:       0,
-	}
-	return wallet.FromSeed(api, wallet.NewSeed(), v5r1Config)
-}
-
-func PublicKeyToBigInt(pub crypto.PublicKey) (*big.Int, error) {
-	pubEd, ok := pub.(ed25519.PublicKey)
-	if !ok {
-		return nil, fmt.Errorf("not an ed25519 key")
-	}
-
-	// TODO: currently only works with 20 byte keys bc types.Config.Signers is [20]byte
-	return new(big.Int).SetBytes(pubEd[:20]), nil
-}
-
-// TODO: mustAddress
-func mustKey(w *wallet.Wallet) *big.Int {
-	return must(PublicKeyToBigInt(w.PrivateKey().Public()))
-}
-
 func Test_ConfigTransformer_ToConfig(t *testing.T) {
 	t.Parallel()
 
-	chainID := chaintest.Chain7TONID
-	var client *ton.APIClient = nil
-	wallets := []*wallet.Wallet{
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-	}
-
-	// TODO: we should also sort keys asc on this side
-
-	var (
-		signer1 = wallets[0]
-		signer2 = wallets[1]
-	)
+	signers := testutils.MakeNewECDSASigners(16)
 
 	tests := []struct {
 		name    string
@@ -89,8 +32,8 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 			name: "success: converts binding config to config",
 			give: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: mustKey(signer1), Group: 0, Index: 0},
-					{Address: mustKey(signer2), Group: 1, Index: 1},
+					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
+					{Address: signers[1].Address().Big(), Group: 1, Index: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
@@ -103,11 +46,11 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 			},
 			want: &types.Config{
 				Quorum:  1,
-				Signers: []common.Address{common.Address(mustKey(signer1).Bytes())},
+				Signers: []common.Address{signers[0].Address()},
 				GroupSigners: []types.Config{
 					{
 						Quorum:       1,
-						Signers:      []common.Address{common.Address(mustKey(signer2).Bytes())},
+						Signers:      []common.Address{signers[1].Address()},
 						GroupSigners: []types.Config{},
 					},
 				},
@@ -133,53 +76,53 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					{Val: 4},
 				}, tvm.KeyUINT8)),
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: mustKey(wallets[0]), Index: 0, Group: 0},
-					{Address: mustKey(wallets[1]), Index: 1, Group: 0},
-					{Address: mustKey(wallets[2]), Index: 2, Group: 0},
-					{Address: mustKey(wallets[3]), Index: 3, Group: 1},
-					{Address: mustKey(wallets[4]), Index: 4, Group: 1},
-					{Address: mustKey(wallets[5]), Index: 5, Group: 1},
-					{Address: mustKey(wallets[6]), Index: 6, Group: 1},
-					{Address: mustKey(wallets[7]), Index: 7, Group: 1},
-					{Address: mustKey(wallets[8]), Index: 8, Group: 2},
-					{Address: mustKey(wallets[9]), Index: 9, Group: 2},
-					{Address: mustKey(wallets[10]), Index: 10, Group: 3},
-					{Address: mustKey(wallets[11]), Index: 11, Group: 4},
-					{Address: mustKey(wallets[12]), Index: 12, Group: 4},
-					{Address: mustKey(wallets[13]), Index: 13, Group: 4},
-					{Address: mustKey(wallets[14]), Index: 14, Group: 4},
-					{Address: mustKey(wallets[15]), Index: 15, Group: 5},
+					{Address: signers[0].Address().Big(), Index: 0, Group: 0},
+					{Address: signers[1].Address().Big(), Index: 1, Group: 0},
+					{Address: signers[2].Address().Big(), Index: 2, Group: 0},
+					{Address: signers[3].Address().Big(), Index: 3, Group: 1},
+					{Address: signers[4].Address().Big(), Index: 4, Group: 1},
+					{Address: signers[5].Address().Big(), Index: 5, Group: 1},
+					{Address: signers[6].Address().Big(), Index: 6, Group: 1},
+					{Address: signers[7].Address().Big(), Index: 7, Group: 1},
+					{Address: signers[8].Address().Big(), Index: 8, Group: 2},
+					{Address: signers[9].Address().Big(), Index: 9, Group: 2},
+					{Address: signers[10].Address().Big(), Index: 10, Group: 3},
+					{Address: signers[11].Address().Big(), Index: 11, Group: 4},
+					{Address: signers[12].Address().Big(), Index: 12, Group: 4},
+					{Address: signers[13].Address().Big(), Index: 13, Group: 4},
+					{Address: signers[14].Address().Big(), Index: 14, Group: 4},
+					{Address: signers[15].Address().Big(), Index: 15, Group: 5},
 				}, tvm.KeyUINT8)),
 			},
 			want: &types.Config{
 				Quorum: 2,
 				Signers: []common.Address{
-					common.Address(mustKey(wallets[0]).Bytes()),
-					common.Address(mustKey(wallets[1]).Bytes()),
-					common.Address(mustKey(wallets[2]).Bytes()),
+					signers[0].Address(),
+					signers[1].Address(),
+					signers[2].Address(),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 4,
 						Signers: []common.Address{
-							common.Address(mustKey(wallets[3]).Bytes()),
-							common.Address(mustKey(wallets[4]).Bytes()),
-							common.Address(mustKey(wallets[5]).Bytes()),
-							common.Address(mustKey(wallets[6]).Bytes()),
-							common.Address(mustKey(wallets[7]).Bytes()),
+							signers[3].Address(),
+							signers[4].Address(),
+							signers[5].Address(),
+							signers[6].Address(),
+							signers[7].Address(),
 						},
 						GroupSigners: []types.Config{
 							{
 								Quorum: 1,
 								Signers: []common.Address{
-									common.Address(mustKey(wallets[8]).Bytes()),
-									common.Address(mustKey(wallets[9]).Bytes()),
+									signers[8].Address(),
+									signers[9].Address(),
 								},
 								GroupSigners: []types.Config{
 									{
 										Quorum: 1,
 										Signers: []common.Address{
-											common.Address(mustKey(wallets[10]).Bytes()),
+											signers[10].Address(),
 										},
 										GroupSigners: []types.Config{},
 									},
@@ -190,16 +133,16 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					{
 						Quorum: 3,
 						Signers: []common.Address{
-							common.Address(mustKey(wallets[11]).Bytes()),
-							common.Address(mustKey(wallets[12]).Bytes()),
-							common.Address(mustKey(wallets[13]).Bytes()),
-							common.Address(mustKey(wallets[14]).Bytes()),
+							signers[11].Address(),
+							signers[12].Address(),
+							signers[13].Address(),
+							signers[14].Address(),
 						},
 						GroupSigners: []types.Config{
 							{
 								Quorum: 1,
 								Signers: []common.Address{
-									common.Address(mustKey(wallets[15]).Bytes()),
+									signers[15].Address(),
 								},
 								GroupSigners: []types.Config{},
 							},
@@ -212,8 +155,8 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 			name: "failure: validation error on resulting config",
 			give: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: mustKey(signer1), Group: 0, Index: 0},
-					{Address: mustKey(signer2), Group: 1, Index: 1},
+					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
+					{Address: signers[1].Address().Big(), Group: 1, Index: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 0}, // A zero quorum makes this invalid
@@ -248,28 +191,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 func Test_SetConfigInputs(t *testing.T) {
 	t.Parallel()
 
-	chainID := chaintest.Chain7TONID
-	var client *ton.APIClient = nil
-	wallets := []*wallet.Wallet{
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-	}
-
-	// Sort signers by their pub keys in ascending order
-	slices.SortFunc(wallets, func(i, j *wallet.Wallet) int {
-		return mustKey(i).Cmp(mustKey(j))
-	})
-
-	var (
-		signer1 = wallets[0]
-		signer2 = wallets[1]
-		signer3 = wallets[2]
-		signer4 = wallets[3]
-		signer5 = wallets[4]
-	)
+	signers := testutils.MakeNewECDSASigners(5)
 
 	tests := []struct {
 		name       string
@@ -282,18 +204,18 @@ func Test_SetConfigInputs(t *testing.T) {
 			giveConfig: types.Config{
 				Quorum: 1,
 				Signers: []common.Address{
-					common.Address(mustKey(signer1).Bytes()),
-					common.Address(mustKey(signer2).Bytes()),
+					signers[0].Address(),
+					signers[1].Address(),
 				},
 				GroupSigners: []types.Config{
-					{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer3).Bytes())}},
+					{Quorum: 1, Signers: []common.Address{signers[2].Address()}},
 				},
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: mustKey(signer1), Group: 0, Index: 0},
-					{Address: mustKey(signer2), Group: 0, Index: 1},
-					{Address: mustKey(signer3), Group: 1, Index: 2},
+					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
+					{Address: signers[1].Address().Big(), Group: 0, Index: 1},
+					{Address: signers[2].Address().Big(), Group: 1, Index: 2},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
@@ -310,18 +232,18 @@ func Test_SetConfigInputs(t *testing.T) {
 			giveConfig: types.Config{
 				Quorum: 2,
 				Signers: []common.Address{
-					common.Address(mustKey(signer1).Bytes()),
-					common.Address(mustKey(signer2).Bytes()),
+					signers[0].Address(),
+					signers[1].Address(),
 				},
 				GroupSigners: []types.Config{
-					{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer3).Bytes())}},
+					{Quorum: 1, Signers: []common.Address{signers[2].Address()}},
 				},
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: mustKey(signer1), Group: 0, Index: 0},
-					{Address: mustKey(signer2), Group: 0, Index: 1},
-					{Address: mustKey(signer3), Group: 1, Index: 2},
+					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
+					{Address: signers[1].Address().Big(), Group: 0, Index: 1},
+					{Address: signers[2].Address().Big(), Group: 1, Index: 2},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
@@ -338,15 +260,15 @@ func Test_SetConfigInputs(t *testing.T) {
 			giveConfig: types.Config{
 				Quorum: 1,
 				Signers: []common.Address{
-					common.Address(mustKey(signer1).Bytes()),
-					common.Address(mustKey(signer2).Bytes()),
+					signers[0].Address(),
+					signers[1].Address(),
 				},
 				GroupSigners: []types.Config{},
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: mustKey(signer1), Group: 0, Index: 0},
-					{Address: mustKey(signer2), Group: 0, Index: 1},
+					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
+					{Address: signers[1].Address().Big(), Group: 0, Index: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
@@ -362,16 +284,16 @@ func Test_SetConfigInputs(t *testing.T) {
 				Quorum:  2,
 				Signers: []common.Address{},
 				GroupSigners: []types.Config{
-					{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer1).Bytes())}},
-					{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer2).Bytes())}},
-					{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer3).Bytes())}},
+					{Quorum: 1, Signers: []common.Address{signers[0].Address()}},
+					{Quorum: 1, Signers: []common.Address{signers[1].Address()}},
+					{Quorum: 1, Signers: []common.Address{signers[2].Address()}},
 				},
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: mustKey(signer1), Group: 1, Index: 0},
-					{Address: mustKey(signer2), Group: 2, Index: 1},
-					{Address: mustKey(signer3), Group: 3, Index: 2},
+					{Address: signers[0].Address().Big(), Group: 1, Index: 0},
+					{Address: signers[1].Address().Big(), Group: 2, Index: 1},
+					{Address: signers[2].Address().Big(), Group: 3, Index: 2},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
@@ -392,30 +314,30 @@ func Test_SetConfigInputs(t *testing.T) {
 			giveConfig: types.Config{
 				Quorum: 2,
 				Signers: []common.Address{
-					common.Address(mustKey(signer1).Bytes()),
-					common.Address(mustKey(signer2).Bytes()),
+					signers[0].Address(),
+					signers[1].Address(),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum:  1,
-						Signers: []common.Address{common.Address(mustKey(signer3).Bytes())},
+						Signers: []common.Address{signers[2].Address()},
 						GroupSigners: []types.Config{
-							{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer4).Bytes())}},
+							{Quorum: 1, Signers: []common.Address{signers[3].Address()}},
 						},
 					},
 					{
 						Quorum:  1,
-						Signers: []common.Address{common.Address(mustKey(signer5).Bytes())},
+						Signers: []common.Address{signers[4].Address()},
 					},
 				},
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: mustKey(signer1), Group: 0, Index: 0},
-					{Address: mustKey(signer2), Group: 0, Index: 1},
-					{Address: mustKey(signer3), Group: 1, Index: 2},
-					{Address: mustKey(signer4), Group: 2, Index: 3},
-					{Address: mustKey(signer5), Group: 3, Index: 4},
+					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
+					{Address: signers[1].Address().Big(), Group: 0, Index: 1},
+					{Address: signers[2].Address().Big(), Group: 1, Index: 2},
+					{Address: signers[3].Address().Big(), Group: 2, Index: 3},
+					{Address: signers[4].Address().Big(), Group: 3, Index: 4},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
@@ -437,31 +359,31 @@ func Test_SetConfigInputs(t *testing.T) {
 				Quorum: 2,
 				// Root signers are out of order (signer2 is before signer1)
 				Signers: []common.Address{
-					common.Address(mustKey(signer2).Bytes()),
-					common.Address(mustKey(signer1).Bytes()),
+					signers[1].Address(),
+					signers[0].Address(),
 				},
 				// Group signers are out of order (signer5 is before the signer4 group)
 				GroupSigners: []types.Config{
 					{
 						Quorum:  1,
-						Signers: []common.Address{common.Address(mustKey(signer3).Bytes())},
+						Signers: []common.Address{signers[2].Address()},
 						GroupSigners: []types.Config{
-							{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer5).Bytes())}},
+							{Quorum: 1, Signers: []common.Address{signers[4].Address()}},
 						},
 					},
 					{
 						Quorum:  1,
-						Signers: []common.Address{common.Address(mustKey(signer4).Bytes())},
+						Signers: []common.Address{signers[3].Address()},
 					},
 				},
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: mustKey(signer1), Group: 0, Index: 0},
-					{Address: mustKey(signer2), Group: 0, Index: 1},
-					{Address: mustKey(signer3), Group: 1, Index: 2},
-					{Address: mustKey(signer4), Group: 3, Index: 3},
-					{Address: mustKey(signer5), Group: 2, Index: 4},
+					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
+					{Address: signers[1].Address().Big(), Group: 0, Index: 1},
+					{Address: signers[2].Address().Big(), Group: 1, Index: 2},
+					{Address: signers[3].Address().Big(), Group: 3, Index: 3},
+					{Address: signers[4].Address().Big(), Group: 2, Index: 4},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},

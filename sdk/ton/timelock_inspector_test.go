@@ -20,20 +20,6 @@ import (
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
 
-// TODO: extract as shared setup
-var chainID = chaintest.Chain7TONID
-var client *ton.APIClient = nil
-var wallets = []*wallet.Wallet{
-	must(makeRandomTestWallet(client, chainID)),
-	must(makeRandomTestWallet(client, chainID)),
-	must(makeRandomTestWallet(client, chainID)),
-	must(makeRandomTestWallet(client, chainID)),
-	must(makeRandomTestWallet(client, chainID)),
-	must(makeRandomTestWallet(client, chainID)),
-	must(makeRandomTestWallet(client, chainID)),
-	must(makeRandomTestWallet(client, chainID)),
-}
-
 type roleFetchTest struct {
 	name            string
 	address         string
@@ -71,6 +57,19 @@ func (tt roleFetchTest) mockRoleContractCalls(t *testing.T, client *ton_mocks.AP
 
 func TestTimelockInspector_GetRolesTests(t *testing.T) {
 	t.Parallel()
+
+	var chainID = chaintest.Chain7TONID
+	var client *ton.APIClient = nil
+	var wallets = []*wallet.Wallet{
+		must(makeRandomTestWallet(client, chainID)),
+		must(makeRandomTestWallet(client, chainID)),
+		must(makeRandomTestWallet(client, chainID)),
+		must(makeRandomTestWallet(client, chainID)),
+		must(makeRandomTestWallet(client, chainID)),
+		must(makeRandomTestWallet(client, chainID)),
+		must(makeRandomTestWallet(client, chainID)),
+		must(makeRandomTestWallet(client, chainID)),
+	}
 
 	ctx := context.Background()
 	tests := []roleFetchTest{

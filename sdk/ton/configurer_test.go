@@ -12,12 +12,12 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
-	"github.com/xssnick/tonutils-go/ton/wallet"
 
 	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
@@ -29,15 +29,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 
 	ctx := context.Background()
 
-	// Initialize the mock
-	chainID := chaintest.Chain7TONID
-	api := ton_mocks.NewTonAPI(t)
-	wallets := []*wallet.Wallet{
-		must(makeRandomTestWallet(api, chainID)),
-		must(makeRandomTestWallet(api, chainID)),
-		must(makeRandomTestWallet(api, chainID)),
-		must(makeRandomTestWallet(api, chainID)),
-	}
+	signers := testutils.MakeNewECDSASigners(16)
 
 	tests := []struct {
 		name      string
@@ -54,14 +46,14 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			cfg: &types.Config{
 				Quorum: 2,
 				Signers: []common.Address{
-					common.Address(mustKey(wallets[1]).Bytes()),
-					common.Address(mustKey(wallets[2]).Bytes()),
+					signers[1].Address(),
+					signers[2].Address(),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 1,
 						Signers: []common.Address{
-							common.Address(mustKey(wallets[3]).Bytes()),
+							signers[3].Address(),
 						},
 						GroupSigners: nil,
 					},
@@ -97,14 +89,14 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			cfg: &types.Config{
 				Quorum: 2,
 				Signers: []common.Address{
-					common.Address(mustKey(wallets[1]).Bytes()),
-					common.Address(mustKey(wallets[2]).Bytes()),
+					signers[1].Address(),
+					signers[2].Address(),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 1,
 						Signers: []common.Address{
-							common.Address(mustKey(wallets[3]).Bytes()),
+							signers[3].Address(),
 						},
 						GroupSigners: nil,
 					},
@@ -141,6 +133,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			t.Parallel()
 
 			_api := ton_mocks.NewTonAPI(t)
+			chainID := chaintest.Chain7TONID
 			walletOperator := must(makeRandomTestWallet(_api, chainID))
 
 			// Apply the mock setup for the ContractDeployBackend
