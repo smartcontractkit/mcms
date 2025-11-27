@@ -216,7 +216,6 @@ func (e *ExecutionError) UnmarshalJSON(data []byte) error {
 	var temp executionErrorAlias
 	if err := json.Unmarshal(cleanData, &temp); err != nil {
 		return fmt.Errorf("error unmarshaling ExecutionError fields: %w", err)
-
 	}
 
 	e.Transaction = temp.Transaction
