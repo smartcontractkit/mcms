@@ -43,6 +43,7 @@ func PublicKeyToBigInt(pub crypto.PublicKey) (*big.Int, error) {
 	return new(big.Int).SetBytes(pubEd[:20]), nil
 }
 
+// TODO: mustAddress
 func mustKey(w *wallet.Wallet) *big.Int {
 	return must(PublicKeyToBigInt(w.PrivateKey().Public()))
 }
@@ -88,8 +89,8 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 			name: "success: converts binding config to config",
 			give: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Key: mustKey(signer1), Group: 0, Index: 0},
-					{Key: mustKey(signer2), Group: 1, Index: 1},
+					{Address: mustKey(signer1), Group: 0, Index: 0},
+					{Address: mustKey(signer2), Group: 1, Index: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
@@ -132,22 +133,22 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					{Val: 4},
 				}, tvm.KeyUINT8)),
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Key: mustKey(wallets[0]), Index: 0, Group: 0},
-					{Key: mustKey(wallets[1]), Index: 1, Group: 0},
-					{Key: mustKey(wallets[2]), Index: 2, Group: 0},
-					{Key: mustKey(wallets[3]), Index: 3, Group: 1},
-					{Key: mustKey(wallets[4]), Index: 4, Group: 1},
-					{Key: mustKey(wallets[5]), Index: 5, Group: 1},
-					{Key: mustKey(wallets[6]), Index: 6, Group: 1},
-					{Key: mustKey(wallets[7]), Index: 7, Group: 1},
-					{Key: mustKey(wallets[8]), Index: 8, Group: 2},
-					{Key: mustKey(wallets[9]), Index: 9, Group: 2},
-					{Key: mustKey(wallets[10]), Index: 10, Group: 3},
-					{Key: mustKey(wallets[11]), Index: 11, Group: 4},
-					{Key: mustKey(wallets[12]), Index: 12, Group: 4},
-					{Key: mustKey(wallets[13]), Index: 13, Group: 4},
-					{Key: mustKey(wallets[14]), Index: 14, Group: 4},
-					{Key: mustKey(wallets[15]), Index: 15, Group: 5},
+					{Address: mustKey(wallets[0]), Index: 0, Group: 0},
+					{Address: mustKey(wallets[1]), Index: 1, Group: 0},
+					{Address: mustKey(wallets[2]), Index: 2, Group: 0},
+					{Address: mustKey(wallets[3]), Index: 3, Group: 1},
+					{Address: mustKey(wallets[4]), Index: 4, Group: 1},
+					{Address: mustKey(wallets[5]), Index: 5, Group: 1},
+					{Address: mustKey(wallets[6]), Index: 6, Group: 1},
+					{Address: mustKey(wallets[7]), Index: 7, Group: 1},
+					{Address: mustKey(wallets[8]), Index: 8, Group: 2},
+					{Address: mustKey(wallets[9]), Index: 9, Group: 2},
+					{Address: mustKey(wallets[10]), Index: 10, Group: 3},
+					{Address: mustKey(wallets[11]), Index: 11, Group: 4},
+					{Address: mustKey(wallets[12]), Index: 12, Group: 4},
+					{Address: mustKey(wallets[13]), Index: 13, Group: 4},
+					{Address: mustKey(wallets[14]), Index: 14, Group: 4},
+					{Address: mustKey(wallets[15]), Index: 15, Group: 5},
 				}, tvm.KeyUINT8)),
 			},
 			want: &types.Config{
@@ -211,8 +212,8 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 			name: "failure: validation error on resulting config",
 			give: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Key: mustKey(signer1), Group: 0, Index: 0},
-					{Key: mustKey(signer2), Group: 1, Index: 1},
+					{Address: mustKey(signer1), Group: 0, Index: 0},
+					{Address: mustKey(signer2), Group: 1, Index: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 0}, // A zero quorum makes this invalid
@@ -290,9 +291,9 @@ func Test_SetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Key: mustKey(signer1), Group: 0, Index: 0},
-					{Key: mustKey(signer2), Group: 0, Index: 1},
-					{Key: mustKey(signer3), Group: 1, Index: 2},
+					{Address: mustKey(signer1), Group: 0, Index: 0},
+					{Address: mustKey(signer2), Group: 0, Index: 1},
+					{Address: mustKey(signer3), Group: 1, Index: 2},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
@@ -318,9 +319,9 @@ func Test_SetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Key: mustKey(signer1), Group: 0, Index: 0},
-					{Key: mustKey(signer2), Group: 0, Index: 1},
-					{Key: mustKey(signer3), Group: 1, Index: 2},
+					{Address: mustKey(signer1), Group: 0, Index: 0},
+					{Address: mustKey(signer2), Group: 0, Index: 1},
+					{Address: mustKey(signer3), Group: 1, Index: 2},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
@@ -344,8 +345,8 @@ func Test_SetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Key: mustKey(signer1), Group: 0, Index: 0},
-					{Key: mustKey(signer2), Group: 0, Index: 1},
+					{Address: mustKey(signer1), Group: 0, Index: 0},
+					{Address: mustKey(signer2), Group: 0, Index: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
@@ -368,9 +369,9 @@ func Test_SetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Key: mustKey(signer1), Group: 1, Index: 0},
-					{Key: mustKey(signer2), Group: 2, Index: 1},
-					{Key: mustKey(signer3), Group: 3, Index: 2},
+					{Address: mustKey(signer1), Group: 1, Index: 0},
+					{Address: mustKey(signer2), Group: 2, Index: 1},
+					{Address: mustKey(signer3), Group: 3, Index: 2},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
@@ -410,11 +411,11 @@ func Test_SetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Key: mustKey(signer1), Group: 0, Index: 0},
-					{Key: mustKey(signer2), Group: 0, Index: 1},
-					{Key: mustKey(signer3), Group: 1, Index: 2},
-					{Key: mustKey(signer4), Group: 2, Index: 3},
-					{Key: mustKey(signer5), Group: 3, Index: 4},
+					{Address: mustKey(signer1), Group: 0, Index: 0},
+					{Address: mustKey(signer2), Group: 0, Index: 1},
+					{Address: mustKey(signer3), Group: 1, Index: 2},
+					{Address: mustKey(signer4), Group: 2, Index: 3},
+					{Address: mustKey(signer5), Group: 3, Index: 4},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
@@ -456,11 +457,11 @@ func Test_SetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Key: mustKey(signer1), Group: 0, Index: 0},
-					{Key: mustKey(signer2), Group: 0, Index: 1},
-					{Key: mustKey(signer3), Group: 1, Index: 2},
-					{Key: mustKey(signer4), Group: 3, Index: 3},
-					{Key: mustKey(signer5), Group: 2, Index: 4},
+					{Address: mustKey(signer1), Group: 0, Index: 0},
+					{Address: mustKey(signer2), Group: 0, Index: 1},
+					{Address: mustKey(signer3), Group: 1, Index: 2},
+					{Address: mustKey(signer4), Group: 3, Index: 3},
+					{Address: mustKey(signer5), Group: 2, Index: 4},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},

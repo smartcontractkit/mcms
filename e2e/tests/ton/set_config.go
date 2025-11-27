@@ -33,24 +33,6 @@ import (
 	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
 )
 
-const (
-	EnvPathContracts = "PATH_CONTRACTS_TON"
-
-	PathContractsMCMS     = "mcms.MCMS.compiled.json"
-	PathContractsTimelock = "mcms.RBACTimelock.compiled.json"
-)
-
-// TODO: duplicated utils with unit tests [START]
-
-func must[E any](out E, err error) E {
-	if err != nil {
-		panic(err)
-	}
-	return out
-}
-
-// TODO: duplicated utils with unit tests [END]
-
 // SetConfigTestSuite tests signing a proposal and converting back to a file
 type SetConfigTestSuite struct {
 	suite.Suite
@@ -127,7 +109,7 @@ func (t *SetConfigTestSuite) deployMCMSContract() {
 
 	// TODO: extract .WaitTrace(tx) functionality and use here instead of wrapper
 	client := tracetracking.NewSignedAPIClient(t.TonClient, *t.wallet)
-	contract, _, err := wrappers.Deploy(&client, contractCode, contractData, amount, msgBody)
+	contract, _, err := wrappers.Deploy(t.T().Context(), &client, contractCode, contractData, amount, msgBody)
 	t.Require().NoError(err)
 	addr := contract.Address
 

@@ -24,7 +24,6 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/ocr"
 )
 
 // sdk.Executor implementation for TON chains, allowing for the execution of operations on the MCMS contract
@@ -164,7 +163,7 @@ func (e *executor) SetRoot(
 	}
 
 	// Encode signatures
-	se, ok := e.Encoder.(SignaturesEncoder[ocr.SignatureEd25519])
+	se, ok := e.Encoder.(SignaturesEncoder[mcms.Signature])
 	if !ok {
 		return types.TransactionResult{}, fmt.Errorf("failed to assert SignatureEncoder")
 	}
@@ -182,7 +181,7 @@ func (e *executor) SetRoot(
 		Metadata:   rm,
 
 		MetadataProof: commonton.SnakeData[mcms.Proof](bindProof),
-		Signatures:    commonton.SnakeData[ocr.SignatureEd25519](bindSignatures),
+		Signatures:    commonton.SnakeData[mcms.Signature](bindSignatures),
 	})
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
