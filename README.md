@@ -91,7 +91,7 @@ More `lint` commands can be found by running `task -l`
 
 ## Documentation
 
-We use [Docsify](https://docsify.js.org) to generate our documentation. You can modify the docs by editing the markdown
+We use [Docusaurus](https://docusaurus.io/) to generate our documentation. You can modify the docs by editing the markdown
 files in the [`docs`](https://github.com/smartcontractkit/mcms/tree/main/docs) directory.
 
 Run the local documentation server with:

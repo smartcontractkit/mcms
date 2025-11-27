@@ -11,7 +11,7 @@
 
 ## Team Overview
 
-The Deployment Automation ([@smartcontractkit/deployment-automation](https://github.com/orgs/smartcontractkit/teams/deployment-automation)) team is responsible for the development and maintenance of this repo, and are the primary code owners and reviewers.
+The Operations Platform Tooling ([@smartcontractkit/op-tooling](https://github.com/orgs/smartcontractkit/teams/op-tooling)) team is responsible for the development and maintenance of this repo, and are the primary code owners and reviewers.
 
 ## How to Contribute
 
@@ -20,7 +20,7 @@ The Deployment Automation ([@smartcontractkit/deployment-automation](https://git
 3. When you are ready to submit your changes, [create a changeset](#changesets) with `pnpm changeset` and commit the changeset file.
 4. Push your branch and open a PR against `main`.
 5. Ensure your PR passes all CI checks.
-6. Request a review from the Deployment Automation team ([@smartcontractkit/deployment-automation](https://github.com/orgs/smartcontractkit/teams/deployment-automation)).
+6. Request a review from the OP Tooling team ([@smartcontractkit/op-tooling](https://github.com/orgs/smartcontractkit/teams/op-tooling)).
 
 ## Changesets
 
