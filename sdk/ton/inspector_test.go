@@ -59,18 +59,18 @@ func TestInspector_GetConfig(t *testing.T) {
 			},
 			want: &types.Config{
 				Quorum: 3,
-				SignerKeys: [][]byte{
-					mustKey(wallets[0]).Bytes(),
-					mustKey(wallets[1]).Bytes(),
-					mustKey(wallets[2]).Bytes(),
+				Signers: []common.Address{
+					common.Address(mustKey(wallets[0]).Bytes()),
+					common.Address(mustKey(wallets[1]).Bytes()),
+					common.Address(mustKey(wallets[2]).Bytes()),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 2,
-						SignerKeys: [][]byte{
-							mustKey(wallets[3]).Bytes(),
-							mustKey(wallets[4]).Bytes(),
-							mustKey(wallets[5]).Bytes(),
+						Signers: []common.Address{
+							common.Address(mustKey(wallets[3]).Bytes()),
+							common.Address(mustKey(wallets[4]).Bytes()),
+							common.Address(mustKey(wallets[5]).Bytes()),
 						},
 						GroupSigners: []types.Config{},
 					},
@@ -99,7 +99,7 @@ func TestInspector_GetConfig(t *testing.T) {
 				}, tvm.KeyUINT8)),
 			},
 			want:    nil,
-			wantErr: fmt.Errorf("unable to convert to SDK config type: invalid MCMS config: Quorum must be greater than 0"),
+			wantErr: fmt.Errorf("invalid MCMS config: Quorum must be greater than 0"),
 			// TODO: figure out why error output for this test case is different
 			// wantErr: fmt.Errorf("invalid MCMS config: Quorum must be less than or equal to the number of signers and groups"),
 		},
@@ -144,8 +144,6 @@ func TestInspector_GetConfig(t *testing.T) {
 				require.EqualError(t, err, tt.wantErr.Error())
 			} else {
 				require.NoError(t, err)
-				// Note: we need to remap SignerKeys to Signers for comparison
-				tonmcms.ConfigRemapSignerKeys(tt.want)
 				assert.Equal(t, tt.want, got)
 			}
 

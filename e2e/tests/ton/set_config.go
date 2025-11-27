@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package tone2e
 
@@ -31,8 +30,26 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 
 	commonton "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
-	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
+	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
 )
+
+const (
+	EnvPathContracts = "PATH_CONTRACTS_TON"
+
+	PathContractsMCMS     = "mcms.MCMS.compiled.json"
+	PathContractsTimelock = "mcms.RBACTimelock.compiled.json"
+)
+
+// TODO: duplicated utils with unit tests [START]
+
+func must[E any](out E, err error) E {
+	if err != nil {
+		panic(err)
+	}
+	return out
+}
+
+// TODO: duplicated utils with unit tests [END]
 
 // SetConfigTestSuite tests signing a proposal and converting back to a file
 type SetConfigTestSuite struct {
@@ -134,10 +151,10 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 	})
 
 	amount := tlb.MustFromTON("0.3")
-	configurerTON, err := mcmston.NewConfigurer(t.wallet, amount)
+	configurerTON, err := tonmcms.NewConfigurer(t.wallet, amount)
 	t.Require().NoError(err)
 
-	inspectorTON := mcmston.NewInspector(t.TonClient, mcmston.NewConfigTransformer())
+	inspectorTON := tonmcms.NewInspector(t.TonClient, tonmcms.NewConfigTransformer())
 	t.Require().NoError(err)
 
 	tests := []struct {
@@ -151,27 +168,27 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 			name: "config proposer",
 			config: types.Config{
 				Quorum: 2,
-				SignerKeys: [][]byte{
-					signers[0].Bytes(),
-					signers[1].Bytes(),
-					signers[2].Bytes(),
+				Signers: []common.Address{
+					signers[0],
+					signers[1],
+					signers[2],
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 4,
-						SignerKeys: [][]byte{
-							signers[3].Bytes(),
-							signers[4].Bytes(),
-							signers[5].Bytes(),
-							signers[6].Bytes(),
-							signers[7].Bytes(),
+						Signers: []common.Address{
+							signers[3],
+							signers[4],
+							signers[5],
+							signers[6],
+							signers[7],
 						},
 						GroupSigners: []types.Config{
 							{
 								Quorum: 1,
-								SignerKeys: [][]byte{
-									signers[8].Bytes(),
-									signers[9].Bytes(),
+								Signers: []common.Address{
+									signers[8],
+									signers[9],
 								},
 								GroupSigners: []types.Config{},
 							},
@@ -179,11 +196,11 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 					},
 					{
 						Quorum: 3,
-						SignerKeys: [][]byte{
-							signers[10].Bytes(),
-							signers[11].Bytes(),
-							signers[12].Bytes(),
-							signers[13].Bytes(),
+						Signers: []common.Address{
+							signers[10],
+							signers[11],
+							signers[12],
+							signers[13],
 						},
 						GroupSigners: []types.Config{},
 					},
@@ -196,18 +213,18 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 			name: "config canceller",
 			config: types.Config{
 				Quorum: 1,
-				SignerKeys: [][]byte{
-					signers[14].Bytes(),
-					signers[15].Bytes(),
+				Signers: []common.Address{
+					signers[14],
+					signers[15],
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 2,
-						SignerKeys: [][]byte{
-							signers[16].Bytes(),
-							signers[17].Bytes(),
-							signers[18].Bytes(),
-							signers[19].Bytes(),
+						Signers: []common.Address{
+							signers[16],
+							signers[17],
+							signers[18],
+							signers[19],
 						},
 						GroupSigners: []types.Config{},
 					},
@@ -219,32 +236,32 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 		{
 			name: "config proposer",
 			config: types.Config{
-				Quorum:     2,
-				SignerKeys: [][]byte{},
+				Quorum:  2,
+				Signers: []common.Address{},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 2,
-						SignerKeys: [][]byte{
-							signers[20].Bytes(),
-							signers[21].Bytes(),
-							signers[22].Bytes(),
-							signers[23].Bytes(),
+						Signers: []common.Address{
+							signers[20],
+							signers[21],
+							signers[22],
+							signers[23],
 						},
 						GroupSigners: []types.Config{},
 					}, {
 						Quorum: 2,
-						SignerKeys: [][]byte{
-							signers[24].Bytes(),
-							signers[25].Bytes(),
-							signers[26].Bytes(),
-							signers[27].Bytes(),
+						Signers: []common.Address{
+							signers[24],
+							signers[25],
+							signers[26],
+							signers[27],
 						},
 						GroupSigners: []types.Config{},
 					}, {
 						Quorum: 1,
-						SignerKeys: [][]byte{
-							signers[28].Bytes(),
-							signers[29].Bytes(),
+						Signers: []common.Address{
+							signers[28],
+							signers[29],
 						},
 						GroupSigners: []types.Config{},
 					},

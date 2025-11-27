@@ -9,10 +9,10 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
 
@@ -39,7 +39,8 @@ func PublicKeyToBigInt(pub crypto.PublicKey) (*big.Int, error) {
 		return nil, fmt.Errorf("not an ed25519 key")
 	}
 
-	return new(big.Int).SetBytes(pubEd), nil
+	// TODO: currently only works with 20 byte keys bc types.Config.Signers is [20]byte
+	return new(big.Int).SetBytes(pubEd[:20]), nil
 }
 
 func mustKey(w *wallet.Wallet) *big.Int {
@@ -100,12 +101,12 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 				}, tvm.KeyUINT8)),
 			},
 			want: &types.Config{
-				Quorum:     1,
-				SignerKeys: [][]byte{mustKey(signer1).Bytes()},
+				Quorum:  1,
+				Signers: []common.Address{common.Address(mustKey(signer1).Bytes())},
 				GroupSigners: []types.Config{
 					{
 						Quorum:       1,
-						SignerKeys:   [][]byte{mustKey(signer2).Bytes()},
+						Signers:      []common.Address{common.Address(mustKey(signer2).Bytes())},
 						GroupSigners: []types.Config{},
 					},
 				},
@@ -151,33 +152,33 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 			},
 			want: &types.Config{
 				Quorum: 2,
-				SignerKeys: [][]byte{
-					mustKey(wallets[0]).Bytes(),
-					mustKey(wallets[1]).Bytes(),
-					mustKey(wallets[2]).Bytes(),
+				Signers: []common.Address{
+					common.Address(mustKey(wallets[0]).Bytes()),
+					common.Address(mustKey(wallets[1]).Bytes()),
+					common.Address(mustKey(wallets[2]).Bytes()),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 4,
-						SignerKeys: [][]byte{
-							mustKey(wallets[3]).Bytes(),
-							mustKey(wallets[4]).Bytes(),
-							mustKey(wallets[5]).Bytes(),
-							mustKey(wallets[6]).Bytes(),
-							mustKey(wallets[7]).Bytes(),
+						Signers: []common.Address{
+							common.Address(mustKey(wallets[3]).Bytes()),
+							common.Address(mustKey(wallets[4]).Bytes()),
+							common.Address(mustKey(wallets[5]).Bytes()),
+							common.Address(mustKey(wallets[6]).Bytes()),
+							common.Address(mustKey(wallets[7]).Bytes()),
 						},
 						GroupSigners: []types.Config{
 							{
 								Quorum: 1,
-								SignerKeys: [][]byte{
-									mustKey(wallets[8]).Bytes(),
-									mustKey(wallets[9]).Bytes(),
+								Signers: []common.Address{
+									common.Address(mustKey(wallets[8]).Bytes()),
+									common.Address(mustKey(wallets[9]).Bytes()),
 								},
 								GroupSigners: []types.Config{
 									{
 										Quorum: 1,
-										SignerKeys: [][]byte{
-											mustKey(wallets[10]).Bytes(),
+										Signers: []common.Address{
+											common.Address(mustKey(wallets[10]).Bytes()),
 										},
 										GroupSigners: []types.Config{},
 									},
@@ -187,17 +188,17 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					},
 					{
 						Quorum: 3,
-						SignerKeys: [][]byte{
-							mustKey(wallets[11]).Bytes(),
-							mustKey(wallets[12]).Bytes(),
-							mustKey(wallets[13]).Bytes(),
-							mustKey(wallets[14]).Bytes(),
+						Signers: []common.Address{
+							common.Address(mustKey(wallets[11]).Bytes()),
+							common.Address(mustKey(wallets[12]).Bytes()),
+							common.Address(mustKey(wallets[13]).Bytes()),
+							common.Address(mustKey(wallets[14]).Bytes()),
 						},
 						GroupSigners: []types.Config{
 							{
 								Quorum: 1,
-								SignerKeys: [][]byte{
-									mustKey(wallets[15]).Bytes(),
+								Signers: []common.Address{
+									common.Address(mustKey(wallets[15]).Bytes()),
 								},
 								GroupSigners: []types.Config{},
 							},
@@ -222,7 +223,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 					{Val: 0},
 				}, tvm.KeyUINT8)),
 			},
-			wantErr: "unable to convert to SDK config type: invalid MCMS config: Quorum must be greater than 0",
+			wantErr: "invalid MCMS config: Quorum must be greater than 0",
 		},
 	}
 
@@ -237,8 +238,6 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 				require.EqualError(t, err, tt.wantErr)
 			} else {
 				require.NoError(t, err)
-				// Note: we need to remap SignerKeys to Signers for comparison
-				tonmcms.ConfigRemapSignerKeys(tt.want)
 				assert.Equal(t, tt.want, got)
 			}
 		})
@@ -281,12 +280,12 @@ func Test_SetConfigInputs(t *testing.T) {
 			name: "success: root signers with some groups",
 			giveConfig: types.Config{
 				Quorum: 1,
-				SignerKeys: [][]byte{
-					mustKey(signer1).Bytes(),
-					mustKey(signer2).Bytes(),
+				Signers: []common.Address{
+					common.Address(mustKey(signer1).Bytes()),
+					common.Address(mustKey(signer2).Bytes()),
 				},
 				GroupSigners: []types.Config{
-					{Quorum: 1, SignerKeys: [][]byte{mustKey(signer3).Bytes()}},
+					{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer3).Bytes())}},
 				},
 			},
 			want: mcms.Config{
@@ -309,12 +308,12 @@ func Test_SetConfigInputs(t *testing.T) {
 			name: "success: root signers with some groups and increased quorum",
 			giveConfig: types.Config{
 				Quorum: 2,
-				SignerKeys: [][]byte{
-					mustKey(signer1).Bytes(),
-					mustKey(signer2).Bytes(),
+				Signers: []common.Address{
+					common.Address(mustKey(signer1).Bytes()),
+					common.Address(mustKey(signer2).Bytes()),
 				},
 				GroupSigners: []types.Config{
-					{Quorum: 1, SignerKeys: [][]byte{mustKey(signer3).Bytes()}},
+					{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer3).Bytes())}},
 				},
 			},
 			want: mcms.Config{
@@ -337,9 +336,9 @@ func Test_SetConfigInputs(t *testing.T) {
 			name: "success: only root signers",
 			giveConfig: types.Config{
 				Quorum: 1,
-				SignerKeys: [][]byte{
-					mustKey(signer1).Bytes(),
-					mustKey(signer2).Bytes(),
+				Signers: []common.Address{
+					common.Address(mustKey(signer1).Bytes()),
+					common.Address(mustKey(signer2).Bytes()),
 				},
 				GroupSigners: []types.Config{},
 			},
@@ -362,9 +361,9 @@ func Test_SetConfigInputs(t *testing.T) {
 				Quorum:  2,
 				Signers: []common.Address{},
 				GroupSigners: []types.Config{
-					{Quorum: 1, SignerKeys: [][]byte{mustKey(signer1).Bytes()}},
-					{Quorum: 1, SignerKeys: [][]byte{mustKey(signer2).Bytes()}},
-					{Quorum: 1, SignerKeys: [][]byte{mustKey(signer3).Bytes()}},
+					{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer1).Bytes())}},
+					{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer2).Bytes())}},
+					{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer3).Bytes())}},
 				},
 			},
 			want: mcms.Config{
@@ -391,21 +390,21 @@ func Test_SetConfigInputs(t *testing.T) {
 			name: "success: nested signers and groups",
 			giveConfig: types.Config{
 				Quorum: 2,
-				SignerKeys: [][]byte{
-					mustKey(signer1).Bytes(),
-					mustKey(signer2).Bytes(),
+				Signers: []common.Address{
+					common.Address(mustKey(signer1).Bytes()),
+					common.Address(mustKey(signer2).Bytes()),
 				},
 				GroupSigners: []types.Config{
 					{
-						Quorum:     1,
-						SignerKeys: [][]byte{mustKey(signer3).Bytes()},
+						Quorum:  1,
+						Signers: []common.Address{common.Address(mustKey(signer3).Bytes())},
 						GroupSigners: []types.Config{
-							{Quorum: 1, SignerKeys: [][]byte{mustKey(signer4).Bytes()}},
+							{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer4).Bytes())}},
 						},
 					},
 					{
-						Quorum:     1,
-						SignerKeys: [][]byte{mustKey(signer5).Bytes()},
+						Quorum:  1,
+						Signers: []common.Address{common.Address(mustKey(signer5).Bytes())},
 					},
 				},
 			},
@@ -436,22 +435,22 @@ func Test_SetConfigInputs(t *testing.T) {
 			giveConfig: types.Config{
 				Quorum: 2,
 				// Root signers are out of order (signer2 is before signer1)
-				SignerKeys: [][]byte{
-					mustKey(signer2).Bytes(),
-					mustKey(signer1).Bytes(),
+				Signers: []common.Address{
+					common.Address(mustKey(signer2).Bytes()),
+					common.Address(mustKey(signer1).Bytes()),
 				},
 				// Group signers are out of order (signer5 is before the signer4 group)
 				GroupSigners: []types.Config{
 					{
-						Quorum:     1,
-						SignerKeys: [][]byte{mustKey(signer3).Bytes()},
+						Quorum:  1,
+						Signers: []common.Address{common.Address(mustKey(signer3).Bytes())},
 						GroupSigners: []types.Config{
-							{Quorum: 1, SignerKeys: [][]byte{mustKey(signer5).Bytes()}},
+							{Quorum: 1, Signers: []common.Address{common.Address(mustKey(signer5).Bytes())}},
 						},
 					},
 					{
-						Quorum:     1,
-						SignerKeys: [][]byte{mustKey(signer4).Bytes()},
+						Quorum:  1,
+						Signers: []common.Address{common.Address(mustKey(signer4).Bytes())},
 					},
 				},
 			},
@@ -480,8 +479,8 @@ func Test_SetConfigInputs(t *testing.T) {
 		{
 			name: "failure: signer count cannot exceed 255",
 			giveConfig: types.Config{
-				Quorum:     1,
-				SignerKeys: make([][]byte, math.MaxUint8+1),
+				Quorum:  1,
+				Signers: make([]common.Address, math.MaxUint8+1),
 			},
 			wantErr: "too many signers: 256 max number is 255",
 		},
