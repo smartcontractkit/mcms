@@ -129,7 +129,7 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 
 		evmConfig.Signers[i] = bindings.ManyChainMultiSigSigner{
 			// big.Int loading doesn't work for me
-			Addr:  common.Address([20]byte(AsUnsigned(signer.Address, 160).Bytes())),
+			Addr:  common.Address([20]byte(AsUnsigned(signer.Address, 160).Bytes())), // TODO: tvm.KeyUINT160
 			Index: signer.Index,
 			Group: signer.Group,
 		}
