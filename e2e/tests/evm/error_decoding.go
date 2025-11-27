@@ -157,17 +157,17 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	s.Require().NotNil(timelockExecErr, "ExecutionError should not be nil")
 	s.Require().NotNil(timelockExecErr.Transaction, "Transaction should be set in ExecutionError")
-	s.Require().NotEmpty(timelockExecErr.UnderlyingReason, "UnderlyingReason should be extracted")
-	s.Require().NotEmpty(timelockExecErr.DecodedUnderlyingReason, "DecodedUnderlyingReason should be extracted")
+	s.Require().NotEmpty(timelockExecErr.UnderlyingReasonRaw, "UnderlyingReasonRaw should be extracted")
+	s.Require().NotEmpty(timelockExecErr.UnderlyingReasonDecoded, "UnderlyingReasonDecoded should be extracted")
 
 	s.Contains(err.Error(), "OutOfBoundsGroup")
-	s.Equal(outOfBoundsGroupError.Name, timelockExecErr.DecodedUnderlyingReason, "Decoded underlying reason should match MCMS error")
+	s.Equal(outOfBoundsGroupError.Name, timelockExecErr.UnderlyingReasonDecoded, "Decoded underlying reason should match MCMS error")
 	s.T().Logf("[TestTimelockExecute] ExecutionError details: Transaction=%v RawRevert=%v Decoded=%q UnderlyingRaw=%q UnderlyingDecoded=%q",
 		timelockExecErr.Transaction,
-		timelockExecErr.RawRevertReason,
-		timelockExecErr.DecodedRevertReason,
-		timelockExecErr.UnderlyingReason,
-		timelockExecErr.DecodedUnderlyingReason,
+		timelockExecErr.RevertReasonRaw,
+		timelockExecErr.RevertReasonDecoded,
+		timelockExecErr.UnderlyingReasonRaw,
+		timelockExecErr.UnderlyingReasonDecoded,
 	)
 }
 
@@ -284,27 +284,27 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	)
 	s.Require().NotNil(execErr, "ExecutionError should not be nil")
 	s.Require().NotNil(execErr.Transaction, "Transaction should be set in ExecutionError")
-	s.Require().NotEmpty(execErr.UnderlyingReason, "UnderlyingReason should be extracted")
-	s.Require().NotEmpty(execErr.DecodedUnderlyingReason, "DecodedUnderlyingReason should be extracted")
+	s.Require().NotEmpty(execErr.UnderlyingReasonRaw, "UnderlyingReasonRaw should be extracted")
+	s.Require().NotEmpty(execErr.UnderlyingReasonDecoded, "UnderlyingReasonDecoded should be extracted")
 
 	s.Contains(err.Error(), "OutOfBoundsGroup")
-	s.NotEmpty(execErr.UnderlyingReason, "UnderlyingReason should not be empty")
-	s.NotNil(execErr.RawRevertReason, "RawRevertReason should be set")
+	s.NotEmpty(execErr.UnderlyingReasonRaw, "UnderlyingReasonRaw should not be empty")
+	s.NotNil(execErr.RevertReasonRaw, "RevertReasonRaw should be set")
 	s.T().Logf("[TestBypassProposal] ExecutionError details: Transaction=%v RawRevert=%v Decoded=%q UnderlyingRaw=%q UnderlyingDecoded=%q",
 		execErr.Transaction,
-		execErr.RawRevertReason,
-		execErr.DecodedRevertReason,
-		execErr.UnderlyingReason,
-		execErr.DecodedUnderlyingReason,
+		execErr.RevertReasonRaw,
+		execErr.RevertReasonDecoded,
+		execErr.UnderlyingReasonRaw,
+		execErr.UnderlyingReasonDecoded,
 	)
 	s.Equal(
 		outOfBoundsGroupError.Name,
-		execErr.DecodedUnderlyingReason,
+		execErr.UnderlyingReasonDecoded,
 		"Decoded underlying reason should match MCMS error",
 	)
 	s.Equal(
 		"CallReverted(truncated)",
-		execErr.DecodedRevertReason,
+		execErr.RevertReasonDecoded,
 		"Decoded revert reason should capture CallReverted wrapper",
 	)
 }
@@ -546,7 +546,7 @@ func setRootAndVerify(
 }
 
 // assertExecutionError asserts that an error is an ExecutionError with expected fields.
-// expectedSelector is optional - if provided (non-zero), it will assert that RawRevertReason.Selector matches.
+// expectedSelector is optional - if provided (non-zero), it will assert that RevertReasonRaw.Selector matches.
 func assertExecutionError(
 	t *testing.T,
 	err error,
@@ -566,7 +566,7 @@ func assertExecutionError(
 	}
 
 	if hasUnderlyingReason {
-		require.NotEmpty(t, execErr.UnderlyingReason, "ExecutionError.UnderlyingReason is empty but expected to be set")
+		require.NotEmpty(t, execErr.UnderlyingReasonRaw, "ExecutionError.UnderlyingReasonRaw is empty but expected to be set")
 	}
 
 	if containsMessage != "" {
@@ -576,23 +576,23 @@ func assertExecutionError(
 
 	// Assert on selector if provided (non-zero selector)
 	if expectedSelector != [4]byte{} {
-		if execErr.RawRevertReason == nil {
-			t.Logf("[assertExecutionError] Selector debug: expected=%#x but RawRevertReason is nil. OriginalErr=%v", expectedSelector, execErr.OriginalError)
+		if execErr.RevertReasonRaw == nil {
+			t.Logf("[assertExecutionError] Selector debug: expected=%#x but RevertReasonRaw is nil. OriginalErr=%v", expectedSelector, execErr.OriginalError)
 		} else {
 			t.Logf(
 				"[assertExecutionError] Selector debug: expected=%#x actual=%#x rawHex=%s decoded=%s underlyingRaw=%s underlyingDecoded=%s original=%v",
 				expectedSelector,
-				execErr.RawRevertReason.Selector,
-				common.Bytes2Hex(execErr.RawRevertReason.Combined()),
-				execErr.DecodedRevertReason,
-				execErr.UnderlyingReason,
-				execErr.DecodedUnderlyingReason,
+				execErr.RevertReasonRaw.Selector,
+				common.Bytes2Hex(execErr.RevertReasonRaw.Combined()),
+				execErr.RevertReasonDecoded,
+				execErr.UnderlyingReasonRaw,
+				execErr.UnderlyingReasonDecoded,
 				execErr.OriginalError,
 			)
 		}
-		require.NotNil(t, execErr.RawRevertReason, "RawRevertReason is nil but expected to be set")
-		require.Equal(t, expectedSelector, execErr.RawRevertReason.Selector,
-			"Error selector mismatch: expected 0x%x, got 0x%x", expectedSelector, execErr.RawRevertReason.Selector)
+		require.NotNil(t, execErr.RevertReasonRaw, "RevertReasonRaw is nil but expected to be set")
+		require.Equal(t, expectedSelector, execErr.RevertReasonRaw.Selector,
+			"Error selector mismatch: expected 0x%x, got 0x%x", expectedSelector, execErr.RevertReasonRaw.Selector)
 	}
 
 	return execErr

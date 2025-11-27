@@ -73,11 +73,10 @@ func (c *CustomErrorData) UnmarshalJSON(data []byte) error {
 	var payload struct {
 		Selector string `json:"selector"`
 		Data     string `json:"data,omitempty"`
-		Raw      string `json:"raw,omitempty"`
 	}
 
 	if err := json.Unmarshal(data, &payload); err != nil {
-		return err
+		return fmt.Errorf("failed to unmarshal CustomErrorData: %w", err)
 	}
 
 	if payload.Selector != "" {
@@ -90,7 +89,7 @@ func (c *CustomErrorData) UnmarshalJSON(data []byte) error {
 	if payload.Data != "" {
 		dataBytes, err := hexutil.Decode(payload.Data)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to unmarshal CustomErrorData: %w", err)
 		}
 		c.Data = dataBytes
 	}
@@ -121,32 +120,32 @@ func (c *CustomErrorData) HexSelector() string {
 type ExecutionError struct {
 	// Transaction is the pre-packed transaction data that can be used to retry or simulate
 	Transaction *gethtypes.Transaction
-	// RawRevertReason contains the error selector and raw data from the contract
+	// RevertReasonRaw contains the error selector and raw data from the contract
 	// This allows for easy comparison of error selectors (e.g., to check if it's CallReverted)
-	RawRevertReason *CustomErrorData
-	// DecodedRevertReason is the human-readable decoded revert reason from the contract (e.g., "InsufficientSigners()")
+	RevertReasonRaw *CustomErrorData
+	// RevertReasonDecoded is the human-readable decoded revert reason from the contract (e.g., "InsufficientSigners()")
 	// This is only populated if the revert data could be decoded using contract ABIs
-	DecodedRevertReason string
-	// UnderlyingReason contains the raw revert reason returned by a nested contract call (plain string or hex)
-	UnderlyingReason string
-	// DecodedUnderlyingReason is the human-readable decoded underlying revert reason (if decoding succeeded)
-	DecodedUnderlyingReason string
+	RevertReasonDecoded string
+	// UnderlyingReasonRaw contains the raw revert reason returned by a nested contract call (plain string or hex)
+	UnderlyingReasonRaw string
+	// UnderlyingReasonDecoded is the human-readable decoded underlying revert reason (if decoding succeeded)
+	UnderlyingReasonDecoded string
 	// OriginalError is the original error from the contract binding
 	OriginalError error `json:"-"`
 }
 
 func (e *ExecutionError) Error() string {
-	if e.DecodedUnderlyingReason != "" {
-		return fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.DecodedUnderlyingReason)
+	if e.UnderlyingReasonDecoded != "" {
+		return fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.UnderlyingReasonDecoded)
 	}
-	if e.UnderlyingReason != "" {
-		return fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.UnderlyingReason)
+	if e.UnderlyingReasonRaw != "" {
+		return fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.UnderlyingReasonRaw)
 	}
-	if e.DecodedRevertReason != "" {
-		return fmt.Sprintf("execution failed: %v (revert reason: %s)", e.OriginalError, e.DecodedRevertReason)
+	if e.RevertReasonDecoded != "" {
+		return fmt.Sprintf("execution failed: %v (revert reason: %s)", e.OriginalError, e.RevertReasonDecoded)
 	}
-	if e.RawRevertReason != nil && len(e.RawRevertReason.Combined()) > 0 {
-		return fmt.Sprintf("execution failed: %v (raw revert data: %s)", e.OriginalError, common.Bytes2Hex(e.RawRevertReason.Combined()))
+	if e.RevertReasonRaw != nil && len(e.RevertReasonRaw.Combined()) > 0 {
+		return fmt.Sprintf("execution failed: %v (raw revert data: %s)", e.OriginalError, common.Bytes2Hex(e.RevertReasonRaw.Combined()))
 	}
 
 	return fmt.Sprintf("execution failed: %v", e.OriginalError)
@@ -188,7 +187,7 @@ func (e *ExecutionError) UnmarshalJSON(data []byte) error {
 
 	var jsonMap map[string]any
 	if err := json.Unmarshal(data, &jsonMap); err != nil {
-		return err
+		return fmt.Errorf("error unmarshaling ExecutionError: %w", err)
 	}
 
 	var originalErr error
@@ -203,27 +202,27 @@ func (e *ExecutionError) UnmarshalJSON(data []byte) error {
 
 	cleanData, err := json.Marshal(jsonMap)
 	if err != nil {
-		return err
+		return fmt.Errorf("error re-marshaling ExecutionError data: %w", err)
 	}
 
 	type executionErrorAlias struct {
 		Transaction             *gethtypes.Transaction `json:"Transaction"`
-		RawRevertReason         *CustomErrorData       `json:"RawRevertReason"`
-		DecodedRevertReason     string                 `json:"DecodedRevertReason"`
-		UnderlyingReason        string                 `json:"UnderlyingReason"`
-		DecodedUnderlyingReason string                 `json:"DecodedUnderlyingReason"`
+		RawRevertReason         *CustomErrorData       `json:"RevertReasonRaw"`
+		DecodedRevertReason     string                 `json:"RevertReasonDecoded"`
+		UnderlyingReason        string                 `json:"UnderlyingReasonRaw"`
+		DecodedUnderlyingReason string                 `json:"UnderlyingReasonDecoded"`
 	}
 
 	var temp executionErrorAlias
 	if err := json.Unmarshal(cleanData, &temp); err != nil {
-		return err
+		return fmt.Errorf("error unmarshaling ExecutionError fields: %w", err)
 	}
 
 	e.Transaction = temp.Transaction
-	e.RawRevertReason = temp.RawRevertReason
-	e.DecodedRevertReason = temp.DecodedRevertReason
-	e.UnderlyingReason = temp.UnderlyingReason
-	e.DecodedUnderlyingReason = temp.DecodedUnderlyingReason
+	e.RevertReasonRaw = temp.RawRevertReason
+	e.RevertReasonDecoded = temp.DecodedRevertReason
+	e.UnderlyingReasonRaw = temp.UnderlyingReason
+	e.UnderlyingReasonDecoded = temp.DecodedUnderlyingReason
 	if originalErr != nil {
 		e.OriginalError = originalErr
 	}
@@ -260,24 +259,24 @@ func BuildExecutionError(
 
 	// If we have CustomErrorData directly, use it; otherwise construct from RawData
 	if revertData.CustomError != nil {
-		execErr.RawRevertReason = revertData.CustomError
+		execErr.RevertReasonRaw = revertData.CustomError
 	} else if len(revertData.RawData) > 0 {
 		// Extract selector and data separately from raw data
 		if len(revertData.RawData) >= selectorSize {
 			var selector [selectorSize]byte
 			copy(selector[:], revertData.RawData[:selectorSize])
-			execErr.RawRevertReason = &CustomErrorData{
+			execErr.RevertReasonRaw = &CustomErrorData{
 				Selector: selector,
 				Data:     revertData.RawData[selectorSize:],
 			}
 		} else {
-			execErr.RawRevertReason = &CustomErrorData{
+			execErr.RevertReasonRaw = &CustomErrorData{
 				Selector: [selectorSize]byte{},
 				Data:     revertData.RawData,
 			}
 		}
 	}
-	execErr.DecodedRevertReason = revertData.Decoded
+	execErr.RevertReasonDecoded = revertData.Decoded
 
 	// Check if this is an RBACTimelock underlying transaction revert
 	// This can appear in multiple ways:
@@ -285,20 +284,20 @@ func BuildExecutionError(
 	// 2. As a decoded custom error that contains this message
 	// 3. As a CallReverted error (selector 0x70de1b4b) which wraps the timelock revert
 	// In this case, we need to use CallContract to get the actual underlying revert reason.
-	// If extraction fails, just leave UnderlyingReason empty
-	rawRevertReasonHasCallRevertedSelector := execErr.RawRevertReason != nil && execErr.RawRevertReason.Selector == CallRevertedSelector
+	// If extraction fails, just leave UnderlyingReasonRaw empty
+	rawRevertReasonHasCallRevertedSelector := execErr.RevertReasonRaw != nil && execErr.RevertReasonRaw.Selector == CallRevertedSelector
 	rawDataHasCallRevertedSelector := len(revertData.RawData) >= selectorSize && string(revertData.RawData[:4]) == string(CallRevertedSelector[:])
 	isCallReverted := strings.Contains(errStr, "CallReverted") ||
-		strings.Contains(execErr.DecodedRevertReason, "CallReverted") ||
+		strings.Contains(execErr.RevertReasonDecoded, "CallReverted") ||
 		rawRevertReasonHasCallRevertedSelector ||
 		rawDataHasCallRevertedSelector
 
 	if strings.Contains(errStr, "RBACTimelock: underlying transaction reverted") ||
-		strings.Contains(execErr.DecodedRevertReason, "RBACTimelock: underlying transaction reverted") ||
+		strings.Contains(execErr.RevertReasonDecoded, "RBACTimelock: underlying transaction reverted") ||
 		(isCallReverted && timelockAddr != (common.Address{}) && len(timelockCallData) > 0) {
 		rawUnderlyingReason, decodedUnderlyingReason := getUnderlyingRevertReason(ctx, timelockAddr, timelockCallData, opts, client)
-		execErr.UnderlyingReason = rawUnderlyingReason
-		execErr.DecodedUnderlyingReason = decodedUnderlyingReason
+		execErr.UnderlyingReasonRaw = rawUnderlyingReason
+		execErr.UnderlyingReasonDecoded = decodedUnderlyingReason
 	}
 
 	return execErr

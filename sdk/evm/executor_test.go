@@ -530,11 +530,11 @@ func TestExecutorExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
 	require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
 	require.Contains(t, err.Error(), "RBACTimelock: underlying transaction reverted", "error should mention RBACTimelock")
 	// If CallContract was called, both raw and decoded underlying reasons should be populated when available.
-	if execErr.UnderlyingReason != "" {
-		require.NotEmpty(t, execErr.UnderlyingReason, "underlying reason should be extracted")
+	if execErr.UnderlyingReasonRaw != "" {
+		require.NotEmpty(t, execErr.UnderlyingReasonRaw, "underlying reason should be extracted")
 	}
-	if execErr.DecodedUnderlyingReason != "" {
-		require.Equal(t, "Insufficient balance to send", execErr.DecodedUnderlyingReason, "decoded underlying reason mismatch")
+	if execErr.UnderlyingReasonDecoded != "" {
+		require.Equal(t, "Insufficient balance to send", execErr.UnderlyingReasonDecoded, "decoded underlying reason mismatch")
 	}
 }
 
