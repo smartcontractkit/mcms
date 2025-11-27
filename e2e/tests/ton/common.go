@@ -8,6 +8,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/xssnick/tonutils-go/address"
+	"github.com/xssnick/tonutils-go/ton/wallet"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
@@ -29,6 +30,14 @@ func must[E any](out E, err error) E {
 	return out
 }
 
+func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wallet, error) {
+	v5r1Config := wallet.ConfigV5R1Final{
+		NetworkGlobalID: networkGlobalID,
+		Workchain:       0,
+	}
+	return wallet.FromSeed(api, wallet.NewSeed(), v5r1Config)
+}
+
 // TODO: duplicated utils with unit tests [END]
 
 func MCMSContractDataFrom(owner *address.Address, chainId int64) mcms.Data {
@@ -39,7 +48,7 @@ func MCMSContractDataFrom(owner *address.Address, chainId int64) mcms.Data {
 			PendingOwner: nil,
 		},
 		Oracle:  tvm.ZeroAddress,
-		Signers: must(tvm.MakeDict(map[*big.Int]mcms.Signer{}, tvm.KeyUINT256)),
+		Signers: must(tvm.MakeDict(map[*big.Int]mcms.Signer{}, 160)), // TODO: tvm.KeyUINT160
 		Config: mcms.Config{
 			Signers:      must(tvm.MakeDictFrom([]mcms.Signer{}, tvm.KeyUINT8)),
 			GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{}, tvm.KeyUINT8)),

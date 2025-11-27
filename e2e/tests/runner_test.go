@@ -45,4 +45,5 @@ func TestTONSuite(t *testing.T) {
 	// suite.Run(t, new(tone2e.TimelockInspectionTestSuite))
 	suite.Run(t, new(tone2e.SigningTestSuite))
 	suite.Run(t, new(tone2e.SetConfigTestSuite))
+	suite.Run(t, new(tone2e.SetRootTestSuite))
 }

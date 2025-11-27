@@ -6,12 +6,10 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
-	"slices"
 	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 
 	"github.com/stretchr/testify/suite"
 
@@ -26,11 +24,12 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
+	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 
 	commonton "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
-	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
+	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 // SetConfigTestSuite tests signing a proposal and converting back to a file
@@ -77,7 +76,7 @@ func (t *SetConfigTestSuite) deployMCMSContract() {
 			PendingOwner: nil,
 		},
 		Oracle:  tvm.ZeroAddress,
-		Signers: must(tvm.MakeDict(map[*big.Int]mcms.Signer{}, tvm.KeyUINT256)),
+		Signers: must(tvm.MakeDict(map[*big.Int]mcms.Signer{}, 160)), // TODO: tvm.KeyUINT160
 		Config: mcms.Config{
 			Signers:      must(tvm.MakeDictFrom([]mcms.Signer{}, tvm.KeyUINT8)),
 			GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{}, tvm.KeyUINT8)),
@@ -123,20 +122,13 @@ func (t *SetConfigTestSuite) deployMCMSContract() {
 
 func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 	// Signers in each group need to be sorted alphabetically
-	signers := [30]common.Address{}
-	for i := range signers {
-		key, _ := crypto.GenerateKey()
-		signers[i] = crypto.PubkeyToAddress(key.PublicKey)
-	}
-	slices.SortFunc(signers[:], func(a, b common.Address) int {
-		return strings.Compare(strings.ToLower(a.Hex()), strings.ToLower(b.Hex()))
-	})
+	signers := testutils.MakeNewECDSASigners(30)
 
 	amount := tlb.MustFromTON("0.3")
-	configurerTON, err := tonmcms.NewConfigurer(t.wallet, amount)
+	configurerTON, err := mcmston.NewConfigurer(t.wallet, amount)
 	t.Require().NoError(err)
 
-	inspectorTON := tonmcms.NewInspector(t.TonClient, tonmcms.NewConfigTransformer())
+	inspectorTON := mcmston.NewInspector(t.TonClient, mcmston.NewConfigTransformer())
 	t.Require().NoError(err)
 
 	tests := []struct {
@@ -151,26 +143,26 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 			config: types.Config{
 				Quorum: 2,
 				Signers: []common.Address{
-					signers[0],
-					signers[1],
-					signers[2],
+					signers[0].Address(),
+					signers[1].Address(),
+					signers[2].Address(),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 4,
 						Signers: []common.Address{
-							signers[3],
-							signers[4],
-							signers[5],
-							signers[6],
-							signers[7],
+							signers[3].Address(),
+							signers[4].Address(),
+							signers[5].Address(),
+							signers[6].Address(),
+							signers[7].Address(),
 						},
 						GroupSigners: []types.Config{
 							{
 								Quorum: 1,
 								Signers: []common.Address{
-									signers[8],
-									signers[9],
+									signers[8].Address(),
+									signers[9].Address(),
 								},
 								GroupSigners: []types.Config{},
 							},
@@ -179,10 +171,10 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 					{
 						Quorum: 3,
 						Signers: []common.Address{
-							signers[10],
-							signers[11],
-							signers[12],
-							signers[13],
+							signers[10].Address(),
+							signers[11].Address(),
+							signers[12].Address(),
+							signers[13].Address(),
 						},
 						GroupSigners: []types.Config{},
 					},
@@ -196,17 +188,17 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 			config: types.Config{
 				Quorum: 1,
 				Signers: []common.Address{
-					signers[14],
-					signers[15],
+					signers[14].Address(),
+					signers[15].Address(),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 2,
 						Signers: []common.Address{
-							signers[16],
-							signers[17],
-							signers[18],
-							signers[19],
+							signers[16].Address(),
+							signers[17].Address(),
+							signers[18].Address(),
+							signers[19].Address(),
 						},
 						GroupSigners: []types.Config{},
 					},
@@ -224,26 +216,26 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 					{
 						Quorum: 2,
 						Signers: []common.Address{
-							signers[20],
-							signers[21],
-							signers[22],
-							signers[23],
+							signers[20].Address(),
+							signers[21].Address(),
+							signers[22].Address(),
+							signers[23].Address(),
 						},
 						GroupSigners: []types.Config{},
 					}, {
 						Quorum: 2,
 						Signers: []common.Address{
-							signers[24],
-							signers[25],
-							signers[26],
-							signers[27],
+							signers[24].Address(),
+							signers[25].Address(),
+							signers[26].Address(),
+							signers[27].Address(),
 						},
 						GroupSigners: []types.Config{},
 					}, {
 						Quorum: 1,
 						Signers: []common.Address{
-							signers[28],
-							signers[29],
+							signers[28].Address(),
+							signers[29].Address(),
 						},
 						GroupSigners: []types.Config{},
 					},

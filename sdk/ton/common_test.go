@@ -4,7 +4,7 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 )
 
-// TODO: duplicated utils with unit tests [START]
+// TODO: duplicated utils with e2e tests [START]
 
 func must[E any](out E, err error) E {
 	if err != nil {
@@ -13,8 +13,6 @@ func must[E any](out E, err error) E {
 	return out
 }
 
-// TODO: duplicated utils with unit tests [END]
-
 func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wallet, error) {
 	v5r1Config := wallet.ConfigV5R1Final{
 		NetworkGlobalID: networkGlobalID,
@@ -22,3 +20,5 @@ func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wal
 	}
 	return wallet.FromSeed(api, wallet.NewSeed(), v5r1Config)
 }
+
+// TODO: duplicated utils with e2e tests [END]
