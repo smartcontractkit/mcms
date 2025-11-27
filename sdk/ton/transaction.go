@@ -22,7 +22,7 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 	}
 
 	if err := fields.Validate(); err != nil {
-		return fmt.Errorf("failed to validate TON additional fields: %w", err)
+		return err
 	}
 
 	return nil
@@ -49,7 +49,9 @@ func NewTransaction(
 	contractType string,
 	tags []string,
 ) (types.Transaction, error) {
-	additionalFields, err := json.Marshal(AdditionalFields{Value: value})
+	additionalFields, err := json.Marshal(AdditionalFields{
+		Value: value,
+	})
 	if err != nil {
 		return types.Transaction{}, fmt.Errorf("failed to marshal additional fields: %w", err)
 	}

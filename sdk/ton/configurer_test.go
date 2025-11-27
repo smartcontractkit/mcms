@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -51,15 +53,15 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmAddr: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			cfg: &types.Config{
 				Quorum: 2,
-				SignerKeys: [][]byte{
-					mustKey(wallets[1]).Bytes(),
-					mustKey(wallets[2]).Bytes(),
+				Signers: []common.Address{
+					common.Address(mustKey(wallets[1]).Bytes()),
+					common.Address(mustKey(wallets[2]).Bytes()),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 1,
-						SignerKeys: [][]byte{
-							mustKey(wallets[3]).Bytes(),
+						Signers: []common.Address{
+							common.Address(mustKey(wallets[3]).Bytes()),
 						},
 						GroupSigners: nil,
 					},
@@ -94,15 +96,15 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mcmAddr: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			cfg: &types.Config{
 				Quorum: 2,
-				SignerKeys: [][]byte{
-					mustKey(wallets[1]).Bytes(),
-					mustKey(wallets[2]).Bytes(),
+				Signers: []common.Address{
+					common.Address(mustKey(wallets[1]).Bytes()),
+					common.Address(mustKey(wallets[2]).Bytes()),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 1,
-						SignerKeys: [][]byte{
-							mustKey(wallets[3]).Bytes(),
+						Signers: []common.Address{
+							common.Address(mustKey(wallets[3]).Bytes()),
 						},
 						GroupSigners: nil,
 					},
