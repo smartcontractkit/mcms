@@ -45,10 +45,10 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 		name: "with decoded underlying reason - highest priority",
 		execErr: &ExecutionError{
 			OriginalError:           errors.New(errMsgOriginalError),
-			RawUnderlyingReason:     "0x1234",
-			DecodedUnderlyingReason: "decoded underlying revert reason",
-			DecodedRevertReason:     "decoded reason",
-			RawRevertReason: &CustomErrorData{
+			UnderlyingReasonRaw:     "0x1234",
+			UnderlyingReasonDecoded: "decoded underlying revert reason",
+			RevertReasonDecoded:     "decoded reason",
+			RevertReasonRaw: &CustomErrorData{
 				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
@@ -67,9 +67,9 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 		name: "with raw underlying reason when decoded unavailable",
 		execErr: &ExecutionError{
 			OriginalError:       errors.New(errMsgOriginalError),
-			RawUnderlyingReason: "underlying revert reason",
-			DecodedRevertReason: "decoded reason",
-			RawRevertReason: &CustomErrorData{
+			UnderlyingReasonRaw: "underlying revert reason",
+			RevertReasonDecoded: "decoded reason",
+			RevertReasonRaw: &CustomErrorData{
 				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
@@ -88,8 +88,8 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 		name: "with decoded revert reason - second priority",
 		execErr: &ExecutionError{
 			OriginalError:       errors.New(errMsgOriginalError),
-			DecodedRevertReason: "OutOfBoundsGroup",
-			RawRevertReason: &CustomErrorData{
+			RevertReasonDecoded: "OutOfBoundsGroup",
+			RevertReasonRaw: &CustomErrorData{
 				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
@@ -108,7 +108,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 		name: "with raw revert reason - third priority",
 		execErr: &ExecutionError{
 			OriginalError: errors.New(errMsgOriginalError),
-			RawRevertReason: &CustomErrorData{
+			RevertReasonRaw: &CustomErrorData{
 				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
@@ -128,7 +128,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 		name: "with empty raw revert reason - selector only still shows raw data",
 		execErr: &ExecutionError{
 			OriginalError: errors.New(errMsgOriginalError),
-			RawRevertReason: &CustomErrorData{
+			RevertReasonRaw: &CustomErrorData{
 				Selector: [4]byte{0x12, 0x34, 0x56, 0x78},
 				Data:     []byte{},
 			},
@@ -148,7 +148,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 		name: "with nil raw revert reason - should not show raw data",
 		execErr: &ExecutionError{
 			OriginalError:   errors.New(errMsgOriginalError),
-			RawRevertReason: nil,
+			RevertReasonRaw: nil,
 		},
 		expectedContains: []string{
 			errMsgExecutionFailed,
@@ -179,7 +179,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 		name: "with CallReverted selector",
 		execErr: &ExecutionError{
 			OriginalError: errors.New(errMsgOriginalError),
-			RawRevertReason: &CustomErrorData{
+			RevertReasonRaw: &CustomErrorData{
 				Selector: CallRevertedSelector,
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
@@ -195,7 +195,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 		name: "with decoded reason but no underlying reason",
 		execErr: &ExecutionError{
 			OriginalError:       errors.New("contract call failed"),
-			DecodedRevertReason: "InsufficientSigners",
+			RevertReasonDecoded: "InsufficientSigners",
 		},
 		expectedContains: []string{
 			errMsgExecutionFailed,
@@ -360,13 +360,13 @@ func TestExecutionErrorJSON(t *testing.T) {
 		t.Parallel()
 
 		execErr := &ExecutionError{
-			RawRevertReason: &CustomErrorData{
+			RevertReasonRaw: &CustomErrorData{
 				Selector: CallRevertedSelector,
 				Data:     []byte{0x01, 0x02},
 			},
-			DecodedRevertReason:     "CallReverted(truncated)",
-			RawUnderlyingReason:     "0xdeadbeef",
-			DecodedUnderlyingReason: "OutOfBoundsGroup()",
+			RevertReasonDecoded:     "CallReverted(truncated)",
+			UnderlyingReasonRaw:     "0xdeadbeef",
+			UnderlyingReasonDecoded: "OutOfBoundsGroup()",
 			OriginalError:           errors.New("execution reverted: custom error"),
 		}
 
@@ -377,8 +377,8 @@ func TestExecutionErrorJSON(t *testing.T) {
 		require.NoError(t, json.Unmarshal(bytes, &parsed))
 
 		require.Equal(t, "execution reverted: custom error", parsed["OriginalError"])
-		require.Equal(t, "CallReverted(truncated)", parsed["DecodedRevertReason"])
-		require.Equal(t, "OutOfBoundsGroup()", parsed["DecodedUnderlyingReason"])
+		require.Equal(t, "CallReverted(truncated)", parsed["RevertReasonDecoded"])
+		require.Equal(t, "OutOfBoundsGroup()", parsed["UnderlyingReasonDecoded"])
 	})
 
 	t.Run("unmarshal_restores_original_error", func(t *testing.T) {
@@ -386,10 +386,10 @@ func TestExecutionErrorJSON(t *testing.T) {
 
 		payload := `{
 			"Transaction": null,
-			"RawRevertReason": {"selector": "0x70de1b4b", "data": "0x"},
-			"DecodedRevertReason": "CallReverted(truncated)",
-			"RawUnderlyingReason": "0xdeadbeef",
-			"DecodedUnderlyingReason": "OutOfBoundsGroup()",
+			"RevertReasonRaw": {"selector": "0x70de1b4b", "data": "0x"},
+			"RevertReasonDecoded": "CallReverted(truncated)",
+			"UnderlyingReasonRaw": "0xdeadbeef",
+			"UnderlyingReasonDecoded": "OutOfBoundsGroup()",
 			"OriginalError": "execution reverted: custom error"
 		}`
 
@@ -397,10 +397,10 @@ func TestExecutionErrorJSON(t *testing.T) {
 		require.NoError(t, json.Unmarshal([]byte(payload), &execErr))
 
 		require.EqualError(t, execErr.OriginalError, "execution reverted: custom error")
-		require.Equal(t, "CallReverted(truncated)", execErr.DecodedRevertReason)
-		require.Equal(t, "OutOfBoundsGroup()", execErr.DecodedUnderlyingReason)
-		require.NotNil(t, execErr.RawRevertReason)
-		assert.Equal(t, CallRevertedSelector, execErr.RawRevertReason.Selector)
+		require.Equal(t, "CallReverted(truncated)", execErr.RevertReasonDecoded)
+		require.Equal(t, "OutOfBoundsGroup()", execErr.UnderlyingReasonDecoded)
+		require.NotNil(t, execErr.RevertReasonRaw)
+		assert.Equal(t, CallRevertedSelector, execErr.RevertReasonRaw.Selector)
 	})
 }
 
