@@ -4,10 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"slices"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/tvm/cell"
@@ -15,7 +13,6 @@ import (
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/ocr"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
@@ -28,7 +25,7 @@ var _ sdk.Encoder = &Encoder{}
 var _ RootMetadataEncoder[mcms.RootMetadata] = &Encoder{}
 var _ OperationEncoder[mcms.Op] = &Encoder{}
 var _ ProofEncoder[mcms.Proof] = &Encoder{}
-var _ SignaturesEncoder[ocr.SignatureEd25519] = &Encoder{}
+var _ SignaturesEncoder[mcms.Signature] = &Encoder{}
 
 // TODO: bubble up to sdk, use in evm as well
 // Defines encoding from sdk types.ChainMetadata to chain type RootMetadata T
@@ -194,22 +191,17 @@ const (
 	SignatureVThreshold = 2
 )
 
-func (e *Encoder) ToSignatures(ss []types.Signature, hash common.Hash) ([]ocr.SignatureEd25519, error) {
-	bindSignatures := make([]ocr.SignatureEd25519, 0, len(ss))
+func (e *Encoder) ToSignatures(ss []types.Signature, hash common.Hash) ([]mcms.Signature, error) {
+	bindSignatures := make([]mcms.Signature, 0, len(ss))
 	for _, s := range ss {
 		if s.V < SignatureVThreshold {
 			s.V += SignatureVOffset
 		}
 
-		// Notice: to verify the signature on TON we need to recover/publish the public key
-		pubKey, err := s.RecoverPublicKey(hash)
-		if err != nil {
-			return []ocr.SignatureEd25519{}, fmt.Errorf("failed to recover public key: %w", err)
-		}
-
-		pubKeyBytes := crypto.FromECDSAPub(pubKey)
-		bindSignatures = append(bindSignatures, ocr.SignatureEd25519{
-			Data: slices.Concat(s.R.Bytes(), s.S.Bytes(), pubKeyBytes),
+		bindSignatures = append(bindSignatures, mcms.Signature{
+			V: s.V,
+			R: new(big.Int).SetBytes(s.R.Bytes()),
+			S: new(big.Int).SetBytes(s.S.Bytes()),
 		})
 	}
 

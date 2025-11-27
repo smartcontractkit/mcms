@@ -41,12 +41,12 @@ func TestInspector_GetConfig(t *testing.T) {
 			address: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockResult: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Key: mustKey(wallets[0]), Index: 0, Group: 0},
-					{Key: mustKey(wallets[1]), Index: 1, Group: 0},
-					{Key: mustKey(wallets[2]), Index: 2, Group: 0},
-					{Key: mustKey(wallets[3]), Index: 0, Group: 1},
-					{Key: mustKey(wallets[4]), Index: 1, Group: 1},
-					{Key: mustKey(wallets[5]), Index: 2, Group: 1},
+					{Address: mustKey(wallets[0]), Index: 0, Group: 0},
+					{Address: mustKey(wallets[1]), Index: 1, Group: 0},
+					{Address: mustKey(wallets[2]), Index: 2, Group: 0},
+					{Address: mustKey(wallets[3]), Index: 0, Group: 1},
+					{Address: mustKey(wallets[4]), Index: 1, Group: 1},
+					{Address: mustKey(wallets[5]), Index: 2, Group: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 3},

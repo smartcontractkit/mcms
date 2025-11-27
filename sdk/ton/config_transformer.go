@@ -64,9 +64,9 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	idx := uint8(0)
 	for i, signerAddr := range signerAddrs {
 		signers[i] = mcms.Signer{
-			Key:   signerAddr.Big(), // TODO: address vs public key required for TON
-			Group: signerGroups[i],
-			Index: idx,
+			Address: signerAddr.Big(), // TODO: address vs public key required for TON
+			Group:   signerGroups[i],
+			Index:   idx,
 		}
 		idx += 1
 	}
@@ -129,7 +129,7 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 
 		evmConfig.Signers[i] = bindings.ManyChainMultiSigSigner{
 			// big.Int loading doesn't work for me
-			Addr:  common.Address([20]byte(AsUnsigned(signer.Key, 256).Bytes())),
+			Addr:  common.Address([20]byte(AsUnsigned(signer.Address, 160).Bytes())),
 			Index: signer.Index,
 			Group: signer.Group,
 		}
