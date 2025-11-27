@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.31.1
+
+### Patch Changes
+
+- [#552](https://github.com/smartcontractkit/mcms/pull/552) [`58a1ff8`](https://github.com/smartcontractkit/mcms/commit/58a1ff81c3c4b379e194c1dac99529ab64565fb8) Thanks [@ecPablo](https://github.com/ecPablo)! - rename DecodedError field to RawDecodedError
+
 ## 0.31.0
 
 ### Minor Changes
