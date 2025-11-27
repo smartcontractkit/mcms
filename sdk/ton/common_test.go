@@ -1,0 +1,24 @@
+package ton_test
+
+import (
+	"github.com/xssnick/tonutils-go/ton/wallet"
+)
+
+// TODO: duplicated utils with unit tests [START]
+
+func must[E any](out E, err error) E {
+	if err != nil {
+		panic(err)
+	}
+	return out
+}
+
+// TODO: duplicated utils with unit tests [END]
+
+func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wallet, error) {
+	v5r1Config := wallet.ConfigV5R1Final{
+		NetworkGlobalID: networkGlobalID,
+		Workchain:       0,
+	}
+	return wallet.FromSeed(api, wallet.NewSeed(), v5r1Config)
+}

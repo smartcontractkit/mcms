@@ -17,13 +17,6 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func must[E any](out E, err error) E {
-	if err != nil {
-		panic(err)
-	}
-	return out
-}
-
 func TestDecoder(t *testing.T) {
 	t.Parallel()
 

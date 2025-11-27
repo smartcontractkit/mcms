@@ -18,6 +18,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/types"
 
 	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
@@ -26,6 +27,8 @@ import (
 
 func TestInspector_GetConfig(t *testing.T) {
 	t.Parallel()
+
+	signers := testutils.MakeNewECDSASigners(8)
 
 	ctx := context.Background()
 	tests := []struct {
@@ -41,12 +44,12 @@ func TestInspector_GetConfig(t *testing.T) {
 			address: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockResult: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: mustKey(wallets[0]), Index: 0, Group: 0},
-					{Address: mustKey(wallets[1]), Index: 1, Group: 0},
-					{Address: mustKey(wallets[2]), Index: 2, Group: 0},
-					{Address: mustKey(wallets[3]), Index: 0, Group: 1},
-					{Address: mustKey(wallets[4]), Index: 1, Group: 1},
-					{Address: mustKey(wallets[5]), Index: 2, Group: 1},
+					{Address: signers[0].Address().Big(), Index: 0, Group: 0},
+					{Address: signers[1].Address().Big(), Index: 1, Group: 0},
+					{Address: signers[2].Address().Big(), Index: 2, Group: 0},
+					{Address: signers[3].Address().Big(), Index: 0, Group: 1},
+					{Address: signers[4].Address().Big(), Index: 1, Group: 1},
+					{Address: signers[5].Address().Big(), Index: 2, Group: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 3},
@@ -60,17 +63,17 @@ func TestInspector_GetConfig(t *testing.T) {
 			want: &types.Config{
 				Quorum: 3,
 				Signers: []common.Address{
-					common.Address(mustKey(wallets[0]).Bytes()),
-					common.Address(mustKey(wallets[1]).Bytes()),
-					common.Address(mustKey(wallets[2]).Bytes()),
+					signers[0].Address(),
+					signers[1].Address(),
+					signers[2].Address(),
 				},
 				GroupSigners: []types.Config{
 					{
 						Quorum: 2,
 						Signers: []common.Address{
-							common.Address(mustKey(wallets[3]).Bytes()),
-							common.Address(mustKey(wallets[4]).Bytes()),
-							common.Address(mustKey(wallets[5]).Bytes()),
+							signers[3].Address(),
+							signers[4].Address(),
+							signers[5].Address(),
 						},
 						GroupSigners: []types.Config{},
 					},

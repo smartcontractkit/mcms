@@ -64,7 +64,7 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	idx := uint8(0)
 	for i, signerAddr := range signerAddrs {
 		signers[i] = mcms.Signer{
-			Address: signerAddr.Big(), // TODO: address vs public key required for TON
+			Address: signerAddr.Big(), // represented as big.Int on TON
 			Group:   signerGroups[i],
 			Index:   idx,
 		}
