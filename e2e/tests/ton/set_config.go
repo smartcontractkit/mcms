@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -17,7 +16,6 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
-	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
@@ -42,37 +40,28 @@ type SetConfigTestSuite struct {
 }
 
 // SetupSuite runs before the test suite
-func (t *SetConfigTestSuite) SetupSuite() {
-	t.TestSetup = *e2e.InitializeSharedTestSetup(t.T())
+func (s *SetConfigTestSuite) SetupSuite() {
+	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
-	walletVersion := wallet.HighloadV2Verified //nolint:staticcheck // only option in mylocalton-docker
-	mcWallet, err := wallet.FromSeed(t.TonClient, strings.Fields(blockchain.DefaultTonHlWalletMnemonic), walletVersion)
-	t.Require().NoError(err)
+	var err error
+	s.wallet, err = LocalWalletDefault(s.TonClient)
+	s.Require().NoError(err)
 
-	time.Sleep(8 * time.Second)
-
-	mcFunderWallet, err := wallet.FromPrivateKeyWithOptions(t.TonClient, mcWallet.PrivateKey(), walletVersion, wallet.WithWorkchain(-1))
-	t.Require().NoError(err)
-
-	// subwallet 42 has balance
-	t.wallet, err = mcFunderWallet.GetSubwallet(uint32(42))
-	t.Require().NoError(err)
-
-	t.deployMCMSContract()
+	s.deployMCMSContract()
 }
 
-func (t *SetConfigTestSuite) deployMCMSContract() {
+func (s *SetConfigTestSuite) deployMCMSContract() {
 	amount := tlb.MustFromTON("0.05")
 	msgBody := cell.BeginCell().EndCell() // empty cell, top up
 
 	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsMCMS)
 	contractCode, err := wrappers.ParseCompiledContract(contractPath)
-	t.Require().NoError(err)
+	s.Require().NoError(err)
 
-	contractData, err := tlb.ToCell(mcms.Data{
+	data := mcms.Data{
 		ID: 4,
 		Ownable: commonton.Ownable2Step{
-			Owner:        t.wallet.Address(),
+			Owner:        s.wallet.Address(),
 			PendingOwner: nil,
 		},
 		Oracle:  tvm.ZeroAddress,
@@ -103,33 +92,34 @@ func (t *SetConfigTestSuite) deployMCMSContract() {
 				OverridePreviousRoot: false,
 			},
 		},
-	})
-	t.Require().NoError(err)
+	}
+	contractData, err := tlb.ToCell(data)
+	s.Require().NoError(err)
 
 	// TODO: extract .WaitTrace(tx) functionality and use here instead of wrapper
-	client := tracetracking.NewSignedAPIClient(t.TonClient, *t.wallet)
-	contract, _, err := wrappers.Deploy(t.T().Context(), &client, contractCode, contractData, amount, msgBody)
-	t.Require().NoError(err)
+	client := tracetracking.NewSignedAPIClient(s.TonClient, *s.wallet)
+	contract, _, err := wrappers.Deploy(s.T().Context(), &client, contractCode, contractData, amount, msgBody)
+	s.Require().NoError(err)
 	addr := contract.Address
 
 	// workchain := int8(-1)
-	// addr, tx, _, err := t.wallet.DeployContractWaitTransaction(t.T().Context(), amount, msgBody, contractCode, contractData, workchain)
-	t.Require().NoError(err)
-	// t.Require().NotNil(tx)
+	// addr, tx, _, err := s.wallet.DeployContractWaitTransaction(s.T().Context(), amount, msgBody, contractCode, contractData, workchain)
+	s.Require().NoError(err)
+	// s.Require().NotNil(tx)
 
-	t.mcmsAddr = addr.String()
+	s.mcmsAddr = addr.String()
 }
 
-func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
+func (s *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 	// Signers in each group need to be sorted alphabetically
 	signers := testutils.MakeNewECDSASigners(30)
 
 	amount := tlb.MustFromTON("0.3")
-	configurerTON, err := mcmston.NewConfigurer(t.wallet, amount)
-	t.Require().NoError(err)
+	configurerTON, err := mcmston.NewConfigurer(s.wallet, amount)
+	s.Require().NoError(err)
 
-	inspectorTON := mcmston.NewInspector(t.TonClient, mcmston.NewConfigTransformer())
-	t.Require().NoError(err)
+	inspectorTON := mcmston.NewInspector(s.TonClient, mcmston.NewConfigTransformer())
+	s.Require().NoError(err)
 
 	tests := []struct {
 		name       string
@@ -247,18 +237,18 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func() {
+		s.Run(tt.name, func() {
 			// Set config
 			{
-				res, err := tt.configurer.SetConfig(t.T().Context(), t.mcmsAddr, &tt.config, true)
-				t.Require().NoError(err, "setting config on MCMS contract")
+				res, err := tt.configurer.SetConfig(s.T().Context(), s.mcmsAddr, &tt.config, true)
+				s.Require().NoError(err, "setting config on MCMS contract")
 
-				t.Require().NotNil(res.Hash)
-				t.Require().NotNil(res.RawData)
+				s.Require().NotNil(res.Hash)
+				s.Require().NotNil(res.RawData)
 
 				tx, ok := res.RawData.(*tlb.Transaction)
-				t.Require().True(ok)
-				t.Require().NotNil(tx.Description)
+				s.Require().True(ok)
+				s.Require().NotNil(tx.Description)
 
 				// TODO: wait for tx, verify success
 				// TODO: implement waiting for tx trace
@@ -268,17 +258,17 @@ func (t *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 			}
 
 			{
-				gotCount, err := tt.inspector.GetOpCount(t.T().Context(), t.mcmsAddr)
-				t.Require().NoError(err, "getting config on MCMS contract")
-				t.Require().Equal(uint64(17), gotCount)
+				gotCount, err := tt.inspector.GetOpCount(s.T().Context(), s.mcmsAddr)
+				s.Require().NoError(err, "getting config on MCMS contract")
+				s.Require().Equal(uint64(17), gotCount)
 			}
 
 			// Assert that config has been set
 			{
-				gotConfig, err := tt.inspector.GetConfig(t.T().Context(), t.mcmsAddr)
-				t.Require().NoError(err, "getting config on MCMS contract")
-				t.Require().NotNil(gotConfig)
-				t.Require().Equal(&tt.config, gotConfig)
+				gotConfig, err := tt.inspector.GetConfig(s.T().Context(), s.mcmsAddr)
+				s.Require().NoError(err, "getting config on MCMS contract")
+				s.Require().NotNil(gotConfig)
+				s.Require().Equal(&tt.config, gotConfig)
 			}
 		})
 	}

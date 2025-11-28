@@ -4,323 +4,333 @@
 package tone2e
 
 import (
-	"context"
-	"crypto/ecdsa"
 	"math/big"
+	"math/rand"
+	"os"
+	"path/filepath"
+	"slices"
+	"strings"
 	"time"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
 
+	cselectors "github.com/smartcontractkit/chain-selectors"
+
+	"github.com/xssnick/tonutils-go/address"
+	"github.com/xssnick/tonutils-go/tlb"
+	"github.com/xssnick/tonutils-go/ton/wallet"
+	"github.com/xssnick/tonutils-go/tvm/cell"
+
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
+
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
-	testutils "github.com/smartcontractkit/mcms/e2e/utils"
+
 	"github.com/smartcontractkit/mcms/sdk/evm"
-	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
+	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 // TimelockInspectionTestSuite is a suite of tests for the RBACTimelock contract inspection.
 type TimelockInspectionTestSuite struct {
 	suite.Suite
-	signerAddresses  []common.Address
-	auth             *bind.TransactOpts
-	publicKey        common.Address
-	timelockContract *bindings.RBACTimelock
 	e2e.TestSetup
+
+	wallet       *wallet.Wallet
+	timelockAddr *address.Address
+
+	accounts []*address.Address
 }
 
-func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, address common.Address) {
-	ctx := context.Background()
-	tx, err := s.timelockContract.GrantRole(s.auth, role, address)
+func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Address) {
+	body, err := tlb.ToCell(rbac.GrantRole{
+		QueryID: rand.Uint64(),
+
+		Role:    new(big.Int).SetBytes(role[:]),
+		Account: acc,
+	})
 	s.Require().NoError(err)
-	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.ClientA, tx.Hash())
+
+	msg := &wallet.Message{
+		Mode: wallet.PayGasSeparately,
+		InternalMessage: &tlb.InternalMessage{
+			IHRDisabled: true,
+			Bounce:      true,
+			DstAddr:     s.timelockAddr,
+			Amount:      tlb.MustFromTON("0.12"),
+			Body:        body,
+		},
+	}
+
+	// TODO: do we wait for execution trace?
+	tx, _, err := s.wallet.SendWaitTransaction(s.T().Context(), msg)
 	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
-	receipt, err = testutils.WaitMinedWithTxHash(ctx, s.ClientA, tx.Hash())
+	s.Require().NotNil(tx)
+
+	// TODO: confirm expectedtransaction success
+}
+
+func (s *TimelockInspectionTestSuite) scheduleBatch(calls []timelock.Call, predecessor *big.Int, salt *big.Int, delay uint32) {
+	body, err := tlb.ToCell(timelock.ScheduleBatch{
+		QueryID: rand.Uint64(),
+
+		Calls:       toncommon.SnakeRef[timelock.Call](calls),
+		Predecessor: predecessor,
+		Salt:        salt,
+		Delay:       delay,
+	})
 	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+
+	msg := &wallet.Message{
+		Mode: wallet.PayGasSeparately,
+		InternalMessage: &tlb.InternalMessage{
+			IHRDisabled: true,
+			Bounce:      true,
+			DstAddr:     s.timelockAddr,
+			Amount:      tlb.MustFromTON("0.3"),
+			Body:        body,
+		},
+	}
+
+	tx, _, err := s.wallet.SendWaitTransaction(s.T().Context(), msg)
+	s.Require().NoError(err)
+	s.Require().NotNil(tx)
+
+	// TODO: wait for tx
+	time.Sleep(3 * time.Second)
+
+	// TODO: confirm expectedtransaction success
+}
+
+func (s *TimelockInspectionTestSuite) deployTimelockContract() {
+	amount := tlb.MustFromTON("0.5") // TODO: high gas
+
+	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsTimelock)
+	contractCode, err := wrappers.ParseCompiledContract(contractPath)
+	s.Require().NoError(err)
+
+	data := TimelockEmptyDataFrom(hash.CRC32("timelock-test"))
+	contractData, err := tlb.ToCell(data)
+	s.Require().NoError(err)
+
+	// When deploying the contract, send the Init message to initialize the Timelock contract
+	none := []toncommon.WrappedAddress{}
+	body := timelock.Init{
+		QueryID:                  0,
+		MinDelay:                 0,
+		Admin:                    s.wallet.Address(),
+		Proposers:                toncommon.SnakeRef[toncommon.WrappedAddress](none),
+		Executors:                toncommon.SnakeRef[toncommon.WrappedAddress](none),
+		Cancellers:               toncommon.SnakeRef[toncommon.WrappedAddress](none),
+		Bypassers:                toncommon.SnakeRef[toncommon.WrappedAddress](none),
+		ExecutorRoleCheckEnabled: true,
+		OpFinalizationTimeout:    0,
+	}
+	bodyc, err := tlb.ToCell(body)
+	s.Require().NoError(err)
+
+	// TODO: extract .WaitTrace(tx) functionality and use here instead of wrapper
+	client := tracetracking.NewSignedAPIClient(s.TonClient, *s.wallet)
+	contract, _, err := wrappers.Deploy(s.T().Context(), &client, contractCode, contractData, amount, bodyc)
+	s.Require().NoError(err)
+	s.timelockAddr = contract.Address
+
+	// workchain := int8(-1)
+	// addr, tx, _, err := s.wallet.DeployContractWaitTransaction(s.T().Context(), amount, msgBody, contractCode, contractData, workchain)
+	s.Require().NoError(err)
+	// s.Require().NotNil(tx)
 }
 
 // SetupSuite runs before the test suite
 func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
-	// Get deployer's private key
-	privateKeyHex := s.Settings.PrivateKeys[0]
-	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
-	s.Require().NoError(err, "Invalid private key")
 
-	// Define signer addresses
-	s.signerAddresses = []common.Address{
-		common.HexToAddress("0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC"),
-		common.HexToAddress("0x70997970C51812dc3A010C7d01b50e0d17dc79C8"),
+	// Generate few test wallets
+	chainID := cselectors.TON_LOCALNET.ChainID
+	client := s.TonClient
+	s.accounts = []*address.Address{
+		must(makeRandomTestWallet(client, chainID)).Address(),
+		must(makeRandomTestWallet(client, chainID)).Address(),
 	}
 
-	// Parse ChainID from string to int64
-	chainID, ok := new(big.Int).SetString(s.BlockchainA.Out.ChainID, 10)
-	s.Require().True(ok, "Failed to parse chain ID")
+	// Sort accounts to have deterministic order
+	slices.SortFunc(s.accounts, func(a, b *address.Address) int {
+		return strings.Compare(strings.ToLower(a.String()), strings.ToLower(b.String()))
+	})
 
-	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, chainID)
-	s.Require().NoError(err, "Failed to create transactor")
-	s.auth = auth
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	s.Require().True(ok, "Failed to cast public key to ECDSA")
+	var err error
+	s.wallet, err = LocalWalletDefault(client)
+	s.Require().NoError(err)
 
-	// Derive the Ethereum address from the public key
-	address := crypto.PubkeyToAddress(*publicKeyECDSA)
-	s.publicKey = address
+	// Deploy Timelock contract
+	s.deployTimelockContract()
 
-	s.timelockContract = testutils.DeployTimelockContract(&s.Suite, s.ClientA, s.auth, address.String())
+	// TODO: wait for tx
+	time.Sleep(5 * time.Second)
 
 	// Grant Some Roles for testing
 	// Proposers
-	role, err := s.timelockContract.PROPOSERROLE(&bind.CallOpts{})
+	role := [32]byte(timelock.RoleProposer.Bytes())
 	s.Require().NoError(err)
-	s.grantRole(role, s.signerAddresses[0])
+	s.grantRole(role, s.accounts[0])
 	// Executors
-	role, err = s.timelockContract.EXECUTORROLE(&bind.CallOpts{})
+	role = [32]byte(timelock.RoleExecutor.Bytes())
 	s.Require().NoError(err)
-	s.grantRole(role, s.signerAddresses[0])
-	s.grantRole(role, s.signerAddresses[1])
+	s.grantRole(role, s.accounts[0])
+	s.grantRole(role, s.accounts[1])
 
-	// By passers
-	role, err = s.timelockContract.BYPASSERROLE(&bind.CallOpts{})
+	// Bypassers
+	role = [32]byte(timelock.RoleBaypasser.Bytes())
 	s.Require().NoError(err)
-	s.grantRole(role, s.signerAddresses[1])
+	s.grantRole(role, s.accounts[1])
 
 	// Cancellers
-	role, err = s.timelockContract.CANCELLERROLE(&bind.CallOpts{})
+	role = [32]byte(timelock.RoleCanceller.Bytes())
 	s.Require().NoError(err)
-	s.grantRole(role, s.signerAddresses[0])
-	s.grantRole(role, s.signerAddresses[1])
+	s.grantRole(role, s.accounts[0])
+	s.grantRole(role, s.accounts[1])
+
+	// TODO: wait for tx
+	time.Sleep(5 * time.Second)
 }
 
 // TestGetProposers gets the list of proposers
 func (s *TimelockInspectionTestSuite) TestGetProposers() {
-	ctx := context.Background()
-	inspector := evm.NewTimelockInspector(s.ClientA)
+	ctx := s.T().Context()
+	inspector := mcmston.NewTimelockInspector(s.TonClient)
 
-	proposers, err := inspector.GetProposers(ctx, s.timelockContract.Address().Hex())
+	proposers, err := inspector.GetProposers(ctx, s.timelockAddr.String())
 	s.Require().NoError(err)
 	s.Require().Len(proposers, 1)
-	s.Require().Equal(s.signerAddresses[0].Hex(), proposers[0])
+	s.Require().Equal(s.accounts[0].String(), proposers[0])
 }
 
 // TestGetExecutors gets the list of executors
 func (s *TimelockInspectionTestSuite) TestGetExecutors() {
-	ctx := context.Background()
-	inspector := evm.NewTimelockInspector(s.ClientA)
+	ctx := s.T().Context()
+	inspector := mcmston.NewTimelockInspector(s.TonClient)
 
-	executors, err := inspector.GetExecutors(ctx, s.timelockContract.Address().Hex())
+	executors, err := inspector.GetExecutors(ctx, s.timelockAddr.String())
 	s.Require().NoError(err)
 	s.Require().Len(executors, 2)
-	s.Require().Equal(s.signerAddresses[0].Hex(), executors[0])
-	s.Require().Equal(s.signerAddresses[1].Hex(), executors[1])
+	s.Require().Equal(s.accounts[0].String(), executors[0])
+	s.Require().Equal(s.accounts[1].String(), executors[1])
 }
 
 // TestGetBypassers gets the list of bypassers
 func (s *TimelockInspectionTestSuite) TestGetBypassers() {
-	ctx := context.Background()
-	inspector := evm.NewTimelockInspector(s.ClientA)
+	ctx := s.T().Context()
+	inspector := mcmston.NewTimelockInspector(s.TonClient)
 
-	bypassers, err := inspector.GetBypassers(ctx, s.timelockContract.Address().Hex())
+	bypassers, err := inspector.GetBypassers(ctx, s.timelockAddr.String())
 	s.Require().NoError(err)
 	s.Require().Len(bypassers, 1) // Ensure lengths match
 	// Check that all elements of signerAddresses are in proposers
-	s.Require().Contains(bypassers, s.signerAddresses[1].Hex())
+	s.Require().Contains(bypassers, s.accounts[1].String())
 }
 
 // TestGetCancellers gets the list of cancellers
 func (s *TimelockInspectionTestSuite) TestGetCancellers() {
-	ctx := context.Background()
-	inspector := evm.NewTimelockInspector(s.ClientA)
+	ctx := s.T().Context()
+	inspector := mcmston.NewTimelockInspector(s.TonClient)
 
-	cancellers, err := inspector.GetCancellers(ctx, s.timelockContract.Address().Hex())
+	cancellers, err := inspector.GetCancellers(ctx, s.timelockAddr.String())
 	s.Require().NoError(err)
 	s.Require().Len(cancellers, 2)
-	s.Require().Equal(s.signerAddresses[0].Hex(), cancellers[0])
-	s.Require().Equal(s.signerAddresses[1].Hex(), cancellers[1])
+	s.Require().Equal(s.accounts[0].String(), cancellers[0])
+	s.Require().Equal(s.accounts[1].String(), cancellers[1])
 }
 
 // TestIsOperation tests the IsOperation method
 func (s *TimelockInspectionTestSuite) TestIsOperation() {
-	ctx := context.Background()
-	inspector := evm.NewTimelockInspector(s.ClientA)
+	ctx := s.T().Context()
+	inspector := mcmston.NewTimelockInspector(s.TonClient)
 
 	// Schedule a test operation
-	calls := []bindings.RBACTimelockCall{
+	calls := []timelock.Call{
 		{
-			Target: s.signerAddresses[0],
+			Target: s.accounts[0],
 			Value:  big.NewInt(1),
+			Data:   cell.BeginCell().EndCell(),
 		},
 	}
-	delay := big.NewInt(3600)
+	delay := 3600
 	pred := [32]byte{0x0}
 	salt := [32]byte{0x01}
-	tx, err := s.timelockContract.ScheduleBatch(s.auth, calls, pred, salt, delay)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(tx.Hash())
-	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.ClientA, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+	s.scheduleBatch(calls, new(big.Int).SetBytes(pred[:]), new(big.Int).SetBytes(salt[:]), uint32(delay))
 
-	opID, err := evm.HashOperationBatch(calls, pred, salt)
+	opID, err := mcmston.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
-	isOP, err := inspector.IsOperation(ctx, s.timelockContract.Address().Hex(), opID)
+	isOP, err := inspector.IsOperation(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
 	s.Require().True(isOP)
 }
 
 // TestIsOperationPending tests the IsOperationPending method
 func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
-	ctx := context.Background()
-	inspector := evm.NewTimelockInspector(s.ClientA)
+	ctx := s.T().Context()
+	inspector := mcmston.NewTimelockInspector(s.TonClient)
 
 	// Schedule a test operation
-	calls := []bindings.RBACTimelockCall{
+	calls := []timelock.Call{
 		{
-			Target: s.signerAddresses[0],
+			Target: s.accounts[0],
 			Value:  big.NewInt(2),
+			Data:   cell.BeginCell().EndCell(),
 		},
 	}
-	delay := big.NewInt(3600)
-	pred, err := evm.HashOperationBatch(calls, [32]byte{0x0}, [32]byte{0x01})
+	delay := 3600
+	pred, err := mcmston.HashOperationBatch(calls, [32]byte{0x0}, [32]byte{0x01})
 	s.Require().NoError(err)
 	salt := [32]byte{0x01}
-	tx, err := s.timelockContract.ScheduleBatch(s.auth, calls, pred, salt, delay)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(tx.Hash())
-	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.ClientA, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+	s.scheduleBatch(calls, new(big.Int).SetBytes(pred[:]), new(big.Int).SetBytes(salt[:]), uint32(delay))
 
-	opID, err := evm.HashOperationBatch(calls, pred, salt)
+	opID, err := mcmston.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
-	isOP, err := inspector.IsOperationPending(ctx, s.timelockContract.Address().Hex(), opID)
+	isOP, err := inspector.IsOperationPending(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
 	s.Require().True(isOP)
 }
 
 // TestIsOperationReady tests the IsOperationReady and IsOperationDone methods
 func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
-	ctx := context.Background()
+	ctx := s.T().Context()
 	inspector := evm.NewTimelockInspector(s.ClientA)
 
 	// Schedule a test operation
-	calls := []bindings.RBACTimelockCall{
+	calls := []timelock.Call{
 		{
-			Target: s.signerAddresses[0],
+			Target: s.accounts[0],
 			Value:  big.NewInt(1),
+			Data:   cell.BeginCell().EndCell(),
 		},
 	}
-	delay := big.NewInt(0)
-	pred2, err := evm.HashOperationBatch(calls, [32]byte{0x0}, [32]byte{0x01})
+	delay := 0
+	pred2, err := mcmston.HashOperationBatch(calls, [32]byte{0x0}, [32]byte{0x01})
 	s.Require().NoError(err)
-	pred, err := evm.HashOperationBatch(calls, pred2, [32]byte{0x01})
+	pred, err := mcmston.HashOperationBatch(calls, pred2, [32]byte{0x01})
 	s.Require().NoError(err)
 	salt := [32]byte{0x01}
-	tx, err := s.timelockContract.ScheduleBatch(s.auth, calls, pred, salt, delay)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(tx.Hash())
-	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.ClientA, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+	s.scheduleBatch(calls, new(big.Int).SetBytes(pred[:]), new(big.Int).SetBytes(salt[:]), uint32(delay))
 
-	opID, err := evm.HashOperationBatch(calls, pred, salt)
+	opID, err := mcmston.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
-	isOP, err := inspector.IsOperationReady(ctx, s.timelockContract.Address().Hex(), opID)
+	isOP, err := inspector.IsOperationReady(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
 	s.Require().True(isOP)
 }
 
-func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
-	ctx := context.Background()
-
-	// Deploy a new timelock for this test
-	timelockContract := testutils.DeployTimelockContract(&s.Suite, s.ClientA, s.auth, s.publicKey.String())
-
-	// Get the suggested gas price
-	gasPrice, err := s.ClientA.SuggestGasPrice(ctx)
-	s.Require().NoError(err)
-	gasLimit := uint64(30000)
-	to := timelockContract.Address()
-
-	pendingNonce, err := s.ClientA.PendingNonceAt(ctx, s.publicKey)
-	s.Require().NoError(err)
-
-	txData := &types.LegacyTx{
-		Nonce:    pendingNonce,
-		To:       &to,
-		Value:    big.NewInt(4e15), // 0.004 ETH
-		GasPrice: gasPrice.Mul(gasPrice, big.NewInt(10)),
-		Gas:      gasLimit,
-	}
-	tx := types.NewTx(txData)
-	// Sign the transaction
-	chainID, err := s.ClientA.NetworkID(ctx)
-	s.Require().NoError(err)
-	privateKeyHex := s.Settings.PrivateKeys[0]
-	privateKey, err := crypto.HexToECDSA(privateKeyHex[2:]) // Strip "0x" prefix
-	s.Require().NoError(err)
-	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), privateKey)
-	s.Require().NoError(err)
-	err = s.ClientA.SendTransaction(ctx, signedTx)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(tx.Hash())
-	receipt, err := testutils.WaitMinedWithTxHash(ctx, s.ClientA, signedTx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
-
-	// Schedule a test operation
-	calls := []bindings.RBACTimelockCall{
-		{
-			Target: s.signerAddresses[1],
-			Value:  big.NewInt(1), // 0.001 ETH
-			Data:   nil,           // No data, just an ETH transfer
-		},
-	}
-	delay := big.NewInt(0)
-	pred := [32]byte{0x0}
-	salt := [32]byte{0x01}
-	tx, err = timelockContract.ScheduleBatch(s.auth, calls, pred, salt, delay)
-	s.Require().NoError(err)
-	s.Require().NotEmpty(tx.Hash())
-	receipt, err = testutils.WaitMinedWithTxHash(ctx, s.ClientA, tx.Hash())
-	s.Require().NoError(err)
-	s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
-
-	// Use `Eventually` to wait for the transaction to be mined and the operation to be done
-	s.Require().Eventually(func() bool {
-		// Attempt to execute the batch
-		tx, err := timelockContract.ExecuteBatch(s.auth, calls, pred, salt)
-		s.Require().NoError(err, "Failed to execute batch")
-		s.Require().NotEmpty(tx.Hash(), "Transaction hash is empty")
-
-		// Wait for the transaction to be mined
-		receipt, err := testutils.WaitMinedWithTxHash(ctx, s.ClientA, tx.Hash())
-		s.Require().NoError(err, "Failed to wait for transaction to be mined")
-		s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status, "Transaction was not successful")
-
-		// Check if the operation is done
-		inspector := evm.NewTimelockInspector(s.ClientA)
-		opID, err := evm.HashOperationBatch(calls, pred, salt)
-		s.Require().NoError(err, "Failed to compute operation ID")
-
-		isOpDone, err := inspector.IsOperationDone(ctx, timelockContract.Address().Hex(), opID)
-		s.Require().NoError(err, "Failed to check if operation is done")
-
-		return isOpDone
-	}, 5*time.Second, 500*time.Millisecond, "Operation was not completed in time")
-}
+// TODO: add TestIsOperationDone test when we have operation execution implemented
 
 // TestGetMinDelay tests the GetMinDelay method
 func (s *TimelockInspectionTestSuite) TestGetMinDelay() {
-	ctx := context.Background()
-	inspector := evm.NewTimelockInspector(s.ClientA)
+	ctx := s.T().Context()
+	inspector := mcmston.NewTimelockInspector(s.TonClient)
 
-	delay, err := inspector.GetMinDelay(ctx, s.timelockContract.Address().Hex())
+	delay, err := inspector.GetMinDelay(ctx, s.timelockAddr.String())
 	s.Require().NoError(err, "Failed to get min delay")
 	s.Require().EqualValues(0, delay)
 }
