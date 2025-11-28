@@ -9,16 +9,14 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
-	"strings"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 
 	"github.com/ethereum/go-ethereum/common"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
 
@@ -55,84 +53,74 @@ type SetRootTestSuite struct {
 }
 
 // SetupSuite runs before the test suite
-func (t *SetRootTestSuite) SetupSuite() {
-	t.TestSetup = *e2e.InitializeSharedTestSetup(t.T())
+func (s *SetRootTestSuite) SetupSuite() {
+	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
 	// Generate few test signers
-	t.signers = testutils.MakeNewECDSASigners(2)
+	s.signers = testutils.MakeNewECDSASigners(2)
 
 	// Generate few test wallets
 	var chainID = chaintest.Chain7TONID
 	var client *ton.APIClient = nil
-	t.accounts = []*address.Address{
+	s.accounts = []*address.Address{
 		must(makeRandomTestWallet(client, chainID)).Address(),
 		must(makeRandomTestWallet(client, chainID)).Address(),
 	}
 
-	walletVersion := wallet.HighloadV2Verified //nolint:staticcheck // only option in mylocalton-docker
-	mcWallet, err := wallet.FromSeed(t.TonClient, strings.Fields(blockchain.DefaultTonHlWalletMnemonic), walletVersion)
-	t.Require().NoError(err)
+	var err error
+	s.wallet, err = LocalWalletDefault(s.TonClient)
+	s.Require().NoError(err)
 
-	time.Sleep(8 * time.Second)
+	s.deployMCMSContract()
 
-	w := wallet.WithWorkchain(-1)
-	mcFunderWallet, err := wallet.FromPrivateKeyWithOptions(t.TonClient, mcWallet.PrivateKey(), walletVersion, w)
-	t.Require().NoError(err)
-
-	// subwallet 42 has balance
-	t.wallet, err = mcFunderWallet.GetSubwallet(uint32(42))
-	t.Require().NoError(err)
-
-	t.deployMCMSContract()
-
-	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(t.TonBlockchain.ChainID, t.TonBlockchain.Family)
-	t.Require().NoError(err)
-	t.chainSelector = types.ChainSelector(chainDetails.ChainSelector)
+	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.TonBlockchain.ChainID, s.TonBlockchain.Family)
+	s.Require().NoError(err)
+	s.chainSelector = types.ChainSelector(chainDetails.ChainSelector)
 }
 
 // TODO: duplicated with SetConfigTestSuite
-func (t *SetRootTestSuite) deployMCMSContract() {
+func (s *SetRootTestSuite) deployMCMSContract() {
 	amount := tlb.MustFromTON("0.05")
 	msgBody := cell.BeginCell().EndCell() // empty cell, top up
 
 	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsMCMS)
 	contractCode, err := wrappers.ParseCompiledContract(contractPath)
-	t.Require().NoError(err)
+	s.Require().NoError(err)
 
-	chainId, err := strconv.ParseInt(t.TonBlockchain.ChainID, 10, 64)
-	t.Require().NoError(err)
-	contractData, err := tlb.ToCell(MCMSContractDataFrom(t.wallet.Address(), chainId))
-	t.Require().NoError(err)
+	chainId, err := strconv.ParseInt(s.TonBlockchain.ChainID, 10, 64)
+	s.Require().NoError(err)
+	contractData, err := tlb.ToCell(MCMSEmptyDataFrom(hash.CRC32("mcms-test"), s.wallet.Address(), chainId))
+	s.Require().NoError(err)
 
 	// TODO: extract .WaitTrace(tx) functionality and use here instead of wrapper
-	client := tracetracking.NewSignedAPIClient(t.TonClient, *t.wallet)
-	contract, _, err := wrappers.Deploy(t.T().Context(), &client, contractCode, contractData, amount, msgBody)
-	t.Require().NoError(err)
+	client := tracetracking.NewSignedAPIClient(s.TonClient, *s.wallet)
+	contract, _, err := wrappers.Deploy(s.T().Context(), &client, contractCode, contractData, amount, msgBody)
+	s.Require().NoError(err)
 	addr := contract.Address
 
 	// workchain := int8(-1)
-	// addr, tx, _, err := t.wallet.DeployContractWaitTransaction(t.T().Context(), amount, msgBody, contractCode, contractData, workchain)
-	t.Require().NoError(err)
-	// t.Require().NotNil(tx)
+	// addr, tx, _, err := s.wallet.DeployContractWaitTransaction(s.T().Context(), amount, msgBody, contractCode, contractData, workchain)
+	s.Require().NoError(err)
+	// s.Require().NotNil(tx)
 
-	t.mcmsAddr = addr.String()
+	s.mcmsAddr = addr.String()
 
 	// Set configuration
-	configurerTON, err := mcmston.NewConfigurer(t.wallet, amount)
-	t.Require().NoError(err)
+	configurerTON, err := mcmston.NewConfigurer(s.wallet, amount)
+	s.Require().NoError(err)
 
 	config := &types.Config{
 		Quorum: 1,
 		Signers: []common.Address{
-			t.signers[0].Address(),
-			t.signers[1].Address(),
+			s.signers[0].Address(),
+			s.signers[1].Address(),
 		},
 		GroupSigners: []types.Config{
 			{
 				Quorum: 1,
 				Signers: []common.Address{
-					t.signers[0].Address(),
-					t.signers[1].Address(),
+					s.signers[0].Address(),
+					s.signers[1].Address(),
 				},
 				GroupSigners: []types.Config{},
 			},
@@ -140,9 +128,9 @@ func (t *SetRootTestSuite) deployMCMSContract() {
 	}
 
 	clearRoot := true
-	tx, err := configurerTON.SetConfig(t.T().Context(), t.mcmsAddr, config, clearRoot)
-	t.Require().NoError(err, "Failed to set contract configuration")
-	t.Require().NotNil(tx)
+	tx, err := configurerTON.SetConfig(s.T().Context(), s.mcmsAddr, config, clearRoot)
+	s.Require().NoError(err, "Failed to set contract configuration")
+	s.Require().NotNil(tx)
 
 	// TODO: ton.WaitTrace(tx)
 	// receipt, err = bind.WaitMined(context.Background(), s.ClientA, tx)

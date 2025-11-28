@@ -18,7 +18,7 @@ import (
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
-	commonton "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
+	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
 )
 
 var _ sdk.TimelockConverter = (*timelockConverter)(nil)
@@ -85,7 +85,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		data, err = tlb.ToCell(timelock.ScheduleBatch{
 			QueryID: rand.Uint64(),
 
-			Calls:       commonton.SnakeRef[timelock.Call](calls),
+			Calls:       toncommon.SnakeRef[timelock.Call](calls),
 			Predecessor: predecessor.Big(),
 			Salt:        salt.Big(),
 			Delay:       uint32(delay.Seconds()),
@@ -100,7 +100,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		data, err = tlb.ToCell(timelock.BypasserExecuteBatch{
 			QueryID: rand.Uint64(),
 
-			Calls: commonton.SnakeRef[timelock.Call](calls),
+			Calls: toncommon.SnakeRef[timelock.Call](calls),
 		})
 	default:
 		return []types.Operation{}, common.Hash{}, sdkerrors.NewInvalidTimelockOperationError(string(action))
@@ -133,7 +133,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 // HashOperationBatch replicates the hash calculation from Solidity
 func HashOperationBatch(calls []timelock.Call, predecessor, salt common.Hash) (common.Hash, error) {
 	ob, err := tlb.ToCell(timelock.OperationBatch{
-		Calls:       commonton.SnakeRef[timelock.Call](calls),
+		Calls:       toncommon.SnakeRef[timelock.Call](calls),
 		Predecessor: predecessor.Big(),
 		Salt:        salt.Big(),
 	})

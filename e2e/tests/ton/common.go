@@ -4,13 +4,21 @@
 package tone2e
 
 import (
+	"fmt"
 	"math/big"
+	"strings"
+	"time"
 
+	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/xssnick/tonutils-go/address"
+	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/ton/wallet"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
 )
 
@@ -40,9 +48,29 @@ func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wal
 
 // TODO: duplicated utils with unit tests [END]
 
-func MCMSContractDataFrom(owner *address.Address, chainId int64) mcms.Data {
+func LocalWalletDefault(client *ton.APIClient) (*wallet.Wallet, error) {
+	walletVersion := wallet.HighloadV2Verified //nolint:staticcheck // only option in mylocalton-docker
+	mcWallet, err := wallet.FromSeed(client, strings.Fields(blockchain.DefaultTonHlWalletMnemonic), walletVersion)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create wallet from seed: %w", err)
+	}
+
+	// TODO: wait for wallet to be deployed, remove magic number sleep
+	time.Sleep(8 * time.Second)
+
+	w := wallet.WithWorkchain(-1)
+	mcFunderWallet, err := wallet.FromPrivateKeyWithOptions(client, mcWallet.PrivateKey(), walletVersion, w)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create funder wallet from private key: %w", err)
+	}
+
+	// subwallet 42 has balance
+	return mcFunderWallet.GetSubwallet(uint32(42))
+}
+
+func MCMSEmptyDataFrom(id uint32, owner *address.Address, chainId int64) mcms.Data {
 	return mcms.Data{
-		ID: 4,
+		ID: id,
 		Ownable: common.Ownable2Step{
 			Owner:        owner,
 			PendingOwner: nil,
@@ -74,6 +102,25 @@ func MCMSContractDataFrom(owner *address.Address, chainId int64) mcms.Data {
 				PostOpCount:          0,
 				OverridePreviousRoot: false,
 			},
+		},
+	}
+}
+
+func TimelockEmptyDataFrom(id uint32) timelock.Data {
+	return timelock.Data{
+		ID:                       id,
+		MinDelay:                 0,
+		Timestamps:               cell.NewDict(256),
+		BlockedFnSelectorsLen:    0,
+		BlockedFnSelectors:       cell.NewDict(32),
+		ExecutorRoleCheckEnabled: true,
+		OpPendingInfo: timelock.OpPendingInfo{
+			ValidAfter:            0,
+			OpFinalizationTimeout: 0,
+			OpPendingID:           big.NewInt(0),
+		},
+		RBAC: rbac.Data{
+			Roles: cell.NewDict(256),
 		},
 	}
 }

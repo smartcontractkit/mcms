@@ -7,7 +7,6 @@ import (
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/ton"
-	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -42,12 +41,12 @@ func (i timelockInspector) GetMinDelay(ctx context.Context, _address string) (ui
 		return 0, fmt.Errorf("error getting getMinDelay: %w", err)
 	}
 
-	rs, err := result.Slice(0)
+	rs, err := result.Int(0)
 	if err != nil {
 		return 0, fmt.Errorf("error getting minDelay slice: %w", err)
 	}
 
-	return rs.LoadUInt(64)
+	return rs.Uint64(), nil
 }
 
 // GetAdmins returns the list of addresses with the admin role
@@ -94,7 +93,7 @@ func (i timelockInspector) getRoleMembers(ctx context.Context, _address string, 
 		return nil, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	_role, err := mapRoleParam(role)
+	_role := new(big.Int).SetBytes(role[:])
 	if err != nil {
 		return nil, fmt.Errorf("failed to map opID param: %w", err)
 	}
@@ -146,22 +145,18 @@ func (i timelockInspector) IsOperation(ctx context.Context, _address string, opI
 		return false, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	_opID, err := mapOpIDParam(opID)
-	if err != nil {
-		return false, fmt.Errorf("failed to map opID param: %w", err)
-	}
-
+	_opID := new(big.Int).SetBytes(opID[:])
 	result, err := i.client.RunGetMethod(ctx, block, addr, "isOperation", _opID)
 	if err != nil {
 		return false, fmt.Errorf("error getting isOperation: %w", err)
 	}
 
-	rs, err := result.Slice(0)
+	rs, err := result.Int(0)
 	if err != nil {
-		return false, fmt.Errorf("error getting isOperation slice: %w", err)
+		return false, fmt.Errorf("error getting isOperation result: %w", err)
 	}
 
-	return rs.LoadBoolBit()
+	return rs.Cmp(big.NewInt(0)) != 0, nil
 }
 
 func (i timelockInspector) IsOperationPending(ctx context.Context, _address string, opID [32]byte) (bool, error) {
@@ -177,22 +172,18 @@ func (i timelockInspector) IsOperationPending(ctx context.Context, _address stri
 		return false, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	_opID, err := mapOpIDParam(opID)
-	if err != nil {
-		return false, fmt.Errorf("failed to map opID param: %w", err)
-	}
-
+	_opID := new(big.Int).SetBytes(opID[:])
 	result, err := i.client.RunGetMethod(ctx, block, addr, "isOperationPending", _opID)
 	if err != nil {
 		return false, fmt.Errorf("error getting isOperationPending: %w", err)
 	}
 
-	rs, err := result.Slice(0)
+	rs, err := result.Int(0)
 	if err != nil {
-		return false, fmt.Errorf("error getting isOperationPending slice: %w", err)
+		return false, fmt.Errorf("error getting isOperationPending result: %w", err)
 	}
 
-	return rs.LoadBoolBit()
+	return rs.Cmp(big.NewInt(0)) != 0, nil
 }
 
 func (i timelockInspector) IsOperationReady(ctx context.Context, _address string, opID [32]byte) (bool, error) {
@@ -208,22 +199,18 @@ func (i timelockInspector) IsOperationReady(ctx context.Context, _address string
 		return false, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	_opID, err := mapOpIDParam(opID)
-	if err != nil {
-		return false, fmt.Errorf("failed to map opID param: %w", err)
-	}
-
+	_opID := new(big.Int).SetBytes(opID[:])
 	result, err := i.client.RunGetMethod(ctx, block, addr, "isOperationReady", _opID)
 	if err != nil {
 		return false, fmt.Errorf("error getting isOperationReady: %w", err)
 	}
 
-	rs, err := result.Slice(0)
+	rs, err := result.Int(0)
 	if err != nil {
-		return false, fmt.Errorf("error getting isOperationReady slice: %w", err)
+		return false, fmt.Errorf("error getting isOperationReady result: %w", err)
 	}
 
-	return rs.LoadBoolBit()
+	return rs.Cmp(big.NewInt(0)) != 0, nil
 }
 
 func (i timelockInspector) IsOperationDone(ctx context.Context, _address string, opID [32]byte) (bool, error) {
@@ -239,40 +226,16 @@ func (i timelockInspector) IsOperationDone(ctx context.Context, _address string,
 		return false, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	_opID, err := mapOpIDParam(opID)
-	if err != nil {
-		return false, fmt.Errorf("failed to map opID param: %w", err)
-	}
-
+	_opID := new(big.Int).SetBytes(opID[:])
 	result, err := i.client.RunGetMethod(ctx, block, addr, "isOperationDone", _opID)
 	if err != nil {
 		return false, fmt.Errorf("error getting isOperationDone: %w", err)
 	}
 
-	rs, err := result.Slice(0)
+	rs, err := result.Int(0)
 	if err != nil {
-		return false, fmt.Errorf("error getting isOperationDone slice: %w", err)
+		return false, fmt.Errorf("error getting isOperationDone result: %w", err)
 	}
 
-	return rs.LoadBoolBit()
-}
-
-// Help function to map (encode) opID param to cell.Slice
-func mapOpIDParam(opID [32]byte) (*cell.Slice, error) {
-	b := cell.BeginCell()
-	if err := b.StoreBigUInt(new(big.Int).SetBytes(opID[:]), 256); err != nil {
-		return nil, fmt.Errorf("failed to store domain separator: %w", err)
-	}
-
-	return b.EndCell().BeginParse(), nil
-}
-
-// Help function to map (encode) role param to cell.Slice
-func mapRoleParam(role [32]byte) (*cell.Slice, error) {
-	b := cell.BeginCell()
-	if err := b.StoreBigUInt(new(big.Int).SetBytes(role[:]), 256); err != nil {
-		return nil, fmt.Errorf("failed to store domain separator: %w", err)
-	}
-
-	return b.EndCell().BeginParse(), nil
+	return rs.Cmp(big.NewInt(0)) != 0, nil
 }
