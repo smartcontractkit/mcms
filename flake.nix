@@ -32,5 +32,7 @@
       devShells = {
         default = pkgs.callPackage ./shell.nix {inherit pkgs pkgsContracts;};
       };
+
+      packages = {} // pkgsContracts;
     });
 }
