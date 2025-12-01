@@ -161,5 +161,7 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 		evmConfig.GroupParents[i] = uint8(val)
 	}
 
+	fmt.Printf("EVM Config: %+v\n", evmConfig)
+
 	return e.evmTransformer.ToConfig(evmConfig)
 }

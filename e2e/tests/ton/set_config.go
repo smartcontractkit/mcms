@@ -95,18 +95,10 @@ func (s *SetConfigTestSuite) deployMCMSContract() {
 	contractData, err := tlb.ToCell(data)
 	s.Require().NoError(err)
 
-	// TODO: extract .WaitTrace(tx) functionality and use here instead of wrapper
 	client := tracetracking.NewSignedAPIClient(s.TonClient, *s.wallet)
 	contract, _, err := wrappers.Deploy(s.T().Context(), &client, contractCode, contractData, amount, msgBody)
 	s.Require().NoError(err)
-	addr := contract.Address
-
-	// workchain := int8(-1)
-	// addr, tx, _, err := s.wallet.DeployContractWaitTransaction(s.T().Context(), amount, msgBody, contractCode, contractData, workchain)
-	s.Require().NoError(err)
-	// s.Require().NotNil(tx)
-
-	s.mcmsAddr = addr.String()
+	s.mcmsAddr = contract.Address.String()
 }
 
 func (s *SetConfigTestSuite) Test_TON_SetConfigInspect() {
