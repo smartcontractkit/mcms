@@ -9,8 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/xssnick/tonutils-go/address"
-	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -102,9 +102,7 @@ func TestInspector_GetConfig(t *testing.T) {
 				}, tvm.KeyUINT8)),
 			},
 			want:    nil,
-			wantErr: fmt.Errorf("invalid MCMS config: Quorum must be greater than 0"),
-			// TODO: figure out why error output for this test case is different
-			// wantErr: fmt.Errorf("invalid MCMS config: Quorum must be less than or equal to the number of signers and groups"),
+			wantErr: fmt.Errorf("invalid MCMS config: Quorum must be less than or equal to the number of signers and groups"),
 		},
 	}
 
@@ -351,12 +349,13 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 				Return(&ton.BlockIDExt{}, nil)
 
 			if tt.mockError == nil {
-				// Encode the expected return value for a successful call
-				// TODO: not sure if this is how results are returned vs tuple of members, need to check (e2e test)
-				mockResultCell, err := tlb.ToCell(tt.mockResult)
-				require.NoError(t, err)
-
-				r := ton.NewExecutionResult([]any{mockResultCell.ToBuilder().ToSlice()})
+				r := ton.NewExecutionResult([]any{
+					tt.mockResult.ChainID,
+					cell.BeginCell().MustStoreAddr(tt.mockResult.MultiSig).EndCell(),
+					big.NewInt(int64(tt.mockResult.PreOpCount)),
+					big.NewInt(int64(tt.mockResult.PostOpCount)),
+					big.NewInt(0), // OverridePreviousRoot as int (ignored)
+				})
 				client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(r, nil).Once()
 			} else {

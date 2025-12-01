@@ -4,11 +4,11 @@
 package solanae2e
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"slices"
-	"strings"
 	"testing"
 	"time"
 
@@ -83,7 +83,7 @@ func generateTestEVMAccounts(t *testing.T, numAccounts int) []EVMTestAccount {
 	}
 
 	slices.SortFunc(testAccounts, func(a, b EVMTestAccount) int {
-		return strings.Compare(strings.ToLower(a.HexAddress), strings.ToLower(b.HexAddress))
+		return bytes.Compare(a.Address[:], b.Address[:])
 	})
 
 	return testAccounts

@@ -80,6 +80,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 
 // TODO: duplicated with SetConfigTestSuite
 func (s *SetRootTestSuite) deployMCMSContract() {
+	ctx := s.T().Context()
 	amount := tlb.MustFromTON("0.05")
 	msgBody := cell.BeginCell().EndCell() // empty cell, top up
 
@@ -89,21 +90,13 @@ func (s *SetRootTestSuite) deployMCMSContract() {
 
 	chainId, err := strconv.ParseInt(s.TonBlockchain.ChainID, 10, 64)
 	s.Require().NoError(err)
-	contractData, err := tlb.ToCell(MCMSEmptyDataFrom(hash.CRC32("mcms-test"), s.wallet.Address(), chainId))
+	contractData, err := tlb.ToCell(MCMSEmptyDataFrom(hash.CRC32("test.set-root.mcms"), s.wallet.Address(), chainId))
 	s.Require().NoError(err)
 
-	// TODO: extract .WaitTrace(tx) functionality and use here instead of wrapper
 	client := tracetracking.NewSignedAPIClient(s.TonClient, *s.wallet)
-	contract, _, err := wrappers.Deploy(s.T().Context(), &client, contractCode, contractData, amount, msgBody)
+	contract, _, err := wrappers.Deploy(ctx, &client, contractCode, contractData, amount, msgBody)
 	s.Require().NoError(err)
-	addr := contract.Address
-
-	// workchain := int8(-1)
-	// addr, tx, _, err := s.wallet.DeployContractWaitTransaction(s.T().Context(), amount, msgBody, contractCode, contractData, workchain)
-	s.Require().NoError(err)
-	// s.Require().NotNil(tx)
-
-	s.mcmsAddr = addr.String()
+	s.mcmsAddr = contract.Address.String()
 
 	// Set configuration
 	configurerTON, err := mcmston.NewConfigurer(s.wallet, amount)
@@ -128,14 +121,35 @@ func (s *SetRootTestSuite) deployMCMSContract() {
 	}
 
 	clearRoot := true
-	tx, err := configurerTON.SetConfig(s.T().Context(), s.mcmsAddr, config, clearRoot)
+	res, err := configurerTON.SetConfig(ctx, s.mcmsAddr, config, clearRoot)
 	s.Require().NoError(err, "Failed to set contract configuration")
-	s.Require().NotNil(tx)
+	s.Require().NotNil(res)
 
-	// TODO: ton.WaitTrace(tx)
-	// receipt, err = bind.WaitMined(context.Background(), s.ClientA, tx)
-	// s.Require().NoError(err, "Failed to mine configuration transaction")
-	// s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
+	tx, ok := res.RawData.(*tlb.Transaction)
+	s.Require().True(ok)
+	s.Require().NotNil(tx.Description)
+
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	s.Require().NoError(err)
+}
+
+// TestGetConfig checks contract configuration
+func (s *SetRootTestSuite) TestGetConfig() {
+	ctx := s.T().Context()
+
+	inspector := mcmston.NewInspector(s.TonClient, mcmston.NewConfigTransformer())
+	config, err := inspector.GetConfig(ctx, s.mcmsAddr)
+
+	s.Require().NoError(err, "Failed to get contract configuration")
+	s.Require().NotNil(config, "Contract configuration is nil")
+
+	// Check first group
+	s.Require().Equal(uint8(1), config.Quorum, "Quorum does not match")
+	s.Require().Equal(s.signers[0].Address(), config.Signers[0], "Signers do not match")
+
+	// Check second group
+	s.Require().Equal(uint8(1), config.GroupSigners[0].Quorum, "Group quorum does not match")
+	s.Require().Equal(s.signers[1].Address(), config.GroupSigners[0].Signers[0], "Group signers do not match")
 }
 
 // TestSetRootProposal sets the root of the MCMS contract
@@ -192,13 +206,18 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	s.Require().NoError(err)
 
 	// Call SetRoot
-	tx, err := executable.SetRoot(ctx, s.chainSelector)
+	res, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(tx.Hash)
+	s.Require().NotEmpty(res.Hash)
 
-	// TODO: ton.WaitTrace(tx)
-	// receipt, err := testutils.WaitMinedWithTxHash(ctx, s.ClientA, common.HexToHash(tx.Hash))
-	// s.Require().NoError(err, "Failed to mine deployment transaction")
+	tx, ok := res.RawData.(*tlb.Transaction)
+	s.Require().True(ok)
+	s.Require().NotNil(tx)
+
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	s.Require().NoError(err)
+
+	// TODO (ton): check success
 	// s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }
 
@@ -279,13 +298,17 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	executable, err := mcmslib.NewExecutable(&proposal, executorsMap)
 	s.Require().NoError(err)
 	// Call SetRoot
-	tx, err := executable.SetRoot(ctx, s.chainSelector)
+	res, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
-	s.Require().NotEmpty(tx.Hash)
+	s.Require().NotEmpty(res.Hash)
 
-	// TODO: ton.WaitTrace(tx)
-	// // Check receipt
-	// receipt, err := testutils.WaitMinedWithTxHash(context.Background(), s.ClientA, common.HexToHash(tx.Hash))
-	// s.Require().NoError(err, "Failed to mine deployment transaction")
+	tx, ok := res.RawData.(*tlb.Transaction)
+	s.Require().True(ok)
+	s.Require().NotNil(tx)
+
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	s.Require().NoError(err)
+
+	// TODO (ton): check success
 	// s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }
