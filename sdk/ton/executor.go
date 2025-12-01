@@ -114,7 +114,6 @@ func (e *executor) ExecuteOperation(
 		},
 	}
 
-	// TODO: do we wait for execution trace?
 	tx, _, err := e.wallet.SendWaitTransaction(ctx, msg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to execute op: %w", err)
@@ -198,7 +197,6 @@ func (e *executor) SetRoot(
 		},
 	}
 
-	// TODO: do we wait for execution trace?
 	tx, _, err := e.wallet.SendWaitTransaction(ctx, msg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to set root: %w", err)
