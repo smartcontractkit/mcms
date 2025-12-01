@@ -69,6 +69,11 @@ jobs:
       contents: read
       actions: read
     steps:
+      - name: Install Nix
+        uses: cachix/install-nix-action@02a151ada4993995686f9ed4f1be7cfbb229e56f # v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
       - name: Install Rust
         uses: moonrepo/setup-rust@ede6de059f8046a5e236c94046823e2af11ca670 # v1.2.2
 
@@ -114,6 +119,14 @@ jobs:
         run: |
           ./e2e/tests/solana/compile-mcm-contracts.sh
 
+      - name: Build TON contracts
+        id: ton-contracts-build
+        shell: bash
+        run: |
+          PATH_CONTRACTS_TON_PKG="$(nix build .#chainlink-ton-contracts --print-out-paths)/"
+          PATH_CONTRACTS_TON="$PATH_CONTRACTS_TON_PKG/lib/node_modules/@chainlink/contracts-ton/build/"
+          echo "path=$PATH_CONTRACTS_TON" >> "$GITHUB_OUTPUT"
+
       - name: Run e2e tests
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
         with:
@@ -139,6 +152,7 @@ jobs:
             echo "::endgroup::"
 
             echo "::group::TON"
+            export PATH_CONTRACTS_TON="${{ steps.ton-contracts-build.outputs.path }}"
             CTF_CONFIGS=../config.ton.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestTONSuite || ton_failure=true
             echo "::endgroup::"
 
