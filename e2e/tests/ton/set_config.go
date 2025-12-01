@@ -120,6 +120,22 @@ func (s *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 		wantErr    error
 	}{
 		{
+			name: "config small/default",
+			config: types.Config{
+				Quorum:  1,
+				Signers: []common.Address{signers[0].Address()},
+				GroupSigners: []types.Config{
+					{
+						Quorum:       1,
+						Signers:      []common.Address{signers[1].Address()},
+						GroupSigners: []types.Config{},
+					},
+				},
+			},
+			configurer: configurerTON,
+			inspector:  inspectorTON,
+		},
+		{
 			name: "config proposer",
 			config: types.Config{
 				Quorum: 2,
@@ -229,9 +245,9 @@ func (s *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 
 	for _, tt := range tests {
 		s.Run(tt.name, func() {
+			ctx := s.T().Context()
 			// Set config
 			{
-				ctx := s.T().Context()
 				res, err := tt.configurer.SetConfig(ctx, s.mcmsAddr, &tt.config, true)
 				s.Require().NoError(err, "setting config on MCMS contract")
 
@@ -247,14 +263,14 @@ func (s *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 			}
 
 			{
-				gotCount, err := tt.inspector.GetOpCount(s.T().Context(), s.mcmsAddr)
+				gotCount, err := tt.inspector.GetOpCount(ctx, s.mcmsAddr)
 				s.Require().NoError(err, "getting config on MCMS contract")
 				s.Require().Equal(uint64(17), gotCount)
 			}
 
 			// Assert that config has been set
 			{
-				gotConfig, err := tt.inspector.GetConfig(s.T().Context(), s.mcmsAddr)
+				gotConfig, err := tt.inspector.GetConfig(ctx, s.mcmsAddr)
 				s.Require().NoError(err, "getting config on MCMS contract")
 				s.Require().NotNil(gotConfig)
 				s.Require().Equal(&tt.config, gotConfig)
