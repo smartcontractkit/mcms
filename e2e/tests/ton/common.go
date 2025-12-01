@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
-	"time"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
@@ -54,9 +53,6 @@ func LocalWalletDefault(client *ton.APIClient) (*wallet.Wallet, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create wallet from seed: %w", err)
 	}
-
-	// TODO: wait for wallet to be deployed, remove magic number sleep
-	time.Sleep(8 * time.Second)
 
 	w := wallet.WithWorkchain(-1)
 	mcFunderWallet, err := wallet.FromPrivateKeyWithOptions(client, mcWallet.PrivateKey(), walletVersion, w)

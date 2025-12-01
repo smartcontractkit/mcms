@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -240,7 +239,8 @@ func (s *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 		s.Run(tt.name, func() {
 			// Set config
 			{
-				res, err := tt.configurer.SetConfig(s.T().Context(), s.mcmsAddr, &tt.config, true)
+				ctx := s.T().Context()
+				res, err := tt.configurer.SetConfig(ctx, s.mcmsAddr, &tt.config, true)
 				s.Require().NoError(err, "setting config on MCMS contract")
 
 				s.Require().NotNil(res.Hash)
@@ -250,11 +250,8 @@ func (s *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 				s.Require().True(ok)
 				s.Require().NotNil(tx.Description)
 
-				// TODO: wait for tx, verify success
-				// TODO: implement waiting for tx trace
-				// client := tracetracking.NewSignedAPIClient(c.client, *c.wallet)
-				// rm, err := client.SendAndWaitForTrace(ctx, *dstAddr, msg)
-				time.Sleep(3 * time.Second)
+				err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+				s.Require().NoError(err)
 			}
 
 			{

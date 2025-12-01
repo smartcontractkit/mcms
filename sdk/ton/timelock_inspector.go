@@ -66,7 +66,7 @@ func (i timelockInspector) GetExecutors(ctx context.Context, address string) ([]
 
 // GetBypassers returns the list of addresses with the bypasser role
 func (i timelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
-	return i.getRoleMembers(ctx, address, [32]byte(timelock.RoleBaypasser.Bytes()))
+	return i.getRoleMembers(ctx, address, [32]byte(timelock.RoleBypasser.Bytes()))
 }
 
 // GetCancellers returns the list of addresses with the canceller role
@@ -156,7 +156,7 @@ func (i timelockInspector) IsOperation(ctx context.Context, _address string, opI
 		return false, fmt.Errorf("error getting isOperation result: %w", err)
 	}
 
-	return rs.Cmp(big.NewInt(0)) != 0, nil
+	return rs.Uint64() == 1, nil
 }
 
 func (i timelockInspector) IsOperationPending(ctx context.Context, _address string, opID [32]byte) (bool, error) {
@@ -183,7 +183,7 @@ func (i timelockInspector) IsOperationPending(ctx context.Context, _address stri
 		return false, fmt.Errorf("error getting isOperationPending result: %w", err)
 	}
 
-	return rs.Cmp(big.NewInt(0)) != 0, nil
+	return rs.Uint64() == 1, nil
 }
 
 func (i timelockInspector) IsOperationReady(ctx context.Context, _address string, opID [32]byte) (bool, error) {
@@ -210,7 +210,7 @@ func (i timelockInspector) IsOperationReady(ctx context.Context, _address string
 		return false, fmt.Errorf("error getting isOperationReady result: %w", err)
 	}
 
-	return rs.Cmp(big.NewInt(0)) != 0, nil
+	return rs.Uint64() == 1, nil
 }
 
 func (i timelockInspector) IsOperationDone(ctx context.Context, _address string, opID [32]byte) (bool, error) {
@@ -237,5 +237,5 @@ func (i timelockInspector) IsOperationDone(ctx context.Context, _address string,
 		return false, fmt.Errorf("error getting isOperationDone result: %w", err)
 	}
 
-	return rs.Cmp(big.NewInt(0)) != 0, nil
+	return rs.Uint64() == 1, nil
 }

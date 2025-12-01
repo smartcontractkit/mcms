@@ -295,7 +295,11 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 
 			if tt.mockError == nil {
 				// Encode the expected `IsOperation` return value for a successful call
-				r := ton.NewExecutionResult([]any{cell.BeginCell().MustStoreBoolBit(tt.want).ToSlice()})
+				wantInt := 0
+				if tt.want {
+					wantInt = 1
+				}
+				r := ton.NewExecutionResult([]any{big.NewInt(int64(wantInt))})
 				client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(r, nil).Once()
 			} else {
@@ -347,7 +351,11 @@ func testIsOperationState(
 
 	if mockError == nil {
 		// Encode the expected `IsOperation` return value for a successful call
-		r := ton.NewExecutionResult([]any{cell.BeginCell().MustStoreBoolBit(want).ToSlice()})
+		wantInt := 0
+		if want {
+			wantInt = 1
+		}
+		r := ton.NewExecutionResult([]any{big.NewInt(int64(wantInt))})
 		client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 			Return(r, nil).Once()
 	} else {
@@ -531,7 +539,7 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 
 			if tt.mockError == nil {
 				// Encode the expected `getMinDelay` return value for a successful call
-				r := ton.NewExecutionResult([]any{cell.BeginCell().MustStoreUInt(tt.minDelay.Uint64(), 64).ToSlice()})
+				r := ton.NewExecutionResult([]any{tt.minDelay})
 				client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(r, nil).Once()
 			} else {
