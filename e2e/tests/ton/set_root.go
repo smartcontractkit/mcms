@@ -81,7 +81,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 // TODO: duplicated with SetConfigTestSuite
 func (s *SetRootTestSuite) deployMCMSContract() {
 	ctx := s.T().Context()
-	amount := tlb.MustFromTON("0.05")
+	amount := tlb.MustFromTON("0.3")
 	msgBody := cell.BeginCell().EndCell() // empty cell, top up
 
 	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsMCMS)
@@ -103,18 +103,12 @@ func (s *SetRootTestSuite) deployMCMSContract() {
 	s.Require().NoError(err)
 
 	config := &types.Config{
-		Quorum: 1,
-		Signers: []common.Address{
-			s.signers[0].Address(),
-			s.signers[1].Address(),
-		},
+		Quorum:  1,
+		Signers: []common.Address{s.signers[0].Address()},
 		GroupSigners: []types.Config{
 			{
-				Quorum: 1,
-				Signers: []common.Address{
-					s.signers[0].Address(),
-					s.signers[1].Address(),
-				},
+				Quorum:       1,
+				Signers:      []common.Address{s.signers[1].Address()},
 				GroupSigners: []types.Config{},
 			},
 		},

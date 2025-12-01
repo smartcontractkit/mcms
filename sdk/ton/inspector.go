@@ -50,11 +50,6 @@ func (i *Inspector) GetConfig(ctx context.Context, _address string) (*types.Conf
 		return nil, fmt.Errorf("error getting getConfig: %w", err)
 	}
 
-	fmt.Printf("GetConfig raw result: %v\n", r)
-	fmt.Printf("Type of r: %T\n", r.AsTuple()[0])
-	fmt.Printf("Type of r: %T\n", r.AsTuple()[1])
-	fmt.Printf("Type of r: %T\n", r.AsTuple()[2])
-
 	rResult := r.AsTuple()
 	if len(rResult) < 3 {
 		return nil, fmt.Errorf("error: getConfig returned less than 3 cells")
