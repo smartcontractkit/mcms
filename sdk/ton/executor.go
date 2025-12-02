@@ -12,7 +12,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
-	commonton "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -91,7 +90,7 @@ func (e *executor) ExecuteOperation(
 		QueryID: rand.Uint64(),
 
 		Op:    bindOp,
-		Proof: commonton.SnakeData[mcms.Proof](bindProof),
+		Proof: bindProof,
 	})
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
@@ -100,11 +99,11 @@ func (e *executor) ExecuteOperation(
 	// Map to Ton Address type
 	dstAddr, err := address.ParseAddr(metadata.MCMAddress)
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
 	msg := &wallet.Message{
-		Mode: wallet.PayGasSeparately,
+		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
 		InternalMessage: &tlb.InternalMessage{
 			IHRDisabled: true,
 			Bounce:      true,
@@ -147,7 +146,7 @@ func (e *executor) SetRoot(
 	// Map to Ton Address type
 	dstAddr, err := address.ParseAddr(metadata.MCMAddress)
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
 	// Encode proofs
@@ -179,15 +178,15 @@ func (e *executor) SetRoot(
 		ValidUntil: validUntil,
 		Metadata:   rm,
 
-		MetadataProof: commonton.SnakeData[mcms.Proof](bindProof),
-		Signatures:    commonton.SnakeData[mcms.Signature](bindSignatures),
+		MetadataProof: bindProof,
+		Signatures:    bindSignatures,
 	})
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
 	}
 
 	msg := &wallet.Message{
-		Mode: wallet.PayGasSeparately,
+		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
 		InternalMessage: &tlb.InternalMessage{
 			IHRDisabled: true,
 			Bounce:      true,
@@ -216,8 +215,11 @@ func IsNil(x any) bool {
 		return true
 	}
 	v := reflect.ValueOf(x)
+	if !v.IsValid() {
+		return true
+	}
 	switch v.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Map, reflect.Pointer, reflect.UnsafePointer, reflect.Interface, reflect.Slice:
+	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.UnsafePointer, reflect.Interface, reflect.Slice:
 		return v.IsNil()
 	default:
 		return false

@@ -55,7 +55,7 @@ func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Addr
 	s.Require().NoError(err)
 
 	msg := &wallet.Message{
-		Mode: wallet.PayGasSeparately,
+		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
 		InternalMessage: &tlb.InternalMessage{
 			IHRDisabled: true,
 			Bounce:      true,
@@ -88,7 +88,7 @@ func (s *TimelockInspectionTestSuite) scheduleBatch(calls []timelock.Call, prede
 	s.Require().NoError(err)
 
 	msg := &wallet.Message{
-		Mode: wallet.PayGasSeparately,
+		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
 		InternalMessage: &tlb.InternalMessage{
 			IHRDisabled: true,
 			Bounce:      true,

@@ -95,7 +95,7 @@ func (e *timelockExecutor) Execute(
 	}
 
 	msg := &wallet.Message{
-		Mode: wallet.PayGasSeparately,
+		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
 		InternalMessage: &tlb.InternalMessage{
 			IHRDisabled: true,
 			Bounce:      true,
