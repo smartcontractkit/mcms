@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/big"
-	"math/rand/v2"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
@@ -77,13 +76,17 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, errHash
 	}
 
+	qID, err := RandomQueryID()
+	if err != nil {
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	}
+
 	// Encode the data based on the operation
 	var data *cell.Cell
-	var err error
 	switch action {
 	case types.TimelockActionSchedule:
 		data, err = tlb.ToCell(timelock.ScheduleBatch{
-			QueryID: rand.Uint64(),
+			QueryID: qID,
 
 			Calls:       toncommon.SnakeRef[timelock.Call](calls),
 			Predecessor: predecessor.Big(),
@@ -92,13 +95,13 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		})
 	case types.TimelockActionCancel:
 		data, err = tlb.ToCell(timelock.Cancel{
-			QueryID: rand.Uint64(),
+			QueryID: qID,
 
 			ID: operationID.Big(),
 		})
 	case types.TimelockActionBypass:
 		data, err = tlb.ToCell(timelock.BypasserExecuteBatch{
-			QueryID: rand.Uint64(),
+			QueryID: qID,
 
 			Calls: toncommon.SnakeRef[timelock.Call](calls),
 		})

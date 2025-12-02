@@ -4,7 +4,6 @@ package tone2e
 
 import (
 	"math/big"
-	"math/rand"
 	"slices"
 	"strings"
 
@@ -25,6 +24,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 )
 
@@ -42,7 +42,7 @@ type TimelockInspectionTestSuite struct {
 func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Address) {
 	ctx := s.T().Context()
 	body, err := tlb.ToCell(rbac.GrantRole{
-		QueryID: rand.Uint64(),
+		QueryID: must(ton.RandomQueryID()),
 
 		Role:    new(big.Int).SetBytes(role[:]),
 		Account: acc,
@@ -73,7 +73,7 @@ func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Addr
 func (s *TimelockInspectionTestSuite) scheduleBatch(calls []timelock.Call, predecessor *big.Int, salt *big.Int, delay uint32) {
 	ctx := s.T().Context()
 	body, err := tlb.ToCell(timelock.ScheduleBatch{
-		QueryID: rand.Uint64(),
+		QueryID: must(ton.RandomQueryID()),
 
 		Calls:       toncommon.SnakeRef[timelock.Call](calls),
 		Predecessor: predecessor,
