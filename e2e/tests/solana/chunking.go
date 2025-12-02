@@ -40,7 +40,7 @@ func (s *SolanaTestSuite) Test_Solana_Chunk_LargeInstructions() {
 	s.Require().NoError(err)
 
 	accounts := []solana.PublicKey{auth.PublicKey(), mcmSignerPDA, timelockSignerPDA}
-	e2eutils.FundAccounts(s.T(), ctx, accounts, 1, s.SolanaClient)
+	e2eutils.FundAccounts(s.T(), accounts, 1, s.SolanaClient)
 
 	s.AssignRoleToAccounts(ctx, timelockPDASeed, auth, []solana.PublicKey{mcmSignerPDA}, timelock.Proposer_Role)
 	s.AssignRoleToAccounts(ctx, timelockPDASeed, auth, []solana.PublicKey{mcmSignerPDA}, timelock.Executor_Role)

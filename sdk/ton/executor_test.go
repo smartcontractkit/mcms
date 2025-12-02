@@ -177,9 +177,8 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			if tt.wantErrNew != nil {
 				require.EqualError(t, err, tt.wantErrNew.Error())
 				return
-			} else {
-				require.NoError(t, err)
 			}
+			require.NoError(t, err)
 
 			tx, err := executor.ExecuteOperation(ctx, tt.metadata, tt.nonce, tt.proof, tt.op)
 
@@ -319,9 +318,8 @@ func TestExecutor_SetRoot(t *testing.T) {
 			if tt.wantErrNew != nil {
 				require.EqualError(t, err, tt.wantErrNew.Error())
 				return
-			} else {
-				require.NoError(t, err)
 			}
+			require.NoError(t, err)
 
 			tx, err := executor.SetRoot(ctx, tt.metadata,
 				tt.proof,

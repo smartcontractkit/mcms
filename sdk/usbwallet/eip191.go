@@ -60,7 +60,7 @@ func (w *ledgerDriver) SignPersonalMessage(path accounts.DerivationPath, message
 	// Ensure the wallet is capable of signing the given transaction
 	if w.version[0] < 1 && w.version[1] < 2 {
 		//lint:ignore ST1005 brand name displayed on the console
-		return nil, fmt.Errorf("Ledger version >= 1.2.0 required for personal signing (found version v%d.%d.%d)", w.version[0], w.version[1], w.version[2])
+		return nil, fmt.Errorf("version error: Ledger version >= 1.2.0 required for personal signing (found version v%d.%d.%d)", w.version[0], w.version[1], w.version[2])
 	}
 	return w.ledgerSignPersonalMessage(path, message)
 }

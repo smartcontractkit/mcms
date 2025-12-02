@@ -52,7 +52,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	timelockSignerPDA, err := solanasdk.FindTimelockSignerPDA(s.TimelockProgramID, testPDASeedTimelockConverter)
 	s.Require().NoError(err)
 
-	e2eutils.FundAccounts(s.T(), ctx, []solana.PublicKey{mcmSignerPDA, timelockSignerPDA}, 1, s.SolanaClient)
+	e2eutils.FundAccounts(s.T(), []solana.PublicKey{mcmSignerPDA, timelockSignerPDA}, 1, s.SolanaClient)
 
 	validUntil := 2051222400 // 2035-01-01T12:00:00 UTC
 	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedTimelockConverter)

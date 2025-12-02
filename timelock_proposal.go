@@ -149,7 +149,7 @@ func (m *TimelockProposal) deriveNewProposal(action types.TimelockAction, metada
 // DeriveCancellationProposal derives a new proposal that cancels the current proposal.
 func (m *TimelockProposal) DeriveCancellationProposal(cancellerMetadata map[types.ChainSelector]types.ChainMetadata) (TimelockProposal, error) {
 	if m.Action != types.TimelockActionSchedule {
-		return TimelockProposal{}, fmt.Errorf("cannot derive a cancellation proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
+		return TimelockProposal{}, errors.New("cannot derive a cancellation proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
 	}
 
 	return m.deriveNewProposal(types.TimelockActionCancel, cancellerMetadata)
@@ -158,7 +158,7 @@ func (m *TimelockProposal) DeriveCancellationProposal(cancellerMetadata map[type
 // DeriveBypassProposal derives a new proposal that bypasses the current proposal.
 func (m *TimelockProposal) DeriveBypassProposal(bypasserAddresses map[types.ChainSelector]types.ChainMetadata) (TimelockProposal, error) {
 	if m.Action != types.TimelockActionSchedule {
-		return TimelockProposal{}, fmt.Errorf("cannot derive a bypass proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
+		return TimelockProposal{}, errors.New("cannot derive a bypass proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
 	}
 
 	return m.deriveNewProposal(types.TimelockActionBypass, bypasserAddresses)

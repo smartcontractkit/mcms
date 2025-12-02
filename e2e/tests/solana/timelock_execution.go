@@ -47,7 +47,7 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 	s.Require().NoError(err)
 
 	accountsToFund := []solana.PublicKey{auth.PublicKey(), proposerKey.PublicKey(), executorKey.PublicKey()}
-	e2esolanautils.FundAccounts(s.T(), ctx, accountsToFund, 1, s.SolanaClient)
+	e2esolanautils.FundAccounts(s.T(), accountsToFund, 1, s.SolanaClient)
 
 	s.AssignRoleToAccounts(ctx, testTimelockExecuteID, auth, getPublicKeys(proposers), timelock.Proposer_Role)
 	s.AssignRoleToAccounts(ctx, testTimelockExecuteID, auth, getPublicKeys(executors), timelock.Executor_Role)
