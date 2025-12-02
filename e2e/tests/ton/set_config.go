@@ -3,9 +3,7 @@
 package tone2e
 
 import (
-	"math/big"
-	"os"
-	"path/filepath"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -13,19 +11,15 @@ import (
 
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
-	"github.com/xssnick/tonutils-go/tvm/cell"
 
-	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 
-	commonton "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 )
 
@@ -50,55 +44,15 @@ func (s *SetConfigTestSuite) SetupSuite() {
 }
 
 func (s *SetConfigTestSuite) deployMCMSContract() {
-	amount := tlb.MustFromTON("0.05")
-	msgBody := cell.BeginCell().EndCell() // empty cell, top up
+	ctx := s.T().Context()
 
-	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsMCMS)
-	contractCode, err := wrappers.ParseCompiledContract(contractPath)
+	amount := tlb.MustFromTON("0.3")
+	chainID, err := strconv.ParseInt(s.TonBlockchain.ChainID, 10, 64)
 	s.Require().NoError(err)
-
-	data := mcms.Data{
-		ID: 4,
-		Ownable: commonton.Ownable2Step{
-			Owner:        s.wallet.Address(),
-			PendingOwner: nil,
-		},
-		Oracle:  tvm.ZeroAddress,
-		Signers: must(tvm.MakeDict(map[*big.Int]mcms.Signer{}, 160)), // TODO: tvm.KeyUINT160
-		Config: mcms.Config{
-			Signers:      must(tvm.MakeDictFrom([]mcms.Signer{}, tvm.KeyUINT8)),
-			GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{}, tvm.KeyUINT8)),
-			GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{}, tvm.KeyUINT8)),
-		},
-		SeenSignedHashes: must(tvm.MakeDict(map[*big.Int]mcms.SeenSignedHash{}, tvm.KeyUINT256)),
-		RootInfo: mcms.RootInfo{
-			ExpiringRootAndOpCount: mcms.ExpiringRootAndOpCount{
-				Root:       big.NewInt(0),
-				ValidUntil: 0,
-				OpCount:    17,
-				OpPendingInfo: mcms.OpPendingInfo{
-					ValidAfter:             0,
-					OpFinalizationTimeout:  0,
-					OpPendingReceiver:      tvm.ZeroAddress,
-					OpPendingBodyTruncated: big.NewInt(0),
-				},
-			},
-			RootMetadata: mcms.RootMetadata{
-				ChainID:              big.NewInt(-217),
-				MultiSig:             tvm.ZeroAddress,
-				PreOpCount:           17,
-				PostOpCount:          17,
-				OverridePreviousRoot: false,
-			},
-		},
-	}
-	contractData, err := tlb.ToCell(data)
+	data := MCMSEmptyDataFrom(hash.CRC32("test.set_config.mcms"), s.wallet.Address(), chainID)
+	mcmsAddr, err := DeployMCMSContract(ctx, s.TonClient, s.wallet, amount, data)
 	s.Require().NoError(err)
-
-	client := tracetracking.NewSignedAPIClient(s.TonClient, *s.wallet)
-	contract, _, err := wrappers.Deploy(s.T().Context(), &client, contractCode, contractData, amount, msgBody)
-	s.Require().NoError(err)
-	s.mcmsAddr = contract.Address.String()
+	s.mcmsAddr = mcmsAddr.String()
 }
 
 func (s *SetConfigTestSuite) Test_TON_SetConfigInspect() {
@@ -265,7 +219,7 @@ func (s *SetConfigTestSuite) Test_TON_SetConfigInspect() {
 			{
 				gotCount, err := tt.inspector.GetOpCount(ctx, s.mcmsAddr)
 				s.Require().NoError(err, "getting config on MCMS contract")
-				s.Require().Equal(uint64(17), gotCount)
+				s.Require().Equal(uint64(0), gotCount)
 			}
 
 			// Assert that config has been set

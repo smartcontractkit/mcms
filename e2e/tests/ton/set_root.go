@@ -6,8 +6,6 @@ package tone2e
 import (
 	"context"
 	"encoding/json"
-	"os"
-	"path/filepath"
 	"strconv"
 
 	"github.com/stretchr/testify/suite"
@@ -18,7 +16,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
@@ -78,25 +75,16 @@ func (s *SetRootTestSuite) SetupSuite() {
 	s.chainSelector = types.ChainSelector(chainDetails.ChainSelector)
 }
 
-// TODO: duplicated with SetConfigTestSuite
 func (s *SetRootTestSuite) deployMCMSContract() {
 	ctx := s.T().Context()
+
 	amount := tlb.MustFromTON("0.3")
-	msgBody := cell.BeginCell().EndCell() // empty cell, top up
-
-	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsMCMS)
-	contractCode, err := wrappers.ParseCompiledContract(contractPath)
+	chainID, err := strconv.ParseInt(s.TonBlockchain.ChainID, 10, 64)
 	s.Require().NoError(err)
-
-	chainId, err := strconv.ParseInt(s.TonBlockchain.ChainID, 10, 64)
+	data := MCMSEmptyDataFrom(hash.CRC32("test.set_root.mcms"), s.wallet.Address(), chainID)
+	mcmsAddr, err := DeployMCMSContract(ctx, s.TonClient, s.wallet, amount, data)
 	s.Require().NoError(err)
-	contractData, err := tlb.ToCell(MCMSEmptyDataFrom(hash.CRC32("test.set-root.mcms"), s.wallet.Address(), chainId))
-	s.Require().NoError(err)
-
-	client := tracetracking.NewSignedAPIClient(s.TonClient, *s.wallet)
-	contract, _, err := wrappers.Deploy(ctx, &client, contractCode, contractData, amount, msgBody)
-	s.Require().NoError(err)
-	s.mcmsAddr = contract.Address.String()
+	s.mcmsAddr = mcmsAddr.String()
 
 	// Set configuration
 	configurerTON, err := mcmston.NewConfigurer(s.wallet, amount)

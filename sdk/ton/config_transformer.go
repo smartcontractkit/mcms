@@ -137,7 +137,7 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 
 	kvGroupQuorums, err := config.GroupQuorums.LoadAll()
 	if err != nil {
-		return nil, fmt.Errorf("unable to laaoad group aa quorums: %w", err)
+		return nil, fmt.Errorf("unable to load all group quorums: %w", err)
 	}
 
 	for i, kvGroupQuorum := range kvGroupQuorums {
