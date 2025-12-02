@@ -74,7 +74,8 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	keySz := uint(8)
 	signersDict := cell.NewDict(keySz)
 	for i, s := range signers {
-		sc, err := tlb.ToCell(s)
+		var sc *cell.Cell
+		sc, err = tlb.ToCell(s)
 		if err != nil {
 			return mcms.Config{}, fmt.Errorf("unable to encode signer %d: %w", i, err)
 		}
@@ -150,7 +151,8 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 	}
 
 	for i, kvGroupQuorum := range kvGroupQuorums {
-		val, err := kvGroupQuorum.Value.LoadUInt(8)
+		var val uint64
+		val, err = kvGroupQuorum.Value.LoadUInt(8)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load group quorum value: %w", err)
 		}
