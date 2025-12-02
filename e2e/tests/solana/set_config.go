@@ -102,7 +102,7 @@ func (s *TestSuite) TestSetConfig() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Empty(err, result.Hash)
+		s.Require().Empty(result.Hash)
 
 		gotConfig, err := mcmsSolana.NewInspector(s.SolanaClient).GetConfig(ctx, mcmAddress)
 		s.Require().NoError(err)

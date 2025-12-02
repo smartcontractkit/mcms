@@ -74,7 +74,7 @@ type BaseProposal struct {
 	Metadata             map[string]any                              `json:"metadata,omitempty"`
 	// This field is passed to SDK implementations to indicate whether the proposal is being run
 	// against a simulated environment. This is only used for testing purposes.
-	useSimulatedBackend bool `json:"-"`
+	useSimulatedBackend bool `json:"-"` //nolint:revive
 }
 
 // AppendSignature appends a signature to the proposal's signature list.

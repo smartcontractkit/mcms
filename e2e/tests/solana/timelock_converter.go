@@ -712,8 +712,9 @@ func toJSONString(t *testing.T, proposal *mcms.Proposal) string {
 	return buffer.String()
 }
 
-func getTransactionLogs(t *testing.T, ctx context.Context, client *rpc.Client, signature string) string {
+func getTransactionLogs(t *testing.T, client *rpc.Client, signature string) string {
 	t.Helper()
+	ctx := context.Background()
 
 	opts := &rpc.GetTransactionOpts{Commitment: rpc.CommitmentConfirmed}
 	result, err := client.GetTransaction(ctx, solana.MustSignatureFromBase58(signature), opts)

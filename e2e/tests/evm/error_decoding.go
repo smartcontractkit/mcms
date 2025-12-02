@@ -315,13 +315,13 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 // 2. Accept ownership (must be called by the new owner, i.e., timelock)
 func transferMCMSOwnershipToTimelock(
 	t *testing.T,
-	ctx context.Context,
 	mcmsContract *bindings.ManyChainMultiSig,
 	timelockAddr common.Address,
 	currentOwnerAuth *bind.TransactOpts,
 	client *ethclient.Client,
 ) {
 	t.Helper()
+	ctx := t.Context()
 
 	// Step 1: Transfer ownership from current owner to timelock
 	tx, err := mcmsContract.TransferOwnership(currentOwnerAuth, timelockAddr)
@@ -336,13 +336,13 @@ func transferMCMSOwnershipToTimelock(
 // This creates a proposal that calls acceptOwnership() on MCMS and executes it through the timelock.
 func acceptMCMSOwnership(
 	t *testing.T,
-	ctx context.Context,
 	mcmsContract *bindings.ManyChainMultiSig,
 	timelockContract *bindings.RBACTimelock,
 	timelockAuth *bind.TransactOpts,
 	client *ethclient.Client,
 ) {
 	t.Helper()
+	ctx := t.Context()
 
 	// Get the acceptOwnership method from MCMS ABI
 	mcmsABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()

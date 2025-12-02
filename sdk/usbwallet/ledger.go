@@ -353,7 +353,7 @@ func (w *ledgerDriver) ledgerSign(derivationPath []uint32, tx *types.Transaction
 	// Chunk size selection to mitigate an underlying RLP deserialization issue on the ledger app.
 	// https://github.com/LedgerHQ/app-ethereum/issues/409
 	chunk := 255
-	//nolint:revive
+	//nolint:revive // alow empty block
 	for ; len(payload)%chunk <= ledgerEip155Size; chunk-- {
 	}
 
@@ -544,12 +544,12 @@ func (w *ledgerDriver) ledgerExchange(opcode ledgerOpcode, p1 ledgerParam1, p2 l
 			payload = chunk[5:]
 		}
 		// Append to the reply and stop when filled up
-		if left := cap(reply) - len(reply); left > len(payload) {
-			reply = append(reply, payload...)
-		} else {
+		left := cap(reply) - len(reply)
+		if left <= len(payload) {
 			reply = append(reply, payload[:left]...)
 			break
 		}
+		reply = append(reply, payload...)
 	}
 	return reply[:len(reply)-2], nil
 }
