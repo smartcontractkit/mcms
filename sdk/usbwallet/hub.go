@@ -186,7 +186,8 @@ func (hub *Hub) refreshWallets() {
 
 	var (
 		wallets = make([]accounts.Wallet, 0, len(devices))
-		events  []accounts.WalletEvent //nolint:prealloc
+		//nolint:prealloc
+		events []accounts.WalletEvent
 	)
 
 	for _, device := range devices {

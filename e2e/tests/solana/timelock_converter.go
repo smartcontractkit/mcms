@@ -677,12 +677,12 @@ func (s *TestSuite) executeTimelockProposal(
 
 	tx, err := timelockExecutable.Execute(ctx, 0)
 	s.Require().NoError(err)
-	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `empty`")
-	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `u8_instruction_data`")
+	s.Require().Contains(getTransactionLogs(s.T(), s.SolanaClient, tx.Hash), "Called `empty`")
+	s.Require().Contains(getTransactionLogs(s.T(), s.SolanaClient, tx.Hash), "Called `u8_instruction_data`")
 
 	tx, err = timelockExecutable.Execute(ctx, 1)
 	s.Require().NoError(err)
-	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `account_mut`")
+	s.Require().Contains(getTransactionLogs(s.T(), s.SolanaClient, tx.Hash), "Called `account_mut`")
 }
 
 func marshalAdditionalFields(t *testing.T, additionalFields solanasdk.AdditionalFields) []byte {
