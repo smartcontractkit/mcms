@@ -89,7 +89,6 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				// Mock SendTransaction to return (no error)
 				api.EXPECT().SendExternalMessageWaitTransaction(mock.Anything, mock.Anything).
 					Return(&tlb.Transaction{Hash: []byte{1, 2, 3, 4, 14}}, &ton.BlockIDExt{}, []byte{}, nil)
-
 			},
 			wantTxHash: "010203040e",
 			wantErr:    nil,
