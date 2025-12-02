@@ -3,7 +3,7 @@ package sui
 import (
 	"context"
 	"encoding/hex"
-	"fmt"
+	"errors"
 	"strings"
 	"testing"
 
@@ -333,7 +333,7 @@ func TestExecutingCallbackParams_AppendPTB_ExtractError(t *testing.T) {
 
 	// Mock the helper functions to return errors
 	params.extractExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
-		return nil, fmt.Errorf("mock extract error")
+		return nil, errors.New("mock extract error")
 	}
 	params.closeExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
 		return nil
@@ -579,7 +579,7 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSDeployerTarget_ExecuteDispatc
 		"0xregistry",
 		"0xdeployerstate",
 		mock.AnythingOfType("*transaction.Argument"),
-	).Return(nil, fmt.Errorf("mock dispatch error"))
+	).Return(nil, errors.New("mock dispatch error"))
 
 	mcmsPackageIDHex := "123456789abcdef0" + strings.Repeat("0", 48)
 	mcmsPackageIDBytes, err := hex.DecodeString(mcmsPackageIDHex)
@@ -650,7 +650,7 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSDeployerTarget_AppendPTBError
 		mock.AnythingOfType("*bind.CallOpts"),
 		mock.AnythingOfType("*transaction.Transaction"),
 		expectedDispatchCall,
-	).Return(nil, fmt.Errorf("mock append error"))
+	).Return(nil, errors.New("mock append error"))
 
 	mcmsPackageIDHex := "123456789abcdef0" + strings.Repeat("0", 48)
 	mcmsPackageIDBytes, err := hex.DecodeString(mcmsPackageIDHex)

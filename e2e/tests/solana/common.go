@@ -11,14 +11,21 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
+	"go.uber.org/zap"
+
 	evmCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/rpc"
-	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/access_controller"
 	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/external_program_cpi_stub"
@@ -27,9 +34,6 @@ import (
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/accesscontroller"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"

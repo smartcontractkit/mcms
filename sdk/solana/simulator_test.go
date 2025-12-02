@@ -20,7 +20,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestSimulator_SimulateSetRoot(t *testing.T) {
+func TestSimulatorSimulateSetRoot(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -110,7 +110,7 @@ func TestSimulator_SimulateSetRoot(t *testing.T) {
 	}
 }
 
-func TestSimulator_SimulateOperation(t *testing.T) {
+func TestSimulatorSimulateOperation(t *testing.T) {
 	t.Parallel()
 
 	auth, err := solana.NewRandomPrivateKey()

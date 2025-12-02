@@ -12,14 +12,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/google/go-cmp/cmp"
+
 	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/external_program_cpi_stub"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
-	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms"
 	e2eutils "github.com/smartcontractkit/mcms/e2e/utils/solana"

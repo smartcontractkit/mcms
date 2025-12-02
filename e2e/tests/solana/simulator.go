@@ -23,7 +23,7 @@ import (
 
 var testPDASeedSetRootSimulateTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r', 'o', 'o', 't', '-', 's', 'i', 'm', 'u', 'l', 'a', 't', 'e'}
 
-func (s *TestSuite) TestSimulator_SimulateSetRoot() {
+func (s *TestSuite) TestSimulatorSimulateSetRoot() {
 	s.SetupMCM(testPDASeedSetRootSimulateTest)
 	ctx := context.Background()
 
@@ -120,7 +120,7 @@ func (s *TestSuite) TestSimulator_SimulateSetRoot() {
 	s.Require().NoError(err)
 }
 
-func (s *TestSuite) TestSimulator_SimulateOperation() {
+func (s *TestSuite) TestSimulatorSimulateOperation() {
 	ctx := context.Background()
 
 	recipientAddress, err := solana.NewRandomPrivateKey()

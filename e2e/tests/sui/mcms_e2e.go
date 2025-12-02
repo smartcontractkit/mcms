@@ -26,7 +26,7 @@ func (s *MCMSUserTestSuite) SetupSuite() {
 }
 
 // TestMCMSUserFunctionOne tests MCMS user function one
-func (s *MCMSUserTestSuite) TestMCMSUser_Function_One() {
+func (s *MCMSUserTestSuite) TestMCMSUserFunctionOne() {
 	s.Run("Proposer Role", func() {
 		RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleProposer)
 	})
