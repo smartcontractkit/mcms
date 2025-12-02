@@ -35,7 +35,6 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	transferMCMSOwnershipToTimelock(
 		s.T(),
-		ctx,
 		mcmsContract,
 		timelockContract.Address(),
 		s.ChainA.auth,
@@ -44,7 +43,6 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	acceptMCMSOwnership(
 		s.T(),
-		ctx,
 		mcmsContract,
 		timelockContract,
 		s.ChainA.auth,
@@ -182,7 +180,6 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 
 	transferMCMSOwnershipToTimelock(
 		s.T(),
-		ctx,
 		mcmsContract,
 		timelockContract.Address(),
 		s.ChainA.auth,
@@ -191,7 +188,6 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 
 	acceptMCMSOwnership(
 		s.T(),
-		ctx,
 		mcmsContract,
 		timelockContract,
 		s.ChainA.auth,
