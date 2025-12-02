@@ -2,6 +2,7 @@ package types //nolint:revive
 
 import (
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
 	"slices"
 
@@ -69,7 +70,7 @@ func (s Signature) RecoverPublicKey(hash common.Hash) (*ecdsa.PublicKey, error) 
 
 	// The signature should be 65 bytes, and the last byte is the recovery id (v).
 	if len(sig) != SignatureBytesLength {
-		return &ecdsa.PublicKey{}, fmt.Errorf("invalid signature length")
+		return &ecdsa.PublicKey{}, errors.New("invalid signature length")
 	}
 
 	// Adjust the recovery id (v) if needed. Ethereum signatures expect 27 or 28.

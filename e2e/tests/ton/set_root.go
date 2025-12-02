@@ -32,7 +32,7 @@ import (
 )
 
 const (
-	ADDR_TIMELOCK = "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8" // static mock address
+	AddrTimelock = "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8" // static mock address
 )
 
 // SetRootTestSuite tests the SetRoot functionality
@@ -215,7 +215,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 		SetAction(types.TimelockActionSchedule).
 		SetDelay(types.MustParseDuration("24h")).
 		SetTimelockAddresses(map[types.ChainSelector]string{
-			s.chainSelector: ADDR_TIMELOCK,
+			s.chainSelector: AddrTimelock,
 		}).
 		AddChainMetadata(
 			s.chainSelector,
