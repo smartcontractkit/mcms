@@ -4,7 +4,6 @@ package sui
 
 import (
 	"crypto/ecdsa"
-	"testing"
 	"time"
 
 	"github.com/smartcontractkit/mcms"
@@ -28,11 +27,11 @@ func (s *MCMSUserTestSuite) SetupSuite() {
 
 // TestMCMSUserFunctionOne tests MCMS user function one
 func (s *MCMSUserTestSuite) Test_MCMSUser_Function_One() {
-	s.Run("Proposer Role", func(t *testing.T) {
+	s.Run("Proposer Role", func() {
 		RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleProposer)
 	})
 
-	s.Run("Bypasser Role", func(t *testing.T) {
+	s.Run("Bypasser Role", func() {
 		RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleBypasser)
 	})
 }
