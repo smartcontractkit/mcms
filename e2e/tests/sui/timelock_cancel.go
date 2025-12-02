@@ -228,7 +228,7 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 	})
 	s.Require().NoError(err, "Failed to derive cancellation proposal")
 
-	cancelProposal, opId, err := cancelTimelockProposal.Convert(s.T().Context(), convertersMap)
+	cancelProposal, opID, err := cancelTimelockProposal.Convert(s.T().Context(), convertersMap)
 	s.Require().NoError(err, "Failed to convert cancellation proposal")
 
 	// Sign the cancellation proposal
@@ -311,5 +311,5 @@ func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
 	_, execErr = timelockExecutable.Execute(s.T().Context(), 0, mcms.WithCallProxy(s.timelockObj))
 	s.Require().Error(execErr, "Executing canceled operation should fail")
 
-	s.T().Logf("✅ Successfully canceled timelock operation with ID: %s", opId)
+	s.T().Logf("✅ Successfully canceled timelock operation with ID: %s", opID)
 }

@@ -241,7 +241,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 	tests := []struct {
 		name      string
 		address   string
-		opId      [32]byte
+		opID      [32]byte
 		mockError error
 		want      bool
 		wantErr   error
@@ -249,13 +249,13 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 		{
 			name:    "IsOperation success",
 			address: "0x1234567890abcdef1234567890abcdef12345678",
-			opId:    [32]byte{0x01},
+			opID:    [32]byte{0x01},
 			want:    true,
 		},
 		{
 			name:      "IsOperation call contract failure error",
 			address:   "0x1234567890abcdef1234567890abcdef12345678",
-			opId:      [32]byte{0x02},
+			opID:      [32]byte{0x02},
 			mockError: errors.New("call to contract failed"),
 			want:      false,
 			wantErr:   errors.New("call to contract failed"),
@@ -289,7 +289,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 			}
 
 			// Call the `IsOperation` method
-			got, err := inspector.IsOperation(ctx, tt.address, tt.opId)
+			got, err := inspector.IsOperation(ctx, tt.address, tt.opID)
 
 			// Assertions for expected error or successful result
 			if tt.wantErr != nil {
@@ -311,7 +311,7 @@ func testIsOperationState(
 	t *testing.T,
 	methodName string,
 	address string,
-	opId [32]byte,
+	opID [32]byte,
 	want bool,
 	mockError error,
 	wantErr error,
@@ -346,11 +346,11 @@ func testIsOperationState(
 	var got bool
 	switch methodName {
 	case "isOperationPending":
-		got, err = inspector.IsOperationPending(ctx, address, opId)
+		got, err = inspector.IsOperationPending(ctx, address, opID)
 	case "isOperationReady":
-		got, err = inspector.IsOperationReady(ctx, address, opId)
+		got, err = inspector.IsOperationReady(ctx, address, opID)
 	case "isOperationDone":
-		got, err = inspector.IsOperationDone(ctx, address, opId)
+		got, err = inspector.IsOperationDone(ctx, address, opID)
 	default:
 		t.Fatalf("unsupported methodName: %s", methodName)
 	}
@@ -375,7 +375,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	tests := []struct {
 		name      string
 		address   string
-		opId      [32]byte
+		opID      [32]byte
 		want      bool
 		mockError error
 		wantErr   error
@@ -383,13 +383,13 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 		{
 			name:    "IsOperationPending success",
 			address: "0x1234567890abcdef1234567890abcdef12345678",
-			opId:    [32]byte{0x01},
+			opID:    [32]byte{0x01},
 			want:    true,
 		},
 		{
 			name:      "IsOperationPending call contract failure error",
 			address:   "0x1234567890abcdef1234567890abcdef12345678",
-			opId:      [32]byte{0x02},
+			opID:      [32]byte{0x02},
 			mockError: errors.New("call to contract failed"),
 			want:      false,
 			wantErr:   errors.New("call to contract failed"),
@@ -399,7 +399,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testIsOperationState(t, "isOperationPending", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+			testIsOperationState(t, "isOperationPending", tt.address, tt.opID, tt.want, tt.mockError, tt.wantErr)
 		})
 	}
 }
@@ -410,7 +410,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	tests := []struct {
 		name      string
 		address   string
-		opId      [32]byte
+		opID      [32]byte
 		want      bool
 		mockError error
 		wantErr   error
@@ -418,13 +418,13 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 		{
 			name:    "IsOperationReady success",
 			address: "0x1234567890abcdef1234567890abcdef12345678",
-			opId:    [32]byte{0x01},
+			opID:    [32]byte{0x01},
 			want:    true,
 		},
 		{
 			name:      "IsOperationReady call contract failure error",
 			address:   "0x1234567890abcdef1234567890abcdef12345678",
-			opId:      [32]byte{0x02},
+			opID:      [32]byte{0x02},
 			mockError: errors.New("call to contract failed"),
 			want:      false,
 			wantErr:   errors.New("call to contract failed"),
@@ -434,7 +434,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testIsOperationState(t, "isOperationReady", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+			testIsOperationState(t, "isOperationReady", tt.address, tt.opID, tt.want, tt.mockError, tt.wantErr)
 		})
 	}
 }
@@ -445,7 +445,7 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 	tests := []struct {
 		name      string
 		address   string
-		opId      [32]byte
+		opID      [32]byte
 		want      bool
 		mockError error
 		wantErr   error
@@ -453,13 +453,13 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 		{
 			name:    "IsOperationDone success",
 			address: "0x1234567890abcdef1234567890abcdef12345678",
-			opId:    [32]byte{0x01},
+			opID:    [32]byte{0x01},
 			want:    true,
 		},
 		{
 			name:      "IsOperationDone call contract failure error",
 			address:   "0x1234567890abcdef1234567890abcdef12345678",
-			opId:      [32]byte{0x02},
+			opID:      [32]byte{0x02},
 			mockError: errors.New("call to contract failed"),
 			want:      false,
 			wantErr:   errors.New("call to contract failed"),
@@ -469,7 +469,7 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			testIsOperationState(t, "isOperationDone", tt.address, tt.opId, tt.want, tt.mockError, tt.wantErr)
+			testIsOperationState(t, "isOperationDone", tt.address, tt.opID, tt.want, tt.mockError, tt.wantErr)
 		})
 	}
 }
