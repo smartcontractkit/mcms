@@ -3,9 +3,10 @@ package types //nolint:revive
 import (
 	"testing"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
 )
 
 func TestGetChainSelectorFamily(t *testing.T) {

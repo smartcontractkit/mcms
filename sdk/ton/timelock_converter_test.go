@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/stretchr/testify/assert"

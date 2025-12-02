@@ -3,7 +3,6 @@
 package sui
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"strconv"
@@ -82,7 +81,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 	s.Require().NoError(err, "setting proposer config")
 
 	// Phase 3: Setup ownership and registration
-	executeMCMSSelfOwnershipTransfer(s.T(), ctx, s, proposerConfig)
+	executeMCMSSelfOwnershipTransfer(s.T(), s, proposerConfig)
 
 	deployerContract, err := module_mcms_deployer.NewMcmsDeployer(s.mcmsPackageID, s.client)
 	s.Require().NoError(err)
@@ -118,7 +117,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 	})
 	s.Require().NoError(err)
 
-	newAddress := executeUpgradePTB(s.T(), ctx, s, compiledPackage, proposerConfig)
+	newAddress := executeUpgradePTB(s.T(), s, compiledPackage, proposerConfig)
 
 	// Phase 6: Verify upgrade completion
 	mcmsUserContract, err := module_mcms_user.NewMcmsUser(newAddress, s.client)
@@ -149,8 +148,9 @@ func logDeploymentInfo(s *MCMSUserUpgradeTestSuite) {
 	s.T().Logf("MCMS User State Object ID: %s", s.stateObj)
 }
 
-func executeMCMSSelfOwnershipTransfer(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig) {
+func executeMCMSSelfOwnershipTransfer(t *testing.T, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig) {
 	t.Helper()
+	ctx := t.Context()
 
 	gasBudget := DefaultGasBudget
 	tx, err := s.mcmsAccount.TransferOwnershipToSelf(
@@ -166,7 +166,7 @@ func executeMCMSSelfOwnershipTransfer(t *testing.T, ctx context.Context, s *MCMS
 	s.Require().NoError(err, "Failed to transfer MCMS ownership to self")
 	s.Require().NotEmpty(tx, "Transaction should not be empty")
 
-	executeMCMSSelfOwnershipAcceptanceProposal(t, ctx, s, proposerConfig)
+	executeMCMSSelfOwnershipAcceptanceProposal(t, s, proposerConfig)
 
 	tx, err = s.mcmsAccount.ExecuteOwnershipTransfer(
 		ctx,
@@ -184,8 +184,9 @@ func executeMCMSSelfOwnershipTransfer(t *testing.T, ctx context.Context, s *MCMS
 	s.Require().NotEmpty(tx, "Transaction should not be empty")
 }
 
-func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig) {
+func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig) {
 	t.Helper()
+	ctx := t.Context()
 
 	transaction, err := createMCMSAcceptOwnershipTransaction(s)
 	s.Require().NoError(err)
@@ -283,8 +284,9 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 // 1. MCMS timelock execution → produces UpgradeTicket
 // 2. Package upgrade using the UpgradeTicket → produces UpgradeReceipt
 // 3. Commit upgrade using the UpgradeReceipt
-func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) string {
+func executeUpgradePTB(t *testing.T, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) string {
 	t.Helper()
+	ctx := t.Context()
 
 	tx, err := suisdk.CreateUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.ownerCapObj, s.mcmsUserPackageID)
 	s.Require().NoError(err)
