@@ -185,7 +185,7 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 	mockBound.On("AppendPTB",
 		ctx,
 		mock.MatchedBy(func(opts *bind.CallOpts) bool {
-			return opts.Signer == mockSigner && opts.WaitForExecution == true
+			return opts.Signer == mockSigner && opts.WaitForExecution
 		}),
 		mock.AnythingOfType("*transaction.Transaction"),
 		mock.AnythingOfType("*bind.EncodedCall"),
@@ -456,7 +456,7 @@ func TestTimelockExecutor_Execute_AppendPTBFailure(t *testing.T) {
 	mockBound.On("AppendPTB",
 		ctx,
 		mock.MatchedBy(func(opts *bind.CallOpts) bool {
-			return opts.Signer == mockSigner && opts.WaitForExecution == true
+			return opts.Signer == mockSigner && opts.WaitForExecution
 		}),
 		mock.AnythingOfType("*transaction.Transaction"),
 		mock.AnythingOfType("*bind.EncodedCall"),

@@ -3,7 +3,7 @@ package mcms
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"math/big"
 	"testing"
 	"time"
@@ -242,7 +242,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, "0x5678", mock.Anything, mock.Anything).
-					Return(types.TransactionResult{}, fmt.Errorf("execute error")).Once()
+					Return(types.TransactionResult{}, errors.New("execute error")).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
 				return defaultProposal(), executors

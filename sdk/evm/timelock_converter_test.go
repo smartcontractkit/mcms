@@ -134,7 +134,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 
 			if tc.expectedError != nil {
 				require.Error(t, err)
-				assert.IsType(t, tc.expectedError, err)
+				require.ErrorIs(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
 				assert.NotEqual(t, common.Hash{}, operationID)

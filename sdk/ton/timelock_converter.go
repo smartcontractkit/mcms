@@ -57,7 +57,8 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 			return []types.Operation{}, common.Hash{}, fmt.Errorf("invalid target address: %w", err)
 		}
 
-		datac, err := cell.FromBOC(tx.Data)
+		var datac *cell.Cell
+		datac, err = cell.FromBOC(tx.Data)
 		if err != nil {
 			return []types.Operation{}, common.Hash{}, fmt.Errorf("invalid cell BOC data: %w", err)
 		}
