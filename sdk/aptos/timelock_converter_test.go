@@ -32,7 +32,7 @@ func TestNewTimelockConverter(t *testing.T) {
 	assert.NotNil(t, converter.bindingFn)
 }
 
-func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
+func TestTimelockConverterConvertBatchToChainOperations(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		metadata        types.ChainMetadata

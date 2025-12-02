@@ -30,7 +30,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	assert.Equal(t, mockAuth, executor.auth)
 }
 
-func TestTimelockExecutor_Execute(t *testing.T) {
+func TestTimelockExecutorExecute(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

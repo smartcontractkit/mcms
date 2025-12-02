@@ -60,7 +60,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	assert.NotNil(t, executor.TimelockInspector)
 }
 
-func TestTimelockExecutor_Properties(t *testing.T) {
+func TestTimelockExecutorProperties(t *testing.T) {
 	t.Parallel()
 
 	mockClient := mocksui.NewISuiAPI(t)
@@ -90,7 +90,7 @@ func TestTimelockExecutor_Properties(t *testing.T) {
 	assert.NotNil(t, executor.executingCallbackParams)
 }
 
-func TestTimelockExecutor_Execute_Success(t *testing.T) {
+func TestTimelockExecutorExecute_Success(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
@@ -201,7 +201,7 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 	assert.NotNil(t, result.RawData)
 }
 
-func TestTimelockExecutor_Execute_InvalidAdditionalFields(t *testing.T) {
+func TestTimelockExecutorExecute_InvalidAdditionalFields(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -245,7 +245,7 @@ func TestTimelockExecutor_Execute_InvalidAdditionalFields(t *testing.T) {
 	assert.Empty(t, result.Hash)
 }
 
-func TestTimelockExecutor_Execute_InvalidTargetAddress(t *testing.T) {
+func TestTimelockExecutorExecute_InvalidTargetAddress(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -301,7 +301,7 @@ func TestTimelockExecutor_Execute_InvalidTargetAddress(t *testing.T) {
 	assert.Empty(t, result.Hash)
 }
 
-func TestTimelockExecutor_Execute_TimelockExecuteBatchFailure(t *testing.T) {
+func TestTimelockExecutorExecute_TimelockExecuteBatchFailure(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -382,7 +382,7 @@ func TestTimelockExecutor_Execute_TimelockExecuteBatchFailure(t *testing.T) {
 	mockEncoder.AssertExpectations(t)
 }
 
-func TestTimelockExecutor_Execute_AppendPTBFailure(t *testing.T) {
+func TestTimelockExecutorExecute_AppendPTBFailure(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
