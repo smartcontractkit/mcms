@@ -7,12 +7,14 @@ import (
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/access_controller"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
-	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
+
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/access_controller"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
+
+	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 )
 
 var _ sdk.TimelockInspector = (*TimelockInspector)(nil)

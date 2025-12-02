@@ -2,6 +2,7 @@ module github.com/smartcontractkit/mcms
 
 go 1.25.3
 
+//nolint:gomoddirectives // allow replace directive
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (

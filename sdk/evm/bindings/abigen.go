@@ -367,6 +367,7 @@ func writeAdditionalMethods(contractName string, logNames []string, abi abi.ABI,
 	if len(logNames) > 0 {
 		var logSwitchBody string
 		for _, logName := range logNames {
+			//nolint:perfsprint // allow fmt.Sprintf in loop
 			logSwitchBody += fmt.Sprintf(`case _%v.abi.Events["%v"].ID:
         return _%v.Parse%v(log)
 `, contractName, logName, contractName, logName)
