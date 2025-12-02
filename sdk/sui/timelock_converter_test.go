@@ -20,7 +20,7 @@ func TestNewTimelockConverter(t *testing.T) {
 	assert.NotNil(t, converter)
 }
 
-func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
+func TestTimelockConverterConvertBatchToChainOperations(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -381,7 +381,7 @@ func TestHashOperationBatch_Deterministic(t *testing.T) {
 	assert.NotEqual(t, hash1, hash2, "Different inputs should produce different hashes")
 }
 
-func TestTimelockConverter_ActionConstants(t *testing.T) {
+func TestTimelockConverterActionConstants(t *testing.T) {
 	t.Parallel()
 
 	// Test that the action constants are correctly defined

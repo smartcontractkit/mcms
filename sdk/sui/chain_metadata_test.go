@@ -92,7 +92,7 @@ func TestTimelockRole_Constants(t *testing.T) {
 	assert.Equal(t, TimelockRoleProposer, TimelockRole(2))
 }
 
-func TestAdditionalFieldsMetadata_JSON(t *testing.T) {
+func TestAdditionalFieldsMetadataJSON(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -156,7 +156,7 @@ func TestAdditionalFieldsMetadata_JSON(t *testing.T) {
 	}
 }
 
-func TestAdditionalFieldsMetadata_RoundTrip(t *testing.T) {
+func TestAdditionalFieldsMetadataRoundTrip(t *testing.T) {
 	t.Parallel()
 
 	original := AdditionalFieldsMetadata{
@@ -187,7 +187,7 @@ func TestAdditionalFieldsMetadata_RoundTrip(t *testing.T) {
 	assert.Equal(t, original.DeployerStateObj, roundTrip.DeployerStateObj)
 }
 
-func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
+func TestAdditionalFieldsMetadataValidate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

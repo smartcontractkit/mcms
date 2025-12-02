@@ -380,7 +380,7 @@ func TestLoadProposal(t *testing.T) {
 	})
 }
 
-func TestProposal_Validate(t *testing.T) {
+func TestProposalValidate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

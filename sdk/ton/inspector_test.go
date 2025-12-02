@@ -25,7 +25,7 @@ import (
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
 
-func TestInspector_GetConfig(t *testing.T) {
+func TestInspectorGetConfig(t *testing.T) {
 	t.Parallel()
 
 	signers := testutils.MakeNewECDSASigners(8)
@@ -85,7 +85,7 @@ func TestInspector_GetConfig(t *testing.T) {
 			address:   "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError: errors.New("call to contract failed"),
 			want:      nil,
-			wantErr:   fmt.Errorf("error getting getConfig: call to contract failed"),
+			wantErr:   errors.New("error getting getConfig: call to contract failed"),
 		},
 		{
 			name:    "Empty Signers list",
@@ -102,7 +102,7 @@ func TestInspector_GetConfig(t *testing.T) {
 				}, tvm.KeyUINT8)),
 			},
 			want:    nil,
-			wantErr: fmt.Errorf("invalid MCMS config: Quorum must be less than or equal to the number of signers and groups"),
+			wantErr: errors.New("invalid MCMS config: Quorum must be less than or equal to the number of signers and groups"),
 		},
 	}
 
@@ -154,7 +154,7 @@ func TestInspector_GetConfig(t *testing.T) {
 	}
 }
 
-func TestInspector_GetOpCount(t *testing.T) {
+func TestInspectorGetOpCount(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -177,7 +177,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 			address:   "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError: errors.New("call to contract failed"),
 			want:      0,
-			wantErr:   fmt.Errorf("error getting getOpCount: call to contract failed"),
+			wantErr:   errors.New("error getting getOpCount: call to contract failed"),
 		},
 	}
 
@@ -225,7 +225,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 	}
 }
 
-func TestInspector_GetRoot(t *testing.T) {
+func TestInspectorGetRoot(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -301,7 +301,7 @@ func TestInspector_GetRoot(t *testing.T) {
 	}
 }
 
-func TestInspector_GetRootMetadata(t *testing.T) {
+func TestInspectorGetRootMetadata(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

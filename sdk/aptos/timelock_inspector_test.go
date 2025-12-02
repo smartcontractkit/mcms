@@ -28,31 +28,31 @@ func TestNewTimelockInspector(t *testing.T) {
 	assert.NotNil(t, inspector.bindingFn)
 }
 
-func TestTimelockInspector_GetProposers(t *testing.T) {
+func TestTimelockInspectorGetProposers(t *testing.T) {
 	t.Parallel()
 	_, err := NewTimelockInspector(nil).GetProposers(t.Context(), "")
 	assert.ErrorContains(t, err, "unsupported on Aptos")
 }
 
-func TestTimelockInspector_GetExecutors(t *testing.T) {
+func TestTimelockInspectorGetExecutors(t *testing.T) {
 	t.Parallel()
 	_, err := NewTimelockInspector(nil).GetExecutors(t.Context(), "")
 	assert.ErrorContains(t, err, "unsupported on Aptos")
 }
 
-func TestTimelockInspector_GetBypassers(t *testing.T) {
+func TestTimelockInspectorGetBypassers(t *testing.T) {
 	t.Parallel()
 	_, err := NewTimelockInspector(nil).GetBypassers(t.Context(), "")
 	assert.ErrorContains(t, err, "unsupported on Aptos")
 }
 
-func TestTimelockInspector_GetCancellers(t *testing.T) {
+func TestTimelockInspectorGetCancellers(t *testing.T) {
 	t.Parallel()
 	_, err := NewTimelockInspector(nil).GetCancellers(t.Context(), "")
 	assert.ErrorContains(t, err, "unsupported on Aptos")
 }
 
-func TestTimelockInspector_IsOperation(t *testing.T) {
+func TestTimelockInspectorIsOperation(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		mcmsAddr string
@@ -130,7 +130,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 	}
 }
 
-func TestTimelockInspector_IsOperationPending(t *testing.T) {
+func TestTimelockInspectorIsOperationPending(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		mcmsAddr string
@@ -208,7 +208,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	}
 }
 
-func TestTimelockInspector_IsOperationReady(t *testing.T) {
+func TestTimelockInspectorIsOperationReady(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		mcmsAddr string
@@ -286,7 +286,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	}
 }
 
-func TestTimelockInspector_IsOperationDone(t *testing.T) {
+func TestTimelockInspectorIsOperationDone(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		mcmsAddr string
@@ -364,7 +364,7 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 	}
 }
 
-func TestTimelockInspector_GetMinDelay(t *testing.T) {
+func TestTimelockInspectorGetMinDelay(t *testing.T) {
 	t.Parallel()
 
 	type args struct {

@@ -38,7 +38,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestTimelockExecutor_Execute(t *testing.T) {
+func TestTimelockExecutorExecute(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

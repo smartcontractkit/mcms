@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	"go.uber.org/zap"
 
 	evmCommon "github.com/ethereum/go-ethereum/common"

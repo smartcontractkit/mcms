@@ -55,7 +55,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		})
 	}
 }
-func TestOperationFields_Validate(t *testing.T) {
+func TestOperationFieldsValidate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

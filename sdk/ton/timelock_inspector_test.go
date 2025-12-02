@@ -55,7 +55,7 @@ func (tt roleFetchTest) mockRoleContractCalls(t *testing.T, client *ton_mocks.AP
 	}
 }
 
-func TestTimelockInspector_GetRolesTests(t *testing.T) {
+func TestTimelockInspectorGetRolesTests(t *testing.T) {
 	t.Parallel()
 
 	var chainID = chaintest.Chain7TONID
@@ -252,7 +252,7 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 	}
 }
 
-func TestTimelockInspector_IsOperation(t *testing.T) {
+func TestTimelockInspectorIsOperation(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -392,7 +392,7 @@ func testIsOperationState(
 }
 
 // Individual test functions calling the helper function with specific method names
-func TestTimelockInspector_IsOperationPending(t *testing.T) {
+func TestTimelockInspectorIsOperationPending(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -427,7 +427,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	}
 }
 
-func TestTimelockInspector_IsOperationReady(t *testing.T) {
+func TestTimelockInspectorIsOperationReady(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -462,7 +462,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	}
 }
 
-func TestTimelockInspector_IsOperationDone(t *testing.T) {
+func TestTimelockInspectorIsOperationDone(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -497,7 +497,7 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 	}
 }
 
-func TestTimelockInspector_GetMinDelay(t *testing.T) {
+func TestTimelockInspectorGetMinDelay(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

@@ -537,7 +537,7 @@ func TestExecutorExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
 	}
 }
 
-func TestExecutor_SetRoot(t *testing.T) {
+func TestExecutorSetRoot(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
