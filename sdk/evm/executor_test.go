@@ -8,12 +8,12 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	evmTypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
@@ -39,8 +39,8 @@ func TestNewExecutor(t *testing.T) {
 
 	executor := evm.NewExecutor(mockEncoder, mockClient, mockAuth)
 
-	assert.Equal(t, mockEncoder, executor.Encoder, "expected Encoder to be set correctly")
-	assert.NotNil(t, executor.Inspector, "expected Inspector to be initialized")
+	require.Equal(t, mockEncoder, executor.Encoder, "expected Encoder to be set correctly")
+	require.NotNil(t, executor.Inspector, "expected Inspector to be initialized")
 }
 
 func TestExecutorExecuteOperation(t *testing.T) {
@@ -210,8 +210,8 @@ func TestExecutorExecuteOperation(t *testing.T) {
 					require.EqualError(t, err, tt.wantErr.Error())
 				}
 			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.wantTxHash, tx.Hash)
+				require.NoError(t, err)
+				require.Equal(t, tt.wantTxHash, tx.Hash)
 			}
 		})
 	}

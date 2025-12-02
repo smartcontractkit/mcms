@@ -9,6 +9,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/tvm/cell"
@@ -173,19 +175,19 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 
 			executor, err := tonmcms.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0.1"))
 			if tt.wantErrNew != nil {
-				assert.EqualError(t, err, tt.wantErrNew.Error())
+				require.EqualError(t, err, tt.wantErrNew.Error())
 				return
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			tx, err := executor.ExecuteOperation(ctx, tt.metadata, tt.nonce, tt.proof, tt.op)
 
 			if tt.wantErr != nil {
-				assert.EqualError(t, err, tt.wantErr.Error())
+				require.EqualError(t, err, tt.wantErr.Error())
 			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, tt.wantTxHash, tx.Hash)
+				require.NoError(t, err)
+				require.Equal(t, tt.wantTxHash, tx.Hash)
 			}
 		})
 	}
@@ -315,10 +317,10 @@ func TestExecutor_SetRoot(t *testing.T) {
 
 			executor, err := tonmcms.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0.1"))
 			if tt.wantErrNew != nil {
-				assert.EqualError(t, err, tt.wantErrNew.Error())
+				require.EqualError(t, err, tt.wantErrNew.Error())
 				return
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 
 			tx, err := executor.SetRoot(ctx, tt.metadata,
@@ -327,11 +329,11 @@ func TestExecutor_SetRoot(t *testing.T) {
 				tt.validUntil,
 				tt.sortedSignatures)
 
-			assert.Equal(t, tt.wantTxHash, tx.Hash)
+			require.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
-				assert.EqualError(t, err, tt.wantErr.Error())
+				require.EqualError(t, err, tt.wantErr.Error())
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 		})
 	}

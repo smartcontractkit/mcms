@@ -8,8 +8,8 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
@@ -34,8 +34,8 @@ func TestNewTimelockExecutor(t *testing.T) {
 	client := ton_mocks.NewAPIClientWrapped(t)
 
 	executor, err := tonmcms.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
-	assert.NotNil(t, executor, "expected Executor")
-	assert.NoError(t, err)
+	require.NotNil(t, executor, "expected Executor")
+	require.NoError(t, err)
 }
 
 func TestTimelockExecutor_Execute(t *testing.T) {
@@ -136,14 +136,14 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			}
 
 			executor, err := tonmcms.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
-			assert.NoError(t, err)
+			require.NoError(t, err)
 
 			tx, err := executor.Execute(ctx, tt.bop, tt.timelockAddress, tt.predecessor, tt.salt)
-			assert.Equal(t, tt.wantTxHash, tx.Hash)
+			require.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
-				assert.EqualError(t, err, tt.wantErr.Error())
+				require.EqualError(t, err, tt.wantErr.Error())
 			} else {
-				assert.NoError(t, err)
+				require.NoError(t, err)
 			}
 		})
 	}
