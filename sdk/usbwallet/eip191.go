@@ -86,6 +86,7 @@ func (w *ledgerDriver) ledgerSignPersonalMessage(derivationPath []uint32, messag
 	// Chunk size selection to mitigate an underlying RLP deserialization issue on the ledger app.
 	// https://github.com/LedgerHQ/app-ethereum/issues/409
 	chunk := 255
+	//nolint:revive // alow empty block
 	for ; len(payload)%chunk <= ledgerEip155Size; chunk-- {
 	}
 

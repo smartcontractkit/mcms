@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
-
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
+
+	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
+
+	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 )
 
 var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
