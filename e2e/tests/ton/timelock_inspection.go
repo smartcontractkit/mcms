@@ -29,7 +29,6 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
-
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 )
 
@@ -258,7 +257,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperation() {
 	isOP, err := inspector.IsOperation(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
 	s.Require().NotNil(isOP)
-	// s.Require().True(isOP)
+	s.Require().True(isOP)
 }
 
 // TestIsOperationPending tests the IsOperationPending method
@@ -285,7 +284,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 	isOP, err := inspector.IsOperationPending(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
 	s.Require().NotNil(isOP)
-	// s.Require().True(isOP)
+	s.Require().True(isOP)
 }
 
 // TestIsOperationReady tests the IsOperationReady and IsOperationDone methods
@@ -314,7 +313,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 	isOP, err := inspector.IsOperationReady(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
 	s.Require().NotNil(isOP)
-	// s.Require().True(isOP)
+	s.Require().True(isOP)
 }
 
 // TODO: add TestIsOperationDone test when we have operation execution implemented

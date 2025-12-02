@@ -21,9 +21,8 @@ import (
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/internal/testutils"
-	"github.com/smartcontractkit/mcms/types"
-
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 // InspectionTestSuite defines the test suite
