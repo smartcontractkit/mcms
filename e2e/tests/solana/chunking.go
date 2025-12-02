@@ -10,14 +10,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 
 	"github.com/smartcontractkit/mcms"
+	e2eutils "github.com/smartcontractkit/mcms/e2e/utils/solana"
 	"github.com/smartcontractkit/mcms/sdk"
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 
-	e2eutils "github.com/smartcontractkit/mcms/e2e/utils/solana"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 )
 
 func (s *TestSuite) Test_Solana_Chunk_LargeInstructions() {

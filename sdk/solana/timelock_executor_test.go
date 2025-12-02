@@ -3,6 +3,7 @@ package solana
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"testing"
@@ -165,7 +166,7 @@ func Test_TimelockExecutor_Execute(t *testing.T) { //nolint:paralleltest
 				mockGetAccountInfo(t, m, configPDA, config, nil)
 				mockSolanaTransaction(t, m, 20, 5,
 					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
-					nil, fmt.Errorf("invalid tx"))
+					nil, errors.New("invalid tx"))
 			},
 			assertion: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.EqualError(t, err, "unable to call execute operation instruction: unable to send instruction: invalid tx")

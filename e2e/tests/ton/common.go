@@ -70,7 +70,7 @@ func LocalWalletDefault(client *ton.APIClient) (*wallet.Wallet, error) {
 	return mcFunderWallet.GetSubwallet(uint32(42))
 }
 
-func MCMSEmptyDataFrom(id uint32, owner *address.Address, chainId int64) mcms.Data {
+func MCMSEmptyDataFrom(id uint32, owner *address.Address, chainID int64) mcms.Data {
 	return mcms.Data{
 		ID: id,
 		Ownable: common.Ownable2Step{
@@ -98,7 +98,7 @@ func MCMSEmptyDataFrom(id uint32, owner *address.Address, chainId int64) mcms.Da
 				},
 			},
 			RootMetadata: mcms.RootMetadata{
-				ChainID:              big.NewInt(chainId),
+				ChainID:              big.NewInt(chainID),
 				MultiSig:             tvm.ZeroAddress,
 				PreOpCount:           0,
 				PostOpCount:          0,

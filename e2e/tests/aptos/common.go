@@ -5,14 +5,17 @@ package aptos
 import (
 	"time"
 
-	"github.com/aptos-labs/aptos-go-sdk"
-	"github.com/aptos-labs/aptos-go-sdk/crypto"
 	"github.com/stretchr/testify/suite"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
+
+	"github.com/aptos-labs/aptos-go-sdk"
+	"github.com/aptos-labs/aptos-go-sdk/crypto"
+
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 	mcmstest "github.com/smartcontractkit/chainlink-aptos/bindings/mcms_test"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/types"

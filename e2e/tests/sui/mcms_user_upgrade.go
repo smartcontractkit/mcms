@@ -105,7 +105,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 		WaitForExecution: true,
 	})
 	s.Require().NoError(err)
-	s.Require().Equal(version, "MCMSUser 1.0.0")
+	s.Require().Equal("MCMSUser 1.0.0", version)
 
 	// Phase 5: Execute upgrade
 	signerAddr, err := s.signer.GetAddress()
@@ -129,7 +129,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 		WaitForExecution: true,
 	})
 	s.Require().NoError(err)
-	s.Require().Equal(mcmsUserVersion, "MCMSUser 2.0.0")
+	s.Require().Equal("MCMSUser 2.0.0", mcmsUserVersion)
 
 	s.T().Log("✅ MCMS User upgrade committed successfully - Complete MCMS → Upgrade workflow completed!")
 }
@@ -446,7 +446,7 @@ func validateAddressChange(t *testing.T, oldAddr, newAddr any) (string, error) {
 	t.Helper()
 
 	if oldAddr == nil || newAddr == nil {
-		return "", fmt.Errorf("package addresses are nil")
+		return "", errors.New("package addresses are nil")
 	}
 
 	oldAddrStr := fmt.Sprintf("%v", oldAddr)
@@ -454,7 +454,7 @@ func validateAddressChange(t *testing.T, oldAddr, newAddr any) (string, error) {
 
 	if oldAddrStr == newAddrStr {
 		t.Errorf("ERROR: Package address did not change! Old: %v, New: %v", oldAddr, newAddr)
-		return "", fmt.Errorf("package address did not change")
+		return "", errors.New("package address did not change")
 	}
 
 	t.Logf("✅ MCMS User package address changed successfully: %s → %s", oldAddrStr, newAddrStr)
@@ -482,7 +482,7 @@ func validateVersionIncrement(t *testing.T, oldVer, newVer any) error {
 		t.Errorf("ERROR: Version did not increment correctly! Old: %.0f, New: %.0f (expected %.0f)",
 			oldVersion, newVersion, expectedVersion)
 
-		return fmt.Errorf("version did not increment correctly")
+		return errors.New("version did not increment correctly")
 	}
 
 	t.Logf("✅ MCMS User version incremented correctly: %.0f → %.0f", oldVersion, newVersion)

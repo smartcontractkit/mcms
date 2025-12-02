@@ -6,10 +6,11 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gagliardetto/solana-go"
-
-	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
+
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"

@@ -221,7 +221,7 @@ func (s *TestSuite) setupTokenProgram(ctx context.Context, auth solana.PrivateKe
 	s.Require().NoError(err)
 	ix1, receiverATA, err := tokens.CreateAssociatedTokenAccount(tokenProgram, mint.PublicKey(), receiver.PublicKey(), auth.PublicKey())
 	s.Require().NoError(err)
-	s.Require().NotEqual(receiverATA.String(), "")
+	s.Require().NotEqual("", receiverATA.String())
 	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix1}, auth, config.DefaultCommitment, solanaCommon.AddSigners(mint))
 
 	return receiverATA

@@ -10,10 +10,12 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
+	"go.uber.org/zap"
+
 	"github.com/gagliardetto/solana-go"
 	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 	"github.com/gagliardetto/solana-go/rpc"
-	"go.uber.org/zap"
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
