@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand/v2"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -85,8 +84,13 @@ func (e *timelockExecutor) Execute(
 		}
 	}
 
+	qID, err := RandomQueryID()
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	}
+
 	body, err := tlb.ToCell(timelock.ExecuteBatch{
-		QueryID: rand.Uint64(),
+		QueryID: qID,
 
 		Calls:       toncommon.SnakeRef[timelock.Call](calls),
 		Predecessor: predecessor.Big(),

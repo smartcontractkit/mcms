@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"math/rand/v2"
 	"reflect"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -86,8 +85,13 @@ func (e *executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("failed to encode proof: %w", err)
 	}
 
+	qID, err := RandomQueryID()
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	}
+
 	body, err := tlb.ToCell(mcms.Execute{
-		QueryID: rand.Uint64(),
+		QueryID: qID,
 
 		Op:    bindOp,
 		Proof: bindProof,
@@ -171,8 +175,13 @@ func (e *executor) SetRoot(
 		return types.TransactionResult{}, fmt.Errorf("failed to encode signatures: %w", err)
 	}
 
+	qID, err := RandomQueryID()
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	}
+
 	body, err := tlb.ToCell(mcms.SetRoot{
-		QueryID: rand.Uint64(),
+		QueryID: qID,
 
 		Root:       new(big.Int).SetBytes(root[:]),
 		ValidUntil: validUntil,

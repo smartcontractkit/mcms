@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/big"
-	"math/rand/v2"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
@@ -99,8 +98,13 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		}
 	}
 
+	qID, err := RandomQueryID()
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	}
+
 	body, err := tlb.ToCell(mcms.SetConfig{
-		QueryID: rand.Uint64(),
+		QueryID: qID,
 
 		SignerAddresses: signerKeys,
 		SignerGroups:    signerGroups,
