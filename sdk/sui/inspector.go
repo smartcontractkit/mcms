@@ -7,6 +7,7 @@ import (
 
 	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"

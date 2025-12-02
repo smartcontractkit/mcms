@@ -6,6 +6,7 @@ import (
 
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 	"github.com/block-vision/sui-go-sdk/models"
+
 	"github.com/smartcontractkit/chainlink-sui/bindgen/function"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 

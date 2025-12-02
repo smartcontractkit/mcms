@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -115,7 +114,7 @@ func TestTimelockExecutorExecute(t *testing.T) {
 					Return(&tlb.Transaction{Hash: []byte{1, 2, 3, 4, 14}}, &ton.BlockIDExt{}, []byte{}, errors.New("error during tx send"))
 			},
 			wantTxHash: "",
-			wantErr:    fmt.Errorf("failed to execute batch: error during tx send"),
+			wantErr:    errors.New("failed to execute batch: error during tx send"),
 		},
 	}
 

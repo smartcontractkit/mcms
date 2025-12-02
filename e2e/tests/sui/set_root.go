@@ -119,7 +119,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 
 		// Root should not be empty after setting
 		s.Require().NotEqual(common.Hash{}, root, "Root should not be empty after SetRoot")
-		s.Require().Greater(validUntilActual, uint32(0), "ValidUntil should be greater than 0 after SetRoot")
+		s.Require().Positive(validUntilActual, "ValidUntil should be greater than 0 after SetRoot")
 
 		// Verify root metadata
 		rootMetadata, err := inspector.GetRootMetadata(ctx, s.mcmsObj)
@@ -230,6 +230,6 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 		root, validUntilActual, err := multiInspector.GetRoot(ctx, s.mcmsObj)
 		s.Require().NoError(err, "Failed to get root after multi-signer SetRoot")
 		s.Require().NotEqual(common.Hash{}, root, "Root should not be empty after multi-signer SetRoot")
-		s.Require().Greater(validUntilActual, uint32(0), "ValidUntil should be greater than 0 after multi-signer SetRoot")
+		s.Require().Positive(validUntilActual, "ValidUntil should be greater than 0 after multi-signer SetRoot")
 	})
 }
