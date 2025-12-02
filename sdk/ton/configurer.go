@@ -11,7 +11,6 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -98,8 +97,8 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	body, err := tlb.ToCell(mcms.SetConfig{
 		QueryID: rand.Uint64(),
 
-		SignerAddresses: common.SnakeData[mcms.SignerAddress](signerKeys),
-		SignerGroups:    common.SnakeData[mcms.SignerGroup](signerGroups),
+		SignerAddresses: signerKeys,
+		SignerGroups:    signerGroups,
 		GroupQuorums:    gqDict,
 		GroupParents:    gpDict,
 
@@ -123,7 +122,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	}
 
 	msg := &wallet.Message{
-		Mode: wallet.PayGasSeparately,
+		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
 		InternalMessage: &tlb.InternalMessage{
 			IHRDisabled: true,
 			Bounce:      true,
