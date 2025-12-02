@@ -2,6 +2,7 @@ package ton
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -22,7 +23,7 @@ var _ sdk.DecodedOperation = &DecodedOperation{}
 
 func NewDecodedOperation(contractType string, msgType string, msgOpcode uint64, msgDecoded any, inputKeys []string, inputArgs []any) (sdk.DecodedOperation, error) {
 	if len(inputKeys) != len(inputArgs) {
-		return nil, fmt.Errorf("input keys and input args must have the same length")
+		return nil, errors.New("input keys and input args must have the same length")
 	}
 
 	return &DecodedOperation{contractType, msgType, msgOpcode, msgDecoded, inputKeys, inputArgs}, nil

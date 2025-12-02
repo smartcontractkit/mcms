@@ -85,7 +85,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	sz := uint(8)
 	gqDict := cell.NewDict(sz)
 	for i, g := range groupQuorum {
-		err := gqDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
+		err = gqDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("unable to dict.set group quorum %d: %w", i, err)
 		}
@@ -93,7 +93,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 	gpDict := cell.NewDict(sz)
 	for i, g := range groupParents {
-		err := gpDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
+		err = gpDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("unable to dict.set group parent %d: %w", i, err)
 		}
