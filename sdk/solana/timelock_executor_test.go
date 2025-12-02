@@ -8,11 +8,13 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 	"github.com/smartcontractkit/mcms/types"
@@ -146,7 +148,7 @@ func Test_TimelockExecutor_Execute(t *testing.T) { //nolint:paralleltest
 			},
 			setup: func(t *testing.T, e *TimelockExecutor, m *mocks.JSONRPCClient) {
 				t.Helper()
-				mockGetAccountInfo(t, m, configPDA, config, fmt.Errorf("GetAccountInfo error"))
+				mockGetAccountInfo(t, m, configPDA, config, errors.New("GetAccountInfo error"))
 			},
 			assertion: assertErrorEquals("unable to read config pda: GetAccountInfo error"),
 		},

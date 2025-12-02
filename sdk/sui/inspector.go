@@ -2,6 +2,7 @@ package sui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/block-vision/sui-go-sdk/sui"
@@ -137,12 +138,12 @@ func (i Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, u
 
 	root, ok := result[0].([]byte)
 	if !ok {
-		return common.Hash{}, 0, fmt.Errorf("invalid root type: expected []byte")
+		return common.Hash{}, 0, errors.New("invalid root type: expected []byte")
 	}
 
 	validUntil, ok := result[1].(uint64)
 	if !ok {
-		return common.Hash{}, 0, fmt.Errorf("invalid validUntil type: expected uint64")
+		return common.Hash{}, 0, errors.New("invalid validUntil type: expected uint64")
 	}
 
 	//nolint:gosec
