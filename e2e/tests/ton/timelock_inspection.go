@@ -66,7 +66,6 @@ func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Addr
 	// TODO: confirm expectedtransaction success
 	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
 	s.Require().NoError(err)
-
 }
 
 func (s *TimelockInspectionTestSuite) scheduleBatch(calls []timelock.Call, predecessor *big.Int, salt *big.Int, delay uint32) {

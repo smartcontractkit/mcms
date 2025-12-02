@@ -19,8 +19,8 @@ import (
 
 var testPDASeedSetConfigTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'c', 'o', 'n', 'f'}
 
-// Test_Solana_SetConfig tests the SetConfig functionality by setting a config on the MCM program
-func (s *TestSuite) Test_Solana_SetConfig() {
+// TestSetConfig tests the SetConfig functionality by setting a config on the MCM program
+func (s *TestSuite) TestSetConfig() {
 	// --- arrange ---
 	ctx := context.Background()
 	s.SetupMCM(testPDASeedSetConfigTest)

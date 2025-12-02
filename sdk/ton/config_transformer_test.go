@@ -17,7 +17,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
-func Test_ConfigTransformer_ToConfig(t *testing.T) {
+func TestConfigTransformer_ToConfig(t *testing.T) {
 	t.Parallel()
 
 	signers := testutils.MakeNewECDSASigners(16)
@@ -188,7 +188,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 	}
 }
 
-func Test_SetConfigInputs(t *testing.T) {
+func TestSetConfigInputs(t *testing.T) {
 	t.Parallel()
 
 	signers := testutils.MakeNewECDSASigners(5)

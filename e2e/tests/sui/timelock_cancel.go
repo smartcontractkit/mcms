@@ -18,7 +18,7 @@ type TimelockCancelProposalTestSuite struct {
 	TestSuite
 }
 
-func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {
+func (s *TimelockCancelProposalTestSuite) TestTimelockCancelProposal() {
 	s.DeployMCMSContract()
 
 	proposerCount := 3

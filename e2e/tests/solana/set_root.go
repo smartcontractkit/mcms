@@ -20,9 +20,9 @@ import (
 
 var testPDASeedSetRootTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r', 'o', 'o', 't'}
 
-// Test_Solana_SetRoot tests the SetRoot functionality by setting a root on the MCM program
+// TestSetRoot tests the SetRoot functionality by setting a root on the MCM program
 // and doing the preload signers setup.
-func (s *TestSuite) Test_Solana_SetRoot() {
+func (s *TestSuite) TestSetRoot() {
 	// --- arrange ---
 	ctx := s.contextWithLogger()
 

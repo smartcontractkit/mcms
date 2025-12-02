@@ -19,7 +19,7 @@ type TimelockProposalTestSuite struct {
 	TestSuite
 }
 
-func (s *TimelockProposalTestSuite) Test_Sui_TimelockProposal() {
+func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	s.Run("TimelockProposal - MCMSAccount Accept Ownership through Bypass", func() {
 		RunAcceptOwnershipProposal(s, suisdk.TimelockRoleBypasser)
 	})

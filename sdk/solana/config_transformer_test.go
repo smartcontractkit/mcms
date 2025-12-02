@@ -15,7 +15,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func Test_ConfigTransformer_ToConfig(t *testing.T) {
+func TestConfigTransformer_ToConfig(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -163,7 +163,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 	}
 }
 
-func Test_ConfigTransformer_ToChainConfig(t *testing.T) {
+func TestConfigTransformer_ToChainConfig(t *testing.T) {
 	t.Parallel()
 
 	var (

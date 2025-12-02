@@ -55,7 +55,7 @@ func (s *SetConfigTestSuite) deployMCMSContract() {
 	s.mcmsAddr = mcmsAddr.String()
 }
 
-func (s *SetConfigTestSuite) Test_TON_SetConfigInspect() {
+func (s *SetConfigTestSuite) TestSetConfigInspect() {
 	// Signers in each group need to be sorted alphabetically
 	signers := testutils.MakeNewECDSASigners(30)
 

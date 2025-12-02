@@ -25,9 +25,9 @@ var testTimelockExecuteID = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'
 
 const BatchAddAccessChunkSize = 24
 
-// Test_Solana_TimelockExecute tests the timelock Execute functionality by scheduling a mint tokens transaction and
+// TestTimelockExecute tests the timelock Execute functionality by scheduling a mint tokens transaction and
 // executing it via the timelock ExecuteBatch
-func (s *TestSuite) Test_Solana_TimelockExecute() {
+func (s *TestSuite) TestTimelockExecute() {
 	// --- arrange ---
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	s.T().Cleanup(cancel)

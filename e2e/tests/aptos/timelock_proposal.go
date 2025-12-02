@@ -27,7 +27,7 @@ import (
 	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 )
 
-func (a *TestSuite) Test_Aptos_TimelockProposal() {
+func (a *TestSuite) TestTimelockProposal() {
 	/*
 		This tests that both the Proposers and the Bypassers can successfully perform operations
 		via the timelock.

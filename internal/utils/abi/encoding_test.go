@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_Encode(t *testing.T) {
+func TestEncode(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -74,7 +74,7 @@ func Test_Encode(t *testing.T) {
 	}
 }
 
-func Test_Decode(t *testing.T) {
+func TestDecode(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

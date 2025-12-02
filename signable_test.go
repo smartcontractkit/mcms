@@ -32,7 +32,7 @@ type simulatorMocks struct {
 	simulator2 *sdkmocks.Simulator
 }
 
-func Test_NewSignable(t *testing.T) {
+func TestNewSignable(t *testing.T) {
 	t.Parallel()
 
 	inspector := sdkmocks.NewInspector(t) // We only need this to fulfill the interface argument requirements
@@ -557,7 +557,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureInvalidSigner(t *te
 	require.False(t, quorumMet)
 }
 
-func Test_Signable_Sign(t *testing.T) {
+func TestSignable_Sign(t *testing.T) {
 	t.Parallel()
 
 	privKey, err := crypto.HexToECDSA(testPrivateKeyHex)
@@ -650,7 +650,7 @@ func Test_Signable_Sign(t *testing.T) {
 	}
 }
 
-func Test_SignAndAppend(t *testing.T) {
+func TestSignAndAppend(t *testing.T) {
 	t.Parallel()
 
 	privKey, err := crypto.HexToECDSA(testPrivateKeyHex)
@@ -742,7 +742,7 @@ func Test_SignAndAppend(t *testing.T) {
 	}
 }
 
-func Test_Signable_GetConfigs(t *testing.T) {
+func TestSignable_GetConfigs(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -853,7 +853,7 @@ func Test_Signable_GetConfigs(t *testing.T) {
 	}
 }
 
-func Test_Signable_Simulate(t *testing.T) {
+func TestSignable_Simulate(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -979,7 +979,7 @@ func Test_Signable_Simulate(t *testing.T) {
 	}
 }
 
-func Test_Signable_ValidateConfigs(t *testing.T) {
+func TestSignable_ValidateConfigs(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -1086,7 +1086,7 @@ func Test_Signable_ValidateConfigs(t *testing.T) {
 	}
 }
 
-func Test_Signable_getCurrentOpCounts(t *testing.T) {
+func TestSignable_getCurrentOpCounts(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

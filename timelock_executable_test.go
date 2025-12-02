@@ -34,7 +34,7 @@ var (
 	adminRole     = crypto.Keccak256Hash([]byte("ADMIN_ROLE"))
 )
 
-func Test_NewTimelockExecutable(t *testing.T) {
+func TestNewTimelockExecutable(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -151,7 +151,7 @@ func Test_NewTimelockExecutable(t *testing.T) {
 	}
 }
 
-func Test_TimelockExecutable_Execute(t *testing.T) {
+func TestTimelockExecutable_Execute(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -275,7 +275,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 	}
 }
 
-func Test_ScheduleAndExecuteProposal(t *testing.T) {
+func TestScheduleAndExecuteProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -307,7 +307,7 @@ func Test_ScheduleAndExecuteProposal(t *testing.T) {
 	}
 }
 
-func Test_ScheduleAndCancelProposal(t *testing.T) {
+func TestScheduleAndCancelProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -798,7 +798,7 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, targetRoles []common.Hash
 	}
 }
 
-func Test_TimelockExecutable_GetChainSpecificIndex(t *testing.T) {
+func TestTimelockExecutable_GetChainSpecificIndex(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

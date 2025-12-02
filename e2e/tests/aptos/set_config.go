@@ -13,7 +13,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func (a *TestSuite) Test_Aptos_SetConfig() {
+func (a *TestSuite) TestSetConfig() {
 	/*
 		This tests setting and retrieving the config for all three timelock roles:
 		- Bypasser

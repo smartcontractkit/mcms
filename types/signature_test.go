@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_NewSignatureFromBytes(t *testing.T) {
+func TestNewSignatureFromBytes(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -60,7 +60,7 @@ func Test_NewSignatureFromBytes(t *testing.T) {
 	}
 }
 
-func Test_ToBytes(t *testing.T) {
+func TestToBytes(t *testing.T) {
 	t.Parallel()
 
 	sig := Signature{
@@ -85,7 +85,7 @@ func Test_ToBytes(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
-func Test_Recover(t *testing.T) {
+func TestRecover(t *testing.T) {
 	t.Parallel()
 
 	// Private key to use for signing

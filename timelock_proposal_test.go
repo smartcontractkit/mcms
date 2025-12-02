@@ -59,7 +59,7 @@ var ValidTimelockProposal = `{
 	]
 }`
 
-func Test_NewTimelockProposal(t *testing.T) {
+func TestNewTimelockProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -306,7 +306,7 @@ func Test_NewTimelockProposal(t *testing.T) {
 	}
 }
 
-func Test_WriteTimelockProposal(t *testing.T) {
+func TestWriteTimelockProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -410,7 +410,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 	}
 }
 
-func Test_TimelockProposal_Validate(t *testing.T) {
+func TestTimelockProposal_Validate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -612,7 +612,7 @@ func Test_TimelockProposal_Validate(t *testing.T) {
 	}
 }
 
-func Test_TimelockProposal_Convert(t *testing.T) {
+func TestTimelockProposal_Convert(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -751,7 +751,7 @@ func TestProposal_WithSaltOverride(t *testing.T) {
 	assert.Equal(t, salt, common.BytesToHash(saltBytes[:]))
 }
 
-func Test_TimelockProposal_Decode(t *testing.T) {
+func TestTimelockProposal_Decode(t *testing.T) {
 	t.Parallel()
 
 	// Get ABI
@@ -907,7 +907,7 @@ func Test_TimelockProposal_Decode(t *testing.T) {
 	}
 }
 
-func Test_TimelockProposal_WithoutSaltOverride(t *testing.T) {
+func TestTimelockProposal_WithoutSaltOverride(t *testing.T) {
 	t.Parallel()
 	builder := NewTimelockProposalBuilder()
 	builder.SetVersion("v1").
@@ -933,7 +933,7 @@ func Test_TimelockProposal_WithoutSaltOverride(t *testing.T) {
 	assert.NotEqual(t, common.Hash{}, saltBytes)
 }
 
-func Test_TimelockProposal_DeriveBypassProposal(t *testing.T) {
+func TestTimelockProposal_DeriveBypassProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -981,7 +981,7 @@ func Test_TimelockProposal_DeriveBypassProposal(t *testing.T) {
 	}
 }
 
-func Test_TimelockProposal_DeriveCancellationProposal(t *testing.T) {
+func TestTimelockProposal_DeriveCancellationProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -1029,7 +1029,7 @@ func Test_TimelockProposal_DeriveCancellationProposal(t *testing.T) {
 	}
 }
 
-func Test_TimelockProposal_ConvertedOperationCounts(t *testing.T) {
+func TestTimelockProposal_ConvertedOperationCounts(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -1128,7 +1128,7 @@ func Test_TimelockProposal_ConvertedOperationCounts(t *testing.T) {
 	assert.Equal(t, uint64(4), counts[chaintest.Chain4Selector])
 }
 
-func Test_TimelockProposal_Merge(t *testing.T) {
+func TestTimelockProposal_Merge(t *testing.T) {
 	t.Parallel()
 
 	sig1, err := types.NewSignatureFromBytes(common.Hex2Bytes("0000000000000000000000000000000000000000000000001111111111111111000000000000000000000000000000000000000000000000aaaaaaaaaaaaaaaa1b"))

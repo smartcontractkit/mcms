@@ -22,7 +22,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func Test_NewExecutable(t *testing.T) {
+func TestNewExecutable(t *testing.T) {
 	t.Parallel()
 
 	executor := mocks.NewExecutor(t) // We only need this to fulfill the interface argument requirements

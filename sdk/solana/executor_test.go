@@ -458,7 +458,7 @@ func newTestExecutor(t *testing.T, auth solana.PrivateKey, chainSelector types.C
 	return NewExecutor(encoder, client, auth), mockJSONRPCClient
 }
 
-func Test_isAccountAlreadyInUseError(t *testing.T) {
+func TestIsAccountAlreadyInUseError(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

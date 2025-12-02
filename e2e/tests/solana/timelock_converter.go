@@ -30,7 +30,7 @@ import (
 
 var testPDASeedTimelockConverter = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'l', 'o', 'c', 'k', 'c', 'o', 'n', 'v', 'e', 'r', 't', 'e', 'r'}
 
-func (s *TestSuite) Test_TimelockConverter() {
+func (s *TestSuite) TestTimelockConverter() {
 	// --- arrange ---
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	s.T().Cleanup(cancel)

@@ -21,7 +21,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func Test_NewInspector(t *testing.T) {
+func TestNewInspector(t *testing.T) {
 	t.Parallel()
 
 	inspector := NewInspector(&rpc.Client{})

@@ -20,7 +20,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 )
 
-func (s *TestSuite) Test_Solana_Chunk_LargeInstructions() {
+func (s *TestSuite) TestChunk_LargeInstructions() {
 	s.T().Setenv("MCMS_SOLANA_MAX_RETRIES", "20")
 
 	mcmPDASeed := [32]byte([]byte("hEjRE08jHA2ilqk12fgjE9OIjRJRd7m8"[:]))

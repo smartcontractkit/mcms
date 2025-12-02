@@ -29,9 +29,9 @@ import (
 
 var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 
-// Test_Solana_Execute tests the Execute functionality by creating a mint tokens transaction and
+// TestExecute tests the Execute functionality by creating a mint tokens transaction and
 // executing it via the MCMS program.
-func (s *TestSuite) Test_Solana_Execute() {
+func (s *TestSuite) TestExecute() {
 	ctx := context.Background()
 	s.SetupMCM(testPDASeedExec)
 

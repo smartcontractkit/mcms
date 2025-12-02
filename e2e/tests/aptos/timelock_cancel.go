@@ -20,7 +20,7 @@ import (
 	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 )
 
-func (a *TestSuite) Test_Aptos_TimelockCancel() {
+func (a *TestSuite) TestTimelockCancel() {
 	/*
 		This tests that a timelock proposal scheduled by the Proposer MCM can be cancelled by the
 		Canceller MCM.

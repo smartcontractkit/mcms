@@ -25,7 +25,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func Test_NewConfigurer(t *testing.T) {
+func TestNewConfigurer(t *testing.T) {
 	t.Parallel()
 
 	client := &rpc.Client{}

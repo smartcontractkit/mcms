@@ -16,7 +16,7 @@ var (
 	signer4 = common.HexToAddress("0x4")
 )
 
-func Test_NewConfig(t *testing.T) {
+func TestNewConfig(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -41,7 +41,7 @@ func Test_NewConfig(t *testing.T) {
 	assert.Equal(t, Config{}, got)
 }
 
-func Test_Config_Validate(t *testing.T) {
+func TestConfig_Validate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -116,7 +116,7 @@ func Test_Config_Validate(t *testing.T) {
 	}
 }
 
-func Test_Config_Equals(t *testing.T) {
+func TestConfigEquals(t *testing.T) {
 	t.Parallel()
 
 	// The config that is being matched against. This is compared against the give field in
@@ -198,7 +198,7 @@ func Test_Config_Equals(t *testing.T) {
 		})
 	}
 }
-func Test_Config_GetAllSigners(t *testing.T) {
+func TestConfigGetAllSigners(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -255,7 +255,7 @@ func Test_Config_GetAllSigners(t *testing.T) {
 	}
 }
 
-func Test_Config_CanSetRoot(t *testing.T) {
+func TestConfigCanSetRoot(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -348,7 +348,7 @@ func Test_Config_CanSetRoot(t *testing.T) {
 	}
 }
 
-func Test_unorderedArrayEquals(t *testing.T) {
+func TestUnorderedArrayEquals(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

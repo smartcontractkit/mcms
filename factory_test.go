@@ -17,7 +17,7 @@ import (
 	ton "github.com/smartcontractkit/mcms/sdk/ton"
 )
 
-func Test_NewEncoder(t *testing.T) {
+func TestNewEncoder(t *testing.T) {
 	t.Parallel()
 
 	// Static inputs
@@ -124,7 +124,7 @@ func Test_NewEncoder(t *testing.T) {
 	}
 }
 
-func Test_newTimelockConverter(t *testing.T) {
+func TestNewTimelockConverter(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
