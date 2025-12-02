@@ -8,17 +8,19 @@ import (
 	"slices"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
-	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
+
+	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 )
 
-func (a *AptosTestSuite) Test_Aptos_TimelockCancel() {
+func (a *TestSuite) Test_Aptos_TimelockCancel() {
 	/*
 		This tests that a timelock proposal scheduled by the Proposer MCM can be cancelled by the
 		Canceller MCM.

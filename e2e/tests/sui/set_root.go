@@ -18,12 +18,12 @@ import (
 
 // SetRootTestSuite defines the test suite for Sui SetRoot tests
 type SetRootTestSuite struct {
-	SuiTestSuite
+	TestSuite
 }
 
 // SetupSuite runs before the test suite
 func (s *SetRootTestSuite) SetupSuite() {
-	s.SuiTestSuite.SetupSuite()
+	s.TestSuite.SetupSuite()
 	s.DeployMCMSContract()
 }
 

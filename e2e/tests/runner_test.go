@@ -24,11 +24,11 @@ func TestEVMSuite(t *testing.T) {
 
 //go:generate ./solana/compile-mcm-contracts.sh
 func TestSolanaSuite(t *testing.T) {
-	suite.Run(t, new(solanae2e.SolanaTestSuite))
+	suite.Run(t, new(solanae2e.TestSuite))
 }
 
 func TestAptosSuite(t *testing.T) {
-	suite.Run(t, new(aptose2e.AptosTestSuite))
+	suite.Run(t, new(aptose2e.TestSuite))
 }
 
 func TestSuiSuite(t *testing.T) {

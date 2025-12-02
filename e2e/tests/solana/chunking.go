@@ -20,7 +20,7 @@ import (
 	e2eutils "github.com/smartcontractkit/mcms/e2e/utils/solana"
 )
 
-func (s *SolanaTestSuite) Test_Solana_Chunk_LargeInstructions() {
+func (s *TestSuite) Test_Solana_Chunk_LargeInstructions() {
 	s.T().Setenv("MCMS_SOLANA_MAX_RETRIES", "20")
 
 	mcmPDASeed := [32]byte([]byte("hEjRE08jHA2ilqk12fgjE9OIjRJRd7m8"[:]))

@@ -31,7 +31,7 @@ var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 
 // Test_Solana_Execute tests the Execute functionality by creating a mint tokens transaction and
 // executing it via the MCMS program.
-func (s *SolanaTestSuite) Test_Solana_Execute() {
+func (s *TestSuite) Test_Solana_Execute() {
 	ctx := context.Background()
 	s.SetupMCM(testPDASeedExec)
 
@@ -170,7 +170,7 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 }
 
 // buildMintTx builds a mint transaction for the proposal
-func (s *SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicKey) types.Transaction {
+func (s *TestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicKey) types.Transaction {
 	amount := 1000 * solana.LAMPORTS_PER_SOL
 	ix2, err := token.NewMintToInstruction(amount, mint, receiverATA, signerPDA, nil).ValidateAndBuild()
 	accounts := ix2.Accounts()
@@ -199,7 +199,7 @@ func (s *SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.Public
 }
 
 // setupTokenProgram sets up a token program with a mint and an associated token account for the receiver
-func (s *SolanaTestSuite) setupTokenProgram(ctx context.Context, auth solana.PrivateKey, signerPDA solana.PublicKey, mint solana.PrivateKey) (receiverATA solana.PublicKey) {
+func (s *TestSuite) setupTokenProgram(ctx context.Context, auth solana.PrivateKey, signerPDA solana.PublicKey, mint solana.PrivateKey) (receiverATA solana.PublicKey) {
 	tokenProgram := solana.Token2022ProgramID
 	// Use CreateToken utility to get initialization instructions
 	createTokenIxs, err := tokens.CreateToken(

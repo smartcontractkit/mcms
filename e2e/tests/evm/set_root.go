@@ -7,20 +7,23 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/suite"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/sdk"
+	mcmtypes "github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	mcmtypes "github.com/smartcontractkit/mcms/types"
 )
 
 // SetRootTestSuite tests the SetRoot functionality

@@ -4,6 +4,7 @@ package sui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -28,7 +29,7 @@ const (
 )
 
 type MCMSUserUpgradeTestSuite struct {
-	SuiTestSuite
+	TestSuite
 }
 
 func (s *MCMSUserUpgradeTestSuite) Test_Sui_MCMSUser_UpgradeProposal() {
@@ -390,7 +391,7 @@ func getUpgradedAddress(t *testing.T, result *models.SuiTransactionBlockResponse
 	t.Helper()
 
 	if result == nil || result.Events == nil {
-		return "", fmt.Errorf("result is nil or events are nil")
+		return "", errors.New("result is nil or events are nil")
 	}
 
 	for _, event := range result.Events {
@@ -399,7 +400,7 @@ func getUpgradedAddress(t *testing.T, result *models.SuiTransactionBlockResponse
 		}
 	}
 
-	return "", fmt.Errorf("upgrade receipt committed event not found")
+	return "", errors.New("upgrade receipt committed event not found")
 }
 
 // isUpgradeEvent checks if the event is an upgrade receipt committed event
@@ -417,7 +418,7 @@ func processUpgradeEvent(t *testing.T, event models.SuiEventResponse) (string, e
 		event.PackageId, event.TransactionModule, event.Type)
 
 	if event.ParsedJson == nil {
-		return "", fmt.Errorf("parsed json is nil")
+		return "", errors.New("parsed json is nil")
 	}
 
 	t.Log("MCMS User Package Upgrade Details:")

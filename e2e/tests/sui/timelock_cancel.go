@@ -15,7 +15,7 @@ import (
 
 // TimelockProposalTestSuite defines the test suite for Sui timelock proposal tests
 type TimelockCancelProposalTestSuite struct {
-	SuiTestSuite
+	TestSuite
 }
 
 func (s *TimelockCancelProposalTestSuite) Test_Sui_TimelockCancelProposal() {

@@ -25,7 +25,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-type SuiTestSuite struct {
+type TestSuite struct {
 	suite.Suite
 	e2e.TestSetup
 
@@ -60,7 +60,7 @@ type SuiTestSuite struct {
 	entrypointArgEncoder suisdk.EntrypointArgEncoder
 }
 
-func (s *SuiTestSuite) SetupSuite() {
+func (s *TestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
 	account := s.SuiBlockchain.NetworkSpecificData.SuiAccount
@@ -80,7 +80,7 @@ func (s *SuiTestSuite) SetupSuite() {
 	s.chainSelector = types.ChainSelector(cselectors.SUI_TESTNET.Selector)
 }
 
-func (s *SuiTestSuite) DeployMCMSContract() {
+func (s *TestSuite) DeployMCMSContract() {
 	gasBudget := uint64(300_000_000)
 	mcmsPackage, tx, err := mcms.PublishMCMS(s.T().Context(), &bind.CallOpts{
 		Signer:           s.signer,
@@ -120,7 +120,7 @@ func (s *SuiTestSuite) DeployMCMSContract() {
 	}
 }
 
-func (s *SuiTestSuite) DeployMCMSUserContract() {
+func (s *TestSuite) DeployMCMSUserContract() {
 	gasBudget := uint64(300_000_000)
 	signerAddress, err := s.signer.GetAddress()
 	s.Require().NoError(err, "Failed to get address")
@@ -165,7 +165,7 @@ func (s *SuiTestSuite) DeployMCMSUserContract() {
 	}
 }
 
-func (s *SuiTestSuite) extractByteArgsFromEncodedCall(encodedCall bind.EncodedCall) []byte {
+func (s *TestSuite) extractByteArgsFromEncodedCall(encodedCall bind.EncodedCall) []byte {
 	var args []byte
 	for _, callArg := range encodedCall.CallArgs {
 		if callArg.CallArg.UnresolvedObject != nil {

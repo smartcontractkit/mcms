@@ -16,12 +16,12 @@ import (
 )
 
 type MCMSUserTestSuite struct {
-	SuiTestSuite
+	TestSuite
 }
 
 // SetupSuite runs before the test suite
 func (s *MCMSUserTestSuite) SetupSuite() {
-	s.SuiTestSuite.SetupSuite()
+	s.TestSuite.SetupSuite()
 	s.DeployMCMSContract()
 	s.DeployMCMSUserContract()
 }

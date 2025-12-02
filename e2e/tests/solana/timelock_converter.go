@@ -30,7 +30,7 @@ import (
 
 var testPDASeedTimelockConverter = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'l', 'o', 'c', 'k', 'c', 'o', 'n', 'v', 'e', 'r', 't', 'e', 'r'}
 
-func (s *SolanaTestSuite) Test_TimelockConverter() {
+func (s *TestSuite) Test_TimelockConverter() {
 	// --- arrange ---
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	s.T().Cleanup(cancel)
@@ -628,7 +628,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	})
 }
 
-func (s *SolanaTestSuite) executeConvertedProposal(
+func (s *TestSuite) executeConvertedProposal(
 	ctx context.Context, wallet solana.PrivateKey, gotProposal mcms.Proposal, mcmAddress string,
 ) {
 	// set config
@@ -663,7 +663,7 @@ func (s *SolanaTestSuite) executeConvertedProposal(
 	}
 }
 
-func (s *SolanaTestSuite) executeTimelockProposal(
+func (s *TestSuite) executeTimelockProposal(
 	ctx context.Context, wallet solana.PrivateKey, timelockProposal *mcms.TimelockProposal,
 ) {
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{

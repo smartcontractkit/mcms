@@ -27,7 +27,7 @@ const BatchAddAccessChunkSize = 24
 
 // Test_Solana_TimelockExecute tests the timelock Execute functionality by scheduling a mint tokens transaction and
 // executing it via the timelock ExecuteBatch
-func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
+func (s *TestSuite) Test_Solana_TimelockExecute() {
 	// --- arrange ---
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	s.T().Cleanup(cancel)
@@ -87,7 +87,7 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 }
 
 // scheduleMintTx schedules a MintTx on the timelock
-func (s *SolanaTestSuite) scheduleMintTx(
+func (s *TestSuite) scheduleMintTx(
 	ctx context.Context,
 	mint,
 	receiverATA, // The account that will receive the mint funds.
