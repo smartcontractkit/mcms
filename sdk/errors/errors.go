@@ -37,7 +37,7 @@ type InvalidTimelockOperationError struct {
 
 // Error returns the error message.
 func (e *InvalidTimelockOperationError) Error() string {
-	return fmt.Sprintf("invalid timelock operation: %s", e.ReceivedTimelockOperation)
+	return "invalid timelock operation: " + e.ReceivedTimelockOperation
 }
 
 func NewInvalidTimelockOperationError(op string) *InvalidTimelockOperationError {

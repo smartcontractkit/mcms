@@ -67,7 +67,7 @@ func (e *executor) ExecuteOperation(
 ) (types.TransactionResult, error) {
 	oe, ok := e.Encoder.(OperationEncoder[mcms.Op])
 	if !ok {
-		return types.TransactionResult{}, fmt.Errorf("failed to assert OperationEncoder")
+		return types.TransactionResult{}, errors.New("failed to assert OperationEncoder")
 	}
 
 	bindOp, err := oe.ToOperation(nonce, metadata, op)
@@ -78,7 +78,7 @@ func (e *executor) ExecuteOperation(
 	// Encode proofs
 	pe, ok := e.Encoder.(ProofEncoder[mcms.Proof])
 	if !ok {
-		return types.TransactionResult{}, fmt.Errorf("failed to assert ProofEncoder")
+		return types.TransactionResult{}, errors.New("failed to assert ProofEncoder")
 	}
 
 	bindProof, err := pe.ToProof(proof)
@@ -135,7 +135,7 @@ func (e *executor) SetRoot(
 ) (types.TransactionResult, error) {
 	rme, ok := e.Encoder.(RootMetadataEncoder[mcms.RootMetadata])
 	if !ok {
-		return types.TransactionResult{}, fmt.Errorf("failed to assert RootMetadataEncoder")
+		return types.TransactionResult{}, errors.New("failed to assert RootMetadataEncoder")
 	}
 
 	rm, err := rme.ToRootMetadata(metadata)
@@ -152,7 +152,7 @@ func (e *executor) SetRoot(
 	// Encode proofs
 	pe, ok := e.Encoder.(ProofEncoder[mcms.Proof])
 	if !ok {
-		return types.TransactionResult{}, fmt.Errorf("failed to assert ProofEncoder")
+		return types.TransactionResult{}, errors.New("failed to assert ProofEncoder")
 	}
 
 	bindProof, err := pe.ToProof(proof)
@@ -163,7 +163,7 @@ func (e *executor) SetRoot(
 	// Encode signatures
 	se, ok := e.Encoder.(SignaturesEncoder[mcms.Signature])
 	if !ok {
-		return types.TransactionResult{}, fmt.Errorf("failed to assert SignatureEncoder")
+		return types.TransactionResult{}, errors.New("failed to assert SignatureEncoder")
 	}
 
 	bindSignatures, err := se.ToSignatures(sortedSignatures, root)

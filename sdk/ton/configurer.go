@@ -114,7 +114,8 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	}
 
 	if c.skipSend {
-		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), "", nil)
+		var tx types.Transaction
+		tx, err = NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), "", nil)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("error encoding mcms setConfig transaction: %w", err)
 		}

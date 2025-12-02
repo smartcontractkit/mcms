@@ -200,7 +200,7 @@ func (e *ExecutingCallbackParams) processMCMSMainModuleCall(ctx context.Context,
 	}
 
 	// Adjust function name to match mcms_ prefix
-	executeDispatchCall.Function = fmt.Sprintf("mcms_%s", strings.TrimPrefix(call.FunctionName, "mcms_"))
+	executeDispatchCall.Function = "mcms_" + strings.TrimPrefix(call.FunctionName, "mcms_")
 
 	_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
 	if err != nil {

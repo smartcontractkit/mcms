@@ -62,12 +62,13 @@ func (e *timelockExecutor) Execute(
 	for i, tx := range bop.Transactions {
 		// Unmarshal the AdditionalFields from the operation
 		var additionalFields AdditionalFields
-		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+		if err = json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
 			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 		}
 
 		// Map to Ton Address type
-		to, err := address.ParseAddr(tx.To)
+		var to *address.Address
+		to, err = address.ParseAddr(tx.To)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("invalid target address: %w", err)
 		}

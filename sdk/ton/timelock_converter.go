@@ -116,8 +116,9 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("invalid timelock address: %w", err)
 	}
 
-	// TODO: remove hardcoded value
-	tx, err := NewTransaction(dstAddr, data.BeginParse(), big.NewInt(0), "RBACTimelock", tags)
+	// TODO (ton): remove hardcoded value
+	var tx types.Transaction
+	tx, err = NewTransaction(dstAddr, data.BeginParse(), big.NewInt(0), "RBACTimelock", tags)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)
 	}

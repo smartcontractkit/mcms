@@ -31,12 +31,7 @@ type AdditionalFields struct {
 
 // Validate ensures the solana-specific fields are correct
 func (f AdditionalFields) Validate() error {
-	var validate = validator.New()
-	if err := validate.Struct(f); err != nil {
-		return err
-	}
-
-	return nil
+	return validator.New().Struct(f)
 }
 
 func NewTransaction(
