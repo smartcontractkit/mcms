@@ -135,6 +135,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 
 			if tc.expectedError != nil {
 				require.Error(t, err)
+				//nolint:testifylint // Allow IsType for error type checking
 				require.IsType(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)
