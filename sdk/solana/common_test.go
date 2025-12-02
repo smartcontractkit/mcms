@@ -5,18 +5,23 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	"github.com/smartcontractkit/mcms/types"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/google/go-cmp/cmp"
-	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	cpiStubBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/external_program_cpi_stub"
 	mcmBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
 	timelockBindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
-	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
-	"github.com/smartcontractkit/mcms/types"
 )
 
 var (
