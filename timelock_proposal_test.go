@@ -719,9 +719,9 @@ func Test_TimelockProposal_Convert(t *testing.T) {
 	require.Len(t, mcmsProposal.Operations, 3)
 
 	require.Len(t, predecessors, 3)
-	require.Equal(t, predecessors[0], ZERO_HASH)
-	require.Equal(t, predecessors[1], ZERO_HASH)
-	require.NotEqual(t, predecessors[2], ZERO_HASH)
+	require.Equal(t, predecessors[0], ZeroHash)
+	require.Equal(t, predecessors[1], ZeroHash)
+	require.NotEqual(t, predecessors[2], ZeroHash)
 }
 
 func TestProposal_WithSaltOverride(t *testing.T) {

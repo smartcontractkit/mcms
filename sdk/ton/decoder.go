@@ -3,6 +3,11 @@ package ton
 import (
 	"fmt"
 
+	"github.com/xssnick/tonutils-go/tvm/cell"
+
+	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/types"
+
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/ccip/ccipsendexecutor"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/ccip/feequoter"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/ccip/offramp"
@@ -14,10 +19,6 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/lib"
-	"github.com/xssnick/tonutils-go/tvm/cell"
-
-	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/types"
 )
 
 // Map of TLBs keyed by contract type

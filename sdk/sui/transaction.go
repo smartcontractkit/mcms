@@ -19,11 +19,7 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 		return fmt.Errorf("failed to unmarshal Sui additional fields: %w", err)
 	}
 
-	if err := fields.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	return fields.Validate()
 }
 
 func (af AdditionalFields) Validate() error {

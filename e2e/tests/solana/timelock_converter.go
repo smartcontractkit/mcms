@@ -329,7 +329,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, operation1ID}, gotPredecessors)
+		s.Require().Equal([]common.Hash{mcms.ZeroHash, operation1ID}, gotPredecessors)
 		s.Require().Empty(cmp.Diff(toJSONString(s.T(), wantProposal), toJSONString(s.T(), &gotProposal)))
 
 		// --- act ---
@@ -396,7 +396,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, operation1ID}, gotPredecessors)
+		s.Require().Equal([]common.Hash{mcms.ZeroHash, operation1ID}, gotPredecessors)
 		s.Require().Empty(cmp.Diff(toJSONString(s.T(), wantProposal), toJSONString(s.T(), &gotProposal)))
 	})
 
@@ -615,7 +615,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, bypassOperation1ID}, gotPredecessors)
+		s.Require().Equal([]common.Hash{mcms.ZeroHash, bypassOperation1ID}, gotPredecessors)
 		s.Require().Empty(cmp.Diff(toJSONString(s.T(), wantProposal), toJSONString(s.T(), &gotProposal)))
 
 		// --- act: executed converted proposal ---

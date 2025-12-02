@@ -59,7 +59,7 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 	t.Parallel()
 
 	var chainID = chaintest.Chain7TONID
-	var client *ton.APIClient = nil
+	var client *ton.APIClient
 	var wallets = []*wallet.Wallet{
 		must(makeRandomTestWallet(client, chainID)),
 		must(makeRandomTestWallet(client, chainID)),

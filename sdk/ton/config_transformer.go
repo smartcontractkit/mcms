@@ -68,7 +68,7 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 			Group:   signerGroups[i],
 			Index:   idx,
 		}
-		idx += 1
+		idx++
 	}
 
 	keySz := uint(8)
@@ -79,7 +79,10 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 			return mcms.Config{}, fmt.Errorf("unable to encode signer %d: %w", i, err)
 		}
 
-		signersDict.SetIntKey(big.NewInt(int64(i)), sc)
+		err = signersDict.SetIntKey(big.NewInt(int64(i)), sc)
+		if err != nil {
+			return mcms.Config{}, fmt.Errorf("unable to dict.set signer %d: %w", i, err)
+		}
 	}
 
 	sz := uint(8)
@@ -87,7 +90,10 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	for i, g := range groupQuorum {
 		if uint8(i) <= groupMax { // don't set unnecessary groups
 			v := cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell()
-			gqDict.SetIntKey(big.NewInt(int64(i)), v)
+			err := gqDict.SetIntKey(big.NewInt(int64(i)), v)
+			if err != nil {
+				return mcms.Config{}, fmt.Errorf("unable to dict.set group quorum %d: %w", i, err)
+			}
 		}
 	}
 
@@ -95,7 +101,10 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	for i, g := range groupParents {
 		if uint8(i) <= groupMax { // don't set unnecessary groups
 			v := cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell()
-			gpDict.SetIntKey(big.NewInt(int64(i)), v)
+			err := gpDict.SetIntKey(big.NewInt(int64(i)), v)
+			if err != nil {
+				return mcms.Config{}, fmt.Errorf("unable to dict.set group parent %d: %w", i, err)
+			}
 		}
 	}
 

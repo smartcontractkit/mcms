@@ -531,7 +531,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	require.NoError(t, err)
 
 	for i := range predecessors {
-		if i == 0 || predecessors[i] == ZERO_HASH {
+		if i == 0 || predecessors[i] == ZeroHash {
 			continue
 		}
 		var isOperation, isOperationPending, isOperationReady bool
@@ -677,7 +677,7 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	require.NoError(t, err)
 
 	for i := range predecessors {
-		if i == 0 || predecessors[i] == ZERO_HASH {
+		if i == 0 || predecessors[i] == ZeroHash {
 			continue
 		}
 

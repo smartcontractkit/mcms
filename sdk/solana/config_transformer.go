@@ -92,7 +92,7 @@ func (e *ConfigTransformer) ToChainConfig(cfg types.Config, solanaConfig Additio
 			Group:      signerGroups[i],
 			Index:      idx,
 		}
-		idx += 1
+		idx++
 	}
 	result.Signers = bindSigners
 	// Set group quorums and group parents.

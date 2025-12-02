@@ -21,11 +21,7 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 		}
 	}
 
-	if err := fields.Validate(); err != nil {
-		return fmt.Errorf("failed to validate TON additional fields: %w", err)
-	}
-
-	return nil
+	return fields.Validate()
 }
 
 type AdditionalFields struct {

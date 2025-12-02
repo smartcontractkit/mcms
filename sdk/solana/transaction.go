@@ -21,11 +21,7 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 		}
 	}
 
-	if err := fields.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	return fields.Validate()
 }
 
 type AdditionalFields struct {

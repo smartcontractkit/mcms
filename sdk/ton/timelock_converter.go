@@ -72,7 +72,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		tags = append(tags, tx.Tags...)
 	}
 
-	operationId, errHash := HashOperationBatch(calls, predecessor, salt)
+	operationID, errHash := HashOperationBatch(calls, predecessor, salt)
 	if errHash != nil {
 		return []types.Operation{}, common.Hash{}, errHash
 	}
@@ -94,7 +94,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		data, err = tlb.ToCell(timelock.Cancel{
 			QueryID: rand.Uint64(),
 
-			ID: operationId.Big(),
+			ID: operationID.Big(),
 		})
 	case types.TimelockActionBypass:
 		data, err = tlb.ToCell(timelock.BypasserExecuteBatch{
@@ -127,7 +127,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		Transaction:   tx,
 	}
 
-	return []types.Operation{op}, operationId, nil
+	return []types.Operation{op}, operationID, nil
 }
 
 // HashOperationBatch replicates the hash calculation from Solidity

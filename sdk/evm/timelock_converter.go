@@ -15,7 +15,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var ZERO_HASH = common.Hash{}
+var ZeroHash = common.Hash{}
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
@@ -60,7 +60,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, errAbi
 	}
 
-	operationId, errHash := HashOperationBatch(calls, predecessor, salt)
+	operationID, errHash := HashOperationBatch(calls, predecessor, salt)
 
 	if errHash != nil {
 		return []types.Operation{}, common.Hash{}, errHash
@@ -73,7 +73,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	case types.TimelockActionSchedule:
 		data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
 	case types.TimelockActionCancel:
-		data, err = abi.Pack("cancel", operationId)
+		data, err = abi.Pack("cancel", operationID)
 	case types.TimelockActionBypass:
 		data, err = abi.Pack("bypasserExecuteBatch", calls)
 	default:
@@ -95,7 +95,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		),
 	}
 
-	return []types.Operation{op}, operationId, nil
+	return []types.Operation{op}, operationID, nil
 }
 
 // HashOperationBatch replicates the hash calculation from Solidity
