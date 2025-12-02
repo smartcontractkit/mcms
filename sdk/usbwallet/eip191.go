@@ -82,7 +82,7 @@ func (w *ledgerDriver) ledgerSignPersonalMessage(derivationPath []uint32, messag
 		reply []byte
 		err   error
 	)
-	fmt.Println("Derivation path: ", path)
+	fmt.Println("Derivation path: " + string(path))
 	// Chunk size selection to mitigate an underlying RLP deserialization issue on the ledger app.
 	// https://github.com/LedgerHQ/app-ethereum/issues/409
 	chunk := 255

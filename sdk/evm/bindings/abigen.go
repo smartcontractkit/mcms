@@ -2,6 +2,7 @@ package bindings
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -47,7 +48,7 @@ func Abigen(a AbigenArgs) {
 		"--out", a.Out,
 		"--type", a.Type,
 	}
-	buildCommand := exec.Command("go", args...)
+	buildCommand := exec.CommandContext(context.Background(), "go", args...)
 	var buildResponse bytes.Buffer
 	buildCommand.Stderr = &buildResponse
 	if err := buildCommand.Run(); err != nil {

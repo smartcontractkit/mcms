@@ -2,6 +2,7 @@ package ton
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -52,7 +53,7 @@ func (i *Inspector) GetConfig(ctx context.Context, _address string) (*types.Conf
 
 	rResult := r.AsTuple()
 	if len(rResult) < 3 {
-		return nil, fmt.Errorf("error: getConfig returned less than 3 cells")
+		return nil, errors.New("error: getConfig returned less than 3 cells")
 	}
 
 	keySz := uint(8)

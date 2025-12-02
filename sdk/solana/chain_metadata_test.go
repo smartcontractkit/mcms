@@ -81,9 +81,9 @@ func TestNewChainMetadataFromTimelock(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			jsonRpc := mocks.NewJSONRPCClient(t)
-			tt.setupMock(jsonRpc)
-			client := rpc.NewWithCustomRPCClient(jsonRpc)
+			jsonRPC := mocks.NewJSONRPCClient(t)
+			tt.setupMock(jsonRPC)
+			client := rpc.NewWithCustomRPCClient(jsonRPC)
 			metadata, err := NewChainMetadataFromTimelock(
 				context.Background(),
 				client,

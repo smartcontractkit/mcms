@@ -2,7 +2,7 @@ package solana
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 	"time"
 
@@ -38,7 +38,7 @@ func FundAccounts(
 	for remaining > 0 {
 		select {
 		case <-timeoutCtx.Done():
-			require.NoError(t, fmt.Errorf("unable to find transaction within timeout"))
+			require.NoError(t, errors.New("unable to find transaction within timeout"))
 		case <-ticker.C:
 			statusRes, sigErr := solanaGoClient.GetSignatureStatuses(ctx, true, sigs...)
 			require.NoError(t, sigErr)

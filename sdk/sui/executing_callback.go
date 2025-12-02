@@ -82,7 +82,7 @@ func (e *ExecutingCallbackParams) processCall(ctx context.Context, ptb *transact
 }
 
 func (e *ExecutingCallbackParams) formatTargetAddress(target []byte) string {
-	return fmt.Sprintf("0x%s", strings.ToLower(hex.EncodeToString(target)))
+	return "0x" + strings.ToLower(hex.EncodeToString(target))
 }
 
 func (e *ExecutingCallbackParams) isTargetMCMSPackage(targetString string) bool {
@@ -234,7 +234,7 @@ func (e *ExecutingCallbackParams) processDestinationContractCall(ctx context.Con
 
 func extractExecutingCallbackParams(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
 	// Convert the type string to TypeTag
-	executingCallbackParamsType := fmt.Sprintf("%s::mcms_registry::ExecutingCallbackParams", mcmsPackageID)
+	executingCallbackParamsType := mcmsPackageID + "::mcms_registry::ExecutingCallbackParams"
 	typeTag, err := bindutils.ConvertTypeStringToTypeTag(executingCallbackParamsType)
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert type string to TypeTag: %w", err)
@@ -255,7 +255,7 @@ func extractExecutingCallbackParams(mcmsPackageID string, ptb *transaction.Trans
 
 func closeExecutingCallbackParams(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
 	// Get the type tag for ExecutingCallbackParams
-	executingCallbackParamsType := fmt.Sprintf("%s::mcms_registry::ExecutingCallbackParams", mcmsPackageID)
+	executingCallbackParamsType := mcmsPackageID + "::mcms_registry::ExecutingCallbackParams"
 	typeTag, err := bindutils.ConvertTypeStringToTypeTag(executingCallbackParamsType)
 	if err != nil {
 		return fmt.Errorf("failed to convert type string to TypeTag: %w", err)

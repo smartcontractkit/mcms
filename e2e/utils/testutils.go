@@ -67,7 +67,7 @@ func WaitMinedWithTxHash(ctx context.Context, b bind.DeployBackend, txHash commo
 func ReadFixture(path string) (*os.File, error) {
 	_, filename, _, ok := runtime.Caller(0)
 	if !ok {
-		return nil, fmt.Errorf("failed to get current file path")
+		return nil, errors.New("failed to get current file path")
 	}
 	projectRoot := filepath.Dir(filepath.Dir(filepath.Dir(filename)))
 	fixturePath := filepath.Join(projectRoot, "e2e", "fixtures", path)
