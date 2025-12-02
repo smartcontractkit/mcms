@@ -503,7 +503,7 @@ func TestExecutorExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
 	client := evm_mocks.NewContractDeployBackend(t)
 	// Mock the Execute call to return RBACTimelock error
 	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-		Return(fmt.Errorf("contract error: error -`CallReverted` args [[8 195 121 160 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 45 82 66 65 67 84 105 109 101 108 111 99 107 58 32 117 110 100 101 114 108 121 105 110 103 32 116 114 97 110 115 97 99 116 105 111 110 32 114 101 118 101 114 116 101 100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]"))
+		Return(errors.New("contract error: error -`CallReverted` args [[8 195 121 160 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 45 82 66 65 67 84 105 109 101 108 111 99 107 58 32 117 110 100 101 114 108 121 105 110 103 32 116 114 97 110 115 97 99 116 105 111 110 32 114 101 118 101 114 116 101 100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]"))
 	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
 		Return(&evmTypes.Header{}, nil).Maybe()
 	client.EXPECT().SuggestGasPrice(mock.Anything).

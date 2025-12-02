@@ -8,7 +8,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
@@ -134,13 +133,13 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 
 			if tc.expectedError != nil {
 				require.Error(t, err)
-				require.ErrorIs(t, err, tc.expectedError)
+				require.IsType(t, tc.expectedError, err)
 			} else {
 				require.NoError(t, err)
-				assert.NotEqual(t, common.Hash{}, operationID)
-				assert.Len(t, chainOperations, 1)
-				assert.Equal(t, timelockAddress, chainOperations[0].Transaction.To)
-				assert.Equal(t, tc.op.ChainSelector, chainOperations[0].ChainSelector)
+				require.NotEqual(t, common.Hash{}, operationID)
+				require.Len(t, chainOperations, 1)
+				require.Equal(t, timelockAddress, chainOperations[0].Transaction.To)
+				require.Equal(t, tc.op.ChainSelector, chainOperations[0].ChainSelector)
 			}
 		})
 	}
