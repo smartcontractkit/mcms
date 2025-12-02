@@ -6,10 +6,12 @@ import (
 	"math/big"
 	"testing"
 
+	cselectors "github.com/smartcontractkit/chain-selectors"
+
+	"github.com/stretchr/testify/require"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/internal/testutils/evmsim"

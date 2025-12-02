@@ -127,7 +127,7 @@ func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op t
 
 	// Unmarshal the AdditionalFields from the operation
 	var additionalFields AdditionalFields
-	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
+	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
 		return mcms.Op{}, err
 	}
 

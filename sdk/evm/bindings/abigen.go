@@ -37,7 +37,7 @@ type AbigenArgs struct {
 //
 // Check whether native abigen is installed, and has correct version
 func Abigen(a AbigenArgs) {
-	abigenPackagePath := fmt.Sprintf("github.com/ethereum/go-ethereum/cmd/abigen@v%s", abigenVersion)
+	abigenPackagePath := "github.com/ethereum/go-ethereum/cmd/abigen@v" + abigenVersion
 	args := []string{
 		"run",
 		abigenPackagePath,

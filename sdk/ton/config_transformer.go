@@ -90,7 +90,7 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	for i, g := range groupQuorum {
 		if uint8(i) <= groupMax { // don't set unnecessary groups
 			v := cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell()
-			err := gqDict.SetIntKey(big.NewInt(int64(i)), v)
+			err = gqDict.SetIntKey(big.NewInt(int64(i)), v)
 			if err != nil {
 				return mcms.Config{}, fmt.Errorf("unable to dict.set group quorum %d: %w", i, err)
 			}
@@ -101,7 +101,7 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	for i, g := range groupParents {
 		if uint8(i) <= groupMax { // don't set unnecessary groups
 			v := cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell()
-			err := gpDict.SetIntKey(big.NewInt(int64(i)), v)
+			err = gpDict.SetIntKey(big.NewInt(int64(i)), v)
 			if err != nil {
 				return mcms.Config{}, fmt.Errorf("unable to dict.set group parent %d: %w", i, err)
 			}

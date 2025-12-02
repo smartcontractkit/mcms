@@ -102,7 +102,7 @@ func (e *Encoder) ToGethOperation(
 
 	// Unmarshal the AdditionalFields from the operation
 	var additionalFields AdditionalFields
-	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
+	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
 		return bindings.ManyChainMultiSigOp{}, err
 	}
 
