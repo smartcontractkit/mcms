@@ -8,13 +8,14 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/types"
 
-	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
-
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+
+	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 func TestConfigTransformer_ToConfig(t *testing.T) {
