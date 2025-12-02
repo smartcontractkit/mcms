@@ -6,8 +6,9 @@ import (
 	"math/big"
 	"testing"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/require"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/common"
 
