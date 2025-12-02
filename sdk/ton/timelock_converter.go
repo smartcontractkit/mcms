@@ -45,7 +45,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 	calls := make([]timelock.Call, 0)
 	tags := make([]string, 0)
 	for _, tx := range bop.Transactions {
-		// TODO: duplicate code, refactor? (@see sdk/ton/timelock_executor.go)
+		// TODO(ton): duplicate code, refactor? (@see sdk/ton/timelock_executor.go)
 		// Unmarshal the AdditionalFields from the operation
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
