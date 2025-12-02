@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/gagliardetto/solana-go"
