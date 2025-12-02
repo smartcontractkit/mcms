@@ -194,7 +194,7 @@ func (a *TestSuite) Test_Aptos_TimelockCancel() {
 	var opCount uint64
 	opCount, err = proposerInspector.GetOpCount(a.T().Context(), mcmsAddress.StringLong())
 	a.Require().NoError(err)
-	a.Require().EqualValues(opCount, 1)
+	a.Require().EqualValues(1, opCount)
 
 	timelockExecutor := aptossdk.NewTimelockExecutor(a.AptosRPCClient, a.deployerAccount)
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{

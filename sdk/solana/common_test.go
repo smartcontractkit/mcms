@@ -2,7 +2,7 @@ package solana
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -183,7 +183,7 @@ func Test_sendAndConfirm(t *testing.T) {
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
 					"NyH6sKKEbAMjxzG9qLTcwd1yEmv46Z94XmH5Pp9AXJps8EofvpPdUn5bp7rzKnztWmxskBiVRnp4DwaHujhHvFh",
-					nil, fmt.Errorf("send and confirm error"))
+					nil, errors.New("send and confirm error"))
 			},
 			opts:    []sendTransactionOption{WithRetries(1)},
 			wantErr: "unable to send instruction: send and confirm error",
@@ -204,7 +204,7 @@ func Test_sendAndConfirm(t *testing.T) {
 			builder: mcmBindings.NewAcceptOwnershipInstruction(testPDASeed, mcmConfigPDA, auth.PublicKey()),
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
 				txMeta := &rpc.TransactionMeta{
-					Err: fmt.Errorf("solana transaction meta error"),
+					Err: errors.New("solana transaction meta error"),
 				}
 
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
@@ -243,7 +243,7 @@ func Test_sendAndConfirm(t *testing.T) {
 type invalidTestInstruction struct{}
 
 func (*invalidTestInstruction) ValidateAndBuild() (*mcmBindings.Instruction, error) {
-	return nil, fmt.Errorf("validate and build error ")
+	return nil, errors.New("validate and build error ")
 }
 
 func buildTransactionEnvelope(t *testing.T, signature string) *rpc.TransactionResultEnvelope {

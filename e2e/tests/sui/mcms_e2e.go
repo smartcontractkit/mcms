@@ -28,11 +28,11 @@ func (s *MCMSUserTestSuite) SetupSuite() {
 
 // TestMCMSUserFunctionOne tests MCMS user function one
 func (s *MCMSUserTestSuite) Test_MCMSUser_Function_One() {
-	s.T().Run("Proposer Role", func(t *testing.T) {
+	s.Run("Proposer Role", func(t *testing.T) {
 		RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleProposer)
 	})
 
-	s.T().Run("Bypasser Role", func(t *testing.T) {
+	s.Run("Bypasser Role", func(t *testing.T) {
 		RunMCMSUserFunctionOneProposal(s, suisdk.TimelockRoleBypasser)
 	})
 }

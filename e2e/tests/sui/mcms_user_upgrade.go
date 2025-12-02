@@ -33,7 +33,7 @@ type MCMSUserUpgradeTestSuite struct {
 }
 
 func (s *MCMSUserUpgradeTestSuite) Test_Sui_MCMSUser_UpgradeProposal() {
-	s.T().Run("TimelockProposal - MCMS User Upgrade through Schedule", func(t *testing.T) {
+	s.Run("TimelockProposal - MCMS User Upgrade through Schedule", func(t *testing.T) {
 		RunMCMSUserUpgradeProposal(s)
 	})
 }

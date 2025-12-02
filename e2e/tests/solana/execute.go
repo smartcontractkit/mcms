@@ -165,8 +165,8 @@ func (s *TestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 
 	// final balance should be 1000000000000 more units
-	s.Require().Equal(initialBalance.Value.Amount, "0")
-	s.Require().Equal(finalBalance.Value.Amount, "1000000000000")
+	s.Require().Equal("0", initialBalance.Value.Amount)
+	s.Require().Equal("1000000000000", finalBalance.Value.Amount)
 }
 
 // buildMintTx builds a mint transaction for the proposal
