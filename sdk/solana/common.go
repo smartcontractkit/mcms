@@ -3,6 +3,7 @@ package solana
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
@@ -188,7 +189,7 @@ func sendAndConfirmInstructions(
 		return "", nil, fmt.Errorf("unable to send instruction: %w", err)
 	}
 	if result.Transaction == nil {
-		return "", nil, fmt.Errorf("nil transaction in instruction result")
+		return "", nil, errors.New("nil transaction in instruction result")
 	}
 
 	transaction, err := result.Transaction.GetTransaction()

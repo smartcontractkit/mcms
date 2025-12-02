@@ -231,6 +231,6 @@ func getRoleAccessController(config timelock.Config, role timelock.Role) (solana
 	case timelock.Admin_Role:
 		return solana.PublicKey{}, fmt.Errorf("not supported role: %v", role)
 	default:
-		return solana.PublicKey{}, fmt.Errorf("unknown role")
+		return solana.PublicKey{}, errors.New("unknown role")
 	}
 }
