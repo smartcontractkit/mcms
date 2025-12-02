@@ -3,7 +3,6 @@ package ton_test
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -252,7 +251,7 @@ func TestInspectorGetRoot(t *testing.T) {
 			name:      "CallContract error",
 			address:   "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError: errors.New("call to contract failed"),
-			wantErr:   fmt.Errorf("error getting getRoot: call to contract failed"),
+			wantErr:   errors.New("error getting getRoot: call to contract failed"),
 		},
 	}
 
@@ -332,7 +331,7 @@ func TestInspectorGetRootMetadata(t *testing.T) {
 			name:      "CallContract error",
 			address:   "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError: errors.New("call to contract failed"),
-			wantErr:   fmt.Errorf("error getting getRootMetadata: call to contract failed"),
+			wantErr:   errors.New("error getting getRootMetadata: call to contract failed"),
 		},
 	}
 
