@@ -58,7 +58,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 
 	// Generate few test wallets
 	var chainID = chaintest.Chain7TONID
-	var client *ton.APIClient = nil
+	var client *ton.APIClient
 	s.accounts = []*address.Address{
 		must(makeRandomTestWallet(client, chainID)).Address(),
 		must(makeRandomTestWallet(client, chainID)).Address(),
