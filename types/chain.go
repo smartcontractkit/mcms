@@ -9,7 +9,7 @@ import (
 type ChainMetadata struct {
 	StartingOpCount  uint64          `json:"startingOpCount"`
 	MCMAddress       string          `json:"mcmAddress"`
-	AdditionalFields json.RawMessage `json:"additionalFields,omitempty" validate:"omitempty"`
+	AdditionalFields json.RawMessage `json:"additionalFields,omitempty" validate:"omitempty"` //nolint:revive
 }
 
 func (m *ChainMetadata) Merge(other ChainMetadata) (ChainMetadata, error) {
