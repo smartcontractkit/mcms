@@ -505,7 +505,7 @@ const (
 	recentBlockHashBytes            = 32
 	numInstructions                 = 2
 	numInstructionsBytes            = 1
-	programIdIndexBytes             = 1 * numInstructions
+	programIDIndexBytes             = 1 * numInstructions
 	numInstructionAccountsBytes     = 1 * numInstructions
 	accountIndexesBytes             = 1 * numAccounts
 	numSignatures                   = 1
@@ -542,7 +542,7 @@ func AppendIxDataChunkSize() int {
 		accountsBytes -
 		recentBlockHashBytes -
 		numInstructionsBytes -
-		programIdIndexBytes -
+		programIDIndexBytes -
 		numInstructionAccountsBytes -
 		accountIndexesBytes -
 		numSignaturesBytes -

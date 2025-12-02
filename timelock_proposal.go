@@ -107,11 +107,7 @@ func (m *TimelockProposal) Validate() error {
 		}
 	}
 
-	if err := timeLockProposalValidateBasic(*m); err != nil {
-		return err
-	}
-
-	return nil
+	return timeLockProposalValidateBasic(*m)
 }
 
 func replaceChainMetadataWithAddresses(p *TimelockProposal, addresses map[types.ChainSelector]types.ChainMetadata) error {

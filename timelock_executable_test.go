@@ -278,8 +278,6 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 func Test_ScheduleAndExecuteProposal(t *testing.T) {
 	t.Parallel()
 
-	ctx := context.Background()
-
 	tests := []struct {
 		name        string
 		targetRoles []common.Hash
@@ -304,15 +302,13 @@ func Test_ScheduleAndExecuteProposal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			scheduleAndExecuteGrantRolesProposal(t, ctx, tt.targetRoles)
+			scheduleAndExecuteGrantRolesProposal(t, tt.targetRoles)
 		})
 	}
 }
 
 func Test_ScheduleAndCancelProposal(t *testing.T) {
 	t.Parallel()
-
-	ctx := context.Background()
 
 	tests := []struct {
 		name        string
@@ -338,7 +334,7 @@ func Test_ScheduleAndCancelProposal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			scheduleAndCancelGrantRolesProposal(t, ctx, tt.targetRoles)
+			scheduleAndCancelGrantRolesProposal(t, tt.targetRoles)
 		})
 	}
 }
@@ -434,8 +430,9 @@ func scheduleGrantRolesProposal(
 	return sim, mcmC, timelockC, proposal, targetRoles
 }
 
-func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
+func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Hash) {
 	t.Helper()
+	ctx := t.Context()
 
 	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, targetRoles, types.MustParseDuration("5s"))
 
@@ -579,8 +576,9 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	}
 }
 
-func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
+func scheduleAndCancelGrantRolesProposal(t *testing.T, targetRoles []common.Hash) {
 	t.Helper()
+	ctx := t.Context()
 
 	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, targetRoles, types.MustParseDuration("5m"))
 

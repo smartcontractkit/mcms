@@ -185,11 +185,7 @@ func (p *Proposal) Validate() error {
 		}
 	}
 
-	if err := proposalValidateBasic(*p); err != nil {
-		return err
-	}
-
-	return nil
+	return proposalValidateBasic(*p)
 }
 
 // UseSimulatedBackend indicates whether the proposal should be run against a simulated backend.
@@ -286,7 +282,7 @@ func (p *Proposal) SigningMessage() (common.Hash, error) {
 	if err != nil {
 		return common.Hash{}, err
 	}
-	msg, err := abi.ABIEncode(SignMsgABI, tree.Root, p.ValidUntil)
+	msg, err := abi.Encode(SignMsgABI, tree.Root, p.ValidUntil)
 	if err != nil {
 		return [32]byte{}, err
 	}

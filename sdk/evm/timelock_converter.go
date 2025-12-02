@@ -8,7 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	abiUtils "github.com/smartcontractkit/mcms/internal/utils/abi"
+	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
@@ -101,8 +101,8 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 // HashOperationBatch replicates the hash calculation from Solidity
 // TODO: see if there's an easier way to do this using the gethwrappers
 func HashOperationBatch(calls []bindings.RBACTimelockCall, predecessor, salt [32]byte) (common.Hash, error) {
-	const abi = `[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct Call[]","name":"calls","type":"tuple[]"},{"internalType":"bytes32","name":"predecessor","type":"bytes32"},{"internalType":"bytes32","name":"salt","type":"bytes32"}]`
-	encoded, err := abiUtils.ABIEncode(abi, calls, predecessor, salt)
+	const _abi = `[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct Call[]","name":"calls","type":"tuple[]"},{"internalType":"bytes32","name":"predecessor","type":"bytes32"},{"internalType":"bytes32","name":"salt","type":"bytes32"}]`
+	encoded, err := abi.Encode(_abi, calls, predecessor, salt)
 	if err != nil {
 		return common.Hash{}, err
 	}

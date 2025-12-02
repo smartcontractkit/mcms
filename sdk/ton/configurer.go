@@ -7,7 +7,6 @@ import (
 	"math/big"
 	"math/rand/v2"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
@@ -122,7 +121,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 		return types.TransactionResult{
 			Hash:        "", // Returning no hash since the transaction hasn't been sent yet.
-			ChainFamily: chain_selectors.FamilyTon,
+			ChainFamily: cselectors.FamilyTon,
 			RawData:     tx, // will be of type types.Transaction
 		}, nil
 	}
