@@ -3,7 +3,6 @@
 package evme2e
 
 import (
-	"context"
 	"math/big"
 	"testing"
 
@@ -82,7 +81,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 	converters := map[mcmtypes.ChainSelector]sdk.TimelockConverter{
 		s.ChainA.chainSelector: &evm.TimelockConverter{},
 	}
-	proposal, _ := convertTimelockProposal(s.T(), ctx, timelockProposal, converters)
+	proposal, _ := convertTimelockProposal(s.T(), timelockProposal, converters)
 
 	tree, err := proposal.MerkleTree()
 	s.Require().NoError(err)
@@ -91,7 +90,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 		s.ChainA.chainSelector: evm.NewInspector(s.ClientA),
 	}
 
-	_ = signAndValidateProposal(s.T(), ctx, &proposal, inspectors, []string{
+	_ = signAndValidateProposal(s.T(), &proposal, inspectors, []string{
 		s.Settings.PrivateKeys[1],
 		s.Settings.PrivateKeys[2],
 	})
@@ -111,7 +110,6 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	setRootAndVerify(
 		s.T(),
-		ctx,
 		executable,
 		s.ChainA.chainSelector,
 		[32]byte(tree.Root),
@@ -225,7 +223,7 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	converters := map[mcmtypes.ChainSelector]sdk.TimelockConverter{
 		s.ChainA.chainSelector: &evm.TimelockConverter{},
 	}
-	proposal, _ := convertTimelockProposal(s.T(), ctx, timelockProposal, converters)
+	proposal, _ := convertTimelockProposal(s.T(), timelockProposal, converters)
 
 	tree, err := proposal.MerkleTree()
 	s.Require().NoError(err)
@@ -233,7 +231,7 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
 		s.ChainA.chainSelector: evm.NewInspector(s.ClientA),
 	}
-	_ = signAndValidateProposal(s.T(), ctx, &proposal, inspectors, []string{
+	_ = signAndValidateProposal(s.T(), &proposal, inspectors, []string{
 		s.Settings.PrivateKeys[1], // Signer for Group 0
 		s.Settings.PrivateKeys[2], // Signer for Group 1
 	})
@@ -253,7 +251,6 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 
 	setRootAndVerify(
 		s.T(),
-		ctx,
 		executable,
 		s.ChainA.chainSelector,
 		[32]byte(tree.Root),
@@ -472,12 +469,11 @@ func createBypassTimelockProposal(
 // convertTimelockProposal converts a TimelockProposal to a Proposal using the provided converters.
 func convertTimelockProposal(
 	t *testing.T,
-	ctx context.Context,
 	timelockProposal mcms.TimelockProposal,
 	converters map[mcmtypes.ChainSelector]sdk.TimelockConverter,
 ) (mcms.Proposal, []common.Hash) {
 	t.Helper()
-	proposal, hashes, err := timelockProposal.Convert(ctx, converters)
+	proposal, hashes, err := timelockProposal.Convert(t.Context(), converters)
 	require.NoError(t, err)
 
 	return proposal, hashes
@@ -488,12 +484,13 @@ func convertTimelockProposal(
 // proposal must be a pointer to ensure signatures are added to the same instance used by NewExecutable.
 func signAndValidateProposal(
 	t *testing.T,
-	ctx context.Context,
 	proposal *mcms.Proposal,
 	inspectors map[mcmtypes.ChainSelector]sdk.Inspector,
 	signerPrivateKeys []string,
 ) *mcms.Signable {
 	t.Helper()
+	ctx := t.Context()
+
 	signable, err := mcms.NewSignable(proposal, inspectors)
 	require.NoError(t, err)
 
@@ -517,7 +514,6 @@ func signAndValidateProposal(
 // setRootAndVerify sets the root on the MCMS contract and verifies it was set correctly.
 func setRootAndVerify(
 	t *testing.T,
-	ctx context.Context,
 	executable *mcms.Executable,
 	chainSelector mcmtypes.ChainSelector,
 	expectedRoot [32]byte,
@@ -526,6 +522,7 @@ func setRootAndVerify(
 	mcmsContract *bindings.ManyChainMultiSig,
 ) {
 	t.Helper()
+	ctx := t.Context()
 
 	tx, err := executable.SetRoot(ctx, chainSelector)
 	require.NoError(t, err, "SetRoot failed")
