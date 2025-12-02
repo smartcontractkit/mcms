@@ -67,7 +67,7 @@ type BaseProposal struct {
 	Version              string                                      `json:"version" validate:"required,oneof=v1"`
 	Kind                 types.ProposalKind                          `json:"kind" validate:"required,oneof=Proposal TimelockProposal"`
 	ValidUntil           uint32                                      `json:"validUntil" validate:"required"`
-	Signatures           []types.Signature                           `json:"signatures" validate:"omitempty,dive,required"`
+	Signatures           []types.Signature                           `json:"signatures" validate:"omitempty,dive,required"` //nolint:revive
 	OverridePreviousRoot bool                                        `json:"overridePreviousRoot"`
 	ChainMetadata        map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata" validate:"required,min=1"`
 	Description          string                                      `json:"description"`
