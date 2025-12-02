@@ -648,8 +648,6 @@ github.com/smartcontractkit/chainlink-sui v0.0.0-20251104205009-00bd79b81471 h1:
 github.com/smartcontractkit/chainlink-sui v0.0.0-20251104205009-00bd79b81471/go.mod h1:VlyZhVw+a93Sk8rVHOIH6tpiXrMzuWLZrjs1eTIExW8=
 github.com/smartcontractkit/chainlink-testing-framework/framework v0.12.1 h1:Ld3OrOQfLubJ+os0/oau2V6RISgsEdBg+Q002zkgXpQ=
 github.com/smartcontractkit/chainlink-testing-framework/framework v0.12.1/go.mod h1:r6KXRM1u9ch5KFR2jspkgtyWEC1X+gxPCL8mR63U990=
-github.com/smartcontractkit/chainlink-ton v0.0.0-20251127104543-ad4b445f8b4c h1:nOejebUWcByaocFqM7xfHlKw86xQvboEHIS0jSuWZ38=
-github.com/smartcontractkit/chainlink-ton v0.0.0-20251127104543-ad4b445f8b4c/go.mod h1:rxekiaWnJnFFfklae1OvO6T7xHJtsEldDvW/e5+b/qg=
 github.com/smartcontractkit/chainlink-ton v0.0.0-20251201102550-b2faa06fd514 h1:Bdn0Ovc/QXZHyW49QCnbWRD0I7WDFP2nCELG4kpZB+4=
 github.com/smartcontractkit/chainlink-ton v0.0.0-20251201102550-b2faa06fd514/go.mod h1:rxekiaWnJnFFfklae1OvO6T7xHJtsEldDvW/e5+b/qg=
 github.com/smartcontractkit/freeport v0.1.3-0.20250716200817-cb5dfd0e369e h1:Hv9Mww35LrufCdM9wtS9yVi/rEWGI1UnjHbcKKU0nVY=
