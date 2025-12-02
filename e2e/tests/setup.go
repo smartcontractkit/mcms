@@ -224,13 +224,13 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			tonBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.TonChain)
 			require.NoError(t, err, "Failed to initialize TON blockchain")
 
-			nodeUrl := tonBlockchainOutput.Nodes[0].ExternalHTTPUrl
-			pool, err := tonchain.CreateLiteserverConnectionPool(ctx, nodeUrl)
+			nodeURL := tonBlockchainOutput.Nodes[0].ExternalHTTPUrl
+			pool, err := tonchain.CreateLiteserverConnectionPool(ctx, nodeURL)
 			require.NoError(t, err, "Failed to initialize TON client - failed to create liteserver connection pool")
 			tonClient = ton.NewAPIClient(pool, ton.ProofCheckPolicyFast)
 
 			// Test liveness, will also fetch ChainID
-			t.Logf("Initialized TON RPC client @ %s", nodeUrl)
+			t.Logf("Initialized TON RPC client @ %s", nodeURL)
 		}
 
 		sharedSetup = &TestSetup{
