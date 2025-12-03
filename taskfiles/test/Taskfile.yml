@@ -17,11 +17,6 @@ tasks:
     cmds:
       - go test -v {{.CLI_ARGS}} ./sdk/sui/...
 
-  unit:ton:
-    desc: "Run TON unit tests"
-    cmds:
-      - go test -v {{.CLI_ARGS}} ./sdk/ton/...
-
   e2e:
     desc: "Run e2e tests"
     env:
@@ -49,13 +44,6 @@ tasks:
       CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.sui.toml" }}'
     cmds:
       - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e -test.run TestSuiSuite {{.CLI_ARGS}} ./e2e/tests...
-
-  e2e:ton:
-    desc: "Run Ton e2e tests"
-    env:
-      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.ton.toml" }}'
-    cmds:
-      - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e -test.run TestTONSuite {{.CLI_ARGS}} ./e2e/tests...
 
   coverage:
     desc: "Run unit test suite with coverage"

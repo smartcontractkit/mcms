@@ -12,7 +12,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
-	"github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 func validateAdditionalFields(additionalFields json.RawMessage, csel types.ChainSelector) error {
@@ -33,8 +32,6 @@ func validateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 
 	case cselectors.FamilySui:
 		return sui.ValidateAdditionalFields(additionalFields)
-	case cselectors.FamilyTon:
-		return ton.ValidateAdditionalFields(additionalFields)
 	}
 
 	return nil
@@ -56,8 +53,6 @@ func validateChainMetadata(metadata types.ChainMetadata, csel types.ChainSelecto
 		return nil
 	case cselectors.FamilySui:
 		return sui.ValidateChainMetadata(metadata)
-	case cselectors.FamilyTon:
-		return nil // TODO: do we need special chain metadata for TON?
 	default:
 		return fmt.Errorf("unsupported chain family: %s", chainFamily)
 	}

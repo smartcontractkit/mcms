@@ -10,7 +10,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
-	"github.com/smartcontractkit/mcms/sdk/ton"
 
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -53,12 +52,6 @@ func newEncoder(
 			txCount,
 			overridePreviousRoot,
 		)
-	case cselectors.FamilyTon:
-		encoder = ton.NewEncoder(
-			csel,
-			txCount,
-			overridePreviousRoot,
-		)
 	}
 
 	return encoder, nil
@@ -84,9 +77,6 @@ func newTimelockConverter(csel types.ChainSelector) (sdk.TimelockConverter, erro
 
 	case cselectors.FamilySui:
 		return &sui.TimelockConverter{}, nil
-
-	case cselectors.FamilyTon:
-		return ton.NewTimelockConverter(), nil
 
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)

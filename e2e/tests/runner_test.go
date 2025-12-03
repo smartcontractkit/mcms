@@ -11,7 +11,6 @@ import (
 	evme2e "github.com/smartcontractkit/mcms/e2e/tests/evm"
 	solanae2e "github.com/smartcontractkit/mcms/e2e/tests/solana"
 	suie2e "github.com/smartcontractkit/mcms/e2e/tests/sui"
-	tone2e "github.com/smartcontractkit/mcms/e2e/tests/ton"
 )
 
 func TestEVMSuite(t *testing.T) {
@@ -39,12 +38,4 @@ func TestSuiSuite(t *testing.T) {
 	suite.Run(t, new(suie2e.MCMSUserTestSuite))
 	suite.Run(t, new(suie2e.TimelockCancelProposalTestSuite))
 	suite.Run(t, new(suie2e.MCMSUserUpgradeTestSuite))
-}
-
-func TestTONSuite(t *testing.T) {
-	suite.Run(t, new(tone2e.SigningTestSuite))
-	suite.Run(t, new(tone2e.SetConfigTestSuite))
-	suite.Run(t, new(tone2e.SetRootTestSuite))
-	suite.Run(t, new(tone2e.InspectionTestSuite))
-	suite.Run(t, new(tone2e.TimelockInspectionTestSuite))
 }
