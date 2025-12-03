@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Validate go.mod
         uses: smartcontractkit/.github/apps/go-mod-validator@845035d315a5067b67c951deab51db019aaf7137 # go-mod-validator/v1
