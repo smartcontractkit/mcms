@@ -18,7 +18,7 @@ func TestNewDecodedOperation(t *testing.T) {
 		contractType string
 		msgType      string
 		msgOpcode    uint64
-		msgDecoded   map[string]interface{}
+		msgDecoded   map[string]any
 		inputKeys    []string
 		inputArgs    []any
 		wantMethod   string
@@ -29,7 +29,7 @@ func TestNewDecodedOperation(t *testing.T) {
 			contractType: "com.foo.acc",
 			msgType:      "functionName",
 			msgOpcode:    0x1,
-			msgDecoded: map[string]interface{}{
+			msgDecoded: map[string]any{
 				"inputKey1": "inputArg1",
 				"inputKey2": "inputArg2",
 			},
@@ -42,7 +42,7 @@ func TestNewDecodedOperation(t *testing.T) {
 			contractType: "com.foo.acc",
 			msgType:      "functionName",
 			msgOpcode:    0x7362d09c,
-			msgDecoded:   map[string]interface{}{},
+			msgDecoded:   map[string]any{},
 			inputKeys:    []string{},
 			inputArgs:    []any{},
 			wantMethod:   "com.foo.acc::functionName(0x7362d09c)",
@@ -52,7 +52,7 @@ func TestNewDecodedOperation(t *testing.T) {
 			contractType: "com.foo.acc",
 			msgType:      "functionName",
 			msgOpcode:    0x1,
-			msgDecoded: map[string]interface{}{
+			msgDecoded: map[string]any{
 				"inputKey1": "inputArg1",
 				"inputKey2": "inputArg2",
 			},

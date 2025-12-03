@@ -9,6 +9,7 @@ import (
 	"github.com/xssnick/tonutils-go/ton"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+
 	"github.com/smartcontractkit/mcms/sdk"
 )
 
@@ -50,33 +51,33 @@ func (i timelockInspector) GetMinDelay(ctx context.Context, _address string) (ui
 }
 
 // GetAdmins returns the list of addresses with the admin role
-func (i timelockInspector) GetAdmins(ctx context.Context, address string) ([]string, error) {
-	return i.getRoleMembers(ctx, address, [32]byte(timelock.RoleAdmin.Bytes()))
+func (i timelockInspector) GetAdmins(ctx context.Context, addr string) ([]string, error) {
+	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleAdmin.Bytes()))
 }
 
 // GetProposers returns the list of addresses with the proposer role
-func (i timelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
-	return i.getRoleMembers(ctx, address, [32]byte(timelock.RoleProposer.Bytes()))
+func (i timelockInspector) GetProposers(ctx context.Context, addr string) ([]string, error) {
+	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleProposer.Bytes()))
 }
 
 // GetExecutors returns the list of addresses with the executor role
-func (i timelockInspector) GetExecutors(ctx context.Context, address string) ([]string, error) {
-	return i.getRoleMembers(ctx, address, [32]byte(timelock.RoleExecutor.Bytes()))
+func (i timelockInspector) GetExecutors(ctx context.Context, addr string) ([]string, error) {
+	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleExecutor.Bytes()))
 }
 
 // GetBypassers returns the list of addresses with the bypasser role
-func (i timelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
-	return i.getRoleMembers(ctx, address, [32]byte(timelock.RoleBypasser.Bytes()))
+func (i timelockInspector) GetBypassers(ctx context.Context, addr string) ([]string, error) {
+	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleBypasser.Bytes()))
 }
 
 // GetCancellers returns the list of addresses with the canceller role
-func (i timelockInspector) GetCancellers(ctx context.Context, address string) ([]string, error) {
-	return i.getRoleMembers(ctx, address, [32]byte(timelock.RoleCanceller.Bytes()))
+func (i timelockInspector) GetCancellers(ctx context.Context, addr string) ([]string, error) {
+	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleCanceller.Bytes()))
 }
 
 // GetOracles returns the list of addresses with the oracle role
-func (i timelockInspector) GetOracles(ctx context.Context, address string) ([]string, error) {
-	return i.getRoleMembers(ctx, address, [32]byte(timelock.RoleOracle.Bytes()))
+func (i timelockInspector) GetOracles(ctx context.Context, addr string) ([]string, error) {
+	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleOracle.Bytes()))
 }
 
 // getRoleMembers returns the list of addresses with the given role

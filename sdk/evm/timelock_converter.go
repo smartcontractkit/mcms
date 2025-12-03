@@ -55,7 +55,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		tags = append(tags, tx.Tags...)
 	}
 
-	abi, errAbi := bindings.RBACTimelockMetaData.GetAbi()
+	_abi, errAbi := bindings.RBACTimelockMetaData.GetAbi()
 	if errAbi != nil {
 		return []types.Operation{}, common.Hash{}, errAbi
 	}
@@ -71,11 +71,11 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	var err error
 	switch action {
 	case types.TimelockActionSchedule:
-		data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
+		data, err = _abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
 	case types.TimelockActionCancel:
-		data, err = abi.Pack("cancel", operationID)
+		data, err = _abi.Pack("cancel", operationID)
 	case types.TimelockActionBypass:
-		data, err = abi.Pack("bypasserExecuteBatch", calls)
+		data, err = _abi.Pack("bypasserExecuteBatch", calls)
 	default:
 		return []types.Operation{}, common.Hash{}, sdkerrors.NewInvalidTimelockOperationError(string(action))
 	}

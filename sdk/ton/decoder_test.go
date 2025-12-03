@@ -61,7 +61,7 @@ func TestDecoder(t *testing.T) {
 			want: &ton.DecodedOperation{
 				ContractType: "com.chainlink.ton.lib.access.RBAC",
 				MsgType:      "GrantRole",
-				MsgDecoded: map[string]interface{}{
+				MsgDecoded: map[string]any{
 					"QueryID": uint64(0x1),
 					"Role":    exampleRoleBig,
 					"Account": address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),

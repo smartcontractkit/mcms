@@ -32,5 +32,6 @@ func MakeNewECDSASigners(n int) []ECDSASigner {
 	slices.SortFunc(signers[:], func(a, b ECDSASigner) int {
 		return strings.Compare(strings.ToLower(a.Address().Hex()), strings.ToLower(b.Address().Hex()))
 	})
+
 	return signers
 }

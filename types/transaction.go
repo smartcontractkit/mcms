@@ -1,4 +1,4 @@
-package types //nolint:revive
+package types
 
 // TransactionResult represents a generic blockchain transaction.
 // It contains the hash of the transaction and the transaction itself.

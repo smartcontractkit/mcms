@@ -2,6 +2,7 @@ package ton
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -24,10 +25,9 @@ func AsUnsigned(v *big.Int, sz uint) *big.Int {
 	}
 	mask := new(big.Int).Lsh(big.NewInt(1), sz)
 	mask.Sub(mask, big.NewInt(1))
+
 	return new(big.Int).And(v, mask) // interpret as uint sz
 }
-
-const maxUint8Value = 255
 
 type ConfigTransformer = sdk.ConfigTransformer[mcms.Config, any]
 
@@ -47,7 +47,7 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	}
 
 	// Check the length of signerAddresses up-front
-	if len(signerAddrs) > maxUint8Value {
+	if len(signerAddrs) > math.MaxUint8 {
 		return mcms.Config{}, sdkerrors.NewTooManySignersError(uint64(len(signerAddrs)))
 	}
 
@@ -141,7 +141,7 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 
 		evmConfig.Signers[i] = bindings.ManyChainMultiSigSigner{
 			// big.Int loading doesn't work for me
-			Addr:  common.Address([20]byte(AsUnsigned(signer.Address, 160).Bytes())), // TODO: tvm.KeyUINT160
+			Addr:  common.Address([20]byte(AsUnsigned(signer.Address, SizeUINT160).Bytes())), // TODO: tvm.KeyUINT160
 			Index: signer.Index,
 			Group: signer.Group,
 		}

@@ -25,8 +25,8 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 }
 
 type AdditionalFields struct {
-	Accounts []*solana.AccountMeta `json:"accounts" validate:"omitempty"` //nolint:revive
-	Value    *big.Int              `json:"value" validate:"omitempty"`    //nolint:revive
+	Accounts []*solana.AccountMeta `json:"accounts" validate:"omitempty"`
+	Value    *big.Int              `json:"value" validate:"omitempty"`
 }
 
 // Validate ensures the solana-specific fields are correct

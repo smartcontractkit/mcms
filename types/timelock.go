@@ -1,4 +1,4 @@
-package types //nolint:revive
+package types
 
 // TimelockAction is an enum for the different types of timelock actions that can be performed on
 // a timelock proposal.

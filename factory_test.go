@@ -10,11 +10,11 @@ import (
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 
-	aptos "github.com/smartcontractkit/mcms/sdk/aptos"
-	evm "github.com/smartcontractkit/mcms/sdk/evm"
-	solana "github.com/smartcontractkit/mcms/sdk/solana"
-	sui "github.com/smartcontractkit/mcms/sdk/sui"
-	ton "github.com/smartcontractkit/mcms/sdk/ton"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 func TestNewEncoder(t *testing.T) {

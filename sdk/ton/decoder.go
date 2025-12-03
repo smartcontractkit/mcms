@@ -23,7 +23,7 @@ import (
 
 // Map of TLBs keyed by contract type
 // TODO(ton): unify and move these definitions to smartcontractkit/chainlink-ton
-var TLBsByContract = map[string]map[uint64]interface{}{
+var TLBsByContract = map[string]map[uint64]any{
 	// Jetton contract types
 	"com.github.ton-blockchain.jetton-contract.contracts.jetton-wallet": wallet.TLBs,
 	"com.github.ton-blockchain.jetton-contract.contracts.jetton-minter": minter.TLBs,
@@ -77,7 +77,7 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 	inputKeys := make([]string, len(keys))
 	inputArgs := make([]any, len(keys))
 
-	m, ok := msgDecoded.(map[string]interface{}) // JSON normalized
+	m, ok := msgDecoded.(map[string]any) // JSON normalized
 	if !ok {
 		return nil, fmt.Errorf("failed to cast as map %s: %w", idTLBs, err)
 	}
@@ -89,5 +89,6 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 	}
 
 	msgOpcode := uint64(0) // not exposed currently
+
 	return NewDecodedOperation(idTLBs, msgType, msgOpcode, msgDecoded, inputKeys, inputArgs)
 }
