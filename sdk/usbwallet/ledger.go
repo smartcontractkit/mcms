@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts"
@@ -493,7 +494,12 @@ func (w *ledgerDriver) ledgerExchange(opcode ledgerOpcode, p1 ledgerParam1, p2 l
 	// Construct the message payload, possibly split into multiple chunks
 	apdu := make([]byte, 2, 7+len(data))
 
-	binary.BigEndian.PutUint16(apdu, uint16(5+len(data)))
+	// G115 check
+	apduLen := 5 + len(data)
+	if apduLen > math.MaxUint16 {
+		return nil, fmt.Errorf("APDU length %d exceeds uint16 max", apduLen)
+	}
+	binary.BigEndian.PutUint16(apdu, uint16(apduLen))
 	apdu = append(apdu, []byte{0xe0, byte(opcode), byte(p1), byte(p2), byte(len(data))}...)
 	apdu = append(apdu, data...)
 
@@ -505,7 +511,7 @@ func (w *ledgerDriver) ledgerExchange(opcode ledgerOpcode, p1 ledgerParam1, p2 l
 	for i := 0; len(apdu) > 0; i++ {
 		// Construct the new message to stream
 		chunk = append(chunk[:0], header...)
-		binary.BigEndian.PutUint16(chunk[3:], uint16(i))
+		binary.BigEndian.PutUint16(chunk[3:], uint16(i)) //nolint:gosec // G115 conversion safe
 
 		if len(apdu) > space {
 			chunk = append(chunk, apdu[:space]...)

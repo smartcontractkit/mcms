@@ -35,7 +35,8 @@ func (s *TestSuite) TestSimulatorSimulateSetRoot() {
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 
-	validUntil := time.Now().Add(10 * time.Hour).Unix()
+	//nolint:gosec // G115 conversion safe
+	validUntil := uint32(time.Now().Add(10 * time.Hour).Unix())
 	solanaTx, err := solanasdk.NewTransaction(
 		auth.PublicKey().String(),
 		[]byte("test data"),
@@ -55,7 +56,7 @@ func (s *TestSuite) TestSimulatorSimulateSetRoot() {
 	s.Require().NoError(err)
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
-		SetValidUntil(uint32(validUntil)).
+		SetValidUntil(validUntil).
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(s.ChainSelector, metadata).

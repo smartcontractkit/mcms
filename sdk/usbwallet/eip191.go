@@ -3,6 +3,7 @@ package usbwallet
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -73,7 +74,12 @@ func (w *ledgerDriver) ledgerSignPersonalMessage(derivationPath []uint32, messag
 		binary.BigEndian.PutUint32(path[1+4*i:], component)
 	}
 	var messageLength [4]byte
-	binary.BigEndian.PutUint32(messageLength[:], uint32(len(message)))
+	// G115 check
+	msgLen := len(message)
+	if msgLen > math.MaxUint32 {
+		return nil, fmt.Errorf("message length %d exceeds uint32 max", msgLen)
+	}
+	binary.BigEndian.PutUint32(messageLength[:], uint32(msgLen))
 	payload := append(path, messageLength[:]...)
 	payload = append(payload, message...)
 	// Send the request and wait for the response

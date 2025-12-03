@@ -118,6 +118,7 @@ func (s *TestSuite) TestSetRoot() {
 			signers = append(signers, signer.Address)
 			mcmsSigners = append(mcmsSigners, mcms.NewPrivateKeySigner(signer.PrivateKey))
 		}
+		//nolint:gosec // G115 conversion safe
 		multiSignersMcmConfig := types.Config{Quorum: uint8(len(signers)), Signers: signers}
 
 		proposal = buildProposal()

@@ -57,7 +57,7 @@ func (s *TestSuite) TestTimelockConverter() {
 
 	e2eutils.FundAccounts(s.T(), []solana.PublicKey{mcmSignerPDA, timelockSignerPDA}, 1, s.SolanaClient)
 
-	validUntil := 2051222400 // 2035-01-01T12:00:00 UTC
+	validUntil := uint32(2051222400) // 2035-01-01T12:00:00 UTC
 	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedTimelockConverter)
 	timelockAddress := solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockConverter)
 	converters := map[types.ChainSelector]sdk.TimelockConverter{
@@ -114,7 +114,7 @@ func (s *TestSuite) TestTimelockConverter() {
 	}
 	timelockProposalBuilder := func() *mcms.TimelockProposalBuilder {
 		return mcms.NewTimelockProposalBuilder().
-			SetValidUntil(uint32(validUntil)).
+			SetValidUntil(validUntil).
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
@@ -142,7 +142,7 @@ func (s *TestSuite) TestTimelockConverter() {
 
 		// build expected output Proposal
 		wantProposal, err := mcms.NewProposalBuilder().
-			SetValidUntil(uint32(validUntil)).
+			SetValidUntil(validUntil).
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
@@ -357,7 +357,7 @@ func (s *TestSuite) TestTimelockConverter() {
 
 		// build expected output Proposal
 		wantProposal, err := mcms.NewProposalBuilder().
-			SetValidUntil(uint32(validUntil)).
+			SetValidUntil(validUntil).
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
@@ -421,7 +421,7 @@ func (s *TestSuite) TestTimelockConverter() {
 
 		// build expected output Proposal
 		wantProposal, err := mcms.NewProposalBuilder().
-			SetValidUntil(uint32(validUntil)).
+			SetValidUntil(validUntil).
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
