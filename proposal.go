@@ -67,14 +67,14 @@ type BaseProposal struct {
 	Version              string                                      `json:"version" validate:"required,oneof=v1"`
 	Kind                 types.ProposalKind                          `json:"kind" validate:"required,oneof=Proposal TimelockProposal"`
 	ValidUntil           uint32                                      `json:"validUntil" validate:"required"`
-	Signatures           []types.Signature                           `json:"signatures" validate:"omitempty,dive,required"` //nolint:revive
+	Signatures           []types.Signature                           `json:"signatures" validate:"omitempty,dive,required"`
 	OverridePreviousRoot bool                                        `json:"overridePreviousRoot"`
 	ChainMetadata        map[types.ChainSelector]types.ChainMetadata `json:"chainMetadata" validate:"required,min=1"`
 	Description          string                                      `json:"description"`
 	Metadata             map[string]any                              `json:"metadata,omitempty"`
 	// This field is passed to SDK implementations to indicate whether the proposal is being run
 	// against a simulated environment. This is only used for testing purposes.
-	useSimulatedBackend bool `json:"-"` //nolint:revive
+	useSimulatedBackend bool `json:"-"`
 }
 
 // AppendSignature appends a signature to the proposal's signature list.

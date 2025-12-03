@@ -37,8 +37,8 @@ type configurer struct {
 //
 //	WithDoNotSendInstructionsOnChain: when selected, the Configurer instance will not
 //			send the TON instructions to the blockchain.
-func NewConfigurer(wallet *wallet.Wallet, amount tlb.Coins, opts ...configurerOption) (sdk.Configurer, error) {
-	c := configurer{wallet, amount, false}
+func NewConfigurer(w *wallet.Wallet, amount tlb.Coins, opts ...configurerOption) (sdk.Configurer, error) {
+	c := configurer{w, amount, false}
 
 	for _, o := range opts {
 		o(&c)

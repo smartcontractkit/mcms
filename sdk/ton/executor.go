@@ -36,7 +36,7 @@ type executor struct {
 }
 
 // NewExecutor creates a new Executor for TON chains
-func NewExecutor(encoder sdk.Encoder, client ton.APIClientWrapped, wallet *wallet.Wallet, amount tlb.Coins) (sdk.Executor, error) {
+func NewExecutor(encoder sdk.Encoder, client ton.APIClientWrapped, w *wallet.Wallet, amount tlb.Coins) (sdk.Executor, error) {
 	if IsNil(encoder) {
 		return nil, errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil")
 	}
@@ -45,14 +45,14 @@ func NewExecutor(encoder sdk.Encoder, client ton.APIClientWrapped, wallet *walle
 		return nil, errors.New("failed to create sdk.Executor - client (ton.APIClientWrapped) is nil")
 	}
 
-	if wallet == nil {
+	if w == nil {
 		return nil, errors.New("failed to create sdk.Executor - wallet (*wallet.Wallet) is nil")
 	}
 
 	return &executor{
 		Encoder:   encoder,
 		Inspector: NewInspector(client, NewConfigTransformer()),
-		wallet:    wallet,
+		wallet:    w,
 		amount:    amount,
 	}, nil
 }

@@ -80,7 +80,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 	// Hash operation according to TON specs
 	// @dev we use the standard sha256 (cell) hash function to hash the leaf.
 	b := cell.BeginCell()
-	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorOp[:]), 256); err != nil {
+	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorOp[:]), SizeUINT256); err != nil {
 		return common.Hash{}, fmt.Errorf("failed to store domain separator: %w", err)
 	}
 	if err := b.StoreRef(opCell); err != nil {
@@ -89,6 +89,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 
 	var hash common.Hash
 	copy(hash[:], b.EndCell().Hash()[:32])
+
 	return hash, nil
 }
 
@@ -107,7 +108,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	// Hash metadata according to TON specs
 	// @dev we use the standard sha256 (cell) hash function to hash the leaf.
 	b := cell.BeginCell()
-	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorMetadata[:]), 256); err != nil {
+	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorMetadata[:]), SizeUINT256); err != nil {
 		return common.Hash{}, fmt.Errorf("failed to store domain separator: %w", err)
 	}
 	if err := b.StoreRef(metaCell); err != nil {
@@ -116,6 +117,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 
 	var hash common.Hash
 	copy(hash[:], b.EndCell().Hash()[:32])
+
 	return hash, nil
 }
 
@@ -183,6 +185,7 @@ func (e *Encoder) ToProof(p []common.Hash) ([]mcms.Proof, error) {
 	for _, hash := range p {
 		proofs = append(proofs, mcms.Proof{Val: hash.Big()})
 	}
+
 	return proofs, nil
 }
 

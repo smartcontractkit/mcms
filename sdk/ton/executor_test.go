@@ -347,5 +347,6 @@ func makeTestSignature(hexStr string) types.Signature {
 
 	// Signature object for the hash
 	sig, _ := types.NewSignatureFromBytes(sigBytes)
+
 	return sig
 }

@@ -36,14 +36,14 @@ type timelockExecutor struct {
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor
-func NewTimelockExecutor(client ton.APIClientWrapped, wallet *wallet.Wallet, amount tlb.Coins) (sdk.TimelockExecutor, error) {
+func NewTimelockExecutor(client ton.APIClientWrapped, w *wallet.Wallet, amount tlb.Coins) (sdk.TimelockExecutor, error) {
 	if IsNil(client) {
 		return nil, errors.New("failed to create sdk.Executor - client (ton.APIClientWrapped) is nil")
 	}
 
 	return &timelockExecutor{
 		TimelockInspector: NewTimelockInspector(client),
-		wallet:            wallet,
+		wallet:            w,
 		amount:            amount,
 	}, nil
 }

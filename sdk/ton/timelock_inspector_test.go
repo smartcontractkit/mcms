@@ -330,7 +330,7 @@ func TestTimelockInspectorIsOperation(t *testing.T) {
 func testIsOperationState(
 	t *testing.T,
 	methodName string,
-	address string,
+	addr string,
 	opID [32]byte,
 	want bool,
 	mockError error,
@@ -369,11 +369,11 @@ func testIsOperationState(
 	var err error
 	switch methodName {
 	case "isOperationPending":
-		got, err = inspector.IsOperationPending(ctx, address, opID)
+		got, err = inspector.IsOperationPending(ctx, addr, opID)
 	case "isOperationReady":
-		got, err = inspector.IsOperationReady(ctx, address, opID)
+		got, err = inspector.IsOperationReady(ctx, addr, opID)
 	case "isOperationDone":
-		got, err = inspector.IsOperationDone(ctx, address, opID)
+		got, err = inspector.IsOperationDone(ctx, addr, opID)
 	default:
 		t.Fatalf("unsupported methodName: %s", methodName)
 	}
