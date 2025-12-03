@@ -141,7 +141,7 @@ func (s *TestSuite) scheduleMintTx(
 		operationID,
 		predecessor,
 		salt,
-		uint32(len(opInstructions)),
+		uint32(len(opInstructions)), //nolint:gosec // G115 conversion safe
 		operationPDA,
 		configPDA,
 		proposerAC,

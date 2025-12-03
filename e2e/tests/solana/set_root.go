@@ -50,7 +50,7 @@ func (s *TestSuite) TestSetRoot() {
 		validUntil := time.Now().Add(10 * time.Hour)
 		proposal, perr := mcms.NewProposalBuilder().
 			SetVersion("v1").
-			SetValidUntil(uint32(validUntil.Unix())).
+			SetValidUntil(uint32(validUntil.Unix())). //nolint:gosec // G115 conversion safe
 			SetDescription(fmt.Sprintf("proposal to test SetRoot - %v", validUntil.UnixMilli())).
 			SetOverridePreviousRoot(true).
 			AddChainMetadata(s.ChainSelector, metadata).

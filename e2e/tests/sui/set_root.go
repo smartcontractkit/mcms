@@ -50,7 +50,7 @@ func (s *SetRootTestSuite) TestSetRoot() {
 	validUntil := time.Now().Add(10 * time.Hour)
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
-		SetValidUntil(uint32(validUntil.Unix())).
+		SetValidUntil(uint32(validUntil.Unix())). //nolint:gosec // G115 conversion safe
 		SetDescription(fmt.Sprintf("SetRoot test proposal - %v", validUntil)).
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(s.chainSelector, metadata).
@@ -156,7 +156,7 @@ func (s *SetRootTestSuite) TestSetRootMultipleSigners() {
 	validUntil := time.Now().Add(10 * time.Hour)
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
-		SetValidUntil(uint32(validUntil.Unix())).
+		SetValidUntil(uint32(validUntil.Unix())). //nolint:gosec // G115 conversion safe
 		SetDescription(fmt.Sprintf("Multi-signer SetRoot test - %v", validUntil.UnixMilli())).
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(s.chainSelector, metadata).
