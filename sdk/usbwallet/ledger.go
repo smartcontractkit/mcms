@@ -499,7 +499,7 @@ func (w *ledgerDriver) ledgerExchange(opcode ledgerOpcode, p1 ledgerParam1, p2 l
 	if apduLen > math.MaxUint16 {
 		return nil, fmt.Errorf("APDU length %d exceeds uint16 max", apduLen)
 	}
-	binary.BigEndian.PutUint16(apdu, uint16(apduLen))
+	binary.BigEndian.PutUint16(apdu, uint16(apduLen)) //nolint:gosec // G115: overflow checked above
 	apdu = append(apdu, []byte{0xe0, byte(opcode), byte(p1), byte(p2), byte(len(data))}...)
 	apdu = append(apdu, data...)
 

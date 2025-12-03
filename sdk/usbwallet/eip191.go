@@ -79,7 +79,7 @@ func (w *ledgerDriver) ledgerSignPersonalMessage(derivationPath []uint32, messag
 	if msgLen > math.MaxUint32 {
 		return nil, fmt.Errorf("message length %d exceeds uint32 max", msgLen)
 	}
-	binary.BigEndian.PutUint32(messageLength[:], uint32(msgLen))
+	binary.BigEndian.PutUint32(messageLength[:], uint32(msgLen)) //nolint:gosec // G115: overflow checked above
 	payload := append(path, messageLength[:]...)
 	payload = append(payload, message...)
 	// Send the request and wait for the response
