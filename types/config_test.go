@@ -41,7 +41,7 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, Config{}, got)
 }
 
-func TestConfigValidate(t *testing.T) {
+func TestConfig_Validate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -116,7 +116,7 @@ func TestConfigValidate(t *testing.T) {
 	}
 }
 
-func TestConfigEquals(t *testing.T) {
+func TestConfig_Equals(t *testing.T) {
 	t.Parallel()
 
 	// The config that is being matched against. This is compared against the give field in
@@ -198,7 +198,7 @@ func TestConfigEquals(t *testing.T) {
 		})
 	}
 }
-func TestConfigGetAllSigners(t *testing.T) {
+func TestConfig_GetAllSigners(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -255,7 +255,7 @@ func TestConfigGetAllSigners(t *testing.T) {
 	}
 }
 
-func TestConfigCanSetRoot(t *testing.T) {
+func TestConfig_CanSetRoot(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

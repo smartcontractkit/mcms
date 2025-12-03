@@ -39,7 +39,7 @@ func TestNewExecutor(t *testing.T) {
 	assert.Equal(t, TimelockRoleProposer, executor.role)
 }
 
-func TestExecutorExecuteOperation(t *testing.T) {
+func TestExecutor_ExecuteOperation(t *testing.T) {
 	t.Parallel()
 	generateData := func(length int) []byte {
 		return bytes.Repeat([]byte{0x42}, length)
@@ -408,7 +408,7 @@ func TestExecutorExecuteOperation(t *testing.T) {
 	}
 }
 
-func TestExecutorSetRoot(t *testing.T) {
+func TestExecutor_SetRoot(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		metadata         types.ChainMetadata

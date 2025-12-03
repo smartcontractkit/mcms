@@ -32,7 +32,7 @@ func TestNewInspector(t *testing.T) {
 	assert.NotNil(t, inspector.bindingFn)
 }
 
-func TestInspectorGetConfig(t *testing.T) {
+func TestInspector_GetConfig(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	tests := []struct {
@@ -148,7 +148,7 @@ func TestInspectorGetConfig(t *testing.T) {
 	}
 }
 
-func TestInspectorGetOpCount(t *testing.T) {
+func TestInspector_GetOpCount(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	tests := []struct {
@@ -213,7 +213,7 @@ func TestInspectorGetOpCount(t *testing.T) {
 	}
 }
 
-func TestInspectorGetRoot(t *testing.T) {
+func TestInspector_GetRoot(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	tests := []struct {
@@ -280,7 +280,7 @@ func TestInspectorGetRoot(t *testing.T) {
 	}
 }
 
-func TestInspectorGetRootMetadata(t *testing.T) {
+func TestInspector_GetRootMetadata(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	tests := []struct {

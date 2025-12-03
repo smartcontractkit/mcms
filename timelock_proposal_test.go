@@ -410,7 +410,7 @@ func TestWriteTimelockProposal(t *testing.T) {
 	}
 }
 
-func TestTimelockProposalValidate(t *testing.T) {
+func TestTimelockProposal_Validate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -724,7 +724,7 @@ func TestTimelockProposal_Convert(t *testing.T) {
 	require.NotEqual(t, predecessors[2], ZeroHash)
 }
 
-func TestProposal_WithSaltOverride(t *testing.T) {
+func TestTimelockProposal_WithSaltOverride(t *testing.T) {
 	t.Parallel()
 	builder := NewTimelockProposalBuilder()
 	builder.SetVersion("v1").

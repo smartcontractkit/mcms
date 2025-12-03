@@ -74,7 +74,7 @@ func TestNewSimulator(t *testing.T) {
 	}
 }
 
-func TestSimulatorExecuteOperation(t *testing.T) {
+func TestSimulator_ExecuteOperation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -159,7 +159,7 @@ func TestSimulatorExecuteOperation(t *testing.T) {
 	}
 }
 
-func TestSimulatorSetRoot(t *testing.T) {
+func TestSimulator_SetRoot(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

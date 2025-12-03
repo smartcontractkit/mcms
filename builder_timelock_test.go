@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestTimelockProposalBuilder(t *testing.T) {
+func TestTimelockProposal_Builder(t *testing.T) {
 	t.Parallel()
 
 	// Define a fixed validUntil timestamp for consistency

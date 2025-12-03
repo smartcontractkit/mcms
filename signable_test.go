@@ -979,7 +979,7 @@ func TestSignable_Simulate(t *testing.T) {
 	}
 }
 
-func TestSignableValidateConfigs(t *testing.T) {
+func TestSignable_ValidateConfigs(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -1086,7 +1086,7 @@ func TestSignableValidateConfigs(t *testing.T) {
 	}
 }
 
-func TestSignable_getCurrentOpCounts(t *testing.T) {
+func TestSignable_GetCurrentOpCounts(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

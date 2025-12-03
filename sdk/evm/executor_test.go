@@ -42,7 +42,7 @@ func TestNewExecutor(t *testing.T) {
 	require.NotNil(t, executor.Inspector, "expected Inspector to be initialized")
 }
 
-func TestExecutorExecuteOperation(t *testing.T) {
+func TestExecutor_ExecuteOperation(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -216,7 +216,7 @@ func TestExecutorExecuteOperation(t *testing.T) {
 	}
 }
 
-func TestExecutorExecuteOperationWithEIP1559GasFees(t *testing.T) {
+func TestExecutor_ExecuteOperationWithEIP1559GasFees(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -281,7 +281,7 @@ func TestExecutorExecuteOperationWithEIP1559GasFees(t *testing.T) {
 	require.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
 }
 
-func TestExecutorSetRootWithEIP1559GasFees(t *testing.T) {
+func TestExecutor_SetRootWithEIP1559GasFees(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -341,7 +341,7 @@ func TestExecutorSetRootWithEIP1559GasFees(t *testing.T) {
 	require.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
 }
 
-func TestExecutorExecuteOperationWithLegacyGasPrice(t *testing.T) {
+func TestExecutor_ExecuteOperationWithLegacyGasPrice(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -405,7 +405,7 @@ func TestExecutorExecuteOperationWithLegacyGasPrice(t *testing.T) {
 	require.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
 }
 
-func TestExecutorSetRootWithLegacyGasPrice(t *testing.T) {
+func TestExecutor_SetRootWithLegacyGasPrice(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -464,7 +464,7 @@ func TestExecutorSetRootWithLegacyGasPrice(t *testing.T) {
 	require.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
 }
 
-func TestExecutorExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
+func TestExecutor_ExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -537,7 +537,7 @@ func TestExecutorExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
 	}
 }
 
-func TestExecutorSetRoot(t *testing.T) {
+func TestExecutor_SetRoot(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

@@ -128,7 +128,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 	}
 }
 
-func TestAdditionalFieldsValidate(t *testing.T) {
+func TestAdditionalFields_Validate(t *testing.T) {
 	t.Parallel()
 
 	validAccount := &solana.AccountMeta{
