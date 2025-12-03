@@ -141,7 +141,7 @@ func (s *TestSuite) scheduleMintTx(
 		operationID,
 		predecessor,
 		salt,
-		uint32(len(opInstructions)), //nolint:gosec // G115 conversion safe
+		uint32(len(opInstructions)),
 		operationPDA,
 		configPDA,
 		proposerAC,
@@ -179,7 +179,7 @@ func (s *TestSuite) scheduleMintTx(
 			appendIx, appendErr := timelock.NewAppendInstructionDataInstruction(
 				testTimelockExecuteID,
 				operationID,
-				//nolint:gosec // G115 conversion safe
+
 				uint32(i), // which instruction index we are chunking
 				chunk,     // partial data
 				operationPDA,
