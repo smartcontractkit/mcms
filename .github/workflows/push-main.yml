@@ -20,6 +20,7 @@ jobs:
           golangci-lint-version: v2.6.2
           use-go-cache: true
           only-new-issues: false
+          golangci-lint-config: .golangci.yml
 
   ci-lint-e2e:
     name: Lint E2E tests
@@ -36,6 +37,7 @@ jobs:
           golangci-lint-args: --build-tags="e2e"
           use-go-cache: true
           only-new-issues: false
+          golangci-lint-config: .golangci.yml
 
   ci-lint-misc:
     name: Lint GH Actions and scripts
