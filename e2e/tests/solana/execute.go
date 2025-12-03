@@ -83,6 +83,7 @@ func (s *TestSuite) TestExecute() {
 	s.Require().NoError(err)
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
+		//nolint:gosec // G115 conversion safe
 		SetValidUntil(uint32(time.Now().Add(10*time.Hour).Unix())).
 		SetDescription("proposal to test Execute with a token distribution").
 		SetOverridePreviousRoot(true).

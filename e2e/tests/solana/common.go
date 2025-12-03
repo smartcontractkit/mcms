@@ -459,7 +459,7 @@ func (s *TestSuite) getInitOperationIxs(timelockID [32]byte, op timelockutils.Op
 			appendIx, err := timelock.NewAppendInstructionDataInstruction(
 				timelockID,
 				op.OperationID(),
-
+				//nolint:gosec // G115 conversion safe
 				uint32(i), // which instruction index we are chunking
 				chunk,     // partial data
 				operationPDA,
@@ -561,6 +561,7 @@ func (s *TestSuite) waitForOperationToBeReady(ctx context.Context, timelockID [3
 		return
 	}
 
+	//nolint:gosec // G115 conversion safe
 	scheduledTime := time.Unix(int64(opAccount.Timestamp), 0)
 
 	// add buffer to scheduled time to ensure blockchain has advanced enough
