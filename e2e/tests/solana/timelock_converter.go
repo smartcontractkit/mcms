@@ -677,12 +677,12 @@ func (s *TestSuite) executeTimelockProposal(
 
 	tx, err := timelockExecutable.Execute(ctx, 0)
 	s.Require().NoError(err)
-	s.Require().Contains(getTransactionLogs(s.T(), s.SolanaClient, tx.Hash), "Called `empty`")
-	s.Require().Contains(getTransactionLogs(s.T(), s.SolanaClient, tx.Hash), "Called `u8_instruction_data`")
+	s.Require().Contains(getTransactionLogs(ctx, s.T(), s.SolanaClient, tx.Hash), "Called `empty`")
+	s.Require().Contains(getTransactionLogs(ctx, s.T(), s.SolanaClient, tx.Hash), "Called `u8_instruction_data`")
 
 	tx, err = timelockExecutable.Execute(ctx, 1)
 	s.Require().NoError(err)
-	s.Require().Contains(getTransactionLogs(s.T(), s.SolanaClient, tx.Hash), "Called `account_mut`")
+	s.Require().Contains(getTransactionLogs(ctx, s.T(), s.SolanaClient, tx.Hash), "Called `account_mut`")
 }
 
 func marshalAdditionalFields(t *testing.T, additionalFields solanasdk.AdditionalFields) []byte {
@@ -712,9 +712,8 @@ func toJSONString(t *testing.T, proposal *mcms.Proposal) string {
 	return buffer.String()
 }
 
-func getTransactionLogs(t *testing.T, client *rpc.Client, signature string) string {
+func getTransactionLogs(ctx context.Context, t *testing.T, client *rpc.Client, signature string) string {
 	t.Helper()
-	ctx := context.Background()
 
 	opts := &rpc.GetTransactionOpts{Commitment: rpc.CommitmentConfirmed}
 	result, err := client.GetTransaction(ctx, solana.MustSignatureFromBase58(signature), opts)

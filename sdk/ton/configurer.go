@@ -81,7 +81,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	}
 
 	// Encode SetConfig message
-	sz := uint(8)
+	sz := uint(SizeUINT8)
 	gqDict := cell.NewDict(sz)
 	for i, g := range groupQuorum {
 		err = gqDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())

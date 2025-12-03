@@ -50,7 +50,7 @@ func (s *TestSuite) TestSetRoot() {
 		validUntil := time.Now().Add(10 * time.Hour)
 		proposal, perr := mcms.NewProposalBuilder().
 			SetVersion("v1").
-			SetValidUntil(uint32(validUntil.Unix())). //nolint:gosec // G115 conversion safe
+			SetValidUntil(uint32(validUntil.Unix())).
 			SetDescription(fmt.Sprintf("proposal to test SetRoot - %v", validUntil.UnixMilli())).
 			SetOverridePreviousRoot(true).
 			AddChainMetadata(s.ChainSelector, metadata).
@@ -118,7 +118,7 @@ func (s *TestSuite) TestSetRoot() {
 			signers = append(signers, signer.Address)
 			mcmsSigners = append(mcmsSigners, mcms.NewPrivateKeySigner(signer.PrivateKey))
 		}
-		//nolint:gosec // G115 conversion safe
+
 		multiSignersMcmConfig := types.Config{Quorum: uint8(len(signers)), Signers: signers}
 
 		proposal = buildProposal()

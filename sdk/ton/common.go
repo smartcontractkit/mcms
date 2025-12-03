@@ -7,6 +7,7 @@ import (
 )
 
 // TODO: move as tvm.SizeUINT160
+const SizeUINT8 = 8
 const SizeUINT160 = 160
 const SizeUINT256 = 256
 

@@ -35,7 +35,6 @@ func (s *TestSuite) TestSimulatorSimulateSetRoot() {
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 
-	//nolint:gosec // G115 conversion safe
 	validUntil := uint32(time.Now().Add(10 * time.Hour).Unix())
 	solanaTx, err := solanasdk.NewTransaction(
 		auth.PublicKey().String(),

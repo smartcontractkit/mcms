@@ -40,6 +40,7 @@ func must[E any](out E, err error) E {
 	if err != nil {
 		panic(err)
 	}
+
 	return out
 }
 
@@ -48,6 +49,7 @@ func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wal
 		NetworkGlobalID: networkGlobalID,
 		Workchain:       0,
 	}
+
 	return wallet.FromSeed(api, wallet.NewSeed(), v5r1Config)
 }
 
@@ -127,7 +129,7 @@ func TimelockEmptyDataFrom(id uint32) timelock.Data {
 	}
 }
 
-func DeployMCMSContract(ctx context.Context, client *ton.APIClient, wallet *wallet.Wallet, amount tlb.Coins, data mcms.Data) (*address.Address, error) {
+func DeployMCMSContract(ctx context.Context, client *ton.APIClient, w *wallet.Wallet, amount tlb.Coins, data mcms.Data) (*address.Address, error) {
 	body := cell.BeginCell().EndCell() // empty cell, top up
 
 	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsMCMS)
@@ -141,15 +143,16 @@ func DeployMCMSContract(ctx context.Context, client *ton.APIClient, wallet *wall
 		return nil, fmt.Errorf("failed to create contract data cell: %w", err)
 	}
 
-	_client := tracetracking.NewSignedAPIClient(client, *wallet)
+	_client := tracetracking.NewSignedAPIClient(client, *w)
 	contract, _, err := wrappers.Deploy(ctx, &_client, contractCode, contractData, amount, body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy contract: %w", err)
 	}
+
 	return contract.Address, nil
 }
 
-func DeployTimelockContract(ctx context.Context, client *ton.APIClient, wallet *wallet.Wallet, amount tlb.Coins, data timelock.Data, body timelock.Init) (*address.Address, error) {
+func DeployTimelockContract(ctx context.Context, client *ton.APIClient, w *wallet.Wallet, amount tlb.Coins, data timelock.Data, body timelock.Init) (*address.Address, error) {
 	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsTimelock)
 	contractCode, err := wrappers.ParseCompiledContract(contractPath)
 	if err != nil {
@@ -166,10 +169,11 @@ func DeployTimelockContract(ctx context.Context, client *ton.APIClient, wallet *
 		return nil, fmt.Errorf("failed to create contract body cell: %w", err)
 	}
 
-	_client := tracetracking.NewSignedAPIClient(client, *wallet)
+	_client := tracetracking.NewSignedAPIClient(client, *w)
 	contract, _, err := wrappers.Deploy(ctx, &_client, contractCode, contractData, amount, bodyCell)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy contract: %w", err)
 	}
+
 	return contract.Address, nil
 }

@@ -227,6 +227,7 @@ func IsNil(x any) bool {
 	if !v.IsValid() {
 		return true
 	}
+	//nolint:exhaustive // default case handles all non-nillable types
 	switch v.Kind() {
 	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.UnsafePointer, reflect.Interface, reflect.Slice:
 		return v.IsNil()

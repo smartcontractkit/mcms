@@ -1,4 +1,4 @@
-package types //nolint:revive
+package types //nolint:revive,nolintlint // allow pkg name 'types'
 
 import (
 	"testing"

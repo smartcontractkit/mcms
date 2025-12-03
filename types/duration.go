@@ -1,4 +1,4 @@
-package types
+package types //nolint:revive,nolintlint // allow pkg name 'types'
 
 import (
 	"encoding/json"

@@ -53,11 +53,11 @@ func (i *Inspector) GetConfig(ctx context.Context, _address string) (*types.Conf
 	}
 
 	rResult := r.AsTuple()
-	if len(rResult) < 3 {
+	if len(rResult) < 3 { //nolint:mnd // 3 expected return values
 		return nil, errors.New("error: getConfig returned less than 3 cells")
 	}
 
-	keySz := uint(8)
+	keySz := uint(SizeUINT8)
 	signers := cell.NewDict(keySz)
 	if rResult[0] != nil {
 		rc0, err := r.Cell(0)
@@ -84,7 +84,7 @@ func (i *Inspector) GetConfig(ctx context.Context, _address string) (*types.Conf
 
 	groupParents := cell.NewDict(keySz)
 	if rResult[2] != nil {
-		rc2, err := r.Cell(2)
+		rc2, err := r.Cell(2) //nolint:mnd // 2 index for 3rd return value
 		if err != nil {
 			return nil, fmt.Errorf("error getting Config.GroupParents cell(2): %w", err)
 		}
@@ -180,7 +180,7 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, _address string) (types
 		return types.ChainMetadata{}, fmt.Errorf("error getting getRootMetadata: %w", err)
 	}
 
-	ri, err := r.Int(2)
+	ri, err := r.Int(2) //nolint:mnd // 2 index for 3rd return value
 	if err != nil {
 		return types.ChainMetadata{}, fmt.Errorf("error getting preOpCount int: %w", err)
 	}
