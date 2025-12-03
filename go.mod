@@ -2,7 +2,8 @@ module github.com/smartcontractkit/mcms
 
 go 1.25.3
 
-replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1 //nolint:gomoddirectives // allow replace directive
+//nolint:gomoddirectives // allow replace directive
+replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
 	github.com/aptos-labs/aptos-go-sdk v1.11.0
