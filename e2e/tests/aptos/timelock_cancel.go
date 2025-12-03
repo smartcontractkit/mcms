@@ -97,6 +97,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 	// | Proposal - schedule accept ownership with proposers |
 	// =======================================================
 
+	//nolint:gosec // G115 allowed in tests
 	validUntil := uint32(time.Now().Add(time.Hour * 24).Unix())
 	acceptOwnershipProposalBuilder := mcms.NewTimelockProposalBuilder().
 		SetVersion("v1").

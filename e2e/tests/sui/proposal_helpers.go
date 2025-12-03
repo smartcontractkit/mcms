@@ -65,7 +65,7 @@ type ProposalBuilderConfig struct {
 
 func CreateTimelockProposalBuilder(t *testing.T, config ProposalBuilderConfig, operations []types.BatchOperation) *mcms.TimelockProposalBuilder {
 	t.Helper()
-
+	//nolint:gosec // G115 allowed in tests
 	validUntilMs := uint32(time.Now().Add(time.Hour * 24).Unix())
 
 	metadata, err := suisdk.NewChainMetadata(config.CurrentOpCount, config.Role, config.McmsPackageID, config.McmsObjID, config.AccountObjID, config.RegistryObjID, config.TimelockObjID, config.DeployerStateObjID)

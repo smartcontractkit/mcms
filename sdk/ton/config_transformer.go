@@ -89,6 +89,7 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	sz := uint(8)
 	gqDict := cell.NewDict(keySz)
 	for i, g := range groupQuorum {
+		//nolint:gosec // G115 conversion safe, max 32 groups
 		if uint8(i) <= groupMax { // don't set unnecessary groups
 			v := cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell()
 			err = gqDict.SetIntKey(big.NewInt(int64(i)), v)
@@ -100,6 +101,7 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 
 	gpDict := cell.NewDict(keySz)
 	for i, g := range groupParents {
+		//nolint:gosec // G115 conversion safe, max 32 groups
 		if uint8(i) <= groupMax { // don't set unnecessary groups
 			v := cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell()
 			err = gpDict.SetIntKey(big.NewInt(int64(i)), v)
@@ -156,6 +158,8 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 		if err != nil {
 			return nil, fmt.Errorf("unable to load group quorum value: %w", err)
 		}
+
+		//nolint:gosec // G115 conversion safe
 		evmConfig.GroupQuorums[i] = uint8(val)
 	}
 
@@ -165,10 +169,13 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 	}
 
 	for i, kvGroupParent := range kvGroupParents {
-		val, err := kvGroupParent.Value.LoadUInt(8)
+		var val uint64
+		val, err = kvGroupParent.Value.LoadUInt(8)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load group parent value: %w", err)
 		}
+
+		//nolint:gosec // G115 conversion safe
 		evmConfig.GroupParents[i] = uint8(val)
 	}
 

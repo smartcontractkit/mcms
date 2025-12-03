@@ -156,6 +156,7 @@ func (i *Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, 
 		return [32]byte{}, 0, fmt.Errorf("error getting Int(1) - validUntil: %w", err)
 	}
 
+	//nolint:gosec // G115 conversion safe, validUntil is uint32
 	return common.BigToHash(root), uint32(validUntil.Uint64()), nil
 }
 

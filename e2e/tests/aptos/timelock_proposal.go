@@ -119,6 +119,7 @@ func (a *TestSuite) TestTimelockProposal() {
 	// ====================================================
 
 	{
+		//nolint:gosec // G115 allowed in tests
 		validUntil := uint32(time.Now().Add(time.Hour * 24).Unix())
 		acceptOwnershipProposalBuilder := mcms.NewTimelockProposalBuilder().
 			SetVersion("v1").
@@ -291,6 +292,7 @@ func (a *TestSuite) TestTimelockProposal() {
 		startingOpCount, errr := inspector.GetOpCount(a.T().Context(), mcmsAddress.StringLong())
 		a.Require().NoError(errr)
 
+		//nolint:gosec // G115 allowed in tests
 		validUntil := uint32(time.Now().Add(time.Hour * 24).Unix())
 		mcmsTestProposalBuilder := mcms.NewTimelockProposalBuilder().
 			SetVersion("v1").

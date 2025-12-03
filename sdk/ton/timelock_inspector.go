@@ -109,9 +109,10 @@ func (i timelockInspector) getRoleMembers(ctx context.Context, _address string, 
 	}
 
 	// For each address index in the roles count, get the address
-	addresses := make([]string, 0, count.Uint64())
-	for j := range count.Uint64() {
-		rAddr, err := i.client.RunGetMethod(ctx, block, addr, "getRoleMember", _role, uint32(j))
+	n := count.Uint64()
+	addresses := make([]string, 0, n)
+	for j := range n {
+		rAddr, err := i.client.RunGetMethod(ctx, block, addr, "getRoleMember", _role, j)
 		if err != nil {
 			return nil, fmt.Errorf("error getting getRoleMember: %w", err)
 		}
