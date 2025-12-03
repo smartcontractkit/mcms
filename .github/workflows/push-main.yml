@@ -80,11 +80,73 @@ jobs:
         with:
           CLI_VERSION: 7.10.0
 
-      - name: Build and test
+      - name: Install Sui CLI
+        shell: bash
+        run: |
+          SUI_VERSION="1.57.2"
+          curl -L "https://github.com/MystenLabs/sui/releases/download/mainnet-v${SUI_VERSION}/sui-mainnet-v${SUI_VERSION}-ubuntu-x86_64.tgz" -o sui.tgz
+          tar -xzf sui.tgz
+          sudo mv sui /usr/local/bin/
+          sui --version
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Compute Solana programs cache key
+        id: solana-programs-cache-key
+        shell: bash
+        run: |
+          key="$(go list -m github.com/smartcontractkit/chainlink-ccip/chains/solana)"
+          echo "key=${key}" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Solana programs
+        uses: actions/cache@v4
+        id: cache-solana-programs
+        with:
+          path: ./e2e/artifacts/solana
+          key: "${{ runner.os }}-mcms-contracts-${{ steps.solana-programs-cache-key.outputs.key }}"
+
+      - name: Build Solana programs
+        if: steps.cache-solana-programs.outputs.cache-hit != 'true'
+        shell: bash
+        run: |
+          ./e2e/tests/solana/compile-mcm-contracts.sh
+
+      - name: Run e2e tests
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
         with:
-          go-test-cmd: go generate -tags=e2e ./e2e/... && CTF_CONFIGS=../config.toml go test -tags=e2e -v ./e2e/tests/...
+          checkout-repo: false
           use-go-cache: true
+          go-test-cmd: |
+            set +e
+
+            echo "::group::EVM"
+            CTF_CONFIGS=../config.evm.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestEVMSuite || evm_failure=true
+            echo "::endgroup::"
+
+            echo "::group::Solana"
+            CTF_CONFIGS=../config.solana.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestSolanaSuite || solana_failure=true
+            echo "::endgroup::"
+
+            echo "::group::Aptos"
+            CTF_CONFIGS=../config.aptos.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestAptosSuite || aptos_failure=true
+            echo "::endgroup::"
+
+            echo "::group::Sui"
+            CTF_CONFIGS=../config.sui.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestSuiSuite || sui_failure=true
+            echo "::endgroup::"
+
+            [[ -n "${evm_failure}" ]] && echo "🚨 EVM e2e tests failed."
+            [[ -n "${solana_failure}" ]] && echo "🚨 Solana e2e tests failed."
+            [[ -n "${aptos_failure}" ]] && echo "🚨 Aptos e2e tests failed."
+            [[ -n "${sui_failure}" ]] && echo "🚨 Sui e2e tests failed."
+            [[ -n "${evm_failure}" || -n "${solana_failure}" || -n "${aptos_failure}" || -n "${sui_failure}" ]] && {
+              exit 1
+            } || {
+              echo "Exiting"
+              exit 0
+            }
+
 
   cd-release:
     runs-on: ubuntu-latest
