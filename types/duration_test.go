@@ -1,4 +1,4 @@
-package types
+package types //nolint:revive,nolintlint // allow pkg name 'types'
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_NewDuration(t *testing.T) {
+func TestNewDuration(t *testing.T) {
 	t.Parallel()
 
 	d, err := time.ParseDuration("1h")
@@ -17,7 +17,7 @@ func Test_NewDuration(t *testing.T) {
 	assert.Equal(t, Duration{Duration: d}, NewDuration(d))
 }
 
-func Test_ParseDuration(t *testing.T) {
+func TestParseDuration(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -55,7 +55,7 @@ func Test_ParseDuration(t *testing.T) {
 	}
 }
 
-func Test_MustParseDuration(t *testing.T) {
+func TestMustParseDuration(t *testing.T) {
 	t.Parallel()
 
 	assert.NotPanics(t, func() {
@@ -71,7 +71,7 @@ func Test_MustParseDuration(t *testing.T) {
 	})
 }
 
-func Test_Duration_String(t *testing.T) {
+func TestDuration_String(t *testing.T) {
 	t.Parallel()
 
 	d, err := time.ParseDuration("1h")
@@ -80,7 +80,7 @@ func Test_Duration_String(t *testing.T) {
 	assert.Equal(t, "1h0m0s", NewDuration(d).String())
 }
 
-func Test_Duration_MarshalJSON(t *testing.T) {
+func TestDuration_MarshalJSON(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -113,7 +113,7 @@ func Test_Duration_MarshalJSON(t *testing.T) {
 	}
 }
 
-func Test_Duration_UnmarshalJSON(t *testing.T) {
+func TestDuration_UnmarshalJSON(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

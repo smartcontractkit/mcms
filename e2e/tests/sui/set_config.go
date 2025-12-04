@@ -14,7 +14,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func (s *SuiTestSuite) Test_Sui_SetConfig() {
+func (s *TestSuite) TestSetConfig() {
 	// Setup the test suite and deploy contracts
 	s.SetupSuite()
 	s.DeployMCMSContract()

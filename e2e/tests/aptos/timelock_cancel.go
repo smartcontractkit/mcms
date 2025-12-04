@@ -8,17 +8,19 @@ import (
 	"slices"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
-	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
+
+	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 )
 
-func (a *AptosTestSuite) Test_Aptos_TimelockCancel() {
+func (a *TestSuite) TestTimelock_Cancel() {
 	/*
 		This tests that a timelock proposal scheduled by the Proposer MCM can be cancelled by the
 		Canceller MCM.
@@ -192,7 +194,7 @@ func (a *AptosTestSuite) Test_Aptos_TimelockCancel() {
 	var opCount uint64
 	opCount, err = proposerInspector.GetOpCount(a.T().Context(), mcmsAddress.StringLong())
 	a.Require().NoError(err)
-	a.Require().EqualValues(opCount, 1)
+	a.Require().EqualValues(1, opCount)
 
 	timelockExecutor := aptossdk.NewTimelockExecutor(a.AptosRPCClient, a.deployerAccount)
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{

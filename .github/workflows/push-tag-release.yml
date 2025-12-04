@@ -14,9 +14,10 @@ jobs:
       actions: read
     steps:
       - name: ci-lint
-        uses: smartcontractkit/.github/actions/ci-lint-go@5ef875a78da521085ad768ecf2ed5e25009496f7 # ci-lint-go@2.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # ci-lint-go@3.1.0
         with:
-          golangci-lint-version: v2.1.6
+          golangci-lint-version: v2.6.2
+          golangci-lint-config: .golangci.yml
 
   ci-lint-e2e:
     name: Lint E2E tests
@@ -27,10 +28,11 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@5ef875a78da521085ad768ecf2ed5e25009496f7 # ci-lint-go@2.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # ci-lint-go@3.1.0
         with:
-          golangci-lint-version: v2.1.6
+          golangci-lint-version: v2.6.2
           golangci-lint-args: --build-tags="e2e"
+          golangci-lint-config: .golangci.yml
 
   ci-test:
     runs-on: ubuntu-latest

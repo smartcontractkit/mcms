@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package solanae2e
 
@@ -10,8 +9,10 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
+
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 
 	"github.com/smartcontractkit/mcms"
@@ -22,7 +23,7 @@ import (
 
 var testPDASeedSetRootSimulateTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r', 'o', 'o', 't', '-', 's', 'i', 'm', 'u', 'l', 'a', 't', 'e'}
 
-func (s *SolanaTestSuite) TestSimulator_SimulateSetRoot() {
+func (s *TestSuite) TestSimulatorSimulateSetRoot() {
 	s.SetupMCM(testPDASeedSetRootSimulateTest)
 	ctx := context.Background()
 
@@ -34,7 +35,7 @@ func (s *SolanaTestSuite) TestSimulator_SimulateSetRoot() {
 	auth, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
 
-	validUntil := time.Now().Add(10 * time.Hour).Unix()
+	validUntil := uint32(time.Now().Add(10 * time.Hour).Unix())
 	solanaTx, err := solanasdk.NewTransaction(
 		auth.PublicKey().String(),
 		[]byte("test data"),
@@ -54,7 +55,7 @@ func (s *SolanaTestSuite) TestSimulator_SimulateSetRoot() {
 	s.Require().NoError(err)
 	proposal, err := mcms.NewProposalBuilder().
 		SetVersion("v1").
-		SetValidUntil(uint32(validUntil)).
+		SetValidUntil(validUntil).
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(s.ChainSelector, metadata).
@@ -119,7 +120,7 @@ func (s *SolanaTestSuite) TestSimulator_SimulateSetRoot() {
 	s.Require().NoError(err)
 }
 
-func (s *SolanaTestSuite) TestSimulator_SimulateOperation() {
+func (s *TestSuite) TestSimulatorSimulateOperation() {
 	ctx := context.Background()
 
 	recipientAddress, err := solana.NewRandomPrivateKey()

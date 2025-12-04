@@ -15,12 +15,12 @@ import (
 
 // InspectionTestSuite defines the test suite for Sui inspection tests
 type InspectionTestSuite struct {
-	SuiTestSuite
+	TestSuite
 }
 
 // SetupSuite runs before the test suite
 func (s *InspectionTestSuite) SetupSuite() {
-	s.SuiTestSuite.SetupSuite()
+	s.TestSuite.SetupSuite()
 	s.DeployMCMSContract()
 }
 

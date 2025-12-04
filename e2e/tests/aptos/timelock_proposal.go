@@ -9,21 +9,25 @@ import (
 	"slices"
 	"time"
 
-	"github.com/aptos-labs/aptos-go-sdk/api"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-	module_mcms_user "github.com/smartcontractkit/chainlink-aptos/bindings/mcms_test/mcms_user"
-	"github.com/smartcontractkit/chainlink-aptos/relayer/codec"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
-	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/aptos-labs/aptos-go-sdk/api"
+
+	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
+	module_mcms_user "github.com/smartcontractkit/chainlink-aptos/bindings/mcms_test/mcms_user"
+	"github.com/smartcontractkit/chainlink-aptos/relayer/codec"
+
+	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
 )
 
-func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
+func (a *TestSuite) TestTimelockProposal() {
 	/*
 		This tests that both the Proposers and the Bypassers can successfully perform operations
 		via the timelock.
@@ -286,6 +290,7 @@ func (a *AptosTestSuite) Test_Aptos_TimelockProposal() {
 
 		startingOpCount, errr := inspector.GetOpCount(a.T().Context(), mcmsAddress.StringLong())
 		a.Require().NoError(errr)
+
 		validUntil := uint32(time.Now().Add(time.Hour * 24).Unix())
 		mcmsTestProposalBuilder := mcms.NewTimelockProposalBuilder().
 			SetVersion("v1").

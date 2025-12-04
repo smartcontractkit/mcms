@@ -1,14 +1,15 @@
-package types
+package types //nolint:revive,nolintlint // allow pkg name 'types'
 
 import (
 	"testing"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
 )
 
-func Test_GetChainSelectorFamily(t *testing.T) {
+func TestGetChainSelectorFamily(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

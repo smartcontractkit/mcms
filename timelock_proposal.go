@@ -10,7 +10,9 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/go-playground/validator/v10"
+
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	inspectorsbuilder "github.com/smartcontractkit/mcms/inspectors"
@@ -22,7 +24,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var ZERO_HASH = common.Hash{}
+var ZeroHash = common.Hash{}
 var DefaultValidUntil = 72 * time.Hour
 
 type TimelockProposal struct {
@@ -106,11 +108,7 @@ func (m *TimelockProposal) Validate() error {
 		}
 	}
 
-	if err := timeLockProposalValidateBasic(*m); err != nil {
-		return err
-	}
-
-	return nil
+	return timeLockProposalValidateBasic(*m)
 }
 
 func replaceChainMetadataWithAddresses(p *TimelockProposal, addresses map[types.ChainSelector]types.ChainMetadata) error {
@@ -152,7 +150,7 @@ func (m *TimelockProposal) deriveNewProposal(action types.TimelockAction, metada
 // DeriveCancellationProposal derives a new proposal that cancels the current proposal.
 func (m *TimelockProposal) DeriveCancellationProposal(cancellerMetadata map[types.ChainSelector]types.ChainMetadata) (TimelockProposal, error) {
 	if m.Action != types.TimelockActionSchedule {
-		return TimelockProposal{}, fmt.Errorf("cannot derive a cancellation proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
+		return TimelockProposal{}, errors.New("cannot derive a cancellation proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
 	}
 
 	return m.deriveNewProposal(types.TimelockActionCancel, cancellerMetadata)
@@ -161,7 +159,7 @@ func (m *TimelockProposal) DeriveCancellationProposal(cancellerMetadata map[type
 // DeriveBypassProposal derives a new proposal that bypasses the current proposal.
 func (m *TimelockProposal) DeriveBypassProposal(bypasserAddresses map[types.ChainSelector]types.ChainMetadata) (TimelockProposal, error) {
 	if m.Action != types.TimelockActionSchedule {
-		return TimelockProposal{}, fmt.Errorf("cannot derive a bypass proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
+		return TimelockProposal{}, errors.New("cannot derive a bypass proposal from a non-schedule proposal. Action needs to be of type 'schedule'")
 	}
 
 	return m.deriveNewProposal(types.TimelockActionBypass, bypasserAddresses)
@@ -182,9 +180,9 @@ func (m *TimelockProposal) Convert(
 
 	// 3) Keep track of the last operation ID per chain
 	lastOpID := make(map[types.ChainSelector]common.Hash)
-	// Initialize them to ZERO_HASH
+	// Initialize them to ZeroHash
 	for sel := range m.ChainMetadata {
-		lastOpID[sel] = ZERO_HASH
+		lastOpID[sel] = ZeroHash
 	}
 
 	// 4) Rebuild chainMetadata in baseProposal

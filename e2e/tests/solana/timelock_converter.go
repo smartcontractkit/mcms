@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package solanae2e
 
@@ -13,14 +12,17 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/google/go-cmp/cmp"
+
 	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/external_program_cpi_stub"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
-	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms"
 	e2eutils "github.com/smartcontractkit/mcms/e2e/utils/solana"
@@ -31,7 +33,7 @@ import (
 
 var testPDASeedTimelockConverter = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'l', 'o', 'c', 'k', 'c', 'o', 'n', 'v', 'e', 'r', 't', 'e', 'r'}
 
-func (s *SolanaTestSuite) Test_TimelockConverter() {
+func (s *TestSuite) TestTimelockConverter() {
 	// --- arrange ---
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	s.T().Cleanup(cancel)
@@ -53,9 +55,9 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	timelockSignerPDA, err := solanasdk.FindTimelockSignerPDA(s.TimelockProgramID, testPDASeedTimelockConverter)
 	s.Require().NoError(err)
 
-	e2eutils.FundAccounts(s.T(), ctx, []solana.PublicKey{mcmSignerPDA, timelockSignerPDA}, 1, s.SolanaClient)
+	e2eutils.FundAccounts(s.T(), []solana.PublicKey{mcmSignerPDA, timelockSignerPDA}, 1, s.SolanaClient)
 
-	validUntil := 2051222400 // 2035-01-01T12:00:00 UTC
+	validUntil := uint32(2051222400) // 2035-01-01T12:00:00 UTC
 	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedTimelockConverter)
 	timelockAddress := solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockConverter)
 	converters := map[types.ChainSelector]sdk.TimelockConverter{
@@ -112,7 +114,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	}
 	timelockProposalBuilder := func() *mcms.TimelockProposalBuilder {
 		return mcms.NewTimelockProposalBuilder().
-			SetValidUntil(uint32(validUntil)).
+			SetValidUntil(validUntil).
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
@@ -140,7 +142,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 
 		// build expected output Proposal
 		wantProposal, err := mcms.NewProposalBuilder().
-			SetValidUntil(uint32(validUntil)).
+			SetValidUntil(validUntil).
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
@@ -329,7 +331,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, operation1ID}, gotPredecessors)
+		s.Require().Equal([]common.Hash{mcms.ZeroHash, operation1ID}, gotPredecessors)
 		s.Require().Empty(cmp.Diff(toJSONString(s.T(), wantProposal), toJSONString(s.T(), &gotProposal)))
 
 		// --- act ---
@@ -355,7 +357,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 
 		// build expected output Proposal
 		wantProposal, err := mcms.NewProposalBuilder().
-			SetValidUntil(uint32(validUntil)).
+			SetValidUntil(validUntil).
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
@@ -396,7 +398,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, operation1ID}, gotPredecessors)
+		s.Require().Equal([]common.Hash{mcms.ZeroHash, operation1ID}, gotPredecessors)
 		s.Require().Empty(cmp.Diff(toJSONString(s.T(), wantProposal), toJSONString(s.T(), &gotProposal)))
 	})
 
@@ -419,7 +421,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 
 		// build expected output Proposal
 		wantProposal, err := mcms.NewProposalBuilder().
-			SetValidUntil(uint32(validUntil)).
+			SetValidUntil(validUntil).
 			SetDescription("proposal to test the timelock proposal converter").
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
@@ -615,7 +617,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Equal([]common.Hash{mcms.ZERO_HASH, bypassOperation1ID}, gotPredecessors)
+		s.Require().Equal([]common.Hash{mcms.ZeroHash, bypassOperation1ID}, gotPredecessors)
 		s.Require().Empty(cmp.Diff(toJSONString(s.T(), wantProposal), toJSONString(s.T(), &gotProposal)))
 
 		// --- act: executed converted proposal ---
@@ -629,7 +631,7 @@ func (s *SolanaTestSuite) Test_TimelockConverter() {
 	})
 }
 
-func (s *SolanaTestSuite) executeConvertedProposal(
+func (s *TestSuite) executeConvertedProposal(
 	ctx context.Context, wallet solana.PrivateKey, gotProposal mcms.Proposal, mcmAddress string,
 ) {
 	// set config
@@ -664,7 +666,7 @@ func (s *SolanaTestSuite) executeConvertedProposal(
 	}
 }
 
-func (s *SolanaTestSuite) executeTimelockProposal(
+func (s *TestSuite) executeTimelockProposal(
 	ctx context.Context, wallet solana.PrivateKey, timelockProposal *mcms.TimelockProposal,
 ) {
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
@@ -675,12 +677,12 @@ func (s *SolanaTestSuite) executeTimelockProposal(
 
 	tx, err := timelockExecutable.Execute(ctx, 0)
 	s.Require().NoError(err)
-	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `empty`")
-	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `u8_instruction_data`")
+	s.Require().Contains(getTransactionLogs(ctx, s.T(), s.SolanaClient, tx.Hash), "Called `empty`")
+	s.Require().Contains(getTransactionLogs(ctx, s.T(), s.SolanaClient, tx.Hash), "Called `u8_instruction_data`")
 
 	tx, err = timelockExecutable.Execute(ctx, 1)
 	s.Require().NoError(err)
-	s.Require().Contains(getTransactionLogs(s.T(), ctx, s.SolanaClient, tx.Hash), "Called `account_mut`")
+	s.Require().Contains(getTransactionLogs(ctx, s.T(), s.SolanaClient, tx.Hash), "Called `account_mut`")
 }
 
 func marshalAdditionalFields(t *testing.T, additionalFields solanasdk.AdditionalFields) []byte {
@@ -710,7 +712,7 @@ func toJSONString(t *testing.T, proposal *mcms.Proposal) string {
 	return buffer.String()
 }
 
-func getTransactionLogs(t *testing.T, ctx context.Context, client *rpc.Client, signature string) string {
+func getTransactionLogs(ctx context.Context, t *testing.T, client *rpc.Client, signature string) string {
 	t.Helper()
 
 	opts := &rpc.GetTransactionOpts{Commitment: rpc.CommitmentConfirmed}

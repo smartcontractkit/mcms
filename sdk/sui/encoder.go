@@ -3,6 +3,7 @@ package sui
 import (
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 	"strings"
@@ -67,13 +68,13 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		return common.Hash{}, fmt.Errorf("failed to parse To address %q: %w", op.Transaction.To, err)
 	}
 	additionalFields := AdditionalFields{}
-	if unmarshalErr := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); unmarshalErr != nil {
-		return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", unmarshalErr)
+	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
+		return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
 	}
 	var additionalFieldsMetadata AdditionalFieldsMetadata
 	if len(metadata.AdditionalFields) > 0 {
-		if unmarshalErr := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); unmarshalErr != nil {
-			return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", unmarshalErr)
+		if err = json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
+			return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
 		}
 	}
 
@@ -104,7 +105,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	chainIDBig := (&big.Int{}).SetUint64(chainID)
 
 	if len(metadata.AdditionalFields) == 0 {
-		return common.Hash{}, fmt.Errorf("additional fields metadata is empty")
+		return common.Hash{}, errors.New("additional fields metadata is empty")
 	}
 	var additionalFieldsMetadata AdditionalFieldsMetadata
 	if unmarshalErr := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); unmarshalErr != nil {

@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func Test_transformHashes(t *testing.T) {
+func TestTransformHashes(t *testing.T) {
 	t.Parallel()
 
 	hashes := []common.Hash{
@@ -39,7 +39,7 @@ func Test_transformHashes(t *testing.T) {
 	assert.Equal(t, want, got)
 }
 
-func Test_transformSignatures(t *testing.T) {
+func TestTransformSignatures(t *testing.T) {
 	t.Parallel()
 
 	got := transformSignatures([]types.Signature{
@@ -66,7 +66,7 @@ func Test_transformSignatures(t *testing.T) {
 	}, got)
 }
 
-func Test_toGethSignature(t *testing.T) {
+func TestToGethSignature(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -126,7 +126,7 @@ func Test_toGethSignature(t *testing.T) {
 	}
 }
 
-func Test_getEVMChainID(t *testing.T) {
+func TestGetEVMChainID(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

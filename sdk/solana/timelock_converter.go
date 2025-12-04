@@ -10,13 +10,15 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/gagliardetto/solana-go"
-	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
-
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
+	"github.com/gagliardetto/solana-go"
+
+	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 )
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
@@ -505,7 +507,7 @@ const (
 	recentBlockHashBytes            = 32
 	numInstructions                 = 2
 	numInstructionsBytes            = 1
-	programIdIndexBytes             = 1 * numInstructions
+	programIDIndexBytes             = 1 * numInstructions
 	numInstructionAccountsBytes     = 1 * numInstructions
 	accountIndexesBytes             = 1 * numAccounts
 	numSignatures                   = 1
@@ -542,7 +544,7 @@ func AppendIxDataChunkSize() int {
 		accountsBytes -
 		recentBlockHashBytes -
 		numInstructionsBytes -
-		programIdIndexBytes -
+		programIDIndexBytes -
 		numInstructionAccountsBytes -
 		accountIndexesBytes -
 		numSignaturesBytes -

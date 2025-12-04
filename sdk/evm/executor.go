@@ -41,7 +41,7 @@ func (e *Executor) ExecuteOperation(
 	op types.Operation,
 ) (types.TransactionResult, error) {
 	if e.Encoder == nil {
-		return types.TransactionResult{}, errors.New("Executor was created without an encoder")
+		return types.TransactionResult{}, errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil")
 	}
 
 	bindOp, err := e.ToGethOperation(nonce, metadata, op)
@@ -93,7 +93,7 @@ func (e *Executor) SetRoot(
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
 	if e.Encoder == nil {
-		return types.TransactionResult{}, errors.New("Executor was created without an encoder")
+		return types.TransactionResult{}, errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil")
 	}
 
 	bindMeta, err := e.ToGethRootMetadata(metadata)

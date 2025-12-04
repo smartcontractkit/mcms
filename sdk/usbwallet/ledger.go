@@ -26,6 +26,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts"
@@ -119,7 +120,7 @@ func (w *ledgerDriver) Open(device io.ReadWriter, passphrase string) error {
 	_, err := w.ledgerDerive(accounts.DefaultBaseDerivationPath)
 	if err != nil {
 		// Ethereum app is not running or in browser mode, nothing more to do, return
-		if err == errLedgerReplyInvalidHeader {
+		if errors.Is(err, errLedgerReplyInvalidHeader) {
 			w.browser = true
 		}
 		return nil
@@ -141,7 +142,7 @@ func (w *ledgerDriver) Close() error {
 // Heartbeat implements usbwallet.driver, performing a sanity check against the
 // Ledger to see if it's still online.
 func (w *ledgerDriver) Heartbeat() error {
-	if _, err := w.ledgerVersion(); err != nil && err != errLedgerInvalidVersionReply {
+	if _, err := w.ledgerVersion(); err != nil && !errors.Is(err, errLedgerInvalidVersionReply) {
 		w.failure = err
 		return err
 	}
@@ -168,7 +169,7 @@ func (w *ledgerDriver) SignTx(path accounts.DerivationPath, tx *types.Transactio
 	// Ensure the wallet is capable of signing the given transaction
 	if chainID != nil && w.version[0] <= 1 && w.version[1] <= 0 && w.version[2] <= 2 {
 		//lint:ignore ST1005 brand name displayed on the console
-		return common.Address{}, nil, fmt.Errorf("Ledger v%d.%d.%d doesn't support signing this transaction, please update to v1.0.3 at least", w.version[0], w.version[1], w.version[2])
+		return common.Address{}, nil, fmt.Errorf("version error: Ledger v%d.%d.%d doesn't support signing this transaction, please update to v1.0.3 at least", w.version[0], w.version[1], w.version[2])
 	}
 	// All infos gathered and metadata checks out, request signing
 	return w.ledgerSign(path, tx, chainID)
@@ -186,7 +187,7 @@ func (w *ledgerDriver) SignTypedMessage(path accounts.DerivationPath, domainHash
 	// Ensure the wallet is capable of signing the given transaction
 	if w.version[0] < 1 && w.version[1] < 5 {
 		//lint:ignore ST1005 brand name displayed on the console
-		return nil, fmt.Errorf("Ledger version >= 1.5.0 required for EIP-712 signing (found version v%d.%d.%d)", w.version[0], w.version[1], w.version[2])
+		return nil, fmt.Errorf("version error: Ledger version >= 1.5.0 required for EIP-712 signing (found version v%d.%d.%d)", w.version[0], w.version[1], w.version[2])
 	}
 	// All infos gathered and metadata checks out, request signing
 	return w.ledgerSignTypedMessage(path, domainHash, messageHash)
@@ -353,6 +354,7 @@ func (w *ledgerDriver) ledgerSign(derivationPath []uint32, tx *types.Transaction
 	// Chunk size selection to mitigate an underlying RLP deserialization issue on the ledger app.
 	// https://github.com/LedgerHQ/app-ethereum/issues/409
 	chunk := 255
+	//nolint:revive // alow empty block
 	for ; len(payload)%chunk <= ledgerEip155Size; chunk-- {
 	}
 
@@ -492,7 +494,12 @@ func (w *ledgerDriver) ledgerExchange(opcode ledgerOpcode, p1 ledgerParam1, p2 l
 	// Construct the message payload, possibly split into multiple chunks
 	apdu := make([]byte, 2, 7+len(data))
 
-	binary.BigEndian.PutUint16(apdu, uint16(5+len(data)))
+	// G115 check
+	apduLen := 5 + len(data)
+	if apduLen > math.MaxUint16 {
+		return nil, fmt.Errorf("APDU length %d exceeds uint16 max", apduLen)
+	}
+	binary.BigEndian.PutUint16(apdu, uint16(apduLen)) //nolint:gosec // G115: overflow checked above
 	apdu = append(apdu, []byte{0xe0, byte(opcode), byte(p1), byte(p2), byte(len(data))}...)
 	apdu = append(apdu, data...)
 
@@ -504,7 +511,7 @@ func (w *ledgerDriver) ledgerExchange(opcode ledgerOpcode, p1 ledgerParam1, p2 l
 	for i := 0; len(apdu) > 0; i++ {
 		// Construct the new message to stream
 		chunk = append(chunk[:0], header...)
-		binary.BigEndian.PutUint16(chunk[3:], uint16(i))
+		binary.BigEndian.PutUint16(chunk[3:], uint16(i)) //nolint:gosec // G115 conversion safe
 
 		if len(apdu) > space {
 			chunk = append(chunk, apdu[:space]...)
@@ -543,12 +550,12 @@ func (w *ledgerDriver) ledgerExchange(opcode ledgerOpcode, p1 ledgerParam1, p2 l
 			payload = chunk[5:]
 		}
 		// Append to the reply and stop when filled up
-		if left := cap(reply) - len(reply); left > len(payload) {
-			reply = append(reply, payload...)
-		} else {
+		left := cap(reply) - len(reply)
+		if left <= len(payload) {
 			reply = append(reply, payload[:left]...)
 			break
 		}
+		reply = append(reply, payload...)
 	}
 	return reply[:len(reply)-2], nil
 }

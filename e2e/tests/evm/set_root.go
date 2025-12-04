@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package evme2e
 
@@ -8,27 +7,29 @@ import (
 	"encoding/json"
 	"math/big"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/crypto"
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/suite"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/sdk"
+	mcmtypes "github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/crypto"
+
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	mcmtypes "github.com/smartcontractkit/mcms/types"
 )
 
 // SetRootTestSuite tests the SetRoot functionality
 type SetRootTestSuite struct {
 	suite.Suite
 	mcmsContract     *bindings.ManyChainMultiSig
-	deployerKey      common.Address
 	signerAddresses  []common.Address
 	auth             *bind.TransactOpts
 	timelockContract *bindings.RBACTimelock
@@ -60,7 +61,6 @@ func (s *SetRootTestSuite) SetupSuite() {
 
 	s.mcmsContract = s.deployMCMSContract()
 	s.timelockContract = s.deployTimelockContract(s.mcmsContract.Address().String())
-	s.deployerKey = crypto.PubkeyToAddress(privateKey.PublicKey)
 	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)
 	s.chainSelector = mcmtypes.ChainSelector(chainDetails.ChainSelector)

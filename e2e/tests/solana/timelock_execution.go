@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package solanae2e
 
@@ -8,12 +7,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/token"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
-	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 
 	e2eutils "github.com/smartcontractkit/mcms/e2e/utils"
@@ -26,9 +26,9 @@ var testTimelockExecuteID = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'
 
 const BatchAddAccessChunkSize = 24
 
-// Test_Solana_TimelockExecute tests the timelock Execute functionality by scheduling a mint tokens transaction and
+// TestTimelockExecute tests the timelock Execute functionality by scheduling a mint tokens transaction and
 // executing it via the timelock ExecuteBatch
-func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
+func (s *TestSuite) TestTimelockExecute() {
 	// --- arrange ---
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	s.T().Cleanup(cancel)
@@ -48,7 +48,7 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 	s.Require().NoError(err)
 
 	accountsToFund := []solana.PublicKey{auth.PublicKey(), proposerKey.PublicKey(), executorKey.PublicKey()}
-	e2esolanautils.FundAccounts(s.T(), ctx, accountsToFund, 1, s.SolanaClient)
+	e2esolanautils.FundAccounts(s.T(), accountsToFund, 1, s.SolanaClient)
 
 	s.AssignRoleToAccounts(ctx, testTimelockExecuteID, auth, getPublicKeys(proposers), timelock.Proposer_Role)
 	s.AssignRoleToAccounts(ctx, testTimelockExecuteID, auth, getPublicKeys(executors), timelock.Executor_Role)
@@ -88,7 +88,7 @@ func (s *SolanaTestSuite) Test_Solana_TimelockExecute() {
 }
 
 // scheduleMintTx schedules a MintTx on the timelock
-func (s *SolanaTestSuite) scheduleMintTx(
+func (s *TestSuite) scheduleMintTx(
 	ctx context.Context,
 	mint,
 	receiverATA, // The account that will receive the mint funds.
@@ -179,6 +179,7 @@ func (s *SolanaTestSuite) scheduleMintTx(
 			appendIx, appendErr := timelock.NewAppendInstructionDataInstruction(
 				testTimelockExecuteID,
 				operationID,
+
 				uint32(i), // which instruction index we are chunking
 				chunk,     // partial data
 				operationPDA,

@@ -5,20 +5,23 @@ package aptos
 import (
 	"time"
 
-	"github.com/aptos-labs/aptos-go-sdk"
-	"github.com/aptos-labs/aptos-go-sdk/crypto"
 	"github.com/stretchr/testify/suite"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
+
+	"github.com/aptos-labs/aptos-go-sdk"
+	"github.com/aptos-labs/aptos-go-sdk/crypto"
+
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 	mcmstest "github.com/smartcontractkit/chainlink-aptos/bindings/mcms_test"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-type AptosTestSuite struct {
+type TestSuite struct {
 	suite.Suite
 	e2e.TestSetup
 
@@ -29,7 +32,7 @@ type AptosTestSuite struct {
 	MCMSTestContract mcmstest.MCMSTest
 }
 
-func (a *AptosTestSuite) SetupSuite() {
+func (a *TestSuite) SetupSuite() {
 	a.TestSetup = *e2e.InitializeSharedTestSetup(a.T())
 	details, err := cselectors.GetChainDetailsByChainIDAndFamily(a.AptosChain.ChainID, cselectors.FamilyAptos)
 	a.Require().NoError(err)
@@ -46,7 +49,7 @@ func (a *AptosTestSuite) SetupSuite() {
 	a.Require().NoError(err)
 }
 
-func (a *AptosTestSuite) deployMCMSContract() {
+func (a *TestSuite) deployMCMSContract() {
 	mcmsSeed := mcms.DefaultSeed + time.Now().String()
 	addr, tx, mcmsContract, err := mcms.DeployToResourceAccount(a.deployerAccount, a.AptosRPCClient, mcmsSeed)
 	a.Require().NoError(err)
@@ -57,7 +60,7 @@ func (a *AptosTestSuite) deployMCMSContract() {
 	a.MCMSContract = mcmsContract
 }
 
-func (a *AptosTestSuite) deployMCMSTestContract() {
+func (a *TestSuite) deployMCMSTestContract() {
 	if a.MCMSContract == nil {
 		a.T().Fatal("MCMS contract not found. Can only deploy MCMS user contract after MCMS contract has been deployed.")
 	}

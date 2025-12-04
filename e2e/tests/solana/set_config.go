@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package solanae2e
 
@@ -7,10 +6,11 @@ import (
 	"context"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gagliardetto/solana-go"
-
-	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
+
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
+
 	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
@@ -19,8 +19,8 @@ import (
 
 var testPDASeedSetConfigTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'c', 'o', 'n', 'f'}
 
-// Test_Solana_SetConfig tests the SetConfig functionality by setting a config on the MCM program
-func (s *SolanaTestSuite) Test_Solana_SetConfig() {
+// TestSetConfig tests the SetConfig functionality by setting a config on the MCM program
+func (s *TestSuite) TestSetConfig() {
 	// --- arrange ---
 	ctx := context.Background()
 	s.SetupMCM(testPDASeedSetConfigTest)
@@ -102,7 +102,7 @@ func (s *SolanaTestSuite) Test_Solana_SetConfig() {
 		s.Require().NoError(err)
 
 		// --- assert ---
-		s.Require().Empty(err, result.Hash)
+		s.Require().Empty(result.Hash)
 
 		gotConfig, err := mcmsSolana.NewInspector(s.SolanaClient).GetConfig(ctx, mcmAddress)
 		s.Require().NoError(err)

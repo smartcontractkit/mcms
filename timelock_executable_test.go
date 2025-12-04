@@ -3,7 +3,7 @@ package mcms
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"math/big"
 	"testing"
 	"time"
@@ -34,7 +34,7 @@ var (
 	adminRole     = crypto.Keccak256Hash([]byte("ADMIN_ROLE"))
 )
 
-func Test_NewTimelockExecutable(t *testing.T) {
+func TestNewTimelockExecutable(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -151,7 +151,7 @@ func Test_NewTimelockExecutable(t *testing.T) {
 	}
 }
 
-func Test_TimelockExecutable_Execute(t *testing.T) {
+func TestTimelockExecutable_Execute(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -242,7 +242,7 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 				executor := mocks.NewTimelockExecutor(t)
 				executor.EXPECT().
 					Execute(ctx, mock.Anything, "0x5678", mock.Anything, mock.Anything).
-					Return(types.TransactionResult{}, fmt.Errorf("execute error")).Once()
+					Return(types.TransactionResult{}, errors.New("execute error")).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
 				return defaultProposal(), executors
@@ -275,10 +275,8 @@ func Test_TimelockExecutable_Execute(t *testing.T) {
 	}
 }
 
-func Test_ScheduleAndExecuteProposal(t *testing.T) {
+func TestScheduleAndExecuteProposal(t *testing.T) {
 	t.Parallel()
-
-	ctx := context.Background()
 
 	tests := []struct {
 		name        string
@@ -304,15 +302,13 @@ func Test_ScheduleAndExecuteProposal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			scheduleAndExecuteGrantRolesProposal(t, ctx, tt.targetRoles)
+			scheduleAndExecuteGrantRolesProposal(t, tt.targetRoles)
 		})
 	}
 }
 
-func Test_ScheduleAndCancelProposal(t *testing.T) {
+func TestScheduleAndCancelProposal(t *testing.T) {
 	t.Parallel()
-
-	ctx := context.Background()
 
 	tests := []struct {
 		name        string
@@ -338,7 +334,7 @@ func Test_ScheduleAndCancelProposal(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			scheduleAndCancelGrantRolesProposal(t, ctx, tt.targetRoles)
+			scheduleAndCancelGrantRolesProposal(t, tt.targetRoles)
 		})
 	}
 }
@@ -434,8 +430,9 @@ func scheduleGrantRolesProposal(
 	return sim, mcmC, timelockC, proposal, targetRoles
 }
 
-func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
+func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Hash) {
 	t.Helper()
+	ctx := t.Context()
 
 	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, targetRoles, types.MustParseDuration("5s"))
 
@@ -531,7 +528,7 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	require.NoError(t, err)
 
 	for i := range predecessors {
-		if i == 0 || predecessors[i] == ZERO_HASH {
+		if i == 0 || predecessors[i] == ZeroHash {
 			continue
 		}
 		var isOperation, isOperationPending, isOperationReady bool
@@ -547,26 +544,26 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	}
 
 	opIdx := 0
-	requireOperationPending(t, ctx, tExecutable, &proposal, opIdx)
-	requireOperationNotReady(t, ctx, tExecutable, &proposal, opIdx)
-	requireOperationNotDone(t, ctx, tExecutable, &proposal, opIdx)
+	requireOperationPending(t, tExecutable, &proposal, opIdx)
+	requireOperationNotReady(t, tExecutable, &proposal, opIdx)
+	requireOperationNotDone(t, tExecutable, &proposal, opIdx)
 
 	// sleep for 5 seconds and then mine a block
 	require.NoError(t, sim.Backend.AdjustTime(5*time.Second))
 	sim.Backend.Commit() // Note < 1.14 geth needs a commit after adjusting time.
 
-	requireOperationPending(t, ctx, tExecutable, &proposal, opIdx)
-	requireOperationReady(t, ctx, tExecutable, &proposal, opIdx)
-	requireOperationNotDone(t, ctx, tExecutable, &proposal, opIdx)
+	requireOperationPending(t, tExecutable, &proposal, opIdx)
+	requireOperationReady(t, tExecutable, &proposal, opIdx)
+	requireOperationNotDone(t, tExecutable, &proposal, opIdx)
 
 	// Execute the proposal
 	_, err = tExecutable.Execute(ctx, opIdx)
 	require.NoError(t, err)
 	sim.Backend.Commit()
 
-	requireOperationNotPending(t, ctx, tExecutable, &proposal, opIdx)
-	requireOperationNotReady(t, ctx, tExecutable, &proposal, opIdx)
-	requireOperationDone(t, ctx, tExecutable, &proposal, opIdx)
+	requireOperationNotPending(t, tExecutable, &proposal, opIdx)
+	requireOperationNotReady(t, tExecutable, &proposal, opIdx)
+	requireOperationDone(t, tExecutable, &proposal, opIdx)
 
 	// Check the state of the timelock contract
 	for _, role := range targetRoles {
@@ -579,8 +576,9 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, ctx context.Context, tar
 	}
 }
 
-func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targetRoles []common.Hash) {
+func scheduleAndCancelGrantRolesProposal(t *testing.T, targetRoles []common.Hash) {
 	t.Helper()
+	ctx := t.Context()
 
 	sim, mcmC, timelockC, proposal, _ := scheduleGrantRolesProposal(t, targetRoles, types.MustParseDuration("5m"))
 
@@ -677,7 +675,7 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	require.NoError(t, err)
 
 	for i := range predecessors {
-		if i == 0 || predecessors[i] == ZERO_HASH {
+		if i == 0 || predecessors[i] == ZeroHash {
 			continue
 		}
 
@@ -800,7 +798,7 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, ctx context.Context, targ
 	}
 }
 
-func Test_TimelockExecutable_GetChainSpecificIndex(t *testing.T) {
+func TestTimelockExecutable_GetChainSpecificIndex(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -942,10 +940,9 @@ func Test_TimelockExecutable_GetChainSpecificIndex(t *testing.T) {
 	})
 }
 
-func requireOperationPending(
-	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
-) {
+func requireOperationPending(t *testing.T, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int) {
 	t.Helper()
+	ctx := t.Context()
 	err := tExecutable.IsOperationPending(ctx, opIdx)
 	require.NoError(t, err)
 	for chainSelector := range proposal.ChainMetadata {
@@ -954,10 +951,9 @@ func requireOperationPending(
 	}
 }
 
-func requireOperationNotPending(
-	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
-) {
+func requireOperationNotPending(t *testing.T, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int) {
 	t.Helper()
+	ctx := t.Context()
 	err := tExecutable.IsOperationPending(ctx, opIdx)
 	require.ErrorContains(t, err, "operation 0 is not pending")
 	for chainSelector := range proposal.ChainMetadata {
@@ -966,10 +962,9 @@ func requireOperationNotPending(
 	}
 }
 
-func requireOperationReady(
-	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
-) {
+func requireOperationReady(t *testing.T, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int) {
 	t.Helper()
+	ctx := t.Context()
 	err := tExecutable.IsOperationReady(ctx, opIdx)
 	require.NoError(t, err)
 	for chainSelector := range proposal.ChainMetadata {
@@ -978,10 +973,9 @@ func requireOperationReady(
 	}
 }
 
-func requireOperationNotReady(
-	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
-) {
+func requireOperationNotReady(t *testing.T, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int) {
 	t.Helper()
+	ctx := t.Context()
 	err := tExecutable.IsOperationReady(ctx, opIdx)
 	require.ErrorContains(t, err, "operation 0 is not ready")
 	for chainSelector := range proposal.ChainMetadata {
@@ -990,10 +984,9 @@ func requireOperationNotReady(
 	}
 }
 
-func requireOperationDone(
-	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
-) {
+func requireOperationDone(t *testing.T, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int) {
 	t.Helper()
+	ctx := t.Context()
 	err := tExecutable.IsOperationDone(ctx, opIdx)
 	require.NoError(t, err)
 	for chainSelector := range proposal.ChainMetadata {
@@ -1002,10 +995,9 @@ func requireOperationDone(
 	}
 }
 
-func requireOperationNotDone(
-	t *testing.T, ctx context.Context, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int,
-) {
+func requireOperationNotDone(t *testing.T, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int) {
 	t.Helper()
+	ctx := t.Context()
 	err := tExecutable.IsOperationDone(ctx, opIdx)
 	require.ErrorContains(t, err, "operation 0 is not done")
 	for chainSelector := range proposal.ChainMetadata {

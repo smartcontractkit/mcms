@@ -1,12 +1,15 @@
 package evm
 
 import (
-	"github.com/ethereum/go-ethereum/common"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
-	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
 const (

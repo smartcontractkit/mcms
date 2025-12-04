@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_IntToUint8(t *testing.T) {
+func TestIntToUint8(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -38,7 +38,7 @@ func Test_IntToUint8(t *testing.T) {
 	}
 }
 
-func Test_IntToUint32(t *testing.T) {
+func TestIntToUint32(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -68,7 +68,7 @@ func Test_IntToUint32(t *testing.T) {
 	}
 }
 
-func Test_Uint64ToUint8(t *testing.T) {
+func TestUint64ToUint8(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -97,7 +97,7 @@ func Test_Uint64ToUint8(t *testing.T) {
 	}
 }
 
-func Test_UInt64ToUint32(t *testing.T) {
+func TestUInt64ToUint32(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -126,7 +126,7 @@ func Test_UInt64ToUint32(t *testing.T) {
 	}
 }
 
-func Test_Int64ToUint32(t *testing.T) {
+func TestInt64ToUint32(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -155,7 +155,7 @@ func Test_Int64ToUint32(t *testing.T) {
 	}
 }
 
-func Test_Uint64ToInt64(t *testing.T) {
+func TestUint64ToInt64(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -188,7 +188,7 @@ func Test_Uint64ToInt64(t *testing.T) {
 	}
 }
 
-func Test_Int64ToUint64(t *testing.T) {
+func TestInt64ToUint64(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -221,7 +221,7 @@ func Test_Int64ToUint64(t *testing.T) {
 	}
 }
 
-func Test_Float64ToUint64(t *testing.T) {
+func TestFloat64ToUint64(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

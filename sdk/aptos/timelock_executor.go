@@ -5,15 +5,17 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aptos-labs/aptos-go-sdk"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
+	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/types"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/types"
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/aptos-labs/aptos-go-sdk"
+
+	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
+	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 )
 
 var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)

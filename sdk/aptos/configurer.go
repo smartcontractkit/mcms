@@ -4,8 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/aptos-labs/aptos-go-sdk"
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
+
+	"github.com/aptos-labs/aptos-go-sdk"
+
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 

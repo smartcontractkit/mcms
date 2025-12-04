@@ -2,7 +2,7 @@ package solana
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 	"time"
 
@@ -16,10 +16,9 @@ const pollInterval = 50 * time.Millisecond
 
 // FundAccounts funds the given accounts with 100 SOL each.
 // It waits for the transactions to be confirmed.
-func FundAccounts(
-	t *testing.T,
-	ctx context.Context, accounts []solana.PublicKey, solAmount uint64, solanaGoClient *rpc.Client) {
+func FundAccounts(t *testing.T, accounts []solana.PublicKey, solAmount uint64, solanaGoClient *rpc.Client) {
 	t.Helper()
+	ctx := t.Context()
 
 	var sigs = make([]solana.Signature, 0, len(accounts))
 	for _, v := range accounts {
@@ -38,7 +37,7 @@ func FundAccounts(
 	for remaining > 0 {
 		select {
 		case <-timeoutCtx.Done():
-			require.NoError(t, fmt.Errorf("unable to find transaction within timeout"))
+			require.NoError(t, errors.New("unable to find transaction within timeout"))
 		case <-ticker.C:
 			statusRes, sigErr := solanaGoClient.GetSignatureStatuses(ctx, true, sigs...)
 			require.NoError(t, sigErr)

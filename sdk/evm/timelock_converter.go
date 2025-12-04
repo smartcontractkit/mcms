@@ -8,14 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	abiUtils "github.com/smartcontractkit/mcms/internal/utils/abi"
+	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var ZERO_HASH = common.Hash{}
+var ZeroHash = common.Hash{}
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
@@ -55,12 +55,12 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		tags = append(tags, tx.Tags...)
 	}
 
-	abi, errAbi := bindings.RBACTimelockMetaData.GetAbi()
+	_abi, errAbi := bindings.RBACTimelockMetaData.GetAbi()
 	if errAbi != nil {
 		return []types.Operation{}, common.Hash{}, errAbi
 	}
 
-	operationId, errHash := HashOperationBatch(calls, predecessor, salt)
+	operationID, errHash := HashOperationBatch(calls, predecessor, salt)
 
 	if errHash != nil {
 		return []types.Operation{}, common.Hash{}, errHash
@@ -71,11 +71,11 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	var err error
 	switch action {
 	case types.TimelockActionSchedule:
-		data, err = abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
+		data, err = _abi.Pack("scheduleBatch", calls, predecessor, salt, big.NewInt(int64(delay.Seconds())))
 	case types.TimelockActionCancel:
-		data, err = abi.Pack("cancel", operationId)
+		data, err = _abi.Pack("cancel", operationID)
 	case types.TimelockActionBypass:
-		data, err = abi.Pack("bypasserExecuteBatch", calls)
+		data, err = _abi.Pack("bypasserExecuteBatch", calls)
 	default:
 		return []types.Operation{}, common.Hash{}, sdkerrors.NewInvalidTimelockOperationError(string(action))
 	}
@@ -95,14 +95,14 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		),
 	}
 
-	return []types.Operation{op}, operationId, nil
+	return []types.Operation{op}, operationID, nil
 }
 
 // HashOperationBatch replicates the hash calculation from Solidity
 // TODO: see if there's an easier way to do this using the gethwrappers
 func HashOperationBatch(calls []bindings.RBACTimelockCall, predecessor, salt [32]byte) (common.Hash, error) {
-	const abi = `[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct Call[]","name":"calls","type":"tuple[]"},{"internalType":"bytes32","name":"predecessor","type":"bytes32"},{"internalType":"bytes32","name":"salt","type":"bytes32"}]`
-	encoded, err := abiUtils.ABIEncode(abi, calls, predecessor, salt)
+	const _abi = `[{"components":[{"internalType":"address","name":"target","type":"address"},{"internalType":"uint256","name":"value","type":"uint256"},{"internalType":"bytes","name":"data","type":"bytes"}],"internalType":"struct Call[]","name":"calls","type":"tuple[]"},{"internalType":"bytes32","name":"predecessor","type":"bytes32"},{"internalType":"bytes32","name":"salt","type":"bytes32"}]`
+	encoded, err := abi.Encode(_abi, calls, predecessor, salt)
 	if err != nil {
 		return common.Hash{}, err
 	}

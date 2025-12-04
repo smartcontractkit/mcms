@@ -1,17 +1,11 @@
 //go:build e2e
-// +build e2e
 
 package evme2e
 
 import (
-	"context"
 	"math/big"
 	"testing"
 
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms"
@@ -20,6 +14,11 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	mcmtypes "github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
 )
 
 const mcmsABIErrorMsg = "Failed to get MCMS ABI"
@@ -35,7 +34,6 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	transferMCMSOwnershipToTimelock(
 		s.T(),
-		ctx,
 		mcmsContract,
 		timelockContract.Address(),
 		s.ChainA.auth,
@@ -44,7 +42,6 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	acceptMCMSOwnership(
 		s.T(),
-		ctx,
 		mcmsContract,
 		timelockContract,
 		s.ChainA.auth,
@@ -84,7 +81,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 	converters := map[mcmtypes.ChainSelector]sdk.TimelockConverter{
 		s.ChainA.chainSelector: &evm.TimelockConverter{},
 	}
-	proposal, _ := convertTimelockProposal(s.T(), ctx, timelockProposal, converters)
+	proposal, _ := convertTimelockProposal(s.T(), timelockProposal, converters)
 
 	tree, err := proposal.MerkleTree()
 	s.Require().NoError(err)
@@ -93,7 +90,7 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 		s.ChainA.chainSelector: evm.NewInspector(s.ClientA),
 	}
 
-	_ = signAndValidateProposal(s.T(), ctx, &proposal, inspectors, []string{
+	_ = signAndValidateProposal(s.T(), &proposal, inspectors, []string{
 		s.Settings.PrivateKeys[1],
 		s.Settings.PrivateKeys[2],
 	})
@@ -113,7 +110,6 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 
 	setRootAndVerify(
 		s.T(),
-		ctx,
 		executable,
 		s.ChainA.chainSelector,
 		[32]byte(tree.Root),
@@ -182,7 +178,6 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 
 	transferMCMSOwnershipToTimelock(
 		s.T(),
-		ctx,
 		mcmsContract,
 		timelockContract.Address(),
 		s.ChainA.auth,
@@ -191,7 +186,6 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 
 	acceptMCMSOwnership(
 		s.T(),
-		ctx,
 		mcmsContract,
 		timelockContract,
 		s.ChainA.auth,
@@ -229,7 +223,7 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	converters := map[mcmtypes.ChainSelector]sdk.TimelockConverter{
 		s.ChainA.chainSelector: &evm.TimelockConverter{},
 	}
-	proposal, _ := convertTimelockProposal(s.T(), ctx, timelockProposal, converters)
+	proposal, _ := convertTimelockProposal(s.T(), timelockProposal, converters)
 
 	tree, err := proposal.MerkleTree()
 	s.Require().NoError(err)
@@ -237,7 +231,7 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
 		s.ChainA.chainSelector: evm.NewInspector(s.ClientA),
 	}
-	_ = signAndValidateProposal(s.T(), ctx, &proposal, inspectors, []string{
+	_ = signAndValidateProposal(s.T(), &proposal, inspectors, []string{
 		s.Settings.PrivateKeys[1], // Signer for Group 0
 		s.Settings.PrivateKeys[2], // Signer for Group 1
 	})
@@ -257,7 +251,6 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 
 	setRootAndVerify(
 		s.T(),
-		ctx,
 		executable,
 		s.ChainA.chainSelector,
 		[32]byte(tree.Root),
@@ -315,13 +308,13 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 // 2. Accept ownership (must be called by the new owner, i.e., timelock)
 func transferMCMSOwnershipToTimelock(
 	t *testing.T,
-	ctx context.Context,
 	mcmsContract *bindings.ManyChainMultiSig,
 	timelockAddr common.Address,
 	currentOwnerAuth *bind.TransactOpts,
 	client *ethclient.Client,
 ) {
 	t.Helper()
+	ctx := t.Context()
 
 	// Step 1: Transfer ownership from current owner to timelock
 	tx, err := mcmsContract.TransferOwnership(currentOwnerAuth, timelockAddr)
@@ -336,13 +329,13 @@ func transferMCMSOwnershipToTimelock(
 // This creates a proposal that calls acceptOwnership() on MCMS and executes it through the timelock.
 func acceptMCMSOwnership(
 	t *testing.T,
-	ctx context.Context,
 	mcmsContract *bindings.ManyChainMultiSig,
 	timelockContract *bindings.RBACTimelock,
 	timelockAuth *bind.TransactOpts,
 	client *ethclient.Client,
 ) {
 	t.Helper()
+	ctx := t.Context()
 
 	// Get the acceptOwnership method from MCMS ABI
 	mcmsABI, err := bindings.ManyChainMultiSigMetaData.GetAbi()
@@ -476,12 +469,11 @@ func createBypassTimelockProposal(
 // convertTimelockProposal converts a TimelockProposal to a Proposal using the provided converters.
 func convertTimelockProposal(
 	t *testing.T,
-	ctx context.Context,
 	timelockProposal mcms.TimelockProposal,
 	converters map[mcmtypes.ChainSelector]sdk.TimelockConverter,
 ) (mcms.Proposal, []common.Hash) {
 	t.Helper()
-	proposal, hashes, err := timelockProposal.Convert(ctx, converters)
+	proposal, hashes, err := timelockProposal.Convert(t.Context(), converters)
 	require.NoError(t, err)
 
 	return proposal, hashes
@@ -492,12 +484,13 @@ func convertTimelockProposal(
 // proposal must be a pointer to ensure signatures are added to the same instance used by NewExecutable.
 func signAndValidateProposal(
 	t *testing.T,
-	ctx context.Context,
 	proposal *mcms.Proposal,
 	inspectors map[mcmtypes.ChainSelector]sdk.Inspector,
 	signerPrivateKeys []string,
 ) *mcms.Signable {
 	t.Helper()
+	ctx := t.Context()
+
 	signable, err := mcms.NewSignable(proposal, inspectors)
 	require.NoError(t, err)
 
@@ -521,7 +514,6 @@ func signAndValidateProposal(
 // setRootAndVerify sets the root on the MCMS contract and verifies it was set correctly.
 func setRootAndVerify(
 	t *testing.T,
-	ctx context.Context,
 	executable *mcms.Executable,
 	chainSelector mcmtypes.ChainSelector,
 	expectedRoot [32]byte,
@@ -530,6 +522,7 @@ func setRootAndVerify(
 	mcmsContract *bindings.ManyChainMultiSig,
 ) {
 	t.Helper()
+	ctx := t.Context()
 
 	tx, err := executable.SetRoot(ctx, chainSelector)
 	require.NoError(t, err, "SetRoot failed")

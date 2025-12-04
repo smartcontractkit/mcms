@@ -24,6 +24,13 @@ tasks:
     cmds:
       - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e {{.CLI_ARGS}} ./e2e/tests...
 
+  e2e:evm:
+    desc: "Run EVM e2e tests"
+    env:
+      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.evm.toml" }}'
+    cmds:
+      - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e -test.run TestEVMSuite {{.CLI_ARGS}} ./e2e/tests...
+
   e2e:aptos:
     desc: "Run Aptos e2e tests"
     env:

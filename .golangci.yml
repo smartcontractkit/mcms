@@ -42,6 +42,9 @@ linters:
   settings:
     goconst:
       min-len: 5
+    gomoddirectives:
+      replace-allow-list:
+        - github.com/gogo/protobuf
     govet:
       enable:
         - shadow

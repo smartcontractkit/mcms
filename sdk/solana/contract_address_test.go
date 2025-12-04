@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_parseContractAddress(t *testing.T) {
+func TestParseContractAddress(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

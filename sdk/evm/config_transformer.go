@@ -88,7 +88,7 @@ func (e *ConfigTransformer) ToChainConfig(
 			Group: signerGroups[i],
 			Index: idx,
 		}
-		idx += 1
+		idx++
 	}
 
 	return bindings.ManyChainMultiSigConfig{

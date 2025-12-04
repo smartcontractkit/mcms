@@ -6,19 +6,24 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/aptos-labs/aptos-go-sdk"
-	"github.com/aptos-labs/aptos-go-sdk/api"
-	"github.com/ethereum/go-ethereum/common"
-	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
+	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/aptos-labs/aptos-go-sdk"
+	"github.com/aptos-labs/aptos-go-sdk/api"
+
+	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
+
 	mock_aptossdk "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
 	mock_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms"
 	mock_module_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms/mcms"
-	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestNewTimelockExecutor(t *testing.T) {

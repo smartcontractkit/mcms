@@ -13,12 +13,12 @@ import (
 
 // TimelockInspectionTestSuite defines the test suite for Sui timelock inspection tests
 type TimelockInspectionTestSuite struct {
-	SuiTestSuite
+	TestSuite
 }
 
 // SetupSuite runs before the test suite
 func (s *TimelockInspectionTestSuite) SetupSuite() {
-	s.SuiTestSuite.SetupSuite()
+	s.TestSuite.SetupSuite()
 	s.DeployMCMSContract()
 }
 

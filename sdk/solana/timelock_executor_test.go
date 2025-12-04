@@ -3,15 +3,18 @@ package solana
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"math/big"
 	"testing"
 
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 	"github.com/smartcontractkit/mcms/types"
@@ -29,7 +32,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	require.Equal(t, executor.auth, auth)
 }
 
-func Test_TimelockExecutor_Execute(t *testing.T) { //nolint:paralleltest
+func TestTimelockExecutor_Execute(t *testing.T) { //nolint:paralleltest
 	type args struct {
 		bop             types.BatchOperation
 		salt            [32]byte
@@ -145,7 +148,7 @@ func Test_TimelockExecutor_Execute(t *testing.T) { //nolint:paralleltest
 			},
 			setup: func(t *testing.T, e *TimelockExecutor, m *mocks.JSONRPCClient) {
 				t.Helper()
-				mockGetAccountInfo(t, m, configPDA, config, fmt.Errorf("GetAccountInfo error"))
+				mockGetAccountInfo(t, m, configPDA, config, errors.New("GetAccountInfo error"))
 			},
 			assertion: assertErrorEquals("unable to read config pda: GetAccountInfo error"),
 		},
@@ -165,7 +168,7 @@ func Test_TimelockExecutor_Execute(t *testing.T) { //nolint:paralleltest
 				mockGetAccountInfo(t, m, configPDA, config, nil)
 				mockSolanaTransaction(t, m, 20, 5,
 					"2QUBE2GqS8PxnGP1EBrWpLw3La4XkEUz5NKXJTdTHoA43ANkf5fqKwZ8YPJVAi3ApefbbbCYJipMVzUa7kg3a7v6",
-					nil, fmt.Errorf("invalid tx"))
+					nil, errors.New("invalid tx"))
 			},
 			assertion: func(t assert.TestingT, err error, i ...any) bool {
 				return assert.EqualError(t, err, "unable to call execute operation instruction: unable to send instruction: invalid tx")
