@@ -3,6 +3,7 @@ package sui
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -191,7 +192,7 @@ func (e Executor) ExecuteOperation(
 			return types.TransactionResult{}, fmt.Errorf("failed to deserialize timelock bypasser execute batch: %w", err)
 		}
 		if len(calls) != len(additionalFields.InternalStateObjects) {
-			return types.TransactionResult{}, fmt.Errorf("mismatched call and state object count")
+			return types.TransactionResult{}, errors.New("mismatched call and state object count")
 		}
 		for i, call := range calls {
 			calls[i] = Call{

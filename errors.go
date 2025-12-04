@@ -172,5 +172,5 @@ type DuplicateSignersError struct {
 }
 
 func (e *DuplicateSignersError) Error() string {
-	return fmt.Sprintf("duplicate signer detected: %s", e.signer)
+	return "duplicate signer detected: " + e.signer
 }

@@ -4,16 +4,15 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math/big"
 	"testing"
+
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	evmTypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
@@ -39,11 +38,11 @@ func TestNewExecutor(t *testing.T) {
 
 	executor := evm.NewExecutor(mockEncoder, mockClient, mockAuth)
 
-	assert.Equal(t, mockEncoder, executor.Encoder, "expected Encoder to be set correctly")
-	assert.NotNil(t, executor.Inspector, "expected Inspector to be initialized")
+	require.Equal(t, mockEncoder, executor.Encoder, "expected Encoder to be set correctly")
+	require.NotNil(t, executor.Inspector, "expected Inspector to be initialized")
 }
 
-func TestExecutorExecuteOperation(t *testing.T) {
+func TestExecutor_ExecuteOperation(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -162,7 +161,7 @@ func TestExecutorExecuteOperation(t *testing.T) {
 			encoder:    nil,
 			mockSetup:  func(m *evm_mocks.ContractDeployBackend) {},
 			wantTxHash: "",
-			wantErr:    errors.New("Executor was created without an encoder"),
+			wantErr:    errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil"),
 		},
 		{
 			name: "failure in geth operation conversion due to invalid chain ID",
@@ -195,7 +194,6 @@ func TestExecutorExecuteOperation(t *testing.T) {
 			executor := evm.NewExecutor(tt.encoder, client, tt.auth)
 			tx, err := executor.ExecuteOperation(ctx, tt.metadata, tt.nonce, tt.proof, tt.op)
 
-			require.Equal(t, tt.wantTxHash, tx.Hash)
 			if tt.wantErr != nil {
 				require.Error(t, err)
 				// When error occurs after tx sending, check for ExecutionError with transaction data
@@ -212,12 +210,13 @@ func TestExecutorExecuteOperation(t *testing.T) {
 				}
 			} else {
 				require.NoError(t, err)
+				require.Equal(t, tt.wantTxHash, tx.Hash)
 			}
 		})
 	}
 }
 
-func TestExecutorExecuteOperationWithEIP1559GasFees(t *testing.T) {
+func TestExecutor_ExecuteOperationWithEIP1559GasFees(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -282,7 +281,7 @@ func TestExecutorExecuteOperationWithEIP1559GasFees(t *testing.T) {
 	require.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
 }
 
-func TestExecutorSetRootWithEIP1559GasFees(t *testing.T) {
+func TestExecutor_SetRootWithEIP1559GasFees(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -342,7 +341,7 @@ func TestExecutorSetRootWithEIP1559GasFees(t *testing.T) {
 	require.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
 }
 
-func TestExecutorExecuteOperationWithLegacyGasPrice(t *testing.T) {
+func TestExecutor_ExecuteOperationWithLegacyGasPrice(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -406,7 +405,7 @@ func TestExecutorExecuteOperationWithLegacyGasPrice(t *testing.T) {
 	require.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
 }
 
-func TestExecutorSetRootWithLegacyGasPrice(t *testing.T) {
+func TestExecutor_SetRootWithLegacyGasPrice(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -465,7 +464,7 @@ func TestExecutorSetRootWithLegacyGasPrice(t *testing.T) {
 	require.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
 }
 
-func TestExecutorExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
+func TestExecutor_ExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -503,7 +502,7 @@ func TestExecutorExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
 	client := evm_mocks.NewContractDeployBackend(t)
 	// Mock the Execute call to return RBACTimelock error
 	client.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-		Return(fmt.Errorf("contract error: error -`CallReverted` args [[8 195 121 160 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 45 82 66 65 67 84 105 109 101 108 111 99 107 58 32 117 110 100 101 114 108 121 105 110 103 32 116 114 97 110 115 97 99 116 105 111 110 32 114 101 118 101 114 116 101 100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]"))
+		Return(errors.New("contract error: error -`CallReverted` args [[8 195 121 160 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 45 82 66 65 67 84 105 109 101 108 111 99 107 58 32 117 110 100 101 114 108 121 105 110 103 32 116 114 97 110 115 97 99 116 105 111 110 32 114 101 118 101 114 116 101 100 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0]]"))
 	client.EXPECT().HeaderByNumber(mock.Anything, mock.Anything).
 		Return(&evmTypes.Header{}, nil).Maybe()
 	client.EXPECT().SuggestGasPrice(mock.Anything).
@@ -517,7 +516,7 @@ func TestExecutorExecuteOperationRBACTimelockUnderlyingRevert(t *testing.T) {
 
 	// Mock CallContract to return the underlying revert reason
 	client.EXPECT().CallContract(mock.Anything, mock.Anything, mock.Anything).
-		Return(nil, fmt.Errorf("execution reverted: 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001a496e73756666696369656e742062616c616e636520746f2073656e6400000000000000000000000000000000000000000000000000000000")).
+		Return(nil, errors.New("execution reverted: 0x08c379a00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000001a496e73756666696369656e742062616c616e636520746f2073656e6400000000000000000000000000000000000000000000000000000000")).
 		Maybe()
 
 	executor := evm.NewExecutor(encoder, client, auth)
@@ -654,7 +653,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 			encoder:    nil,
 			mockSetup:  func(m *evm_mocks.ContractDeployBackend) {},
 			wantTxHash: "",
-			wantErr:    errors.New("Executor was created without an encoder"),
+			wantErr:    errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil"),
 		},
 		{
 			name: "failure in geth operation conversion due to invalid chain ID",

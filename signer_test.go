@@ -11,7 +11,7 @@ import (
 
 const testPrivateKeyHex = "b17c4c6a409cebce4b39977689180900d9009d5c55a57ff9fd9cb962b24ae99d"
 
-func Test_PrivateKeySigner_Sign(t *testing.T) {
+func TestPrivateKeySigner_Sign(t *testing.T) {
 	t.Parallel()
 
 	privKey, err := crypto.HexToECDSA(testPrivateKeyHex)
@@ -49,7 +49,7 @@ func Test_PrivateKeySigner_Sign(t *testing.T) {
 	}
 }
 
-func Test_PrivateKeySigner_GetAddress(t *testing.T) {
+func TestPrivateKeySigner_GetAddress(t *testing.T) {
 	t.Parallel()
 
 	privKey, err := crypto.HexToECDSA(testPrivateKeyHex)

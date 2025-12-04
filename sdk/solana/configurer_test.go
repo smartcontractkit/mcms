@@ -2,24 +2,30 @@ package solana
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/ethereum/go-ethereum/common"
+
 	ag_binary "github.com/gagliardetto/binary"
+
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
-	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
-	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func Test_NewConfigurer(t *testing.T) {
+func TestNewConfigurer(t *testing.T) {
 	t.Parallel()
 
 	client := &rpc.Client{}
@@ -161,7 +167,7 @@ func TestConfigurer_SetConfig(t *testing.T) { //nolint:paralleltest // https://g
 
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
 					"4PQcRHQJT4cRQZooAhZMAP9ZXJsAka9DeKvXeYvXAvPpHb4Qkc5rmTSHDA2SZSh9aKPBguBx4kmcyHHbkytoAiRr",
-					nil, fmt.Errorf("initialize signers error"))
+					nil, errors.New("initialize signers error"))
 			},
 			wantErr: "unable to set config: unable to send instruction 0 - initSigners: unable to send instruction: initialize signers error",
 		},
@@ -180,7 +186,7 @@ func TestConfigurer_SetConfig(t *testing.T) { //nolint:paralleltest // https://g
 				// append signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 10, 20,
 					"7D9XEYRnCn1D5JFrrYMPUaHfog7Vnj5rbPdj7kbULa4hKq7GsnA7Q8KNQfLEgfCawBsW4dcH2MQAp4km1dnjr6V",
-					nil, fmt.Errorf("append signers error"))
+					nil, errors.New("append signers error"))
 			},
 			wantErr: "unable to set config: unable to send instruction 1 - appendSigners0: unable to send instruction: append signers error",
 		},
@@ -201,7 +207,7 @@ func TestConfigurer_SetConfig(t *testing.T) { //nolint:paralleltest // https://g
 				// finalize signers
 				mockSolanaTransaction(t, mockJSONRPCClient, 12, 22,
 					"2iEeniu3QUgXNsjau8r7fZ7XLb2g1F3q9VJJKvRyyFz4hHgVvhGkLgSUdmRumfXKWv8spJ9ihudGFyPZsPGdp4Ya",
-					nil, fmt.Errorf("finalize signers error"))
+					nil, errors.New("finalize signers error"))
 			},
 			wantErr: "unable to set config: unable to send instruction 2 - finalizeSigners: unable to send instruction: finalize signers error",
 		},
@@ -224,7 +230,7 @@ func TestConfigurer_SetConfig(t *testing.T) { //nolint:paralleltest // https://g
 				// set config
 				mockSolanaTransaction(t, mockJSONRPCClient, 13, 23,
 					"52f3VmvW7m9uTQu3PtyibgxnAvEuXDmm9umuHherGjS4pzRR7QXRDKnZhh6b95P7pQxzTgvE1muMNKYEY7YWsS3G",
-					nil, fmt.Errorf("set config error"))
+					nil, errors.New("set config error"))
 			},
 			wantErr: "unable to set config: unable to send instruction 3 - setConfig: unable to send instruction: set config error",
 		},

@@ -4,12 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/aptos-labs/aptos-go-sdk"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-	"github.com/smartcontractkit/chainlink-aptos/relayer/txm"
-
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/aptos-labs/aptos-go-sdk"
+
+	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
+	"github.com/smartcontractkit/chainlink-aptos/relayer/txm"
 )
 
 type Decoder struct{}

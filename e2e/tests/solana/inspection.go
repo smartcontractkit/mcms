@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package solanae2e
 
@@ -16,7 +15,7 @@ var testPDASeedGetRoot = [32]byte{'t', 'e', 's', 't', '-', 'g', 'e', 't', 'r', '
 var testPDASeedGetRootMeta = [32]byte{'t', 'e', 's', 't', '-', 'g', 'e', 't', 'm', 'e', 't', 'a'}
 
 // TestGetOpCount tests the GetOpCount functionality
-func (s *SolanaTestSuite) TestGetOpCount() {
+func (s *TestSuite) TestGetOpCount() {
 	ctx := context.Background()
 	s.SetupMCM(testPDASeedGetOpCount)
 
@@ -28,7 +27,7 @@ func (s *SolanaTestSuite) TestGetOpCount() {
 }
 
 // TestGetRoot tests the GetRoot functionality
-func (s *SolanaTestSuite) TestGetRoot() {
+func (s *TestSuite) TestGetRoot() {
 	ctx := context.Background()
 	s.SetupMCM(testPDASeedGetRoot)
 
@@ -41,7 +40,7 @@ func (s *SolanaTestSuite) TestGetRoot() {
 }
 
 // TestGetRootMetadata tests the GetRootMetadata functionality
-func (s *SolanaTestSuite) TestGetRootMetadata() {
+func (s *TestSuite) TestGetRootMetadata() {
 	ctx := context.Background()
 	s.SetupMCM(testPDASeedGetRootMeta)
 

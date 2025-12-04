@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package solanae2e
 
@@ -8,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gagliardetto/solana-go"
+
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
 
@@ -24,7 +24,7 @@ var testPDASeedTimelockIsOperationsReady = [32]byte{'t', 'e', 's', 't', '-', 't'
 var testPDASeedTimelockIsOperationsDone = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'd', 'o', 'n', 'e'}
 var testPDASeedTimelockMinDelay = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'm', 'i', 'n', 'd', 'e', 'l', 'a', 'y'}
 
-func (s *SolanaTestSuite) TestGetProposers() {
+func (s *TestSuite) TestGetProposers() {
 	s.SetupTimelock(testPDASeedTimelockGetProposers, 1*time.Second)
 	ctx := context.Background()
 
@@ -40,7 +40,7 @@ func (s *SolanaTestSuite) TestGetProposers() {
 	s.Require().ElementsMatch(expected, proposers, "Proposers don't match")
 }
 
-func (s *SolanaTestSuite) TestGetExecutors() {
+func (s *TestSuite) TestGetExecutors() {
 	s.SetupTimelock(testPDASeedTimelockGetExecutors, 1*time.Second)
 	ctx := context.Background()
 
@@ -56,7 +56,7 @@ func (s *SolanaTestSuite) TestGetExecutors() {
 	s.Require().ElementsMatch(expected, executors, "Executors don't match")
 }
 
-func (s *SolanaTestSuite) TestGetCancellers() {
+func (s *TestSuite) TestGetCancellers() {
 	s.SetupTimelock(testPDASeedTimelockGetCancellers, 1*time.Second)
 	ctx := context.Background()
 
@@ -72,7 +72,7 @@ func (s *SolanaTestSuite) TestGetCancellers() {
 	s.Require().ElementsMatch(expected, cancellers, "Cancellers don't match")
 }
 
-func (s *SolanaTestSuite) TestGetBypassers() {
+func (s *TestSuite) TestGetBypassers() {
 	s.SetupTimelock(testPDASeedTimelockGetBypassers, 1*time.Second)
 	ctx := context.Background()
 
@@ -88,7 +88,7 @@ func (s *SolanaTestSuite) TestGetBypassers() {
 	s.Require().ElementsMatch(expected, bypassers, "Bypassers don't match")
 }
 
-func (s *SolanaTestSuite) TestIsOperation() {
+func (s *TestSuite) TestIsOperation() {
 	ctx := context.Background()
 	admin, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
@@ -104,7 +104,7 @@ func (s *SolanaTestSuite) TestIsOperation() {
 	s.Require().True(operation, "Operation should exist")
 }
 
-func (s *SolanaTestSuite) TestIOperationPending() {
+func (s *TestSuite) TestIOperationPending() {
 	ctx := context.Background()
 	admin, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
@@ -121,7 +121,7 @@ func (s *SolanaTestSuite) TestIOperationPending() {
 	s.Require().True(operation, "Operation should be pending")
 }
 
-func (s *SolanaTestSuite) TestIsOperationReady() {
+func (s *TestSuite) TestIsOperationReady() {
 	ctx := context.Background()
 	admin, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
@@ -140,7 +140,7 @@ func (s *SolanaTestSuite) TestIsOperationReady() {
 	s.Require().True(operation, "Operation should be ready")
 }
 
-func (s *SolanaTestSuite) TestIsOperationDone() {
+func (s *TestSuite) TestIsOperationDone() {
 	ctx := context.Background()
 	admin, err := solana.PrivateKeyFromBase58(privateKey)
 	s.Require().NoError(err)
@@ -159,7 +159,7 @@ func (s *SolanaTestSuite) TestIsOperationDone() {
 	s.Require().True(operation, "Operation should be done")
 }
 
-func (s *SolanaTestSuite) TestGetMinDelay() {
+func (s *TestSuite) TestGetMinDelay() {
 	ctx := context.Background()
 	minDelay := 1 * time.Second
 	s.SetupTimelock(testPDASeedTimelockMinDelay, minDelay)
@@ -171,7 +171,7 @@ func (s *SolanaTestSuite) TestGetMinDelay() {
 	s.Require().Equal(delay, uint64(minDelay.Seconds()), "Min delay should match the configured value")
 }
 
-func (s *SolanaTestSuite) createOperation(timelockID [32]byte) timelockutils.Operation {
+func (s *TestSuite) createOperation(timelockID [32]byte) timelockutils.Operation {
 	salt, serr := timelockutils.SimpleSalt()
 	s.Require().NoError(serr)
 

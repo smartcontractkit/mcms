@@ -3,17 +3,19 @@ package solana
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
+	"gotest.tools/v3/assert"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
 	"github.com/google/go-cmp/cmp"
+
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
-	"github.com/stretchr/testify/require"
-	"gotest.tools/v3/assert"
 
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func Test_ConfigTransformer_ToConfig(t *testing.T) {
+func TestConfigTransformer_ToConfig(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -161,7 +163,7 @@ func Test_ConfigTransformer_ToConfig(t *testing.T) {
 	}
 }
 
-func Test_ConfigTransformer_ToChainConfig(t *testing.T) {
+func TestConfigTransformer_ToChainConfig(t *testing.T) {
 	t.Parallel()
 
 	var (

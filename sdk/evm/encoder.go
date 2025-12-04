@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	abiUtils "github.com/smartcontractkit/mcms/internal/utils/abi"
+	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
@@ -62,8 +62,8 @@ func (e *Encoder) HashOperation(
 		return common.Hash{}, err
 	}
 
-	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
-	encoded, err := abiUtils.ABIEncode(abi, mcmDomainSeparatorOp, bindOp)
+	_abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"nonce","type":"uint40"},{"name":"to","type":"address"},{"name":"value","type":"uint256"},{"name":"data","type":"bytes"}]}]`
+	encoded, err := abi.Encode(_abi, mcmDomainSeparatorOp, bindOp)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -79,8 +79,8 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		return common.Hash{}, err
 	}
 
-	abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
-	encoded, err := abiUtils.ABIEncode(abi, mcmDomainSeparatorMetadata, bindMeta)
+	_abi := `[{"type":"bytes32"},{"type":"tuple","components":[{"name":"chainId","type":"uint256"},{"name":"multiSig","type":"address"},{"name":"preOpCount","type":"uint40"},{"name":"postOpCount","type":"uint40"},{"name":"overridePreviousRoot","type":"bool"}]}]`
+	encoded, err := abi.Encode(_abi, mcmDomainSeparatorMetadata, bindMeta)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -102,7 +102,7 @@ func (e *Encoder) ToGethOperation(
 
 	// Unmarshal the AdditionalFields from the operation
 	var additionalFields AdditionalFields
-	if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
+	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
 		return bindings.ManyChainMultiSigOp{}, err
 	}
 

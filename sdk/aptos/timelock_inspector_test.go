@@ -5,11 +5,13 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/aptos-labs/aptos-go-sdk"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+
+	"github.com/aptos-labs/aptos-go-sdk"
+
+	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 
 	mock_aptossdk "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
 	mock_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms"

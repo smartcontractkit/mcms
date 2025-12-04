@@ -7,18 +7,22 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aptos-labs/aptos-go-sdk"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/aptos-labs/aptos-go-sdk"
+
+	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
+	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
+
 	mock_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms"
 	mock_module_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms/mcms"
-	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestNewTimelockConverter(t *testing.T) {

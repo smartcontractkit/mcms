@@ -6,10 +6,12 @@ import (
 	"math/big"
 	"testing"
 
-	solana2 "github.com/gagliardetto/solana-go"
-	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	solana2 "github.com/gagliardetto/solana-go"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk/aptos"

@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package solanae2e
 
@@ -10,27 +9,29 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/programs/system"
-	"github.com/gagliardetto/solana-go/programs/token"
-	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
-	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/tokens"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/programs/system"
+	"github.com/gagliardetto/solana-go/programs/token"
+	"github.com/gagliardetto/solana-go/rpc"
+
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/config"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
+	solanaCommon "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/tokens"
 )
 
 var testPDASeedExec = [32]byte{'t', 'e', 's', 't', '-', 'e', 'x', 'e', 'c'}
 
-// Test_Solana_Execute tests the Execute functionality by creating a mint tokens transaction and
+// TestExecute tests the Execute functionality by creating a mint tokens transaction and
 // executing it via the MCMS program.
-func (s *SolanaTestSuite) Test_Solana_Execute() {
+func (s *TestSuite) TestExecute() {
 	ctx := context.Background()
 	s.SetupMCM(testPDASeedExec)
 
@@ -164,12 +165,12 @@ func (s *SolanaTestSuite) Test_Solana_Execute() {
 	s.Require().NoError(err)
 
 	// final balance should be 1000000000000 more units
-	s.Require().Equal(initialBalance.Value.Amount, "0")
-	s.Require().Equal(finalBalance.Value.Amount, "1000000000000")
+	s.Require().Equal("0", initialBalance.Value.Amount)
+	s.Require().Equal("1000000000000", finalBalance.Value.Amount)
 }
 
 // buildMintTx builds a mint transaction for the proposal
-func (s *SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicKey) types.Transaction {
+func (s *TestSuite) buildMintTx(mint, receiverATA, signerPDA solana.PublicKey) types.Transaction {
 	amount := 1000 * solana.LAMPORTS_PER_SOL
 	ix2, err := token.NewMintToInstruction(amount, mint, receiverATA, signerPDA, nil).ValidateAndBuild()
 	accounts := ix2.Accounts()
@@ -198,7 +199,7 @@ func (s *SolanaTestSuite) buildMintTx(mint, receiverATA, signerPDA solana.Public
 }
 
 // setupTokenProgram sets up a token program with a mint and an associated token account for the receiver
-func (s *SolanaTestSuite) setupTokenProgram(ctx context.Context, auth solana.PrivateKey, signerPDA solana.PublicKey, mint solana.PrivateKey) (receiverATA solana.PublicKey) {
+func (s *TestSuite) setupTokenProgram(ctx context.Context, auth solana.PrivateKey, signerPDA solana.PublicKey, mint solana.PrivateKey) (receiverATA solana.PublicKey) {
 	tokenProgram := solana.Token2022ProgramID
 	// Use CreateToken utility to get initialization instructions
 	createTokenIxs, err := tokens.CreateToken(
@@ -220,7 +221,7 @@ func (s *SolanaTestSuite) setupTokenProgram(ctx context.Context, auth solana.Pri
 	s.Require().NoError(err)
 	ix1, receiverATA, err := tokens.CreateAssociatedTokenAccount(tokenProgram, mint.PublicKey(), receiver.PublicKey(), auth.PublicKey())
 	s.Require().NoError(err)
-	s.Require().NotEqual(receiverATA.String(), "")
+	s.Require().NotEmpty(receiverATA.String())
 	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, []solana.Instruction{ix1}, auth, config.DefaultCommitment, solanaCommon.AddSigners(mint))
 
 	return receiverATA

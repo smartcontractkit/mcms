@@ -17,11 +17,7 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 		return fmt.Errorf("failed to unmarshal Aptos additional fields: %w", err)
 	}
 
-	if err := fields.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	return fields.Validate()
 }
 
 type AdditionalFields struct {

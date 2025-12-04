@@ -6,11 +6,12 @@ import (
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
+	"github.com/smartcontractkit/mcms/types"
+
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
-	"github.com/smartcontractkit/mcms/types"
 )
 
 func validateAdditionalFields(additionalFields json.RawMessage, csel types.ChainSelector) error {

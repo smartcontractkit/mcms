@@ -2,6 +2,7 @@ package bindings
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"go/ast"
 	"go/format"
@@ -37,7 +38,7 @@ type AbigenArgs struct {
 //
 // Check whether native abigen is installed, and has correct version
 func Abigen(a AbigenArgs) {
-	abigenPackagePath := fmt.Sprintf("github.com/ethereum/go-ethereum/cmd/abigen@v%s", abigenVersion)
+	abigenPackagePath := "github.com/ethereum/go-ethereum/cmd/abigen@v" + abigenVersion
 	args := []string{
 		"run",
 		abigenPackagePath,
@@ -47,7 +48,7 @@ func Abigen(a AbigenArgs) {
 		"--out", a.Out,
 		"--type", a.Type,
 	}
-	buildCommand := exec.Command("go", args...)
+	buildCommand := exec.CommandContext(context.Background(), "go", args...)
 	var buildResponse bytes.Buffer
 	buildCommand.Stderr = &buildResponse
 	if err := buildCommand.Run(); err != nil {
@@ -366,6 +367,7 @@ func writeAdditionalMethods(contractName string, logNames []string, abi abi.ABI,
 	if len(logNames) > 0 {
 		var logSwitchBody string
 		for _, logName := range logNames {
+			//nolint:perfsprint // allow fmt.Sprintf in loop
 			logSwitchBody += fmt.Sprintf(`case _%v.abi.Events["%v"].ID:
         return _%v.Parse%v(log)
 `, contractName, logName, contractName, logName)

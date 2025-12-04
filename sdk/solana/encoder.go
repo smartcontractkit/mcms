@@ -64,7 +64,7 @@ func (e *Encoder) HashOperation(
 	// Parse Additional fields to get the ix accounts
 	var additionalFields AdditionalFields
 	if op.Transaction.AdditionalFields != nil {
-		if err := json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
+		if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
 			return common.Hash{}, fmt.Errorf("unable to unmarshal additional fields: %w", err)
 		}
 	}

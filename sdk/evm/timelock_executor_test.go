@@ -3,7 +3,7 @@ package evm
 import (
 	"context"
 	"encoding/json"
-	"fmt"
+	"errors"
 	"math/big"
 	"testing"
 
@@ -113,11 +113,11 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			mockSetup: func(m *evm_mocks.ContractDeployBackend) {
 				// Successful tx send
 				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
-					Return(fmt.Errorf("error during tx send"))
+					Return(errors.New("error during tx send"))
 				sharedMockSetup(m)
 			},
 			wantTxHash: "",
-			wantErr:    fmt.Errorf("execution failed: error during tx send"),
+			wantErr:    errors.New("execution failed: error during tx send"),
 		},
 	}
 

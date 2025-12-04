@@ -164,13 +164,13 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			aptosBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.AptosChain)
 			require.NoError(t, err, "Failed to initialize Aptos blockchain")
 
-			nodeUrl := fmt.Sprintf("%v/v1", aptosBlockchainOutput.Nodes[0].ExternalHTTPUrl)
+			nodeURL := fmt.Sprintf("%v/v1", aptosBlockchainOutput.Nodes[0].ExternalHTTPUrl)
 
-			aptosClient, err = aptos.NewNodeClient(nodeUrl, 0)
+			aptosClient, err = aptos.NewNodeClient(nodeURL, 0)
 			require.NoError(t, err, "Failed to initialize Aptos RPC client")
 
 			// Test liveness, will also fetch ChainID
-			t.Logf("Initialized Aptos RPC client @ %s", nodeUrl)
+			t.Logf("Initialized Aptos RPC client @ %s", nodeURL)
 			nodeInfo, infoErr := aptosClient.Info()
 			require.NoError(t, infoErr, "Failed to get Aptos node info")
 			require.NotEmpty(t, nodeInfo.LedgerVersionStr)
@@ -196,11 +196,11 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			suiBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.SuiChain)
 			require.NoError(t, err, "Failed to initialize Sui blockchain")
 
-			nodeUrl := suiBlockchainOutput.Nodes[0].ExternalHTTPUrl
-			suiClient = sui.NewSuiClient(nodeUrl)
+			nodeURL := suiBlockchainOutput.Nodes[0].ExternalHTTPUrl
+			suiClient = sui.NewSuiClient(nodeURL)
 
 			// Test liveness, will also fetch ChainID
-			t.Logf("Initialized Sui RPC client @ %s", nodeUrl)
+			t.Logf("Initialized Sui RPC client @ %s", nodeURL)
 		}
 
 		sharedSetup = &TestSetup{

@@ -3,13 +3,13 @@ package evm
 import (
 	"context"
 	"errors"
-	"fmt"
 	"math/big"
 	"testing"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -70,14 +70,14 @@ func TestInspector_GetConfig(t *testing.T) {
 			address:   "0x1234567890abcdef1234567890abcdef12345678",
 			mockError: errors.New("CallContract failed"),
 			want:      nil,
-			wantErr:   fmt.Errorf("CallContract failed"),
+			wantErr:   errors.New("CallContract failed"),
 		},
 		{
 			name:       "Empty Signers list",
 			address:    "0x1234567890abcdef1234567890abcdef12345678",
 			mockResult: bindings.ManyChainMultiSigConfig{Signers: []bindings.ManyChainMultiSigSigner{}, GroupQuorums: [32]uint8{3, 2}, GroupParents: [32]uint8{0, 0}},
 			want:       nil,
-			wantErr:    fmt.Errorf("invalid MCMS config: Quorum must be less than or equal to the number of signers and groups"),
+			wantErr:    errors.New("invalid MCMS config: Quorum must be less than or equal to the number of signers and groups"),
 		},
 	}
 
@@ -151,7 +151,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 			address:   "0x1234567890abcdef1234567890abcdef12345678",
 			mockError: errors.New("CallContract failed"),
 			want:      0,
-			wantErr:   fmt.Errorf("CallContract failed"),
+			wantErr:   errors.New("CallContract failed"),
 		},
 	}
 
@@ -224,7 +224,7 @@ func TestInspector_GetRoot(t *testing.T) {
 			name:      "CallContract error",
 			address:   "0x1234567890abcdef1234567890abcdef12345678",
 			mockError: errors.New("CallContract failed"),
-			wantErr:   fmt.Errorf("CallContract failed"),
+			wantErr:   errors.New("CallContract failed"),
 		},
 	}
 
@@ -305,7 +305,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 			name:      "CallContract error",
 			address:   "0x1234567890abcdef1234567890abcdef12345678",
 			mockError: errors.New("CallContract failed"),
-			wantErr:   fmt.Errorf("CallContract failed"),
+			wantErr:   errors.New("CallContract failed"),
 		},
 	}
 

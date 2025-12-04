@@ -6,10 +6,11 @@ import (
 	"math/big"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 
 	"github.com/block-vision/sui-go-sdk/sui"
+
+	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	"github.com/smartcontractkit/mcms/sdk"

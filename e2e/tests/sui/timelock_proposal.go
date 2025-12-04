@@ -4,7 +4,6 @@ package sui
 
 import (
 	"crypto/ecdsa"
-	"testing"
 	"time"
 
 	"github.com/smartcontractkit/mcms"
@@ -17,15 +16,15 @@ import (
 
 // TimelockProposalTestSuite defines the test suite for Sui timelock proposal tests
 type TimelockProposalTestSuite struct {
-	SuiTestSuite
+	TestSuite
 }
 
-func (s *TimelockProposalTestSuite) Test_Sui_TimelockProposal() {
-	s.T().Run("TimelockProposal - MCMSAccount Accept Ownership through Bypass", func(t *testing.T) {
+func (s *TimelockProposalTestSuite) TestTimelockProposal() {
+	s.Run("TimelockProposal - MCMSAccount Accept Ownership through Bypass", func() {
 		RunAcceptOwnershipProposal(s, suisdk.TimelockRoleBypasser)
 	})
 
-	s.T().Run("TimelockProposal - MCMSAccount Accept Ownership through Schedule", func(t *testing.T) {
+	s.Run("TimelockProposal - MCMSAccount Accept Ownership through Schedule", func() {
 		RunAcceptOwnershipProposal(s, suisdk.TimelockRoleProposer)
 	})
 }

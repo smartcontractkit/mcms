@@ -3,7 +3,7 @@
 package sui
 
 import (
-	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -28,11 +28,11 @@ const (
 )
 
 type MCMSUserUpgradeTestSuite struct {
-	SuiTestSuite
+	TestSuite
 }
 
-func (s *MCMSUserUpgradeTestSuite) Test_Sui_MCMSUser_UpgradeProposal() {
-	s.T().Run("TimelockProposal - MCMS User Upgrade through Schedule", func(t *testing.T) {
+func (s *MCMSUserUpgradeTestSuite) TestMCMSUserUpgradeProposal() {
+	s.Run("TimelockProposal - MCMS User Upgrade through Schedule", func() {
 		RunMCMSUserUpgradeProposal(s)
 	})
 }
@@ -81,7 +81,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 	s.Require().NoError(err, "setting proposer config")
 
 	// Phase 3: Setup ownership and registration
-	executeMCMSSelfOwnershipTransfer(s.T(), ctx, s, proposerConfig)
+	executeMCMSSelfOwnershipTransfer(s.T(), s, proposerConfig)
 
 	deployerContract, err := module_mcms_deployer.NewMcmsDeployer(s.mcmsPackageID, s.client)
 	s.Require().NoError(err)
@@ -104,7 +104,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 		WaitForExecution: true,
 	})
 	s.Require().NoError(err)
-	s.Require().Equal(version, "MCMSUser 1.0.0")
+	s.Require().Equal("MCMSUser 1.0.0", version)
 
 	// Phase 5: Execute upgrade
 	signerAddr, err := s.signer.GetAddress()
@@ -117,7 +117,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 	})
 	s.Require().NoError(err)
 
-	newAddress := executeUpgradePTB(s.T(), ctx, s, compiledPackage, proposerConfig)
+	newAddress := executeUpgradePTB(s.T(), s, compiledPackage, proposerConfig)
 
 	// Phase 6: Verify upgrade completion
 	mcmsUserContract, err := module_mcms_user.NewMcmsUser(newAddress, s.client)
@@ -128,7 +128,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 		WaitForExecution: true,
 	})
 	s.Require().NoError(err)
-	s.Require().Equal(mcmsUserVersion, "MCMSUser 2.0.0")
+	s.Require().Equal("MCMSUser 2.0.0", mcmsUserVersion)
 
 	s.T().Log("✅ MCMS User upgrade committed successfully - Complete MCMS → Upgrade workflow completed!")
 }
@@ -148,8 +148,9 @@ func logDeploymentInfo(s *MCMSUserUpgradeTestSuite) {
 	s.T().Logf("MCMS User State Object ID: %s", s.stateObj)
 }
 
-func executeMCMSSelfOwnershipTransfer(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig) {
+func executeMCMSSelfOwnershipTransfer(t *testing.T, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig) {
 	t.Helper()
+	ctx := t.Context()
 
 	gasBudget := DefaultGasBudget
 	tx, err := s.mcmsAccount.TransferOwnershipToSelf(
@@ -165,7 +166,7 @@ func executeMCMSSelfOwnershipTransfer(t *testing.T, ctx context.Context, s *MCMS
 	s.Require().NoError(err, "Failed to transfer MCMS ownership to self")
 	s.Require().NotEmpty(tx, "Transaction should not be empty")
 
-	executeMCMSSelfOwnershipAcceptanceProposal(t, ctx, s, proposerConfig)
+	executeMCMSSelfOwnershipAcceptanceProposal(t, s, proposerConfig)
 
 	tx, err = s.mcmsAccount.ExecuteOwnershipTransfer(
 		ctx,
@@ -183,8 +184,9 @@ func executeMCMSSelfOwnershipTransfer(t *testing.T, ctx context.Context, s *MCMS
 	s.Require().NotEmpty(tx, "Transaction should not be empty")
 }
 
-func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig) {
+func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, s *MCMSUserUpgradeTestSuite, proposerConfig *RoleConfig) {
 	t.Helper()
+	ctx := t.Context()
 
 	transaction, err := createMCMSAcceptOwnershipTransaction(s)
 	s.Require().NoError(err)
@@ -282,8 +284,9 @@ func executeMCMSSelfOwnershipAcceptanceProposal(t *testing.T, ctx context.Contex
 // 1. MCMS timelock execution → produces UpgradeTicket
 // 2. Package upgrade using the UpgradeTicket → produces UpgradeReceipt
 // 3. Commit upgrade using the UpgradeReceipt
-func executeUpgradePTB(t *testing.T, ctx context.Context, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) string {
+func executeUpgradePTB(t *testing.T, s *MCMSUserUpgradeTestSuite, compiledPackage bind.PackageArtifact, proposerConfig *RoleConfig) string {
 	t.Helper()
+	ctx := t.Context()
 
 	tx, err := suisdk.CreateUpgradeTransaction(compiledPackage, s.mcmsPackageID, s.depStateObj, s.registryObj, s.ownerCapObj, s.mcmsUserPackageID)
 	s.Require().NoError(err)
@@ -390,7 +393,7 @@ func getUpgradedAddress(t *testing.T, result *models.SuiTransactionBlockResponse
 	t.Helper()
 
 	if result == nil || result.Events == nil {
-		return "", fmt.Errorf("result is nil or events are nil")
+		return "", errors.New("result is nil or events are nil")
 	}
 
 	for _, event := range result.Events {
@@ -399,7 +402,7 @@ func getUpgradedAddress(t *testing.T, result *models.SuiTransactionBlockResponse
 		}
 	}
 
-	return "", fmt.Errorf("upgrade receipt committed event not found")
+	return "", errors.New("upgrade receipt committed event not found")
 }
 
 // isUpgradeEvent checks if the event is an upgrade receipt committed event
@@ -417,7 +420,7 @@ func processUpgradeEvent(t *testing.T, event models.SuiEventResponse) (string, e
 		event.PackageId, event.TransactionModule, event.Type)
 
 	if event.ParsedJson == nil {
-		return "", fmt.Errorf("parsed json is nil")
+		return "", errors.New("parsed json is nil")
 	}
 
 	t.Log("MCMS User Package Upgrade Details:")
@@ -445,7 +448,7 @@ func validateAddressChange(t *testing.T, oldAddr, newAddr any) (string, error) {
 	t.Helper()
 
 	if oldAddr == nil || newAddr == nil {
-		return "", fmt.Errorf("package addresses are nil")
+		return "", errors.New("package addresses are nil")
 	}
 
 	oldAddrStr := fmt.Sprintf("%v", oldAddr)
@@ -453,7 +456,7 @@ func validateAddressChange(t *testing.T, oldAddr, newAddr any) (string, error) {
 
 	if oldAddrStr == newAddrStr {
 		t.Errorf("ERROR: Package address did not change! Old: %v, New: %v", oldAddr, newAddr)
-		return "", fmt.Errorf("package address did not change")
+		return "", errors.New("package address did not change")
 	}
 
 	t.Logf("✅ MCMS User package address changed successfully: %s → %s", oldAddrStr, newAddrStr)
@@ -481,7 +484,7 @@ func validateVersionIncrement(t *testing.T, oldVer, newVer any) error {
 		t.Errorf("ERROR: Version did not increment correctly! Old: %.0f, New: %.0f (expected %.0f)",
 			oldVersion, newVersion, expectedVersion)
 
-		return fmt.Errorf("version did not increment correctly")
+		return errors.New("version did not increment correctly")
 	}
 
 	t.Logf("✅ MCMS User version incremented correctly: %.0f → %.0f", oldVersion, newVersion)

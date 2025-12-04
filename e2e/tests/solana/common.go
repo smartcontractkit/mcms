@@ -1,25 +1,32 @@
 //go:build e2e
-// +build e2e
 
 package solanae2e
 
 import (
+	"bytes"
 	"context"
 	"crypto/ecdsa"
 	"fmt"
 	"slices"
-	"strings"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
+
+	"go.uber.org/zap"
 
 	evmCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
+
 	bin "github.com/gagliardetto/binary"
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
 	"github.com/gagliardetto/solana-go/rpc"
-	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/contracts/tests/testutils"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/access_controller"
 	cpistub "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/external_program_cpi_stub"
@@ -28,9 +35,6 @@ import (
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/accesscontroller"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/common"
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	"go.uber.org/zap"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
@@ -83,7 +87,7 @@ func generateTestEVMAccounts(t *testing.T, numAccounts int) []EVMTestAccount {
 	}
 
 	slices.SortFunc(testAccounts, func(a, b EVMTestAccount) int {
-		return strings.Compare(strings.ToLower(a.HexAddress), strings.ToLower(b.HexAddress))
+		return bytes.Compare(a.Address[:], b.Address[:])
 	})
 
 	return testAccounts
@@ -97,8 +101,8 @@ type RoleAccounts struct {
 	AccessController solana.PrivateKey
 }
 
-// SolanaTestSuite is the base test suite for all solana e2e tests
-type SolanaTestSuite struct {
+// TestSuite is the base test suite for all solana e2e tests
+type TestSuite struct {
 	suite.Suite
 	e2e.TestSetup
 
@@ -111,7 +115,7 @@ type SolanaTestSuite struct {
 }
 
 // SetupSuite runs before the test suite
-func (s *SolanaTestSuite) SetupSuite() {
+func (s *TestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 	s.MCMProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
 	s.TimelockProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["timelock"])
@@ -123,7 +127,7 @@ func (s *SolanaTestSuite) SetupSuite() {
 	s.ChainSelector = types.ChainSelector(details.ChainSelector)
 }
 
-func (s *SolanaTestSuite) SetupTest() {
+func (s *TestSuite) SetupTest() {
 	// reset all programID to a random key
 	// this ensures all methods in the sdk correctly sets the programID itself
 	// and not rely on the global programID to be set by something else
@@ -192,14 +196,14 @@ func InitializeMCMProgram(ctx context.Context, t *testing.T, solanaClient *rpc.C
 	require.Equal(t, chainSelector, configAccount.ChainId)
 	require.Equal(t, wallet.PublicKey(), configAccount.Owner)
 }
-func (s *SolanaTestSuite) SetupMCM(pdaSeed [32]byte) {
+func (s *TestSuite) SetupMCM(pdaSeed [32]byte) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
 
 	InitializeMCMProgram(ctx, s.T(), s.SolanaClient, s.MCMProgramID, pdaSeed, uint64(s.ChainSelector))
 }
 
-func (s *SolanaTestSuite) SetupTimelock(pdaSeed [32]byte, minDelay time.Duration) {
+func (s *TestSuite) SetupTimelock(pdaSeed [32]byte, minDelay time.Duration) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
 
@@ -299,7 +303,7 @@ func (s *SolanaTestSuite) SetupTimelock(pdaSeed [32]byte, minDelay time.Duration
 	})
 }
 
-func (s *SolanaTestSuite) AssignRoleToAccounts(
+func (s *TestSuite) AssignRoleToAccounts(
 	ctx context.Context, pdaSeed solanasdk.PDASeed, auth solana.PrivateKey,
 	accounts []solana.PublicKey, role timelock.Role,
 ) {
@@ -308,7 +312,7 @@ func (s *SolanaTestSuite) AssignRoleToAccounts(
 	testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, instructions, auth, rpc.CommitmentConfirmed)
 }
 
-func (s *SolanaTestSuite) SetupCPIStub(pdaSeed solanasdk.PDASeed) {
+func (s *TestSuite) SetupCPIStub(pdaSeed solanasdk.PDASeed) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	s.T().Cleanup(cancel)
 
@@ -328,7 +332,7 @@ func (s *SolanaTestSuite) SetupCPIStub(pdaSeed solanasdk.PDASeed) {
 		rpc.CommitmentConfirmed)
 }
 
-func (s *SolanaTestSuite) getInitAccessControllersIxs(ctx context.Context, roleAcAccount solana.PublicKey, authority solana.PrivateKey) []solana.Instruction {
+func (s *TestSuite) getInitAccessControllersIxs(ctx context.Context, roleAcAccount solana.PublicKey, authority solana.PrivateKey) []solana.Instruction {
 	ixs := []solana.Instruction{}
 
 	dataSize := uint64(8 + 32 + 32 + ((32 * 64) + 8)) // discriminator + owner + proposed owner + access_list (64 max addresses + length)
@@ -348,7 +352,7 @@ func (s *SolanaTestSuite) getInitAccessControllersIxs(ctx context.Context, roleA
 	return ixs
 }
 
-func (s *SolanaTestSuite) getBatchAddAccessIxs(
+func (s *TestSuite) getBatchAddAccessIxs(
 	ctx context.Context, timelockID [32]byte, roleAcAccount solana.PublicKey, role timelock.Role,
 	addresses []solana.PublicKey, authority solana.PrivateKey, chunkSize int,
 ) []solana.Instruction {
@@ -386,13 +390,13 @@ func (s *SolanaTestSuite) getBatchAddAccessIxs(
 	return ixs
 }
 
-func (s *SolanaTestSuite) initOperation(ctx context.Context, op timelockutils.Operation, timelockID [32]byte, auth solana.PrivateKey) {
+func (s *TestSuite) initOperation(ctx context.Context, op timelockutils.Operation, timelockID [32]byte, auth solana.PrivateKey) {
 	ixs := s.getInitOperationIxs(timelockID, op, auth.PublicKey())
 	tx := testutils.SendAndConfirm(ctx, s.T(), s.SolanaClient, ixs, auth, rpc.CommitmentConfirmed)
 	s.Require().NotNil(tx)
 }
 
-func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockutils.Operation, authority solana.PublicKey) []solana.Instruction {
+func (s *TestSuite) getInitOperationIxs(timelockID [32]byte, op timelockutils.Operation, authority solana.PublicKey) []solana.Instruction {
 	configPDA, err := solanasdk.FindTimelockConfigPDA(s.TimelockProgramID, timelockID)
 	s.Require().NoError(err)
 	operationPDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockProgramID, timelockID, op.OperationID())
@@ -455,6 +459,7 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 			appendIx, err := timelock.NewAppendInstructionDataInstruction(
 				timelockID,
 				op.OperationID(),
+
 				uint32(i), // which instruction index we are chunking
 				chunk,     // partial data
 				operationPDA,
@@ -484,7 +489,7 @@ func (s *SolanaTestSuite) getInitOperationIxs(timelockID [32]byte, op timelockut
 	return ixs
 }
 
-func (s *SolanaTestSuite) scheduleOperation(ctx context.Context, timelockID [32]byte, delay time.Duration, opID [32]byte) {
+func (s *TestSuite) scheduleOperation(ctx context.Context, timelockID [32]byte, delay time.Duration, opID [32]byte) {
 	operationPDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockProgramID, timelockID, opID)
 	s.Require().NoError(err)
 
@@ -509,7 +514,7 @@ func (s *SolanaTestSuite) scheduleOperation(ctx context.Context, timelockID [32]
 	s.Require().NotNil(tx)
 }
 
-func (s *SolanaTestSuite) executeOperation(ctx context.Context, timelockID [32]byte, opID [32]byte) {
+func (s *TestSuite) executeOperation(ctx context.Context, timelockID [32]byte, opID [32]byte) {
 	operationPDA, err := solanasdk.FindTimelockOperationPDA(s.TimelockProgramID, timelockID, opID)
 	s.Require().NoError(err)
 
@@ -540,7 +545,7 @@ func (s *SolanaTestSuite) executeOperation(ctx context.Context, timelockID [32]b
 	s.Require().NotNil(tx)
 }
 
-func (s *SolanaTestSuite) waitForOperationToBeReady(ctx context.Context, timelockID [32]byte, opID [32]byte) {
+func (s *TestSuite) waitForOperationToBeReady(ctx context.Context, timelockID [32]byte, opID [32]byte) {
 	const maxAttempts = 20
 	const pollInterval = 500 * time.Millisecond
 	const timeBuffer = 2 * time.Second
@@ -575,6 +580,6 @@ func (s *SolanaTestSuite) waitForOperationToBeReady(ctx context.Context, timeloc
 	s.Require().Fail(fmt.Sprintf("Operation %s is not ready after %d attempts", opID, maxAttempts))
 }
 
-func (s *SolanaTestSuite) contextWithLogger() context.Context {
+func (s *TestSuite) contextWithLogger() context.Context {
 	return context.WithValue(context.Background(), solanasdk.ContextLoggerValue, zap.NewNop().Sugar())
 }

@@ -1,5 +1,4 @@
 // Package safecast implements functions to safely cast types to avoid panics
-
 package safecast
 
 import (

@@ -3,16 +3,19 @@ package solana
 import (
 	"context"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"os"
 	"strconv"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+
+	"go.uber.org/zap"
+
 	"github.com/gagliardetto/solana-go"
 	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
 	"github.com/gagliardetto/solana-go/rpc"
-	"go.uber.org/zap"
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
@@ -188,7 +191,7 @@ func sendAndConfirmInstructions(
 		return "", nil, fmt.Errorf("unable to send instruction: %w", err)
 	}
 	if result.Transaction == nil {
-		return "", nil, fmt.Errorf("nil transaction in instruction result")
+		return "", nil, errors.New("nil transaction in instruction result")
 	}
 
 	transaction, err := result.Transaction.GetTransaction()

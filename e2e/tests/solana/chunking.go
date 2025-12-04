@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package solanae2e
 
@@ -11,17 +10,17 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 
 	"github.com/smartcontractkit/mcms"
+	e2eutils "github.com/smartcontractkit/mcms/e2e/utils/solana"
 	"github.com/smartcontractkit/mcms/sdk"
 	mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 
-	e2eutils "github.com/smartcontractkit/mcms/e2e/utils/solana"
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 )
 
-func (s *SolanaTestSuite) Test_Solana_Chunk_LargeInstructions() {
+func (s *TestSuite) TestChunkLargeInstructions() {
 	s.T().Setenv("MCMS_SOLANA_MAX_RETRIES", "20")
 
 	mcmPDASeed := [32]byte([]byte("hEjRE08jHA2ilqk12fgjE9OIjRJRd7m8"[:]))
@@ -41,7 +40,7 @@ func (s *SolanaTestSuite) Test_Solana_Chunk_LargeInstructions() {
 	s.Require().NoError(err)
 
 	accounts := []solana.PublicKey{auth.PublicKey(), mcmSignerPDA, timelockSignerPDA}
-	e2eutils.FundAccounts(s.T(), ctx, accounts, 1, s.SolanaClient)
+	e2eutils.FundAccounts(s.T(), accounts, 1, s.SolanaClient)
 
 	s.AssignRoleToAccounts(ctx, timelockPDASeed, auth, []solana.PublicKey{mcmSignerPDA}, timelock.Proposer_Role)
 	s.AssignRoleToAccounts(ctx, timelockPDASeed, auth, []solana.PublicKey{mcmSignerPDA}, timelock.Executor_Role)

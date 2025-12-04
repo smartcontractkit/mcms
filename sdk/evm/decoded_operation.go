@@ -2,7 +2,7 @@ package evm
 
 import (
 	"encoding/json"
-	"fmt"
+	"errors"
 
 	"github.com/smartcontractkit/mcms/sdk"
 )
@@ -17,7 +17,7 @@ var _ sdk.DecodedOperation = &DecodedOperation{}
 
 func NewDecodedOperation(functionName string, inputKeys []string, inputArgs []any) (*DecodedOperation, error) {
 	if len(inputKeys) != len(inputArgs) {
-		return nil, fmt.Errorf("input keys and input args must have the same length")
+		return nil, errors.New("input keys and input args must have the same length")
 	}
 
 	return &DecodedOperation{

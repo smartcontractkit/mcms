@@ -6,15 +6,20 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/gagliardetto/solana-go"
-	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/google/go-cmp/cmp"
-	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	"github.com/stretchr/testify/require"
+
 	"gotest.tools/v3/assert"
 
-	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/gagliardetto/solana-go"
+	"github.com/gagliardetto/solana-go/rpc"
+
+	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
+
+	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 )
 
 func TestNewChainMetadataFromTimelock(t *testing.T) {
@@ -81,9 +86,9 @@ func TestNewChainMetadataFromTimelock(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			jsonRpc := mocks.NewJSONRPCClient(t)
-			tt.setupMock(jsonRpc)
-			client := rpc.NewWithCustomRPCClient(jsonRpc)
+			jsonRPC := mocks.NewJSONRPCClient(t)
+			tt.setupMock(jsonRPC)
+			client := rpc.NewWithCustomRPCClient(jsonRPC)
 			metadata, err := NewChainMetadataFromTimelock(
 				context.Background(),
 				client,

@@ -3,15 +3,17 @@ package sui
 import (
 	"testing"
 
-	"github.com/aptos-labs/aptos-go-sdk/bcs"
-	"github.com/block-vision/sui-go-sdk/models"
-	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	"github.com/smartcontractkit/chainlink-sui/bindings/generated"
-	mcmsuser "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+
+	"github.com/aptos-labs/aptos-go-sdk/bcs"
+	"github.com/block-vision/sui-go-sdk/models"
+
+	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	"github.com/smartcontractkit/chainlink-sui/bindings/generated"
+	mcmsuser "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_user"
 )
 
 func TestDecoder(t *testing.T) {

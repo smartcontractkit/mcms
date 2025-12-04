@@ -50,7 +50,7 @@ var (
 	}`
 )
 
-func Test_BaseProposal_AppendSignature(t *testing.T) {
+func TestBaseProposal_AppendSignature(t *testing.T) {
 	t.Parallel()
 
 	signature := types.Signature{}
@@ -64,7 +64,7 @@ func Test_BaseProposal_AppendSignature(t *testing.T) {
 	assert.Equal(t, []types.Signature{signature}, proposal.Signatures)
 }
 
-func Test_BaseProposal_GetChainMetadata(t *testing.T) {
+func TestBaseProposal_GetChainMetadata(t *testing.T) {
 	t.Parallel()
 
 	chainMetadata := map[types.ChainSelector]types.ChainMetadata{
@@ -78,7 +78,7 @@ func Test_BaseProposal_GetChainMetadata(t *testing.T) {
 	assert.Equal(t, chainMetadata, proposal.ChainMetadatas())
 }
 
-func Test_BaseProposal_SetChainMetadata(t *testing.T) {
+func TestBaseProposal_SetChainMetadata(t *testing.T) {
 	t.Parallel()
 
 	proposal := BaseProposal{
@@ -98,7 +98,7 @@ func Test_BaseProposal_SetChainMetadata(t *testing.T) {
 	assert.Empty(t, proposal.ChainMetadata[chaintest.Chain1Selector].MCMAddress)
 }
 
-func Test_NewProposal(t *testing.T) {
+func TestNewProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -231,7 +231,7 @@ func Test_NewProposal(t *testing.T) {
 	}
 }
 
-func Test_WriteProposal(t *testing.T) {
+func TestWriteProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -380,7 +380,7 @@ func TestLoadProposal(t *testing.T) {
 	})
 }
 
-func Test_Proposal_Validate(t *testing.T) {
+func TestProposalValidate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -540,7 +540,7 @@ func Test_Proposal_Validate(t *testing.T) {
 	}
 }
 
-func Test_Proposal_GetEncoders(t *testing.T) {
+func TestProposal_GetEncoders(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -620,7 +620,7 @@ func Test_Proposal_GetEncoders(t *testing.T) {
 	}
 }
 
-func Test_Proposal_UseSimulatedBackend(t *testing.T) {
+func TestProposal_UseSimulatedBackend(t *testing.T) {
 	t.Parallel()
 
 	proposal := Proposal{
@@ -633,7 +633,7 @@ func Test_Proposal_UseSimulatedBackend(t *testing.T) {
 	assert.True(t, proposal.useSimulatedBackend)
 }
 
-func Test_Proposal_ChainSelectors(t *testing.T) {
+func TestProposal_ChainSelectors(t *testing.T) {
 	t.Parallel()
 	builder := NewProposalBuilder()
 	builder.SetVersion("v1").
@@ -663,7 +663,7 @@ func Test_Proposal_ChainSelectors(t *testing.T) {
 	assert.Equal(t, want, proposal.ChainSelectors())
 }
 
-func Test_Proposal_MerkleTree(t *testing.T) {
+func TestProposal_MerkleTree(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -775,7 +775,7 @@ func Test_Proposal_MerkleTree(t *testing.T) {
 	}
 }
 
-func Test_Proposal_TransactionCounts(t *testing.T) {
+func TestProposal_TransactionCounts(t *testing.T) {
 	t.Parallel()
 	builder := NewProposalBuilder()
 	builder.SetVersion("v1").
@@ -818,7 +818,7 @@ func Test_Proposal_TransactionCounts(t *testing.T) {
 	}, got)
 }
 
-func Test_Proposal_Decode(t *testing.T) {
+func TestProposal_Decode(t *testing.T) {
 	t.Parallel()
 
 	// Get ABI
@@ -965,7 +965,7 @@ func Test_Proposal_Decode(t *testing.T) {
 	}
 }
 
-func Test_Proposal_TransactionNonces(t *testing.T) {
+func TestProposal_TransactionNonces(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

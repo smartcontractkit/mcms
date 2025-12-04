@@ -19,11 +19,7 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 		return fmt.Errorf("failed to unmarshal Sui additional fields: %w", err)
 	}
 
-	if err := fields.Validate(); err != nil {
-		return err
-	}
-
-	return nil
+	return fields.Validate()
 }
 
 func (af AdditionalFields) Validate() error {
@@ -97,9 +93,9 @@ func NewTransactionWithUpgradeData(moduleName, function string, to string, data 
 }
 
 // CreateUpgradeTransaction creates a transaction for upgrading a package through MCMS
-func CreateUpgradeTransaction(compiledPackage bind.PackageArtifact, mcmsPackageID, depStateObj, registryObj, ownerCapObj, mcmsUserPackageId string) (types.Transaction, error) {
+func CreateUpgradeTransaction(compiledPackage bind.PackageArtifact, mcmsPackageID, depStateObj, registryObj, ownerCapObj, mcmsUserPackageID string) (types.Transaction, error) {
 	upgradePolicy := uint8(0) // Compatible upgrade policy
-	data, err := serializeAuthorizeUpgradeParams(ownerCapObj, depStateObj, upgradePolicy, compiledPackage.Digest, mcmsUserPackageId)
+	data, err := serializeAuthorizeUpgradeParams(ownerCapObj, depStateObj, upgradePolicy, compiledPackage.Digest, mcmsUserPackageID)
 	if err != nil {
 		return types.Transaction{}, fmt.Errorf("serializing authorize upgrade params: %w", err)
 	}
@@ -131,6 +127,6 @@ func CreateUpgradeTransaction(compiledPackage bind.PackageArtifact, mcmsPackageI
 		[]string{registryObj},       // Internal objects (Registry for validation)
 		moduleBytes,                 // Compiled modules for upgrade
 		depAddresses,                // Dependencies for upgrade
-		mcmsUserPackageId,           // Package being upgraded
+		mcmsUserPackageID,           // Package being upgraded
 	)
 }

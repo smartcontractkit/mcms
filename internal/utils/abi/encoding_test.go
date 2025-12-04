@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test_ABIEncode(t *testing.T) {
+func TestEncode(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -59,7 +59,7 @@ func Test_ABIEncode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := ABIEncode(tt.giveABI, tt.giveValues...)
+			got, err := Encode(tt.giveABI, tt.giveValues...)
 
 			if tt.wantError {
 				require.Error(t, err)
@@ -74,7 +74,7 @@ func Test_ABIEncode(t *testing.T) {
 	}
 }
 
-func Test_ABIDecode(t *testing.T) {
+func TestDecode(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -128,7 +128,7 @@ func Test_ABIDecode(t *testing.T) {
 			data, err := hex.DecodeString(tt.giveData)
 			require.NoError(t, err)
 
-			got, err := ABIDecode(tt.giveABI, data)
+			got, err := Decode(tt.giveABI, data)
 
 			if tt.wantError {
 				require.Error(t, err)

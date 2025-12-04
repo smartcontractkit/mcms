@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package evme2e
 
@@ -24,7 +23,6 @@ import (
 // TimelockInspectionTestSuite is a suite of tests for the RBACTimelock contract inspection.
 type TimelockInspectionTestSuite struct {
 	suite.Suite
-	deployerKey      common.Address
 	signerAddresses  []common.Address
 	auth             *bind.TransactOpts
 	publicKey        common.Address
@@ -32,7 +30,7 @@ type TimelockInspectionTestSuite struct {
 	e2e.TestSetup
 }
 
-func (s *TimelockInspectionTestSuite) granRole(role [32]byte, address common.Address) {
+func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, address common.Address) {
 	ctx := context.Background()
 	tx, err := s.timelockContract.GrantRole(s.auth, role, address)
 	s.Require().NoError(err)
@@ -74,29 +72,28 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.publicKey = address
 
 	s.timelockContract = testutils.DeployTimelockContract(&s.Suite, s.ClientA, s.auth, address.String())
-	s.deployerKey = crypto.PubkeyToAddress(privateKey.PublicKey)
 
 	// Grant Some Roles for testing
 	// Proposers
 	role, err := s.timelockContract.PROPOSERROLE(&bind.CallOpts{})
 	s.Require().NoError(err)
-	s.granRole(role, s.signerAddresses[0])
+	s.grantRole(role, s.signerAddresses[0])
 	// Executors
 	role, err = s.timelockContract.EXECUTORROLE(&bind.CallOpts{})
 	s.Require().NoError(err)
-	s.granRole(role, s.signerAddresses[0])
-	s.granRole(role, s.signerAddresses[1])
+	s.grantRole(role, s.signerAddresses[0])
+	s.grantRole(role, s.signerAddresses[1])
 
 	// By passers
 	role, err = s.timelockContract.BYPASSERROLE(&bind.CallOpts{})
 	s.Require().NoError(err)
-	s.granRole(role, s.signerAddresses[1])
+	s.grantRole(role, s.signerAddresses[1])
 
 	// Cancellers
 	role, err = s.timelockContract.CANCELLERROLE(&bind.CallOpts{})
 	s.Require().NoError(err)
-	s.granRole(role, s.signerAddresses[0])
-	s.granRole(role, s.signerAddresses[1])
+	s.grantRole(role, s.signerAddresses[0])
+	s.grantRole(role, s.signerAddresses[1])
 }
 
 // TestGetProposers gets the list of proposers

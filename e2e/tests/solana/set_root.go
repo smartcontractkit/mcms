@@ -1,5 +1,4 @@
 //go:build e2e
-// +build e2e
 
 package solanae2e
 
@@ -10,6 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/gagliardetto/solana-go"
+
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 
 	"github.com/smartcontractkit/mcms"
@@ -20,9 +20,9 @@ import (
 
 var testPDASeedSetRootTest = [32]byte{'t', 'e', 's', 't', '-', 's', 'e', 't', 'r', 'o', 'o', 't'}
 
-// Test_Solana_SetRoot tests the SetRoot functionality by setting a root on the MCM program
+// TestSetRoot tests the SetRoot functionality by setting a root on the MCM program
 // and doing the preload signers setup.
-func (s *SolanaTestSuite) Test_Solana_SetRoot() {
+func (s *TestSuite) TestSetRoot() {
 	// --- arrange ---
 	ctx := s.contextWithLogger()
 
@@ -118,6 +118,7 @@ func (s *SolanaTestSuite) Test_Solana_SetRoot() {
 			signers = append(signers, signer.Address)
 			mcmsSigners = append(mcmsSigners, mcms.NewPrivateKeySigner(signer.PrivateKey))
 		}
+
 		multiSignersMcmConfig := types.Config{Quorum: uint8(len(signers)), Signers: signers}
 
 		proposal = buildProposal()

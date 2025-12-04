@@ -2,22 +2,26 @@ package solana
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
+	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/google/go-cmp/cmp"
+
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
-	"github.com/google/go-cmp/cmp"
-	cselectors "github.com/smartcontractkit/chain-selectors"
+
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
-	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func Test_NewInspector(t *testing.T) {
+func TestNewInspector(t *testing.T) {
 	t.Parallel()
 
 	inspector := NewInspector(&rpc.Client{})
@@ -82,7 +86,7 @@ func TestInspector_GetConfig(t *testing.T) {
 		{
 			name: "error: rpc error",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				err := fmt.Errorf("json rpc call failed")
+				err := errors.New("json rpc call failed")
 				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, &bindings.MultisigConfig{}, err)
 			},
 			want:    nil,
@@ -146,7 +150,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 		{
 			name: "error: rpc error",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				err := fmt.Errorf("json rpc call failed")
+				err := errors.New("json rpc call failed")
 				newRootAndOpCount := &bindings.ExpiringRootAndOpCount{OpCount: 123}
 				mockGetAccountInfo(t, mockJSONRPCClient, opCountPDA, newRootAndOpCount, err)
 			},
@@ -204,7 +208,7 @@ func TestInspector_GetRoot(t *testing.T) {
 		{
 			name: "error: rpc error",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				err := fmt.Errorf("json rpc call failed")
+				err := errors.New("json rpc call failed")
 				newRootAndOpCount := &bindings.ExpiringRootAndOpCount{
 					Root:       hash,
 					ValidUntil: 123,
@@ -263,7 +267,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 		{
 			name: "error: rpc error",
 			setup: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				err := fmt.Errorf("json rpc call failed")
+				err := errors.New("json rpc call failed")
 				newRootMetadata := &bindings.RootMetadata{PreOpCount: 123}
 				mockGetAccountInfo(t, mockJSONRPCClient, rootMetadataPDA, newRootMetadata, err)
 			},

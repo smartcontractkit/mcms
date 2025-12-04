@@ -3,6 +3,7 @@ package usbwallet
 import (
 	"encoding/binary"
 	"fmt"
+	"math"
 
 	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -60,7 +61,7 @@ func (w *ledgerDriver) SignPersonalMessage(path accounts.DerivationPath, message
 	// Ensure the wallet is capable of signing the given transaction
 	if w.version[0] < 1 && w.version[1] < 2 {
 		//lint:ignore ST1005 brand name displayed on the console
-		return nil, fmt.Errorf("Ledger version >= 1.2.0 required for personal signing (found version v%d.%d.%d)", w.version[0], w.version[1], w.version[2])
+		return nil, fmt.Errorf("version error: Ledger version >= 1.2.0 required for personal signing (found version v%d.%d.%d)", w.version[0], w.version[1], w.version[2])
 	}
 	return w.ledgerSignPersonalMessage(path, message)
 }
@@ -73,7 +74,12 @@ func (w *ledgerDriver) ledgerSignPersonalMessage(derivationPath []uint32, messag
 		binary.BigEndian.PutUint32(path[1+4*i:], component)
 	}
 	var messageLength [4]byte
-	binary.BigEndian.PutUint32(messageLength[:], uint32(len(message)))
+	// G115 check
+	msgLen := len(message)
+	if msgLen > math.MaxUint32 {
+		return nil, fmt.Errorf("message length %d exceeds uint32 max", msgLen)
+	}
+	binary.BigEndian.PutUint32(messageLength[:], uint32(msgLen)) //nolint:gosec // G115: overflow checked above
 	payload := append(path, messageLength[:]...)
 	payload = append(payload, message...)
 	// Send the request and wait for the response
@@ -82,10 +88,11 @@ func (w *ledgerDriver) ledgerSignPersonalMessage(derivationPath []uint32, messag
 		reply []byte
 		err   error
 	)
-	fmt.Println("Derivation path: ", path)
+	fmt.Println("Derivation path: " + string(path))
 	// Chunk size selection to mitigate an underlying RLP deserialization issue on the ledger app.
 	// https://github.com/LedgerHQ/app-ethereum/issues/409
 	chunk := 255
+	//nolint:revive // alow empty block
 	for ; len(payload)%chunk <= ledgerEip155Size; chunk-- {
 	}
 

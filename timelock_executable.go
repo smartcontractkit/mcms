@@ -2,6 +2,7 @@ package mcms
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -26,7 +27,7 @@ func NewTimelockExecutable(
 	executors map[types.ChainSelector]sdk.TimelockExecutor,
 ) (*TimelockExecutable, error) {
 	if proposal.Action != types.TimelockActionSchedule {
-		return nil, fmt.Errorf("TimelockExecutable can only be created from a TimelockProposal with action 'schedule'")
+		return nil, errors.New("TimelockExecutable can only be created from a TimelockProposal with action 'schedule'")
 	}
 
 	te := &TimelockExecutable{
