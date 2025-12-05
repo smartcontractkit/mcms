@@ -12,7 +12,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
-	"github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 func validateAdditionalFields(additionalFields json.RawMessage, csel types.ChainSelector) error {

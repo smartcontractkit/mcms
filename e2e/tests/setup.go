@@ -20,8 +20,6 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/ton"
 
-	tonchain "github.com/smartcontractkit/chainlink-ton/pkg/ton/chain"
-
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 	"github.com/smartcontractkit/freeport"
@@ -207,30 +205,6 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 
 			// Test liveness, will also fetch ChainID
 			t.Logf("Initialized Sui RPC client @ %s", nodeURL)
-		}
-
-		var (
-			tonClient           *ton.APIClient
-			tonBlockchainOutput *blockchain.Output
-		)
-		if in.TonChain != nil {
-			// Use blockchain network setup (fallback)
-			ports := freeport.GetN(t, 2)
-			port := ports[0]
-			faucetPort := ports[1]
-			in.TonChain.Port = strconv.Itoa(port)
-			in.TonChain.FaucetPort = strconv.Itoa(faucetPort)
-
-			tonBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.TonChain)
-			require.NoError(t, err, "Failed to initialize TON blockchain")
-
-			nodeURL := tonBlockchainOutput.Nodes[0].ExternalHTTPUrl
-			pool, err := tonchain.CreateLiteserverConnectionPool(ctx, nodeURL)
-			require.NoError(t, err, "Failed to initialize TON client - failed to create liteserver connection pool")
-			tonClient = ton.NewAPIClient(pool, ton.ProofCheckPolicyFast)
-
-			// Test liveness, will also fetch ChainID
-			t.Logf("Initialized TON RPC client @ %s", nodeURL)
 		}
 
 		sharedSetup = &TestSetup{

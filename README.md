@@ -1,7 +1,7 @@
 <div align="center">
   <h1>Many Chain Multisig System</h1>
   <a href='https://github.com/smartcontractkit/mcms/actions/workflows/push-main.yml'><img src="https://github.com/smartcontractkit/mcms/actions/workflows/push-main.yml/badge.svg" /></a>
-  <a href="https://miniature-adventure-5kwz5w3.pages.github.io/" rel="nofollow">
+  <a href="https://smartcontractkit.github.io/mcms/intro/" rel="nofollow">
     <img src="https://img.shields.io/static/v1?label=docs&message=latest&color=blue" alt="Official documentation">
   </a>
   <br/>
