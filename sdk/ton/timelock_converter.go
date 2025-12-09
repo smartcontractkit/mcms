@@ -41,34 +41,13 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 	salt common.Hash,
 ) ([]types.Operation, common.Hash, error) {
 	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
-	calls := make([]timelock.Call, 0)
+	calls, err := ConvertBatchToCalls(bop)
+	if err != nil {
+		return []types.Operation{}, common.Hash{}, err
+	}
+
 	tags := make([]string, 0)
 	for _, tx := range bop.Transactions {
-		// TODO(ton): duplicate code, refactor? (@see sdk/ton/timelock_executor.go)
-		// Unmarshal the AdditionalFields from the operation
-		var additionalFields AdditionalFields
-		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
-		}
-
-		// Map to Ton Address type
-		to, err := address.ParseAddr(tx.To)
-		if err != nil {
-			return []types.Operation{}, common.Hash{}, fmt.Errorf("invalid target address: %w", err)
-		}
-
-		var datac *cell.Cell
-		datac, err = cell.FromBOC(tx.Data)
-		if err != nil {
-			return []types.Operation{}, common.Hash{}, fmt.Errorf("invalid cell BOC data: %w", err)
-		}
-
-		calls = append(calls, timelock.Call{
-			Target: to,
-			Data:   datac,
-			Value:  additionalFields.Value,
-		})
-
 		tags = append(tags, tx.Tags...)
 	}
 
@@ -133,6 +112,35 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 	}
 
 	return []types.Operation{op}, operationID, nil
+}
+
+func ConvertBatchToCalls(bop types.BatchOperation) ([]timelock.Call, error) {
+	calls := make([]timelock.Call, len(bop.Transactions))
+	for i, tx := range bop.Transactions {
+		// Unmarshal the AdditionalFields from the operation
+		var additionalFields AdditionalFields
+		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+		}
+
+		// Map to Ton Address type
+		to, err := address.ParseAddr(tx.To)
+		if err != nil {
+			return nil, fmt.Errorf("invalid target address: %w", err)
+		}
+
+		datac, err := cell.FromBOC(tx.Data)
+		if err != nil {
+			return nil, fmt.Errorf("invalid cell BOC data: %w", err)
+		}
+
+		calls[i] = timelock.Call{
+			Target: to,
+			Data:   datac,
+			Value:  additionalFields.Value,
+		}
+	}
+	return calls, nil
 }
 
 // HashOperationBatch replicates the hash calculation from Solidity
