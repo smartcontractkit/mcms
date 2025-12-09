@@ -22,7 +22,7 @@ func TestDecoder(t *testing.T) {
 
 	exampleRole := crypto.Keccak256Hash([]byte("EXAMPLE_ROLE"))
 
-	// TODO: fix me - what's up with *big.Int decoding as negative num?
+	// TODO(ton): fix me - what's up with *big.Int decoding as negative num?
 	exampleRoleBig, _ := cell.BeginCell().
 		MustStoreBigInt(new(big.Int).SetBytes(exampleRole[:]), 257).
 		EndCell().

@@ -76,7 +76,6 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				m.EXPECT().WaitForBlock(mock.Anything).
 					Return(apiw)
 
-				// Mock SendTransaction to return an error
 				m.EXPECT().SendExternalMessageWaitTransaction(mock.Anything, mock.Anything).
 					Return(&tlb.Transaction{Hash: []byte{1, 2, 3, 4, 14}}, &ton.BlockIDExt{}, []byte{}, nil)
 			},

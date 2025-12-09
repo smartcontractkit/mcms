@@ -64,7 +64,6 @@ func (s *SetConfigTestSuite) TestSetConfigInspect() {
 	s.Require().NoError(err)
 
 	inspectorTON := mcmston.NewInspector(s.TonClient)
-	s.Require().NoError(err)
 
 	tests := []struct {
 		name       string

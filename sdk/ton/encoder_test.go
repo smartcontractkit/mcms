@@ -149,7 +149,7 @@ func TestEncoderToOperation(t *testing.T) {
 		wantErr      string
 	}{
 		{
-			name:         "success: converts to a geth operations",
+			name:         "success: converts to a TON mcms.Op operations",
 			giveSelector: chaintest.Chain7Selector,
 			giveOp: types.Operation{
 				ChainSelector: chainSelector,

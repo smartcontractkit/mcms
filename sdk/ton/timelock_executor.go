@@ -6,10 +6,11 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/samber/lo"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
-
-	"github.com/ethereum/go-ethereum/common"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
@@ -34,7 +35,7 @@ type timelockExecutor struct {
 
 // NewTimelockExecutor creates a new TimelockExecutor
 func NewTimelockExecutor(client ton.APIClientWrapped, w *wallet.Wallet, amount tlb.Coins) (sdk.TimelockExecutor, error) {
-	if IsNil(client) {
+	if lo.IsNil(client) {
 		return nil, errors.New("failed to create sdk.Executor - client (ton.APIClientWrapped) is nil")
 	}
 

@@ -3,6 +3,7 @@ package evm
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -44,7 +45,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		// Unmarshal the additional fields
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return []types.Operation{}, common.Hash{}, err
+			return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
 		}
 
 		calls = append(calls, bindings.RBACTimelockCall{
@@ -81,7 +82,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	if err != nil {
-		return []types.Operation{}, common.Hash{}, err
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to encode timelock action data: %w", err)
 	}
 
 	op := types.Operation{
