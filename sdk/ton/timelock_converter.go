@@ -89,7 +89,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 	}
 
 	if err != nil {
-		return []types.Operation{}, common.Hash{}, err
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to encode timelock action data: %w", err)
 	}
 
 	// Map to Ton Address type

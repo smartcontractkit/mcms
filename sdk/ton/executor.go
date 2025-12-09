@@ -6,9 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
-	"reflect"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/samber/lo"
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
@@ -37,11 +37,11 @@ type executor struct {
 
 // NewExecutor creates a new Executor for TON chains
 func NewExecutor(encoder sdk.Encoder, client ton.APIClientWrapped, w *wallet.Wallet, amount tlb.Coins) (sdk.Executor, error) {
-	if IsNil(encoder) {
+	if lo.IsNil(encoder) {
 		return nil, errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil")
 	}
 
-	if IsNil(client) {
+	if lo.IsNil(client) {
 		return nil, errors.New("failed to create sdk.Executor - client (ton.APIClientWrapped) is nil")
 	}
 
@@ -215,23 +215,4 @@ func (e *executor) SetRoot(
 		ChainFamily: chain_selectors.FamilyTon,
 		RawData:     tx,
 	}, nil
-}
-
-// IsNil checks if a value is nil or if it's a reference type with a nil underlying value.
-// Notice: vendoring github:samber/lo
-func IsNil(x any) bool {
-	if x == nil {
-		return true
-	}
-	v := reflect.ValueOf(x)
-	if !v.IsValid() {
-		return true
-	}
-	//nolint:exhaustive // default case handles all non-nillable types
-	switch v.Kind() {
-	case reflect.Chan, reflect.Func, reflect.Map, reflect.Ptr, reflect.UnsafePointer, reflect.Interface, reflect.Slice:
-		return v.IsNil()
-	default:
-		return false
-	}
 }

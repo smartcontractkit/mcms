@@ -95,10 +95,6 @@ func (i timelockInspector) getRoleMembers(ctx context.Context, _address string, 
 	}
 
 	_role := new(big.Int).SetBytes(role[:])
-	if err != nil {
-		return nil, fmt.Errorf("failed to map opID param: %w", err)
-	}
-
 	r, err := i.client.RunGetMethod(ctx, block, addr, "getRoleMemberCount", _role)
 	if err != nil {
 		return nil, fmt.Errorf("error getting getRoleMemberCount: %w", err)
