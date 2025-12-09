@@ -3,7 +3,6 @@ package ton
 import (
 	"context"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 
@@ -18,7 +17,6 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/ton/wallet"
-	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
@@ -57,34 +55,7 @@ func (e *timelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %w", err)
 	}
 
-	calls := make([]timelock.Call, len(bop.Transactions))
-	for i, tx := range bop.Transactions {
-		// Unmarshal the AdditionalFields from the operation
-		var additionalFields AdditionalFields
-		if err = json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
-		}
-
-		// Map to Ton Address type
-		var to *address.Address
-		to, err = address.ParseAddr(tx.To)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("invalid target address: %w", err)
-		}
-
-		var datac *cell.Cell
-		datac, err = cell.FromBOC(tx.Data)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("invalid cell BOC data: %w", err)
-		}
-
-		calls[i] = timelock.Call{
-			Target: to,
-			Data:   datac,
-			Value:  additionalFields.Value,
-		}
-	}
-
+	calls, err := ConvertBatchToCalls(bop)
 	qID, err := RandomQueryID()
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
