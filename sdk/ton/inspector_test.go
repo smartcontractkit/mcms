@@ -134,7 +134,7 @@ func TestInspectorGetConfig(t *testing.T) {
 			}
 
 			// Instantiate Inspector with the mock client
-			inspector := tonmcms.NewInspector(client, tonmcms.NewConfigTransformer())
+			inspector := tonmcms.NewInspector(client)
 
 			// Call GetConfig and capture the got
 			got, err := inspector.GetConfig(ctx, tt.address)
@@ -205,7 +205,7 @@ func TestInspectorGetOpCount(t *testing.T) {
 			}
 
 			// Instantiate Inspector with the mock client
-			inspector := tonmcms.NewInspector(client, tonmcms.NewConfigTransformer())
+			inspector := tonmcms.NewInspector(client)
 
 			// Call GetOpCount and capture the got
 			got, err := inspector.GetOpCount(ctx, tt.address)
@@ -280,7 +280,7 @@ func TestInspectorGetRoot(t *testing.T) {
 			}
 
 			// Instantiate Inspector with the mock client
-			inspector := tonmcms.NewInspector(client, tonmcms.NewConfigTransformer())
+			inspector := tonmcms.NewInspector(client)
 
 			// Call GetRoot and capture the result
 			got, validUntil, err := inspector.GetRoot(ctx, tt.address)
@@ -365,7 +365,7 @@ func TestInspectorGetRootMetadata(t *testing.T) {
 			}
 
 			// Instantiate Inspector with the mock client
-			inspector := tonmcms.NewInspector(client, tonmcms.NewConfigTransformer())
+			inspector := tonmcms.NewInspector(client)
 
 			// Call GetRootMetadata and capture the got
 			got, err := inspector.GetRootMetadata(ctx, tt.address)

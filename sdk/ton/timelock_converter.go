@@ -42,7 +42,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
 	calls, err := ConvertBatchToCalls(bop)
 	if err != nil {
-		return []types.Operation{}, common.Hash{}, err
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to convert batch to calls: %w", err)
 	}
 
 	tags := make([]string, 0)
@@ -139,6 +139,7 @@ func ConvertBatchToCalls(bop types.BatchOperation) ([]timelock.Call, error) {
 			Value:  tlb.FromNanoTON(additionalFields.Value),
 		}
 	}
+
 	return calls, nil
 }
 

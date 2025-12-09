@@ -89,7 +89,7 @@ func (s *InspectionTestSuite) deployMCMSContract() {
 func (s *InspectionTestSuite) TestGetConfig() {
 	ctx := s.T().Context()
 
-	inspector := mcmston.NewInspector(s.TonClient, mcmston.NewConfigTransformer())
+	inspector := mcmston.NewInspector(s.TonClient)
 	config, err := inspector.GetConfig(ctx, s.mcmsAddr)
 
 	s.Require().NoError(err, "Failed to get contract configuration")
@@ -108,7 +108,7 @@ func (s *InspectionTestSuite) TestGetConfig() {
 func (s *InspectionTestSuite) TestGetOpCount() {
 	ctx := s.T().Context()
 
-	inspector := mcmston.NewInspector(s.TonClient, mcmston.NewConfigTransformer())
+	inspector := mcmston.NewInspector(s.TonClient)
 	opCount, err := inspector.GetOpCount(ctx, s.mcmsAddr)
 
 	s.Require().NoError(err, "Failed to get op count")
@@ -119,7 +119,7 @@ func (s *InspectionTestSuite) TestGetOpCount() {
 func (s *InspectionTestSuite) TestGetRoot() {
 	ctx := s.T().Context()
 
-	inspector := mcmston.NewInspector(s.TonClient, mcmston.NewConfigTransformer())
+	inspector := mcmston.NewInspector(s.TonClient)
 	root, validUntil, err := inspector.GetRoot(ctx, s.mcmsAddr)
 
 	s.Require().NoError(err, "Failed to get root from contract")
@@ -131,7 +131,7 @@ func (s *InspectionTestSuite) TestGetRoot() {
 func (s *InspectionTestSuite) TestGetRootMetadata() {
 	ctx := s.T().Context()
 
-	inspector := mcmston.NewInspector(s.TonClient, mcmston.NewConfigTransformer())
+	inspector := mcmston.NewInspector(s.TonClient)
 	metadata, err := inspector.GetRootMetadata(ctx, s.mcmsAddr)
 
 	s.Require().NoError(err, "Failed to get root metadata from contract")
