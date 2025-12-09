@@ -74,7 +74,7 @@ func (s *TimelockInspectionTestSuite) scheduleBatch(calls []timelock.Call, prede
 	body, err := tlb.ToCell(timelock.ScheduleBatch{
 		QueryID: must(mcmston.RandomQueryID()),
 
-		Calls:       toncommon.SnakeRef[timelock.Call](calls),
+		Calls:       calls,
 		Predecessor: predecessor,
 		Salt:        salt,
 		Delay:       delay,
@@ -112,10 +112,10 @@ func (s *TimelockInspectionTestSuite) deployTimelockContract() {
 		QueryID:                  0,
 		MinDelay:                 0,
 		Admin:                    s.wallet.Address(),
-		Proposers:                toncommon.SnakeRef[toncommon.WrappedAddress](none),
-		Executors:                toncommon.SnakeRef[toncommon.WrappedAddress](none),
-		Cancellers:               toncommon.SnakeRef[toncommon.WrappedAddress](none),
-		Bypassers:                toncommon.SnakeRef[toncommon.WrappedAddress](none),
+		Proposers:                none,
+		Executors:                none,
+		Cancellers:               none,
+		Bypassers:                none,
 		ExecutorRoleCheckEnabled: true,
 		OpFinalizationTimeout:    0,
 	}
@@ -227,7 +227,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperation() {
 	calls := []timelock.Call{
 		{
 			Target: s.accounts[0],
-			Value:  big.NewInt(1),
+			Value:  tlb.MustFromTON("0.1"), // TON implementation enforces min value per call
 			Data:   cell.BeginCell().EndCell(),
 		},
 	}
@@ -241,7 +241,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperation() {
 	isOP, err := inspector.IsOperation(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
 	s.Require().NotNil(isOP)
-	// s.Require().True(isOP) // TODO(ton): fix
+	s.Require().True(isOP)
 }
 
 // TestIsOperationPending tests the IsOperationPending method
@@ -253,7 +253,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 	calls := []timelock.Call{
 		{
 			Target: s.accounts[0],
-			Value:  big.NewInt(2),
+			Value:  tlb.MustFromTON("0.1"), // TON implementation enforces min value per call
 			Data:   cell.BeginCell().EndCell(),
 		},
 	}
@@ -268,7 +268,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 	isOP, err := inspector.IsOperationPending(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
 	s.Require().NotNil(isOP)
-	// s.Require().True(isOP) // TODO(ton): fix
+	s.Require().True(isOP)
 }
 
 // TestIsOperationReady tests the IsOperationReady and IsOperationDone methods
@@ -280,7 +280,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 	calls := []timelock.Call{
 		{
 			Target: s.accounts[0],
-			Value:  big.NewInt(1),
+			Value:  tlb.MustFromTON("0.1"), // TON implementation enforces min value per call
 			Data:   cell.BeginCell().EndCell(),
 		},
 	}
@@ -297,7 +297,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 	isOP, err := inspector.IsOperationReady(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
 	s.Require().NotNil(isOP)
-	// s.Require().True(isOP) // TODO(ton): fix
+	s.Require().True(isOP)
 }
 
 // TODO: add TestIsOperationDone test when we have operation execution implemented

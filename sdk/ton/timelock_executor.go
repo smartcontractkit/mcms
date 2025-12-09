@@ -19,7 +19,6 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
-	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
 )
 
 var _ sdk.TimelockExecutor = (*timelockExecutor)(nil)
@@ -64,7 +63,7 @@ func (e *timelockExecutor) Execute(
 	body, err := tlb.ToCell(timelock.ExecuteBatch{
 		QueryID: qID,
 
-		Calls:       toncommon.SnakeRef[timelock.Call](calls),
+		Calls:       calls,
 		Predecessor: predecessor.Big(),
 		Salt:        salt.Big(),
 	})
