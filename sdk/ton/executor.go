@@ -51,7 +51,7 @@ func NewExecutor(encoder sdk.Encoder, client ton.APIClientWrapped, w *wallet.Wal
 
 	return &executor{
 		Encoder:   encoder,
-		Inspector: NewInspector(client, NewConfigTransformer()),
+		Inspector: NewInspector(client),
 		wallet:    w,
 		amount:    amount,
 	}, nil

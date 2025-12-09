@@ -26,11 +26,11 @@ type Inspector struct {
 	configTransformer ConfigTransformer
 }
 
-// NewInspector creates a new Inspector for EVM chains
-func NewInspector(client ton.APIClientWrapped, configTransformer ConfigTransformer) sdk.Inspector {
+// NewInspector creates a new Inspector for TON chains
+func NewInspector(client ton.APIClientWrapped) sdk.Inspector {
 	return &Inspector{
 		client:            client,
-		configTransformer: configTransformer,
+		configTransformer: NewConfigTransformer(),
 	}
 }
 

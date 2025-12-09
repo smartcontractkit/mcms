@@ -55,6 +55,10 @@ func (e *timelockExecutor) Execute(
 	}
 
 	calls, err := ConvertBatchToCalls(bop)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to convert batch to calls: %w", err)
+	}
+
 	qID, err := RandomQueryID()
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)

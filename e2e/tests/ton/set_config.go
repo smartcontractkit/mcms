@@ -63,7 +63,7 @@ func (s *SetConfigTestSuite) TestSetConfigInspect() {
 	configurerTON, err := mcmston.NewConfigurer(s.wallet, amount)
 	s.Require().NoError(err)
 
-	inspectorTON := mcmston.NewInspector(s.TonClient, mcmston.NewConfigTransformer())
+	inspectorTON := mcmston.NewInspector(s.TonClient)
 	s.Require().NoError(err)
 
 	tests := []struct {

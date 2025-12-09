@@ -118,7 +118,7 @@ func (s *SetRootTestSuite) deployMCMSContract() {
 func (s *SetRootTestSuite) TestGetConfig() {
 	ctx := s.T().Context()
 
-	inspector := mcmston.NewInspector(s.TonClient, mcmston.NewConfigTransformer())
+	inspector := mcmston.NewInspector(s.TonClient)
 	config, err := inspector.GetConfig(ctx, s.mcmsAddr)
 
 	s.Require().NoError(err, "Failed to get contract configuration")
@@ -159,7 +159,7 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 
 	// Sign the proposal
 	inspectors := map[types.ChainSelector]sdk.Inspector{
-		s.chainSelector: mcmston.NewInspector(s.TonClient, mcmston.NewConfigTransformer()),
+		s.chainSelector: mcmston.NewInspector(s.TonClient),
 	}
 	signable, err := mcmslib.NewSignable(proposal, inspectors)
 	s.Require().NoError(err)
@@ -246,7 +246,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 
 	// Sign proposal
 	inspectors := map[types.ChainSelector]sdk.Inspector{
-		s.chainSelector: mcmston.NewInspector(s.TonClient, mcmston.NewConfigTransformer()),
+		s.chainSelector: mcmston.NewInspector(s.TonClient),
 	}
 	signable, err := mcmslib.NewSignable(&proposal, inspectors)
 	s.Require().NoError(err)
