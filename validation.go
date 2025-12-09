@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/mcms/sdk/ton"
 
 	"github.com/smartcontractkit/mcms/types"
 
