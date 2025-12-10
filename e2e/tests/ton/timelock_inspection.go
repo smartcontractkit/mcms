@@ -8,7 +8,6 @@ import (
 	"math/big"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/stretchr/testify/suite"
 
@@ -68,12 +67,11 @@ func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Addr
 	s.Require().NoError(err)
 	s.Require().NotNil(tx)
 
-	// TODO: confirm expectedtransaction success
 	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
 	s.Require().NoError(err)
 }
 
-func (s *TimelockInspectionTestSuite) scheduleBatch(calls []timelock.Call, predecessor *big.Int, salt *big.Int, delay uint32) {
+func (s *TimelockInspectionTestSuite) scheduleBatch(timelockAddr *address.Address, calls []timelock.Call, predecessor *big.Int, salt *big.Int, delay uint32) {
 	ctx := s.T().Context()
 	body, err := tlb.ToCell(timelock.ScheduleBatch{
 		QueryID: must(mcmston.RandomQueryID()),
@@ -90,7 +88,7 @@ func (s *TimelockInspectionTestSuite) scheduleBatch(calls []timelock.Call, prede
 		InternalMessage: &tlb.InternalMessage{
 			IHRDisabled: true,
 			Bounce:      true,
-			DstAddr:     s.timelockAddr,
+			DstAddr:     timelockAddr,
 			Amount:      tlb.MustFromTON("0.3"),
 			Body:        body,
 		},
@@ -100,7 +98,6 @@ func (s *TimelockInspectionTestSuite) scheduleBatch(calls []timelock.Call, prede
 	s.Require().NoError(err)
 	s.Require().NotNil(tx)
 
-	// TODO: confirm expectedtransaction success
 	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
 	s.Require().NoError(err)
 }
@@ -238,13 +235,12 @@ func (s *TimelockInspectionTestSuite) TestIsOperation() {
 	delay := 3600
 	pred := common.Hash([32]byte{0x0})
 	salt := common.Hash([32]byte{0x01})
-	s.scheduleBatch(calls, pred.Big(), salt.Big(), uint32(delay))
+	s.scheduleBatch(s.timelockAddr, calls, pred.Big(), salt.Big(), uint32(delay))
 
 	opID, err := mcmston.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
 	isOP, err := inspector.IsOperation(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
-	s.Require().NotNil(isOP)
 	s.Require().True(isOP)
 }
 
@@ -262,16 +258,15 @@ func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 		},
 	}
 	delay := 3600
-	pred, err := mcmston.HashOperationBatch(calls, [32]byte{0x0}, [32]byte{0x01})
-	s.Require().NoError(err)
 	salt := common.Hash([32]byte{0x01})
-	s.scheduleBatch(calls, pred.Big(), salt.Big(), uint32(delay))
+	pred, err := mcmston.HashOperationBatch(calls, [32]byte{0x0}, salt)
+	s.Require().NoError(err)
+	s.scheduleBatch(s.timelockAddr, calls, pred.Big(), salt.Big(), uint32(delay))
 
 	opID, err := mcmston.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
 	isOP, err := inspector.IsOperationPending(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
-	s.Require().NotNil(isOP)
 	s.Require().True(isOP)
 }
 
@@ -289,18 +284,17 @@ func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 		},
 	}
 	delay := 0
-	pred2, err := mcmston.HashOperationBatch(calls, [32]byte{0x0}, [32]byte{0x01})
-	s.Require().NoError(err)
-	pred, err := mcmston.HashOperationBatch(calls, pred2, [32]byte{0x01})
-	s.Require().NoError(err)
 	salt := common.Hash([32]byte{0x01})
-	s.scheduleBatch(calls, pred.Big(), salt.Big(), uint32(delay))
+	pred2, err := mcmston.HashOperationBatch(calls, [32]byte{0x0}, salt)
+	s.Require().NoError(err)
+	pred, err := mcmston.HashOperationBatch(calls, pred2, salt)
+	s.Require().NoError(err)
+	s.scheduleBatch(s.timelockAddr, calls, pred.Big(), salt.Big(), uint32(delay))
 
 	opID, err := mcmston.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
 	isOP, err := inspector.IsOperationReady(ctx, s.timelockAddr.String(), opID)
 	s.Require().NoError(err)
-	s.Require().NotNil(isOP)
 	s.Require().True(isOP)
 }
 
@@ -308,7 +302,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	ctx := s.T().Context()
 
 	// Deploy a new timelock for this test
-	timelockAddr, err := s.deployTimelockContract(hash.CRC32("test.timelock_inspection.timelock.1"))
+	newTimelockAddr, err := s.deployTimelockContract(hash.CRC32("test.timelock_inspection.timelock.1"))
 	s.Require().NoError(err)
 
 	// Schedule a test operation
@@ -320,51 +314,88 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 		},
 	}
 	delay := 0
-	pred2, err := mcmston.HashOperationBatch(calls, [32]byte{0x0}, [32]byte{0x01})
-	s.Require().NoError(err)
-	pred, err := mcmston.HashOperationBatch(calls, pred2, [32]byte{0x01})
-	s.Require().NoError(err)
+	pred := common.Hash([32]byte{0x0})
 	salt := common.Hash([32]byte{0x01})
-	s.scheduleBatch(calls, pred.Big(), salt.Big(), uint32(delay))
 
-	// Use `Eventually` to wait for the transaction to be mined and the operation to be done
-	s.Require().Eventually(func() bool {
-		// Attempt to execute the batch
-		executor, err := mcmston.NewTimelockExecutor(s.TonClient, s.wallet, tlb.MustFromTON("0.2"))
-		s.Require().NoError(err, "Failed to create TimelockExecutor")
+	id, err := mcmston.HashOperationBatch(calls, pred, salt)
+	s.Require().NoError(err)
 
-		bop := types.BatchOperation{
-			ChainSelector: types.ChainSelector(cselectors.TON_LOCALNET.Selector),
-			Transactions: []types.Transaction{
-				{
-					To:               s.accounts[1].String(),
-					Data:             cell.BeginCell().EndCell().ToBOC(),
-					AdditionalFields: json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.1").Nano().Uint64())),
-				},
+	s.scheduleBatch(newTimelockAddr, calls, pred.Big(), salt.Big(), uint32(delay))
+
+	inspector := mcmston.NewTimelockInspector(s.TonClient)
+	isOp, err := inspector.IsOperation(ctx, newTimelockAddr.String(), id)
+	s.Require().NoError(err, "Failed to check if operation exists")
+	s.Require().True(isOp, "Operation should exist")
+
+	isOpPending, err := inspector.IsOperationPending(ctx, newTimelockAddr.String(), id)
+	s.Require().NoError(err, "Failed to check if operation is pending")
+	s.Require().True(isOpPending, "Operation should be pending")
+
+	isOpReady, err := inspector.IsOperationReady(ctx, newTimelockAddr.String(), id)
+	s.Require().NoError(err, "Failed to check if operation is ready")
+	s.Require().True(isOpReady, "Operation should be ready")
+
+	isOpDone, err := inspector.IsOperationDone(ctx, newTimelockAddr.String(), id)
+	s.Require().NoError(err, "Failed to check if operation is done")
+	s.Require().False(isOpDone, "Operation should not be done yet")
+
+	// Attempt to execute the batch
+	executor, err := mcmston.NewTimelockExecutor(s.TonClient, s.wallet, tlb.MustFromTON("0.2"))
+	s.Require().NoError(err, "Failed to create TimelockExecutor")
+
+	bop := types.BatchOperation{
+		ChainSelector: types.ChainSelector(cselectors.TON_LOCALNET.Selector),
+		Transactions: []types.Transaction{
+			{
+				To:               s.accounts[1].String(),
+				Data:             cell.BeginCell().EndCell().ToBOC(),
+				AdditionalFields: json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.1").Nano().Uint64())),
 			},
-		}
-		res, err := executor.Execute(ctx, bop, timelockAddr.String(), pred, salt)
-		s.Require().NoError(err, "Failed to execute batch")
-		s.Require().NotEmpty(res.Hash, "Transaction hash is empty")
+		},
+	}
 
-		// Wait for the transaction to be mined
-		tx, ok := res.RawData.(*tlb.Transaction)
-		s.Require().True(ok)
-		s.Require().NotNil(tx.Description)
+	// Test same ID
+	_calls, err := mcmston.ConvertBatchToCalls(bop)
+	s.Require().NoError(err, "Failed to convert batch to calls")
 
-		err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
-		s.Require().NoError(err)
+	_id, err := mcmston.HashOperationBatch(_calls, pred, salt)
+	s.Require().NoError(err, "Failed to compute operation ID")
+	s.Require().Equal(id, _id, "Operation IDs do not match")
 
-		// Check if the operation is done
-		inspector := mcmston.NewTimelockInspector(s.TonClient)
-		opID, err := mcmston.HashOperationBatch(calls, pred, salt)
-		s.Require().NoError(err, "Failed to compute operation ID")
+	res, err := executor.Execute(ctx, bop, newTimelockAddr.String(), pred, salt)
+	s.Require().NoError(err, "Failed to execute batch")
+	s.Require().NotEmpty(res.Hash, "Transaction hash is empty")
 
-		isOpDone, err := inspector.IsOperationDone(ctx, timelockAddr.String(), opID)
-		s.Require().NoError(err, "Failed to check if operation is done")
+	// Wait for the transaction to be mined
+	tx, ok := res.RawData.(*tlb.Transaction)
+	s.Require().True(ok)
+	s.Require().NotNil(tx.Description)
 
-		return isOpDone
-	}, 5*time.Second, 500*time.Millisecond, "Operation was not completed in time")
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	s.Require().NoError(err)
+
+	// Check the operation (still) exists
+	isOp, err = inspector.IsOperation(ctx, newTimelockAddr.String(), id)
+	s.Require().NoError(err, "Failed to check if operation exists")
+	s.Require().True(isOp, "Operation should exist")
+
+	// Check the operation is NOT pending anymore
+	isOpPending, err = inspector.IsOperationPending(ctx, newTimelockAddr.String(), id)
+	s.Require().NoError(err, "Failed to check if operation is pending")
+	s.Require().False(isOpPending, "Operation should NOT be pending")
+
+	// Check the operation is NOT done
+	isOpDone, err = inspector.IsOperationDone(ctx, newTimelockAddr.String(), id)
+	s.Require().NoError(err, "Failed to check if operation is done")
+	s.Require().False(isOpDone, "Operation should NOT be done (in error state)")
+
+	// Check the operation is in error state (bounced from an uninitialized account)
+	tonInspector, ok := inspector.(*mcmston.TimelockInspector)
+	s.Require().True(ok, "Inspector is not of type TimelockInspector")
+
+	isOpError, err := tonInspector.IsOperationError(ctx, newTimelockAddr.String(), id)
+	s.Require().NoError(err, "Failed to check if operation is in error state")
+	s.Require().True(isOpError, "Operation should be in error state")
 }
 
 // TestGetMinDelay tests the GetMinDelay method
