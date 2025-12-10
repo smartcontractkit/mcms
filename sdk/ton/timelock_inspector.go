@@ -13,18 +13,18 @@ import (
 	"github.com/smartcontractkit/mcms/sdk"
 )
 
-var _ sdk.TimelockInspector = (*timelockInspector)(nil)
+var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 
 // TimelockInspector is an Inspector implementation for TON, for accessing the MCMS-Timelock contract
-type timelockInspector struct {
+type TimelockInspector struct {
 	client ton.APIClientWrapped
 }
 
 func NewTimelockInspector(client ton.APIClientWrapped) sdk.TimelockInspector {
-	return &timelockInspector{client}
+	return &TimelockInspector{client}
 }
 
-func (i timelockInspector) GetMinDelay(ctx context.Context, _address string) (uint64, error) {
+func (i TimelockInspector) GetMinDelay(ctx context.Context, _address string) (uint64, error) {
 	// Map to Ton Address type (timelock.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
@@ -51,37 +51,37 @@ func (i timelockInspector) GetMinDelay(ctx context.Context, _address string) (ui
 }
 
 // GetAdmins returns the list of addresses with the admin role
-func (i timelockInspector) GetAdmins(ctx context.Context, addr string) ([]string, error) {
+func (i TimelockInspector) GetAdmins(ctx context.Context, addr string) ([]string, error) {
 	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleAdmin.Bytes()))
 }
 
 // GetProposers returns the list of addresses with the proposer role
-func (i timelockInspector) GetProposers(ctx context.Context, addr string) ([]string, error) {
+func (i TimelockInspector) GetProposers(ctx context.Context, addr string) ([]string, error) {
 	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleProposer.Bytes()))
 }
 
 // GetExecutors returns the list of addresses with the executor role
-func (i timelockInspector) GetExecutors(ctx context.Context, addr string) ([]string, error) {
+func (i TimelockInspector) GetExecutors(ctx context.Context, addr string) ([]string, error) {
 	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleExecutor.Bytes()))
 }
 
 // GetBypassers returns the list of addresses with the bypasser role
-func (i timelockInspector) GetBypassers(ctx context.Context, addr string) ([]string, error) {
+func (i TimelockInspector) GetBypassers(ctx context.Context, addr string) ([]string, error) {
 	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleBypasser.Bytes()))
 }
 
 // GetCancellers returns the list of addresses with the canceller role
-func (i timelockInspector) GetCancellers(ctx context.Context, addr string) ([]string, error) {
+func (i TimelockInspector) GetCancellers(ctx context.Context, addr string) ([]string, error) {
 	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleCanceller.Bytes()))
 }
 
 // GetOracles returns the list of addresses with the oracle role
-func (i timelockInspector) GetOracles(ctx context.Context, addr string) ([]string, error) {
+func (i TimelockInspector) GetOracles(ctx context.Context, addr string) ([]string, error) {
 	return i.getRoleMembers(ctx, addr, [32]byte(timelock.RoleOracle.Bytes()))
 }
 
 // getRoleMembers returns the list of addresses with the given role
-func (i timelockInspector) getRoleMembers(ctx context.Context, _address string, role [32]byte) ([]string, error) {
+func (i TimelockInspector) getRoleMembers(ctx context.Context, _address string, role [32]byte) ([]string, error) {
 	// Map to Ton Address type (timelock.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
@@ -130,7 +130,7 @@ func (i timelockInspector) getRoleMembers(ctx context.Context, _address string, 
 	return addresses, nil
 }
 
-func (i timelockInspector) IsOperation(ctx context.Context, _address string, opID [32]byte) (bool, error) {
+func (i TimelockInspector) IsOperation(ctx context.Context, _address string, opID [32]byte) (bool, error) {
 	// Map to Ton Address type (timelock.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
@@ -157,7 +157,7 @@ func (i timelockInspector) IsOperation(ctx context.Context, _address string, opI
 	return rs.Uint64() == 1, nil
 }
 
-func (i timelockInspector) IsOperationPending(ctx context.Context, _address string, opID [32]byte) (bool, error) {
+func (i TimelockInspector) IsOperationPending(ctx context.Context, _address string, opID [32]byte) (bool, error) {
 	// Map to Ton Address type (timelock.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
@@ -184,7 +184,7 @@ func (i timelockInspector) IsOperationPending(ctx context.Context, _address stri
 	return rs.Uint64() == 1, nil
 }
 
-func (i timelockInspector) IsOperationReady(ctx context.Context, _address string, opID [32]byte) (bool, error) {
+func (i TimelockInspector) IsOperationReady(ctx context.Context, _address string, opID [32]byte) (bool, error) {
 	// Map to Ton Address type (timelock.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
@@ -211,7 +211,7 @@ func (i timelockInspector) IsOperationReady(ctx context.Context, _address string
 	return rs.Uint64() == 1, nil
 }
 
-func (i timelockInspector) IsOperationDone(ctx context.Context, _address string, opID [32]byte) (bool, error) {
+func (i TimelockInspector) IsOperationDone(ctx context.Context, _address string, opID [32]byte) (bool, error) {
 	// Map to Ton Address type (timelock.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
@@ -233,6 +233,33 @@ func (i timelockInspector) IsOperationDone(ctx context.Context, _address string,
 	rs, err := result.Int(0)
 	if err != nil {
 		return false, fmt.Errorf("error getting isOperationDone result: %w", err)
+	}
+
+	return rs.Uint64() == 1, nil
+}
+
+func (i TimelockInspector) IsOperationError(ctx context.Context, _address string, opID [32]byte) (bool, error) {
+	// Map to Ton Address type (timelock.address)
+	addr, err := address.ParseAddr(_address)
+	if err != nil {
+		return false, fmt.Errorf("invalid timelock address: %w", err)
+	}
+
+	// TODO: mv and import from github.com/smartcontractkit/chainlink-ton/bindings/mcms/timelock
+	block, err := i.client.CurrentMasterchainInfo(ctx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get current masterchain info: %w", err)
+	}
+
+	_opID := new(big.Int).SetBytes(opID[:])
+	result, err := i.client.RunGetMethod(ctx, block, addr, "isOperationError", _opID)
+	if err != nil {
+		return false, fmt.Errorf("error getting isOperationError: %w", err)
+	}
+
+	rs, err := result.Int(0)
+	if err != nil {
+		return false, fmt.Errorf("error getting isOperationError result: %w", err)
 	}
 
 	return rs.Uint64() == 1, nil
