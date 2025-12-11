@@ -111,8 +111,8 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorMetadata[:]), SizeUINT256); err != nil {
 		return common.Hash{}, fmt.Errorf("failed to store domain separator: %w", err)
 	}
-	if err := b.StoreRef(metaCell); err != nil {
-		return common.Hash{}, fmt.Errorf("failed to store meta cell ref: %w", err)
+	if err := b.StoreBuilder(metaCell.ToBuilder()); err != nil {
+		return common.Hash{}, fmt.Errorf("failed to store metadata bytes: %w", err)
 	}
 
 	var hash common.Hash
