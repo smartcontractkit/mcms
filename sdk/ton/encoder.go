@@ -174,6 +174,7 @@ func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadat
 	// TODO (ton): fix me, GLOBAL_ID -217 for mulocalton is not applied and -1 default is returned on-chain
 	if chainID == chain_selectors.TON_LOCALNET.ChainID {
 		chainID = -1
+		//nolint:forbidigo // only used in tests, needs to be fixed properly
 		fmt.Println("WARNING (fix me): Using TON chainID -1 for localton instead of -217 from GLOBAL_ID")
 	}
 

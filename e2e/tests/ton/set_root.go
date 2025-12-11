@@ -166,11 +166,10 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	_, err = signable.SignAndAppend(mcmslib.NewPrivateKeySigner(s.signers[0].Key))
 	s.Require().NoError(err)
 
-	// TODO: errors on TON, getter called before setter
 	// Validate the signatures
-	// quorumMet, err := signable.ValidateSignatures(ctx)
-	// s.Require().NoError(err)
-	// s.Require().True(quorumMet)
+	quorumMet, err := signable.ValidateSignatures(ctx)
+	s.Require().NoError(err)
+	s.Require().True(quorumMet)
 
 	// Create the chain MCMS proposal executor
 	encoders, err := proposal.GetEncoders()
@@ -261,16 +260,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 		s.chainSelector: executor,
 	}
 
-	// TODO: no simulation on TON
-	// // Prepare and execute simulation
-	// simulator, err := evm.NewSimulator(encoder, s.ClientA)
-	// s.Require().NoError(err, "Failed to create simulator")
-	// simulators := map[types.ChainSelector]sdk.Simulator{
-	// 	s.chainSelector: simulator,
-	// }
-	// signable.SetSimulators(simulators)
-	// err = signable.Simulate(ctx)
-	// s.Require().NoError(err)
+	// Notice: no simulation on TON (like on EVM)
 
 	// Create the chain MCMS proposal executor
 	executable, err := mcmslib.NewExecutable(&proposal, executorsMap)
