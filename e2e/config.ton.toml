@@ -8,7 +8,7 @@ private_keys = [
 [ton_config]
 chain_id = "-217"
 type = "ton"
-image = "ghcr.io/neodix42/mylocalton-docker:v3.95"
+image = "ghcr.io/neodix42/mylocalton-docker:v3.97"
 
 [ton_config.out]
 family = "ton"
@@ -16,3 +16,4 @@ family = "ton"
 [ton_config.custom_env]
 GLOBAL_ID = "-217"
 NEXT_BLOCK_GENERATION_DELAY = "0.5"
+VERSION_CAPABILITIES = "12"

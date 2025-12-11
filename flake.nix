@@ -5,7 +5,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
 
-    chainlink-ton.url = "github:smartcontractkit/chainlink-ton";
+    chainlink-ton.url = "github:smartcontractkit/chainlink-ton/chore/mcms-polish-4";
   };
 
   outputs = inputs @ {

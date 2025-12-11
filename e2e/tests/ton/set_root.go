@@ -195,11 +195,9 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	s.Require().True(ok)
 	s.Require().NotNil(tx)
 
+	// Wait and check success
 	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
 	s.Require().NoError(err)
-
-	// TODO (ton): check success
-	// s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }
 
 // TestSetRootTimelockProposal sets the root of the MCMS contract from a timelock proposal type.
@@ -287,9 +285,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	s.Require().True(ok)
 	s.Require().NotNil(tx)
 
+	// Wait and check success
 	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
 	s.Require().NoError(err)
-
-	// TODO (ton): check success
-	// s.Require().Equal(types.ReceiptStatusSuccessful, receipt.Status)
 }
