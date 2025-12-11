@@ -35,7 +35,7 @@ func NewInspector(client ton.APIClientWrapped) sdk.Inspector {
 }
 
 // TODO(ton): use GetConfig from chainlink-ton/pkg/bindings/mcms/mcms
-func (i *Inspector) GetConfig(ctx context.Context, _address string) (*types.Config, error) {
+func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Config, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
@@ -102,7 +102,7 @@ func (i *Inspector) GetConfig(ctx context.Context, _address string) (*types.Conf
 }
 
 // TODO(ton): use GetOpCount from chainlink-ton/pkg/bindings/mcms/mcms
-func (i *Inspector) GetOpCount(ctx context.Context, _address string) (uint64, error) {
+func (i Inspector) GetOpCount(ctx context.Context, _address string) (uint64, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
@@ -129,7 +129,7 @@ func (i *Inspector) GetOpCount(ctx context.Context, _address string) (uint64, er
 }
 
 // TODO(ton): use GetRoot from chainlink-ton/pkg/bindings/mcms/mcms
-func (i *Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, uint32, error) {
+func (i Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, uint32, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
@@ -162,7 +162,7 @@ func (i *Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, 
 }
 
 // TODO(ton): use GetRootMetadata from chainlink-ton/pkg/bindings/mcms/mcms
-func (i *Inspector) GetRootMetadata(ctx context.Context, _address string) (types.ChainMetadata, error) {
+func (i Inspector) GetRootMetadata(ctx context.Context, _address string) (types.ChainMetadata, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {

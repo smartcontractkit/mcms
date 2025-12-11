@@ -120,7 +120,6 @@ func (s *SetRootTestSuite) TestGetConfig() {
 
 	inspector := mcmston.NewInspector(s.TonClient)
 	config, err := inspector.GetConfig(ctx, s.mcmsAddr)
-
 	s.Require().NoError(err, "Failed to get contract configuration")
 	s.Require().NotNil(config, "Contract configuration is nil")
 

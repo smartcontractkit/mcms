@@ -150,7 +150,7 @@ func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op t
 	}
 
 	return mcms.Op{
-		ChainID:  (&big.Int{}).SetInt64(int64(chainID)),
+		ChainID:  new(big.Int).SetInt64(int64(chainID)),
 		MultiSig: mcmsAddr,
 		Nonce:    uint64(opCount),
 		To:       toAddr,
@@ -171,8 +171,14 @@ func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadat
 		return mcms.RootMetadata{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
+	// TODO (ton): fix me, GLOBAL_ID -217 for mulocalton is not applied and -1 default is returned on-chain
+	if chainID == chain_selectors.TON_LOCALNET.ChainID {
+		chainID = -1
+		fmt.Println("WARNING (fix me): Using TON chainID -1 for localton instead of -217 from GLOBAL_ID")
+	}
+
 	return mcms.RootMetadata{
-		ChainID:              (&big.Int{}).SetInt64(int64(chainID)),
+		ChainID:              new(big.Int).SetInt64(int64(chainID)),
 		MultiSig:             mcmsAddr,
 		PreOpCount:           metadata.StartingOpCount,
 		PostOpCount:          metadata.StartingOpCount + e.TxCount,
