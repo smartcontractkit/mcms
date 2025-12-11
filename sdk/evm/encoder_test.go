@@ -16,7 +16,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestEncoderHashOperation(t *testing.T) {
+func TestEncoder_HashOperation(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -78,7 +78,7 @@ func TestEncoderHashOperation(t *testing.T) {
 	}
 }
 
-func TestEncoderHashMetadata(t *testing.T) {
+func TestEncoder_HashMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -122,7 +122,7 @@ func TestEncoderHashMetadata(t *testing.T) {
 	}
 }
 
-func TestEncoderToGethOperation(t *testing.T) {
+func TestEncoder_ToGethOperation(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -203,7 +203,7 @@ func TestEncoderToGethOperation(t *testing.T) {
 	}
 }
 
-func TestEncoderToGethRootMetadata(t *testing.T) {
+func TestEncoder_ToGethRootMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

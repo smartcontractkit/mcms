@@ -25,7 +25,7 @@ func TestNewEncoder(t *testing.T) {
 	require.True(t, encoder.OverridePreviousRoot)
 }
 
-func TestEncoderHashOperation(t *testing.T) {
+func TestEncoder_HashOperation(t *testing.T) {
 	t.Parallel()
 	solanaTx, err := NewTransaction(
 		testAccount.String(),
@@ -172,7 +172,7 @@ func TestEncoderHashOperation(t *testing.T) {
 	}
 }
 
-func TestEncoderHashMetadata(t *testing.T) {
+func TestEncoder_HashMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

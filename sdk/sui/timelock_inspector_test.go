@@ -27,7 +27,7 @@ func TestNewTimelockInspector(t *testing.T) {
 	assert.NotNil(t, inspector.mcms)
 }
 
-func TestTimelockInspectorGetProposers(t *testing.T) {
+func TestTimelockInspector_GetProposers(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -43,7 +43,7 @@ func TestTimelockInspectorGetProposers(t *testing.T) {
 	assert.Contains(t, err.Error(), "unsupported on Sui")
 }
 
-func TestTimelockInspectorGetExecutors(t *testing.T) {
+func TestTimelockInspector_GetExecutors(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -59,7 +59,7 @@ func TestTimelockInspectorGetExecutors(t *testing.T) {
 	assert.Contains(t, err.Error(), "unsupported on Sui")
 }
 
-func TestTimelockInspectorGetBypassers(t *testing.T) {
+func TestTimelockInspector_GetBypassers(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -75,7 +75,7 @@ func TestTimelockInspectorGetBypassers(t *testing.T) {
 	assert.Contains(t, err.Error(), "unsupported on Sui")
 }
 
-func TestTimelockInspectorGetCancellers(t *testing.T) {
+func TestTimelockInspector_GetCancellers(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -91,7 +91,7 @@ func TestTimelockInspectorGetCancellers(t *testing.T) {
 	assert.Contains(t, err.Error(), "unsupported on Sui")
 }
 
-func TestTimelockInspectorGetMinDelay(t *testing.T) {
+func TestTimelockInspector_GetMinDelay(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -125,7 +125,7 @@ func TestTimelockInspectorGetMinDelay(t *testing.T) {
 	assert.Equal(t, uint64(600), result)
 }
 
-func TestTimelockInspectorIsOperation(t *testing.T) {
+func TestTimelockInspector_IsOperation(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -161,7 +161,7 @@ func TestTimelockInspectorIsOperation(t *testing.T) {
 	assert.True(t, result)
 }
 
-func TestTimelockInspectorIsOperationPending(t *testing.T) {
+func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -197,7 +197,7 @@ func TestTimelockInspectorIsOperationPending(t *testing.T) {
 	assert.False(t, result)
 }
 
-func TestTimelockInspectorIsOperationReady(t *testing.T) {
+func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -234,7 +234,7 @@ func TestTimelockInspectorIsOperationReady(t *testing.T) {
 	assert.True(t, result)
 }
 
-func TestTimelockInspectorIsOperationDone(t *testing.T) {
+func TestTimelockInspector_IsOperationDone(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 

@@ -15,7 +15,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestTimelockConverterConvertBatchToChainOperation(t *testing.T) {
+func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

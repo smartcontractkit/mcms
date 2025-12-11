@@ -36,7 +36,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	assert.NotNil(t, executor.bindingFn)
 }
 
-func TestExecutorExecute(t *testing.T) {
+func TestExecutor_Execute(t *testing.T) {
 	t.Parallel()
 	type args struct {
 		bop             types.BatchOperation

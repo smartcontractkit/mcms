@@ -12,7 +12,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestEncoderHashOperation(t *testing.T) {
+func TestEncoder_HashOperation(t *testing.T) {
 	t.Parallel()
 	type fields struct {
 		ChainSelector        types.ChainSelector
@@ -131,7 +131,7 @@ func TestEncoderHashOperation(t *testing.T) {
 	}
 }
 
-func TestEncoderHashMetadata(t *testing.T) {
+func TestEncoder_HashMetadata(t *testing.T) {
 	t.Parallel()
 	type fields struct {
 		ChainSelector        types.ChainSelector

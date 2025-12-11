@@ -189,7 +189,7 @@ func TestEncodeSignatures_LargeVValue(t *testing.T) {
 	assert.Equal(t, byte(30), encoded[0][64]) // V value should remain unchanged
 }
 
-func TestExecutorSetRoot_IfImplemented(t *testing.T) {
+func TestExecutor_SetRoot_IfImplemented(t *testing.T) {
 	t.Parallel()
 
 	signatures := []types.Signature{
@@ -213,7 +213,7 @@ func TestExecutorSetRoot_IfImplemented(t *testing.T) {
 	assert.Len(t, encoded[1], 65) // 32 + 32 + 1
 }
 
-func TestExecutorSetRoot(t *testing.T) {
+func TestExecutor_SetRoot(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -281,7 +281,7 @@ func TestExecutorSetRoot(t *testing.T) {
 	assert.Equal(t, expectedResponse, result.RawData)
 }
 
-func TestExecutorExecuteOperation_InvalidAdditionalFields(t *testing.T) {
+func TestExecutor_ExecuteOperation_InvalidAdditionalFields(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -323,7 +323,7 @@ func TestExecutorExecuteOperation_InvalidAdditionalFields(t *testing.T) {
 	assert.Empty(t, result.Hash)
 }
 
-func TestExecutorExecuteOperation_Success_ScheduleBatch(t *testing.T) {
+func TestExecutor_ExecuteOperation_Success_ScheduleBatch(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -408,7 +408,7 @@ func TestExecutorExecuteOperation_Success_ScheduleBatch(t *testing.T) {
 	assert.Equal(t, "9WzSXdwbky8tNbH7juvyaui4QzMUYEjdCEKMrMgLhXHT", result.Hash)
 }
 
-func TestExecutorExecuteOperation_Success_Bypass(t *testing.T) {
+func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -523,7 +523,7 @@ func TestExecutorExecuteOperation_Success_Bypass(t *testing.T) {
 	assert.Equal(t, "0xbypass_success_digest", result.Hash)
 }
 
-func TestExecutorExecuteOperation_Success_Cancel(t *testing.T) {
+func TestExecutor_ExecuteOperation_Success_Cancel(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
@@ -620,7 +620,7 @@ func TestExecutorExecuteOperation_Success_Cancel(t *testing.T) {
 	assert.Equal(t, "0xcancel_success_digest", result.Hash)
 }
 
-func TestExecutorExecuteOperation_Cancel_InvalidOperationID(t *testing.T) {
+func TestExecutor_ExecuteOperation_Cancel_InvalidOperationID(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 

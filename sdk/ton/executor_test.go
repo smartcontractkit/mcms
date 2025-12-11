@@ -41,7 +41,7 @@ func TestNewExecutor(t *testing.T) {
 	assert.NoError(t, err)
 }
 
-func TestExecutorExecuteOperation(t *testing.T) {
+func TestExecutor_ExecuteOperation(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
@@ -192,7 +192,7 @@ func TestExecutorExecuteOperation(t *testing.T) {
 	}
 }
 
-func TestExecutorSetRoot(t *testing.T) {
+func TestExecutor_SetRoot(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
