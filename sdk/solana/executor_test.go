@@ -39,7 +39,7 @@ func TestNewExecutor(t *testing.T) {
 	require.NotNil(t, executor)
 }
 
-func TestExecutorExecuteOperation(t *testing.T) { //nolint:paralleltest
+func TestExecutor_ExecuteOperation(t *testing.T) { //nolint:paralleltest
 	type args struct {
 		metadata types.ChainMetadata
 		nonce    uint32
@@ -184,7 +184,7 @@ func TestExecutorExecuteOperation(t *testing.T) { //nolint:paralleltest
 	}
 }
 
-func TestExecutorSetRoot(t *testing.T) { //nolint:paralleltest
+func TestExecutor_SetRoot(t *testing.T) { //nolint:paralleltest
 	ctx := context.Background()
 	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
 	auth, err := solana.NewRandomPrivateKey()

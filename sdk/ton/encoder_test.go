@@ -20,7 +20,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 )
 
-func TestEncoderHashOperation(t *testing.T) {
+func TestEncoder_HashOperation(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -82,7 +82,7 @@ func TestEncoderHashOperation(t *testing.T) {
 	}
 }
 
-func TestEncoderHashMetadata(t *testing.T) {
+func TestEncoder_HashMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
@@ -128,7 +128,7 @@ func TestEncoderHashMetadata(t *testing.T) {
 	}
 }
 
-func TestEncoderToOperation(t *testing.T) {
+func TestEncoder_ToOperation(t *testing.T) {
 	t.Parallel()
 
 	var (
@@ -212,7 +212,7 @@ func TestEncoderToOperation(t *testing.T) {
 	}
 }
 
-func TestEncoderToRootMetadata(t *testing.T) {
+func TestEncoder_ToRootMetadata(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

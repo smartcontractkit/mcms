@@ -16,7 +16,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 )
 
-func TestTimelockInspectorGetProposers(t *testing.T) {
+func TestTimelockInspector_GetProposers(t *testing.T) {
 	t.Parallel()
 
 	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
@@ -73,7 +73,7 @@ func TestTimelockInspectorGetProposers(t *testing.T) {
 	}
 }
 
-func TestTimelockInspectorGetExecutors(t *testing.T) {
+func TestTimelockInspector_GetExecutors(t *testing.T) {
 	t.Parallel()
 
 	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
@@ -130,7 +130,7 @@ func TestTimelockInspectorGetExecutors(t *testing.T) {
 	}
 }
 
-func TestTimelockInspectorGetBypassers(t *testing.T) {
+func TestTimelockInspector_GetBypassers(t *testing.T) {
 	t.Parallel()
 
 	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
@@ -187,7 +187,7 @@ func TestTimelockInspectorGetBypassers(t *testing.T) {
 	}
 }
 
-func TestTimelockInspectorGetCancellers(t *testing.T) {
+func TestTimelockInspector_GetCancellers(t *testing.T) {
 	t.Parallel()
 
 	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
@@ -244,7 +244,7 @@ func TestTimelockInspectorGetCancellers(t *testing.T) {
 	}
 }
 
-func TestTimelockInspectorIsOperation(t *testing.T) {
+func TestTimelockInspector_IsOperation(t *testing.T) {
 	t.Parallel()
 	operationPDA, err := FindTimelockOperationPDA(testTimelockProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
@@ -297,7 +297,7 @@ func TestTimelockInspectorIsOperation(t *testing.T) {
 	}
 }
 
-func TestTimelockInspectorIsOperationPending(t *testing.T) {
+func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	t.Parallel()
 	operationPDA, err := FindTimelockOperationPDA(testTimelockProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
@@ -351,7 +351,7 @@ func TestTimelockInspectorIsOperationPending(t *testing.T) {
 	}
 }
 
-func TestTimelockInspectorIsOperationReady(t *testing.T) {
+func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	t.Parallel()
 	operationPDA, err := FindTimelockOperationPDA(testTimelockProgramID, testPDASeed, testOpID)
 	require.NoError(t, err)
@@ -515,7 +515,7 @@ func TestIsOperationDone(t *testing.T) {
 	}
 }
 
-func TestTimelockInspectorgetRoleAccessController(t *testing.T) {
+func TestTimelockInspector_getRoleAccessController(t *testing.T) {
 	t.Parallel()
 
 	config := createTimelockConfig(t)
@@ -569,7 +569,7 @@ func TestTimelockInspectorgetRoleAccessController(t *testing.T) {
 	}
 }
 
-func TestTimelockInspectorGetMinDelay(t *testing.T) {
+func TestTimelockInspector_GetMinDelay(t *testing.T) {
 	t.Parallel()
 
 	timelockConfigPDA, err := FindTimelockConfigPDA(testTimelockProgramID, testPDASeed)
