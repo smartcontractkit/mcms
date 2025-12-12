@@ -135,7 +135,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 
 			_api := ton_mocks.NewTonAPI(t)
 			chainID := chaintest.Chain7TONID
-			walletOperator := must(tvm.NewRandomTestWallet(_api, chainID))
+			walletOperator := must(tvm.NewRandomV5R1TestWallet(_api, chainID))
 
 			// Apply the mock setup for the ContractDeployBackend
 			if tt.mockSetup != nil {

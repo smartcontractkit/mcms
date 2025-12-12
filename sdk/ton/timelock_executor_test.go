@@ -31,7 +31,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	chainID := chaintest.Chain7TONID
 
 	_api := ton_mocks.NewTonAPI(t)
-	walletOperator := must(tvm.NewRandomTestWallet(_api, chainID))
+	walletOperator := must(tvm.NewRandomV5R1TestWallet(_api, chainID))
 	client := ton_mocks.NewAPIClientWrapped(t)
 
 	executor, err := tonmcms.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
@@ -127,7 +127,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			// Initialize the mock
 			chainID := chaintest.Chain7TONID
 			_api := ton_mocks.NewTonAPI(t)
-			walletOperator := must(tvm.NewRandomTestWallet(_api, chainID))
+			walletOperator := must(tvm.NewRandomV5R1TestWallet(_api, chainID))
 
 			client := ton_mocks.NewAPIClientWrapped(t)
 
