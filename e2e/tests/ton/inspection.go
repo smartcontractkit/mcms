@@ -14,6 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/internal/testutils"
@@ -40,7 +41,7 @@ func (s *InspectionTestSuite) SetupSuite() {
 	s.signers = testutils.MakeNewECDSASigners(2)
 
 	var err error
-	s.wallet, err = LocalWalletDefault(s.TonClient)
+	s.wallet, err = tvm.MyLocalTONWalletDefault(s.TonClient)
 	s.Require().NoError(err)
 
 	s.deployMCMSContract()

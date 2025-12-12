@@ -10,6 +10,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -82,7 +83,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	}
 
 	// Encode SetConfig message
-	sz := uint(SizeUINT8)
+	sz := uint(tvm.SizeUINT8)
 	gqDict := cell.NewDict(sz)
 	for i, g := range groupQuorum {
 		err = gqDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
@@ -99,7 +100,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		}
 	}
 
-	qID, err := RandomQueryID()
+	qID, err := tvm.RandomQueryID()
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
 	}

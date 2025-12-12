@@ -21,6 +21,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
 var _ sdk.TimelockExecutor = (*timelockExecutor)(nil)
@@ -61,7 +62,7 @@ func (e *timelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("failed to convert batch to calls: %w", err)
 	}
 
-	qID, err := RandomQueryID()
+	qID, err := tvm.RandomQueryID()
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
 	}

@@ -15,6 +15,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
 var _ sdk.Inspector = (*Inspector)(nil)
@@ -57,7 +58,7 @@ func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Confi
 		return nil, errors.New("error: getConfig returned less than 3 cells")
 	}
 
-	keySz := uint(SizeUINT8)
+	keySz := uint(tvm.SizeUINT8)
 	signers := cell.NewDict(keySz)
 	if rResult[0] != nil {
 		rc0, err := r.Cell(0)

@@ -66,7 +66,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 	}
 
 	var err error
-	s.wallet, err = LocalWalletDefault(s.TonClient)
+	s.wallet, err = tvm.MyLocalTONWalletDefault(s.TonClient)
 	s.Require().NoError(err)
 
 	s.deployMCMSContract()

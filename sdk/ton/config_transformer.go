@@ -11,6 +11,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/sdk"
 
@@ -62,7 +63,7 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 		idx++
 	}
 
-	keySz := uint(SizeUINT8)
+	keySz := uint(tvm.SizeUINT8)
 	signersDict := cell.NewDict(keySz)
 	for i, s := range signers {
 		var sc *cell.Cell
@@ -77,7 +78,7 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 		}
 	}
 
-	sz := uint(SizeUINT8)
+	sz := uint(tvm.SizeUINT8)
 	gqDict := cell.NewDict(keySz)
 	for i, g := range groupQuorum {
 		//nolint:gosec // G115 conversion safe, max 32 groups
@@ -147,7 +148,7 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 
 	for i, kvGroupQuorum := range kvGroupQuorums {
 		var val uint64
-		val, err = kvGroupQuorum.Value.LoadUInt(SizeUINT8)
+		val, err = kvGroupQuorum.Value.LoadUInt(tvm.SizeUINT8)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load group quorum value: %w", err)
 		}
@@ -163,7 +164,7 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 
 	for i, kvGroupParent := range kvGroupParents {
 		var val uint64
-		val, err = kvGroupParent.Value.LoadUInt(SizeUINT8)
+		val, err = kvGroupParent.Value.LoadUInt(tvm.SizeUINT8)
 		if err != nil {
 			return nil, fmt.Errorf("unable to load group parent value: %w", err)
 		}
