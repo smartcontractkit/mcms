@@ -108,7 +108,7 @@ func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*addres
 	ctx := s.T().Context()
 	amount := tlb.MustFromTON("0.5") // TODO: high gas
 
-	data := TimelockEmptyDataFrom(id)
+	data := timelock.EmptyDataFrom(id)
 	// When deploying the contract, send the Init message to initialize the Timelock contract
 	none := []toncommon.WrappedAddress{}
 	body := timelock.Init{
@@ -134,8 +134,8 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	chainID := cselectors.TON_LOCALNET.ChainID
 	client := s.TonClient
 	s.accounts = []*address.Address{
-		must(tvm.NewRandomTestWallet(client, chainID)).Address(),
-		must(tvm.NewRandomTestWallet(client, chainID)).Address(),
+		must(tvm.NewRandomV5R1TestWallet(client, chainID)).Address(),
+		must(tvm.NewRandomV5R1TestWallet(client, chainID)).Address(),
 	}
 
 	// Sort accounts to have deterministic order

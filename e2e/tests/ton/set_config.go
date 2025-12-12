@@ -12,6 +12,7 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
 
@@ -49,7 +50,7 @@ func (s *SetConfigTestSuite) deployMCMSContract() {
 	amount := tlb.MustFromTON("0.3")
 	chainID, err := strconv.ParseInt(s.TonBlockchain.ChainID, 10, 64)
 	s.Require().NoError(err)
-	data := MCMSEmptyDataFrom(hash.CRC32("test.set_config.mcms"), s.wallet.Address(), chainID)
+	data := mcms.EmptyDataFrom(hash.CRC32("test.set_config.mcms"), s.wallet.Address(), chainID)
 	mcmsAddr, err := DeployMCMSContract(ctx, s.TonClient, s.wallet, amount, data)
 	s.Require().NoError(err)
 	s.mcmsAddr = mcmsAddr.String()

@@ -63,14 +63,14 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 	var chainID = chaintest.Chain7TONID
 	var client *ton.APIClient
 	var wallets = []*wallet.Wallet{
-		must(tvm.NewRandomTestWallet(client, chainID)),
-		must(tvm.NewRandomTestWallet(client, chainID)),
-		must(tvm.NewRandomTestWallet(client, chainID)),
-		must(tvm.NewRandomTestWallet(client, chainID)),
-		must(tvm.NewRandomTestWallet(client, chainID)),
-		must(tvm.NewRandomTestWallet(client, chainID)),
-		must(tvm.NewRandomTestWallet(client, chainID)),
-		must(tvm.NewRandomTestWallet(client, chainID)),
+		must(tvm.NewRandomV5R1TestWallet(client, chainID)),
+		must(tvm.NewRandomV5R1TestWallet(client, chainID)),
+		must(tvm.NewRandomV5R1TestWallet(client, chainID)),
+		must(tvm.NewRandomV5R1TestWallet(client, chainID)),
+		must(tvm.NewRandomV5R1TestWallet(client, chainID)),
+		must(tvm.NewRandomV5R1TestWallet(client, chainID)),
+		must(tvm.NewRandomV5R1TestWallet(client, chainID)),
+		must(tvm.NewRandomV5R1TestWallet(client, chainID)),
 	}
 
 	ctx := context.Background()
