@@ -14,6 +14,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
@@ -81,7 +82,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 	// Hash operation according to TON specs
 	// @dev we use the standard sha256 (cell) hash function to hash the leaf.
 	b := cell.BeginCell()
-	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorOp[:]), SizeUINT256); err != nil {
+	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorOp[:]), tvm.SizeUINT256); err != nil {
 		return common.Hash{}, fmt.Errorf("failed to store domain separator: %w", err)
 	}
 	if err := b.StoreRef(opCell); err != nil {
@@ -109,7 +110,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 	// Hash metadata according to TON specs
 	// @dev we use the standard sha256 (cell) hash function to hash the leaf.
 	b := cell.BeginCell()
-	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorMetadata[:]), SizeUINT256); err != nil {
+	if err := b.StoreBigUInt(new(big.Int).SetBytes(mcms.ManyChainMultiSigDomainSeparatorMetadata[:]), tvm.SizeUINT256); err != nil {
 		return common.Hash{}, fmt.Errorf("failed to store domain separator: %w", err)
 	}
 	if err := b.StoreBuilder(metaCell.ToBuilder()); err != nil {

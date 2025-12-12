@@ -47,7 +47,7 @@ type TimelockInspectionTestSuite struct {
 func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Address) {
 	ctx := s.T().Context()
 	body, err := tlb.ToCell(rbac.GrantRole{
-		QueryID: must(mcmston.RandomQueryID()),
+		QueryID: must(tvm.RandomQueryID()),
 
 		Role:    tlbe.NewUint256(new(big.Int).SetBytes(role[:])),
 		Account: acc,
@@ -76,7 +76,7 @@ func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Addr
 func (s *TimelockInspectionTestSuite) scheduleBatch(timelockAddr *address.Address, calls []timelock.Call, predecessor, salt common.Hash, delay uint32) {
 	ctx := s.T().Context()
 	body, err := tlb.ToCell(timelock.ScheduleBatch{
-		QueryID: must(mcmston.RandomQueryID()),
+		QueryID: must(tvm.RandomQueryID()),
 
 		Calls:       calls,
 		Predecessor: tlbe.NewUint256(predecessor.Big()),
@@ -144,7 +144,7 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	})
 
 	var err error
-	s.wallet, err = LocalWalletDefault(client)
+	s.wallet, err = tvm.MyLocalTONWalletDefault(client)
 	s.Require().NoError(err)
 
 	// Deploy Timelock contract

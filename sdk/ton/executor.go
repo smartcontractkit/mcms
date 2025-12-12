@@ -23,6 +23,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
 // sdk.Executor implementation for TON chains, allowing for the execution of operations on the MCMS contract
@@ -86,7 +87,7 @@ func (e *executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("failed to encode proof: %w", err)
 	}
 
-	qID, err := RandomQueryID()
+	qID, err := tvm.RandomQueryID()
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
 	}
@@ -176,7 +177,7 @@ func (e *executor) SetRoot(
 		return types.TransactionResult{}, fmt.Errorf("failed to encode signatures: %w", err)
 	}
 
-	qID, err := RandomQueryID()
+	qID, err := tvm.RandomQueryID()
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
 	}
