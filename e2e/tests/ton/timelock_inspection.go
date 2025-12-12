@@ -3,11 +3,11 @@
 package tone2e
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"math/big"
 	"slices"
-	"strings"
 
 	"github.com/stretchr/testify/suite"
 
@@ -138,7 +138,7 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 
 	// Sort accounts to have deterministic order
 	slices.SortFunc(s.accounts, func(a, b *address.Address) int {
-		return strings.Compare(strings.ToLower(a.String()), strings.ToLower(b.String()))
+		return bytes.Compare(a.Data(), b.Data())
 	})
 
 	var err error
