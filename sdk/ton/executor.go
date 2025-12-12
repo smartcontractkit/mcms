@@ -22,6 +22,7 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 )
 
 // sdk.Executor implementation for TON chains, allowing for the execution of operations on the MCMS contract
@@ -183,7 +184,7 @@ func (e *executor) SetRoot(
 	body, err := tlb.ToCell(mcms.SetRoot{
 		QueryID: qID,
 
-		Root:       new(big.Int).SetBytes(root[:]),
+		Root:       tlbe.NewUint256(new(big.Int).SetBytes(root[:])),
 		ValidUntil: validUntil,
 		Metadata:   rm,
 

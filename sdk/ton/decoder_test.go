@@ -9,9 +9,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
-	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
@@ -21,14 +21,8 @@ func TestDecoder(t *testing.T) {
 	t.Parallel()
 
 	exampleRole := crypto.Keccak256Hash([]byte("EXAMPLE_ROLE"))
-
-	// TODO(ton): fix me - what's up with *big.Int decoding as negative num?
-	exampleRoleBig, _ := cell.BeginCell().
-		MustStoreBigInt(new(big.Int).SetBytes(exampleRole[:]), 257).
-		EndCell().
-		ToBuilder().
-		ToSlice().
-		LoadBigInt(256)
+	// Notice: need to convert to Uint256 (big.Int)
+	exampleRoleBig := tlbe.NewUint256(exampleRole.Big())
 
 	// Grant role data
 	grantRoleData, err := tlb.ToCell(rbac.GrantRole{

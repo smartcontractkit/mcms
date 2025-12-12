@@ -10,6 +10,7 @@ import (
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 
 	"github.com/smartcontractkit/mcms/sdk"
 
@@ -18,16 +19,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
-
-func AsUnsigned(v *big.Int, sz uint) *big.Int {
-	if sz == 0 {
-		return new(big.Int)
-	}
-	mask := new(big.Int).Lsh(big.NewInt(1), sz)
-	mask.Sub(mask, big.NewInt(1))
-
-	return new(big.Int).And(v, mask) // interpret as uint sz
-}
 
 type ConfigTransformer = sdk.ConfigTransformer[mcms.Config, any]
 
@@ -64,7 +55,7 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	idx := uint8(0)
 	for i, signerAddr := range signerAddrs {
 		signers[i] = mcms.Signer{
-			Address: signerAddr.Big(), // represented as big.Int on TON
+			Address: tlbe.NewUint160(signerAddr.Big()), // represented as big.Int on TON
 			Group:   signerGroups[i],
 			Index:   idx,
 		}
@@ -139,10 +130,8 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 			return nil, fmt.Errorf("unable to decode signer: %w", err)
 		}
 
-		// big.Int loading doesn't work for me
-		// TODO: fix/document why AsUnsigned
 		addrBytes := make([]byte, 20)
-		AsUnsigned(signer.Address, SizeUINT160).FillBytes(addrBytes) // TODO: tvm.KeyUINT160
+		signer.Address.Value().FillBytes(addrBytes) // TODO: tvm.KeyUINT160
 
 		evmConfig.Signers[i] = bindings.ManyChainMultiSigSigner{
 			Addr:  common.Address(addrBytes),

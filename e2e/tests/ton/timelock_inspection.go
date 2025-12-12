@@ -24,6 +24,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
@@ -47,7 +48,7 @@ func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Addr
 	body, err := tlb.ToCell(rbac.GrantRole{
 		QueryID: must(mcmston.RandomQueryID()),
 
-		Role:    new(big.Int).SetBytes(role[:]),
+		Role:    tlbe.NewUint256(new(big.Int).SetBytes(role[:])),
 		Account: acc,
 	})
 	s.Require().NoError(err)
@@ -71,14 +72,14 @@ func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Addr
 	s.Require().NoError(err)
 }
 
-func (s *TimelockInspectionTestSuite) scheduleBatch(timelockAddr *address.Address, calls []timelock.Call, predecessor *big.Int, salt *big.Int, delay uint32) {
+func (s *TimelockInspectionTestSuite) scheduleBatch(timelockAddr *address.Address, calls []timelock.Call, predecessor, salt common.Hash, delay uint32) {
 	ctx := s.T().Context()
 	body, err := tlb.ToCell(timelock.ScheduleBatch{
 		QueryID: must(mcmston.RandomQueryID()),
 
 		Calls:       calls,
-		Predecessor: predecessor,
-		Salt:        salt,
+		Predecessor: tlbe.NewUint256(predecessor.Big()),
+		Salt:        tlbe.NewUint256(salt.Big()),
 		Delay:       delay,
 	})
 	s.Require().NoError(err)
@@ -235,7 +236,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperation() {
 	delay := 3600
 	pred := common.Hash([32]byte{0x0})
 	salt := common.Hash([32]byte{0x01})
-	s.scheduleBatch(s.timelockAddr, calls, pred.Big(), salt.Big(), uint32(delay))
+	s.scheduleBatch(s.timelockAddr, calls, pred, salt, uint32(delay))
 
 	opID, err := mcmston.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
@@ -261,7 +262,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 	salt := common.Hash([32]byte{0x01})
 	pred, err := mcmston.HashOperationBatch(calls, [32]byte{0x0}, salt)
 	s.Require().NoError(err)
-	s.scheduleBatch(s.timelockAddr, calls, pred.Big(), salt.Big(), uint32(delay))
+	s.scheduleBatch(s.timelockAddr, calls, pred, salt, uint32(delay))
 
 	opID, err := mcmston.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
@@ -289,7 +290,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 	s.Require().NoError(err)
 	pred, err := mcmston.HashOperationBatch(calls, pred2, salt)
 	s.Require().NoError(err)
-	s.scheduleBatch(s.timelockAddr, calls, pred.Big(), salt.Big(), uint32(delay))
+	s.scheduleBatch(s.timelockAddr, calls, pred, salt, uint32(delay))
 
 	opID, err := mcmston.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
@@ -320,7 +321,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	id, err := mcmston.HashOperationBatch(calls, pred, salt)
 	s.Require().NoError(err)
 
-	s.scheduleBatch(newTimelockAddr, calls, pred.Big(), salt.Big(), uint32(delay))
+	s.scheduleBatch(newTimelockAddr, calls, pred, salt, uint32(delay))
 
 	inspector := mcmston.NewTimelockInspector(s.TonClient)
 	isOp, err := inspector.IsOperation(ctx, newTimelockAddr.String(), id)

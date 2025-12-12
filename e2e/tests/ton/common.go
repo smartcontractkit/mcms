@@ -22,6 +22,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
@@ -89,14 +90,14 @@ func MCMSEmptyDataFrom(id uint32, owner *address.Address, chainID int64) mcms.Da
 		SeenSignedHashes: must(tvm.MakeDict(map[*big.Int]mcms.SeenSignedHash{}, tvm.KeyUINT256)),
 		RootInfo: mcms.RootInfo{
 			ExpiringRootAndOpCount: mcms.ExpiringRootAndOpCount{
-				Root:       big.NewInt(0),
+				Root:       tlbe.NewUint256(big.NewInt(0)),
 				ValidUntil: 0,
 				OpCount:    0,
 				OpPendingInfo: mcms.OpPendingInfo{
 					ValidAfter:             0,
 					OpFinalizationTimeout:  0,
 					OpPendingReceiver:      tvm.ZeroAddress,
-					OpPendingBodyTruncated: big.NewInt(0),
+					OpPendingBodyTruncated: tlbe.NewUint256(big.NewInt(0)),
 				},
 			},
 			RootMetadata: mcms.RootMetadata{
@@ -121,7 +122,7 @@ func TimelockEmptyDataFrom(id uint32) timelock.Data {
 		OpPendingInfo: timelock.OpPendingInfo{
 			ValidAfter:            0,
 			OpFinalizationTimeout: 0,
-			OpPendingID:           big.NewInt(0),
+			OpPendingID:           tlbe.NewUint256(big.NewInt(0)),
 		},
 		RBAC: rbac.Data{
 			Roles: cell.NewDict(256),

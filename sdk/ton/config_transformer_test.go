@@ -33,8 +33,8 @@ func TestConfigTransformer_ToConfig(t *testing.T) {
 			name: "success: converts binding config to config",
 			give: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
-					{Address: signers[1].Address().Big(), Group: 1, Index: 1},
+					{Address: AsUint160Addr(signers[0]), Group: 0, Index: 0},
+					{Address: AsUint160Addr(signers[1]), Group: 1, Index: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
@@ -77,22 +77,22 @@ func TestConfigTransformer_ToConfig(t *testing.T) {
 					{Val: 4},
 				}, tvm.KeyUINT8)),
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: signers[0].Address().Big(), Index: 0, Group: 0},
-					{Address: signers[1].Address().Big(), Index: 1, Group: 0},
-					{Address: signers[2].Address().Big(), Index: 2, Group: 0},
-					{Address: signers[3].Address().Big(), Index: 3, Group: 1},
-					{Address: signers[4].Address().Big(), Index: 4, Group: 1},
-					{Address: signers[5].Address().Big(), Index: 5, Group: 1},
-					{Address: signers[6].Address().Big(), Index: 6, Group: 1},
-					{Address: signers[7].Address().Big(), Index: 7, Group: 1},
-					{Address: signers[8].Address().Big(), Index: 8, Group: 2},
-					{Address: signers[9].Address().Big(), Index: 9, Group: 2},
-					{Address: signers[10].Address().Big(), Index: 10, Group: 3},
-					{Address: signers[11].Address().Big(), Index: 11, Group: 4},
-					{Address: signers[12].Address().Big(), Index: 12, Group: 4},
-					{Address: signers[13].Address().Big(), Index: 13, Group: 4},
-					{Address: signers[14].Address().Big(), Index: 14, Group: 4},
-					{Address: signers[15].Address().Big(), Index: 15, Group: 5},
+					{Address: AsUint160Addr(signers[0]), Index: 0, Group: 0},
+					{Address: AsUint160Addr(signers[1]), Index: 1, Group: 0},
+					{Address: AsUint160Addr(signers[2]), Index: 2, Group: 0},
+					{Address: AsUint160Addr(signers[3]), Index: 3, Group: 1},
+					{Address: AsUint160Addr(signers[4]), Index: 4, Group: 1},
+					{Address: AsUint160Addr(signers[5]), Index: 5, Group: 1},
+					{Address: AsUint160Addr(signers[6]), Index: 6, Group: 1},
+					{Address: AsUint160Addr(signers[7]), Index: 7, Group: 1},
+					{Address: AsUint160Addr(signers[8]), Index: 8, Group: 2},
+					{Address: AsUint160Addr(signers[9]), Index: 9, Group: 2},
+					{Address: AsUint160Addr(signers[10]), Index: 10, Group: 3},
+					{Address: AsUint160Addr(signers[11]), Index: 11, Group: 4},
+					{Address: AsUint160Addr(signers[12]), Index: 12, Group: 4},
+					{Address: AsUint160Addr(signers[13]), Index: 13, Group: 4},
+					{Address: AsUint160Addr(signers[14]), Index: 14, Group: 4},
+					{Address: AsUint160Addr(signers[15]), Index: 15, Group: 5},
 				}, tvm.KeyUINT8)),
 			},
 			want: &types.Config{
@@ -156,8 +156,8 @@ func TestConfigTransformer_ToConfig(t *testing.T) {
 			name: "failure: validation error on resulting config",
 			give: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
-					{Address: signers[1].Address().Big(), Group: 1, Index: 1},
+					{Address: AsUint160Addr(signers[0]), Group: 0, Index: 0},
+					{Address: AsUint160Addr(signers[1]), Group: 1, Index: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 0}, // A zero quorum makes this invalid
@@ -214,9 +214,9 @@ func TestSetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
-					{Address: signers[1].Address().Big(), Group: 0, Index: 1},
-					{Address: signers[2].Address().Big(), Group: 1, Index: 2},
+					{Address: AsUint160Addr(signers[0]), Group: 0, Index: 0},
+					{Address: AsUint160Addr(signers[1]), Group: 0, Index: 1},
+					{Address: AsUint160Addr(signers[2]), Group: 1, Index: 2},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
@@ -242,9 +242,9 @@ func TestSetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
-					{Address: signers[1].Address().Big(), Group: 0, Index: 1},
-					{Address: signers[2].Address().Big(), Group: 1, Index: 2},
+					{Address: AsUint160Addr(signers[0]), Group: 0, Index: 0},
+					{Address: AsUint160Addr(signers[1]), Group: 0, Index: 1},
+					{Address: AsUint160Addr(signers[2]), Group: 1, Index: 2},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
@@ -268,8 +268,8 @@ func TestSetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
-					{Address: signers[1].Address().Big(), Group: 0, Index: 1},
+					{Address: AsUint160Addr(signers[0]), Group: 0, Index: 0},
+					{Address: AsUint160Addr(signers[1]), Group: 0, Index: 1},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 1},
@@ -292,9 +292,9 @@ func TestSetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: signers[0].Address().Big(), Group: 1, Index: 0},
-					{Address: signers[1].Address().Big(), Group: 2, Index: 1},
-					{Address: signers[2].Address().Big(), Group: 3, Index: 2},
+					{Address: AsUint160Addr(signers[0]), Group: 1, Index: 0},
+					{Address: AsUint160Addr(signers[1]), Group: 2, Index: 1},
+					{Address: AsUint160Addr(signers[2]), Group: 3, Index: 2},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
@@ -334,11 +334,11 @@ func TestSetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
-					{Address: signers[1].Address().Big(), Group: 0, Index: 1},
-					{Address: signers[2].Address().Big(), Group: 1, Index: 2},
-					{Address: signers[3].Address().Big(), Group: 2, Index: 3},
-					{Address: signers[4].Address().Big(), Group: 3, Index: 4},
+					{Address: AsUint160Addr(signers[0]), Group: 0, Index: 0},
+					{Address: AsUint160Addr(signers[1]), Group: 0, Index: 1},
+					{Address: AsUint160Addr(signers[2]), Group: 1, Index: 2},
+					{Address: AsUint160Addr(signers[3]), Group: 2, Index: 3},
+					{Address: AsUint160Addr(signers[4]), Group: 3, Index: 4},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},
@@ -380,11 +380,11 @@ func TestSetConfigInputs(t *testing.T) {
 			},
 			want: mcms.Config{
 				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
-					{Address: signers[0].Address().Big(), Group: 0, Index: 0},
-					{Address: signers[1].Address().Big(), Group: 0, Index: 1},
-					{Address: signers[2].Address().Big(), Group: 1, Index: 2},
-					{Address: signers[3].Address().Big(), Group: 3, Index: 3},
-					{Address: signers[4].Address().Big(), Group: 2, Index: 4},
+					{Address: AsUint160Addr(signers[0]), Group: 0, Index: 0},
+					{Address: AsUint160Addr(signers[1]), Group: 0, Index: 1},
+					{Address: AsUint160Addr(signers[2]), Group: 1, Index: 2},
+					{Address: AsUint160Addr(signers[3]), Group: 3, Index: 3},
+					{Address: AsUint160Addr(signers[4]), Group: 2, Index: 4},
 				}, tvm.KeyUINT8)),
 				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
 					{Val: 2},

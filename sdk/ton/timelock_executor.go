@@ -20,6 +20,7 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 )
 
 var _ sdk.TimelockExecutor = (*timelockExecutor)(nil)
@@ -69,8 +70,8 @@ func (e *timelockExecutor) Execute(
 		QueryID: qID,
 
 		Calls:       calls,
-		Predecessor: predecessor.Big(),
-		Salt:        salt.Big(),
+		Predecessor: tlbe.NewUint256(predecessor.Big()),
+		Salt:        tlbe.NewUint256(salt.Big()),
 	})
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
