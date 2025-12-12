@@ -139,9 +139,13 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 			return nil, fmt.Errorf("unable to decode signer: %w", err)
 		}
 
+		// big.Int loading doesn't work for me
+		// TODO: fix/document why AsUnsigned
+		addrBytes := make([]byte, 20)
+		AsUnsigned(signer.Address, SizeUINT160).FillBytes(addrBytes) // TODO: tvm.KeyUINT160
+
 		evmConfig.Signers[i] = bindings.ManyChainMultiSigSigner{
-			// big.Int loading doesn't work for me
-			Addr:  common.Address([20]byte(AsUnsigned(signer.Address, SizeUINT160).Bytes())), // TODO: tvm.KeyUINT160
+			Addr:  common.Address(addrBytes),
 			Index: signer.Index,
 			Group: signer.Group,
 		}
