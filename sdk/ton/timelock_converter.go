@@ -99,9 +99,11 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("invalid timelock address: %w", err)
 	}
 
-	// TODO (ton): remove hardcoded value
+	// Notice: follows EVM convention of value being 0 here
+	value := big.NewInt(0)
+
 	var tx types.Transaction
-	tx, err = NewTransaction(dstAddr, data.BeginParse(), big.NewInt(0), "RBACTimelock", tags)
+	tx, err = NewTransaction(dstAddr, data.BeginParse(), value, "RBACTimelock", tags)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)
 	}

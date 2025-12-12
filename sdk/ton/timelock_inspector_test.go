@@ -14,6 +14,8 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 
 	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
@@ -61,14 +63,14 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 	var chainID = chaintest.Chain7TONID
 	var client *ton.APIClient
 	var wallets = []*wallet.Wallet{
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
-		must(makeRandomTestWallet(client, chainID)),
+		must(tvm.NewRandomTestWallet(client, chainID)),
+		must(tvm.NewRandomTestWallet(client, chainID)),
+		must(tvm.NewRandomTestWallet(client, chainID)),
+		must(tvm.NewRandomTestWallet(client, chainID)),
+		must(tvm.NewRandomTestWallet(client, chainID)),
+		must(tvm.NewRandomTestWallet(client, chainID)),
+		must(tvm.NewRandomTestWallet(client, chainID)),
+		must(tvm.NewRandomTestWallet(client, chainID)),
 	}
 
 	ctx := context.Background()

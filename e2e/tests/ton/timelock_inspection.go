@@ -26,6 +26,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
@@ -133,8 +134,8 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	chainID := cselectors.TON_LOCALNET.ChainID
 	client := s.TonClient
 	s.accounts = []*address.Address{
-		must(makeRandomTestWallet(client, chainID)).Address(),
-		must(makeRandomTestWallet(client, chainID)).Address(),
+		must(tvm.NewRandomTestWallet(client, chainID)).Address(),
+		must(tvm.NewRandomTestWallet(client, chainID)).Address(),
 	}
 
 	// Sort accounts to have deterministic order

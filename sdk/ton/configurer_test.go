@@ -19,6 +19,8 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+
 	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
@@ -133,7 +135,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 
 			_api := ton_mocks.NewTonAPI(t)
 			chainID := chaintest.Chain7TONID
-			walletOperator := must(makeRandomTestWallet(_api, chainID))
+			walletOperator := must(tvm.NewRandomTestWallet(_api, chainID))
 
 			// Apply the mock setup for the ContractDeployBackend
 			if tt.mockSetup != nil {

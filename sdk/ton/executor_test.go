@@ -18,6 +18,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
 
@@ -33,7 +35,7 @@ func TestNewExecutor(t *testing.T) {
 	chainID := chaintest.Chain7TONID
 
 	_api := ton_mocks.NewTonAPI(t)
-	walletOperator := must(makeRandomTestWallet(_api, chainID))
+	walletOperator := must(tvm.NewRandomTestWallet(_api, chainID))
 	client := ton_mocks.NewAPIClientWrapped(t)
 
 	executor, err := tonmcms.NewExecutor(encoder, client, walletOperator, tlb.MustFromTON("0.1"))
@@ -165,7 +167,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			// Initialize the mock
 			chainID := chaintest.Chain7TONID
 			_api := ton_mocks.NewTonAPI(t)
-			walletOperator := must(makeRandomTestWallet(_api, chainID))
+			walletOperator := must(tvm.NewRandomTestWallet(_api, chainID))
 
 			client := ton_mocks.NewAPIClientWrapped(t)
 
@@ -306,7 +308,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 			// Initialize the mock
 			chainID := chaintest.Chain7TONID
 			_api := ton_mocks.NewTonAPI(t)
-			walletOperator := must(makeRandomTestWallet(_api, chainID))
+			walletOperator := must(tvm.NewRandomTestWallet(_api, chainID))
 
 			client := ton_mocks.NewAPIClientWrapped(t)
 

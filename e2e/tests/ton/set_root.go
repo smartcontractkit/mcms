@@ -15,6 +15,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
@@ -59,8 +60,8 @@ func (s *SetRootTestSuite) SetupSuite() {
 	var chainID = chaintest.Chain7TONID
 	var client *ton.APIClient
 	s.accounts = []*address.Address{
-		must(makeRandomTestWallet(client, chainID)).Address(),
-		must(makeRandomTestWallet(client, chainID)).Address(),
+		must(tvm.NewRandomTestWallet(client, chainID)).Address(),
+		must(tvm.NewRandomTestWallet(client, chainID)).Address(),
 	}
 
 	var err error
