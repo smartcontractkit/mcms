@@ -1,9 +1,11 @@
 package ton_test
 
 import (
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/mcms/internal/testutils"
+
 	"github.com/xssnick/tonutils-go/ton/wallet"
+
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 )
 
 // TODO: duplicated utils with e2e tests [START]

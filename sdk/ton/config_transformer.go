@@ -130,7 +130,7 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 			return nil, fmt.Errorf("unable to decode signer: %w", err)
 		}
 
-		addrBytes := make([]byte, 20)
+		addrBytes := make([]byte, common.AddressLength)
 		signer.Address.Value().FillBytes(addrBytes) // TODO: tvm.KeyUINT160
 
 		evmConfig.Signers[i] = bindings.ManyChainMultiSigSigner{
