@@ -34,7 +34,7 @@ func NewInspector(client ton.APIClientWrapped) sdk.Inspector {
 	}
 }
 
-// TODO(ton): use GetConfig from chainlink-ton/pkg/bindings/mcms/mcms
+// TODO (ton): use GetConfig from chainlink-ton/pkg/bindings/mcms/mcms
 func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Config, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
@@ -101,7 +101,7 @@ func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Confi
 	})
 }
 
-// TODO(ton): use GetOpCount from chainlink-ton/pkg/bindings/mcms/mcms
+// TODO (ton): use GetOpCount from chainlink-ton/pkg/bindings/mcms/mcms
 func (i Inspector) GetOpCount(ctx context.Context, _address string) (uint64, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
@@ -128,7 +128,7 @@ func (i Inspector) GetOpCount(ctx context.Context, _address string) (uint64, err
 	return ri.Uint64(), nil
 }
 
-// TODO(ton): use GetRoot from chainlink-ton/pkg/bindings/mcms/mcms
+// TODO (ton): use GetRoot from chainlink-ton/pkg/bindings/mcms/mcms
 func (i Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, uint32, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
@@ -161,7 +161,7 @@ func (i Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, u
 	return common.BigToHash(root), uint32(validUntil.Uint64()), nil
 }
 
-// TODO(ton): use GetRootMetadata from chainlink-ton/pkg/bindings/mcms/mcms
+// TODO (ton): use GetRootMetadata from chainlink-ton/pkg/bindings/mcms/mcms
 func (i Inspector) GetRootMetadata(ctx context.Context, _address string) (types.ChainMetadata, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)

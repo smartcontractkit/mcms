@@ -22,7 +22,7 @@ import (
 )
 
 // Map of TLBs keyed by contract type
-// TODO(ton): unify and move these definitions to smartcontractkit/chainlink-ton
+// TODO (ton): unify and move these definitions to smartcontractkit/chainlink-ton
 var TLBsByContract = map[string]map[uint64]any{
 	// Jetton contract types
 	"com.github.ton-blockchain.jetton-contract.contracts.jetton-wallet": wallet.TLBs,
