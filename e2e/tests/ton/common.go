@@ -35,8 +35,6 @@ const (
 	PathContractsTimelock = "mcms.RBACTimelock.compiled.json"
 )
 
-// TODO: duplicated utils with unit tests [START]
-
 func must[E any](out E, err error) E {
 	if err != nil {
 		panic(err)
@@ -44,17 +42,6 @@ func must[E any](out E, err error) E {
 
 	return out
 }
-
-func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wallet, error) {
-	v5r1Config := wallet.ConfigV5R1Final{
-		NetworkGlobalID: networkGlobalID,
-		Workchain:       0,
-	}
-
-	return wallet.FromSeed(api, wallet.NewSeed(), v5r1Config)
-}
-
-// TODO: duplicated utils with unit tests [END]
 
 func LocalWalletDefault(client *ton.APIClient) (*wallet.Wallet, error) {
 	walletVersion := wallet.HighloadV2Verified //nolint:staticcheck // only option in mylocalton-docker
