@@ -9,6 +9,7 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -72,7 +73,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 	signerKeys := make([]mcms.SignerAddress, len(signerAddresses))
 	for i, addr := range signerAddresses {
-		signerKeys[i] = mcms.SignerAddress{Val: addr.Big()}
+		signerKeys[i] = mcms.SignerAddress{Val: tlbe.NewUint160(addr.Big())}
 	}
 
 	signerGroups := make([]mcms.SignerGroup, len(_signerGroups))

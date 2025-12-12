@@ -17,6 +17,7 @@ import (
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 )
 
 var _ sdk.TimelockConverter = (*timelockConverter)(nil)
@@ -68,15 +69,15 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 			QueryID: qID,
 
 			Calls:       calls,
-			Predecessor: predecessor.Big(),
-			Salt:        salt.Big(),
+			Predecessor: tlbe.NewUint256(predecessor.Big()),
+			Salt:        tlbe.NewUint256(salt.Big()),
 			Delay:       uint32(delay.Seconds()),
 		})
 	case types.TimelockActionCancel:
 		data, err = tlb.ToCell(timelock.Cancel{
 			QueryID: qID,
 
-			ID: operationID.Big(),
+			ID: tlbe.NewUint256(operationID.Big()),
 		})
 	case types.TimelockActionBypass:
 		data, err = tlb.ToCell(timelock.BypasserExecuteBatch{
@@ -147,8 +148,8 @@ func ConvertBatchToCalls(bop types.BatchOperation) ([]timelock.Call, error) {
 func HashOperationBatch(calls []timelock.Call, predecessor, salt common.Hash) (common.Hash, error) {
 	ob, err := tlb.ToCell(timelock.OperationBatch{
 		Calls:       calls,
-		Predecessor: predecessor.Big(),
-		Salt:        salt.Big(),
+		Predecessor: tlbe.NewUint256(predecessor.Big()),
+		Salt:        tlbe.NewUint256(salt.Big()),
 	})
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to encode OperationBatch: %w", err)

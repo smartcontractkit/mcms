@@ -1,6 +1,8 @@
 package ton_test
 
 import (
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
+	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 )
 
@@ -24,3 +26,7 @@ func makeRandomTestWallet(api wallet.TonAPI, networkGlobalID int32) (*wallet.Wal
 }
 
 // TODO: duplicated utils with e2e tests [END]
+
+func AsUint160Addr(s testutils.ECDSASigner) *tlbe.Uint160 {
+	return tlbe.NewUint160(s.Address().Big())
+}

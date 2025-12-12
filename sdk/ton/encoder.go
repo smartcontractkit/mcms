@@ -13,6 +13,7 @@ import (
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
@@ -190,7 +191,7 @@ func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadat
 func (e *Encoder) ToProof(p []common.Hash) ([]mcms.Proof, error) {
 	proofs := make([]mcms.Proof, 0, len(p))
 	for _, hash := range p {
-		proofs = append(proofs, mcms.Proof{Val: hash.Big()})
+		proofs = append(proofs, mcms.Proof{Val: tlbe.NewUint256(hash.Big())})
 	}
 
 	return proofs, nil
