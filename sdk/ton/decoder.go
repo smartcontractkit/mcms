@@ -36,7 +36,12 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 		return nil, fmt.Errorf("invalid cell BOC data: %w", err)
 	}
 
-	// TODO (ton): handle empty cell
+	// Handle message with no body - empty cell
+	isEmpty := datac.RefsNum() == 0 && datac.BitsSize() == 0
+	if isEmpty {
+		return NewDecodedOperation(contractType, "", 0, map[string]any{}, []string{}, []any{})
+	}
+
 	msgType, msgDecoded, err := lib.DecodeTLBValToJSON(datac, tlbs)
 	if err != nil {
 		return nil, fmt.Errorf("error while JSON decoding message (cell) for contract %s: %w", contractType, err)

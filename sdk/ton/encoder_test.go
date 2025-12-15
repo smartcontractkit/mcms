@@ -243,6 +243,15 @@ func TestEncoder_ToRootMetadata(t *testing.T) {
 			giveMetadata: types.ChainMetadata{},
 			wantErr:      "invalid chain ID: 0",
 		},
+		{
+			name:         "faiure: invalid mcms address",
+			giveSelector: chaintest.Chain7Selector,
+			giveMetadata: types.ChainMetadata{
+				StartingOpCount: 0,
+				MCMAddress:      "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-", // invalid address
+			},
+			wantErr: "invalid mcms address: incorrect address data",
+		},
 	}
 
 	txCount := uint64(5)

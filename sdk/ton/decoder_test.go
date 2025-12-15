@@ -9,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
@@ -51,7 +52,29 @@ func TestDecoder(t *testing.T) {
 		wantErr            string
 	}{
 		{
-			name: "success",
+			name: "success - empty message",
+			give: types.Operation{
+				ChainSelector: 1,
+				Transaction: must(ton.NewTransaction(
+					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
+					cell.BeginCell().ToSlice(),
+					big.NewInt(0),
+					"RBACTimelock",
+					[]string{"topUp"},
+				)),
+			},
+			contractInterfaces: "com.chainlink.ton.lib.access.RBAC",
+			want: &ton.DecodedOperation{
+				ContractType: "com.chainlink.ton.lib.access.RBAC",
+				MsgType:      "",
+				MsgDecoded:   map[string]any{},
+				InputKeys:    []string{},
+				InputArgs:    []any{},
+			},
+			wantErr: "",
+		},
+		{
+			name: "success - message with body",
 			give: types.Operation{
 				ChainSelector: 1,
 				Transaction: must(ton.NewTransaction(

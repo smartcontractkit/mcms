@@ -111,6 +111,23 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			salt:        zeroHash,
 			wantErr:     "failed to unmarshal additional fields: invalid character 'i' looking for beginning of value",
 		},
+		{
+			name: "Invalid address in transaction",
+			op: types.BatchOperation{
+				Transactions: []types.Transaction{{
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock"},
+					To:                "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-", // invalid address
+					Data:              []byte("0x1234"),
+					AdditionalFields:  []byte("{\"value\":1000}"),
+				}},
+				ChainSelector: types.ChainSelector(cselectors.TON_TESTNET.Selector),
+			},
+			delay:       "1h",
+			operation:   types.TimelockActionSchedule,
+			predecessor: zeroHash,
+			salt:        zeroHash,
+			wantErr:     "failed to convert batch to calls: invalid target address: incorrect address data",
+		},
 	}
 
 	for _, tc := range testCases {
