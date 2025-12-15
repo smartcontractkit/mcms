@@ -39,7 +39,7 @@ type configurer struct {
 //
 //	WithDoNotSendInstructionsOnChain: when selected, the Configurer instance will not
 //			send the TON instructions to the blockchain.
-func NewConfigurer(w *wallet.Wallet, amount tlb.Coins, opts ...configurerOption) (sdk.Configurer, error) {
+func NewConfigurer(w *wallet.Wallet, amount tlb.Coins, opts ...ConfigurerOption) (sdk.Configurer, error) {
 	c := configurer{w, amount, false}
 
 	for _, o := range opts {
@@ -49,12 +49,12 @@ func NewConfigurer(w *wallet.Wallet, amount tlb.Coins, opts ...configurerOption)
 	return c, nil
 }
 
-type configurerOption func(*configurer)
+type ConfigurerOption func(*configurer)
 
 // WithDoNotSendInstructionsOnChain sets the configurer to not sign and send the configuration transaction
 // but rather make it return a prepared MCMS types.Transaction instead.
 // If set, the Hash field in the result will be empty.
-func WithDoNotSendInstructionsOnChain() configurerOption {
+func WithDoNotSendInstructionsOnChain() ConfigurerOption {
 	return func(c *configurer) {
 		c.skipSend = true
 	}

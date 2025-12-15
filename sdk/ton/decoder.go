@@ -13,20 +13,20 @@ import (
 
 type decoder struct {
 	// Map of contract type to TL-B definitions (type -> opcode -> TL-B struct)
-	TLBsForContract map[string]lib.TLBMap
+	TypeToTLBMap map[string]lib.TLBMap
 }
 
 var _ sdk.Decoder = &decoder{}
 
 func NewDecoder(tlbs map[string]lib.TLBMap) sdk.Decoder {
 	return &decoder{
-		TLBsForContract: tlbs,
+		TypeToTLBMap: tlbs,
 	}
 }
 
 func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.DecodedOperation, error) {
 	contractType := contractInterfaces
-	tlbs, ok := d.TLBsForContract[contractType]
+	tlbs, ok := d.TypeToTLBMap[contractType]
 	if !ok {
 		return nil, fmt.Errorf("decoding failed - unknown contract interface: %s", contractType)
 	}
@@ -36,7 +36,7 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 		return nil, fmt.Errorf("invalid cell BOC data: %w", err)
 	}
 
-	// TODO: handle empty cell
+	// TODO (ton): handle empty cell
 	msgType, msgDecoded, err := lib.DecodeTLBValToJSON(datac, tlbs)
 	if err != nil {
 		return nil, fmt.Errorf("error while JSON decoding message (cell) for contract %s: %w", contractType, err)

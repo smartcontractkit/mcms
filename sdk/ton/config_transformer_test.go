@@ -209,7 +209,11 @@ func TestSetConfigInputs(t *testing.T) {
 					signers[1].Address(),
 				},
 				GroupSigners: []types.Config{
-					{Quorum: 1, Signers: []common.Address{signers[2].Address()}},
+					{
+						Quorum:       1,
+						Signers:      []common.Address{signers[2].Address()},
+						GroupSigners: []types.Config{},
+					},
 				},
 			},
 			want: mcms.Config{
@@ -237,7 +241,11 @@ func TestSetConfigInputs(t *testing.T) {
 					signers[1].Address(),
 				},
 				GroupSigners: []types.Config{
-					{Quorum: 1, Signers: []common.Address{signers[2].Address()}},
+					{
+						Quorum:       1,
+						Signers:      []common.Address{signers[2].Address()},
+						GroupSigners: []types.Config{},
+					},
 				},
 			},
 			want: mcms.Config{
@@ -285,9 +293,21 @@ func TestSetConfigInputs(t *testing.T) {
 				Quorum:  2,
 				Signers: []common.Address{},
 				GroupSigners: []types.Config{
-					{Quorum: 1, Signers: []common.Address{signers[0].Address()}},
-					{Quorum: 1, Signers: []common.Address{signers[1].Address()}},
-					{Quorum: 1, Signers: []common.Address{signers[2].Address()}},
+					{
+						Quorum:       1,
+						Signers:      []common.Address{signers[0].Address()},
+						GroupSigners: []types.Config{},
+					},
+					{
+						Quorum:       1,
+						Signers:      []common.Address{signers[1].Address()},
+						GroupSigners: []types.Config{},
+					},
+					{
+						Quorum:       1,
+						Signers:      []common.Address{signers[2].Address()},
+						GroupSigners: []types.Config{},
+					},
 				},
 			},
 			want: mcms.Config{
@@ -323,12 +343,17 @@ func TestSetConfigInputs(t *testing.T) {
 						Quorum:  1,
 						Signers: []common.Address{signers[2].Address()},
 						GroupSigners: []types.Config{
-							{Quorum: 1, Signers: []common.Address{signers[3].Address()}},
+							{
+								Quorum:       1,
+								Signers:      []common.Address{signers[3].Address()},
+								GroupSigners: []types.Config{},
+							},
 						},
 					},
 					{
-						Quorum:  1,
-						Signers: []common.Address{signers[4].Address()},
+						Quorum:       1,
+						Signers:      []common.Address{signers[4].Address()},
+						GroupSigners: []types.Config{},
 					},
 				},
 			},
@@ -369,12 +394,17 @@ func TestSetConfigInputs(t *testing.T) {
 						Quorum:  1,
 						Signers: []common.Address{signers[2].Address()},
 						GroupSigners: []types.Config{
-							{Quorum: 1, Signers: []common.Address{signers[4].Address()}},
+							{
+								Quorum:       1,
+								Signers:      []common.Address{signers[4].Address()},
+								GroupSigners: []types.Config{},
+							},
 						},
 					},
 					{
-						Quorum:  1,
-						Signers: []common.Address{signers[3].Address()},
+						Quorum:       1,
+						Signers:      []common.Address{signers[3].Address()},
+						GroupSigners: []types.Config{},
 					},
 				},
 			},
@@ -422,6 +452,11 @@ func TestSetConfigInputs(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
+
+				recovered, err := transformer.ToConfig(got)
+				require.NoError(t, err)
+				// Notice: compare .GroupSigners to avoid issues with recovering case unsorted_signers_and_groups
+				assert.Equal(t, tt.giveConfig.GroupSigners, recovered.GroupSigners)
 			}
 		})
 	}

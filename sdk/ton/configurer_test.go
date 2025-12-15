@@ -35,6 +35,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 
 	tests := []struct {
 		name      string
+		options   []tonmcms.ConfigurerOption
 		mcmAddr   string
 		cfg       *types.Config
 		clearRoot bool
@@ -44,6 +45,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	}{
 		{
 			name:    "success",
+			options: []tonmcms.ConfigurerOption{},
 			mcmAddr: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			cfg: &types.Config{
 				Quorum: 2,
@@ -85,7 +87,37 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			wantErr: nil,
 		},
 		{
+			name: "success - WithDoNotSendInstructionsOnChain option",
+			options: []tonmcms.ConfigurerOption{
+				tonmcms.WithDoNotSendInstructionsOnChain(),
+			},
+			mcmAddr: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
+			cfg: &types.Config{
+				Quorum: 2,
+				Signers: []common.Address{
+					signers[1].Address(),
+					signers[2].Address(),
+				},
+				GroupSigners: []types.Config{
+					{
+						Quorum: 1,
+						Signers: []common.Address{
+							signers[3].Address(),
+						},
+						GroupSigners: nil,
+					},
+				},
+			},
+			clearRoot: true,
+			mockSetup: func(m *ton_mocks.TonAPI) {
+				// No mocks needed as transaction won't be sent
+			},
+			want:    "", // Hash is empty when not sending transaction
+			wantErr: nil,
+		},
+		{
 			name:    "failure - SendTransaction fails",
+			options: []tonmcms.ConfigurerOption{},
 			mcmAddr: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			cfg: &types.Config{
 				Quorum: 2,
@@ -143,7 +175,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			}
 
 			// Create the Configurer instance
-			configurer, err := tonmcms.NewConfigurer(walletOperator, tlb.MustFromTON("0.1"))
+			configurer, err := tonmcms.NewConfigurer(walletOperator, tlb.MustFromTON("0.1"), tt.options...)
 			require.NoError(t, err)
 
 			// Call SetConfig
