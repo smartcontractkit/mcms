@@ -11,11 +11,22 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/lib"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+// Map of contract type to TL-B definitions (type -> opcode -> TL-B struct)
+var typeToTLBMap = map[string]lib.TLBMap{
+	// MCMS contract types
+	"com.chainlink.ton.lib.access.RBAC": rbac.TLBs,
+	"com.chainlink.ton.mcms.MCMS":       mcms.TLBs,
+	"com.chainlink.ton.mcms.Timelock":   timelock.TLBs,
+}
 
 func TestDecoder(t *testing.T) {
 	t.Parallel()
@@ -71,7 +82,7 @@ func TestDecoder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			d := ton.NewDecoder()
+			d := ton.NewDecoder(typeToTLBMap)
 			got, err := d.Decode(tt.give.Transaction, tt.contractInterfaces)
 			if tt.wantErr != "" {
 				require.Error(t, err)
