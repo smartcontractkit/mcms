@@ -8,50 +8,27 @@ import (
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/ccip/ccipsendexecutor"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/ccip/feequoter"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/ccip/offramp"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/ccip/onramp"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/ccip/router"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/jetton/minter"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/jetton/wallet"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/lib/access/rbac"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/decoders/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/lib"
 )
 
-// Map of TLBs keyed by contract type
-// TODO (ton): unify and move these definitions to smartcontractkit/chainlink-ton
-var TLBsByContract = map[string]map[uint64]any{
-	// Jetton contract types
-	"com.github.ton-blockchain.jetton-contract.contracts.jetton-wallet": wallet.TLBs,
-	"com.github.ton-blockchain.jetton-contract.contracts.jetton-minter": minter.TLBs,
-	// CCIP contract types
-	"com.chainlink.ton.ccip.Router":           router.TLBs,
-	"com.chainlink.ton.ccip.OnRamp":           onramp.TLBs,
-	"com.chainlink.ton.ccip.OffRamp":          offramp.TLBs,
-	"com.chainlink.ton.ccip.FeeQuoter":        feequoter.TLBs,
-	"com.chainlink.ton.ccip.CCIPSendExecutor": ccipsendexecutor.TLBs,
-	// MCMS contract types
-	"com.chainlink.ton.lib.access.RBAC": rbac.TLBs,
-	"com.chainlink.ton.mcms.MCMS":       mcms.TLBs,
-	"com.chainlink.ton.mcms.Timelock":   timelock.TLBs,
+type decoder struct {
+	// Map of contract type to TL-B definitions (type -> opcode -> TL-B struct)
+	TLBsForContract map[string]lib.TLBMap
 }
-
-type decoder struct{}
 
 var _ sdk.Decoder = &decoder{}
 
-func NewDecoder() sdk.Decoder {
-	return &decoder{}
+func NewDecoder(tlbs map[string]lib.TLBMap) sdk.Decoder {
+	return &decoder{
+		TLBsForContract: tlbs,
+	}
 }
 
 func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.DecodedOperation, error) {
-	idTLBs := contractInterfaces
-	tlbs, ok := TLBsByContract[idTLBs]
+	contractType := contractInterfaces
+	tlbs, ok := d.TLBsForContract[contractType]
 	if !ok {
-		return nil, fmt.Errorf("decoding failed - unknown contract interface: %s", idTLBs)
+		return nil, fmt.Errorf("decoding failed - unknown contract interface: %s", contractType)
 	}
 
 	datac, err := cell.FromBOC(tx.Data)
@@ -62,24 +39,24 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 	// TODO: handle empty cell
 	msgType, msgDecoded, err := lib.DecodeTLBValToJSON(datac, tlbs)
 	if err != nil {
-		return nil, fmt.Errorf("error while JSON decoding message (cell) for contract %s: %w", idTLBs, err)
+		return nil, fmt.Errorf("error while JSON decoding message (cell) for contract %s: %w", contractType, err)
 	}
 
 	if msgType == "Cell" || msgType == "<nil>" { // on decoder fallback (not decoded)
-		return nil, fmt.Errorf("failed to decode message for contract %s: %w", idTLBs, err)
+		return nil, fmt.Errorf("failed to decode message for contract %s: %w", contractType, err)
 	}
 
 	// Extract the input keys and args (tree/map lvl 0)
 	keys, err := lib.DecodeTLBStructKeys(datac, tlbs)
 	if err != nil {
-		return nil, fmt.Errorf("error while (struct) decoding message (cell) for contract %s: %w", idTLBs, err)
+		return nil, fmt.Errorf("error while (struct) decoding message (cell) for contract %s: %w", contractType, err)
 	}
 	inputKeys := make([]string, len(keys))
 	inputArgs := make([]any, len(keys))
 
 	m, ok := msgDecoded.(map[string]any) // JSON normalized
 	if !ok {
-		return nil, fmt.Errorf("failed to cast as map %s: %w", idTLBs, err)
+		return nil, fmt.Errorf("failed to cast as map %s: %w", contractType, err)
 	}
 
 	// Notice: sorting keys based on TL-B order (decoded map is unsorted)
@@ -90,5 +67,5 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 
 	msgOpcode := uint64(0) // not exposed currently
 
-	return NewDecodedOperation(idTLBs, msgType, msgOpcode, msgDecoded, inputKeys, inputArgs)
+	return NewDecodedOperation(contractType, msgType, msgOpcode, msgDecoded, inputKeys, inputArgs)
 }
