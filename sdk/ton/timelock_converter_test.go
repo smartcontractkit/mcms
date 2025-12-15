@@ -28,6 +28,18 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 	timelockAddress := "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"
 	mcmAddress := "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"
 	zeroHash := common.Hash{}
+
+	testOp := types.BatchOperation{
+		Transactions: []types.Transaction{must(ton.NewTransaction(
+			address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
+			cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
+			new(big.Int).SetUint64(1000),
+			"RBACTimelock",
+			[]string{"tag1", "tag2"},
+		))},
+		ChainSelector: types.ChainSelector(cselectors.TON_TESTNET.Selector),
+	}
+
 	testCases := []struct {
 		name           string
 		metadata       types.ChainMetadata
@@ -40,17 +52,8 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 		expectedOpType string
 	}{
 		{
-			name: "Schedule operation",
-			op: types.BatchOperation{
-				Transactions: []types.Transaction{must(ton.NewTransaction(
-					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
-					cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
-					new(big.Int).SetUint64(1000),
-					"RBACTimelock",
-					[]string{"tag1", "tag2"},
-				))},
-				ChainSelector: types.ChainSelector(cselectors.TON_TESTNET.Selector),
-			},
+			name:           "Schedule operation",
+			op:             testOp,
 			delay:          "1h",
 			operation:      types.TimelockActionSchedule,
 			predecessor:    zeroHash,
@@ -58,17 +61,8 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			expectedOpType: "RBACTimelock",
 		},
 		{
-			name: "Cancel operation",
-			op: types.BatchOperation{
-				Transactions: []types.Transaction{must(ton.NewTransaction(
-					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
-					cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
-					new(big.Int).SetUint64(1000),
-					"RBACTimelock",
-					[]string{"tag1", "tag2"},
-				))},
-				ChainSelector: types.ChainSelector(cselectors.TON_TESTNET.Selector),
-			},
+			name:           "Cancel operation",
+			op:             testOp,
 			delay:          "1h",
 			operation:      types.TimelockActionCancel,
 			predecessor:    zeroHash,
@@ -76,17 +70,17 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			expectedOpType: "RBACTimelock",
 		},
 		{
-			name: "Invalid operation",
-			op: types.BatchOperation{
-				Transactions: []types.Transaction{must(ton.NewTransaction(
-					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
-					cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
-					new(big.Int).SetUint64(1000),
-					"RBACTimelock",
-					[]string{"tag1", "tag2"},
-				))},
-				ChainSelector: types.ChainSelector(cselectors.TON_TESTNET.Selector),
-			},
+			name:           "Schedule operation",
+			op:             testOp,
+			delay:          "1h",
+			operation:      types.TimelockActionBypass,
+			predecessor:    zeroHash,
+			salt:           zeroHash,
+			expectedOpType: "RBACTimelock",
+		},
+		{
+			name:           "Invalid operation",
+			op:             testOp,
 			delay:          "1h",
 			operation:      types.TimelockAction("invalid"),
 			predecessor:    zeroHash,
