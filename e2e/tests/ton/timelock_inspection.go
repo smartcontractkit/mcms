@@ -114,7 +114,7 @@ func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*addres
 	// Admin will get all roles (not required, just for testing)
 	// TODO (ton): scope out ticket to fix common.SnakeData[*address.Address] usage in chainlink-ton (might not work properly)
 	addrs := []toncommon.WrappedAddress{
-		toncommon.WrappedAddress{s.wallet.Address()},
+		toncommon.WrappedAddress{WrappedAddress: s.wallet.Address()},
 	}
 
 	body := timelock.Init{

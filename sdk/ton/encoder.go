@@ -226,5 +226,6 @@ func fixMyLocalTONChainID(chainID int32) int32 {
 		//nolint:forbidigo // only used in tests, needs to be fixed properly
 		fmt.Println("WARNING (fix me): Using TON chainID -1 for localton instead of -217 from GLOBAL_ID")
 	}
+
 	return chainID
 }

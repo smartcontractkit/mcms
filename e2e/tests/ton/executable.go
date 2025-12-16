@@ -33,7 +33,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
-	mcmtypes "github.com/smartcontractkit/mcms/types"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/internal/testutils"
@@ -47,9 +46,9 @@ type ExecutionTestSuite struct {
 	signers []testutils.ECDSASigner
 
 	// Sign proposals across multiple chains, execute and verify on Chain A
-	ChainA mcmtypes.ChainSelector
-	ChainB mcmtypes.ChainSelector
-	ChainC mcmtypes.ChainSelector
+	ChainA types.ChainSelector
+	ChainB types.ChainSelector
+	ChainC types.ChainSelector
 
 	// Chain A metadata
 	mcmsAddr     string
@@ -75,10 +74,10 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	// Initialize chains
 	details, err := cselectors.GetChainDetailsByChainIDAndFamily(s.TonBlockchain.ChainID, s.TonBlockchain.Family)
 	s.Require().NoError(err)
-	s.ChainA = mcmtypes.ChainSelector(details.ChainSelector)
+	s.ChainA = types.ChainSelector(details.ChainSelector)
 
-	s.ChainB = mcmtypes.ChainSelector(cselectors.GETH_TESTNET.Selector)
-	s.ChainC = mcmtypes.ChainSelector(cselectors.GETH_DEVNET_2.Selector)
+	s.ChainB = types.ChainSelector(cselectors.GETH_TESTNET.Selector)
+	s.ChainC = types.ChainSelector(cselectors.GETH_DEVNET_2.Selector)
 
 	// Deploy contracts on chain A (the one we execute on)
 	s.deployMCMSContract(hash.CRC32("test.executable.mcms"))
@@ -114,11 +113,11 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 		BaseProposal: mcmslib.BaseProposal{
 			Version:              "v1",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-			Kind:                 mcmtypes.KindProposal,
+			Kind:                 types.KindProposal,
 			ValidUntil:           2004259681,
-			Signatures:           []mcmtypes.Signature{},
+			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
-			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 				s.ChainA: {
 					StartingOpCount:  0,
 					MCMAddress:       s.mcmsAddr,
@@ -126,7 +125,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 				},
 			},
 		},
-		Operations: []mcmtypes.Operation{
+		Operations: []types.Operation{
 			{
 				ChainSelector: s.ChainA,
 				Transaction:   opTX,
@@ -139,7 +138,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NoError(err)
 
 	// Gen caller map for easy access (we can use geth chainselector for anvil)
-	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
+	inspectors := map[types.ChainSelector]sdk.Inspector{
 		s.ChainA: mcmston.NewInspector(s.TonClient),
 	}
 
@@ -167,7 +166,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	encoder := encoders[s.ChainA].(*mcmston.Encoder)
 	executor, err := mcmston.NewExecutor(encoder, s.TonClient, s.wallet, tlb.MustFromTON("0.1"))
 	s.Require().NoError(err)
-	executors := map[mcmtypes.ChainSelector]sdk.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		s.ChainA: executor,
 	}
 
@@ -236,6 +235,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		Role:    tlbe.NewUint256(timelock.RoleProposer),
 		Account: s.wallet.Address(),
 	})
+	s.Require().NoError(err)
 
 	opTX, err := mcmston.NewTransaction(
 		address.MustParseAddr(s.timelockAddr),
@@ -251,11 +251,11 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		BaseProposal: mcmslib.BaseProposal{
 			Version:              "v1",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-			Kind:                 mcmtypes.KindProposal,
+			Kind:                 types.KindProposal,
 			ValidUntil:           2004259681,
-			Signatures:           []mcmtypes.Signature{},
+			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
-			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 				s.ChainA: {
 					StartingOpCount:  1,
 					MCMAddress:       s.mcmsAddr,
@@ -263,7 +263,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 				},
 			},
 		},
-		Operations: []mcmtypes.Operation{
+		Operations: []types.Operation{
 			{
 				ChainSelector: s.ChainA,
 				Transaction:   opTX,
@@ -276,7 +276,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 
 	// Gen caller map for easy access (we can use geth chainselector for anvil)
-	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
+	inspectors := map[types.ChainSelector]sdk.Inspector{
 		s.ChainA: mcmston.NewInspector(s.TonClient),
 	}
 
@@ -301,7 +301,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	encoder := encoders[s.ChainA].(*mcmston.Encoder)
 	executor, err := mcmston.NewExecutor(encoder, s.TonClient, s.wallet, tlb.MustFromTON("0.1"))
 	s.Require().NoError(err)
-	executors := map[mcmtypes.ChainSelector]sdk.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		s.ChainA: executor,
 	}
 
@@ -380,11 +380,11 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		BaseProposal: mcmslib.BaseProposal{
 			Version:              "v1",
 			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
-			Kind:                 mcmtypes.KindProposal,
+			Kind:                 types.KindProposal,
 			ValidUntil:           2004259681,
-			Signatures:           []mcmtypes.Signature{},
+			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
-			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 				s.ChainA: {
 					StartingOpCount:  2,
 					MCMAddress:       s.mcmsAddr,
@@ -392,7 +392,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 				},
 			},
 		},
-		Operations: []mcmtypes.Operation{
+		Operations: []types.Operation{
 			{
 				ChainSelector: s.ChainA,
 				Transaction:   opTX2,
@@ -419,7 +419,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	// s.Require().NoError(err)
 
 	// Construct executors
-	executors2 := map[mcmtypes.ChainSelector]sdk.Executor{
+	executors2 := map[types.ChainSelector]sdk.Executor{
 		s.ChainA: executor,
 	}
 
@@ -516,12 +516,12 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	proposalTimelock := mcmslib.TimelockProposal{
 		BaseProposal: mcmslib.BaseProposal{
 			Version:              "v1",
-			Kind:                 mcmtypes.KindTimelockProposal,
+			Kind:                 types.KindTimelockProposal,
 			Description:          "description",
 			ValidUntil:           2004259681,
 			OverridePreviousRoot: true,
-			Signatures:           []mcmtypes.Signature{},
-			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
+			Signatures:           []types.Signature{},
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
 				s.ChainA: {
 					StartingOpCount:  opCountA,
 					MCMAddress:       s.mcmsAddr,
@@ -537,30 +537,30 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 				},
 			},
 		},
-		Action: mcmtypes.TimelockActionSchedule,
-		Delay:  mcmtypes.MustParseDuration("0s"),
-		TimelockAddresses: map[mcmtypes.ChainSelector]string{
+		Action: types.TimelockActionSchedule,
+		Delay:  types.MustParseDuration("0s"),
+		TimelockAddresses: map[types.ChainSelector]string{
 			s.ChainA: s.timelockAddr,
 			s.ChainB: "0xdead0002",
 			s.ChainC: "0xdead1002",
 		},
-		Operations: []mcmtypes.BatchOperation{
+		Operations: []types.BatchOperation{
 			{
 				ChainSelector: s.ChainA,
-				Transactions:  []mcmtypes.Transaction{opTX},
+				Transactions:  []types.Transaction{opTX},
 			},
 			{
 				ChainSelector: s.ChainB,
-				Transactions:  []mcmtypes.Transaction{dummyTX},
+				Transactions:  []types.Transaction{dummyTX},
 			},
 			{
 				ChainSelector: s.ChainC,
-				Transactions:  []mcmtypes.Transaction{dummyTX},
+				Transactions:  []types.Transaction{dummyTX},
 			},
 		},
 	}
 
-	proposal, _, err := proposalTimelock.Convert(ctx, map[mcmtypes.ChainSelector]sdk.TimelockConverter{
+	proposal, _, err := proposalTimelock.Convert(ctx, map[types.ChainSelector]sdk.TimelockConverter{
 		s.ChainA: mcmston.NewTimelockConverter(),
 		s.ChainB: &evm.TimelockConverter{},
 		s.ChainC: &evm.TimelockConverter{},
@@ -572,7 +572,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	s.Require().NoError(err)
 
 	// Sign proposal
-	inspectors := map[mcmtypes.ChainSelector]sdk.Inspector{
+	inspectors := map[types.ChainSelector]sdk.Inspector{
 		s.ChainA: inspectorA,
 		s.ChainB: s.newMockEVMInspector(proposal.ChainMetadata[s.ChainB]),
 		s.ChainC: s.newMockEVMInspector(proposal.ChainMetadata[s.ChainC]),
@@ -602,7 +602,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	encoderC := encoders[s.ChainC].(*evm.Encoder)
 
 	// Construct executors for both chains
-	executors := map[mcmtypes.ChainSelector]sdk.Executor{
+	executors := map[types.ChainSelector]sdk.Executor{
 		s.ChainA: must(mcmston.NewExecutor(encoderA, s.TonClient, s.wallet, tlb.MustFromTON("0.1"))),
 		s.ChainB: evm.NewExecutor(encoderB, nil, nil), // No need to execute on Chain B or C
 		s.ChainC: evm.NewExecutor(encoderC, nil, nil),
@@ -613,7 +613,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	// s.Require().NoError(err, "Failed to create simulator for Chain A")
 	// simulatorC, err := evm.NewSimulator(encoderC, s.ClientB)
 	// s.Require().NoError(err, "Failed to create simulator for Chain B")
-	// simulators := map[mcmtypes.ChainSelector]sdk.Simulator{
+	// simulators := map[types.ChainSelector]sdk.Simulator{
 	// 	s.ChainB: simulatorB,
 	// 	s.ChainC: simulatorC,
 	// }
@@ -664,7 +664,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	s.Require().Equal(opCountA+1, newOpCountA)
 
 	// Construct executors
-	tExecutors := map[mcmtypes.ChainSelector]sdk.TimelockExecutor{
+	tExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 		s.ChainA: must(mcmston.NewTimelockExecutor(s.TonClient, s.wallet, tlb.MustFromTON("0.2"))),
 		s.ChainB: evm.NewTimelockExecutor(nil, nil), // No need to execute on Chain B or C
 		s.ChainC: evm.NewTimelockExecutor(nil, nil),
@@ -707,8 +707,8 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 	mcmsAddr := address.MustParseAddr(s.mcmsAddr)
 	// When deploying the contract, send the Init message to initialize the Timelock contract
 	accounts := []toncommon.WrappedAddress{
-		toncommon.WrappedAddress{mcmsAddr},
-		toncommon.WrappedAddress{s.wallet.Address()},
+		toncommon.WrappedAddress{WrappedAddress: mcmsAddr},
+		toncommon.WrappedAddress{WrappedAddress: s.wallet.Address()},
 	}
 	body := timelock.Init{
 		QueryID:                  0,
