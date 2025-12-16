@@ -676,7 +676,7 @@ var testOpAdditionalFields = json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.Mu
 // TODO (ton): duplicated with timelock_inspection.go
 func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 	ctx := s.T().Context()
-	amount := tlb.MustFromTON("1.5") // TODO: high gas
+	amount := tlb.MustFromTON("1.5") // TODO (ton): high gas
 
 	data := timelock.EmptyDataFrom(id)
 	mcmsAddr := address.MustParseAddr(s.mcmsAddr)
@@ -706,7 +706,7 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 func (s *ExecutionTestSuite) deployMCMSContract(id uint32) {
 	ctx := s.T().Context()
 
-	// TODO: when MCMS is out of gas, executions fail silently
+	// TODO (ton): when MCMS is out of gas, executions fail silently
 	// - trace doesn't return error, but opCount doesn't increase
 	amount := tlb.MustFromTON("10")
 	chainID, err := strconv.ParseInt(s.TonBlockchain.ChainID, 10, 64)
