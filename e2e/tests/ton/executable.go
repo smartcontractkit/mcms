@@ -217,7 +217,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	inspectorT := mcmston.NewTimelockInspector(s.TonClient)
 	proposers, err := inspectorT.GetProposers(ctx, s.timelockAddr)
 	s.Require().NoError(err)
-	s.Require().Equal(2, len(proposers))
+	s.Require().Len(proposers, 2)
 	s.Require().Contains(proposers, s.mcmsAddr)
 }
 
@@ -350,7 +350,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	inspectorT := mcmston.NewTimelockInspector(s.TonClient)
 	proposers, err := inspectorT.GetProposers(ctx, s.timelockAddr)
 	s.Require().NoError(err)
-	s.Require().Equal(2, len(proposers))
+	s.Require().Len(proposers, 2)
 	s.Require().Contains(proposers, s.wallet.Address().String())
 
 	// Construct 2nd proposal
@@ -466,7 +466,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	// Check the state of the timelock contract
 	bypassers, err := inspectorT.GetBypassers(ctx, s.timelockAddr)
 	s.Require().NoError(err)
-	s.Require().Equal(2, len(bypassers))
+	s.Require().Len(bypassers, 2)
 	s.Require().Contains(bypassers, s.mcmsAddr)
 }
 
@@ -682,8 +682,8 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 	mcmsAddr := address.MustParseAddr(s.mcmsAddr)
 	// When deploying the contract, send the Init message to initialize the Timelock contract
 	accounts := []toncommon.AddressWrap{
-		toncommon.AddressWrap{Val: mcmsAddr},
-		toncommon.AddressWrap{Val: s.wallet.Address()},
+		{Val: mcmsAddr},
+		{Val: s.wallet.Address()},
 	}
 	body := timelock.Init{
 		QueryID:                  0,

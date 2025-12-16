@@ -113,7 +113,7 @@ func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*addres
 	// When deploying the contract, send the Init message to initialize the Timelock contract
 	// Admin will get all roles (not required, just for testing)
 	addrs := []toncommon.AddressWrap{
-		toncommon.AddressWrap{Val: s.wallet.Address()},
+		{Val: s.wallet.Address()},
 	}
 
 	body := timelock.Init{
