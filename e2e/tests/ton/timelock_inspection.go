@@ -107,7 +107,7 @@ func (s *TimelockInspectionTestSuite) scheduleBatch(timelockAddr *address.Addres
 // TODO (ton): duplicated with executable.go
 func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*address.Address, error) {
 	ctx := s.T().Context()
-	amount := tlb.MustFromTON("0.5") // TODO (ton): high gas
+	amount := tlb.MustFromTON("1.5") // TODO (ton): high gas
 
 	data := timelock.EmptyDataFrom(id)
 	// When deploying the contract, send the Init message to initialize the Timelock contract
@@ -186,7 +186,7 @@ func (s *TimelockInspectionTestSuite) TestGetProposers() {
 
 	proposers, err := inspector.GetProposers(ctx, s.timelockAddr.String())
 	s.Require().NoError(err)
-	s.Require().Len(proposers, 1)
+	s.Require().Len(proposers, 2)
 	s.Require().Equal(s.accounts[0].String(), proposers[0])
 }
 
@@ -197,7 +197,7 @@ func (s *TimelockInspectionTestSuite) TestGetExecutors() {
 
 	executors, err := inspector.GetExecutors(ctx, s.timelockAddr.String())
 	s.Require().NoError(err)
-	s.Require().Len(executors, 2)
+	s.Require().Len(executors, 3)
 	s.Require().Equal(s.accounts[0].String(), executors[0])
 	s.Require().Equal(s.accounts[1].String(), executors[1])
 }
@@ -209,7 +209,7 @@ func (s *TimelockInspectionTestSuite) TestGetBypassers() {
 
 	bypassers, err := inspector.GetBypassers(ctx, s.timelockAddr.String())
 	s.Require().NoError(err)
-	s.Require().Len(bypassers, 1) // Ensure lengths match
+	s.Require().Len(bypassers, 2) // Ensure lengths match
 	// Check that all elements of signerAddresses are in proposers
 	s.Require().Contains(bypassers, s.accounts[1].String())
 }
@@ -221,7 +221,7 @@ func (s *TimelockInspectionTestSuite) TestGetCancellers() {
 
 	cancellers, err := inspector.GetCancellers(ctx, s.timelockAddr.String())
 	s.Require().NoError(err)
-	s.Require().Len(cancellers, 2)
+	s.Require().Len(cancellers, 3)
 	s.Require().Equal(s.accounts[0].String(), cancellers[0])
 	s.Require().Equal(s.accounts[1].String(), cancellers[1])
 }
