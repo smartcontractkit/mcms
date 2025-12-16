@@ -76,6 +76,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 	s.chainSelector = types.ChainSelector(chainDetails.ChainSelector)
 }
 
+// TODO (ton): duplicated with executable.go
 func (s *SetRootTestSuite) deployMCMSContract() {
 	ctx := s.T().Context()
 

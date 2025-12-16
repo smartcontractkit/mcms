@@ -104,21 +104,27 @@ func (s *TimelockInspectionTestSuite) scheduleBatch(timelockAddr *address.Addres
 	s.Require().NoError(err)
 }
 
+// TODO (ton): duplicated with executable.go
 func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*address.Address, error) {
 	ctx := s.T().Context()
 	amount := tlb.MustFromTON("0.5") // TODO: high gas
 
 	data := timelock.EmptyDataFrom(id)
 	// When deploying the contract, send the Init message to initialize the Timelock contract
-	none := []toncommon.WrappedAddress{}
+	// Admin will get all roles (not required, just for testing)
+	// TODO (ton): scope out ticket to fix common.SnakeData[*address.Address] usage in chainlink-ton (might not work properly)
+	addrs := []toncommon.WrappedAddress{
+		toncommon.WrappedAddress{s.wallet.Address()},
+	}
+
 	body := timelock.Init{
 		QueryID:                  0,
 		MinDelay:                 0,
 		Admin:                    s.wallet.Address(),
-		Proposers:                none,
-		Executors:                none,
-		Cancellers:               none,
-		Bypassers:                none,
+		Proposers:                addrs,
+		Executors:                addrs,
+		Cancellers:               addrs,
+		Bypassers:                addrs,
 		ExecutorRoleCheckEnabled: true,
 		OpFinalizationTimeout:    0,
 	}

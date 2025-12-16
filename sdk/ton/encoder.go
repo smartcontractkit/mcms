@@ -129,6 +129,8 @@ func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op t
 		return mcms.Op{}, &sdkerrors.InvalidChainIDError{ReceivedChainID: e.ChainSelector}
 	}
 
+	chainID = fixMyLocalTONChainID(chainID)
+
 	// Unmarshal the AdditionalFields from the operation
 	var additionalFields AdditionalFields
 	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
@@ -157,7 +159,9 @@ func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op t
 		Nonce:    uint64(opCount),
 		To:       toAddr,
 		Data:     datac,
-		Value:    tlb.FromNanoTON(additionalFields.Value),
+		// TODO (ton): why not workng?
+		// Value:    tlb.FromNanoTON(additionalFields.Value),
+		Value: tlb.MustFromTON("0.2"), // temporary hardcode until tlb.FromNanoTON works
 	}, nil
 }
 
@@ -167,17 +171,12 @@ func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadat
 		return mcms.RootMetadata{}, &sdkerrors.InvalidChainIDError{ReceivedChainID: e.ChainSelector}
 	}
 
+	chainID = fixMyLocalTONChainID(chainID)
+
 	// Map to Ton Address type (mcms.address)
 	mcmsAddr, err := address.ParseAddr(metadata.MCMAddress)
 	if err != nil {
 		return mcms.RootMetadata{}, fmt.Errorf("invalid mcms address: %w", err)
-	}
-
-	// TODO (ton): fix me, GLOBAL_ID -217 for mulocalton is not applied and -1 default is returned on-chain
-	if chainID == chain_selectors.TON_LOCALNET.ChainID {
-		chainID = -1
-		//nolint:forbidigo // only used in tests, needs to be fixed properly
-		fmt.Println("WARNING (fix me): Using TON chainID -1 for localton instead of -217 from GLOBAL_ID")
 	}
 
 	return mcms.RootMetadata{
@@ -218,4 +217,14 @@ func (e *Encoder) ToSignatures(ss []types.Signature, hash common.Hash) ([]mcms.S
 	}
 
 	return bindSignatures, nil
+}
+
+// TODO (ton): fix me, GLOBAL_ID -217 for mulocalton is not applied and -1 default is returned on-chain
+func fixMyLocalTONChainID(chainID int32) int32 {
+	if chainID == chain_selectors.TON_LOCALNET.ChainID {
+		chainID = -1
+		//nolint:forbidigo // only used in tests, needs to be fixed properly
+		fmt.Println("WARNING (fix me): Using TON chainID -1 for localton instead of -217 from GLOBAL_ID")
+	}
+	return chainID
 }
