@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/big"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
@@ -21,13 +20,21 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
+// Default amount to send with timelock transactions (to cover gas fees)
+var DefaultSendAmount = tlb.MustFromTON("0.15")
+
 var _ sdk.TimelockConverter = (*timelockConverter)(nil)
 
-type timelockConverter struct{}
+type timelockConverter struct {
+	// Transaction opts
+	amount tlb.Coins
+}
 
 // NewTimelockConverter creates a new TimelockConverter
-func NewTimelockConverter() sdk.TimelockConverter {
-	return &timelockConverter{}
+func NewTimelockConverter(amount tlb.Coins) sdk.TimelockConverter {
+	return &timelockConverter{
+		amount: amount,
+	}
 }
 
 func (t *timelockConverter) ConvertBatchToChainOperations(
@@ -100,11 +107,9 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("invalid timelock address: %w", err)
 	}
 
-	// Notice: follows EVM convention of value being 0 here
-	value := big.NewInt(0)
-
+	// Notice: EVM just sets 0 here, but on TON we need to set some value to cover gas fees
 	var tx types.Transaction
-	tx, err = NewTransaction(dstAddr, data.BeginParse(), value, "RBACTimelock", tags)
+	tx, err = NewTransaction(dstAddr, data.BeginParse(), t.amount.Nano(), "RBACTimelock", tags)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)
 	}

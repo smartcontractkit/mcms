@@ -86,7 +86,9 @@ func newTimelockConverter(csel types.ChainSelector) (sdk.TimelockConverter, erro
 		return &sui.TimelockConverter{}, nil
 
 	case cselectors.FamilyTon:
-		return ton.NewTimelockConverter(), nil
+		// Notice: we need to define the send amount from MCMS to Timelock,
+		// to cover gas fees. We use a static default value here for now.
+		return ton.NewTimelockConverter(ton.DefaultSendAmount), nil
 
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)

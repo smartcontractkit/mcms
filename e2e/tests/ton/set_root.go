@@ -239,7 +239,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	s.Require().NoError(err)
 
 	proposal, _, err := proposalTimelock.Convert(ctx, map[types.ChainSelector]sdk.TimelockConverter{
-		s.chainSelector: mcmston.NewTimelockConverter(),
+		s.chainSelector: mcmston.NewTimelockConverter(mcmston.DefaultSendAmount),
 	})
 	s.Require().NoError(err)
 

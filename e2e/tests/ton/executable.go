@@ -550,7 +550,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	}
 
 	proposal, _, err := proposalTimelock.Convert(ctx, map[types.ChainSelector]sdk.TimelockConverter{
-		s.ChainA: mcmston.NewTimelockConverter(),
+		s.ChainA: mcmston.NewTimelockConverter(mcmston.DefaultSendAmount),
 		s.ChainB: &evm.TimelockConverter{},
 		s.ChainC: &evm.TimelockConverter{},
 	})

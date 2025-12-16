@@ -128,7 +128,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			converter := ton.NewTimelockConverter()
+			converter := ton.NewTimelockConverter(ton.DefaultSendAmount)
 			chainOperations, operationID, err := converter.ConvertBatchToChainOperations(
 				ctx,
 				tc.metadata,

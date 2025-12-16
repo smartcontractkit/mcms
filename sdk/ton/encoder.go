@@ -159,9 +159,7 @@ func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op t
 		Nonce:    uint64(opCount),
 		To:       toAddr,
 		Data:     datac,
-		// TODO (ton): why not workng?
-		// Value:    tlb.FromNanoTON(additionalFields.Value),
-		Value: tlb.MustFromTON("0.2"), // temporary hardcode until tlb.FromNanoTON works
+		Value:    tlb.FromNanoTON(additionalFields.Value),
 	}, nil
 }
 
