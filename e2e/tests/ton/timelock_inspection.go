@@ -104,7 +104,6 @@ func (s *TimelockInspectionTestSuite) scheduleBatch(timelockAddr *address.Addres
 	s.Require().NoError(err)
 }
 
-// TODO (ton): duplicated with executable.go
 func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*address.Address, error) {
 	ctx := s.T().Context()
 	amount := tlb.MustFromTON("1.5") // TODO (ton): high gas

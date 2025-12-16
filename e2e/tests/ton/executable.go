@@ -673,7 +673,6 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 
 var testOpAdditionalFields = json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.1").Nano().Uint64()))
 
-// TODO (ton): duplicated with timelock_inspection.go
 func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 	ctx := s.T().Context()
 	amount := tlb.MustFromTON("1.5") // TODO (ton): high gas
@@ -702,7 +701,6 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 	s.timelockAddr = timelockAddr.String()
 }
 
-// TODO (ton): duplicated with set_root.go
 func (s *ExecutionTestSuite) deployMCMSContract(id uint32) {
 	ctx := s.T().Context()
 
@@ -720,18 +718,7 @@ func (s *ExecutionTestSuite) deployMCMSContract(id uint32) {
 	configurerTON, err := mcmston.NewConfigurer(s.wallet, amount)
 	s.Require().NoError(err)
 
-	config := &types.Config{
-		Quorum:  1,
-		Signers: []common.Address{s.signers[0].Address()},
-		GroupSigners: []types.Config{
-			{
-				Quorum:       1,
-				Signers:      []common.Address{s.signers[1].Address()},
-				GroupSigners: []types.Config{},
-			},
-		},
-	}
-
+	config := GenSimpleTestMCMSConfig(s.signers)
 	clearRoot := true
 	res, err := configurerTON.SetConfig(ctx, s.mcmsAddr, config, clearRoot)
 	s.Require().NoError(err, "Failed to set contract configuration")
@@ -747,17 +734,7 @@ func (s *ExecutionTestSuite) deployMCMSContract(id uint32) {
 
 func (s *ExecutionTestSuite) newMockEVMInspector(rootMetadata types.ChainMetadata) sdk.Inspector {
 	return mockEVMInspector{
-		config: &types.Config{
-			Quorum:  1,
-			Signers: []common.Address{s.signers[0].Address()},
-			GroupSigners: []types.Config{
-				{
-					Quorum:       1,
-					Signers:      []common.Address{s.signers[1].Address()},
-					GroupSigners: []types.Config{},
-				},
-			},
-		},
+		config:       GenSimpleTestMCMSConfig(s.signers),
 		opCount:      0,
 		root:         common.HexToHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
 		rootMetadata: rootMetadata,

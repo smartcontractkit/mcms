@@ -8,6 +8,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
@@ -18,6 +20,9 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
+
+	"github.com/smartcontractkit/mcms/internal/testutils"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 const (
@@ -82,4 +87,19 @@ func DeployTimelockContract(ctx context.Context, client *ton.APIClient, w *walle
 	}
 
 	return contract.Address, nil
+}
+
+// GenSimpleTestMCMSConfig generates a simple test configuration that's used in e2e tests.
+func GenSimpleTestMCMSConfig(signers []testutils.ECDSASigner) *types.Config {
+	return &types.Config{
+		Quorum:  1,
+		Signers: []common.Address{signers[0].Address()},
+		GroupSigners: []types.Config{
+			{
+				Quorum:       1,
+				Signers:      []common.Address{signers[1].Address()},
+				GroupSigners: []types.Config{},
+			},
+		},
+	}
 }

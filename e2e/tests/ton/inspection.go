@@ -19,7 +19,6 @@ import (
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/internal/testutils"
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
-	"github.com/smartcontractkit/mcms/types"
 )
 
 // InspectionTestSuite defines the test suite
@@ -62,18 +61,7 @@ func (s *InspectionTestSuite) deployMCMSContract() {
 	configurerTON, err := mcmston.NewConfigurer(s.wallet, amount)
 	s.Require().NoError(err)
 
-	config := &types.Config{
-		Quorum:  1,
-		Signers: []common.Address{s.signers[0].Address()},
-		GroupSigners: []types.Config{
-			{
-				Quorum:       1,
-				Signers:      []common.Address{s.signers[1].Address()},
-				GroupSigners: []types.Config{},
-			},
-		},
-	}
-
+	config := GenSimpleTestMCMSConfig(s.signers)
 	clearRoot := true
 	res, err := configurerTON.SetConfig(ctx, s.mcmsAddr, config, clearRoot)
 	s.Require().NoError(err, "Failed to set contract configuration")

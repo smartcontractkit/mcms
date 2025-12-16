@@ -9,8 +9,6 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
@@ -76,7 +74,6 @@ func (s *SetRootTestSuite) SetupSuite() {
 	s.chainSelector = types.ChainSelector(chainDetails.ChainSelector)
 }
 
-// TODO (ton): duplicated with executable.go
 func (s *SetRootTestSuite) deployMCMSContract() {
 	ctx := s.T().Context()
 
@@ -92,18 +89,7 @@ func (s *SetRootTestSuite) deployMCMSContract() {
 	configurerTON, err := mcmston.NewConfigurer(s.wallet, amount)
 	s.Require().NoError(err)
 
-	config := &types.Config{
-		Quorum:  1,
-		Signers: []common.Address{s.signers[0].Address()},
-		GroupSigners: []types.Config{
-			{
-				Quorum:       1,
-				Signers:      []common.Address{s.signers[1].Address()},
-				GroupSigners: []types.Config{},
-			},
-		},
-	}
-
+	config := GenSimpleTestMCMSConfig(s.signers)
 	clearRoot := true
 	res, err := configurerTON.SetConfig(ctx, s.mcmsAddr, config, clearRoot)
 	s.Require().NoError(err, "Failed to set contract configuration")
