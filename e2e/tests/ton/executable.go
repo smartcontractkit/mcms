@@ -707,8 +707,12 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 	mcmsAddr := address.MustParseAddr(s.mcmsAddr)
 	// When deploying the contract, send the Init message to initialize the Timelock contract
 	accounts := []toncommon.WrappedAddress{
-		toncommon.WrappedAddress{WrappedAddress: mcmsAddr},
-		toncommon.WrappedAddress{WrappedAddress: s.wallet.Address()},
+		toncommon.WrappedAddress{
+			WrappedAddress: mcmsAddr,
+		},
+		toncommon.WrappedAddress{
+			WrappedAddress: s.wallet.Address(),
+		},
 	}
 	body := timelock.Init{
 		QueryID:                  0,
