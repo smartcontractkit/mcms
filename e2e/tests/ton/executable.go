@@ -213,14 +213,12 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NoError(err)
 	s.Require().Equal(uint64(1), newOpCountA)
 
-	// // Check the state of the timelock contract
-	// proposerCount, err := s.ChainA.timelockContract.GetRoleMemberCount(&bind.CallOpts{}, role)
-	// s.Require().NoError(err)
-	// // One is added by default
-	// s.Require().Equal(big.NewInt(2), proposerCount)
-	// proposer, err := s.ChainA.timelockContract.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
-	// s.Require().NoError(err)
-	// s.Require().Equal(s.ChainA.mcmsContract.Address().Hex(), proposer.Hex())
+	// Check the state of the timelock contract
+	inspectorT := mcmston.NewTimelockInspector(s.TonClient)
+	proposers, err := inspectorT.GetProposers(ctx, s.timelockAddr)
+	s.Require().NoError(err)
+	s.Require().Equal(2, len(proposers))
+	s.Require().Contains(proposers, s.mcmsAddr)
 }
 
 // TestExecuteProposalMultiple executes 2 proposals to check nonce calculation mechanisms are working
@@ -348,13 +346,12 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 	s.Require().Equal(uint64(2), newOpCountA)
 
-	// // Check the state of the timelock contract
-	// proposerCount, err := s.ChainA.timelockContract.GetRoleMemberCount(&bind.CallOpts{}, role)
-	// s.Require().NoError(err)
-	// s.Require().Equal(big.NewInt(2), proposerCount)
-	// proposer, err := s.ChainA.timelockContract.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
-	// s.Require().NoError(err)
-	// s.Require().Equal(s.ChainA.mcmsContract.Address().Hex(), proposer.Hex())
+	// Check the state of the timelock contract
+	inspectorT := mcmston.NewTimelockInspector(s.TonClient)
+	proposers, err := inspectorT.GetProposers(ctx, s.timelockAddr)
+	s.Require().NoError(err)
+	s.Require().Equal(2, len(proposers))
+	s.Require().Contains(proposers, s.wallet.Address().String())
 
 	// Construct 2nd proposal
 
@@ -413,11 +410,6 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 	s.Require().True(quorumMet)
 
-	// TODO: this is not needed?
-	// // Construct encoders
-	// encoders2, err := proposal2.GetEncoders()
-	// s.Require().NoError(err)
-
 	// Construct executors
 	executors2 := map[types.ChainSelector]sdk.Executor{
 		s.ChainA: executor,
@@ -471,14 +463,11 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.Require().NoError(err)
 	s.Require().Equal(uint64(3), newOpCountA)
 
-	// TODO (ton): verify actual state changes
-	// // Check the state of the timelock contract
-	// proposerCount, err = s.ChainA.timelockContract.GetRoleMemberCount(&bind.CallOpts{}, role2)
-	// s.Require().NoError(err)
-	// s.Require().Equal(big.NewInt(2), proposerCount)
-	// proposer, err = s.ChainA.timelockContract.GetRoleMember(&bind.CallOpts{}, role, big.NewInt(0))
-	// s.Require().NoError(err)
-	// s.Require().Equal(s.ChainA.mcmsContract.Address().Hex(), proposer.Hex())
+	// Check the state of the timelock contract
+	bypassers, err := inspectorT.GetBypassers(ctx, s.timelockAddr)
+	s.Require().NoError(err)
+	s.Require().Equal(2, len(bypassers))
+	s.Require().Contains(bypassers, s.mcmsAddr)
 }
 
 // TestExecuteProposalMultipleChains executes a proposal with operations on two different chains
@@ -608,18 +597,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 		s.ChainC: evm.NewExecutor(encoderC, nil, nil),
 	}
 
-	// // Prepare and execute simulation A
-	// simulatorB, err := evm.NewSimulator(encoderB, s.ClientA)
-	// s.Require().NoError(err, "Failed to create simulator for Chain A")
-	// simulatorC, err := evm.NewSimulator(encoderC, s.ClientB)
-	// s.Require().NoError(err, "Failed to create simulator for Chain B")
-	// simulators := map[types.ChainSelector]sdk.Simulator{
-	// 	s.ChainB: simulatorB,
-	// 	s.ChainC: simulatorC,
-	// }
-	// signable.SetSimulators(simulators)
-	// err = signable.Simulate(ctx)
-	// s.Require().NoError(err)
+	// Notice: simulation not supported for TON executor yet
 
 	// Construct executable object
 	executable, err := mcmslib.NewExecutable(&proposal, executors)
@@ -691,9 +669,6 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	// Wait and check success
 	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
 	s.Require().NoError(err)
-
-	// Execute operation 1
-	// TODO: expect error as unitialized?
 }
 
 var testOpAdditionalFields = json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.1").Nano().Uint64()))
@@ -706,13 +681,9 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 	data := timelock.EmptyDataFrom(id)
 	mcmsAddr := address.MustParseAddr(s.mcmsAddr)
 	// When deploying the contract, send the Init message to initialize the Timelock contract
-	accounts := []toncommon.WrappedAddress{
-		toncommon.WrappedAddress{
-			WrappedAddress: mcmsAddr,
-		},
-		toncommon.WrappedAddress{
-			WrappedAddress: s.wallet.Address(),
-		},
+	accounts := []toncommon.AddressWrap{
+		toncommon.AddressWrap{Val: mcmsAddr},
+		toncommon.AddressWrap{Val: s.wallet.Address()},
 	}
 	body := timelock.Init{
 		QueryID:                  0,

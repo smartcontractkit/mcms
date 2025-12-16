@@ -23,7 +23,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
 
-	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
+	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
@@ -31,14 +31,14 @@ import (
 func TestNewExecutor(t *testing.T) {
 	t.Parallel()
 
-	encoder := &tonmcms.Encoder{}
+	encoder := &mcmston.Encoder{}
 	chainID := chaintest.Chain7TONID
 
 	_api := ton_mocks.NewTonAPI(t)
 	walletOperator := must(tvm.NewRandomV5R1TestWallet(_api, chainID))
 	client := ton_mocks.NewAPIClientWrapped(t)
 
-	executor, err := tonmcms.NewExecutor(encoder, client, walletOperator, tlb.MustFromTON("0.1"))
+	executor, err := mcmston.NewExecutor(encoder, client, walletOperator, tlb.MustFromTON("0.1"))
 	assert.NotNil(t, executor, "expected Executor")
 	assert.NoError(t, err)
 }
@@ -49,7 +49,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	ctx := context.Background()
 	tests := []struct {
 		name       string
-		encoder    *tonmcms.Encoder
+		encoder    *mcmston.Encoder
 		metadata   types.ChainMetadata
 		nonce      uint32
 		proof      []common.Hash
@@ -61,7 +61,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	}{
 		{
 			name: "success",
-			encoder: &tonmcms.Encoder{
+			encoder: &mcmston.Encoder{
 				ChainSelector: chaintest.Chain7Selector,
 			},
 			metadata: types.ChainMetadata{
@@ -99,7 +99,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 		},
 		{
 			name: "failure in tx execution",
-			encoder: &tonmcms.Encoder{
+			encoder: &mcmston.Encoder{
 				ChainSelector: chaintest.Chain7Selector,
 			},
 			metadata: types.ChainMetadata{
@@ -144,7 +144,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 		},
 		{
 			name: "failure in operation conversion due to invalid chain ID",
-			encoder: &tonmcms.Encoder{
+			encoder: &mcmston.Encoder{
 				ChainSelector: types.ChainSelector(1),
 			},
 			op: types.Operation{
@@ -175,7 +175,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				tt.mockSetup(_api, client)
 			}
 
-			executor, err := tonmcms.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0.1"))
+			executor, err := mcmston.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0.1"))
 			if tt.wantErrNew != nil {
 				require.EqualError(t, err, tt.wantErrNew.Error())
 				return
@@ -200,7 +200,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 	ctx := context.Background()
 	tests := []struct {
 		name             string
-		encoder          *tonmcms.Encoder
+		encoder          *mcmston.Encoder
 		metadata         types.ChainMetadata
 		proof            []common.Hash
 		root             [32]byte
@@ -213,7 +213,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 	}{
 		{
 			name: "success",
-			encoder: &tonmcms.Encoder{
+			encoder: &mcmston.Encoder{
 				ChainSelector: chaintest.Chain7Selector,
 			},
 			metadata: types.ChainMetadata{
@@ -249,7 +249,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 		},
 		{
 			name: "failure in tx send",
-			encoder: &tonmcms.Encoder{
+			encoder: &mcmston.Encoder{
 				ChainSelector: chaintest.Chain7Selector,
 			},
 			metadata: types.ChainMetadata{
@@ -292,7 +292,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 		},
 		{
 			name: "failure in operation conversion due to invalid chain ID",
-			encoder: &tonmcms.Encoder{
+			encoder: &mcmston.Encoder{
 				ChainSelector: types.ChainSelector(1),
 			},
 			mockSetup:  func(api *ton_mocks.TonAPI, client *ton_mocks.APIClientWrapped) {},
@@ -316,7 +316,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 				tt.mockSetup(_api, client)
 			}
 
-			executor, err := tonmcms.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0.1"))
+			executor, err := mcmston.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0.1"))
 			if tt.wantErrNew != nil {
 				require.EqualError(t, err, tt.wantErrNew.Error())
 				return

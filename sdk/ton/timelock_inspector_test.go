@@ -18,7 +18,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 
-	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
+	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
 
@@ -208,7 +208,7 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 
 			// Create a new mock client and inspector for each test case
 			client := ton_mocks.NewAPIClientWrapped(t)
-			inspector := tonmcms.NewTimelockInspector(client)
+			inspector := mcmston.NewTimelockInspector(client)
 
 			// Mock the contract calls based on the test case
 			if tt.mockError == nil {
@@ -288,7 +288,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 
 			// Create a new mock client and inspector for each test case
 			client := ton_mocks.NewAPIClientWrapped(t)
-			inspector := tonmcms.NewTimelockInspector(client)
+			inspector := mcmston.NewTimelockInspector(client)
 
 			// Mock the contract call based on the test case
 			// Mock CurrentMasterchainInfo
@@ -344,7 +344,7 @@ func testIsOperationState(
 
 	// Create a new mock client and inspector for each test case
 	client := ton_mocks.NewAPIClientWrapped(t)
-	inspector := tonmcms.NewTimelockInspector(client)
+	inspector := mcmston.NewTimelockInspector(client)
 
 	// Mock the contract call based on the test case
 	// Mock CurrentMasterchainInfo
@@ -533,7 +533,7 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 
 			// Create a new mock client and inspector for each test case
 			client := ton_mocks.NewAPIClientWrapped(t)
-			inspector := tonmcms.NewTimelockInspector(client)
+			inspector := mcmston.NewTimelockInspector(client)
 
 			// Mock CurrentMasterchainInfo
 			client.EXPECT().CurrentMasterchainInfo(mock.Anything).

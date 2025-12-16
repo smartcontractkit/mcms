@@ -21,7 +21,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
-	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
+	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
 
@@ -35,7 +35,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 
 	tests := []struct {
 		name      string
-		options   []tonmcms.ConfigurerOption
+		options   []mcmston.ConfigurerOption
 		mcmAddr   string
 		cfg       *types.Config
 		clearRoot bool
@@ -45,7 +45,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	}{
 		{
 			name:    "success",
-			options: []tonmcms.ConfigurerOption{},
+			options: []mcmston.ConfigurerOption{},
 			mcmAddr: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			cfg: &types.Config{
 				Quorum: 2,
@@ -88,8 +88,8 @@ func TestConfigurer_SetConfig(t *testing.T) {
 		},
 		{
 			name: "success - WithDoNotSendInstructionsOnChain option",
-			options: []tonmcms.ConfigurerOption{
-				tonmcms.WithDoNotSendInstructionsOnChain(),
+			options: []mcmston.ConfigurerOption{
+				mcmston.WithDoNotSendInstructionsOnChain(),
 			},
 			mcmAddr: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			cfg: &types.Config{
@@ -117,7 +117,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 		},
 		{
 			name:    "failure - SendTransaction fails",
-			options: []tonmcms.ConfigurerOption{},
+			options: []mcmston.ConfigurerOption{},
 			mcmAddr: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			cfg: &types.Config{
 				Quorum: 2,
@@ -175,7 +175,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			}
 
 			// Create the Configurer instance
-			configurer, err := tonmcms.NewConfigurer(walletOperator, tlb.MustFromTON("0.1"), tt.options...)
+			configurer, err := mcmston.NewConfigurer(walletOperator, tlb.MustFromTON("0.1"), tt.options...)
 			require.NoError(t, err)
 
 			// Call SetConfig

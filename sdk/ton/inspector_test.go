@@ -21,7 +21,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/types"
 
-	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
+	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
 
@@ -134,7 +134,7 @@ func TestInspector_GetConfig(t *testing.T) {
 			}
 
 			// Instantiate Inspector with the mock client
-			inspector := tonmcms.NewInspector(client)
+			inspector := mcmston.NewInspector(client)
 
 			// Call GetConfig and capture the got
 			got, err := inspector.GetConfig(ctx, tt.address)
@@ -205,7 +205,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 			}
 
 			// Instantiate Inspector with the mock client
-			inspector := tonmcms.NewInspector(client)
+			inspector := mcmston.NewInspector(client)
 
 			// Call GetOpCount and capture the got
 			got, err := inspector.GetOpCount(ctx, tt.address)
@@ -280,7 +280,7 @@ func TestInspector_GetRoot(t *testing.T) {
 			}
 
 			// Instantiate Inspector with the mock client
-			inspector := tonmcms.NewInspector(client)
+			inspector := mcmston.NewInspector(client)
 
 			// Call GetRoot and capture the result
 			got, validUntil, err := inspector.GetRoot(ctx, tt.address)
@@ -365,7 +365,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 			}
 
 			// Instantiate Inspector with the mock client
-			inspector := tonmcms.NewInspector(client)
+			inspector := mcmston.NewInspector(client)
 
 			// Call GetRootMetadata and capture the got
 			got, err := inspector.GetRootMetadata(ctx, tt.address)

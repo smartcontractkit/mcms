@@ -112,11 +112,8 @@ func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*addres
 	data := timelock.EmptyDataFrom(id)
 	// When deploying the contract, send the Init message to initialize the Timelock contract
 	// Admin will get all roles (not required, just for testing)
-	// TODO (ton): scope out ticket to fix common.SnakeData[*address.Address] usage in chainlink-ton (might not work properly)
-	addrs := []toncommon.WrappedAddress{
-		toncommon.WrappedAddress{
-			WrappedAddress: s.wallet.Address(),
-		},
+	addrs := []toncommon.AddressWrap{
+		toncommon.AddressWrap{Val: s.wallet.Address()},
 	}
 
 	body := timelock.Init{

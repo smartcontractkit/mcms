@@ -21,7 +21,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
 
-	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
+	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
 
@@ -34,7 +34,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	walletOperator := must(tvm.NewRandomV5R1TestWallet(_api, chainID))
 	client := ton_mocks.NewAPIClientWrapped(t)
 
-	executor, err := tonmcms.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
+	executor, err := mcmston.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
 	require.NotNil(t, executor, "expected Executor")
 	require.NoError(t, err)
 }
@@ -135,7 +135,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				tt.mockSetup(_api, client)
 			}
 
-			executor, err := tonmcms.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
+			executor, err := mcmston.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
 			require.NoError(t, err)
 
 			tx, err := executor.Execute(ctx, tt.bop, tt.timelockAddress, tt.predecessor, tt.salt)

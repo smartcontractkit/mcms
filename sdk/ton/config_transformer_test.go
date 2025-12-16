@@ -15,7 +15,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
-	tonmcms "github.com/smartcontractkit/mcms/sdk/ton"
+	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 func TestConfigTransformer_ToConfig(t *testing.T) {
@@ -176,7 +176,7 @@ func TestConfigTransformer_ToConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			transformer := tonmcms.NewConfigTransformer()
+			transformer := mcmston.NewConfigTransformer()
 			got, err := transformer.ToConfig(tt.give)
 
 			if tt.wantErr != "" {
@@ -444,7 +444,7 @@ func TestSetConfigInputs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			transformer := tonmcms.NewConfigTransformer()
+			transformer := mcmston.NewConfigTransformer()
 			got, err := transformer.ToChainConfig(tt.giveConfig, nil)
 
 			if tt.wantErr != "" {
