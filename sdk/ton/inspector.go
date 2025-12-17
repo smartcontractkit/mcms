@@ -38,7 +38,7 @@ func ParseAddrGetBlock(ctx context.Context, client ton.APIClientWrapped, _addres
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
-		return nil, &ton.BlockIDExt{}, fmt.Errorf("invalid mcms address: %w", err)
+		return nil, &ton.BlockIDExt{}, fmt.Errorf("invalid address: %w", err)
 	}
 
 	block, err := client.CurrentMasterchainInfo(ctx)
