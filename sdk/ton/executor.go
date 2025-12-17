@@ -2,7 +2,6 @@ package ton
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"fmt"
 	"math/big"
@@ -10,16 +9,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/samber/lo"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
-
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 
-	"github.com/xssnick/tonutils-go/ton"
-	"github.com/xssnick/tonutils-go/ton/wallet"
-
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
+	"github.com/xssnick/tonutils-go/ton"
+	"github.com/xssnick/tonutils-go/ton/wallet"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
@@ -108,27 +104,15 @@ func (e *executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
-	msg := &wallet.Message{
-		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
-		InternalMessage: &tlb.InternalMessage{
-			IHRDisabled: true,
-			Bounce:      true,
-			DstAddr:     dstAddr,
-			Amount:      e.amount,
-			Body:        body,
-		},
-	}
+	skipSend := false // TODO: expose via executor options
 
-	tx, _, err := e.wallet.SendWaitTransaction(ctx, msg)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to execute op: %w", err)
-	}
-
-	return types.TransactionResult{
-		Hash:        hex.EncodeToString(tx.Hash),
-		ChainFamily: chain_selectors.FamilyTon,
-		RawData:     tx,
-	}, err
+	return SendTx(ctx, TxOpts{
+		Wallet:   e.wallet,
+		DstAddr:  dstAddr,
+		Amount:   e.amount,
+		Body:     body,
+		SkipSend: skipSend,
+	})
 }
 
 func (e *executor) SetRoot(
@@ -196,25 +180,13 @@ func (e *executor) SetRoot(
 		return types.TransactionResult{}, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
 	}
 
-	msg := &wallet.Message{
-		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
-		InternalMessage: &tlb.InternalMessage{
-			IHRDisabled: true,
-			Bounce:      true,
-			DstAddr:     dstAddr,
-			Amount:      e.amount,
-			Body:        body,
-		},
-	}
+	skipSend := false // TODO: expose via executor options
 
-	tx, _, err := e.wallet.SendWaitTransaction(ctx, msg)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to set root: %w", err)
-	}
-
-	return types.TransactionResult{
-		Hash:        hex.EncodeToString(tx.Hash),
-		ChainFamily: chain_selectors.FamilyTon,
-		RawData:     tx,
-	}, nil
+	return SendTx(ctx, TxOpts{
+		Wallet:   e.wallet,
+		DstAddr:  dstAddr,
+		Amount:   e.amount,
+		Body:     body,
+		SkipSend: skipSend,
+	})
 }

@@ -2,11 +2,8 @@ package ton
 
 import (
 	"context"
-	"encoding/hex"
 	"fmt"
 	"math/big"
-
-	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
@@ -119,39 +116,11 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("failed to encode SetConfig body: %w", err)
 	}
 
-	if c.skipSend {
-		var tx types.Transaction
-		tx, err = NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), "", nil)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("error encoding mcms setConfig transaction: %w", err)
-		}
-
-		return types.TransactionResult{
-			Hash:        "", // Returning no hash since the transaction hasn't been sent yet.
-			ChainFamily: cselectors.FamilyTon,
-			RawData:     tx, // will be of type types.Transaction
-		}, nil
-	}
-
-	msg := &wallet.Message{
-		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
-		InternalMessage: &tlb.InternalMessage{
-			IHRDisabled: true,
-			Bounce:      true,
-			DstAddr:     dstAddr,
-			Amount:      c.amount,
-			Body:        body,
-		},
-	}
-
-	tx, _, err := c.wallet.SendWaitTransaction(ctx, msg)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to set config: %w", err)
-	}
-
-	return types.TransactionResult{
-		Hash:        hex.EncodeToString(tx.Hash),
-		ChainFamily: cselectors.FamilyTon,
-		RawData:     tx, // *tlb.Transaction
-	}, nil
+	return SendTx(ctx, TxOpts{
+		Wallet:   c.wallet,
+		DstAddr:  dstAddr,
+		Amount:   c.amount,
+		Body:     body,
+		SkipSend: c.skipSend,
+	})
 }

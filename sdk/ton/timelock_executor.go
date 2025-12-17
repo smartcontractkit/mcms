@@ -2,7 +2,6 @@ package ton
 
 import (
 	"context"
-	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -11,8 +10,6 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
-
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
@@ -78,25 +75,13 @@ func (e *timelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
 	}
 
-	msg := &wallet.Message{
-		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
-		InternalMessage: &tlb.InternalMessage{
-			IHRDisabled: true,
-			Bounce:      true,
-			DstAddr:     dstAddr,
-			Amount:      e.amount,
-			Body:        body,
-		},
-	}
+	skipSend := false // TODO: expose via executor options
 
-	tx, _, err := e.wallet.SendWaitTransaction(ctx, msg)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to execute batch: %w", err)
-	}
-
-	return types.TransactionResult{
-		Hash:        hex.EncodeToString(tx.Hash),
-		ChainFamily: chain_selectors.FamilyTon,
-		RawData:     tx,
-	}, nil
+	return SendTx(ctx, TxOpts{
+		Wallet:   e.wallet,
+		DstAddr:  dstAddr,
+		Amount:   e.amount,
+		Body:     body,
+		SkipSend: skipSend,
+	})
 }

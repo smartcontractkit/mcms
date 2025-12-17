@@ -133,7 +133,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					Return(&tlb.Transaction{Hash: []byte{1, 2, 3, 4, 14}}, &ton.BlockIDExt{}, []byte{}, errors.New("error during tx send"))
 			},
 			wantTxHash: "",
-			wantErr:    errors.New("failed to execute op: error during tx send"),
+			wantErr:    errors.New("failed to send transaction: error during tx send"),
 		},
 		{
 			name:       "failure - nil encoder",
@@ -281,7 +281,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 					Return(&tlb.Transaction{Hash: []byte{1, 2, 3, 4, 14}}, &ton.BlockIDExt{}, []byte{}, errors.New("error during tx send"))
 			},
 			wantTxHash: "",
-			wantErr:    errors.New("failed to set root: error during tx send"),
+			wantErr:    errors.New("failed to send transaction: error during tx send"),
 		},
 		{
 			name:       "failure - nil encoder",
