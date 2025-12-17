@@ -27,15 +27,9 @@ func NewTimelockInspector(client ton.APIClientWrapped) sdk.TimelockInspector {
 }
 
 func (i TimelockInspector) GetMinDelay(ctx context.Context, _address string) (uint64, error) {
-	// Map to Ton Address type (timelock.address)
-	addr, err := address.ParseAddr(_address)
+	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
 	if err != nil {
-		return 0, fmt.Errorf("invalid timelock address: %w", err)
-	}
-
-	block, err := i.client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get current masterchain info: %w", err)
+		return 0, err
 	}
 
 	return tvm.CallGetter(ctx, i.client, block, addr, timelock.GetMinDelay)
@@ -95,15 +89,9 @@ func (i TimelockInspector) getRoleMembers(ctx context.Context, _address string, 
 }
 
 func (i TimelockInspector) IsOperation(ctx context.Context, _address string, opID [32]byte) (bool, error) {
-	// Map to Ton Address type (timelock.address)
-	addr, err := address.ParseAddr(_address)
+	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
 	if err != nil {
-		return false, fmt.Errorf("invalid timelock address: %w", err)
-	}
-
-	block, err := i.client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return false, fmt.Errorf("failed to get current masterchain info: %w", err)
+		return false, err
 	}
 
 	_opID := new(big.Int).SetBytes(opID[:])
@@ -112,15 +100,9 @@ func (i TimelockInspector) IsOperation(ctx context.Context, _address string, opI
 }
 
 func (i TimelockInspector) IsOperationPending(ctx context.Context, _address string, opID [32]byte) (bool, error) {
-	// Map to Ton Address type (timelock.address)
-	addr, err := address.ParseAddr(_address)
+	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
 	if err != nil {
-		return false, fmt.Errorf("invalid timelock address: %w", err)
-	}
-
-	block, err := i.client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return false, fmt.Errorf("failed to get current masterchain info: %w", err)
+		return false, err
 	}
 
 	_opID := new(big.Int).SetBytes(opID[:])
@@ -129,15 +111,9 @@ func (i TimelockInspector) IsOperationPending(ctx context.Context, _address stri
 }
 
 func (i TimelockInspector) IsOperationReady(ctx context.Context, _address string, opID [32]byte) (bool, error) {
-	// Map to Ton Address type (timelock.address)
-	addr, err := address.ParseAddr(_address)
+	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
 	if err != nil {
-		return false, fmt.Errorf("invalid timelock address: %w", err)
-	}
-
-	block, err := i.client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return false, fmt.Errorf("failed to get current masterchain info: %w", err)
+		return false, err
 	}
 
 	_opID := new(big.Int).SetBytes(opID[:])
@@ -146,15 +122,9 @@ func (i TimelockInspector) IsOperationReady(ctx context.Context, _address string
 }
 
 func (i TimelockInspector) IsOperationDone(ctx context.Context, _address string, opID [32]byte) (bool, error) {
-	// Map to Ton Address type (timelock.address)
-	addr, err := address.ParseAddr(_address)
+	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
 	if err != nil {
-		return false, fmt.Errorf("invalid timelock address: %w", err)
-	}
-
-	block, err := i.client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return false, fmt.Errorf("failed to get current masterchain info: %w", err)
+		return false, err
 	}
 
 	_opID := new(big.Int).SetBytes(opID[:])
@@ -163,15 +133,9 @@ func (i TimelockInspector) IsOperationDone(ctx context.Context, _address string,
 }
 
 func (i TimelockInspector) IsOperationError(ctx context.Context, _address string, opID [32]byte) (bool, error) {
-	// Map to Ton Address type (timelock.address)
-	addr, err := address.ParseAddr(_address)
+	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
 	if err != nil {
-		return false, fmt.Errorf("invalid timelock address: %w", err)
-	}
-
-	block, err := i.client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return false, fmt.Errorf("failed to get current masterchain info: %w", err)
+		return false, err
 	}
 
 	_opID := new(big.Int).SetBytes(opID[:])

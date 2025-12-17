@@ -33,16 +33,26 @@ func NewInspector(client ton.APIClientWrapped) sdk.Inspector {
 	}
 }
 
-func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Config, error) {
+// ParseAddrGetBlock parses the given address string into a TON address and retrieves the current masterchain block info.
+func ParseAddrGetBlock(ctx context.Context, client ton.APIClientWrapped, _address string) (*address.Address, *ton.BlockIDExt, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
-		return nil, fmt.Errorf("invalid mcms address: %w", err)
+		return nil, &ton.BlockIDExt{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
-	block, err := i.client.CurrentMasterchainInfo(ctx)
+	block, err := client.CurrentMasterchainInfo(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get current masterchain info: %w", err)
+		return nil, &ton.BlockIDExt{}, fmt.Errorf("failed to get current masterchain info: %w", err)
+	}
+
+	return addr, block, nil
+}
+
+func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Config, error) {
+	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
+	if err != nil {
+		return nil, err
 	}
 
 	_config, err := tvm.CallGetter(ctx, i.client, block, addr, mcms.GetConfig)
@@ -54,30 +64,18 @@ func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Confi
 }
 
 func (i Inspector) GetOpCount(ctx context.Context, _address string) (uint64, error) {
-	// Map to Ton Address type (mcms.address)
-	addr, err := address.ParseAddr(_address)
+	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
 	if err != nil {
-		return 0, fmt.Errorf("invalid mcms address: %w", err)
-	}
-
-	block, err := i.client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return 0, fmt.Errorf("failed to get current masterchain info: %w", err)
+		return 0, err
 	}
 
 	return tvm.CallGetter(ctx, i.client, block, addr, mcms.GetOpCount)
 }
 
 func (i Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, uint32, error) {
-	// Map to Ton Address type (mcms.address)
-	addr, err := address.ParseAddr(_address)
+	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
 	if err != nil {
-		return [32]byte{}, 0, fmt.Errorf("invalid mcms address: %w", err)
-	}
-
-	block, err := i.client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return [32]byte{}, 0, fmt.Errorf("failed to get current masterchain info: %w", err)
+		return [32]byte{}, 0, err
 	}
 
 	r, err := tvm.CallGetter(ctx, i.client, block, addr, mcms.GetRoot)
@@ -89,15 +87,9 @@ func (i Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, u
 }
 
 func (i Inspector) GetRootMetadata(ctx context.Context, _address string) (types.ChainMetadata, error) {
-	// Map to Ton Address type (mcms.address)
-	addr, err := address.ParseAddr(_address)
+	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
 	if err != nil {
-		return types.ChainMetadata{}, fmt.Errorf("invalid mcms address: %w", err)
-	}
-
-	block, err := i.client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return types.ChainMetadata{}, fmt.Errorf("failed to get current masterchain info: %w", err)
+		return types.ChainMetadata{}, err
 	}
 
 	rm, err := tvm.CallGetter(ctx, i.client, block, addr, mcms.GetRootMetadata)
