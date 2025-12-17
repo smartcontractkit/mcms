@@ -59,14 +59,20 @@ func DeployContract(ctx context.Context, opts DeployOpts) (*address.Address, err
 		return nil, fmt.Errorf("failed to parse compiled contract: %w", err)
 	}
 
-	contractData, err := tlb.ToCell(opts.Data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create contract data cell: %w", err)
+	contractData, ok := opts.Data.(*cell.Cell) // Cell or we try to decode
+	if !ok {
+		contractData, err = tlb.ToCell(opts.Data)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create contract data cell: %w", err)
+		}
 	}
 
-	bodyCell, err := tlb.ToCell(opts.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create contract body cell: %w", err)
+	bodyCell, ok := opts.Body.(*cell.Cell) // Cell or we try to decode
+	if !ok {
+		bodyCell, err = tlb.ToCell(opts.Body)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create contract body cell: %w", err)
+		}
 	}
 
 	_client := tracetracking.NewSignedAPIClient(opts.Client, *opts.Wallet)

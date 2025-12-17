@@ -164,7 +164,12 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 
 	// Construct executors
 	encoder := encoders[s.ChainA].(*mcmston.Encoder)
-	executor, err := mcmston.NewExecutor(encoder, s.TonClient, s.wallet, tlb.MustFromTON("0.1"))
+	executor, err := mcmston.NewExecutor(mcmston.ExecutorOpts{
+		Encoder: encoder,
+		Client:  s.TonClient,
+		Wallet:  s.wallet,
+		Amount:  tlb.MustFromTON("0.1"),
+	})
 	s.Require().NoError(err)
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.ChainA: executor,
@@ -297,7 +302,12 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 
 	// Construct executors
 	encoder := encoders[s.ChainA].(*mcmston.Encoder)
-	executor, err := mcmston.NewExecutor(encoder, s.TonClient, s.wallet, tlb.MustFromTON("0.1"))
+	executor, err := mcmston.NewExecutor(mcmston.ExecutorOpts{
+		Encoder: encoder,
+		Client:  s.TonClient,
+		Wallet:  s.wallet,
+		Amount:  tlb.MustFromTON("0.1"),
+	})
 	s.Require().NoError(err)
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.ChainA: executor,
@@ -592,7 +602,12 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 
 	// Construct executors for both chains
 	executors := map[types.ChainSelector]sdk.Executor{
-		s.ChainA: must(mcmston.NewExecutor(encoderA, s.TonClient, s.wallet, tlb.MustFromTON("0.1"))),
+		s.ChainA: must(mcmston.NewExecutor(mcmston.ExecutorOpts{
+			Encoder: encoderA,
+			Client:  s.TonClient,
+			Wallet:  s.wallet,
+			Amount:  tlb.MustFromTON("0.1"),
+		})),
 		s.ChainB: evm.NewExecutor(encoderB, nil, nil), // No need to execute on Chain B or C
 		s.ChainC: evm.NewExecutor(encoderC, nil, nil),
 	}
@@ -643,7 +658,11 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 
 	// Construct executors
 	tExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
-		s.ChainA: must(mcmston.NewTimelockExecutor(s.TonClient, s.wallet, tlb.MustFromTON("0.2"))),
+		s.ChainA: must(mcmston.NewTimelockExecutor(mcmston.TimelockExecutorOpts{
+			Client: s.TonClient,
+			Wallet: s.wallet,
+			Amount: tlb.MustFromTON("0.2"),
+		})),
 		s.ChainB: evm.NewTimelockExecutor(nil, nil), // No need to execute on Chain B or C
 		s.ChainC: evm.NewTimelockExecutor(nil, nil),
 	}

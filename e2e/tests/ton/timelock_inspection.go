@@ -346,7 +346,11 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	s.Require().False(isOpDone, "Operation should not be done yet")
 
 	// Attempt to execute the batch
-	executor, err := mcmston.NewTimelockExecutor(s.TonClient, s.wallet, tlb.MustFromTON("0.2"))
+	executor, err := mcmston.NewTimelockExecutor(mcmston.TimelockExecutorOpts{
+		Client: s.TonClient,
+		Wallet: s.wallet,
+		Amount: tlb.MustFromTON("0.1"),
+	})
 	s.Require().NoError(err, "Failed to create TimelockExecutor")
 
 	bop := types.BatchOperation{

@@ -165,7 +165,12 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*mcmston.Encoder)
 
-	executor, err := mcmston.NewExecutor(encoder, s.TonClient, s.wallet, tlb.MustFromTON("0.1"))
+	executor, err := mcmston.NewExecutor(mcmston.ExecutorOpts{
+		Encoder: encoder,
+		Client:  s.TonClient,
+		Wallet:  s.wallet,
+		Amount:  tlb.MustFromTON("0.1"),
+	})
 	s.Require().NoError(err)
 	executorsMap := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
@@ -243,7 +248,12 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*mcmston.Encoder)
 
-	executor, err := mcmston.NewExecutor(encoder, s.TonClient, s.wallet, tlb.MustFromTON("0.1"))
+	executor, err := mcmston.NewExecutor(mcmston.ExecutorOpts{
+		Encoder: encoder,
+		Client:  s.TonClient,
+		Wallet:  s.wallet,
+		Amount:  tlb.MustFromTON("0.1"),
+	})
 	s.Require().NoError(err)
 	executorsMap := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,

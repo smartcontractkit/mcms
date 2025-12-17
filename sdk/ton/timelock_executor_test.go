@@ -10,11 +10,10 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/tvm/cell"
-
-	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
@@ -25,18 +24,70 @@ import (
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
 
-func TestNewTimelockExecutor(t *testing.T) {
+func TestTimelockExecutor_NewTimelockExecutor(t *testing.T) {
 	t.Parallel()
 
 	chainID := chaintest.Chain7TONID
+	amount := tlb.MustFromTON("0.1")
 
-	_api := ton_mocks.NewTonAPI(t)
-	walletOperator := must(tvm.NewRandomV5R1TestWallet(_api, chainID))
-	client := ton_mocks.NewAPIClientWrapped(t)
+	tests := []struct {
+		name    string
+		mutate  func(opts mcmston.TimelockExecutorOpts) mcmston.TimelockExecutorOpts
+		wantErr string
+	}{
+		{
+			name: "success",
+			mutate: func(opts mcmston.TimelockExecutorOpts) mcmston.TimelockExecutorOpts {
+				return opts
+			},
+			wantErr: "",
+		},
+		{
+			name: "nil client",
+			mutate: func(opts mcmston.TimelockExecutorOpts) mcmston.TimelockExecutorOpts {
+				opts.Client = nil
 
-	executor, err := mcmston.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
-	require.NotNil(t, executor, "expected Executor")
-	require.NoError(t, err)
+				return opts
+			},
+			wantErr: "failed to create sdk.Executor - client (ton.APIClientWrapped) is nil",
+		},
+		{
+			name: "nil wallet",
+			mutate: func(opts mcmston.TimelockExecutorOpts) mcmston.TimelockExecutorOpts {
+				opts.Wallet = nil
+
+				return opts
+			},
+			wantErr: "failed to create sdk.Executor - wallet (*wallet.Wallet) is nil",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_api := ton_mocks.NewTonAPI(t)
+			walletOperator := must(tvm.NewRandomV5R1TestWallet(_api, chainID))
+			var client ton.APIClientWrapped = ton_mocks.NewAPIClientWrapped(t)
+
+			opts := tt.mutate(mcmston.TimelockExecutorOpts{
+				Client: client,
+				Wallet: walletOperator,
+				Amount: amount,
+			})
+
+			executor, err := mcmston.NewTimelockExecutor(opts)
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+				require.Nil(t, executor)
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, executor)
+		})
+	}
 }
 
 func TestTimelockExecutor_Execute(t *testing.T) {
@@ -135,7 +186,11 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				tt.mockSetup(_api, client)
 			}
 
-			executor, err := mcmston.NewTimelockExecutor(client, walletOperator, tlb.MustFromTON("0.1"))
+			executor, err := mcmston.NewTimelockExecutor(mcmston.TimelockExecutorOpts{
+				Client: client,
+				Wallet: walletOperator,
+				Amount: tlb.MustFromTON("0.1"),
+			})
 			require.NoError(t, err)
 
 			tx, err := executor.Execute(ctx, tt.bop, tt.timelockAddress, tt.predecessor, tt.salt)

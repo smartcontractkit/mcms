@@ -7,7 +7,6 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -28,19 +27,81 @@ import (
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 )
 
-func TestNewExecutor(t *testing.T) {
+func TestExecutor_NewExecutor(t *testing.T) {
 	t.Parallel()
 
-	encoder := &mcmston.Encoder{}
+	amount := tlb.MustFromTON("0.1")
 	chainID := chaintest.Chain7TONID
 
-	_api := ton_mocks.NewTonAPI(t)
-	walletOperator := must(tvm.NewRandomV5R1TestWallet(_api, chainID))
-	client := ton_mocks.NewAPIClientWrapped(t)
+	tests := []struct {
+		name    string
+		mutate  func(opts mcmston.ExecutorOpts) mcmston.ExecutorOpts
+		wantErr string
+	}{
+		{
+			name: "success",
+			mutate: func(opts mcmston.ExecutorOpts) mcmston.ExecutorOpts {
+				return opts
+			},
+			wantErr: "",
+		},
+		{
+			name: "nil encoder",
+			mutate: func(opts mcmston.ExecutorOpts) mcmston.ExecutorOpts {
+				opts.Encoder = nil
 
-	executor, err := mcmston.NewExecutor(encoder, client, walletOperator, tlb.MustFromTON("0.1"))
-	assert.NotNil(t, executor, "expected Executor")
-	assert.NoError(t, err)
+				return opts
+			},
+			wantErr: "failed to create sdk.Executor - encoder (sdk.Encoder) is nil",
+		},
+		{
+			name: "nil client",
+			mutate: func(opts mcmston.ExecutorOpts) mcmston.ExecutorOpts {
+				opts.Client = nil
+
+				return opts
+			},
+			wantErr: "failed to create sdk.Executor - client (ton.APIClientWrapped) is nil",
+		},
+		{
+			name: "nil wallet",
+			mutate: func(opts mcmston.ExecutorOpts) mcmston.ExecutorOpts {
+				opts.Wallet = nil
+
+				return opts
+			},
+			wantErr: "failed to create sdk.Executor - wallet (*wallet.Wallet) is nil",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			_api := ton_mocks.NewTonAPI(t)
+			walletOperator := must(tvm.NewRandomV5R1TestWallet(_api, chainID))
+			var client ton.APIClientWrapped = ton_mocks.NewAPIClientWrapped(t)
+			var encoder = mcmston.NewEncoder(chaintest.Chain7Selector, 0, false)
+
+			opts := tt.mutate(mcmston.ExecutorOpts{
+				Encoder: encoder,
+				Client:  client,
+				Wallet:  walletOperator,
+				Amount:  amount,
+			})
+
+			exec, err := mcmston.NewExecutor(opts)
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+				require.Nil(t, exec)
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.NotNil(t, exec)
+		})
+	}
 }
 
 func TestExecutor_ExecuteOperation(t *testing.T) {
@@ -175,7 +236,12 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				tt.mockSetup(_api, client)
 			}
 
-			executor, err := mcmston.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0.1"))
+			executor, err := mcmston.NewExecutor(mcmston.ExecutorOpts{
+				Encoder: tt.encoder,
+				Client:  client,
+				Wallet:  walletOperator,
+				Amount:  tlb.MustFromTON("0.1"),
+			})
 			if tt.wantErrNew != nil {
 				require.EqualError(t, err, tt.wantErrNew.Error())
 				return
@@ -316,7 +382,12 @@ func TestExecutor_SetRoot(t *testing.T) {
 				tt.mockSetup(_api, client)
 			}
 
-			executor, err := mcmston.NewExecutor(tt.encoder, client, walletOperator, tlb.MustFromTON("0.1"))
+			executor, err := mcmston.NewExecutor(mcmston.ExecutorOpts{
+				Encoder: tt.encoder,
+				Client:  client,
+				Wallet:  walletOperator,
+				Amount:  tlb.MustFromTON("0.1"),
+			})
 			if tt.wantErrNew != nil {
 				require.EqualError(t, err, tt.wantErrNew.Error())
 				return
