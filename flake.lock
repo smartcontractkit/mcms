@@ -7,11 +7,11 @@
         "nixpkgs-release-25-05": "nixpkgs-release-25-05"
       },
       "locked": {
-        "lastModified": 1765991642,
-        "narHash": "sha256-xFBmdyrDWDK9gIr9OyHwUHWCWevW8WChDGBLMbf94yE=",
+        "lastModified": 1765995970,
+        "narHash": "sha256-vHA7f6lt4aNCFaS9X21cQDWNl8dcCHNkf9hmT6Pe590=",
         "owner": "smartcontractkit",
         "repo": "chainlink-ton",
-        "rev": "73e0a4dfae13b57e413e6d40ebdd9a5d85cbcc64",
+        "rev": "8367e430a92aade4465d18189b5633b77da5de65",
         "type": "github"
       },
       "original": {

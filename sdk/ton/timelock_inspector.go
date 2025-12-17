@@ -89,50 +89,32 @@ func (i TimelockInspector) getRoleMembers(ctx context.Context, _address string, 
 }
 
 func (i TimelockInspector) IsOperation(ctx context.Context, _address string, opID [32]byte) (bool, error) {
-	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
-	if err != nil {
-		return false, err
-	}
-
-	_opID := new(big.Int).SetBytes(opID[:])
-
-	return tvm.CallGetter(ctx, i.client, block, addr, timelock.IsOperation, _opID)
+	return i.isOperationFor(ctx, _address, opID, timelock.IsOperation)
 }
 
 func (i TimelockInspector) IsOperationPending(ctx context.Context, _address string, opID [32]byte) (bool, error) {
-	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
-	if err != nil {
-		return false, err
-	}
-
-	_opID := new(big.Int).SetBytes(opID[:])
-
-	return tvm.CallGetter(ctx, i.client, block, addr, timelock.IsOperationPending, _opID)
+	return i.isOperationFor(ctx, _address, opID, timelock.IsOperationPending)
 }
 
 func (i TimelockInspector) IsOperationReady(ctx context.Context, _address string, opID [32]byte) (bool, error) {
-	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
-	if err != nil {
-		return false, err
-	}
-
-	_opID := new(big.Int).SetBytes(opID[:])
-
-	return tvm.CallGetter(ctx, i.client, block, addr, timelock.IsOperationReady, _opID)
+	return i.isOperationFor(ctx, _address, opID, timelock.IsOperationReady)
 }
 
 func (i TimelockInspector) IsOperationDone(ctx context.Context, _address string, opID [32]byte) (bool, error) {
-	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
-	if err != nil {
-		return false, err
-	}
-
-	_opID := new(big.Int).SetBytes(opID[:])
-
-	return tvm.CallGetter(ctx, i.client, block, addr, timelock.IsOperationDone, _opID)
+	return i.isOperationFor(ctx, _address, opID, timelock.IsOperationDone)
 }
 
 func (i TimelockInspector) IsOperationError(ctx context.Context, _address string, opID [32]byte) (bool, error) {
+	return i.isOperationFor(ctx, _address, opID, timelock.IsOperationError)
+}
+
+// isOperationFor is a helper function to check the status of an operation using the provided getter
+func (i TimelockInspector) isOperationFor(
+	ctx context.Context,
+	_address string,
+	opID [32]byte,
+	getter tvm.Getter[*big.Int, bool],
+) (bool, error) {
 	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
 	if err != nil {
 		return false, err
@@ -140,5 +122,5 @@ func (i TimelockInspector) IsOperationError(ctx context.Context, _address string
 
 	_opID := new(big.Int).SetBytes(opID[:])
 
-	return tvm.CallGetter(ctx, i.client, block, addr, timelock.IsOperationError, _opID)
+	return tvm.CallGetter(ctx, i.client, block, addr, getter, _opID)
 }

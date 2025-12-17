@@ -40,22 +40,37 @@ func must[E any](out E, err error) E {
 	return out
 }
 
-func DeployMCMSContract(ctx context.Context, client *ton.APIClient, w *wallet.Wallet, amount tlb.Coins, data mcms.Data) (*address.Address, error) {
-	body := cell.BeginCell().EndCell() // empty cell, top up
+type DeployOpts struct {
+	// Connection
+	Client *ton.APIClient
+	Wallet *wallet.Wallet
 
-	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsMCMS)
-	contractCode, err := wrappers.ParseCompiledContract(contractPath)
+	// Deployment info
+	ContractPath string
+
+	Amount tlb.Coins
+	Data   any
+	Body   any
+}
+
+func DeployContract(ctx context.Context, opts DeployOpts) (*address.Address, error) {
+	contractCode, err := wrappers.ParseCompiledContract(opts.ContractPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse compiled contract: %w", err)
 	}
 
-	contractData, err := tlb.ToCell(data)
+	contractData, err := tlb.ToCell(opts.Data)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create contract data cell: %w", err)
 	}
 
-	_client := tracetracking.NewSignedAPIClient(client, *w)
-	contract, _, err := wrappers.Deploy(ctx, &_client, contractCode, contractData, amount, body)
+	bodyCell, err := tlb.ToCell(opts.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create contract body cell: %w", err)
+	}
+
+	_client := tracetracking.NewSignedAPIClient(opts.Client, *opts.Wallet)
+	contract, _, err := wrappers.Deploy(ctx, &_client, contractCode, contractData, opts.Amount, bodyCell)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy contract: %w", err)
 	}
@@ -63,30 +78,26 @@ func DeployMCMSContract(ctx context.Context, client *ton.APIClient, w *wallet.Wa
 	return contract.Address, nil
 }
 
+func DeployMCMSContract(ctx context.Context, client *ton.APIClient, w *wallet.Wallet, amount tlb.Coins, data mcms.Data) (*address.Address, error) {
+	return DeployContract(ctx, DeployOpts{
+		Client:       client,
+		Wallet:       w,
+		ContractPath: filepath.Join(os.Getenv(EnvPathContracts), PathContractsMCMS),
+		Amount:       amount,
+		Data:         data,
+		Body:         cell.BeginCell().EndCell(), // empty cell, top up
+	})
+}
+
 func DeployTimelockContract(ctx context.Context, client *ton.APIClient, w *wallet.Wallet, amount tlb.Coins, data timelock.Data, body timelock.Init) (*address.Address, error) {
-	contractPath := filepath.Join(os.Getenv(EnvPathContracts), PathContractsTimelock)
-	contractCode, err := wrappers.ParseCompiledContract(contractPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to parse compiled contract: %w", err)
-	}
-
-	contractData, err := tlb.ToCell(data)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create contract data cell: %w", err)
-	}
-
-	bodyCell, err := tlb.ToCell(body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create contract body cell: %w", err)
-	}
-
-	_client := tracetracking.NewSignedAPIClient(client, *w)
-	contract, _, err := wrappers.Deploy(ctx, &_client, contractCode, contractData, amount, bodyCell)
-	if err != nil {
-		return nil, fmt.Errorf("failed to deploy contract: %w", err)
-	}
-
-	return contract.Address, nil
+	return DeployContract(ctx, DeployOpts{
+		Client:       client,
+		Wallet:       w,
+		ContractPath: filepath.Join(os.Getenv(EnvPathContracts), PathContractsTimelock),
+		Amount:       amount,
+		Data:         data,
+		Body:         body,
+	})
 }
 
 // GenSimpleTestMCMSConfig generates a simple test configuration that's used in e2e tests.
