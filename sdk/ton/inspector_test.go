@@ -85,7 +85,7 @@ func TestInspector_GetConfig(t *testing.T) {
 			address:   "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError: errors.New("call to contract failed"),
 			want:      nil,
-			wantErr:   errors.New("error getting getConfig: call to contract failed"),
+			wantErr:   errors.New("tvm: failed to run get method \"getConfig\": call to contract failed"),
 		},
 		{
 			name:    "Empty Signers list",
@@ -177,7 +177,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 			address:   "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError: errors.New("call to contract failed"),
 			want:      0,
-			wantErr:   errors.New("error getting getOpCount: call to contract failed"),
+			wantErr:   errors.New("tvm: failed to run get method \"getOpCount\": call to contract failed"),
 		},
 	}
 
@@ -252,7 +252,7 @@ func TestInspector_GetRoot(t *testing.T) {
 			name:      "CallContract error",
 			address:   "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError: errors.New("call to contract failed"),
-			wantErr:   errors.New("error getting getRoot: call to contract failed"),
+			wantErr:   errors.New("tvm: failed to run get method \"getRoot\": call to contract failed"),
 		},
 	}
 
@@ -332,7 +332,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 			name:      "CallContract error",
 			address:   "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError: errors.New("call to contract failed"),
-			wantErr:   errors.New("error getting getRootMetadata: call to contract failed"),
+			wantErr:   errors.New("tvm: failed to run get method \"getRootMetadata\": call to contract failed"),
 		},
 	}
 

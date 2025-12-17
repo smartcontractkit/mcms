@@ -97,7 +97,7 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 			address:       "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError:     errors.New("call to contract failed"),
 			want:          nil,
-			wantErr:       errors.New("error getting getRoleMemberCount: call to contract failed"),
+			wantErr:       errors.New("error calling GetRoleMembersView: tvm: failed to run get method \"getRoleMemberCount\": call to contract failed"),
 			roleFetchType: "proposers",
 		},
 		{
@@ -122,7 +122,7 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 			address:       "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError:     errors.New("call to contract failed"),
 			want:          nil,
-			wantErr:       errors.New("error getting getRoleMemberCount: call to contract failed"),
+			wantErr:       errors.New("error calling GetRoleMembersView: tvm: failed to run get method \"getRoleMemberCount\": call to contract failed"),
 			roleFetchType: "executors",
 		},
 		{
@@ -147,7 +147,7 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 			address:       "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError:     errors.New("call to contract failed"),
 			want:          nil,
-			wantErr:       errors.New("error getting getRoleMemberCount: call to contract failed"),
+			wantErr:       errors.New("error calling GetRoleMembersView: tvm: failed to run get method \"getRoleMemberCount\": call to contract failed"),
 			roleFetchType: "executors",
 		},
 		{
@@ -172,7 +172,7 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 			address:       "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError:     errors.New("call to contract failed"),
 			want:          nil,
-			wantErr:       errors.New("error getting getRoleMemberCount: call to contract failed"),
+			wantErr:       errors.New("error calling GetRoleMembersView: tvm: failed to run get method \"getRoleMemberCount\": call to contract failed"),
 			roleFetchType: "bypassers",
 		},
 		{
@@ -197,7 +197,7 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 			address:       "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError:     errors.New("call to contract failed"),
 			want:          nil,
-			wantErr:       errors.New("error getting getRoleMemberCount: call to contract failed"),
+			wantErr:       errors.New("error calling GetRoleMembersView: tvm: failed to run get method \"getRoleMemberCount\": call to contract failed"),
 			roleFetchType: "cancellers",
 		},
 	}
@@ -278,7 +278,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 			opID:      [32]byte{0x02},
 			mockError: errors.New("call to contract failed"),
 			want:      false,
-			wantErr:   errors.New("error getting isOperation: call to contract failed"),
+			wantErr:   errors.New("tvm: failed to run get method \"isOperation\": call to contract failed"),
 		},
 	}
 
@@ -417,7 +417,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 			opID:      [32]byte{0x02},
 			mockError: errors.New("call to contract failed"),
 			want:      false,
-			wantErr:   errors.New("error getting isOperationPending: call to contract failed"),
+			wantErr:   errors.New("tvm: failed to run get method \"isOperationPending\": call to contract failed"),
 		},
 	}
 
@@ -452,7 +452,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 			opID:      [32]byte{0x02},
 			mockError: errors.New("call to contract failed"),
 			want:      false,
-			wantErr:   errors.New("error getting isOperationReady: call to contract failed"),
+			wantErr:   errors.New("tvm: failed to run get method \"isOperationReady\": call to contract failed"),
 		},
 	}
 
@@ -487,7 +487,7 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 			opID:      [32]byte{0x02},
 			mockError: errors.New("call to contract failed"),
 			want:      false,
-			wantErr:   errors.New("error getting isOperationDone: call to contract failed"),
+			wantErr:   errors.New("tvm: failed to run get method \"isOperationDone\": call to contract failed"),
 		},
 	}
 
@@ -523,7 +523,7 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 			address:   "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockError: errors.New("call to contract failed"),
 			want:      0,
-			wantErr:   errors.New("error getting getMinDelay: call to contract failed"),
+			wantErr:   errors.New("tvm: failed to run get method \"getMinDelay\": call to contract failed"),
 		},
 	}
 

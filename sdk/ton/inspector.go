@@ -2,14 +2,12 @@ package ton
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/ton"
-	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -35,7 +33,6 @@ func NewInspector(client ton.APIClientWrapped) sdk.Inspector {
 	}
 }
 
-// TODO (ton): use GetConfig from chainlink-ton/pkg/bindings/mcms/mcms
 func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Config, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
@@ -48,61 +45,14 @@ func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Confi
 		return nil, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	r, err := i.client.RunGetMethod(ctx, block, addr, "getConfig")
+	_config, err := tvm.CallGetter(ctx, i.client, block, addr, mcms.GetConfig)
 	if err != nil {
-		return nil, fmt.Errorf("error getting getConfig: %w", err)
+		return nil, err
 	}
 
-	rResult := r.AsTuple()
-	if len(rResult) < 3 { //nolint:mnd // 3 expected return values
-		return nil, errors.New("error: getConfig returned less than 3 cells")
-	}
-
-	keySz := uint(tvm.SizeUINT8)
-	signers := cell.NewDict(keySz)
-	if rResult[0] != nil {
-		rc0, err := r.Cell(0)
-		if err != nil {
-			return nil, fmt.Errorf("error getting Config.Signers cell(0): %w", err)
-		}
-
-		if rc0 != nil {
-			signers = rc0.AsDict(keySz)
-		}
-	}
-
-	groupQuorums := cell.NewDict(keySz)
-	if rResult[1] != nil {
-		rc1, err := r.Cell(1)
-		if err != nil {
-			return nil, fmt.Errorf("error getting Config.GroupQuorums cell(1): %w", err)
-		}
-
-		if rc1 != nil {
-			groupQuorums = rc1.AsDict(keySz)
-		}
-	}
-
-	groupParents := cell.NewDict(keySz)
-	if rResult[2] != nil {
-		rc2, err := r.Cell(2) //nolint:mnd // 2 index for 3rd return value
-		if err != nil {
-			return nil, fmt.Errorf("error getting Config.GroupParents cell(2): %w", err)
-		}
-
-		if rc2 != nil {
-			groupParents = rc2.AsDict(keySz)
-		}
-	}
-
-	return i.configTransformer.ToConfig(mcms.Config{
-		Signers:      signers,
-		GroupQuorums: groupQuorums,
-		GroupParents: groupParents,
-	})
+	return i.configTransformer.ToConfig(_config)
 }
 
-// TODO (ton): use GetOpCount from chainlink-ton/pkg/bindings/mcms/mcms
 func (i Inspector) GetOpCount(ctx context.Context, _address string) (uint64, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
@@ -110,26 +60,14 @@ func (i Inspector) GetOpCount(ctx context.Context, _address string) (uint64, err
 		return 0, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
-	// TODO: mv and import from github.com/smartcontractkit/chainlink-ton/bindings/mcms/mcms
 	block, err := i.client.CurrentMasterchainInfo(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	r, err := i.client.RunGetMethod(ctx, block, addr, "getOpCount")
-	if err != nil {
-		return 0, fmt.Errorf("error getting getOpCount: %w", err)
-	}
-
-	ri, err := r.Int(0)
-	if err != nil {
-		return 0, fmt.Errorf("error getting opCount slice: %w", err)
-	}
-
-	return ri.Uint64(), nil
+	return tvm.CallGetter(ctx, i.client, block, addr, mcms.GetOpCount)
 }
 
-// TODO (ton): use GetRoot from chainlink-ton/pkg/bindings/mcms/mcms
 func (i Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, uint32, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
@@ -137,32 +75,19 @@ func (i Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, u
 		return [32]byte{}, 0, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
-	// TODO: mv and import from github.com/smartcontractkit/chainlink-ton/bindings/mcms/mcms
 	block, err := i.client.CurrentMasterchainInfo(ctx)
 	if err != nil {
 		return [32]byte{}, 0, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	r, err := i.client.RunGetMethod(ctx, block, addr, "getRoot")
+	r, err := tvm.CallGetter(ctx, i.client, block, addr, mcms.GetRoot)
 	if err != nil {
-		return [32]byte{}, 0, fmt.Errorf("error getting getRoot: %w", err)
+		return [32]byte{}, 0, err
 	}
 
-	root, err := r.Int(0)
-	if err != nil {
-		return [32]byte{}, 0, fmt.Errorf("error getting Int(0) - root: %w", err)
-	}
-
-	validUntil, err := r.Int(1)
-	if err != nil {
-		return [32]byte{}, 0, fmt.Errorf("error getting Int(1) - validUntil: %w", err)
-	}
-
-	//nolint:gosec // G115 conversion safe, validUntil is uint32
-	return common.BigToHash(root), uint32(validUntil.Uint64()), nil
+	return common.BigToHash(r.Root), r.ValidUntil, nil
 }
 
-// TODO (ton): use GetRootMetadata from chainlink-ton/pkg/bindings/mcms/mcms
 func (i Inspector) GetRootMetadata(ctx context.Context, _address string) (types.ChainMetadata, error) {
 	// Map to Ton Address type (mcms.address)
 	addr, err := address.ParseAddr(_address)
@@ -170,24 +95,18 @@ func (i Inspector) GetRootMetadata(ctx context.Context, _address string) (types.
 		return types.ChainMetadata{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
-	// TODO: mv and import from github.com/smartcontractkit/chainlink-ton/bindings/mcms/mcms
 	block, err := i.client.CurrentMasterchainInfo(ctx)
 	if err != nil {
 		return types.ChainMetadata{}, fmt.Errorf("failed to get current masterchain info: %w", err)
 	}
 
-	r, err := i.client.RunGetMethod(ctx, block, addr, "getRootMetadata")
+	rm, err := tvm.CallGetter(ctx, i.client, block, addr, mcms.GetRootMetadata)
 	if err != nil {
-		return types.ChainMetadata{}, fmt.Errorf("error getting getRootMetadata: %w", err)
-	}
-
-	ri, err := r.Int(2) //nolint:mnd // 2 index for 3rd return value
-	if err != nil {
-		return types.ChainMetadata{}, fmt.Errorf("error getting preOpCount int: %w", err)
+		return types.ChainMetadata{}, err
 	}
 
 	return types.ChainMetadata{
-		StartingOpCount: ri.Uint64(),
+		StartingOpCount: rm.PreOpCount,
 		MCMAddress:      _address,
 	}, nil
 }

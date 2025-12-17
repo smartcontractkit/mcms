@@ -664,6 +664,14 @@ github.com/smartcontractkit/chainlink-ton v0.0.0-20251216125720-1413fa6ffe65 h1:
 github.com/smartcontractkit/chainlink-ton v0.0.0-20251216125720-1413fa6ffe65/go.mod h1:z27AgU6fEXkkfmUAzcbEH9u3RKz2oaGy3isb7KK6Z2E=
 github.com/smartcontractkit/chainlink-ton v0.0.0-20251216164546-5c01294e67f0 h1:e8C47c6WC/BSFd/joI5kadkmA9twR5ArK7rKisQPZ+k=
 github.com/smartcontractkit/chainlink-ton v0.0.0-20251216164546-5c01294e67f0/go.mod h1:z27AgU6fEXkkfmUAzcbEH9u3RKz2oaGy3isb7KK6Z2E=
+github.com/smartcontractkit/chainlink-ton v0.0.0-20251217103847-dd1d787c2967 h1:4P3Sh1MnrsCq5reySmuAl/cZ/TXgYY70w34EoouEz0o=
+github.com/smartcontractkit/chainlink-ton v0.0.0-20251217103847-dd1d787c2967/go.mod h1:z27AgU6fEXkkfmUAzcbEH9u3RKz2oaGy3isb7KK6Z2E=
+github.com/smartcontractkit/chainlink-ton v0.0.0-20251217105631-b3317865102c h1:lOldYwfqRwMAm4Zq+Dz7jl8Xx9i3OkoB4gzaYeQAw/w=
+github.com/smartcontractkit/chainlink-ton v0.0.0-20251217105631-b3317865102c/go.mod h1:z27AgU6fEXkkfmUAzcbEH9u3RKz2oaGy3isb7KK6Z2E=
+github.com/smartcontractkit/chainlink-ton v0.0.0-20251217110120-33edeaf7c68d h1:cyJ9rjnMD827E86ofJr0csxzijemgnnlg8MUJC8LieQ=
+github.com/smartcontractkit/chainlink-ton v0.0.0-20251217110120-33edeaf7c68d/go.mod h1:z27AgU6fEXkkfmUAzcbEH9u3RKz2oaGy3isb7KK6Z2E=
+github.com/smartcontractkit/chainlink-ton v0.0.0-20251217111141-cb367045c4a0 h1:9O0FfiitHsAhekXJ2LIE6fr5fG1P0GhlSUijEKPCBtc=
+github.com/smartcontractkit/chainlink-ton v0.0.0-20251217111141-cb367045c4a0/go.mod h1:z27AgU6fEXkkfmUAzcbEH9u3RKz2oaGy3isb7KK6Z2E=
 github.com/smartcontractkit/freeport v0.1.3-0.20250716200817-cb5dfd0e369e h1:Hv9Mww35LrufCdM9wtS9yVi/rEWGI1UnjHbcKKU0nVY=
 github.com/smartcontractkit/freeport v0.1.3-0.20250716200817-cb5dfd0e369e/go.mod h1:T4zH9R8R8lVWKfU7tUvYz2o2jMv1OpGCdpY2j2QZXzU=
 github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 h1:12ijqMM9tvYVEm+nR826WsrNi6zCKpwBhuApq127wHs=
