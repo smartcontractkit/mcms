@@ -351,7 +351,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 			if tt.mockError == nil {
 				r := ton.NewExecutionResult([]any{
 					tt.mockResult.ChainID,
-					cell.BeginCell().MustStoreAddr(tt.mockResult.MultiSig).EndCell(),
+					cell.BeginCell().MustStoreAddr(tt.mockResult.MultiSig).ToSlice(),
 					new(big.Int).SetUint64(tt.mockResult.PreOpCount),
 					new(big.Int).SetUint64(tt.mockResult.PostOpCount),
 					big.NewInt(0), // OverridePreviousRoot as int (ignored)

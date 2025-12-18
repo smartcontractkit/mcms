@@ -70,7 +70,7 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 		inputArgs[i] = m[k]
 	}
 
-	msgOpcode := uint64(0) // not exposed currently
+	msgOpcode := uint64(0) // TODO (ton): not exposed currently
 
 	return NewDecodedOperation(contractType, msgType, msgOpcode, msgDecoded, inputKeys, inputArgs)
 }

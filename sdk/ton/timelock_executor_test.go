@@ -122,8 +122,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 		wantErr         error
 	}{
 		{
-			name: "success",
-			// auth:            mockAuth,
+			name:            "success",
 			timelockAddress: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			bop: types.BatchOperation{
 				ChainSelector: chaintest.Chain7Selector,
@@ -146,8 +145,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			wantErr:    nil,
 		},
 		{
-			name: "failure in tx execution",
-			// auth:            mockAuth,
+			name:            "failure in tx execution",
 			timelockAddress: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			bop: types.BatchOperation{
 				ChainSelector: chaintest.Chain7Selector,
