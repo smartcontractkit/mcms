@@ -114,7 +114,7 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 		"mcms":       s.mcmsPackageID,
 		"mcms_owner": signerAddr,
 		"mcms_test":  "0x0",
-	})
+	}, false, s.suiNodeUrl)
 	s.Require().NoError(err)
 
 	newAddress := executeUpgradePTB(s.T(), s, compiledPackage, proposerConfig)

@@ -29,8 +29,9 @@ type TestSuite struct {
 	suite.Suite
 	e2e.TestSetup
 
-	client sui.ISuiAPI
-	signer bindutils.SuiSigner
+	client     sui.ISuiAPI
+	signer     bindutils.SuiSigner
+	suiNodeUrl string
 
 	chainSelector types.ChainSelector
 
@@ -75,6 +76,7 @@ func (s *TestSuite) SetupSuite() {
 
 	// Set up Sui client
 	s.client = s.SuiClient
+	s.suiNodeUrl = s.SuiNodeUrl
 	// TODO: Find funded accounts
 	s.signer = testSigner
 	s.chainSelector = types.ChainSelector(cselectors.SUI_TESTNET.Selector)
@@ -86,7 +88,7 @@ func (s *TestSuite) DeployMCMSContract() {
 		Signer:           s.signer,
 		GasBudget:        &gasBudget,
 		WaitForExecution: true,
-	}, s.client)
+	}, s.client, s.suiNodeUrl)
 	s.Require().NoError(err, "Failed to publish MCMS package")
 	s.mcmsPackageID = mcmsPackage.Address()
 	s.mcms = mcmsPackage.MCMS()
@@ -129,7 +131,7 @@ func (s *TestSuite) DeployMCMSUserContract() {
 		Signer:           s.signer,
 		GasBudget:        &gasBudget,
 		WaitForExecution: true,
-	}, s.client, s.mcmsPackageID, signerAddress)
+	}, s.client, s.mcmsPackageID, signerAddress, s.suiNodeUrl)
 	s.Require().NoError(err, "Failed to publish MCMS user package")
 
 	s.mcmsUserPackageID = mcmsUserPackage.Address()
