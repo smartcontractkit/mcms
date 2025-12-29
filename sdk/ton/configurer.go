@@ -3,7 +3,6 @@ package ton
 import (
 	"context"
 	"fmt"
-	"math/big"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
@@ -16,7 +15,6 @@ import (
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
-	"github.com/xssnick/tonutils-go/tvm/cell"
 )
 
 var _ sdk.Configurer = &configurer{}
@@ -80,21 +78,14 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	}
 
 	// Encode SetConfig message
-	sz := uint(tvm.SizeUINT8)
-	gqDict := cell.NewDict(sz)
-	for i, g := range groupQuorum {
-		err = gqDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("unable to dict.set group quorum %d: %w", i, err)
-		}
+	gqDict, err := tlbe.NewDictFromSlice[uint8](groupQuorum[:])
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to create group quorum dict: %w", err)
 	}
 
-	gpDict := cell.NewDict(sz)
-	for i, g := range groupParents {
-		err = gpDict.SetIntKey(big.NewInt(int64(i)), cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell())
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("unable to dict.set group parent %d: %w", i, err)
-		}
+	gpDict, err := tlbe.NewDictFromSlice[uint8](groupParents[:])
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to create group parents dict: %w", err)
 	}
 
 	qID, err := tvm.RandomQueryID()

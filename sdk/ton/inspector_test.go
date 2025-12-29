@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 
 	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/types"
@@ -43,22 +43,22 @@ func TestInspector_GetConfig(t *testing.T) {
 			name:    "getConfig call success",
 			address: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockResult: mcms.Config{
-				Signers: must(tvm.MakeDictFrom([]mcms.Signer{
+				Signers: must(tlbe.NewDictFromSlice[uint8]([]mcms.Signer{
 					{Address: AsUint160Addr(signers[0]), Index: 0, Group: 0},
 					{Address: AsUint160Addr(signers[1]), Index: 1, Group: 0},
 					{Address: AsUint160Addr(signers[2]), Index: 2, Group: 0},
 					{Address: AsUint160Addr(signers[3]), Index: 0, Group: 1},
 					{Address: AsUint160Addr(signers[4]), Index: 1, Group: 1},
 					{Address: AsUint160Addr(signers[5]), Index: 2, Group: 1},
-				}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
-					{Val: 3},
-					{Val: 2},
-				}, tvm.KeyUINT8)), // Valid configuration
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
-					{Val: 0},
-					{Val: 0},
-				}, tvm.KeyUINT8)),
+				})),
+				GroupQuorums: must(tlbe.NewDictFromSlice[uint8]([]uint8{
+					3,
+					2,
+				})), // Valid configuration
+				GroupParents: must(tlbe.NewDictFromSlice[uint8]([]uint8{
+					0,
+					0,
+				})),
 			},
 			want: &types.Config{
 				Quorum: 3,
@@ -91,15 +91,15 @@ func TestInspector_GetConfig(t *testing.T) {
 			name:    "Empty Signers list",
 			address: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			mockResult: mcms.Config{
-				Signers: must(tvm.MakeDictFrom([]mcms.Signer{}, tvm.KeyUINT8)),
-				GroupQuorums: must(tvm.MakeDictFrom([]mcms.GroupQuorum{
-					{Val: 3},
-					{Val: 2},
-				}, tvm.KeyUINT8)),
-				GroupParents: must(tvm.MakeDictFrom([]mcms.GroupParent{
-					{Val: 0},
-					{Val: 0},
-				}, tvm.KeyUINT8)),
+				Signers: must(tlbe.NewDictFromSlice[uint8]([]mcms.Signer{})),
+				GroupQuorums: must(tlbe.NewDictFromSlice[uint8]([]uint8{
+					3,
+					2,
+				})),
+				GroupParents: must(tlbe.NewDictFromSlice[uint8]([]uint8{
+					0,
+					0,
+				})),
 			},
 			want:    nil,
 			wantErr: errors.New("invalid MCMS config: Quorum must be less than or equal to the number of signers and groups"),
@@ -121,9 +121,9 @@ func TestInspector_GetConfig(t *testing.T) {
 			if tt.mockError == nil {
 				// Encode the expected return value for a successful call
 				r := ton.NewExecutionResult([]any{
-					tt.mockResult.Signers.AsCell(),
-					tt.mockResult.GroupQuorums.AsCell(),
-					tt.mockResult.GroupParents.AsCell(),
+					must(tt.mockResult.Signers.AsDictionary()).AsCell(),
+					must(tt.mockResult.GroupQuorums.AsDictionary()).AsCell(),
+					must(tt.mockResult.GroupParents.AsDictionary()).AsCell(),
 				})
 				client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
 					Return(r, nil).Once()

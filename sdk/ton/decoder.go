@@ -8,17 +8,18 @@ import (
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/debug/lib"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/codec"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
 type decoder struct {
 	// Map of contract type to TL-B definitions (type -> opcode -> TL-B struct)
-	TypeToTLBMap map[string]lib.TLBMap
+	TypeToTLBMap map[string]tvm.TLBMap
 }
 
 var _ sdk.Decoder = &decoder{}
 
-func NewDecoder(tlbs map[string]lib.TLBMap) sdk.Decoder {
+func NewDecoder(tlbs map[string]tvm.TLBMap) sdk.Decoder {
 	return &decoder{
 		TypeToTLBMap: tlbs,
 	}
@@ -42,7 +43,7 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 		return NewDecodedOperation(contractType, "", 0, map[string]any{}, []string{}, []any{})
 	}
 
-	msgType, msgDecoded, err := lib.DecodeTLBValToJSON(datac, tlbs)
+	msgType, msgDecoded, err := codec.DecodeTLBValToJSON(datac, tlbs)
 	if err != nil {
 		return nil, fmt.Errorf("error while JSON decoding message (cell) for contract %s: %w", contractType, err)
 	}
@@ -52,7 +53,7 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 	}
 
 	// Extract the input keys and args (tree/map lvl 0)
-	keys, err := lib.DecodeTLBStructKeys(datac, tlbs)
+	keys, err := codec.DecodeTLBStructKeys(datac, tlbs)
 	if err != nil {
 		return nil, fmt.Errorf("error while (struct) decoding message (cell) for contract %s: %w", contractType, err)
 	}

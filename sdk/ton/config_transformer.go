@@ -103,16 +103,36 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 		}
 	}
 
+	// TODO (ton): this fn can be optimized to avoid double dict creation
+	_signersDict, err := tlbe.NewDictFromDictionary[uint8, mcms.Signer](signersDict)
+	if err != nil {
+		return mcms.Config{}, fmt.Errorf("unable to create signers dict: %w", err)
+	}
+
+	_gqDict, err := tlbe.NewDictFromDictionary[uint8, uint8](gqDict)
+	if err != nil {
+		return mcms.Config{}, fmt.Errorf("unable to create group quorums dict: %w", err)
+	}
+
+	_gpDict, err := tlbe.NewDictFromDictionary[uint8, uint8](gpDict)
+	if err != nil {
+		return mcms.Config{}, fmt.Errorf("unable to create group parents dict: %w", err)
+	}
+
 	return mcms.Config{
-		Signers:      signersDict,
-		GroupQuorums: gqDict,
-		GroupParents: gpDict,
+		Signers:      _signersDict,
+		GroupQuorums: _gqDict,
+		GroupParents: _gpDict,
 	}, nil
 }
 
 // ToConfig Maps the chain-specific config to the chain-agnostic config
 func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) {
-	kvSigners, err := config.Signers.LoadAll()
+	_signers, err := config.Signers.AsDictionary()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get signers as Dictionary: %w", err)
+	}
+	kvSigners, err := _signers.LoadAll()
 	if err != nil {
 		return nil, fmt.Errorf("unable to load signers: %w", err)
 	}
@@ -141,7 +161,11 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 		}
 	}
 
-	kvGroupQuorums, err := config.GroupQuorums.LoadAll()
+	_groupQuorums, err := config.GroupQuorums.AsDictionary()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get group quorums as Dictionary: %w", err)
+	}
+	kvGroupQuorums, err := _groupQuorums.LoadAll()
 	if err != nil {
 		return nil, fmt.Errorf("unable to load all group quorums: %w", err)
 	}
@@ -157,7 +181,12 @@ func (e *configTransformer) ToConfig(config mcms.Config) (*types.Config, error) 
 		evmConfig.GroupQuorums[i] = uint8(val)
 	}
 
-	kvGroupParents, err := config.GroupParents.LoadAll()
+	_groupParents, err := config.GroupParents.AsDictionary()
+	if err != nil {
+		return nil, fmt.Errorf("unable to get group parents as Dictionary: %w", err)
+	}
+
+	kvGroupParents, err := _groupParents.LoadAll()
 	if err != nil {
 		return nil, fmt.Errorf("unable to load group parents: %w", err)
 	}
