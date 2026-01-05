@@ -14,7 +14,7 @@ jobs:
       actions: read
     steps:
       - name: ci-lint
-        uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # ci-lint-go@3.1.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@64514642fdd7bbbcf52c2dd498f3ffe0704cc544 # ci-lint-go@1.2.0
         with:
           golangci-lint-version: v2.6.2
           golangci-lint-config: .golangci.yml
@@ -28,7 +28,7 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # ci-lint-go@3.1.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@64514642fdd7bbbcf52c2dd498f3ffe0704cc544 # ci-lint-go@1.2.0
         with:
           golangci-lint-version: v2.6.2
           golangci-lint-args: --build-tags="e2e"
@@ -52,7 +52,7 @@ jobs:
       actions: read
     steps:
       - name: cicd-publish-release
-        uses: smartcontractkit/.github/actions/cicd-build-publish-artifacts-go@b4737861584f88fa9569d6978f70fedf8b1ae67c # cicd-build-publish-artifacts-go@0.4.0
+        uses: smartcontractkit/.github/actions/cicd-build-publish-artifacts-go@64514642fdd7bbbcf52c2dd498f3ffe0704cc544 # cicd-build-publish-artifacts-go@0.4.0
         with:
           # general inputs
           app-name: mcms-lib
@@ -79,7 +79,7 @@ jobs:
         shell: bash
 
       - name: Notify Slack
-        uses: smartcontractkit/.github/actions/slack-notify-git-ref@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # slack-notify-git-ref@0.1.4
+        uses: smartcontractkit/.github/actions/slack-notify-git-ref@64514642fdd7bbbcf52c2dd498f3ffe0704cc544 # slack-notify-git-ref@0.1.4
         with:
           slack-channel-id: ${{ secrets.SLACK_CHANNEL_MCMS }}
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN_RELENG }} # Releng Bot

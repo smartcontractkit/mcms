@@ -15,7 +15,7 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # ci-lint-go@3.1.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@64514642fdd7bbbcf52c2dd498f3ffe0704cc544 # ci-lint-go@1.2.0
         with:
           golangci-lint-version: v2.6.2
           use-go-cache: true
@@ -31,7 +31,7 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # ci-lint-go@3.1.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@64514642fdd7bbbcf52c2dd498f3ffe0704cc544 # ci-lint-go@1.2.0
         with:
           golangci-lint-version: v2.6.2
           golangci-lint-args: --build-tags="e2e"
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Linting Misc (yaml + sh files)
-        uses: smartcontractkit/.github/actions/ci-lint-misc@9fc306ac63d8997c9ca0da283e56caaf71589f83 # ci-lint-misc@1.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-misc@64514642fdd7bbbcf52c2dd498f3ffe0704cc544 # ci-lint-misc@1.2.0
 
   ci-test:
     runs-on: ubuntu-latest
@@ -155,7 +155,7 @@ jobs:
       contents: read
     steps:
       - name: cd-release
-        uses: smartcontractkit/.github/actions/cicd-changesets@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # cicd-changesets@0.3.6
+        uses: smartcontractkit/.github/actions/cicd-changesets@64514642fdd7bbbcf52c2dd498f3ffe0704cc544 # cicd-changesets@0.3.6
         with:
           # general inputs
           git-user: app-token-issuer-infra-releng[bot]
@@ -172,7 +172,7 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Scanning with Sonarqube
-        uses: smartcontractkit/.github/actions/ci-sonarqube-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-sonarqube-go@0.3.1
+        uses: smartcontractkit/.github/actions/ci-sonarqube-go@64514642fdd7bbbcf52c2dd498f3ffe0704cc544 # ci-sonarqube-go@0.3.1
         with:
           # sonarqube inputs
           sonar-token: ${{ secrets.SONAR_TOKEN }}
