@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.32.0
+
+### Minor Changes
+
+- [#571](https://github.com/smartcontractkit/mcms/pull/571) [`141dc6f`](https://github.com/smartcontractkit/mcms/commit/141dc6fceb2a194524ab36bb7addbe37eb28e9a5) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: bump version
+
 ## 0.31.1
 
 ### Patch Changes
