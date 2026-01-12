@@ -21,6 +21,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -291,6 +292,11 @@ func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sd
 			converter = solana.NewTimelockConverter()
 		case chain_selectors.FamilyAptos:
 			converter = aptos.NewTimelockConverter()
+		case chain_selectors.FamilySui:
+			converter, err = sui.NewTimelockConverter()
+			if err != nil {
+				return nil, fmt.Errorf("failed to create Sui timelock converter: %w", err)
+			}
 		default:
 			return nil, fmt.Errorf("unsupported chain family %s", fam)
 		}
