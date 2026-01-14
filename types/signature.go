@@ -36,10 +36,23 @@ func NewSignatureFromBytes(sig []byte) (Signature, error) {
 		return Signature{}, fmt.Errorf("invalid signature length: %d", len(sig))
 	}
 
+	v := sig[SignatureBytesLength-1]
+	if v < SignatureVOffset {
+		// FIXME: if "V < offset", can we simply increment the offset or does it mean
+		// the signature as a whole is invalid?
+		v += SignatureVOffset
+	}
+	// FIXME: should we check for 27 and 28 only? According to https://bitcoin.stackexchange.com/a/112489
+	// and https://bitcoin.stackexchange.com/a/38909, it's technically possible for V to
+	// be 29, 30, 31, 32, 33 and 34.
+	if v != 27 && v != 28 {
+		return Signature{}, fmt.Errorf("invalid signature V value: %d", v)
+	}
+
 	return Signature{
 		R: common.BytesToHash(sig[:SignatureComponentSize]),
 		S: common.BytesToHash(sig[SignatureComponentSize:(SignatureBytesLength - 1)]),
-		V: sig[SignatureBytesLength-1],
+		V: v,
 	}, nil
 }
 
@@ -64,7 +77,7 @@ func (s Signature) Recover(hash common.Hash) (common.Address, error) {
 	return crypto.PubkeyToAddress(*pubKey), nil
 }
 
-// Recover returns the public key recovered from the signature and the message hash
+// RecoverPublicKey returns the public key recovered from the signature and the message hash
 func (s Signature) RecoverPublicKey(hash common.Hash) (*ecdsa.PublicKey, error) {
 	sig := s.ToBytes()
 
