@@ -16,11 +16,11 @@ var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 
 // TimelockInspector is an Inspector implementation for EVM chains for accessing the RBACTimelock contract
 type TimelockInspector struct {
-	client ContractDeployBackend
+	client sdk.ContractDeployBackend
 }
 
 // NewTimelockInspector creates a new TimelockInspector
-func NewTimelockInspector(client ContractDeployBackend) *TimelockInspector {
+func NewTimelockInspector(client sdk.ContractDeployBackend) *TimelockInspector {
 	return &TimelockInspector{
 		client: client,
 	}

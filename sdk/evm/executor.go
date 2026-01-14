@@ -12,6 +12,7 @@ import (
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -24,7 +25,7 @@ type Executor struct {
 }
 
 // NewExecutor creates a new Executor for EVM chains
-func NewExecutor(encoder *Encoder, client ContractDeployBackend, auth *bind.TransactOpts) *Executor {
+func NewExecutor(encoder *Encoder, client sdk.ContractDeployBackend, auth *bind.TransactOpts) *Executor {
 	return &Executor{
 		Encoder:   encoder,
 		Inspector: NewInspector(client),

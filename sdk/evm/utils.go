@@ -1,7 +1,6 @@
 package evm
 
 import (
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
@@ -17,11 +16,6 @@ const (
 	// SimulatedEVMChainID is the chain ID used for simulated chains.
 	SimulatedEVMChainID = 1337
 )
-
-type ContractDeployBackend interface {
-	bind.ContractBackend
-	bind.DeployBackend
-}
 
 // transformHashes transforms a slice of common.Hash to a slice of [32]byte.
 func transformHashes(hashes []common.Hash) [][32]byte {

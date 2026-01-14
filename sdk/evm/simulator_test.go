@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	evm_mocks "github.com/smartcontractkit/mcms/sdk/evm/mocks"
 	"github.com/smartcontractkit/mcms/types"
@@ -30,7 +31,7 @@ func TestNewSimulator(t *testing.T) {
 	tests := []struct {
 		name       string
 		encoder    *evm.Encoder
-		client     evm.ContractDeployBackend
+		client     sdk.ContractDeployBackend
 		wantErr    error
 		wantErrMsg string
 	}{

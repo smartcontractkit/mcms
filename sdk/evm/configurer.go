@@ -17,12 +17,12 @@ var _ sdk.Configurer = &Configurer{}
 
 // Configurer configures the MCM contract for EVM chains.
 type Configurer struct {
-	client ContractDeployBackend
+	client sdk.ContractDeployBackend
 	auth   *bind.TransactOpts
 }
 
 // NewConfigurer creates a new Configurer for EVM chains.
-func NewConfigurer(client ContractDeployBackend, auth *bind.TransactOpts,
+func NewConfigurer(client sdk.ContractDeployBackend, auth *bind.TransactOpts,
 ) *Configurer {
 	return &Configurer{
 		client: client,

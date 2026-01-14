@@ -16,11 +16,11 @@ var _ sdk.Inspector = (*Inspector)(nil)
 // Inspector is an Inspector implementation for EVM chains, giving access to the state of the MCMS contract
 type Inspector struct {
 	ConfigTransformer
-	client ContractDeployBackend
+	client sdk.ContractDeployBackend
 }
 
 // NewInspector creates a new Inspector for EVM chains
-func NewInspector(client ContractDeployBackend) *Inspector {
+func NewInspector(client sdk.ContractDeployBackend) *Inspector {
 	return &Inspector{
 		ConfigTransformer: ConfigTransformer{},
 		client:            client,

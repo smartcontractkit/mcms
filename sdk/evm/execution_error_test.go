@@ -15,6 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/sdk/evm/mocks"
 )
@@ -1399,7 +1400,7 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			var client ContractDeployBackend
+			var client sdk.ContractDeployBackend
 			if tt.setupMock != nil {
 				mockClient := mocks.NewContractDeployBackend(t)
 				tt.setupMock(mockClient)
