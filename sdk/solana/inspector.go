@@ -18,6 +18,8 @@ import (
 
 var _ sdk.Inspector = (*Inspector)(nil)
 
+type RPCClient = *rpc.Client
+
 // Inspector is an Inspector implementation for Solana chains, giving access to the state of the MCMS contract
 type Inspector struct {
 	ConfigTransformer
