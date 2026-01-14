@@ -26,7 +26,7 @@ func NewTimelockConverter() *TimelockConverter {
 	return &TimelockConverter{}
 }
 
-func (t *TimelockConverter) ConvertBatchToChainOperations(
+func (t TimelockConverter) ConvertBatchToChainOperations(
 	_ context.Context,
 	metadata types.ChainMetadata,
 	bop types.BatchOperation,
