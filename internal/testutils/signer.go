@@ -3,7 +3,6 @@ package testutils
 import (
 	"crypto/ecdsa"
 	"slices"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -30,7 +29,7 @@ func MakeNewECDSASigners(n int) []ECDSASigner {
 	}
 	// Signers need to be sorted alphabetically
 	slices.SortFunc(signers[:], func(a, b ECDSASigner) int {
-		return strings.Compare(strings.ToLower(a.Address().Hex()), strings.ToLower(b.Address().Hex()))
+		return a.Address().Cmp(b.Address())
 	})
 
 	return signers

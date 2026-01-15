@@ -513,7 +513,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 	}
 }
 
-func TestAdditionalFieldsJSONMarshaling(t *testing.T) {
+func TestAdditionalFields_JSONMarshaling(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

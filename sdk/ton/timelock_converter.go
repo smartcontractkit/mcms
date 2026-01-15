@@ -1,0 +1,168 @@
+package ton
+
+import (
+	"context"
+	"encoding/json"
+	"fmt"
+
+	"github.com/smartcontractkit/mcms/sdk"
+	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
+	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/xssnick/tonutils-go/address"
+	"github.com/xssnick/tonutils-go/tlb"
+	"github.com/xssnick/tonutils-go/tvm/cell"
+
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+)
+
+// Default amount to send with timelock transactions (to cover gas fees)
+var DefaultSendAmount = tlb.MustFromTON("0.15")
+
+var _ sdk.TimelockConverter = (*timelockConverter)(nil)
+
+type timelockConverter struct {
+	// Transaction opts
+	amount tlb.Coins
+}
+
+// NewTimelockConverter creates a new TimelockConverter
+func NewTimelockConverter(amount tlb.Coins) sdk.TimelockConverter {
+	return &timelockConverter{
+		amount: amount,
+	}
+}
+
+func (t *timelockConverter) ConvertBatchToChainOperations(
+	_ context.Context,
+	metadata types.ChainMetadata,
+	bop types.BatchOperation,
+	timelockAddress string,
+	mcmAddress string,
+	delay types.Duration,
+	action types.TimelockAction,
+	predecessor common.Hash,
+	salt common.Hash,
+) ([]types.Operation, common.Hash, error) {
+	// Create the list of RBACTimelockCall (batch of calls) and tags for the operations
+	calls, err := ConvertBatchToCalls(bop)
+	if err != nil {
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to convert batch to calls: %w", err)
+	}
+
+	tags := make([]string, 0)
+	for _, tx := range bop.Transactions {
+		tags = append(tags, tx.Tags...)
+	}
+
+	operationID, errHash := HashOperationBatch(calls, predecessor, salt)
+	if errHash != nil {
+		return []types.Operation{}, common.Hash{}, errHash
+	}
+
+	qID, err := tvm.RandomQueryID()
+	if err != nil {
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	}
+
+	// Encode the data based on the operation
+	var data *cell.Cell
+	switch action {
+	case types.TimelockActionSchedule:
+		data, err = tlb.ToCell(timelock.ScheduleBatch{
+			QueryID: qID,
+
+			Calls:       calls,
+			Predecessor: tlbe.NewUint256(predecessor.Big()),
+			Salt:        tlbe.NewUint256(salt.Big()),
+			Delay:       uint32(delay.Seconds()),
+		})
+	case types.TimelockActionCancel:
+		data, err = tlb.ToCell(timelock.Cancel{
+			QueryID: qID,
+
+			ID: tlbe.NewUint256(operationID.Big()),
+		})
+	case types.TimelockActionBypass:
+		data, err = tlb.ToCell(timelock.BypasserExecuteBatch{
+			QueryID: qID,
+
+			Calls: calls,
+		})
+	default:
+		return []types.Operation{}, common.Hash{}, sdkerrors.NewInvalidTimelockOperationError(string(action))
+	}
+
+	if err != nil {
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to encode timelock action data: %w", err)
+	}
+
+	// Map to Ton Address type
+	dstAddr, err := address.ParseAddr(timelockAddress)
+	if err != nil {
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("invalid timelock address: %w", err)
+	}
+
+	// Notice: EVM just sets 0 here, but on TON we need to set some value to cover gas fees
+	var tx types.Transaction
+	tx, err = NewTransaction(dstAddr, data.BeginParse(), t.amount.Nano(), "RBACTimelock", tags)
+	if err != nil {
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)
+	}
+
+	op := types.Operation{
+		ChainSelector: bop.ChainSelector,
+		Transaction:   tx,
+	}
+
+	return []types.Operation{op}, operationID, nil
+}
+
+func ConvertBatchToCalls(bop types.BatchOperation) ([]timelock.Call, error) {
+	calls := make([]timelock.Call, len(bop.Transactions))
+	for i, tx := range bop.Transactions {
+		// Unmarshal the AdditionalFields from the operation
+		var additionalFields AdditionalFields
+		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+			return nil, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+		}
+
+		// Map to Ton Address type
+		to, err := address.ParseAddr(tx.To)
+		if err != nil {
+			return nil, fmt.Errorf("invalid target address: %w", err)
+		}
+
+		datac, err := cell.FromBOC(tx.Data)
+		if err != nil {
+			return nil, fmt.Errorf("invalid cell BOC data: %w", err)
+		}
+
+		calls[i] = timelock.Call{
+			Target: to,
+			Data:   datac,
+			Value:  tlb.FromNanoTON(additionalFields.Value),
+		}
+	}
+
+	return calls, nil
+}
+
+// HashOperationBatch replicates the hash calculation from Solidity
+func HashOperationBatch(calls []timelock.Call, predecessor, salt common.Hash) (common.Hash, error) {
+	ob, err := tlb.ToCell(timelock.OperationBatch{
+		Calls:       calls,
+		Predecessor: tlbe.NewUint256(predecessor.Big()),
+		Salt:        tlbe.NewUint256(salt.Big()),
+	})
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to encode OperationBatch: %w", err)
+	}
+
+	// Return the hash as a [32]byte array
+	return common.BytesToHash(ob.Hash()), nil
+}

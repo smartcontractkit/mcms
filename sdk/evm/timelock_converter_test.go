@@ -2,7 +2,6 @@ package evm
 
 import (
 	"context"
-	"encoding/json"
 	"math/big"
 	"testing"
 
@@ -31,7 +30,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 		operation      types.TimelockAction
 		predecessor    common.Hash
 		salt           common.Hash
-		expectedError  error
+		expectedError  string
 		expectedOpType string
 	}{
 		{
@@ -52,7 +51,6 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:      types.TimelockActionSchedule,
 			predecessor:    zeroHash,
 			salt:           zeroHash,
-			expectedError:  nil,
 			expectedOpType: "RBACTimelock",
 		},
 		{
@@ -73,7 +71,6 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:      types.TimelockActionCancel,
 			predecessor:    zeroHash,
 			salt:           zeroHash,
-			expectedError:  nil,
 			expectedOpType: "RBACTimelock",
 		},
 		{
@@ -94,7 +91,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:      types.TimelockAction("invalid"),
 			predecessor:    zeroHash,
 			salt:           zeroHash,
-			expectedError:  sdkerrors.NewInvalidTimelockOperationError("invalid"),
+			expectedError:  sdkerrors.NewInvalidTimelockOperationError("invalid").Error(),
 			expectedOpType: "",
 		},
 		{
@@ -112,7 +109,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:     types.TimelockActionSchedule,
 			predecessor:   zeroHash,
 			salt:          zeroHash,
-			expectedError: &json.SyntaxError{},
+			expectedError: "failed to unmarshal EVM additional fields: invalid character 'i' looking for beginning of value",
 		},
 	}
 
@@ -133,10 +130,9 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 				tc.salt,
 			)
 
-			if tc.expectedError != nil {
+			if tc.expectedError != "" {
 				require.Error(t, err)
-				//nolint:testifylint // Allow IsType for error type checking
-				require.IsType(t, tc.expectedError, err)
+				require.EqualError(t, err, tc.expectedError)
 			} else {
 				require.NoError(t, err)
 				require.NotEqual(t, common.Hash{}, operationID)
