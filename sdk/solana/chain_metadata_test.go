@@ -109,7 +109,7 @@ func TestNewChainMetadataFromTimelock(t *testing.T) {
 	}
 }
 
-func TestAdditionalFields_MetadataValidate(t *testing.T) {
+func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
 	t.Parallel()
 
 	// Create valid public keys for testing.

@@ -32,7 +32,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 	require.Equal(t, executor.auth, auth)
 }
 
-func TestTimelockExecutorExecute(t *testing.T) { //nolint:paralleltest
+func TestTimelockExecutor_Execute(t *testing.T) { //nolint:paralleltest
 	type args struct {
 		bop             types.BatchOperation
 		salt            [32]byte

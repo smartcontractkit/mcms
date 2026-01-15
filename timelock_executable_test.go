@@ -151,7 +151,7 @@ func TestNewTimelockExecutable(t *testing.T) {
 	}
 }
 
-func TestTimelockExecutableExecute(t *testing.T) {
+func TestTimelockExecutable_Execute(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()

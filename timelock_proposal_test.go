@@ -410,7 +410,7 @@ func TestWriteTimelockProposal(t *testing.T) {
 	}
 }
 
-func TestTimelockProposalValidate(t *testing.T) {
+func TestTimelockProposal_Validate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

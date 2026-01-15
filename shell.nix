@@ -11,8 +11,8 @@ pkgs.mkShell {
       # nix tooling
       alejandra
 
-      # Go 1.24 + tools
-      go_1_24
+      # Go 1.25 + tools
+      go_1_25
       gopls
       delve
       golangci-lint
