@@ -5,18 +5,17 @@ import (
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/chainsmetadata"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
-	"github.com/smartcontractkit/mcms/sdk/sui"
+	sdkSui "github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
 type InspectorFetcher interface {
-	FetchInspectors(chainMetadata map[types.ChainSelector]types.ChainMetadata, proposal *mcms.TimelockProposal) (map[types.ChainSelector]sdk.Inspector, error)
+	FetchInspectors(chainMetadata map[types.ChainSelector]types.ChainMetadata, action types.TimelockAction) (map[types.ChainSelector]sdk.Inspector, error)
 }
 
 var _ InspectorFetcher = (*MCMInspectorFetcher)(nil)
@@ -32,12 +31,12 @@ func NewMCMInspectorFetcher(chains sdk.ChainAccess) *MCMInspectorFetcher {
 // FetchInspectors gets a map of inspectors for the given chain metadata and chain clients
 func (b *MCMInspectorFetcher) FetchInspectors(
 	chainMetadata map[types.ChainSelector]types.ChainMetadata,
-	proposal *mcms.TimelockProposal) (map[types.ChainSelector]sdk.Inspector, error) {
+	action types.TimelockAction) (map[types.ChainSelector]sdk.Inspector, error) {
 	inspectors := map[types.ChainSelector]sdk.Inspector{}
-	for chainSelector := range chainMetadata {
-		inspector, err := GetInspectorFromChainSelector(b.chains, uint64(chainSelector), proposal)
+	for chainSelector, metadata := range chainMetadata {
+		inspector, err := BuildInspector(b.chains, chainSelector, action, metadata)
 		if err != nil {
-			return nil, fmt.Errorf("error getting inspector for chain selector %d: %w", chainSelector, err)
+			return nil, err
 		}
 		inspectors[chainSelector] = inspector
 	}
@@ -45,54 +44,57 @@ func (b *MCMInspectorFetcher) FetchInspectors(
 	return inspectors, nil
 }
 
-// GetInspectorFromChainSelector returns an inspector for the given chain selector and chain clients
-func GetInspectorFromChainSelector(chains sdk.ChainAccess, selector uint64, proposal *mcms.TimelockProposal) (sdk.Inspector, error) {
-	fam, err := types.GetChainSelectorFamily(types.ChainSelector(selector))
-	if err != nil {
-		return nil, fmt.Errorf("error getting chainClient family: %w", err)
+// BuildInspector constructs a chain-family-specific Inspector from ChainAccess plus metadata.
+func BuildInspector(
+	chains sdk.ChainAccess,
+	selector types.ChainSelector,
+	action types.TimelockAction,
+	metadata types.ChainMetadata,
+) (sdk.Inspector, error) {
+	if chains == nil {
+		return nil, fmt.Errorf("chain access is required")
 	}
 
-	action := proposal.Action
-	var inspector sdk.Inspector
-	switch fam {
+	family, err := types.GetChainSelectorFamily(selector)
+	if err != nil {
+		return nil, fmt.Errorf("error getting chain family: %w", err)
+	}
+
+	rawSelector := uint64(selector)
+	switch family {
 	case chainsel.FamilyEVM:
-		client, ok := chains.EVMClient(selector)
+		client, ok := chains.EVMClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", selector)
+			return nil, fmt.Errorf("missing EVM chain client for selector %d", rawSelector)
 		}
-		inspector = evm.NewInspector(client)
+		return evm.NewInspector(client), nil
 	case chainsel.FamilySolana:
-		client, ok := chains.SolanaClient(selector)
+		client, ok := chains.SolanaClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Solana chain client for selector %d", selector)
+			return nil, fmt.Errorf("missing Solana chain client for selector %d", rawSelector)
 		}
-		inspector = solana.NewInspector(client)
+		return solana.NewInspector(client), nil
 	case chainsel.FamilyAptos:
+		client, ok := chains.AptosClient(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing Aptos chain client for selector %d", rawSelector)
+		}
 		role, err := chainsmetadata.AptosRoleFromAction(action)
 		if err != nil {
-			return nil, fmt.Errorf("error getting aptos role from proposal: %w", err)
+			return nil, fmt.Errorf("error determining aptos role: %w", err)
 		}
-		client, ok := chains.AptosClient(selector)
-		if !ok {
-			return nil, fmt.Errorf("missing Aptos chain client for selector %d", selector)
-		}
-		inspector = aptos.NewInspector(client, role)
+		return aptos.NewInspector(client, role), nil
 	case chainsel.FamilySui:
-		metadata, err := chainsmetadata.SuiMetadata(proposal.ChainMetadata[types.ChainSelector(selector)])
-		if err != nil {
-			return nil, fmt.Errorf("error getting sui metadata from proposal: %w", err)
-		}
-		client, signer, ok := chains.Sui(selector)
+		client, signer, ok := chains.Sui(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Sui chain client for selector %d", selector)
+			return nil, fmt.Errorf("missing Sui chain client for selector %d", rawSelector)
 		}
-		inspector, err = sui.NewInspector(client, signer, metadata.McmsPackageID, metadata.Role)
+		suiMetadata, err := chainsmetadata.SuiMetadata(metadata)
 		if err != nil {
-			return nil, fmt.Errorf("error creating sui inspector: %w", err)
+			return nil, fmt.Errorf("error parsing sui metadata: %w", err)
 		}
+		return sdkSui.NewInspector(client, signer, suiMetadata.McmsPackageID, suiMetadata.Role)
 	default:
-		return nil, fmt.Errorf("unsupported chain family %s", fam)
+		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}
-
-	return inspector, nil
 }

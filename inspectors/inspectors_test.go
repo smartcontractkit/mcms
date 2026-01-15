@@ -9,7 +9,6 @@ import (
 	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
 )
@@ -38,7 +37,7 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 			},
 			chainAccess: &fakeChainAccess{},
 			expectErr:   true,
-			errContains: "error getting inspector for chain selector 1: error getting chainClient family: chain family not found for selector 1",
+			errContains: "error getting chain family: chain family not found for selector 1",
 		},
 		{
 			name: "valid input",
@@ -71,7 +70,7 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 			}
 
 			builder := NewMCMInspectorFetcher(tc.chainAccess)
-			inspectors, err := builder.FetchInspectors(tc.chainMetadata, &mcms.TimelockProposal{})
+			inspectors, err := builder.FetchInspectors(tc.chainMetadata, mcmsTypes.TimelockActionSchedule)
 			if tc.expectErr {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errContains)

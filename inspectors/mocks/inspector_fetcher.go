@@ -3,10 +3,8 @@
 package mocks
 
 import (
-	mcms "github.com/smartcontractkit/mcms"
-	mock "github.com/stretchr/testify/mock"
-
 	sdk "github.com/smartcontractkit/mcms/sdk"
+	mock "github.com/stretchr/testify/mock"
 
 	types "github.com/smartcontractkit/mcms/types"
 )
@@ -24,9 +22,9 @@ func (_m *InspectorFetcher) EXPECT() *InspectorFetcher_Expecter {
 	return &InspectorFetcher_Expecter{mock: &_m.Mock}
 }
 
-// FetchInspectors provides a mock function with given fields: chainMetadata, proposal
-func (_m *InspectorFetcher) FetchInspectors(chainMetadata map[types.ChainSelector]types.ChainMetadata, proposal *mcms.TimelockProposal) (map[types.ChainSelector]sdk.Inspector, error) {
-	ret := _m.Called(chainMetadata, proposal)
+// FetchInspectors provides a mock function with given fields: chainMetadata, action
+func (_m *InspectorFetcher) FetchInspectors(chainMetadata map[types.ChainSelector]types.ChainMetadata, action types.TimelockAction) (map[types.ChainSelector]sdk.Inspector, error) {
+	ret := _m.Called(chainMetadata, action)
 
 	if len(ret) == 0 {
 		panic("no return value specified for FetchInspectors")
@@ -34,19 +32,19 @@ func (_m *InspectorFetcher) FetchInspectors(chainMetadata map[types.ChainSelecto
 
 	var r0 map[types.ChainSelector]sdk.Inspector
 	var r1 error
-	if rf, ok := ret.Get(0).(func(map[types.ChainSelector]types.ChainMetadata, *mcms.TimelockProposal) (map[types.ChainSelector]sdk.Inspector, error)); ok {
-		return rf(chainMetadata, proposal)
+	if rf, ok := ret.Get(0).(func(map[types.ChainSelector]types.ChainMetadata, types.TimelockAction) (map[types.ChainSelector]sdk.Inspector, error)); ok {
+		return rf(chainMetadata, action)
 	}
-	if rf, ok := ret.Get(0).(func(map[types.ChainSelector]types.ChainMetadata, *mcms.TimelockProposal) map[types.ChainSelector]sdk.Inspector); ok {
-		r0 = rf(chainMetadata, proposal)
+	if rf, ok := ret.Get(0).(func(map[types.ChainSelector]types.ChainMetadata, types.TimelockAction) map[types.ChainSelector]sdk.Inspector); ok {
+		r0 = rf(chainMetadata, action)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(map[types.ChainSelector]sdk.Inspector)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(map[types.ChainSelector]types.ChainMetadata, *mcms.TimelockProposal) error); ok {
-		r1 = rf(chainMetadata, proposal)
+	if rf, ok := ret.Get(1).(func(map[types.ChainSelector]types.ChainMetadata, types.TimelockAction) error); ok {
+		r1 = rf(chainMetadata, action)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -61,14 +59,14 @@ type InspectorFetcher_FetchInspectors_Call struct {
 
 // FetchInspectors is a helper method to define mock.On call
 //   - chainMetadata map[types.ChainSelector]types.ChainMetadata
-//   - proposal *mcms.TimelockProposal
-func (_e *InspectorFetcher_Expecter) FetchInspectors(chainMetadata interface{}, proposal interface{}) *InspectorFetcher_FetchInspectors_Call {
-	return &InspectorFetcher_FetchInspectors_Call{Call: _e.mock.On("FetchInspectors", chainMetadata, proposal)}
+//   - action types.TimelockAction
+func (_e *InspectorFetcher_Expecter) FetchInspectors(chainMetadata interface{}, action interface{}) *InspectorFetcher_FetchInspectors_Call {
+	return &InspectorFetcher_FetchInspectors_Call{Call: _e.mock.On("FetchInspectors", chainMetadata, action)}
 }
 
-func (_c *InspectorFetcher_FetchInspectors_Call) Run(run func(chainMetadata map[types.ChainSelector]types.ChainMetadata, proposal *mcms.TimelockProposal)) *InspectorFetcher_FetchInspectors_Call {
+func (_c *InspectorFetcher_FetchInspectors_Call) Run(run func(chainMetadata map[types.ChainSelector]types.ChainMetadata, action types.TimelockAction)) *InspectorFetcher_FetchInspectors_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(map[types.ChainSelector]types.ChainMetadata), args[1].(*mcms.TimelockProposal))
+		run(args[0].(map[types.ChainSelector]types.ChainMetadata), args[1].(types.TimelockAction))
 	})
 	return _c
 }
@@ -78,7 +76,7 @@ func (_c *InspectorFetcher_FetchInspectors_Call) Return(_a0 map[types.ChainSelec
 	return _c
 }
 
-func (_c *InspectorFetcher_FetchInspectors_Call) RunAndReturn(run func(map[types.ChainSelector]types.ChainMetadata, *mcms.TimelockProposal) (map[types.ChainSelector]sdk.Inspector, error)) *InspectorFetcher_FetchInspectors_Call {
+func (_c *InspectorFetcher_FetchInspectors_Call) RunAndReturn(run func(map[types.ChainSelector]types.ChainMetadata, types.TimelockAction) (map[types.ChainSelector]sdk.Inspector, error)) *InspectorFetcher_FetchInspectors_Call {
 	_c.Call.Return(run)
 	return _c
 }

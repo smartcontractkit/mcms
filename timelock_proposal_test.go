@@ -20,11 +20,11 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
+	mocks "github.com/smartcontractkit/mcms/sdk/mocks"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	"github.com/smartcontractkit/mcms/sdk/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -302,6 +302,101 @@ func Test_NewTimelockProposal(t *testing.T) {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, *got)
 			}
+		})
+	}
+}
+
+func TestTimelockProposal_GetOpCount(t *testing.T) {
+	t.Parallel()
+
+	const selector = types.ChainSelector(123)
+	baseMetadata := map[types.ChainSelector]types.ChainMetadata{
+		selector: {
+			MCMAddress:      "0xabc",
+			StartingOpCount: 5,
+		},
+	}
+
+	tests := []struct {
+		name        string
+		proposal    *TimelockProposal
+		setupMock   func(t *testing.T) (sdk.Inspector, error)
+		expectCount uint64
+		expectErr   string
+	}{
+		{
+			name: "success with factory override",
+			proposal: &TimelockProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: baseMetadata,
+				},
+				Action: types.TimelockActionSchedule,
+			},
+			setupMock: func(t *testing.T) (sdk.Inspector, error) {
+				mockInspector := mocks.NewInspector(t)
+				mockInspector.EXPECT().
+					GetOpCount(mock.Anything, baseMetadata[selector].MCMAddress).
+					Return(uint64(42), nil).
+					Once()
+				return mockInspector, nil
+			},
+			expectCount: 42,
+		},
+		{
+			name: "error when metadata missing",
+			proposal: &TimelockProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
+				},
+			},
+			expectErr: "missing chain metadata",
+		},
+		{
+			name: "error bubbling from factory",
+			proposal: &TimelockProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: baseMetadata,
+				},
+				Action: types.TimelockActionSchedule,
+			},
+			setupMock: func(t *testing.T) (sdk.Inspector, error) {
+				return nil, errors.New("factory boom")
+			},
+			expectErr: "factory boom",
+		},
+	}
+
+	for _, tc := range tests {
+
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			prevFactory := inspectorFactory
+			inspectorFactory = func(action types.TimelockAction, metadata types.ChainMetadata, cs types.ChainSelector, chains sdk.ChainAccess) (sdk.Inspector, error) {
+				if tc.setupMock != nil {
+					return tc.setupMock(t)
+				}
+				defaultInspector := mocks.NewInspector(t)
+				defaultInspector.EXPECT().
+					GetOpCount(mock.Anything, metadata.MCMAddress).
+					Return(uint64(1), nil).
+					Once()
+				return defaultInspector, nil
+			}
+			t.Cleanup(func() {
+				inspectorFactory = prevFactory
+			})
+
+			count, err := tc.proposal.GetOpCount(context.Background(), nil, selector)
+			if tc.expectErr != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectErr)
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectCount, count)
 		})
 	}
 }
