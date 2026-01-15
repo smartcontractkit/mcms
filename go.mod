@@ -8,7 +8,7 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 require (
 	github.com/aptos-labs/aptos-go-sdk v1.11.0
 	github.com/block-vision/sui-go-sdk v1.1.2
-	github.com/ethereum/go-ethereum v1.16.7
+	github.com/ethereum/go-ethereum v1.16.8
 	github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/solana-go v1.13.0
 	github.com/go-playground/validator/v10 v10.28.0
