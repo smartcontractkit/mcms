@@ -25,9 +25,9 @@ func BuildConvertersForTimelockProposal(proposal mcms.TimelockProposal) (map[typ
 		var converter sdk.TimelockConverter
 		switch fam {
 		case chainsel.FamilyEVM:
-			converter = evm.TimelockConverter{}
+			converter = evm.NewTimelockConverter()
 		case chainsel.FamilySolana:
-			converter = solana.TimelockConverter{}
+			converter = solana.NewTimelockConverter()
 		case chainsel.FamilyAptos:
 			converter = aptos.NewTimelockConverter()
 		default:
