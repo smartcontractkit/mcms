@@ -16,31 +16,15 @@ type SuiSigner interface {
 	GetAddress() (string, error)
 }
 
-type SuiChainClient interface {
-	GetClient() sui.ISuiAPI
-	GetSigner() SuiSigner
-}
-
-type SolanaChainClient interface {
-	GetClient() *solrpc.Client
-}
-
 type ContractDeployBackend interface {
 	bind.ContractBackend
 	bind.DeployBackend
 }
 
-type EVMChainClient interface {
-	GetClient() ContractDeployBackend
-}
-
-type ChainClient interface {
-	GetClient() aptoslib.AptosRpcClient
-}
-
-type BlockChains interface {
-	EVMChains() map[uint64]EVMChainClient
-	SolanaChains() map[uint64]SolanaChainClient
-	AptosChains() map[uint64]ChainClient
-	SuiChains() map[uint64]SuiChainClient
+type ChainAccess interface {
+	Selectors() []uint64
+	EVMClient(selector uint64) (ContractDeployBackend, bool)
+	SolanaClient(selector uint64) (*solrpc.Client, bool)
+	AptosClient(selector uint64) (aptoslib.AptosRpcClient, bool)
+	Sui(selector uint64) (sui.ISuiAPI, SuiSigner, bool)
 }

@@ -14,7 +14,7 @@ mockname: "{{.InterfaceName}}"
 inpackage: false
 outpkg: mocks
 packages:
-  github.com/smartcontractkit/mcms:
+  github.com/smartcontractkit/mcms/inspectors:
   github.com/smartcontractkit/mcms/sdk:
   github.com/smartcontractkit/mcms/sdk/evm:
   github.com/smartcontractkit/mcms/sdk/evm/bindings:

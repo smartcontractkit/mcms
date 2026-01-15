@@ -3,12 +3,14 @@ package inspectors
 import (
 	"testing"
 
+	aptoslib "github.com/aptos-labs/aptos-go-sdk"
+	"github.com/block-vision/sui-go-sdk/sui"
+	solrpc "github.com/gagliardetto/solana-go/rpc"
 	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/mocks"
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
 )
 
@@ -18,9 +20,7 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 	tests := []struct {
 		name                    string
 		chainMetadata           map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata
-		chainClientsEVM         map[uint64]sdk.EVMChainClient
-		setup                   func(evmClients map[uint64]sdk.EVMChainClient, solanaClients map[uint64]sdk.SolanaChainClient)
-		chainClientsSolana      map[uint64]sdk.SolanaChainClient
+		chainAccess             sdk.ChainAccess
 		expectErr               bool
 		errContains             string
 		expectedInspectorsCount int
@@ -28,19 +28,17 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 		{
 			name:          "empty input",
 			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{},
-			chainClientsEVM: map[uint64]sdk.EVMChainClient{
-				chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector: mocks.NewEVMChainClient(t),
-			},
-			expectErr: false,
+			chainAccess:   &fakeChainAccess{},
+			expectErr:     false,
 		},
 		{
 			name: "missing chain client",
 			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
 				1: {MCMAddress: "0xabc", StartingOpCount: 0},
 			},
-			chainClientsEVM: map[uint64]sdk.EVMChainClient{},
-			expectErr:       true,
-			errContains:     "error getting inspector for chain selector 1: error getting chainClient family: chain family not found for selector 1",
+			chainAccess: &fakeChainAccess{},
+			expectErr:   true,
+			errContains: "error getting inspector for chain selector 1: error getting chainClient family: chain family not found for selector 1",
 		},
 		{
 			name: "valid input",
@@ -48,17 +46,19 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 				mcmsTypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): {MCMAddress: "0xabc", StartingOpCount: 0},
 				mcmsTypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector):            {MCMAddress: "0xabc", StartingOpCount: 0},
 			},
-			chainClientsEVM: map[uint64]sdk.EVMChainClient{
-				chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector: mocks.NewEVMChainClient(t),
+			chainAccess: &fakeChainAccess{
+				selectors: []uint64{
+					chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector,
+					chainsel.SOLANA_DEVNET.Selector,
+				},
+				evmClients: map[uint64]sdk.ContractDeployBackend{
+					chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector: nil,
+				},
+				solanaClients: map[uint64]*solrpc.Client{
+					chainsel.SOLANA_DEVNET.Selector: nil,
+				},
 			},
-			chainClientsSolana: map[uint64]sdk.SolanaChainClient{
-				chainsel.SOLANA_DEVNET.Selector: mocks.NewSolanaChainClient(t),
-			},
-			expectErr: false,
-			setup: func(evmClients map[uint64]sdk.EVMChainClient, solanaClients map[uint64]sdk.SolanaChainClient) {
-				evmClients[chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector].(*mocks.EVMChainClient).EXPECT().GetClient().Return(nil).Once()
-				solanaClients[chainsel.SOLANA_DEVNET.Selector].(*mocks.SolanaChainClient).EXPECT().GetClient().Return(nil).Once()
-			},
+			expectErr:               false,
 			expectedInspectorsCount: 2,
 		},
 	}
@@ -66,15 +66,11 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			allChains := mocks.NewBlockChains(t)
-
-			if tc.expectedInspectorsCount > 0 {
-				tc.setup(tc.chainClientsEVM, tc.chainClientsSolana)
-				allChains.EXPECT().EVMChains().Return(tc.chainClientsEVM)
-				allChains.EXPECT().SolanaChains().Return(tc.chainClientsSolana)
+			if tc.chainAccess == nil {
+				tc.chainAccess = &fakeChainAccess{}
 			}
 
-			builder := NewMCMInspectorFetcher(allChains)
+			builder := NewMCMInspectorFetcher(tc.chainAccess)
 			inspectors, err := builder.FetchInspectors(tc.chainMetadata, &mcms.TimelockProposal{})
 			if tc.expectErr {
 				require.Error(t, err)
@@ -85,4 +81,65 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 			}
 		})
 	}
+}
+
+type fakeChainAccess struct {
+	selectors     []uint64
+	evmClients    map[uint64]sdk.ContractDeployBackend
+	solanaClients map[uint64]*solrpc.Client
+	aptosClients  map[uint64]aptoslib.AptosRpcClient
+	suiClients    map[uint64]struct {
+		client sui.ISuiAPI
+		signer sdk.SuiSigner
+	}
+}
+
+var _ sdk.ChainAccess = (*fakeChainAccess)(nil)
+
+func (f *fakeChainAccess) Selectors() []uint64 {
+	if f == nil {
+		return nil
+	}
+
+	return f.selectors
+}
+
+func (f *fakeChainAccess) EVMClient(selector uint64) (sdk.ContractDeployBackend, bool) {
+	if f == nil || f.evmClients == nil {
+		return nil, false
+	}
+	client, ok := f.evmClients[selector]
+
+	return client, ok
+}
+
+func (f *fakeChainAccess) SolanaClient(selector uint64) (*solrpc.Client, bool) {
+	if f == nil || f.solanaClients == nil {
+		return nil, false
+	}
+	client, ok := f.solanaClients[selector]
+
+	return client, ok
+}
+
+func (f *fakeChainAccess) AptosClient(selector uint64) (aptoslib.AptosRpcClient, bool) {
+	if f == nil || f.aptosClients == nil {
+		var zero aptoslib.AptosRpcClient
+		return zero, false
+	}
+	client, ok := f.aptosClients[selector]
+
+	return client, ok
+}
+
+func (f *fakeChainAccess) Sui(selector uint64) (sui.ISuiAPI, sdk.SuiSigner, bool) {
+	if f == nil || f.suiClients == nil {
+		return nil, nil, false
+	}
+	client, ok := f.suiClients[selector]
+	if !ok {
+		return nil, nil, false
+	}
+
+	return client.client, client.signer, true
 }

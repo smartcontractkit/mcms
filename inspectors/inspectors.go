@@ -22,10 +22,10 @@ type InspectorFetcher interface {
 var _ InspectorFetcher = (*MCMInspectorFetcher)(nil)
 
 type MCMInspectorFetcher struct {
-	chains sdk.BlockChains
+	chains sdk.ChainAccess
 }
 
-func NewMCMInspectorFetcher(chains sdk.BlockChains) *MCMInspectorFetcher {
+func NewMCMInspectorFetcher(chains sdk.ChainAccess) *MCMInspectorFetcher {
 	return &MCMInspectorFetcher{chains: chains}
 }
 
@@ -46,7 +46,7 @@ func (b *MCMInspectorFetcher) FetchInspectors(
 }
 
 // GetInspectorFromChainSelector returns an inspector for the given chain selector and chain clients
-func GetInspectorFromChainSelector(chains sdk.BlockChains, selector uint64, proposal *mcms.TimelockProposal) (sdk.Inspector, error) {
+func GetInspectorFromChainSelector(chains sdk.ChainAccess, selector uint64, proposal *mcms.TimelockProposal) (sdk.Inspector, error) {
 	fam, err := types.GetChainSelectorFamily(types.ChainSelector(selector))
 	if err != nil {
 		return nil, fmt.Errorf("error getting chainClient family: %w", err)
@@ -56,23 +56,37 @@ func GetInspectorFromChainSelector(chains sdk.BlockChains, selector uint64, prop
 	var inspector sdk.Inspector
 	switch fam {
 	case chainsel.FamilyEVM:
-		inspector = evm.NewInspector(chains.EVMChains()[selector].GetClient())
+		client, ok := chains.EVMClient(selector)
+		if !ok {
+			return nil, fmt.Errorf("missing EVM chain client for selector %d", selector)
+		}
+		inspector = evm.NewInspector(client)
 	case chainsel.FamilySolana:
-		inspector = solana.NewInspector(chains.SolanaChains()[selector].GetClient())
+		client, ok := chains.SolanaClient(selector)
+		if !ok {
+			return nil, fmt.Errorf("missing Solana chain client for selector %d", selector)
+		}
+		inspector = solana.NewInspector(client)
 	case chainsel.FamilyAptos:
 		role, err := chainsmetadata.AptosRoleFromAction(action)
 		if err != nil {
 			return nil, fmt.Errorf("error getting aptos role from proposal: %w", err)
 		}
-		chainClient := chains.AptosChains()[selector]
-		inspector = aptos.NewInspector(chainClient.GetClient(), role)
+		client, ok := chains.AptosClient(selector)
+		if !ok {
+			return nil, fmt.Errorf("missing Aptos chain client for selector %d", selector)
+		}
+		inspector = aptos.NewInspector(client, role)
 	case chainsel.FamilySui:
 		metadata, err := chainsmetadata.SuiMetadata(proposal.ChainMetadata[types.ChainSelector(selector)])
 		if err != nil {
 			return nil, fmt.Errorf("error getting sui metadata from proposal: %w", err)
 		}
-		chain := chains.SuiChains()[selector]
-		inspector, err = sui.NewInspector(chain.GetClient(), chain.GetSigner(), metadata.McmsPackageID, metadata.Role)
+		client, signer, ok := chains.Sui(selector)
+		if !ok {
+			return nil, fmt.Errorf("missing Sui chain client for selector %d", selector)
+		}
+		inspector, err = sui.NewInspector(client, signer, metadata.McmsPackageID, metadata.Role)
 		if err != nil {
 			return nil, fmt.Errorf("error creating sui inspector: %w", err)
 		}
