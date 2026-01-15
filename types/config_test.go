@@ -41,7 +41,7 @@ func TestNewConfig(t *testing.T) {
 	assert.Equal(t, Config{}, got)
 }
 
-func TestConfig_Validate(t *testing.T) {
+func TestConfigValidate(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

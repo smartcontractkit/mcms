@@ -4,7 +4,6 @@ package sui
 
 import (
 	"slices"
-	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -26,7 +25,7 @@ func (s *TestSuite) TestSetConfig() {
 		signers[i] = crypto.PubkeyToAddress(key.PublicKey)
 	}
 	slices.SortFunc(signers[:], func(a, b common.Address) int {
-		return strings.Compare(strings.ToLower(a.Hex()), strings.ToLower(b.Hex()))
+		return a.Cmp(b)
 	})
 
 	bypasserConfig := &types.Config{

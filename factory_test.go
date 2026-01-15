@@ -14,6 +14,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 )
 
 func TestNewEncoder(t *testing.T) {
@@ -85,6 +86,16 @@ func TestNewEncoder(t *testing.T) {
 			},
 		},
 		{
+			name:         "success: returns a TON encoder",
+			giveSelector: chaintest.Chain7Selector,
+			giveIsSim:    false,
+			want: &ton.Encoder{
+				TxCount:              giveTxCount,
+				ChainSelector:        chaintest.Chain7Selector,
+				OverridePreviousRoot: false,
+			},
+		},
+		{
 			name:         "failure: chain not found for selector",
 			giveSelector: chaintest.ChainInvalidSelector,
 			giveIsSim:    true,
@@ -136,6 +147,11 @@ func TestNewTimelockConverter(t *testing.T) {
 			name:          "success: Sui executor",
 			chainSelector: chaintest.Chain6Selector,
 			want:          &sui.TimelockConverter{},
+		},
+		{
+			name:          "success: TON executor",
+			chainSelector: chaintest.Chain7Selector,
+			want:          ton.NewTimelockConverter(ton.DefaultSendAmount),
 		},
 		{
 			name:          "failure: unknown selector",
