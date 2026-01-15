@@ -60,7 +60,7 @@ jobs:
           update-git-tag: "true"
           # goreleaser inputs
           goreleaser-args: "--config .goreleaser.yml"
-          goreleaser-version: '~> v2'
+          goreleaser-version: "~> v2"
           goreleaser-dist: goreleaser-pro
           goreleaser-key: ${{ secrets.GORELEASER_KEY }}
 
@@ -69,6 +69,8 @@ jobs:
     needs:
       - cicd-publish-release
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     environment: build-publish
     steps:
       - name: Checkout repository
@@ -85,4 +87,4 @@ jobs:
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN_RELENG }} # Releng Bot
           git-ref: ${{ env.TAG }}
           git-ref-type: tag
-          changelog-url: 'https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG }}'
+          changelog-url: "https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG }}"

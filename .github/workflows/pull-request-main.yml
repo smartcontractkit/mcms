@@ -151,8 +151,10 @@ jobs:
 
   ci-sonarqube:
     name: Sonarqube Scan
-    needs: [ ci-lint, ci-lint-misc, ci-test ]
+    needs: [ci-lint, ci-lint-misc, ci-test]
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Scanning with Sonarqube
