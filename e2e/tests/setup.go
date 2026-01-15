@@ -56,6 +56,7 @@ type TestSetup struct {
 	SolanaBlockchain *blockchain.Output
 	AptosBlockchain  *blockchain.Output
 	SuiClient        sui.ISuiAPI
+	SuiNodeUrl       string
 	SuiBlockchain    *blockchain.Output
 	Config
 }
@@ -180,10 +181,12 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 		var (
 			suiClient           sui.ISuiAPI
 			suiBlockchainOutput *blockchain.Output
+			suiNodeUrl          string
 		)
 		if in.Settings.LocalSuiNodeURL != "" {
 			// Connect to local Sui node (highest priority)
 			suiClient = sui.NewSuiClient(in.Settings.LocalSuiNodeURL)
+			suiNodeUrl = in.Settings.LocalSuiNodeURL
 			t.Logf("Connected to local Sui node @ %s", in.Settings.LocalSuiNodeURL)
 		} else if in.SuiChain != nil {
 			// Use blockchain network setup (fallback)
@@ -198,6 +201,7 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 
 			nodeURL := suiBlockchainOutput.Nodes[0].ExternalHTTPUrl
 			suiClient = sui.NewSuiClient(nodeURL)
+			suiNodeUrl = nodeURL
 
 			// Test liveness, will also fetch ChainID
 			t.Logf("Initialized Sui RPC client @ %s", nodeURL)
@@ -213,6 +217,7 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			AptosBlockchain:  aptosBlockchainOutput,
 			SuiClient:        suiClient,
 			SuiBlockchain:    suiBlockchainOutput,
+			SuiNodeUrl:       suiNodeUrl,
 			Config:           *in,
 		}
 	})
