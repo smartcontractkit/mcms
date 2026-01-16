@@ -37,7 +37,7 @@ func (c *Configurer) SetConfig(ctx context.Context, mcmAddr string, cfg *types.C
 		return types.TransactionResult{}, err
 	}
 
-	groupQuorums, groupParents, signerAddrs, signerGroups, err := ExtractSetConfigInputs(cfg)
+	groupQuorums, groupParents, signerAddrs, signerGroups, err := sdk.ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}

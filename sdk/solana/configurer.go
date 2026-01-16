@@ -9,7 +9,7 @@ import (
 	evmCommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/sdk"
-	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
+
 	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/gagliardetto/solana-go"
@@ -89,7 +89,7 @@ func (c *Configurer) SetConfig(
 		return types.TransactionResult{}, err
 	}
 
-	groupQuorums, groupParents, signerAddresses, signerGroups, err := evmsdk.ExtractSetConfigInputs(cfg)
+	groupQuorums, groupParents, signerAddresses, signerGroups, err := sdk.ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}

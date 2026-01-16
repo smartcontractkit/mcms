@@ -14,7 +14,6 @@ import (
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -51,7 +50,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, err
 	}
 	chainIDBig := new(big.Int).SetUint64(chainID)
-	groupQuorum, groupParents, signerAddresses, signerGroups, err := evm.ExtractSetConfigInputs(cfg)
+	groupQuorum, groupParents, signerAddresses, signerGroups, err := sdk.ExtractSetConfigInputs(cfg)
 
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)

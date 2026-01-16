@@ -12,7 +12,6 @@ import (
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -68,7 +67,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	mcmsBinding := c.bindingFn(mcmsAddress, c.client)
 	opts := &bind.TransactOpts{Signer: c.auth}
 
-	groupQuorum, groupParents, signerAddresses, signerGroups, err := evm.ExtractSetConfigInputs(cfg)
+	groupQuorum, groupParents, signerAddresses, signerGroups, err := sdk.ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}
