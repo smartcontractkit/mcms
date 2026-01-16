@@ -461,7 +461,7 @@ func TestSignable_SingleChainMultipleSignerMultipleTX_FailureMissingQuorum(t *te
 	quorumMet, err := signable.ValidateSignatures(ctx)
 	require.Error(t, err)
 
-	require.IsType(t, &QuorumNotReachedError{}, err)
+	require.EqualError(t, QuorumNotReachedError{ChainSelector: chaintest.Chain1Selector}, err.Error())
 	require.False(t, quorumMet)
 }
 
