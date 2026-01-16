@@ -20,7 +20,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
-	mocks "github.com/smartcontractkit/mcms/sdk/mocks"
+	"github.com/smartcontractkit/mcms/sdk/mocks"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
@@ -333,11 +333,14 @@ func TestTimelockProposal_GetOpCount(t *testing.T) {
 				Action: types.TimelockActionSchedule,
 			},
 			setupMock: func(t *testing.T) (sdk.Inspector, error) {
+				t.Helper()
+
 				mockInspector := mocks.NewInspector(t)
 				mockInspector.EXPECT().
 					GetOpCount(mock.Anything, baseMetadata[selector].MCMAddress).
 					Return(uint64(42), nil).
 					Once()
+
 				return mockInspector, nil
 			},
 			expectCount: 42,
@@ -360,6 +363,8 @@ func TestTimelockProposal_GetOpCount(t *testing.T) {
 				Action: types.TimelockActionSchedule,
 			},
 			setupMock: func(t *testing.T) (sdk.Inspector, error) {
+				t.Helper()
+
 				return nil, errors.New("factory boom")
 			},
 			expectErr: "factory boom",
@@ -367,7 +372,6 @@ func TestTimelockProposal_GetOpCount(t *testing.T) {
 	}
 
 	for _, tc := range tests {
-
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
@@ -381,6 +385,7 @@ func TestTimelockProposal_GetOpCount(t *testing.T) {
 					GetOpCount(mock.Anything, metadata.MCMAddress).
 					Return(uint64(1), nil).
 					Once()
+
 				return defaultInspector, nil
 			}
 			t.Cleanup(func() {

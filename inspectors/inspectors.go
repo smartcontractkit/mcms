@@ -67,12 +67,14 @@ func BuildInspector(
 		if !ok {
 			return nil, fmt.Errorf("missing EVM chain client for selector %d", rawSelector)
 		}
+
 		return evm.NewInspector(client), nil
 	case chainsel.FamilySolana:
 		client, ok := chains.SolanaClient(rawSelector)
 		if !ok {
 			return nil, fmt.Errorf("missing Solana chain client for selector %d", rawSelector)
 		}
+
 		return solana.NewInspector(client), nil
 	case chainsel.FamilyAptos:
 		client, ok := chains.AptosClient(rawSelector)
@@ -83,6 +85,7 @@ func BuildInspector(
 		if err != nil {
 			return nil, fmt.Errorf("error determining aptos role: %w", err)
 		}
+
 		return aptos.NewInspector(client, role), nil
 	case chainsel.FamilySui:
 		client, signer, ok := chains.Sui(rawSelector)
@@ -93,6 +96,7 @@ func BuildInspector(
 		if err != nil {
 			return nil, fmt.Errorf("error parsing sui metadata: %w", err)
 		}
+
 		return sdkSui.NewInspector(client, signer, suiMetadata.McmsPackageID, suiMetadata.Role)
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
