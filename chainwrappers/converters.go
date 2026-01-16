@@ -1,4 +1,4 @@
-package chainaccess
+package chainwrappers
 
 import (
 	"fmt"

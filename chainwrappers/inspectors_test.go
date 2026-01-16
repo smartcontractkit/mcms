@@ -1,4 +1,4 @@
-package chainaccess
+package chainwrappers
 
 import (
 	"testing"
@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/chainaccess/mocks"
+
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
 )
 

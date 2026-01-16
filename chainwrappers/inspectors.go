@@ -1,4 +1,4 @@
-package chainaccess
+package chainwrappers
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 
 // BuildInspectors gets a map of inspectors for the given chain metadata and chain clients
 func BuildInspectors(
-	chains ChainAccess,
+	chains ChainAccessor,
 	chainMetadata map[types.ChainSelector]types.ChainMetadata,
 	action types.TimelockAction) (map[types.ChainSelector]sdk.Inspector, error) {
 	inspectors := map[types.ChainSelector]sdk.Inspector{}
@@ -30,9 +30,9 @@ func BuildInspectors(
 	return inspectors, nil
 }
 
-// BuildInspector constructs a chain-family-specific Inspector from ChainAccess plus metadata.
+// BuildInspector constructs a chain-family-specific Inspector from ChainAccessor plus metadata.
 func BuildInspector(
-	chains ChainAccess,
+	chains ChainAccessor,
 	selector types.ChainSelector,
 	action types.TimelockAction,
 	metadata types.ChainMetadata,

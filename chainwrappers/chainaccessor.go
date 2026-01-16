@@ -1,4 +1,4 @@
-package chainaccess
+package chainwrappers
 
 import (
 	aptoslib "github.com/aptos-labs/aptos-go-sdk"
@@ -9,7 +9,7 @@ import (
 	suisuisdk "github.com/smartcontractkit/mcms/sdk/sui"
 )
 
-type ChainAccess interface {
+type ChainAccessor interface {
 	Selectors() []uint64
 	EVMClient(selector uint64) (evmsdk.ContractDeployBackend, bool)
 	SolanaClient(selector uint64) (*solrpc.Client, bool)

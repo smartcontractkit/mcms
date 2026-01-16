@@ -109,7 +109,7 @@ func NewQuorumNotReachedError(sel types.ChainSelector) *QuorumNotReachedError {
 	return &QuorumNotReachedError{ChainSelector: sel}
 }
 
-func (e *QuorumNotReachedError) Error() string {
+func (e QuorumNotReachedError) Error() string {
 	return fmt.Sprintf("quorum not reached for chain %d", e.ChainSelector)
 }
 
