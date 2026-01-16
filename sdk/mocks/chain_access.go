@@ -247,12 +247,12 @@ func (_c *ChainAccess_SolanaClient_Call) RunAndReturn(run func(uint64) (*rpc.Cli
 	return _c
 }
 
-// Sui provides a mock function with given fields: selector
-func (_m *ChainAccess) Sui(selector uint64) (sui.ISuiAPI, sdk.SuiSigner, bool) {
+// SuiClient provides a mock function with given fields: selector
+func (_m *ChainAccess) SuiClient(selector uint64) (sui.ISuiAPI, sdk.SuiSigner, bool) {
 	ret := _m.Called(selector)
 
 	if len(ret) == 0 {
-		panic("no return value specified for Sui")
+		panic("no return value specified for SuiClient")
 	}
 
 	var r0 sui.ISuiAPI
@@ -286,30 +286,30 @@ func (_m *ChainAccess) Sui(selector uint64) (sui.ISuiAPI, sdk.SuiSigner, bool) {
 	return r0, r1, r2
 }
 
-// ChainAccess_Sui_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Sui'
-type ChainAccess_Sui_Call struct {
+// ChainAccess_SuiClient_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SuiClient'
+type ChainAccess_SuiClient_Call struct {
 	*mock.Call
 }
 
-// Sui is a helper method to define mock.On call
+// SuiClient is a helper method to define mock.On call
 //   - selector uint64
-func (_e *ChainAccess_Expecter) Sui(selector interface{}) *ChainAccess_Sui_Call {
-	return &ChainAccess_Sui_Call{Call: _e.mock.On("Sui", selector)}
+func (_e *ChainAccess_Expecter) SuiClient(selector interface{}) *ChainAccess_SuiClient_Call {
+	return &ChainAccess_SuiClient_Call{Call: _e.mock.On("SuiClient", selector)}
 }
 
-func (_c *ChainAccess_Sui_Call) Run(run func(selector uint64)) *ChainAccess_Sui_Call {
+func (_c *ChainAccess_SuiClient_Call) Run(run func(selector uint64)) *ChainAccess_SuiClient_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].(uint64))
 	})
 	return _c
 }
 
-func (_c *ChainAccess_Sui_Call) Return(_a0 sui.ISuiAPI, _a1 sdk.SuiSigner, _a2 bool) *ChainAccess_Sui_Call {
+func (_c *ChainAccess_SuiClient_Call) Return(_a0 sui.ISuiAPI, _a1 sdk.SuiSigner, _a2 bool) *ChainAccess_SuiClient_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *ChainAccess_Sui_Call) RunAndReturn(run func(uint64) (sui.ISuiAPI, sdk.SuiSigner, bool)) *ChainAccess_Sui_Call {
+func (_c *ChainAccess_SuiClient_Call) RunAndReturn(run func(uint64) (sui.ISuiAPI, sdk.SuiSigner, bool)) *ChainAccess_SuiClient_Call {
 	_c.Call.Return(run)
 	return _c
 }

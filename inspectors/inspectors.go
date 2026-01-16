@@ -75,7 +75,7 @@ func BuildInspector(
 
 		return aptos.NewInspector(client, role), nil
 	case chainsel.FamilySui:
-		client, signer, ok := chains.Sui(rawSelector)
+		client, signer, ok := chains.SuiClient(rawSelector)
 		if !ok {
 			return nil, fmt.Errorf("missing Sui chain client for selector %d", rawSelector)
 		}

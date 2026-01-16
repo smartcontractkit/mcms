@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"github.com/ethereum/go-ethereum/common"
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"

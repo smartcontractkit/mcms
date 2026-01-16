@@ -26,5 +26,5 @@ type ChainAccess interface {
 	EVMClient(selector uint64) (ContractDeployBackend, bool)
 	SolanaClient(selector uint64) (*solrpc.Client, bool)
 	AptosClient(selector uint64) (aptoslib.AptosRpcClient, bool)
-	Sui(selector uint64) (sui.ISuiAPI, SuiSigner, bool)
+	SuiClient(selector uint64) (sui.ISuiAPI, SuiSigner, bool)
 }
