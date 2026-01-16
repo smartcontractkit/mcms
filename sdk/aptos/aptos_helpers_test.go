@@ -1,4 +1,4 @@
-package chainsmetadata
+package aptos
 
 import (
 	"testing"
@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/sdk/aptos"
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
 )
 
@@ -16,25 +15,25 @@ func TestAptosRoleFromAction(t *testing.T) {
 	tests := []struct {
 		name         string
 		action       mcmsTypes.TimelockAction
-		expectedRole aptos.TimelockRole
+		expectedRole TimelockRole
 		expectError  bool
 	}{
 		{
 			name:         "bypass action returns bypasser role",
 			action:       mcmsTypes.TimelockActionBypass,
-			expectedRole: aptos.TimelockRoleBypasser,
+			expectedRole: TimelockRoleBypasser,
 			expectError:  false,
 		},
 		{
 			name:         "schedule action returns proposer role",
 			action:       mcmsTypes.TimelockActionSchedule,
-			expectedRole: aptos.TimelockRoleProposer,
+			expectedRole: TimelockRoleProposer,
 			expectError:  false,
 		},
 		{
 			name:         "cancel action returns canceller role",
 			action:       mcmsTypes.TimelockActionCancel,
-			expectedRole: aptos.TimelockRoleCanceller,
+			expectedRole: TimelockRoleCanceller,
 			expectError:  false,
 		},
 		{

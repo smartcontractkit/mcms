@@ -8,6 +8,15 @@ import (
 
 const AddressLen = 32
 
+// TODO: this interface should come from chainlink-sui when available
+type SuiSigner interface {
+	// Sign signs the given message and returns the serialized signature.
+	Sign(message []byte) ([]string, error)
+
+	// GetAddress returns the Sui address derived from the signer's public key
+	GetAddress() (string, error)
+}
+
 type Address [AddressLen]uint8
 
 func AddressFromHex(str string) (*Address, error) {

@@ -18,7 +18,6 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 )
 
@@ -240,7 +239,7 @@ func BuildExecutionError(
 	txPreview *gethtypes.Transaction,
 	opts *bind.TransactOpts,
 	contractAddr common.Address,
-	client sdk.ContractDeployBackend,
+	client ContractDeployBackend,
 	timelockAddr common.Address,
 	timelockCallData []byte,
 ) *ExecutionError {
@@ -615,7 +614,7 @@ func getUnderlyingRevertReason(
 	timelockAddr common.Address,
 	timelockCallData []byte,
 	opts *bind.TransactOpts,
-	client sdk.ContractDeployBackend,
+	client ContractDeployBackend,
 ) (string, string) {
 	if timelockAddr == (common.Address{}) || len(timelockCallData) == 0 || client == nil || opts == nil {
 		return "", ""

@@ -1,11 +1,10 @@
-package inspectors
+package chainaccess
 
 import (
 	"fmt"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/smartcontractkit/mcms/chainsmetadata"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -16,7 +15,7 @@ import (
 
 // BuildInspectors gets a map of inspectors for the given chain metadata and chain clients
 func BuildInspectors(
-	chains sdk.ChainAccess,
+	chains ChainAccess,
 	chainMetadata map[types.ChainSelector]types.ChainMetadata,
 	action types.TimelockAction) (map[types.ChainSelector]sdk.Inspector, error) {
 	inspectors := map[types.ChainSelector]sdk.Inspector{}
@@ -33,7 +32,7 @@ func BuildInspectors(
 
 // BuildInspector constructs a chain-family-specific Inspector from ChainAccess plus metadata.
 func BuildInspector(
-	chains sdk.ChainAccess,
+	chains ChainAccess,
 	selector types.ChainSelector,
 	action types.TimelockAction,
 	metadata types.ChainMetadata,
@@ -68,7 +67,7 @@ func BuildInspector(
 		if !ok {
 			return nil, fmt.Errorf("missing Aptos chain client for selector %d", rawSelector)
 		}
-		role, err := chainsmetadata.AptosRoleFromAction(action)
+		role, err := aptos.AptosRoleFromAction(action)
 		if err != nil {
 			return nil, fmt.Errorf("error determining aptos role: %w", err)
 		}
@@ -79,7 +78,7 @@ func BuildInspector(
 		if !ok {
 			return nil, fmt.Errorf("missing Sui chain client for selector %d", rawSelector)
 		}
-		suiMetadata, err := chainsmetadata.SuiMetadata(metadata)
+		suiMetadata, err := sdkSui.SuiMetadata(metadata)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing sui metadata: %w", err)
 		}

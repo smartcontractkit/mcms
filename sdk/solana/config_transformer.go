@@ -3,8 +3,9 @@ package solana
 import (
 	"github.com/ethereum/go-ethereum/common"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
-	"github.com/smartcontractkit/mcms/sdk/evm"
+
 	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/gagliardetto/solana-go"
@@ -77,7 +78,7 @@ func (e *ConfigTransformer) ToChainConfig(cfg types.Config, solanaConfig Additio
 		ProposedOwner: solanaConfig.ProposedOwner,
 	}
 	// Populate the signers: we can reuse the evm implementation here as the signers structure is the same
-	groupQuorums, groupParents, signerAddrs, signerGroups, err := evm.ExtractSetConfigInputs(&cfg)
+	groupQuorums, groupParents, signerAddrs, signerGroups, err := sdk.ExtractSetConfigInputs(&cfg)
 	if err != nil {
 		return bindings.MultisigConfig{}, err
 	}

@@ -1,4 +1,4 @@
-package inspectors
+package chainaccess
 
 import (
 	"testing"
@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/sdk/mocks"
+	"github.com/smartcontractkit/mcms/chainaccess/mocks"
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
 )
 

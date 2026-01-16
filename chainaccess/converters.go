@@ -1,11 +1,10 @@
-package proposalutils
+package chainaccess
 
 import (
 	"fmt"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -14,9 +13,9 @@ import (
 )
 
 // BuildConverters constructs a map of chain selectors to their respective timelock converters based on the provided timelock proposal.
-func BuildConverters(proposal mcms.TimelockProposal) (map[types.ChainSelector]sdk.TimelockConverter, error) {
+func BuildConverters(chainMetadata map[types.ChainSelector]types.ChainMetadata) (map[types.ChainSelector]sdk.TimelockConverter, error) {
 	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
-	for chainMeta := range proposal.ChainMetadata {
+	for chainMeta := range chainMetadata {
 		fam, err := types.GetChainSelectorFamily(chainMeta)
 		if err != nil {
 			return nil, fmt.Errorf("error getting chain family: %w", err)

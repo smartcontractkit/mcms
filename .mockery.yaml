@@ -32,7 +32,7 @@ packages:
         config:
           dir: "./sdk/ton/mocks"
           filename: "api.go"
-  github.com/smartcontractkit/mcms/inspectors:
+  github.com/smartcontractkit/mcms/chainaccess:
   github.com/smartcontractkit/mcms/sdk:
   github.com/smartcontractkit/mcms/sdk/evm:
   github.com/smartcontractkit/mcms/sdk/evm/bindings:

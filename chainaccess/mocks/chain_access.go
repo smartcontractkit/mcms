@@ -4,11 +4,14 @@ package mocks
 
 import (
 	aptos "github.com/aptos-labs/aptos-go-sdk"
+
+	evm "github.com/smartcontractkit/mcms/sdk/evm"
+
 	mock "github.com/stretchr/testify/mock"
 
 	rpc "github.com/gagliardetto/solana-go/rpc"
 
-	sdk "github.com/smartcontractkit/mcms/sdk"
+	sdksui "github.com/smartcontractkit/mcms/sdk/sui"
 
 	sui "github.com/block-vision/sui-go-sdk/sui"
 )
@@ -85,23 +88,23 @@ func (_c *ChainAccess_AptosClient_Call) RunAndReturn(run func(uint64) (aptos.Apt
 }
 
 // EVMClient provides a mock function with given fields: selector
-func (_m *ChainAccess) EVMClient(selector uint64) (sdk.ContractDeployBackend, bool) {
+func (_m *ChainAccess) EVMClient(selector uint64) (evm.ContractDeployBackend, bool) {
 	ret := _m.Called(selector)
 
 	if len(ret) == 0 {
 		panic("no return value specified for EVMClient")
 	}
 
-	var r0 sdk.ContractDeployBackend
+	var r0 evm.ContractDeployBackend
 	var r1 bool
-	if rf, ok := ret.Get(0).(func(uint64) (sdk.ContractDeployBackend, bool)); ok {
+	if rf, ok := ret.Get(0).(func(uint64) (evm.ContractDeployBackend, bool)); ok {
 		return rf(selector)
 	}
-	if rf, ok := ret.Get(0).(func(uint64) sdk.ContractDeployBackend); ok {
+	if rf, ok := ret.Get(0).(func(uint64) evm.ContractDeployBackend); ok {
 		r0 = rf(selector)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdk.ContractDeployBackend)
+			r0 = ret.Get(0).(evm.ContractDeployBackend)
 		}
 	}
 
@@ -132,12 +135,12 @@ func (_c *ChainAccess_EVMClient_Call) Run(run func(selector uint64)) *ChainAcces
 	return _c
 }
 
-func (_c *ChainAccess_EVMClient_Call) Return(_a0 sdk.ContractDeployBackend, _a1 bool) *ChainAccess_EVMClient_Call {
+func (_c *ChainAccess_EVMClient_Call) Return(_a0 evm.ContractDeployBackend, _a1 bool) *ChainAccess_EVMClient_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ChainAccess_EVMClient_Call) RunAndReturn(run func(uint64) (sdk.ContractDeployBackend, bool)) *ChainAccess_EVMClient_Call {
+func (_c *ChainAccess_EVMClient_Call) RunAndReturn(run func(uint64) (evm.ContractDeployBackend, bool)) *ChainAccess_EVMClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -248,7 +251,7 @@ func (_c *ChainAccess_SolanaClient_Call) RunAndReturn(run func(uint64) (*rpc.Cli
 }
 
 // SuiClient provides a mock function with given fields: selector
-func (_m *ChainAccess) SuiClient(selector uint64) (sui.ISuiAPI, sdk.SuiSigner, bool) {
+func (_m *ChainAccess) SuiClient(selector uint64) (sui.ISuiAPI, sdksui.SuiSigner, bool) {
 	ret := _m.Called(selector)
 
 	if len(ret) == 0 {
@@ -256,9 +259,9 @@ func (_m *ChainAccess) SuiClient(selector uint64) (sui.ISuiAPI, sdk.SuiSigner, b
 	}
 
 	var r0 sui.ISuiAPI
-	var r1 sdk.SuiSigner
+	var r1 sdksui.SuiSigner
 	var r2 bool
-	if rf, ok := ret.Get(0).(func(uint64) (sui.ISuiAPI, sdk.SuiSigner, bool)); ok {
+	if rf, ok := ret.Get(0).(func(uint64) (sui.ISuiAPI, sdksui.SuiSigner, bool)); ok {
 		return rf(selector)
 	}
 	if rf, ok := ret.Get(0).(func(uint64) sui.ISuiAPI); ok {
@@ -269,11 +272,11 @@ func (_m *ChainAccess) SuiClient(selector uint64) (sui.ISuiAPI, sdk.SuiSigner, b
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(uint64) sdk.SuiSigner); ok {
+	if rf, ok := ret.Get(1).(func(uint64) sdksui.SuiSigner); ok {
 		r1 = rf(selector)
 	} else {
 		if ret.Get(1) != nil {
-			r1 = ret.Get(1).(sdk.SuiSigner)
+			r1 = ret.Get(1).(sdksui.SuiSigner)
 		}
 	}
 
@@ -304,12 +307,12 @@ func (_c *ChainAccess_SuiClient_Call) Run(run func(selector uint64)) *ChainAcces
 	return _c
 }
 
-func (_c *ChainAccess_SuiClient_Call) Return(_a0 sui.ISuiAPI, _a1 sdk.SuiSigner, _a2 bool) *ChainAccess_SuiClient_Call {
+func (_c *ChainAccess_SuiClient_Call) Return(_a0 sui.ISuiAPI, _a1 sdksui.SuiSigner, _a2 bool) *ChainAccess_SuiClient_Call {
 	_c.Call.Return(_a0, _a1, _a2)
 	return _c
 }
 
-func (_c *ChainAccess_SuiClient_Call) RunAndReturn(run func(uint64) (sui.ISuiAPI, sdk.SuiSigner, bool)) *ChainAccess_SuiClient_Call {
+func (_c *ChainAccess_SuiClient_Call) RunAndReturn(run func(uint64) (sui.ISuiAPI, sdksui.SuiSigner, bool)) *ChainAccess_SuiClient_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -9,7 +9,6 @@ import (
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -19,7 +18,7 @@ type Simulator struct {
 	*Inspector
 }
 
-func NewSimulator(encoder *Encoder, client sdk.ContractDeployBackend) (*Simulator, error) {
+func NewSimulator(encoder *Encoder, client ContractDeployBackend) (*Simulator, error) {
 	if encoder == nil {
 		return nil, errors.New("Simulator was created without an encoder")
 	}

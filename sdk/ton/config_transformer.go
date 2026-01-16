@@ -33,7 +33,7 @@ func NewConfigTransformer() ConfigTransformer { return &configTransformer{} }
 
 // ToChainConfig converts the chain agnostic config to the chain-specific config
 func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config, error) {
-	groupQuorum, groupParents, signerAddrs, signerGroups, err := evm.ExtractSetConfigInputs(&cfg)
+	groupQuorum, groupParents, signerAddrs, signerGroups, err := sdk.ExtractSetConfigInputs(&cfg)
 	if err != nil {
 		return mcms.Config{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}

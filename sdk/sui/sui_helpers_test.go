@@ -1,4 +1,4 @@
-package chainsmetadata
+package sui
 
 import (
 	"testing"
@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -61,14 +60,14 @@ func TestSuiMetadata(t *testing.T) {
 			if tt.expectError {
 				require.Error(t, err)
 				assert.Contains(t, err.Error(), tt.errorMsg)
-				assert.Equal(t, sui.AdditionalFieldsMetadata{}, metadata)
+				assert.Equal(t, AdditionalFieldsMetadata{}, metadata)
 
 				return
 			}
 
 			require.NoError(t, err)
 			assert.Equal(t, "0x1", metadata.McmsPackageID)
-			assert.Equal(t, sui.TimelockRole(1), metadata.Role)
+			assert.Equal(t, TimelockRole(1), metadata.Role)
 			assert.Equal(t, "0x2", metadata.AccountObj)
 			assert.Equal(t, "0x3", metadata.RegistryObj)
 			assert.Equal(t, "0x4", metadata.TimelockObj)
