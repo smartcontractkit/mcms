@@ -13,8 +13,8 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-// BuildConvertersForTimelockProposal constructs a map of chain selectors to their respective timelock converters based on the provided timelock proposal.
-func BuildConvertersForTimelockProposal(proposal mcms.TimelockProposal) (map[types.ChainSelector]sdk.TimelockConverter, error) {
+// BuildConverters constructs a map of chain selectors to their respective timelock converters based on the provided timelock proposal.
+func BuildConverters(proposal mcms.TimelockProposal) (map[types.ChainSelector]sdk.TimelockConverter, error) {
 	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
 	for chainMeta := range proposal.ChainMetadata {
 		fam, err := types.GetChainSelectorFamily(chainMeta)

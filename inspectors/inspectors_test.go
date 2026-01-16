@@ -68,9 +68,7 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 			if tc.chainAccess == nil {
 				tc.chainAccess = &fakeChainAccess{}
 			}
-
-			builder := NewMCMInspectorFetcher(tc.chainAccess)
-			inspectors, err := builder.FetchInspectors(tc.chainMetadata, mcmsTypes.TimelockActionSchedule)
+			inspectors, err := BuildInspectors(tc.chainMetadata, mcmsTypes.TimelockActionSchedule)
 			if tc.expectErr {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.errContains)

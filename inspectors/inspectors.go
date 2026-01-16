@@ -14,27 +14,14 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-type InspectorFetcher interface {
-	FetchInspectors(chainMetadata map[types.ChainSelector]types.ChainMetadata, action types.TimelockAction) (map[types.ChainSelector]sdk.Inspector, error)
-}
-
-var _ InspectorFetcher = (*MCMInspectorFetcher)(nil)
-
-type MCMInspectorFetcher struct {
-	chains sdk.ChainAccess
-}
-
-func NewMCMInspectorFetcher(chains sdk.ChainAccess) *MCMInspectorFetcher {
-	return &MCMInspectorFetcher{chains: chains}
-}
-
-// FetchInspectors gets a map of inspectors for the given chain metadata and chain clients
-func (b *MCMInspectorFetcher) FetchInspectors(
+// BuildInspectors gets a map of inspectors for the given chain metadata and chain clients
+func BuildInspectors(
+	chains sdk.ChainAccess,
 	chainMetadata map[types.ChainSelector]types.ChainMetadata,
 	action types.TimelockAction) (map[types.ChainSelector]sdk.Inspector, error) {
 	inspectors := map[types.ChainSelector]sdk.Inspector{}
 	for chainSelector, metadata := range chainMetadata {
-		inspector, err := BuildInspector(b.chains, chainSelector, action, metadata)
+		inspector, err := BuildInspector(chains, chainSelector, action, metadata)
 		if err != nil {
 			return nil, err
 		}
