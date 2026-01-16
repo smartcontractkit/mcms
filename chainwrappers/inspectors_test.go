@@ -18,8 +18,8 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 	tests := []struct {
 		name                    string
 		chainMetadata           map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata
-		chainAccess             *mocks.ChainAccess
-		setup                   func(access *mocks.ChainAccess)
+		chainAccess             *mocks.ChainAccessor
+		setup                   func(access *mocks.ChainAccessor)
 		expectErr               bool
 		errContains             string
 		expectedInspectorsCount int
@@ -27,7 +27,7 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 		{
 			name:          "empty input",
 			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{},
-			chainAccess:   mocks.NewChainAccess(t),
+			chainAccess:   mocks.NewChainAccessor(t),
 			expectErr:     false,
 		},
 		{
@@ -35,7 +35,7 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
 				1: {MCMAddress: "0xabc", StartingOpCount: 0},
 			},
-			chainAccess: mocks.NewChainAccess(t),
+			chainAccess: mocks.NewChainAccessor(t),
 			expectErr:   true,
 			errContains: "error getting chain family: chain family not found for selector 1",
 		},
@@ -45,9 +45,9 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 				mcmsTypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): {MCMAddress: "0xabc", StartingOpCount: 0},
 				mcmsTypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector):            {MCMAddress: "0xabc", StartingOpCount: 0},
 			},
-			chainAccess: mocks.NewChainAccess(t),
+			chainAccess: mocks.NewChainAccessor(t),
 			expectErr:   false,
-			setup: func(access *mocks.ChainAccess) {
+			setup: func(access *mocks.ChainAccessor) {
 				access.EXPECT().EVMClient(mock.Anything).Return(nil, true)
 				access.EXPECT().SolanaClient(mock.Anything).Return(nil, true)
 			},
@@ -59,7 +59,7 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			if tc.chainAccess == nil {
-				tc.chainAccess = mocks.NewChainAccess(t)
+				tc.chainAccess = mocks.NewChainAccessor(t)
 			}
 			if tc.expectedInspectorsCount > 0 {
 				tc.setup(tc.chainAccess)
