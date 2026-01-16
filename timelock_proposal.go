@@ -15,7 +15,6 @@ import (
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
-	inspectorsbuilder "github.com/smartcontractkit/mcms/chainaccess"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
@@ -338,52 +337,6 @@ func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.Chain
 	}
 
 	return out, nil
-}
-
-// GetOpCount queries the on-chain MCMS contract for the current op count of the given chain.
-func (m *TimelockProposal) GetOpCount(
-	ctx context.Context,
-	chains inspectorsbuilder.ChainAccess,
-	chainSelector types.ChainSelector,
-) (uint64, error) {
-	if m == nil {
-		return 0, errors.New("nil proposal")
-	}
-
-	metadata, ok := m.ChainMetadata[chainSelector]
-	if !ok {
-		return 0, fmt.Errorf("missing chain metadata for selector %d", chainSelector)
-	}
-
-	inspector, err := inspectorFactory(m.Action, metadata, chainSelector, chains)
-	if err != nil {
-		return 0, err
-	}
-
-	return inspector.GetOpCount(ctx, metadata.MCMAddress)
-}
-
-type chainInspectorFactoryFunc func(
-	action types.TimelockAction,
-	metadata types.ChainMetadata,
-	chainSelector types.ChainSelector,
-	chains inspectorsbuilder.ChainAccess,
-) (sdk.Inspector, error)
-
-// inspectorFactory is overridden in tests so we can inject lightweight inspectors
-// without dialing real RPC clients for every chain family. The alternative would be to
-// mock every chain-specific client (EVM bind.ContractBackend, solrpc.Client, Aptos RPC, Sui API/signers),
-// keep those mocks compiling as upstream SDKs change, and make each Inspector constructor
-// happy during unit tests—considerably more brittle than swapping the inspector itself.
-var inspectorFactory chainInspectorFactoryFunc = defaultInspectorFactory
-
-func defaultInspectorFactory(
-	action types.TimelockAction,
-	metadata types.ChainMetadata,
-	chainSelector types.ChainSelector,
-	chains inspectorsbuilder.ChainAccess,
-) (sdk.Inspector, error) {
-	return inspectorsbuilder.BuildInspector(chains, chainSelector, action, metadata)
 }
 
 // Merge merges the given timelock proposal with the current one
