@@ -19,7 +19,7 @@ jobs:
       actions: read
     steps:
       - name: Install Nix
-        uses: cachix/install-nix-action@02a151ada4993995686f9ed4f1be7cfbb229e56f # v31
+        uses: cachix/install-nix-action@4e002c8ec80594ecd40e759629461e26c8abed15 # v31
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
