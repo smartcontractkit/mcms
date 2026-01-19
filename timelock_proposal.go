@@ -25,8 +25,10 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var ZeroHash = common.Hash{}
-var DefaultValidUntil = 72 * time.Hour
+var (
+	ZeroHash          = common.Hash{}
+	DefaultValidUntil = 72 * time.Hour
+)
 
 type TimelockProposal struct {
 	BaseProposal
@@ -345,6 +347,7 @@ func (m *TimelockProposal) GetOpCount(
 	ctx context.Context,
 	chains chainwrappers.ChainAccessor,
 	chainSelector types.ChainSelector,
+	opts ...GetOpCountOption,
 ) (uint64, error) {
 	if m == nil {
 		return 0, errors.New("nil proposal")
@@ -355,28 +358,35 @@ func (m *TimelockProposal) GetOpCount(
 		return 0, fmt.Errorf("missing chain metadata for selector %d", chainSelector)
 	}
 
-	inspector, err := inspectorFactory(m.Action, metadata, chainSelector, chains)
-	if err != nil {
-		return 0, err
+	options := getOpCountOptions{}
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	inspector := options.inspector
+	if inspector == nil {
+		var err error
+		inspector, err = defaultInspectorFactory(m.Action, metadata, chainSelector, chains)
+		if err != nil {
+			return 0, err
+		}
 	}
 
 	return inspector.GetOpCount(ctx, metadata.MCMAddress)
 }
 
-type chainInspectorFactoryFunc func(
-	action types.TimelockAction,
-	metadata types.ChainMetadata,
-	chainSelector types.ChainSelector,
-	chains chainwrappers.ChainAccessor,
-) (sdk.Inspector, error)
+type getOpCountOptions struct {
+	inspector sdk.Inspector
+}
 
-// inspectorFactory is overridden in tests so we can inject a lightweight Inspector
-// without dialing real RPC clients for every chain family. Using a factory seam here
-// keeps tests focused on proposal logic and avoids maintaining mocks for each chain's
-// client API (EVM bind.ContractBackend, solrpc.Client, Aptos RPC, Sui API/signers),
-// which tend to drift as upstream SDKs change. Swapping the Inspector is simpler and
-// less brittle than recreating full client stacks just to satisfy constructors.
-var inspectorFactory chainInspectorFactoryFunc = defaultInspectorFactory
+type GetOpCountOption func(*getOpCountOptions)
+
+// WithInspector overrides the default inspector (useful for tests).
+func WithInspector(inspector sdk.Inspector) GetOpCountOption {
+	return func(o *getOpCountOptions) {
+		o.inspector = inspector
+	}
+}
 
 func defaultInspectorFactory(
 	action types.TimelockAction,

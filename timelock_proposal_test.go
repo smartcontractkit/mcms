@@ -18,7 +18,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/mocks"
@@ -361,7 +360,7 @@ func TestTimelockProposal_GetOpCount(t *testing.T) {
 			expectErr: "missing chain metadata",
 		},
 		{
-			name: "error bubbling from factory",
+			name: "error bubbling from inspector",
 			proposal: &TimelockProposal{
 				BaseProposal: BaseProposal{
 					ChainMetadata: baseMetadata,
@@ -371,9 +370,15 @@ func TestTimelockProposal_GetOpCount(t *testing.T) {
 			setupMock: func(t *testing.T) (sdk.Inspector, error) {
 				t.Helper()
 
-				return nil, errors.New("factory boom")
+				mockInspector := mocks.NewInspector(t)
+				mockInspector.EXPECT().
+					GetOpCount(mock.Anything, baseMetadata[selector].MCMAddress).
+					Return(uint64(0), errors.New("inspector boom")).
+					Once()
+
+				return mockInspector, nil
 			},
-			expectErr: "factory boom",
+			expectErr: "inspector boom",
 		},
 	}
 
@@ -381,24 +386,21 @@ func TestTimelockProposal_GetOpCount(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			prevFactory := inspectorFactory
-			inspectorFactory = func(action types.TimelockAction, metadata types.ChainMetadata, cs types.ChainSelector, chains chainwrappers.ChainAccessor) (sdk.Inspector, error) {
-				if tc.setupMock != nil {
-					return tc.setupMock(t)
-				}
+			var opts []GetOpCountOption
+			if tc.setupMock != nil {
+				inspector, err := tc.setupMock(t)
+				require.NoError(t, err)
+				opts = append(opts, WithInspector(inspector))
+			} else if tc.expectErr == "" {
 				defaultInspector := mocks.NewInspector(t)
 				defaultInspector.EXPECT().
-					GetOpCount(mock.Anything, metadata.MCMAddress).
+					GetOpCount(mock.Anything, baseMetadata[selector].MCMAddress).
 					Return(uint64(1), nil).
 					Once()
-
-				return defaultInspector, nil
+				opts = append(opts, WithInspector(defaultInspector))
 			}
-			t.Cleanup(func() {
-				inspectorFactory = prevFactory
-			})
 
-			count, err := tc.proposal.GetOpCount(context.Background(), nil, selector)
+			count, err := tc.proposal.GetOpCount(context.Background(), nil, selector, opts...)
 			if tc.expectErr != "" {
 				require.Error(t, err)
 				require.Contains(t, err.Error(), tc.expectErr)
