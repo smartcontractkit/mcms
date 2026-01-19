@@ -43,6 +43,18 @@ All chain family integrations must implement interfaces defined in the `/sdk` fo
 | `TimelockInspector` | **Required** | Query timelock contract state                             | [timelock_inspector.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/timelock_inspector.go) |
 | `TimelockConverter` | **Required** | Convert batch operations to timelock operations           | [timelock_converter.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/timelock_converter.go) |
 
+### ChainAccess Registry Adapter
+
+The MCMS SDK intentionally avoids importing chain-registry implementations (for example, the Chainlink Deployments Framework). Instead, shared tooling must expose the `ChainAccess` interface defined in [`sdk/chainclient.go`](https://github.com/smartcontractkit/mcms/blob/main/sdk/chainclient.go) so inspectors and proposal tooling can fetch RPC clients without pulling in external dependencies.
+
+Your adapter should:
+
+- Implement `Selectors() []uint64` and the per-family lookup helpers (`EVMClient`, `SolanaClient`, `AptosClient`, `Sui`) by delegating to your registry.
+- Return chain clients that satisfy `bind.ContractBackend`/`bind.DeployBackend` for EVM, `*solrpc.Client` for Solana, `aptoslib.AptosRpcClient` for Aptos, and `(sui.ISuiAPI, SuiSigner)` for Sui, etc.
+- Live in the repository that already depends on your registry (e.g., CLDF or deployment tooling) so `mcms` itself stays agnostic.
+
+This boundary keeps MCMS reusable across environments while still allowing downstream systems to map their chain catalogs into MCMS inspectors.
+
 ## Required Interfaces
 
 ### Executor Interface
@@ -360,6 +372,7 @@ Use the `/sdk/errors/` package for standardized error handling:
 Each interface implementation needs a corresponding `_test.go` file with comprehensive coverage (>80%). Test all public methods with both success and failure cases using table-driven tests. Mock external dependencies (RPC clients, contracts) in `sdk/<chain>/mocks/`.
 
 **Test Examples:**
+
 - [EVM Tests](https://github.com/smartcontractkit/mcms/blob/main/sdk/evm/executor_test.go) | [Mock Examples](https://github.com/smartcontractkit/mcms/tree/main/sdk/evm/mocks)
 - [Solana Tests](https://github.com/smartcontractkit/mcms/blob/main/sdk/solana/encoder_test.go) | [Mocks](https://github.com/smartcontractkit/mcms/tree/main/sdk/solana/mocks)
 - [Aptos Tests](https://github.com/smartcontractkit/mcms/blob/main/sdk/aptos/inspector_test.go) | [Mocks](https://github.com/smartcontractkit/mcms/tree/main/sdk/aptos/mocks)
@@ -368,19 +381,20 @@ Each interface implementation needs a corresponding `_test.go` file with compreh
 
 Create test suite under `/e2e/tests/<chain-family>/` covering:
 
-| Test Category | Example | Key Coverage |
-|---------------|---------|--------------|
-| **Config Management** | [solana/set_config.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/set_config.go) | Set/update config, retrieve and verify, clearRoot flag |
-| **Root Operations** | [solana/set_root.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/set_root.go) | Set root with signatures, quorum requirements, expiration |
-| **Operation Execution** | [solana/execute.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/execute.go) | Execute with valid proof, verify effects, test invalid proofs |
-| **Contract Inspection** | [solana/inspection.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/inspection.go) | Query config, op count, root, metadata |
-| **Simulation** (optional) | [solana/simulator.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/simulator.go) | Simulate valid/invalid ops, verify no state changes |
-| **Timelock Conversion** (optional) | [solana/timelock_converter.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/timelock_converter.go) | Convert batch to timelock ops, verify IDs and actions |
-| **Timelock Execution** (optional) | [solana/timelock_execution.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/timelock_execution.go) | Schedule with delay, execute after delay, predecessors |
-| **Timelock Inspection** (optional) | [solana/timelock_inspection.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/timelock_inspection.go) | Query roles, operation status, minimum delay |
-| **Timelock Cancellation** (optional) | [aptos/timelock_cancel.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/aptos/timelock_cancel.go) | Cancel pending ops, verify cancellation |
+| Test Category                        | Example                                                                                                                     | Key Coverage                                                  |
+|--------------------------------------|-----------------------------------------------------------------------------------------------------------------------------|---------------------------------------------------------------|
+| **Config Management**                | [solana/set_config.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/set_config.go)                   | Set/update config, retrieve and verify, clearRoot flag        |
+| **Root Operations**                  | [solana/set_root.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/set_root.go)                       | Set root with signatures, quorum requirements, expiration     |
+| **Operation Execution**              | [solana/execute.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/execute.go)                         | Execute with valid proof, verify effects, test invalid proofs |
+| **Contract Inspection**              | [solana/inspection.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/inspection.go)                   | Query config, op count, root, metadata                        |
+| **Simulation** (optional)            | [solana/simulator.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/simulator.go)                     | Simulate valid/invalid ops, verify no state changes           |
+| **Timelock Conversion** (optional)   | [solana/timelock_converter.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/timelock_converter.go)   | Convert batch to timelock ops, verify IDs and actions         |
+| **Timelock Execution** (optional)    | [solana/timelock_execution.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/timelock_execution.go)   | Schedule with delay, execute after delay, predecessors        |
+| **Timelock Inspection** (optional)   | [solana/timelock_inspection.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/solana/timelock_inspection.go) | Query roles, operation status, minimum delay                  |
+| **Timelock Cancellation** (optional) | [aptos/timelock_cancel.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/aptos/timelock_cancel.go)           | Cancel pending ops, verify cancellation                       |
 
 **Test Suite Setup:**
+
 1. Create `e2e/config.<chain>.toml` ([example](https://github.com/smartcontractkit/mcms/blob/main/e2e/config.evm.toml))
 2. Update [e2e/tests/setup.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/setup.go) with blockchain node and RPC clients
 3. Add suite to [e2e/tests/runner_test.go](https://github.com/smartcontractkit/mcms/blob/main/e2e/tests/runner_test.go)

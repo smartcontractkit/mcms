@@ -1,11 +1,10 @@
 package evm
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"math/big"
-
-	"context"
 
 	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"

@@ -9,7 +9,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
+
 	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/xssnick/tonutils-go/address"
@@ -62,7 +62,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
-	groupQuorum, groupParents, signerAddresses, _signerGroups, err := evm.ExtractSetConfigInputs(cfg)
+	groupQuorum, groupParents, signerAddresses, _signerGroups, err := sdk.ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}
