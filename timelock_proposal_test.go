@@ -20,11 +20,11 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/mocks"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
-	"github.com/smartcontractkit/mcms/sdk/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -306,7 +306,115 @@ func TestNewTimelockProposal(t *testing.T) {
 	}
 }
 
-func TestWriteTimelockProposal(t *testing.T) {
+func TestTimelockProposal_GetOpCount(t *testing.T) {
+	t.Parallel()
+
+	const selector = types.ChainSelector(123)
+	baseMetadata := map[types.ChainSelector]types.ChainMetadata{
+		selector: {
+			MCMAddress:      "0xabc",
+			StartingOpCount: 5,
+		},
+	}
+
+	tests := []struct {
+		name        string
+		proposal    *TimelockProposal
+		setupMock   func(t *testing.T) (sdk.Inspector, error)
+		expectCount uint64
+		expectErr   string
+	}{
+		{
+			name:      "error when proposal is nil",
+			proposal:  (*TimelockProposal)(nil),
+			expectErr: "nil proposal",
+		},
+		{
+			name: "success with factory override",
+			proposal: &TimelockProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: baseMetadata,
+				},
+				Action: types.TimelockActionSchedule,
+			},
+			setupMock: func(t *testing.T) (sdk.Inspector, error) {
+				t.Helper()
+
+				mockInspector := mocks.NewInspector(t)
+				mockInspector.EXPECT().
+					GetOpCount(mock.Anything, baseMetadata[selector].MCMAddress).
+					Return(uint64(42), nil).
+					Once()
+
+				return mockInspector, nil
+			},
+			expectCount: 42,
+		},
+		{
+			name: "error when metadata missing",
+			proposal: &TimelockProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: map[types.ChainSelector]types.ChainMetadata{},
+				},
+			},
+			expectErr: "missing chain metadata",
+		},
+		{
+			name: "error bubbling from inspector",
+			proposal: &TimelockProposal{
+				BaseProposal: BaseProposal{
+					ChainMetadata: baseMetadata,
+				},
+				Action: types.TimelockActionSchedule,
+			},
+			setupMock: func(t *testing.T) (sdk.Inspector, error) {
+				t.Helper()
+
+				mockInspector := mocks.NewInspector(t)
+				mockInspector.EXPECT().
+					GetOpCount(mock.Anything, baseMetadata[selector].MCMAddress).
+					Return(uint64(0), errors.New("inspector boom")).
+					Once()
+
+				return mockInspector, nil
+			},
+			expectErr: "inspector boom",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			var opts []GetOpCountOption
+			if tc.setupMock != nil {
+				inspector, err := tc.setupMock(t)
+				require.NoError(t, err)
+				opts = append(opts, WithInspector(inspector))
+			} else if tc.expectErr == "" {
+				defaultInspector := mocks.NewInspector(t)
+				defaultInspector.EXPECT().
+					GetOpCount(mock.Anything, baseMetadata[selector].MCMAddress).
+					Return(uint64(1), nil).
+					Once()
+				opts = append(opts, WithInspector(defaultInspector))
+			}
+
+			count, err := tc.proposal.GetOpCount(context.Background(), nil, selector, opts...)
+			if tc.expectErr != "" {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), tc.expectErr)
+
+				return
+			}
+
+			require.NoError(t, err)
+			require.Equal(t, tc.expectCount, count)
+		})
+	}
+}
+
+func Test_WriteTimelockProposal(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {

@@ -15,6 +15,7 @@ import (
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
+	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
@@ -24,8 +25,10 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var ZeroHash = common.Hash{}
-var DefaultValidUntil = 72 * time.Hour
+var (
+	ZeroHash          = common.Hash{}
+	DefaultValidUntil = 72 * time.Hour
+)
 
 type TimelockProposal struct {
 	BaseProposal
@@ -337,6 +340,52 @@ func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.Chain
 	}
 
 	return out, nil
+}
+
+// GetOpCount queries the on-chain MCMS contract for the current op count of the given chain.
+func (m *TimelockProposal) GetOpCount(
+	ctx context.Context,
+	chains chainwrappers.ChainAccessor,
+	chainSelector types.ChainSelector,
+	opts ...GetOpCountOption,
+) (uint64, error) {
+	if m == nil {
+		return 0, errors.New("nil proposal")
+	}
+
+	metadata, ok := m.ChainMetadata[chainSelector]
+	if !ok {
+		return 0, fmt.Errorf("missing chain metadata for selector %d", chainSelector)
+	}
+
+	options := getOpCountOptions{}
+	for _, opt := range opts {
+		opt(&options)
+	}
+
+	inspector := options.inspector
+	if inspector == nil {
+		var err error
+		inspector, err = chainwrappers.BuildInspector(chains, chainSelector, m.Action, metadata)
+		if err != nil {
+			return 0, err
+		}
+	}
+
+	return inspector.GetOpCount(ctx, metadata.MCMAddress)
+}
+
+type getOpCountOptions struct {
+	inspector sdk.Inspector
+}
+
+type GetOpCountOption func(*getOpCountOptions)
+
+// WithInspector overrides the default inspector (useful for tests).
+func WithInspector(inspector sdk.Inspector) GetOpCountOption {
+	return func(o *getOpCountOptions) {
+		o.inspector = inspector
+	}
 }
 
 // Merge merges the given timelock proposal with the current one
