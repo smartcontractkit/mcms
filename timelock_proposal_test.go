@@ -18,7 +18,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/chainaccess"
+	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/mocks"
@@ -377,7 +377,7 @@ func TestTimelockProposal_GetOpCount(t *testing.T) {
 			t.Parallel()
 
 			prevFactory := inspectorFactory
-			inspectorFactory = func(action types.TimelockAction, metadata types.ChainMetadata, cs types.ChainSelector, chains chainaccess.ChainAccess) (sdk.Inspector, error) {
+			inspectorFactory = func(action types.TimelockAction, metadata types.ChainMetadata, cs types.ChainSelector, chains chainwrappers.ChainAccessor) (sdk.Inspector, error) {
 				if tc.setupMock != nil {
 					return tc.setupMock(t)
 				}

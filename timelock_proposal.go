@@ -15,7 +15,7 @@ import (
 
 	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
-	inspectorsbuilder "github.com/smartcontractkit/mcms/chainaccess"
+	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
@@ -343,7 +343,7 @@ func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.Chain
 // GetOpCount queries the on-chain MCMS contract for the current op count of the given chain.
 func (m *TimelockProposal) GetOpCount(
 	ctx context.Context,
-	chains inspectorsbuilder.ChainAccess,
+	chains chainwrappers.ChainAccessor,
 	chainSelector types.ChainSelector,
 ) (uint64, error) {
 	if m == nil {
@@ -367,7 +367,7 @@ type chainInspectorFactoryFunc func(
 	action types.TimelockAction,
 	metadata types.ChainMetadata,
 	chainSelector types.ChainSelector,
-	chains inspectorsbuilder.ChainAccess,
+	chains chainwrappers.ChainAccessor,
 ) (sdk.Inspector, error)
 
 // inspectorFactory is overridden in tests so we can inject lightweight inspectors
@@ -381,9 +381,9 @@ func defaultInspectorFactory(
 	action types.TimelockAction,
 	metadata types.ChainMetadata,
 	chainSelector types.ChainSelector,
-	chains inspectorsbuilder.ChainAccess,
+	chains chainwrappers.ChainAccessor,
 ) (sdk.Inspector, error) {
-	return inspectorsbuilder.BuildInspector(chains, chainSelector, action, metadata)
+	return chainwrappers.BuildInspector(chains, chainSelector, action, metadata)
 }
 
 // Merge merges the given timelock proposal with the current one
