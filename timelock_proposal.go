@@ -366,7 +366,7 @@ func (m *TimelockProposal) GetOpCount(
 	inspector := options.inspector
 	if inspector == nil {
 		var err error
-		inspector, err = defaultInspectorFactory(m.Action, metadata, chainSelector, chains)
+		inspector, err = chainwrappers.BuildInspector(chains, chainSelector, m.Action, metadata)
 		if err != nil {
 			return 0, err
 		}
@@ -386,15 +386,6 @@ func WithInspector(inspector sdk.Inspector) GetOpCountOption {
 	return func(o *getOpCountOptions) {
 		o.inspector = inspector
 	}
-}
-
-func defaultInspectorFactory(
-	action types.TimelockAction,
-	metadata types.ChainMetadata,
-	chainSelector types.ChainSelector,
-	chains chainwrappers.ChainAccessor,
-) (sdk.Inspector, error) {
-	return chainwrappers.BuildInspector(chains, chainSelector, action, metadata)
 }
 
 // Merge merges the given timelock proposal with the current one
