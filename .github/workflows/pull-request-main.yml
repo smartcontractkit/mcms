@@ -102,7 +102,7 @@ jobs:
           echo "key=${key}" >> "$GITHUB_OUTPUT"
 
       - name: Cache Solana programs
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: cache-solana-programs
         with:
           path: ./e2e/artifacts/solana
