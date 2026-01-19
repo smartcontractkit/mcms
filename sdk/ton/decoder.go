@@ -71,7 +71,32 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 		inputArgs[i] = m[k]
 	}
 
-	msgOpcode := uint64(0) // TODO (ton): not exposed currently
+	msgOpcode, err := extractOpcode(datac)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract opcode: %w", err)
+	}
 
 	return NewDecodedOperation(contractType, msgType, msgOpcode, msgDecoded, inputKeys, inputArgs)
+}
+
+const BIT_LENGTH_OPCODE = 32
+
+// extractOpcode extracts the opcode from the message body cell.
+func extractOpcode(body *cell.Cell) (uint32, error) {
+	if body == nil {
+		return 0, nil
+	}
+
+	s := body.BeginParse()
+	if s.BitsLeft() < BIT_LENGTH_OPCODE {
+		return 0, nil
+	}
+
+	// extract opcode (first 32 bits)
+	opcode, err := s.LoadUInt(BIT_LENGTH_OPCODE)
+	if err != nil {
+		return 0, fmt.Errorf("failed to load opcode: %w", err)
+	}
+
+	return uint32(opcode), nil //nolint:gosec // LoadUInt(32) fits in uint32
 }
