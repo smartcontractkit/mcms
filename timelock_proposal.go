@@ -25,8 +25,10 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var ZeroHash = common.Hash{}
-var DefaultValidUntil = 72 * time.Hour
+var (
+	ZeroHash          = common.Hash{}
+	DefaultValidUntil = 72 * time.Hour
+)
 
 type TimelockProposal struct {
 	BaseProposal
@@ -340,11 +342,23 @@ func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.Chain
 	return out, nil
 }
 
+type getOpCountOptions struct {
+	inspector sdk.Inspector
+}
+type GetOpCountOption func(*getOpCountOptions)
+
+func WithInspector(inspector sdk.Inspector) GetOpCountOption {
+	return func(o *getOpCountOptions) {
+		o.inspector = inspector
+	}
+}
+
 // GetOpCount queries the on-chain MCMS contract for the current op count of the given chain.
 func (m *TimelockProposal) GetOpCount(
 	ctx context.Context,
 	chains chainwrappers.ChainAccessor,
 	chainSelector types.ChainSelector,
+	options ...GetOpCountOption,
 ) (uint64, error) {
 	if m == nil {
 		return 0, errors.New("nil proposal")
@@ -355,36 +369,19 @@ func (m *TimelockProposal) GetOpCount(
 		return 0, fmt.Errorf("missing chain metadata for selector %d", chainSelector)
 	}
 
-	inspector, err := inspectorFactory(m.Action, metadata, chainSelector, chains)
-	if err != nil {
-		return 0, err
+	var opts getOpCountOptions
+	for _, o := range options {
+		o(&opts)
+	}
+	if opts.inspector == nil {
+		var err error
+		opts.inspector, err = chainwrappers.BuildInspector(chains, chainSelector, m.Action, metadata)
+		if err != nil {
+			return 0, fmt.Errorf("failed to build inspector: %w", err)
+		}
 	}
 
-	return inspector.GetOpCount(ctx, metadata.MCMAddress)
-}
-
-type chainInspectorFactoryFunc func(
-	action types.TimelockAction,
-	metadata types.ChainMetadata,
-	chainSelector types.ChainSelector,
-	chains chainwrappers.ChainAccessor,
-) (sdk.Inspector, error)
-
-// inspectorFactory is overridden in tests so we can inject a lightweight Inspector
-// without dialing real RPC clients for every chain family. Using a factory seam here
-// keeps tests focused on proposal logic and avoids maintaining mocks for each chain's
-// client API (EVM bind.ContractBackend, solrpc.Client, Aptos RPC, Sui API/signers),
-// which tend to drift as upstream SDKs change. Swapping the Inspector is simpler and
-// less brittle than recreating full client stacks just to satisfy constructors.
-var inspectorFactory chainInspectorFactoryFunc = defaultInspectorFactory
-
-func defaultInspectorFactory(
-	action types.TimelockAction,
-	metadata types.ChainMetadata,
-	chainSelector types.ChainSelector,
-	chains chainwrappers.ChainAccessor,
-) (sdk.Inspector, error) {
-	return chainwrappers.BuildInspector(chains, chainSelector, action, metadata)
+	return opts.inspector.GetOpCount(ctx, metadata.MCMAddress)
 }
 
 // Merge merges the given timelock proposal with the current one
