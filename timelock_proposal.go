@@ -370,11 +370,12 @@ type chainInspectorFactoryFunc func(
 	chains chainwrappers.ChainAccessor,
 ) (sdk.Inspector, error)
 
-// inspectorFactory is overridden in tests so we can inject lightweight inspectors
-// without dialing real RPC clients for every chain family. The alternative would be to
-// mock every chain-specific client (EVM bind.ContractBackend, solrpc.Client, Aptos RPC, Sui API/signers),
-// keep those mocks compiling as upstream SDKs change, and make each Inspector constructor
-// happy during unit tests—considerably more brittle than swapping the inspector itself.
+// inspectorFactory is overridden in tests so we can inject a lightweight Inspector
+// without dialing real RPC clients for every chain family. Using a factory seam here
+// keeps tests focused on proposal logic and avoids maintaining mocks for each chain's
+// client API (EVM bind.ContractBackend, solrpc.Client, Aptos RPC, Sui API/signers),
+// which tend to drift as upstream SDKs change. Swapping the Inspector is simpler and
+// less brittle than recreating full client stacks just to satisfy constructors.
 var inspectorFactory chainInspectorFactoryFunc = defaultInspectorFactory
 
 func defaultInspectorFactory(
