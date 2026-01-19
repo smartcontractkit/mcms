@@ -326,6 +326,11 @@ func TestTimelockProposal_GetOpCount(t *testing.T) {
 		expectErr   string
 	}{
 		{
+			name:      "error when proposal is nil",
+			proposal:  (*TimelockProposal)(nil),
+			expectErr: "nil proposal",
+		},
+		{
 			name: "success with factory override",
 			proposal: &TimelockProposal{
 				BaseProposal: BaseProposal{
