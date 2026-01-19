@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.34.0
+
+### Minor Changes
+
+- [#585](https://github.com/smartcontractkit/mcms/pull/585) [`1b3c2eb`](https://github.com/smartcontractkit/mcms/commit/1b3c2ebcc0da5deb7e0ea821c4ce7a1af6fb7082) Thanks [@ecPablo](https://github.com/ecPablo)! - add get opcount helper
+
 ## 0.33.0
 
 ### Minor Changes
