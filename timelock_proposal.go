@@ -25,8 +25,10 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-var ZeroHash = common.Hash{}
-var DefaultValidUntil = 72 * time.Hour
+var (
+	ZeroHash          = common.Hash{}
+	DefaultValidUntil = 72 * time.Hour
+)
 
 type TimelockProposal struct {
 	BaseProposal
@@ -36,6 +38,7 @@ type TimelockProposal struct {
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
 	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1,dive"`
 	SaltOverride      *common.Hash                   `json:"salt,omitempty"`
+	chains            chainwrappers.ChainAccessor    `json:"-"`
 }
 
 var _ ProposalInterface = (*TimelockProposal)(nil)
@@ -48,6 +51,12 @@ func NewTimelockProposal(r io.Reader, opts ...ProposalOption) (*TimelockProposal
 	}
 
 	return newProposal[*TimelockProposal](r, options.predecessors)
+}
+
+func WithChainAccessor(chains chainwrappers.ChainAccessor) ProposalOption {
+	return func(opts *proposalOptions) {
+		opts.chains = chains
+	}
 }
 
 func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
@@ -343,11 +352,13 @@ func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.Chain
 // GetOpCount queries the on-chain MCMS contract for the current op count of the given chain.
 func (m *TimelockProposal) GetOpCount(
 	ctx context.Context,
-	chains chainwrappers.ChainAccessor,
 	chainSelector types.ChainSelector,
 ) (uint64, error) {
 	if m == nil {
 		return 0, errors.New("nil proposal")
+	}
+	if m.chains == nil {
+		return 0, errors.New("proposal does not have a chain accessor (see WithChainAccessor option)")
 	}
 
 	metadata, ok := m.ChainMetadata[chainSelector]
@@ -355,36 +366,12 @@ func (m *TimelockProposal) GetOpCount(
 		return 0, fmt.Errorf("missing chain metadata for selector %d", chainSelector)
 	}
 
-	inspector, err := inspectorFactory(m.Action, metadata, chainSelector, chains)
+	inspector, err := chainwrappers.BuildInspector(m.chains, chainSelector, m.Action, metadata)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("failed to build inspector: %w", err)
 	}
 
 	return inspector.GetOpCount(ctx, metadata.MCMAddress)
-}
-
-type chainInspectorFactoryFunc func(
-	action types.TimelockAction,
-	metadata types.ChainMetadata,
-	chainSelector types.ChainSelector,
-	chains chainwrappers.ChainAccessor,
-) (sdk.Inspector, error)
-
-// inspectorFactory is overridden in tests so we can inject a lightweight Inspector
-// without dialing real RPC clients for every chain family. Using a factory seam here
-// keeps tests focused on proposal logic and avoids maintaining mocks for each chain's
-// client API (EVM bind.ContractBackend, solrpc.Client, Aptos RPC, Sui API/signers),
-// which tend to drift as upstream SDKs change. Swapping the Inspector is simpler and
-// less brittle than recreating full client stacks just to satisfy constructors.
-var inspectorFactory chainInspectorFactoryFunc = defaultInspectorFactory
-
-func defaultInspectorFactory(
-	action types.TimelockAction,
-	metadata types.ChainMetadata,
-	chainSelector types.ChainSelector,
-	chains chainwrappers.ChainAccessor,
-) (sdk.Inspector, error) {
-	return chainwrappers.BuildInspector(chains, chainSelector, action, metadata)
 }
 
 // Merge merges the given timelock proposal with the current one

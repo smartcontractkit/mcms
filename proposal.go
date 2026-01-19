@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/go-playground/validator/v10"
 
+	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
@@ -112,6 +113,7 @@ type ProposalOption func(*proposalOptions)
 
 type proposalOptions struct {
 	predecessors []io.Reader
+	chains       chainwrappers.ChainAccessor
 }
 
 // WithPredecessors is an option that allows the user to specify a list of
