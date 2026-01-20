@@ -10,9 +10,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
-      actions: read
     steps:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # ci-lint-go@3.1.0
@@ -26,9 +24,7 @@ jobs:
     name: Lint E2E tests
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
-      actions: read
     steps:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # ci-lint-go@3.1.0
@@ -54,7 +50,7 @@ jobs:
       actions: read
     steps:
       - name: ci-test
-        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
+        uses: smartcontractkit/.github/actions/ci-test-go@dfcba48f05933158428bce867d790e3d5a9baa6b # ci-test-go@1.1.0
         with:
           go-test-cmd: go test -coverprofile=coverage.txt $(go list ./...)
           use-go-cache: true
@@ -147,7 +143,6 @@ jobs:
               exit 0
             }
 
-
   cd-release:
     runs-on: ubuntu-latest
     permissions:
@@ -167,7 +162,7 @@ jobs:
 
   ci-sonarqube:
     name: Sonarqube Scan
-    needs: [ ci-lint, ci-lint-misc, ci-test ]
+    needs: [ci-lint, ci-lint-misc, ci-test]
     runs-on: ubuntu-latest
     if: github.actor != 'dependabot[bot]'
     steps:
