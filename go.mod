@@ -22,7 +22,7 @@ require (
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20250805210128-7f8a0f403c3a
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20251104205009-00bd79b81471
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.12.1
-	github.com/smartcontractkit/chainlink-ton v0.0.0-20260115170733-b16e9683d4d5
+	github.com/smartcontractkit/chainlink-ton v0.0.0-20260120144738-c9d69aa78a47
 	github.com/smartcontractkit/freeport v0.1.3-0.20250716200817-cb5dfd0e369e
 	github.com/spf13/cast v1.10.0
 	github.com/stretchr/testify v1.11.1
@@ -205,7 +205,7 @@ require (
 	github.com/sigurn/crc16 v0.0.0-20211026045750-20ab5afb07e3 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/smartcontractkit/chainlink-ccip v0.1.1-solana.0.20260107192940-0be702ef3ff5 // indirect
-	github.com/smartcontractkit/chainlink-common v0.9.6-0.20260109203210-6efadaacad99 // indirect
+	github.com/smartcontractkit/chainlink-common v0.9.6-0.20260114142648-bd9e1b483e96 // indirect
 	github.com/smartcontractkit/chainlink-common/pkg/chipingress v0.0.10 // indirect
 	github.com/smartcontractkit/chainlink-protos/cre/go v0.0.0-20251124151448-0448aefdaab9 // indirect
 	github.com/smartcontractkit/chainlink-protos/linking-service/go v0.0.0-20251002192024-d2ad9222409b // indirect
