@@ -15,7 +15,7 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # ci-lint-go@3.1.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
         with:
           golangci-lint-version: v2.6.2
           use-go-cache: true
@@ -31,7 +31,7 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@bd2ca3d8fa2dc89f98b49b297e9b72c2e3e68cdc # ci-lint-go@3.1.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
         with:
           golangci-lint-version: v2.6.2
           golangci-lint-args: --build-tags="e2e"
@@ -54,7 +54,7 @@ jobs:
       actions: read
     steps:
       - name: ci-test
-        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
+        uses: smartcontractkit/.github/actions/ci-test-go@2b1d964024bb001ae9fba4f840019ac86ad1d824 # ci-test-go@1.1.0
         with:
           go-test-cmd: go test -coverprofile=coverage.txt $(go list ./...)
           use-go-cache: true
@@ -113,7 +113,7 @@ jobs:
           ./e2e/tests/solana/compile-mcm-contracts.sh
 
       - name: Run e2e tests
-        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
+        uses: smartcontractkit/.github/actions/ci-test-go@2b1d964024bb001ae9fba4f840019ac86ad1d824 # ci-test-go@1.1.0
         with:
           checkout-repo: false
           use-go-cache: true
@@ -147,7 +147,6 @@ jobs:
               exit 0
             }
 
-
   cd-release:
     runs-on: ubuntu-latest
     permissions:
@@ -167,7 +166,7 @@ jobs:
 
   ci-sonarqube:
     name: Sonarqube Scan
-    needs: [ ci-lint, ci-lint-misc, ci-test ]
+    needs: [ci-lint, ci-lint-misc, ci-test]
     runs-on: ubuntu-latest
     if: github.actor != 'dependabot[bot]'
     steps:
