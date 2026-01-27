@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	aptose2e "github.com/smartcontractkit/mcms/e2e/tests/aptos"
+	cantone2e "github.com/smartcontractkit/mcms/e2e/tests/canton"
 	evme2e "github.com/smartcontractkit/mcms/e2e/tests/evm"
 	solanae2e "github.com/smartcontractkit/mcms/e2e/tests/solana"
 	suie2e "github.com/smartcontractkit/mcms/e2e/tests/sui"
@@ -48,4 +49,8 @@ func TestTONSuite(t *testing.T) {
 	suite.Run(t, new(tone2e.InspectionTestSuite))
 	suite.Run(t, new(tone2e.ExecutionTestSuite))
 	suite.Run(t, new(tone2e.TimelockInspectionTestSuite))
+}
+
+func TestCantonSuite(t *testing.T) {
+	suite.Run(t, new(cantone2e.MCMSConfigurerTestSuite))
 }

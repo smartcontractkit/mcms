@@ -57,6 +57,13 @@ tasks:
     cmds:
       - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e -test.run TestTONSuite {{.CLI_ARGS}} ./e2e/tests...
 
+  e2e:canton:
+    desc: "Run Canton e2e tests"
+    env:
+      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.canton.toml" }}'
+    cmds:
+      - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e -test.run TestCantonSuite {{.CLI_ARGS}} ./e2e/tests...
+
   coverage:
     desc: "Run unit test suite with coverage"
     cmds:
