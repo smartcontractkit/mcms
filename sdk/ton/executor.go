@@ -111,14 +111,11 @@ func (e *executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
-	skipSend := false // TODO: expose via executor options
-
 	return SendTx(ctx, TxOpts{
-		Wallet:   e.wallet,
-		DstAddr:  dstAddr,
-		Amount:   e.amount,
-		Body:     body,
-		SkipSend: skipSend,
+		Wallet:  e.wallet,
+		DstAddr: dstAddr,
+		Amount:  e.amount,
+		Body:    body,
 	})
 }
 
@@ -187,13 +184,10 @@ func (e *executor) SetRoot(
 		return types.TransactionResult{}, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
 	}
 
-	skipSend := false // TODO: expose via executor options
-
 	return SendTx(ctx, TxOpts{
-		Wallet:   e.wallet,
-		DstAddr:  dstAddr,
-		Amount:   e.amount,
-		Body:     body,
-		SkipSend: skipSend,
+		Wallet:  e.wallet,
+		DstAddr: dstAddr,
+		Amount:  e.amount,
+		Body:    body,
 	})
 }
