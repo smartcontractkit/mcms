@@ -27,12 +27,12 @@ func NewTimelockInspector(client ton.APIClientWrapped) sdk.TimelockInspector {
 }
 
 func (i TimelockInspector) GetMinDelay(ctx context.Context, _address string) (uint64, error) {
-	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
+	addr, err := address.ParseAddr(_address)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("invalid address: %w", err)
 	}
 
-	return tvm.CallGetter(ctx, i.client, block, addr, timelock.GetMinDelay)
+	return tvm.CallGetterLatest(ctx, i.client, addr, timelock.GetMinDelay)
 }
 
 // GetAdmins returns the list of addresses with the admin role
@@ -115,12 +115,12 @@ func (i TimelockInspector) isOperationFor(
 	opID [32]byte,
 	getter tvm.Getter[*big.Int, bool],
 ) (bool, error) {
-	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
+	addr, err := address.ParseAddr(_address)
 	if err != nil {
-		return false, err
+		return false, fmt.Errorf("invalid address: %w", err)
 	}
 
 	_opID := new(big.Int).SetBytes(opID[:])
 
-	return tvm.CallGetter(ctx, i.client, block, addr, getter, _opID)
+	return tvm.CallGetterLatest(ctx, i.client, addr, getter, _opID)
 }

@@ -71,7 +71,10 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 		inputArgs[i] = m[k]
 	}
 
-	msgOpcode := uint64(0) // TODO (ton): not exposed currently
+	msgOpcode, err := tvm.ExtractOpcode(datac)
+	if err != nil {
+		return nil, fmt.Errorf("failed to extract opcode: %w", err)
+	}
 
 	return NewDecodedOperation(contractType, msgType, msgOpcode, msgDecoded, inputKeys, inputArgs)
 }

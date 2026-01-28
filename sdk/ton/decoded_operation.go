@@ -11,7 +11,7 @@ import (
 type DecodedOperation struct {
 	ContractType string
 	MsgType      string
-	MsgOpcode    uint64
+	MsgOpcode    uint32
 
 	// Message data
 	MsgDecoded any // normalized and decoded cell structure
@@ -21,7 +21,7 @@ type DecodedOperation struct {
 
 var _ sdk.DecodedOperation = &DecodedOperation{}
 
-func NewDecodedOperation(contractType string, msgType string, msgOpcode uint64, msgDecoded any, inputKeys []string, inputArgs []any) (sdk.DecodedOperation, error) {
+func NewDecodedOperation(contractType string, msgType string, msgOpcode uint32, msgDecoded any, inputKeys []string, inputArgs []any) (sdk.DecodedOperation, error) {
 	if len(inputKeys) != len(inputArgs) {
 		return nil, errors.New("input keys and input args must have the same length")
 	}

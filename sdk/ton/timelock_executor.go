@@ -85,13 +85,10 @@ func (e *timelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
 	}
 
-	skipSend := false // TODO: expose via executor options
-
 	return SendTx(ctx, TxOpts{
-		Wallet:   e.wallet,
-		DstAddr:  dstAddr,
-		Amount:   e.amount,
-		Body:     body,
-		SkipSend: skipSend,
+		Wallet:  e.wallet,
+		DstAddr: dstAddr,
+		Amount:  e.amount,
+		Body:    body,
 	})
 }

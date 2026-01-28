@@ -89,6 +89,7 @@ func TestDecoder(t *testing.T) {
 			want: &ton.DecodedOperation{
 				ContractType: "com.chainlink.ton.lib.access.RBAC",
 				MsgType:      "GrantRole",
+				MsgOpcode:    0x95cd540f,
 				MsgDecoded: map[string]any{
 					"QueryID": uint64(0x1),
 					"Role":    exampleRoleBig,
