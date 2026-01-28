@@ -177,7 +177,7 @@ func (e *executor) SetRoot(
 		QueryID: qID,
 
 		Root:       tlbe.NewUint256(new(big.Int).SetBytes(root[:])),
-		ValidUntil: validUntil,
+		ValidUntil: uint64(validUntil),
 		Metadata:   rm,
 
 		MetadataProof: bindProof,
