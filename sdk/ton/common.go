@@ -16,28 +16,13 @@ import (
 )
 
 type TxOpts struct {
-	Wallet   *wallet.Wallet
-	DstAddr  *address.Address
-	Amount   tlb.Coins
-	Body     *cell.Cell
-	SkipSend bool
+	Wallet  *wallet.Wallet
+	DstAddr *address.Address
+	Amount  tlb.Coins
+	Body    *cell.Cell
 }
 
 func SendTx(ctx context.Context, opts TxOpts) (types.TransactionResult, error) {
-	if opts.SkipSend {
-		var tx types.Transaction
-		tx, err := NewTransaction(opts.DstAddr, opts.Body.ToBuilder().ToSlice(), opts.Amount.Nano(), "", nil)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("error encoding transaction: %w", err)
-		}
-
-		return types.TransactionResult{
-			Hash:        "", // Returning no hash since the transaction hasn't been sent yet.
-			ChainFamily: cselectors.FamilyTon,
-			RawData:     tx, // will be of type types.Transaction
-		}, nil
-	}
-
 	msg := &wallet.Message{
 		Mode: wallet.PayGasSeparately | wallet.IgnoreErrors,
 		InternalMessage: &tlb.InternalMessage{

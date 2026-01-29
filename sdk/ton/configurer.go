@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
@@ -107,11 +108,25 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("failed to encode SetConfig body: %w", err)
 	}
 
+	// check if we should plan this as an MCMS op instead of executing now
+	if c.skipSend {
+		var tx types.Transaction
+		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), "MCMS", []string{"SetConfig"})
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("error encoding transaction: %w", err)
+		}
+
+		return types.TransactionResult{
+			Hash:        "", // Returning no hash since the transaction hasn't been sent yet.
+			ChainFamily: cselectors.FamilyTon,
+			RawData:     tx, // will be of type types.Transaction
+		}, nil
+	}
+
 	return SendTx(ctx, TxOpts{
-		Wallet:   c.wallet,
-		DstAddr:  dstAddr,
-		Amount:   c.amount,
-		Body:     body,
-		SkipSend: c.skipSend,
+		Wallet:  c.wallet,
+		DstAddr: dstAddr,
+		Amount:  c.amount,
+		Body:    body,
 	})
 }

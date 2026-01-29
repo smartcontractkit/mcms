@@ -33,29 +33,13 @@ func NewInspector(client ton.APIClientWrapped) sdk.Inspector {
 	}
 }
 
-// ParseAddrGetBlock parses the given address string into a TON address and retrieves the current masterchain block info.
-func ParseAddrGetBlock(ctx context.Context, client ton.APIClientWrapped, _address string) (*address.Address, *ton.BlockIDExt, error) {
-	// Map to Ton Address type (mcms.address)
+func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Config, error) {
 	addr, err := address.ParseAddr(_address)
 	if err != nil {
-		return nil, &ton.BlockIDExt{}, fmt.Errorf("invalid address: %w", err)
+		return nil, fmt.Errorf("invalid address: %w", err)
 	}
 
-	block, err := client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return nil, &ton.BlockIDExt{}, fmt.Errorf("failed to get current masterchain info: %w", err)
-	}
-
-	return addr, block, nil
-}
-
-func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Config, error) {
-	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
-	if err != nil {
-		return nil, err
-	}
-
-	_config, err := tvm.CallGetter(ctx, i.client, block, addr, mcms.GetConfig)
+	_config, err := tvm.CallGetterLatest(ctx, i.client, addr, mcms.GetConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -64,21 +48,21 @@ func (i Inspector) GetConfig(ctx context.Context, _address string) (*types.Confi
 }
 
 func (i Inspector) GetOpCount(ctx context.Context, _address string) (uint64, error) {
-	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
+	addr, err := address.ParseAddr(_address)
 	if err != nil {
-		return 0, err
+		return 0, fmt.Errorf("invalid address: %w", err)
 	}
 
-	return tvm.CallGetter(ctx, i.client, block, addr, mcms.GetOpCount)
+	return tvm.CallGetterLatest(ctx, i.client, addr, mcms.GetOpCount)
 }
 
 func (i Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, uint32, error) {
-	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
+	addr, err := address.ParseAddr(_address)
 	if err != nil {
-		return [32]byte{}, 0, err
+		return [32]byte{}, 0, fmt.Errorf("invalid address: %w", err)
 	}
 
-	r, err := tvm.CallGetter(ctx, i.client, block, addr, mcms.GetRoot)
+	r, err := tvm.CallGetterLatest(ctx, i.client, addr, mcms.GetRoot)
 	if err != nil {
 		return [32]byte{}, 0, err
 	}
@@ -87,12 +71,12 @@ func (i Inspector) GetRoot(ctx context.Context, _address string) (common.Hash, u
 }
 
 func (i Inspector) GetRootMetadata(ctx context.Context, _address string) (types.ChainMetadata, error) {
-	addr, block, err := ParseAddrGetBlock(ctx, i.client, _address)
+	addr, err := address.ParseAddr(_address)
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}
 
-	rm, err := tvm.CallGetter(ctx, i.client, block, addr, mcms.GetRootMetadata)
+	rm, err := tvm.CallGetterLatest(ctx, i.client, addr, mcms.GetRootMetadata)
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}

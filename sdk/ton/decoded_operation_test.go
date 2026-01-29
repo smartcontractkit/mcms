@@ -17,7 +17,7 @@ func TestNewDecodedOperation(t *testing.T) {
 		name         string
 		contractType string
 		msgType      string
-		msgOpcode    uint64
+		msgOpcode    uint32
 		msgDecoded   map[string]any
 		inputKeys    []string
 		inputArgs    []any
