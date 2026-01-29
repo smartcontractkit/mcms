@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"time"
 
 	cselectors "github.com/smartcontractkit/chain-selectors"
 
@@ -12,6 +13,7 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -44,4 +46,35 @@ func SendTx(ctx context.Context, opts TxOpts) (types.TransactionResult, error) {
 		ChainFamily: cselectors.FamilyTon,
 		RawData:     tx, // *tlb.Transaction
 	}, nil
+}
+
+func SendTxAfter(ctx context.Context, opts TxOpts, now uint64, validAfter uint64, buffer time.Duration, wait ...bool) (types.TransactionResult, error) {
+	var z types.TransactionResult // zero value
+
+	// If the operation is valid to be executed, send the transaction immediately
+	if uint64(now) >= validAfter {
+		return SendTx(ctx, opts)
+	}
+
+	// Waits by default, unless specified otherwise
+	if len(wait) > 0 && !wait[0] {
+		return z, fmt.Errorf("pending operation not final: operation is not yet valid to be executed (valid after %d, now %d)", validAfter, now)
+	}
+
+	waitDuration := time.Duration(validAfter-uint64(now))*time.Second + buffer // add a buffer to ensure validity
+	tick := time.NewTicker(waitDuration)
+
+	logger := sdk.LoggerFrom(ctx)
+	logger.Infof("waiting to send transaction", "validAfter", validAfter, "now", now, "waitDuration", waitDuration)
+	for {
+		select {
+		case <-tick.C:
+			nowApprox := uint64(now) + uint64(waitDuration.Seconds())
+			logger.Infof("sending delayed transaction", "validAfter", validAfter, "nowApprox", nowApprox)
+
+			return SendTx(ctx, opts)
+		case <-ctx.Done():
+			return z, fmt.Errorf("context done while waiting to send transaction: %w", ctx.Err())
+		}
+	}
 }
