@@ -1,5 +1,15 @@
 # @smartcontractkit/mcms
 
+## 0.35.0
+
+### Minor Changes
+
+- [#586](https://github.com/smartcontractkit/mcms/pull/586) [`19074d4`](https://github.com/smartcontractkit/mcms/commit/19074d4019d02a236f4c54669daff8c9e110c09b) Thanks [@krebernisak](https://github.com/krebernisak)! - Update to latest chainlink-ton MCMS contracts version + misc fixes/improvements
+
+### Patch Changes
+
+- [#603](https://github.com/smartcontractkit/mcms/pull/603) [`2cd7db1`](https://github.com/smartcontractkit/mcms/commit/2cd7db171382385d0bc9e3099eef2ea8248ae622) Thanks [@krebernisak](https://github.com/krebernisak)! - Add wait (pending op) support for TON executors
+
 ## 0.34.0
 
 ### Minor Changes
