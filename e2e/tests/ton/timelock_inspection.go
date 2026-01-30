@@ -106,7 +106,7 @@ func (s *TimelockInspectionTestSuite) scheduleBatch(timelockAddr *address.Addres
 
 func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*address.Address, error) {
 	ctx := s.T().Context()
-	amount := tlb.MustFromTON("1.5") // TODO (ton): high gas
+	amount := tlb.MustFromTON("0.8") // TODO (ton): high gas
 
 	data := timelock.EmptyDataFrom(id)
 	// When deploying the contract, send the Init message to initialize the Timelock contract
@@ -234,7 +234,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperation() {
 	calls := []timelock.Call{
 		{
 			Target: s.accounts[0],
-			Value:  tlb.MustFromTON("0.1"), // TON implementation enforces min value per call
+			Value:  tlb.MustFromTON("0.03"), // TON implementation enforces min value per call
 			Data:   cell.BeginCell().EndCell(),
 		},
 	}
@@ -259,7 +259,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 	calls := []timelock.Call{
 		{
 			Target: s.accounts[0],
-			Value:  tlb.MustFromTON("0.1"), // TON implementation enforces min value per call
+			Value:  tlb.MustFromTON("0.03"), // TON implementation enforces min value per call
 			Data:   cell.BeginCell().EndCell(),
 		},
 	}
@@ -285,7 +285,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 	calls := []timelock.Call{
 		{
 			Target: s.accounts[0],
-			Value:  tlb.MustFromTON("0.1"), // TON implementation enforces min value per call
+			Value:  tlb.MustFromTON("0.03"), // TON implementation enforces min value per call
 			Data:   cell.BeginCell().EndCell(),
 		},
 	}
@@ -315,7 +315,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	calls := []timelock.Call{
 		{
 			Target: s.accounts[1],
-			Value:  tlb.MustFromTON("0.1"), // TON implementation enforces min value per call
+			Value:  tlb.MustFromTON("0.03"), // TON implementation enforces min value per call
 			Data:   cell.BeginCell().EndCell(),
 		},
 	}
@@ -359,7 +359,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 			{
 				To:               s.accounts[1].String(),
 				Data:             cell.BeginCell().EndCell().ToBOC(),
-				AdditionalFields: json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.1").Nano().Uint64())),
+				AdditionalFields: json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.03").Nano().Uint64())),
 			},
 		},
 	}

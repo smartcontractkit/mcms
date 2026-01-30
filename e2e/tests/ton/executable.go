@@ -91,6 +91,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	// Construct a proposal
 
 	// Construct a TON transaction to grant a role
+	// TODO: grant another role to a dummy address to test 2x operations
 
 	// Grant role data
 	grantRoleData, err := tlb.ToCell(rbac.GrantRole{
@@ -661,7 +662,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 		s.ChainA: must(mcmston.NewTimelockExecutor(mcmston.TimelockExecutorOpts{
 			Client: s.TonClient,
 			Wallet: s.wallet,
-			Amount: tlb.MustFromTON("0.2"),
+			Amount: tlb.MustFromTON("0.1"),
 		})),
 		s.ChainB: evm.NewTimelockExecutor(nil, nil), // No need to execute on Chain B or C
 		s.ChainC: evm.NewTimelockExecutor(nil, nil),
@@ -694,7 +695,7 @@ var testOpAdditionalFields = json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.Mu
 
 func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 	ctx := s.T().Context()
-	amount := tlb.MustFromTON("1.5") // TODO (ton): high gas
+	amount := tlb.MustFromTON("0.8") // TODO (ton): high gas
 
 	data := timelock.EmptyDataFrom(id)
 	mcmsAddr := address.MustParseAddr(s.mcmsAddr)
