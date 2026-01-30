@@ -53,6 +53,9 @@ func (s *InspectionTestSuite) deployMCMSContract() {
 	chainID, err := strconv.ParseInt(s.TonBlockchain.ChainID, 10, 64)
 	s.Require().NoError(err)
 	data := mcms.EmptyDataFrom(hash.CRC32("test.inspection.mcms"), s.wallet.Address(), chainID)
+	// Set non-zero finalization timeout
+	data.RootInfo.ExpiringRootAndOpCount.OpPendingInfo.OpFinalizationTimeout = 3 // seconds
+
 	mcmsAddr, err := DeployMCMSContract(ctx, s.TonClient, s.wallet, amount, data)
 	s.Require().NoError(err)
 	s.mcmsAddr = mcmsAddr.String()
