@@ -62,7 +62,7 @@ func SendTxAfter(ctx context.Context, opts TxOpts, now uint64, validAfter uint64
 	}
 
 	// add a buffer to wait to ensure validity
-	waitDuration := time.Duration(validAfter-now)*time.Second + buffer // nolint:gosec // ok to convert here
+	waitDuration := time.Duration(validAfter-now)*time.Second + buffer //nolint:gosec // ok to convert here
 	tick := time.NewTicker(waitDuration)
 
 	logger := sdk.LoggerFrom(ctx)

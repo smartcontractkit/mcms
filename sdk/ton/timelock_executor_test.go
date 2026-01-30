@@ -96,7 +96,17 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 	ctx := context.Background()
 
 	sharedMockSetup := func(api *ton_mocks.TonAPI, client *ton_mocks.APIClientWrapped) {
-		// Mock CurrentMasterchainInfo
+		// Mock OpPendingInfo getter call
+		client.EXPECT().CurrentMasterchainInfo(mock.Anything).
+			Return(&ton.BlockIDExt{}, nil)
+
+		client.EXPECT().GetBlockData(mock.Anything, mock.Anything).
+			Return(&tlb.Block{BlockInfo: tlb.BlockHeader{}}, nil)
+
+		client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+			Return(ton.NewExecutionResult([]any{big.NewInt(0), big.NewInt(5), big.NewInt(5)}), nil)
+
+		// Mock send message
 		api.EXPECT().CurrentMasterchainInfo(mock.Anything).
 			Return(&ton.BlockIDExt{}, nil)
 

@@ -137,7 +137,17 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					AdditionalFields: json.RawMessage(`{"value": 0}`)},
 			},
 			mockSetup: func(api *ton_mocks.TonAPI, client *ton_mocks.APIClientWrapped) {
-				// Mock CurrentMasterchainInfo
+				// Mock OpPendingInfo getter call
+				client.EXPECT().CurrentMasterchainInfo(mock.Anything).
+					Return(&ton.BlockIDExt{}, nil)
+
+				client.EXPECT().GetBlockData(mock.Anything, mock.Anything).
+					Return(&tlb.Block{BlockInfo: tlb.BlockHeader{}}, nil)
+
+				client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(ton.NewExecutionResult([]any{big.NewInt(0), big.NewInt(5), cell.BeginCell().MustStoreAddr(nil).ToSlice(), big.NewInt(5)}), nil)
+
+				// Mock send message
 				api.EXPECT().CurrentMasterchainInfo(mock.Anything).
 					Return(&ton.BlockIDExt{}, nil)
 
@@ -175,7 +185,17 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					AdditionalFields: json.RawMessage(`{"value": 0}`)},
 			},
 			mockSetup: func(api *ton_mocks.TonAPI, client *ton_mocks.APIClientWrapped) {
-				// Mock CurrentMasterchainInfo
+				// Mock OpPendingInfo getter call
+				client.EXPECT().CurrentMasterchainInfo(mock.Anything).
+					Return(&ton.BlockIDExt{}, nil)
+
+				client.EXPECT().GetBlockData(mock.Anything, mock.Anything).
+					Return(&tlb.Block{BlockInfo: tlb.BlockHeader{}}, nil)
+
+				client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(ton.NewExecutionResult([]any{big.NewInt(0), big.NewInt(5), cell.BeginCell().MustStoreAddr(nil).ToSlice(), big.NewInt(5)}), nil)
+
+				// Mock send message
 				api.EXPECT().CurrentMasterchainInfo(mock.Anything).
 					Return(&ton.BlockIDExt{}, nil)
 
@@ -292,7 +312,17 @@ func TestExecutor_SetRoot(t *testing.T) {
 				makeTestSignature("0xabcdef1234567890"),
 			},
 			mockSetup: func(api *ton_mocks.TonAPI, client *ton_mocks.APIClientWrapped) {
-				// Mock CurrentMasterchainInfo
+				// Mock OpPendingInfo getter call
+				client.EXPECT().CurrentMasterchainInfo(mock.Anything).
+					Return(&ton.BlockIDExt{}, nil)
+
+				client.EXPECT().GetBlockData(mock.Anything, mock.Anything).
+					Return(&tlb.Block{BlockInfo: tlb.BlockHeader{}}, nil)
+
+				client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(ton.NewExecutionResult([]any{big.NewInt(0), big.NewInt(5), cell.BeginCell().MustStoreAddr(nil).ToSlice(), big.NewInt(5)}), nil)
+
+				// Mock send message
 				api.EXPECT().CurrentMasterchainInfo(mock.Anything).
 					Return(&ton.BlockIDExt{}, nil)
 
@@ -328,7 +358,17 @@ func TestExecutor_SetRoot(t *testing.T) {
 				makeTestSignature("0xabcdef1234567890"),
 			},
 			mockSetup: func(api *ton_mocks.TonAPI, client *ton_mocks.APIClientWrapped) {
-				// Mock CurrentMasterchainInfo
+				// Mock OpPendingInfo getter call
+				client.EXPECT().CurrentMasterchainInfo(mock.Anything).
+					Return(&ton.BlockIDExt{}, nil)
+
+				client.EXPECT().GetBlockData(mock.Anything, mock.Anything).
+					Return(&tlb.Block{BlockInfo: tlb.BlockHeader{}}, nil)
+
+				client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
+					Return(ton.NewExecutionResult([]any{big.NewInt(0), big.NewInt(5), cell.BeginCell().MustStoreAddr(nil).ToSlice(), big.NewInt(5)}), nil)
+
+				// Mock send message
 				api.EXPECT().CurrentMasterchainInfo(mock.Anything).
 					Return(&ton.BlockIDExt{}, nil)
 
