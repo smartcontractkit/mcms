@@ -10,7 +10,7 @@ require (
 	github.com/block-vision/sui-go-sdk v1.1.2
 	github.com/ethereum/go-ethereum v1.16.8
 	github.com/gagliardetto/binary v0.8.0
-	github.com/gagliardetto/solana-go v1.13.0
+	github.com/gagliardetto/solana-go v1.14.0
 	github.com/go-playground/validator/v10 v10.28.0
 	github.com/google/go-cmp v0.7.0
 	github.com/joho/godotenv v1.5.1
