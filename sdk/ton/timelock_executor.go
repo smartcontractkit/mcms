@@ -57,12 +57,17 @@ func NewTimelockExecutor(opts TimelockExecutorOpts) (sdk.TimelockExecutor, error
 		return nil, errors.New("failed to create sdk.Executor - wallet (*wallet.Wallet) is nil")
 	}
 
+	wait := true // default
+	if opts.WaitPending != nil {
+		wait = *opts.WaitPending
+	}
+
 	return &timelockExecutor{
 		TimelockInspector: NewTimelockInspector(opts.Client),
 		client:            opts.Client,
 		wallet:            opts.Wallet,
 		amount:            opts.Amount,
-		wait:              lo.Ternary(opts.WaitPending == nil, true, *opts.WaitPending),
+		wait:              wait,
 	}, nil
 }
 

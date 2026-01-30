@@ -65,13 +65,18 @@ func NewExecutor(opts ExecutorOpts) (sdk.Executor, error) {
 		return nil, errors.New("failed to create sdk.Executor - wallet (*wallet.Wallet) is nil")
 	}
 
+	wait := true // default
+	if opts.WaitPending != nil {
+		wait = *opts.WaitPending
+	}
+
 	return &executor{
 		Encoder:   opts.Encoder,
 		Inspector: NewInspector(opts.Client),
 		client:    opts.Client,
 		wallet:    opts.Wallet,
 		amount:    opts.Amount,
-		wait:      lo.Ternary(opts.WaitPending == nil, true, *opts.WaitPending),
+		wait:      wait,
 	}, nil
 }
 
