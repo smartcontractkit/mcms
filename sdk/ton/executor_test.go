@@ -38,7 +38,12 @@ func sharedMockSetup_TestExecutor(t *testing.T, api *ton_mocks.TonAPI, client *t
 		Return(&tlb.Block{BlockInfo: tlb.BlockHeader{}}, nil)
 
 	client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-		Return(ton.NewExecutionResult([]any{big.NewInt(0), big.NewInt(5), cell.BeginCell().MustStoreAddr(nil).ToSlice(), big.NewInt(5)}), nil)
+		Return(ton.NewExecutionResult([]any{
+			big.NewInt(0), // ValidAfter
+			big.NewInt(5), // OpFinalizationTimeout
+			cell.BeginCell().MustStoreAddr(nil).ToSlice(), // OpPendingReceiver
+			big.NewInt(0), // OpPendingBodyTruncated
+		}), nil)
 
 	// Mock send message
 	api.EXPECT().CurrentMasterchainInfo(mock.Anything).
@@ -212,6 +217,9 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			encoder: &mcmston.Encoder{
 				ChainSelector: types.ChainSelector(1),
 			},
+			metadata: types.ChainMetadata{
+				MCMAddress: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
+			},
 			op: types.Operation{
 				ChainSelector: types.ChainSelector(1),
 				Transaction: types.Transaction{
@@ -340,6 +348,9 @@ func TestExecutor_SetRoot(t *testing.T) {
 			name: "failure in operation conversion due to invalid chain ID",
 			encoder: &mcmston.Encoder{
 				ChainSelector: types.ChainSelector(1),
+			},
+			metadata: types.ChainMetadata{
+				MCMAddress: "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			},
 			mockSetup:  func(api *ton_mocks.TonAPI, client *ton_mocks.APIClientWrapped) {},
 			wantTxHash: "",

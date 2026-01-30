@@ -104,7 +104,11 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			Return(&tlb.Block{BlockInfo: tlb.BlockHeader{}}, nil)
 
 		client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-			Return(ton.NewExecutionResult([]any{big.NewInt(0), big.NewInt(5), big.NewInt(5)}), nil)
+			Return(ton.NewExecutionResult([]any{
+				big.NewInt(0), // ValidAfter
+				big.NewInt(5), // OpFinalizationTimeout
+				big.NewInt(0), // OpPendingID
+			}), nil)
 
 		// Mock send message
 		api.EXPECT().CurrentMasterchainInfo(mock.Anything).

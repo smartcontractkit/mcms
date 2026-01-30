@@ -15,6 +15,7 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/ton/wallet"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
@@ -102,6 +103,12 @@ func (e *timelockExecutor) Execute(
 	if err != nil {
 		return z, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
 	}
+
+	return e.CheckPendingSend(ctx, dstAddr, body)
+}
+
+func (e *timelockExecutor) CheckPendingSend(ctx context.Context, dstAddr *address.Address, body *cell.Cell) (types.TransactionResult, error) {
+	var z types.TransactionResult // zero value
 
 	// Check the status of potential pending operation
 	// Get current block

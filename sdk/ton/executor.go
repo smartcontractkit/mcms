@@ -17,6 +17,7 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/ton/wallet"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
@@ -89,6 +90,12 @@ func (e *executor) ExecuteOperation(
 ) (types.TransactionResult, error) {
 	var z types.TransactionResult // zero value
 
+	// Map to Ton Address type
+	dstAddr, err := address.ParseAddr(metadata.MCMAddress)
+	if err != nil {
+		return z, fmt.Errorf("invalid mcms address: %w", err)
+	}
+
 	// Encode operation
 	oe, ok := e.Encoder.(OperationEncoder[mcms.Op])
 	if !ok {
@@ -126,41 +133,7 @@ func (e *executor) ExecuteOperation(
 		return z, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
 	}
 
-	// Map to Ton Address type
-	dstAddr, err := address.ParseAddr(metadata.MCMAddress)
-	if err != nil {
-		return z, fmt.Errorf("invalid mcms address: %w", err)
-	}
-
-	// Check the status of potential pending operation
-	// Get current block
-	blockID, err := e.client.CurrentMasterchainInfo(ctx)
-	if err != nil {
-		return z, fmt.Errorf("failed to get current block: %w", err)
-	}
-
-	// Load the full block to get timestamp and hash
-	block, err := e.client.GetBlockData(ctx, blockID)
-	if err != nil {
-		return z, fmt.Errorf("failed to get block data: %w", err)
-	}
-
-	// Load the current on-chain time
-	now := block.BlockInfo.GenUtime
-
-	info, err := tvm.CallGetter(ctx, e.client, blockID, dstAddr, mcms.GetOpPendingInfo)
-	if err != nil {
-		return z, fmt.Errorf("failed to call mcms.GetOpPendingInfo getter: %w", err)
-	}
-
-	tx := TxOpts{
-		Wallet:  e.wallet,
-		DstAddr: dstAddr,
-		Amount:  e.amount,
-		Body:    body,
-	}
-
-	return SendTxAfter(ctx, tx, uint64(now), info.ValidAfter, DefaultWaitBuffer, e.wait)
+	return e.CheckPendingSend(ctx, dstAddr, body)
 }
 
 func (e *executor) SetRoot(
@@ -173,6 +146,12 @@ func (e *executor) SetRoot(
 ) (types.TransactionResult, error) {
 	var z types.TransactionResult // zero value
 
+	// Map to Ton Address type
+	dstAddr, err := address.ParseAddr(metadata.MCMAddress)
+	if err != nil {
+		return z, fmt.Errorf("invalid mcms address: %w", err)
+	}
+
 	// Encode root metadata
 	rme, ok := e.Encoder.(RootMetadataEncoder[mcms.RootMetadata])
 	if !ok {
@@ -182,12 +161,6 @@ func (e *executor) SetRoot(
 	rm, err := rme.ToRootMetadata(metadata)
 	if err != nil {
 		return z, fmt.Errorf("failed to convert to root metadata: %w", err)
-	}
-
-	// Map to Ton Address type
-	dstAddr, err := address.ParseAddr(metadata.MCMAddress)
-	if err != nil {
-		return z, fmt.Errorf("invalid mcms address: %w", err)
 	}
 
 	// Encode proofs
@@ -230,6 +203,12 @@ func (e *executor) SetRoot(
 	if err != nil {
 		return z, fmt.Errorf("failed to encode ExecuteBatch body: %w", err)
 	}
+
+	return e.CheckPendingSend(ctx, dstAddr, body)
+}
+
+func (e *executor) CheckPendingSend(ctx context.Context, dstAddr *address.Address, body *cell.Cell) (types.TransactionResult, error) {
+	var z types.TransactionResult // zero value
 
 	// Check the status of potential pending operation
 	// Get current block
