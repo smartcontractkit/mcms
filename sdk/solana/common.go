@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/smartcontractkit/mcms/sdk"
 
-	"go.uber.org/zap"
+	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/gagliardetto/solana-go"
 	computebudget "github.com/gagliardetto/solana-go/programs/compute-budget"
@@ -288,7 +288,7 @@ func sendTransaction(
 ) (*rpc.GetTransactionResult, error) {
 	var errBlockHash error
 	var hashRes *rpc.GetLatestBlockhashResult
-	logger := logFromContext(ctx)
+	logger := sdk.LoggerFrom(ctx)
 
 	sendTransactionOptions := defaultSendTransactionOptions()
 	for _, opt := range opts {
@@ -422,22 +422,4 @@ func getenv[T any](key string, defaultValue T, converter func(string) (T, error)
 	}
 
 	return convertedValue
-}
-
-type Logger interface {
-	Infof(template string, args ...any)
-}
-
-type contextLoggerValueT string
-
-const ContextLoggerValue = contextLoggerValueT("mcms-logger")
-
-func logFromContext(ctx context.Context) Logger {
-	value := ctx.Value(ContextLoggerValue)
-	logger, ok := value.(Logger)
-	if !ok {
-		logger = zap.Must(zap.NewProduction()).Sugar()
-	}
-
-	return logger
 }
