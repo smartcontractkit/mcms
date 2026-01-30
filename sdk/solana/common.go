@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/smartcontractkit/mcms/sdk"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/gagliardetto/solana-go"
@@ -18,7 +20,6 @@ import (
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/mcm"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/fees"
-	"github.com/smartcontractkit/mcms/sdk"
 )
 
 const (

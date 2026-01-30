@@ -37,6 +37,7 @@ import (
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
 
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
+	"github.com/smartcontractkit/mcms/sdk"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -581,5 +582,5 @@ func (s *TestSuite) waitForOperationToBeReady(ctx context.Context, timelockID [3
 }
 
 func (s *TestSuite) contextWithLogger() context.Context {
-	return context.WithValue(context.Background(), solanasdk.ContextLoggerValue, zap.NewNop().Sugar())
+	return context.WithValue(context.Background(), sdk.ContextLoggerValue, zap.NewNop().Sugar())
 }

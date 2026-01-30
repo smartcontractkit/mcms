@@ -52,7 +52,7 @@ func SendTxAfter(ctx context.Context, opts TxOpts, now uint64, validAfter uint64
 	var z types.TransactionResult // zero value
 
 	// If the operation is valid to be executed, send the transaction immediately
-	if uint64(now) >= validAfter {
+	if now >= validAfter {
 		return SendTx(ctx, opts)
 	}
 
@@ -61,7 +61,8 @@ func SendTxAfter(ctx context.Context, opts TxOpts, now uint64, validAfter uint64
 		return z, fmt.Errorf("pending operation not final: operation is not yet valid to be executed (valid after %d, now %d)", validAfter, now)
 	}
 
-	waitDuration := time.Duration(validAfter-uint64(now))*time.Second + buffer // add a buffer to ensure validity
+	// add a buffer to wait to ensure validity
+	waitDuration := time.Duration(validAfter-now)*time.Second + buffer // nolint:gosec // ok to convert here
 	tick := time.NewTicker(waitDuration)
 
 	logger := sdk.LoggerFrom(ctx)
@@ -69,7 +70,7 @@ func SendTxAfter(ctx context.Context, opts TxOpts, now uint64, validAfter uint64
 	for {
 		select {
 		case <-tick.C:
-			nowApprox := uint64(now) + uint64(waitDuration.Seconds())
+			nowApprox := now + uint64(waitDuration.Seconds())
 			logger.Infof("sending delayed transaction", "validAfter", validAfter, "nowApprox", nowApprox)
 
 			return SendTx(ctx, opts)
