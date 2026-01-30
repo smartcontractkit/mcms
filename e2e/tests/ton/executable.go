@@ -91,7 +91,6 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	// Construct a proposal
 
 	// Construct a TON transaction to grant a role
-	// TODO: grant another role to a dummy address to test 2x operations
 
 	// Grant role data
 	grantRoleData, err := tlb.ToCell(rbac.GrantRole{
@@ -689,6 +688,203 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 	// Wait and check success
 	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
 	s.Require().NoError(err)
+}
+
+// TestExecuteProposal executes a proposal with multiple operations
+func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
+	ctx := context.Background()
+
+	// Op counts before execution
+	inspector := mcmston.NewInspector(s.TonClient)
+	opCount, err := inspector.GetOpCount(ctx, s.mcmsAddr)
+	s.Require().NoError(err)
+
+	// Prepare (dummy) accounts to grant roles to
+	accA := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAd99")
+	accB := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c")
+
+	// Construct a proposal
+
+	// Construct a TON transaction to grant a role
+
+	// Grant role data
+	grantRoleData, err := tlb.ToCell(rbac.GrantRole{
+		QueryID: 0x1,
+		Role:    tlbe.NewUint256(timelock.RoleProposer),
+		Account: accA,
+	})
+	s.Require().NoError(err)
+
+	opTX, err := mcmston.NewTransaction(
+		address.MustParseAddr(s.timelockAddr),
+		grantRoleData.ToBuilder().ToSlice(),
+		tlb.MustFromTON("0.1").Nano(),
+		"RBACTimelock",
+		[]string{"RBACTimelock", "GrantRole"},
+	)
+	s.Require().NoError(err)
+
+	// Grant role data no.2 - we test 2x operations in a single proposal
+	grantRoleData2, err := tlb.ToCell(rbac.GrantRole{
+		QueryID: 0x2,
+		Role:    tlbe.NewUint256(timelock.RoleProposer),
+		Account: accB,
+	})
+	s.Require().NoError(err)
+
+	opTX2, err := mcmston.NewTransaction(
+		address.MustParseAddr(s.timelockAddr),
+		grantRoleData2.ToBuilder().ToSlice(),
+		tlb.MustFromTON("0.1").Nano(),
+		"RBACTimelock",
+		[]string{"RBACTimelock", "GrantRole"},
+	)
+	s.Require().NoError(err)
+
+	proposal := mcmslib.Proposal{
+		BaseProposal: mcmslib.BaseProposal{
+			Version:              "v1",
+			Description:          "Grants RBACTimelock 'Proposer' Role to MCMS Contract",
+			Kind:                 types.KindProposal,
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				s.ChainA: {
+					StartingOpCount:  opCount,
+					MCMAddress:       s.mcmsAddr,
+					AdditionalFields: testOpAdditionalFields,
+				},
+			},
+		},
+		Operations: []types.Operation{
+			{
+				ChainSelector: s.ChainA,
+				Transaction:   opTX,
+			},
+			{
+				ChainSelector: s.ChainA,
+				Transaction:   opTX2,
+			},
+		},
+	}
+
+	tree, err := proposal.MerkleTree()
+	s.Require().NotNil(tree)
+	s.Require().NoError(err)
+
+	// Gen caller map for easy access (we can use geth chainselector for anvil)
+	inspectors := map[types.ChainSelector]sdk.Inspector{
+		s.ChainA: mcmston.NewInspector(s.TonClient),
+	}
+
+	// Construct executor
+	signable, err := mcmslib.NewSignable(&proposal, inspectors)
+	s.Require().NoError(err)
+	s.Require().NotNil(signable)
+
+	err = signable.ValidateConfigs(ctx)
+	s.Require().NoError(err)
+
+	_, err = signable.SignAndAppend(mcmslib.NewPrivateKeySigner(s.signers[1].Key))
+	s.Require().NoError(err)
+
+	// Validate the signatures
+	quorumMet, err := signable.ValidateSignatures(ctx)
+	s.Require().NoError(err)
+	s.Require().True(quorumMet)
+
+	// Construct encoders
+	encoders, err := proposal.GetEncoders()
+	s.Require().NoError(err)
+
+	// Construct executors
+	encoder := encoders[s.ChainA].(*mcmston.Encoder)
+	executor, err := mcmston.NewExecutor(mcmston.ExecutorOpts{
+		Encoder: encoder,
+		Client:  s.TonClient,
+		Wallet:  s.wallet,
+		Amount:  tlb.MustFromTON("0.1"),
+	})
+	s.Require().NoError(err)
+	executors := map[types.ChainSelector]sdk.Executor{
+		s.ChainA: executor,
+	}
+
+	// Construct executable
+	executable, err := mcmslib.NewExecutable(&proposal, executors)
+	s.Require().NoError(err)
+
+	// SetRoot on the contract
+	res, err := executable.SetRoot(ctx, s.ChainA)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(res.Hash)
+
+	// Wait for transaction to be mined
+	tx, ok := res.RawData.(*tlb.Transaction)
+	s.Require().True(ok)
+	s.Require().NotNil(tx)
+
+	// Wait and check success
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	s.Require().NoError(err)
+
+	// Validate Contract State and verify root was set A
+	rootARoot, rootAValidUntil, err := inspectors[s.ChainA].GetRoot(ctx, s.mcmsAddr)
+	s.Require().NoError(err)
+	s.Require().Equal(rootARoot, common.Hash([32]byte(tree.Root.Bytes())))
+	s.Require().Equal(rootAValidUntil, proposal.ValidUntil)
+
+	// Execute the proposal - no.0
+	res, err = executable.Execute(ctx, 0)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(res.Hash)
+
+	// Wait for transaction to be mined
+	tx, ok = res.RawData.(*tlb.Transaction)
+	s.Require().True(ok)
+	s.Require().NotNil(tx)
+
+	// Wait and check success
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	s.Require().NoError(err)
+
+	// Verify the operation count is updated on chain A
+	newOpCountA, err := inspectors[s.ChainA].GetOpCount(ctx, s.mcmsAddr)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(opCount+1), newOpCountA)
+
+	// Check the state of the timelock contract
+	inspectorT := mcmston.NewTimelockInspector(s.TonClient)
+	proposers, err := inspectorT.GetProposers(ctx, s.timelockAddr)
+	s.Require().NoError(err)
+	s.Require().Len(proposers, 3)
+	s.Require().Contains(proposers, accA.String())
+
+	// Execute the proposal - no.1
+	res, err = executable.Execute(ctx, 1)
+	s.Require().NoError(err)
+	s.Require().NotEmpty(res.Hash)
+
+	// Wait for transaction to be mined
+	tx, ok = res.RawData.(*tlb.Transaction)
+	s.Require().True(ok)
+	s.Require().NotNil(tx)
+
+	// Wait and check success
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	s.Require().NoError(err)
+
+	// Verify the operation count is updated on chain A
+	newOpCountA, err = inspectors[s.ChainA].GetOpCount(ctx, s.mcmsAddr)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(opCount+2), newOpCountA)
+
+	// Check the state of the timelock contract
+	proposers, err = inspectorT.GetProposers(ctx, s.timelockAddr)
+	s.Require().NoError(err)
+	s.Require().Len(proposers, 4)
+	s.Require().Contains(proposers, accB.String())
 }
 
 var testOpAdditionalFields = json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.1").Nano().Uint64()))

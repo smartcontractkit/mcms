@@ -100,8 +100,6 @@ func TestEncoder_HashMetadata(t *testing.T) {
 				MCMAddress:      "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8",
 			},
 			want: "0xdc28983fc828ede55ccd16567b1e0b7ae74e28f96c4e6383357c175550d363fb",
-			// TODO (ton): fix me, the above hash is bc we replace -217 chain id with -1 (mylocalton bug)
-			// want: "0x4e376893226a88f610e5e741ec88ada4deff4c29b7c0611c7f7c80ce0a847924",
 		},
 		{
 			name:         "failure: could not get TON chain id",
