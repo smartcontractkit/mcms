@@ -852,7 +852,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	// Verify the operation count is updated on chain A
 	newOpCountA, err := inspectors[s.ChainA].GetOpCount(ctx, s.mcmsAddr)
 	s.Require().NoError(err)
-	s.Require().Equal(uint64(opCount+1), newOpCountA)
+	s.Require().Equal(opCount+1, newOpCountA)
 
 	// Check the state of the timelock contract
 	inspectorT := mcmston.NewTimelockInspector(s.TonClient)
@@ -878,7 +878,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	// Verify the operation count is updated on chain A
 	newOpCountA, err = inspectors[s.ChainA].GetOpCount(ctx, s.mcmsAddr)
 	s.Require().NoError(err)
-	s.Require().Equal(uint64(opCount+2), newOpCountA)
+	s.Require().Equal(opCount+2, newOpCountA)
 
 	// Check the state of the timelock contract
 	proposers, err = inspectorT.GetProposers(ctx, s.timelockAddr)
