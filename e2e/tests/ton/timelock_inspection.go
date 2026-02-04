@@ -155,21 +155,20 @@ func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*addres
 func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
+	var err error
+	s.wallet, err = tvm.MyLocalTONWalletDefault(s.TonClient)
+	s.Require().NoError(err)
+
 	// Generate few test wallets
-	client := s.TonClient
 	s.accounts = []*address.Address{
-		NewInitializedAddress(context.Background(), s.Suite, client, s.wallet),
-		NewInitializedAddress(context.Background(), s.Suite, client, s.wallet),
+		NewInitializedAddress(context.Background(), s.Suite, s.TonClient, s.wallet),
+		NewInitializedAddress(context.Background(), s.Suite, s.TonClient, s.wallet),
 	}
 
 	// Sort accounts to have deterministic order
 	slices.SortFunc(s.accounts, func(a, b *address.Address) int {
 		return bytes.Compare(a.Data(), b.Data())
 	})
-
-	var err error
-	s.wallet, err = tvm.MyLocalTONWalletDefault(client)
-	s.Require().NoError(err)
 
 	// Deploy Timelock contract
 	s.timelockAddr, err = s.deployTimelockContract(hash.CRC32("test.timelock_inspection.timelock"))
