@@ -866,11 +866,10 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 
 		ec, err := r.TraceExitCode()
 		if err != nil {
-			fmt.Printf("Error trace:\n%s\n", debug.NewDebuggerTreeTrace(nil).DumpReceived(&r))
 			return fmt.Errorf("failed to get outcome exit code: %w", err)
 		}
 		if ec != tvm.ExitCodeSuccess {
-			return fmt.Errorf("transaction failed with exit code: %d", ec)
+			return fmt.Errorf("transaction failed with exit code: %d\nmsg trace:\n%s\n", ec, debug.NewDebuggerTreeTrace(nil).DumpReceived(&r))
 		}
 		return nil
 	}()
