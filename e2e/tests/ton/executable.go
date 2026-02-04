@@ -701,8 +701,40 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	s.Require().NoError(err)
 
 	// Prepare (dummy) accounts to grant roles to
-	accA := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAd99")
-	accB := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c")
+	// accA := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAd99")
+	// accB := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c")
+	initAccount := func() *address.Address {
+		walletA, err := tvm.NewRandomHighloadV3TestWallet(s.TonClient)
+		s.Require().NoError(err)
+		// Fund wallet
+		_, _, err = s.wallet.SendWaitTransaction(ctx,
+			&wallet.Message{
+				Mode: wallet.PayGasSeparately,
+				InternalMessage: &tlb.InternalMessage{
+					IHRDisabled: true,
+					Bounce:      false,
+					DstAddr:     walletA.WalletAddress(),
+					Amount:      tlb.MustFromTON("0.1"),
+					Body:        nil,
+				},
+			})
+		s.Require().NoError(err)
+		// Init wallet
+		_, _, err = walletA.SendWaitTransaction(ctx, &wallet.Message{
+			Mode: wallet.PayGasSeparately,
+			InternalMessage: &tlb.InternalMessage{
+				IHRDisabled: true,
+				Bounce:      false,
+				DstAddr:     walletA.WalletAddress(),
+				Amount:      tlb.MustFromTON("0.1"),
+				Body:        nil,
+			},
+		})
+		s.Require().NoError(err)
+		return walletA.WalletAddress()
+	}
+	accA := initAccount()
+	accB := initAccount()
 
 	// Construct a proposal
 
