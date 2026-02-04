@@ -159,8 +159,8 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	chainID := cselectors.TON_LOCALNET.ChainID
 	client := s.TonClient
 	s.accounts = []*address.Address{
-		must(NewInitializedAddress(context.Background(), s, client, s.wallet)).Address(),
-		must(NewInitializedAddress(context.Background(), s, client, s.wallet)).Address(),
+		must(NewInitializedAddress(context.Background(), s.Suite, client, s.wallet)).Address(),
+		must(NewInitializedAddress(context.Background(), s.Suite, client, s.wallet)).Address(),
 	}
 
 	// Sort accounts to have deterministic order
