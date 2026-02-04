@@ -914,6 +914,9 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 
 	timelockAddr, err := DeployTimelockContract(ctx, s.TonClient, s.wallet, amount, data, body)
 	s.Require().NoError(err)
+	minDelay, err := tvm.CallGetterLatest(ctx, s.TonClient, timelockAddr, timelock.GetMinDelay)
+	s.Require().NoError(err)
+	s.Require().Equal(uint32(0), minDelay)
 	s.timelockAddr = timelockAddr.String()
 }
 
