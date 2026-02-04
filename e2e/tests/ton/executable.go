@@ -700,43 +700,8 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	s.Require().NoError(err)
 
 	// Prepare (dummy) accounts to grant roles to
-	// accA := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAd99")
-	// accB := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c")
-	initAccount := func() *address.Address {
-		walletA, err := tvm.NewRandomV5R1TestWallet(s.TonClient, -217)
-		s.Require().NoError(err)
-		// Fund wallet
-		signedClient := tracetracking.NewSignedAPIClient(s.TonClient, *s.wallet)
-		_, err = signedClient.SendAndWaitForTrace(ctx, *walletA.WalletAddress(),
-			&wallet.Message{
-				Mode: wallet.PayGasSeparately,
-				InternalMessage: &tlb.InternalMessage{
-					IHRDisabled: true,
-					Bounce:      false,
-					DstAddr:     walletA.WalletAddress(),
-					Amount:      tlb.MustFromTON("0.1"),
-					Body:        nil,
-				},
-			})
-		s.Require().NoError(err)
-
-		// Init wallet
-		newSignedClient := tracetracking.NewSignedAPIClient(s.TonClient, *walletA)
-		_, err = newSignedClient.SendAndWaitForTrace(ctx, *walletA.WalletAddress(), &wallet.Message{
-			Mode: wallet.PayGasSeparately,
-			InternalMessage: &tlb.InternalMessage{
-				IHRDisabled: true,
-				Bounce:      false,
-				DstAddr:     walletA.WalletAddress(),
-				Amount:      tlb.MustFromTON("0.1"),
-				Body:        nil,
-			},
-		})
-		s.Require().NoError(err)
-		return walletA.WalletAddress().Bounce(true)
-	}
-	accA := initAccount()
-	accB := initAccount()
+	accA := NewInitializedAddress(ctx, s, s.TonClient, s.wallet)
+	accB := NewInitializedAddress(ctx, s, s.TonClient, s.wallet)
 
 	// Construct a proposal
 

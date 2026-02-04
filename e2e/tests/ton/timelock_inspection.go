@@ -4,6 +4,7 @@ package tone2e
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -158,8 +159,8 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	chainID := cselectors.TON_LOCALNET.ChainID
 	client := s.TonClient
 	s.accounts = []*address.Address{
-		must(tvm.NewRandomV5R1TestWallet(client, chainID)).Address(),
-		must(tvm.NewRandomV5R1TestWallet(client, chainID)).Address(),
+		must(NewInitializedAddress(context.Background(), s, client, s.wallet)).Address(),
+		must(NewInitializedAddress(context.Background(), s, client, s.wallet)).Address(),
 	}
 
 	// Sort accounts to have deterministic order
