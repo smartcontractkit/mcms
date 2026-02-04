@@ -704,10 +704,11 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	// accA := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAd99")
 	// accB := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c")
 	initAccount := func() *address.Address {
-		walletA, err := tvm.NewRandomHighloadV3TestWallet(s.TonClient)
+		walletA, err := tvm.NewRandomV5R1TestWallet(s.TonClient, -217)
 		s.Require().NoError(err)
 		// Fund wallet
-		_, _, err = s.wallet.SendWaitTransaction(ctx,
+		signedClient := tracetracking.NewSignedAPIClient(s.TonClient, *s.wallet)
+		_, err = signedClient.SendAndWaitForTrace(ctx, *walletA.WalletAddress(),
 			&wallet.Message{
 				Mode: wallet.PayGasSeparately,
 				InternalMessage: &tlb.InternalMessage{
@@ -719,8 +720,10 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 				},
 			})
 		s.Require().NoError(err)
+
 		// Init wallet
-		_, _, err = walletA.SendWaitTransaction(ctx, &wallet.Message{
+		newSignedClient := tracetracking.NewSignedAPIClient(s.TonClient, *walletA)
+		_, err = newSignedClient.SendAndWaitForTrace(ctx, *walletA.WalletAddress(), &wallet.Message{
 			Mode: wallet.PayGasSeparately,
 			InternalMessage: &tlb.InternalMessage{
 				IHRDisabled: true,
