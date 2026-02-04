@@ -81,7 +81,9 @@ func DeployContract(ctx context.Context, opts DeployOpts) (*address.Address, err
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy contract: %w", err)
 	}
-	fmt.Println("Trace:\n", debug.NewDebuggerTreeTrace(nil).DumpReceived(rec))
+	//   Error: /home/runner/work/mcms/mcms/e2e/tests/ton/common.go:84:2: use of `fmt.Println` forbidden by pattern `^(fmt\.Print(|f|ln)|print|println)$` (forbidigo)
+	//skip lint
+	fmt.Println("Trace:\n", debug.NewDebuggerTreeTrace(nil).DumpReceived(rec)) //nolint:forbidigo : print used in e2e tests only
 
 	return contract.Address, nil
 }
