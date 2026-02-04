@@ -22,6 +22,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/codec/debug"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
@@ -851,7 +852,28 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	s.Require().NotNil(tx)
 
 	// Wait and check success
-	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	// err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+
+	err = func() error {
+		r, err := tracetracking.MapToReceivedMessage(tx)
+		if err != nil {
+			return fmt.Errorf("failed to map tx to ReceivedMessage: %w", err)
+		}
+		err = r.WaitForTrace(ctx, s.TonClient)
+		if err != nil {
+			return fmt.Errorf("failed to wait for trace: %w", err)
+		}
+
+		ec, err := r.TraceExitCode()
+		if err != nil {
+			fmt.Printf("Error trace:\n%s\n", debug.NewDebuggerTreeTrace(nil).DumpReceived(&r))
+			return fmt.Errorf("failed to get outcome exit code: %w", err)
+		}
+		if ec != tvm.ExitCodeSuccess {
+			return fmt.Errorf("transaction failed with exit code: %d", ec)
+		}
+		return nil
+	}()
 	s.Require().NoError(err)
 
 	// Verify the operation count is updated on chain A
