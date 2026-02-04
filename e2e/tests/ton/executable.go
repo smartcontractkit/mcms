@@ -769,6 +769,11 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 		},
 	}
 
+	fmt.Println("Calling getter on timelock")
+	minDelay, err := tvm.CallGetterLatest(ctx, s.TonClient, address.MustParseAddr(s.timelockAddr), timelock.GetMinDelay)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(0), minDelay)
+
 	tree, err := proposal.MerkleTree()
 	s.Require().NotNil(tree)
 	s.Require().NoError(err)
@@ -916,7 +921,7 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 	s.Require().NoError(err)
 	minDelay, err := tvm.CallGetterLatest(ctx, s.TonClient, timelockAddr, timelock.GetMinDelay)
 	s.Require().NoError(err)
-	s.Require().Equal(uint32(0), minDelay)
+	s.Require().Equal(uint64(0), minDelay)
 	s.timelockAddr = timelockAddr.String()
 }
 
