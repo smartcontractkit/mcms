@@ -22,7 +22,6 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/codec/debug"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
@@ -734,7 +733,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 			},
 		})
 		s.Require().NoError(err)
-		return walletA.WalletAddress()
+		return walletA.WalletAddress().Bounce(true)
 	}
 	accA := initAccount()
 	accB := initAccount()
@@ -804,11 +803,6 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 			},
 		},
 	}
-
-	fmt.Println("Calling getter on timelock")
-	minDelay, err := tvm.CallGetterLatest(ctx, s.TonClient, address.MustParseAddr(s.timelockAddr), timelock.GetMinDelay)
-	s.Require().NoError(err)
-	s.Require().Equal(uint64(0), minDelay)
 
 	tree, err := proposal.MerkleTree()
 	s.Require().NotNil(tree)
@@ -887,27 +881,27 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	s.Require().NotNil(tx)
 
 	// Wait and check success
-	// err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
 
-	err = func() error {
-		r, err := tracetracking.MapToReceivedMessage(tx)
-		if err != nil {
-			return fmt.Errorf("failed to map tx to ReceivedMessage: %w", err)
-		}
-		err = r.WaitForTrace(ctx, s.TonClient)
-		if err != nil {
-			return fmt.Errorf("failed to wait for trace: %w", err)
-		}
+	// err = func() error {
+	// 	r, err := tracetracking.MapToReceivedMessage(tx)
+	// 	if err != nil {
+	// 		return fmt.Errorf("failed to map tx to ReceivedMessage: %w", err)
+	// 	}
+	// 	err = r.WaitForTrace(ctx, s.TonClient)
+	// 	if err != nil {
+	// 		return fmt.Errorf("failed to wait for trace: %w", err)
+	// 	}
 
-		ec, err := r.TraceExitCode()
-		if err != nil {
-			return fmt.Errorf("failed to get outcome exit code: %w", err)
-		}
-		if ec != tvm.ExitCodeSuccess {
-			return fmt.Errorf("transaction failed with exit code: %d\nmsg trace:\n%s\n", ec, debug.NewDebuggerTreeTrace(nil).DumpReceived(&r))
-		}
-		return nil
-	}()
+	// 	ec, err := r.TraceExitCode()
+	// 	if err != nil {
+	// 		return fmt.Errorf("failed to get outcome exit code: %w", err)
+	// 	}
+	// 	if ec != tvm.ExitCodeSuccess {
+	// 		return fmt.Errorf("transaction failed with exit code: %d\nmsg trace:\n%s\n", ec, debug.NewDebuggerTreeTrace(nil).DumpReceived(&r))
+	// 	}
+	// 	return nil
+	// }()
 	s.Require().NoError(err)
 
 	// Verify the operation count is updated on chain A
@@ -975,6 +969,7 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 
 	timelockAddr, err := DeployTimelockContract(ctx, s.TonClient, s.wallet, amount, data, body)
 	s.Require().NoError(err)
+	// Ensure contract is initialized
 	minDelay, err := tvm.CallGetterLatest(ctx, s.TonClient, timelockAddr, timelock.GetMinDelay)
 	s.Require().NoError(err)
 	s.Require().Equal(uint64(0), minDelay)
