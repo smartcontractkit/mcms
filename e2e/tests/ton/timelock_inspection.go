@@ -156,11 +156,10 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
 	// Generate few test wallets
-	chainID := cselectors.TON_LOCALNET.ChainID
 	client := s.TonClient
 	s.accounts = []*address.Address{
-		must(NewInitializedAddress(context.Background(), s.Suite, client, s.wallet)).Address(),
-		must(NewInitializedAddress(context.Background(), s.Suite, client, s.wallet)).Address(),
+		NewInitializedAddress(context.Background(), s.Suite, client, s.wallet).Address(),
+		NewInitializedAddress(context.Background(), s.Suite, client, s.wallet).Address(),
 	}
 
 	// Sort accounts to have deterministic order
