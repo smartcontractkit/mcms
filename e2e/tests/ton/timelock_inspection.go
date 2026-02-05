@@ -22,9 +22,11 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/examples/counter"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/ownable2step"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/codec/debug"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
@@ -131,6 +133,22 @@ func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*addres
 	}
 
 	return DeployTimelockContract(ctx, s.TonClient, s.wallet, amount, data, body)
+}
+
+func (s *TimelockInspectionTestSuite) deployCounter(id uint32) (*address.Address, error) {
+	ctx := s.T().Context()
+	amount := tlb.MustFromTON("0.5") // TODO (ton): high gas
+
+	data := counter.ContractData{
+		ID:    id,
+		Value: 0,
+		Ownable: ownable2step.Storage{
+			Owner:        s.timelockAddr,
+			PendingOwner: nil,
+		},
+	}
+
+	return DeployCounterContract(ctx, s.TonClient, s.wallet, amount, data)
 }
 
 // SetupSuite runs before the test suite
@@ -313,19 +331,19 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	s.Require().NoError(err)
 
 	// So operation fails
-	// uninitializedAccount := must(tvm.NewRandomV5R1TestWallet(s.TonClient, cselectors.TON_LOCALNET.ChainID)).Address()
+	counterAddr, err := s.deployCounter(hash.CRC32("test.timelock_inspection.counter.1"))
+	s.Require().NoError(err)
 
 	data := func() *cell.Cell {
 		b := cell.BeginCell()
-		s.Require().NoError(b.StoreUInt(0x6578746E, 32)) // extension_action op code (expects more data)
+		s.Require().NoError(b.StoreUInt(0xFFFFFFFF, 32)) // Counter doesn't handle bounced messages
 
 		return b.EndCell()
 	}()
 	// Schedule a test operation
 	calls := []timelock.Call{
 		{
-			// Target: uninitializedAccount,
-			Target: s.accounts[1],
+			Target: counterAddr,
 			Value:  tlb.MustFromTON("0.03"), // TON implementation enforces min value per call
 			Data:   data,
 		},
@@ -368,8 +386,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 		ChainSelector: types.ChainSelector(cselectors.TON_LOCALNET.Selector),
 		Transactions: []types.Transaction{
 			{
-				// To:               uninitializedAccount.String(),
-				To:               s.accounts[1].String(),
+				To:               counterAddr.String(),
 				Data:             data.ToBOC(),
 				AdditionalFields: json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.03").Nano().Uint64())),
 			},

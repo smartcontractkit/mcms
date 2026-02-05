@@ -17,6 +17,7 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/examples/counter"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
@@ -32,6 +33,7 @@ const (
 
 	PathContractsMCMS     = "mcms.MCMS.compiled.json"
 	PathContractsTimelock = "mcms.RBACTimelock.compiled.json"
+	PathContractsCounter  = "examples.Counter.compiled.json"
 )
 
 func must[E any](out E, err error) E {
@@ -140,6 +142,17 @@ func DeployTimelockContract(ctx context.Context, client *ton.APIClient, w *walle
 		Amount:       amount,
 		Data:         data,
 		Body:         body,
+	})
+}
+
+func DeployCounterContract(ctx context.Context, client *ton.APIClient, w *wallet.Wallet, amount tlb.Coins, data counter.ContractData) (*address.Address, error) {
+	return DeployContract(ctx, DeployOpts{
+		Client:       client,
+		Wallet:       w,
+		ContractPath: filepath.Join(os.Getenv(EnvPathContracts), PathContractsCounter),
+		Amount:       amount,
+		Data:         data,
+		Body:         cell.BeginCell().EndCell(), // empty body
 	})
 }
 
