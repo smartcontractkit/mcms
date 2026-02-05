@@ -310,10 +310,13 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	newTimelockAddr, err := s.deployTimelockContract(hash.CRC32("test.timelock_inspection.timelock.1"))
 	s.Require().NoError(err)
 
+	// So operation fails
+	uninitializedAccount := must(tvm.NewRandomV5R1TestWallet(s.TonClient, cselectors.TON_LOCALNET.ChainID)).Address().String()
+
 	// Schedule a test operation
 	calls := []timelock.Call{
 		{
-			Target: s.accounts[1],
+			Target: uninitializedAccount,
 			Value:  tlb.MustFromTON("0.03"), // TON implementation enforces min value per call
 			Data:   cell.BeginCell().EndCell(),
 		},
@@ -352,7 +355,6 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	})
 	s.Require().NoError(err, "Failed to create TimelockExecutor")
 
-	uninitializedAccount := must(tvm.NewRandomV5R1TestWallet(s.TonClient, cselectors.TON_LOCALNET.ChainID)).Address().String()
 	bop := types.BatchOperation{
 		ChainSelector: types.ChainSelector(cselectors.TON_LOCALNET.Selector),
 		Transactions: []types.Transaction{
