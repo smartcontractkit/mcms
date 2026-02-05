@@ -54,4 +54,5 @@ func TestTONSuite(t *testing.T) {
 func TestCantonSuite(t *testing.T) {
 	suite.Run(t, new(cantone2e.MCMSConfigurerTestSuite))
 	suite.Run(t, new(cantone2e.MCMSInspectorTestSuite))
+	suite.Run(t, new(cantone2e.MCMSExecutorTestSuite))
 }

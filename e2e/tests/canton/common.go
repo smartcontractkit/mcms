@@ -4,9 +4,12 @@ package canton
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
 	"github.com/noders-team/go-daml/pkg/client"
 	"github.com/noders-team/go-daml/pkg/model"
@@ -15,8 +18,10 @@ import (
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 	"github.com/smartcontractkit/chainlink-canton/integration-tests/testhelpers"
 
+	mcmscore "github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
+	mcmstypes "github.com/smartcontractkit/mcms/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -29,8 +34,11 @@ type TestSuite struct {
 	client      *client.DamlBindingClient
 	participant testhelpers.Participant
 
+	chainSelector  mcmstypes.ChainSelector
+	chainId        int64
 	packageIDs     []string
 	mcmsContractID string
+	mcmsId         string
 }
 
 func NewBindingClient(ctx context.Context, jwtToken, ledgerAPIURL, adminAPIURL string) (*client.DamlBindingClient, error) {
@@ -54,6 +62,7 @@ func (s *TestSuite) SetupSuite() {
 	s.client, err = NewBindingClient(s.T().Context(), jwt, config.GRPCLedgerAPIURL, config.AdminAPIURL)
 	s.Require().NoError(err)
 	s.participant = participant
+	s.chainSelector = mcmstypes.ChainSelector(s.env.Chain.ChainSelector())
 }
 
 const NumGroups = 32
@@ -69,15 +78,17 @@ func (s *TestSuite) DeployMCMSContract() {
 	s.packageIDs = packageIDs
 
 	mcmsOwner := s.participant.Party
-	chainId := 1
+	chainId := int64(1)
 	baseMcmsId := "mcms-test-001"
 	mcmsId := makeMcmsId(baseMcmsId, "proposer")
 
 	mcmsContractId := s.createMCMS(s.T().Context(), s.participant, mcmsOwner, chainId, mcmsId, mcms.RoleProposer)
 	s.mcmsContractID = mcmsContractId
+	s.mcmsId = mcmsId
+	s.chainId = chainId
 }
 
-func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Participant, owner string, chainId int, mcmsId string, role mcms.Role) string {
+func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Participant, owner string, chainId int64, mcmsId string, role mcms.Role) string {
 	// Create empty expiring root
 	emptyExpiringRoot := mcms.ExpiringRoot{
 		Root:       types.TEXT(""),
@@ -152,4 +163,51 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Part
 // TODO: Use right role types
 func makeMcmsId(baseId string, role string) string {
 	return baseId + "-" + role
+}
+
+// TODO: Remove when validUntil calcualtion is considered in contracts
+func (s *TestSuite) SignProposal(proposal *mcmscore.Proposal, signer mcmscore.PrivateKeySigner) mcmstypes.Signature {
+	// Get the Merkle root of the proposal
+	tree, err := proposal.MerkleTree()
+	s.Require().NoError(err, "failed to calculate tree")
+
+	root := tree.Root.Hex()
+	// Get the valid until timestamp from the proposal metadata
+	validUntil := proposal.ValidUntil
+
+	// Compute the payload to sign (this should match what the MCMS contract expects)
+	payload := ComputeSignedHash(root, validUntil)
+
+	// Sign the payload
+	sig, err := signer.Sign(payload)
+	s.Require().NoError(err, "failed to sign proposal")
+
+	signature, err := mcmstypes.NewSignatureFromBytes(sig)
+	s.Require().NoError(err, "failed to create signature from bytes")
+
+	// Append the signature to the proposal
+	proposal.AppendSignature(signature)
+
+	return signature
+}
+
+func ComputeSignedHash(root string, validUntil uint32) []byte {
+	// Inner data: root || validUntil as hex
+	validUntilHex := Uint32ToHex(validUntil)
+	innerData, _ := hex.DecodeString(root + validUntilHex)
+	innerHash := crypto.Keccak256(innerData)
+
+	// EIP-191 prefix: "\x19Ethereum Signed Message:\n32"
+	prefix := []byte("\x19Ethereum Signed Message:\n32")
+	prefixedData := append(prefix, innerHash...)
+
+	return crypto.Keccak256Hash(prefixedData).Bytes()
+}
+
+// Uint32ToHex converts uint32 to 32-byte hex (matching Canton's placeholder)
+// Canton currently uses padLeft32 "0" - we match that for compatibility
+func Uint32ToHex(validUntil uint32) string {
+	// For now, match Canton's placeholder implementation
+	// TODO: Implement proper timestamp encoding when Canton updates
+	return strings.Repeat("0", 64)
 }

@@ -29,6 +29,7 @@ var supportedFamilies = []string{
 	cselectors.FamilyAptos,
 	cselectors.FamilySui,
 	cselectors.FamilyTon,
+	cselectors.FamilyCanton,
 }
 
 // GetChainSelectorFamily returns the family of the chain selector.

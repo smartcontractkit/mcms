@@ -7,6 +7,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -55,6 +56,12 @@ func newEncoder(
 		)
 	case cselectors.FamilyTon:
 		encoder = ton.NewEncoder(
+			csel,
+			txCount,
+			overridePreviousRoot,
+		)
+	case cselectors.FamilyCanton:
+		encoder = canton.NewEncoder(
 			csel,
 			txCount,
 			overridePreviousRoot,

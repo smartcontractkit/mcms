@@ -9,6 +9,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -57,6 +58,8 @@ func validateChainMetadata(metadata types.ChainMetadata, csel types.ChainSelecto
 		return nil
 	case cselectors.FamilySui:
 		return sui.ValidateChainMetadata(metadata)
+	case cselectors.FamilyCanton:
+		return canton.ValidateChainMetadata(metadata)
 	case cselectors.FamilyTon:
 		// TODO (ton): do we need special chain metadata for TON?
 		// Yes! We could attach MCMS -> Timelock value here which is now hardcoded default in timelock converter
