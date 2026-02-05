@@ -24,7 +24,6 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/codec/debug"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
@@ -71,26 +70,7 @@ func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Addr
 	s.Require().NoError(err)
 	s.Require().NotNil(tx)
 
-	// err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
-	err = func() error {
-		r, err := tracetracking.MapToReceivedMessage(tx)
-		if err != nil {
-			return fmt.Errorf("failed to map tx to ReceivedMessage: %w", err)
-		}
-		err = r.WaitForTrace(ctx, s.TonClient)
-		if err != nil {
-			return fmt.Errorf("failed to wait for trace: %w", err)
-		}
-
-		ec, err := r.TraceExitCode()
-		if err != nil {
-			return fmt.Errorf("failed to get outcome exit code: %w", err)
-		}
-		if ec != tvm.ExitCodeSuccess {
-			return fmt.Errorf("transaction failed with exit code: %d\nmsg trace:\n%s\n", ec, debug.NewDebuggerTreeTrace(nil).DumpReceived(&r))
-		}
-		return nil
-	}()
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
 	s.Require().NoError(err)
 }
 

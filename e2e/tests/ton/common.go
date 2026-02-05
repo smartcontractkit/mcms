@@ -19,7 +19,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/codec/debug"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
@@ -79,11 +78,10 @@ func DeployContract(ctx context.Context, opts DeployOpts) (*address.Address, err
 	}
 
 	_client := tracetracking.NewSignedAPIClient(opts.Client, *opts.Wallet)
-	contract, rec, err := wrappers.Deploy(ctx, &_client, contractCode, contractData, opts.Amount, bodyCell)
+	contract, _, err := wrappers.Deploy(ctx, &_client, contractCode, contractData, opts.Amount, bodyCell)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy contract: %w", err)
 	}
-	fmt.Println("Trace:\n", debug.NewDebuggerTreeTrace(nil).DumpReceived(rec)) //nolint:forbidigo : print used in e2e tests only
 
 	return contract.Address, nil
 }

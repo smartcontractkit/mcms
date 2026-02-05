@@ -847,26 +847,6 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 
 	// Wait and check success
 	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
-
-	// err = func() error {
-	// 	r, err := tracetracking.MapToReceivedMessage(tx)
-	// 	if err != nil {
-	// 		return fmt.Errorf("failed to map tx to ReceivedMessage: %w", err)
-	// 	}
-	// 	err = r.WaitForTrace(ctx, s.TonClient)
-	// 	if err != nil {
-	// 		return fmt.Errorf("failed to wait for trace: %w", err)
-	// 	}
-
-	// 	ec, err := r.TraceExitCode()
-	// 	if err != nil {
-	// 		return fmt.Errorf("failed to get outcome exit code: %w", err)
-	// 	}
-	// 	if ec != tvm.ExitCodeSuccess {
-	// 		return fmt.Errorf("transaction failed with exit code: %d\nmsg trace:\n%s\n", ec, debug.NewDebuggerTreeTrace(nil).DumpReceived(&r))
-	// 	}
-	// 	return nil
-	// }()
 	s.Require().NoError(err)
 
 	// Verify the operation count is updated on chain A
