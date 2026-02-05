@@ -316,6 +316,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	data := func() *cell.Cell {
 		b := cell.BeginCell()
 		s.Require().NoError(b.StoreUInt(0xffffffff, 32)) // invalid op code to force failure
+
 		return b.EndCell()
 	}()
 	// Schedule a test operation
