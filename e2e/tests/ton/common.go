@@ -117,6 +117,7 @@ func NewInitializedAddress(ctx context.Context, s *suite.Suite, tonClient *ton.A
 		},
 	})
 	s.Require().NoError(err)
+
 	return walletA.WalletAddress().Bounce(true)
 }
 
