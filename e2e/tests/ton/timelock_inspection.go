@@ -384,7 +384,8 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	s.Require().NotNil(tx.Description)
 
 	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
-	s.Require().NoError(err)
+	s.Require().Error(err)
+	s.Require().ErrorContains(err, "transaction failed with exit code")
 
 	// Check the operation (still) exists
 	isOp, err = inspector.IsOperation(ctx, newTimelockAddr.String(), id)
