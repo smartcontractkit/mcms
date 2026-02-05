@@ -700,8 +700,8 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	s.Require().NoError(err)
 
 	// Prepare (dummy) accounts to grant roles to
-	accA := NewInitializedAddress(ctx, s.Suite, s.TonClient, s.wallet)
-	accB := NewInitializedAddress(ctx, s.Suite, s.TonClient, s.wallet)
+	accA := NewInitializedAddress(ctx, &s.Suite, s.TonClient, s.wallet)
+	accB := NewInitializedAddress(ctx, &s.Suite, s.TonClient, s.wallet)
 
 	// Construct a proposal
 

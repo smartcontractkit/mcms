@@ -141,8 +141,8 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 
 	// Generate few test wallets
 	s.accounts = []*address.Address{
-		NewInitializedAddress(context.Background(), s.Suite, s.TonClient, s.wallet),
-		NewInitializedAddress(context.Background(), s.Suite, s.TonClient, s.wallet),
+		NewInitializedAddress(context.Background(), &s.Suite, s.TonClient, s.wallet),
+		NewInitializedAddress(context.Background(), &s.Suite, s.TonClient, s.wallet),
 	}
 
 	// Sort accounts to have deterministic order

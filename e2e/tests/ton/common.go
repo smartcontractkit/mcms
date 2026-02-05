@@ -86,7 +86,7 @@ func DeployContract(ctx context.Context, opts DeployOpts) (*address.Address, err
 	return contract.Address, nil
 }
 
-func NewInitializedAddress(ctx context.Context, s suite.Suite, tonClient *ton.APIClient, w *wallet.Wallet) *address.Address {
+func NewInitializedAddress(ctx context.Context, s *suite.Suite, tonClient *ton.APIClient, w *wallet.Wallet) *address.Address {
 	walletA, err := tvm.NewRandomV5R1TestWallet(tonClient, -217)
 	s.Require().NoError(err)
 	// Fund wallet
