@@ -18,12 +18,14 @@ import (
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
+	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/codec/debug"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
@@ -391,7 +393,30 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	s.Require().True(ok)
 	s.Require().NotNil(tx.Description)
 
-	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	waitForTrace := func(ctx context.Context, c ton.APIClientWrapped, tx *tlb.Transaction) error {
+		r, err := tracetracking.MapToReceivedMessage(tx)
+		if err != nil {
+			return fmt.Errorf("failed to map tx to ReceivedMessage: %w", err)
+		}
+		err = r.WaitForTrace(ctx, c)
+		if err != nil {
+			return fmt.Errorf("failed to wait for trace: %w", err)
+		}
+		s.T().Logf("msg trace: \n%s", debug.NewDebuggerTreeTrace(nil).DumpReceived(&r))
+
+		ec, err := r.TraceExitCode()
+		if err != nil {
+			return fmt.Errorf("failed to get outcome exit code: %w", err)
+		}
+		if ec != tvm.ExitCodeSuccess {
+			return fmt.Errorf("transaction failed with exit code: %d", ec)
+		}
+
+		return nil
+	}
+
+	err = waitForTrace(ctx, s.TonClient, tx)
+
 	s.Require().Error(err)
 	s.Require().ErrorContains(err, "transaction failed with exit code")
 
