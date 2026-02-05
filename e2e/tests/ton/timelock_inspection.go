@@ -311,14 +311,20 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	s.Require().NoError(err)
 
 	// So operation fails
-	uninitializedAccount := must(tvm.NewRandomV5R1TestWallet(s.TonClient, cselectors.TON_LOCALNET.ChainID)).Address()
+	// uninitializedAccount := must(tvm.NewRandomV5R1TestWallet(s.TonClient, cselectors.TON_LOCALNET.ChainID)).Address()
 
+	data := func() *cell.Cell {
+		b := cell.BeginCell()
+		s.Require().NoError(b.StoreUInt(0xffffffff, 32)) // invalid op code to force failure
+		return b.EndCell()
+	}()
 	// Schedule a test operation
 	calls := []timelock.Call{
 		{
-			Target: uninitializedAccount,
+			// Target: uninitializedAccount,
+			Target: s.accounts[1],
 			Value:  tlb.MustFromTON("0.03"), // TON implementation enforces min value per call
-			Data:   cell.BeginCell().EndCell(),
+			Data:   data,
 		},
 	}
 	delay := 0
@@ -359,8 +365,9 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 		ChainSelector: types.ChainSelector(cselectors.TON_LOCALNET.Selector),
 		Transactions: []types.Transaction{
 			{
-				To:               uninitializedAccount.String(),
-				Data:             cell.BeginCell().EndCell().ToBOC(),
+				// To:               uninitializedAccount.String(),
+				To:               s.accounts[1].String(),
+				Data:             data.ToBOC(),
 				AdditionalFields: json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.03").Nano().Uint64())),
 			},
 		},
