@@ -700,8 +700,8 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	s.Require().NoError(err)
 
 	// Prepare (dummy) accounts to grant roles to
-	accA := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAd99")
-	accB := address.MustParseAddr("EQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAM9c")
+	accA := NewInitializedAddress(ctx, &s.Suite, s.TonClient, s.wallet)
+	accB := NewInitializedAddress(ctx, &s.Suite, s.TonClient, s.wallet)
 
 	// Construct a proposal
 
@@ -914,6 +914,10 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 
 	timelockAddr, err := DeployTimelockContract(ctx, s.TonClient, s.wallet, amount, data, body)
 	s.Require().NoError(err)
+	// Ensure contract is initialized
+	minDelay, err := tvm.CallGetterLatest(ctx, s.TonClient, timelockAddr, timelock.GetMinDelay)
+	s.Require().NoError(err)
+	s.Require().Equal(uint64(0), minDelay)
 	s.timelockAddr = timelockAddr.String()
 }
 

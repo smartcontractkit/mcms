@@ -4,6 +4,7 @@ package tone2e
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -20,9 +21,11 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/examples/counter"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	toncommon "github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/common"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ccip/bindings/ownable2step"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
@@ -130,26 +133,40 @@ func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*addres
 	return DeployTimelockContract(ctx, s.TonClient, s.wallet, amount, data, body)
 }
 
+func (s *TimelockInspectionTestSuite) deployCounter(id uint32) (*address.Address, error) {
+	ctx := s.T().Context()
+	amount := tlb.MustFromTON("0.5") // TODO (ton): high gas
+
+	data := counter.ContractData{
+		ID:    id,
+		Value: 0,
+		Ownable: ownable2step.Storage{
+			Owner:        s.timelockAddr,
+			PendingOwner: nil,
+		},
+	}
+
+	return DeployCounterContract(ctx, s.TonClient, s.wallet, amount, data)
+}
+
 // SetupSuite runs before the test suite
 func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
+	var err error
+	s.wallet, err = tvm.MyLocalTONWalletDefault(s.TonClient)
+	s.Require().NoError(err)
+
 	// Generate few test wallets
-	chainID := cselectors.TON_LOCALNET.ChainID
-	client := s.TonClient
 	s.accounts = []*address.Address{
-		must(tvm.NewRandomV5R1TestWallet(client, chainID)).Address(),
-		must(tvm.NewRandomV5R1TestWallet(client, chainID)).Address(),
+		NewInitializedAddress(context.Background(), &s.Suite, s.TonClient, s.wallet),
+		NewInitializedAddress(context.Background(), &s.Suite, s.TonClient, s.wallet),
 	}
 
 	// Sort accounts to have deterministic order
 	slices.SortFunc(s.accounts, func(a, b *address.Address) int {
 		return bytes.Compare(a.Data(), b.Data())
 	})
-
-	var err error
-	s.wallet, err = tvm.MyLocalTONWalletDefault(client)
-	s.Require().NoError(err)
 
 	// Deploy Timelock contract
 	s.timelockAddr, err = s.deployTimelockContract(hash.CRC32("test.timelock_inspection.timelock"))
@@ -311,12 +328,22 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	newTimelockAddr, err := s.deployTimelockContract(hash.CRC32("test.timelock_inspection.timelock.1"))
 	s.Require().NoError(err)
 
+	// So operation fails
+	counterAddr, err := s.deployCounter(hash.CRC32("test.timelock_inspection.counter.1"))
+	s.Require().NoError(err)
+
+	data := func() *cell.Cell {
+		b := cell.BeginCell()
+		s.Require().NoError(b.StoreUInt(0xFFFFFFFF, 32)) // Counter doesn't handle bounced messages
+
+		return b.EndCell()
+	}()
 	// Schedule a test operation
 	calls := []timelock.Call{
 		{
-			Target: s.accounts[1],
+			Target: counterAddr,
 			Value:  tlb.MustFromTON("0.03"), // TON implementation enforces min value per call
-			Data:   cell.BeginCell().EndCell(),
+			Data:   data,
 		},
 	}
 	delay := 0
@@ -357,8 +384,8 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 		ChainSelector: types.ChainSelector(cselectors.TON_LOCALNET.Selector),
 		Transactions: []types.Transaction{
 			{
-				To:               s.accounts[1].String(),
-				Data:             cell.BeginCell().EndCell().ToBOC(),
+				To:               counterAddr.String(),
+				Data:             data.ToBOC(),
 				AdditionalFields: json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.03").Nano().Uint64())),
 			},
 		},
@@ -382,7 +409,8 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	s.Require().NotNil(tx.Description)
 
 	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
-	s.Require().NoError(err)
+	s.Require().Error(err)
+	s.Require().ErrorContains(err, "transaction failed with exit code")
 
 	// Check the operation (still) exists
 	isOp, err = inspector.IsOperation(ctx, newTimelockAddr.String(), id)
