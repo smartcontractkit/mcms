@@ -372,11 +372,12 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	})
 	s.Require().NoError(err, "Failed to create TimelockExecutor")
 
+	uninitializedAccount := must(tvm.NewRandomV5R1TestWallet(s.TonClient, cselectors.TON_LOCALNET.ChainID)).Address().String()
 	bop := types.BatchOperation{
 		ChainSelector: types.ChainSelector(cselectors.TON_LOCALNET.Selector),
 		Transactions: []types.Transaction{
 			{
-				To:               s.accounts[1].String(),
+				To:               uninitializedAccount,
 				Data:             cell.BeginCell().EndCell().ToBOC(),
 				AdditionalFields: json.RawMessage(fmt.Sprintf(`{"value": %d}`, tlb.MustFromTON("0.03").Nano().Uint64())),
 			},
