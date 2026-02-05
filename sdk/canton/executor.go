@@ -101,18 +101,28 @@ func (e Executor) ExecuteOperation(
 		contractIds[i] = cantontypes.CONTRACT_ID(cid)
 	}
 
-	// Build ExecuteOp input
-	input := mcms.ExecuteOp{
-		Submitter:   cantontypes.PARTY(e.party),
-		TargetCid:   cantontypes.CONTRACT_ID(cantonOpFields.TargetCid),
-		Op:          cantonOp,
-		OpProof:     opProof,
-		ContractIds: contractIds,
-	}
-
 	// Build exercise command using generated bindings
 	mcmsContract := mcms.MCMS{}
-	exerciseCmd := mcmsContract.ExecuteOp(metadata.MCMAddress, input)
+	var exerciseCmd *model.ExerciseCommand
+	// Use different input struct depending on whether the operation is targeting the MCMS contract itself or another contract
+	if cantonOpFields.TargetInstanceId == "self" {
+		input := mcms.ExecuteMcmsOp{
+			Submitter: cantontypes.PARTY(e.party),
+			Op:        cantonOp,
+			OpProof:   opProof,
+		}
+		exerciseCmd = mcmsContract.ExecuteMcmsOp(metadata.MCMAddress, input)
+	} else {
+		input := mcms.ExecuteOp{
+			Submitter:   cantontypes.PARTY(e.party),
+			TargetCid:   cantontypes.CONTRACT_ID(cantonOpFields.TargetCid),
+			Op:          cantonOp,
+			OpProof:     opProof,
+			ContractIds: contractIds,
+		}
+		exerciseCmd = mcmsContract.ExecuteOp(metadata.MCMAddress, input)
+
+	}
 
 	// List known packages to find the package ID for mcms
 	ListKnownPackagesResp, err := e.client.PackageMng.ListKnownPackages(ctx)
@@ -192,20 +202,26 @@ func (e Executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
-	// Convert root to hex string without 0x prefix
+	// Calculate the hash to sign according to Canton's expectations, and extract signers from it
 	rootHex := hex.EncodeToString(root[:])
+	validUntilHexForSigning := strings.Repeat("0", 64) // TODO: Remove, Canton placeholder (64 zeros)
+	concatenated := rootHex + validUntilHexForSigning
 
-	// Convert proof to Canton TEXT array
-	metadataProof := make([]cantontypes.TEXT, len(proof))
-	for i, p := range proof {
-		metadataProof[i] = cantontypes.TEXT(hex.EncodeToString(p[:]))
+	innerData, err := hex.DecodeString(concatenated)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to decode hex for signing: %w", err)
 	}
+	innerHash := crypto.Keccak256(innerData)
+
+	// Apply EIP-191 prefix
+	prefix := []byte("\x19Ethereum Signed Message:\n32")
+	prefixedData := append(prefix, innerHash...)
+	cantonSignedHash := crypto.Keccak256Hash(prefixedData)
 
 	// Convert signatures to Canton RawSignature array
 	signatures := make([]mcms.RawSignature, len(sortedSignatures))
 	for i, sig := range sortedSignatures {
-		// Recover public key from signature
-		pubKey, err := sig.RecoverPublicKey(root)
+		pubKey, err := sig.RecoverPublicKey(cantonSignedHash)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("failed to recover public key for signature %d: %w", i, err)
 		}
@@ -222,8 +238,6 @@ func (e Executor) SetRoot(
 	// Extract root metadata from ChainMetadata.AdditionalFields
 	var rootMetadata mcms.RootMetadata
 	if len(metadata.AdditionalFields) > 0 {
-		// Parse additional fields to extract Canton-specific metadata
-		// Expected format: {"chainId": int, "multisigId": string, "preOpCount": int, "postOpCount": int, "overridePreviousRoot": bool}
 		var additionalFields map[string]interface{}
 		if err := json.Unmarshal(metadata.AdditionalFields, &additionalFields); err != nil {
 			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
@@ -247,10 +261,12 @@ func (e Executor) SetRoot(
 		}
 	}
 
-	// Build SetRoot input
-	// validUntil is in seconds (uint32), convert to time.Time for TIMESTAMP
-	// Canton expects UTC time and validates: now < validUntil
-	// Add extra buffer to account for ledger time processing
+	// Convert proof to Canton TEXT array
+	metadataProof := make([]cantontypes.TEXT, len(proof))
+	for i, p := range proof {
+		metadataProof[i] = cantontypes.TEXT(hex.EncodeToString(p[:]))
+	}
+
 	validUntilTime := time.Unix(time.Unix(int64(validUntil), 0).UnixMicro(), 0)
 	input := mcms.SetRoot{
 		Submitter:     cantontypes.PARTY(e.party),
@@ -265,7 +281,6 @@ func (e Executor) SetRoot(
 	mcmsContract := mcms.MCMS{}
 	exerciseCmd := mcmsContract.SetRoot(metadata.MCMAddress, input)
 
-	// List known packages to find the package ID for mcms
 	ListKnownPackagesResp, err := e.client.PackageMng.ListKnownPackages(ctx)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to list known packages: %w", err)
