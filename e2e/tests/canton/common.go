@@ -96,10 +96,11 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Part
 
 	// Create MCMS contract
 	mcmsContract := mcms.MCMS{
-		Owner:   types.PARTY(participant.Party),
-		Role:    role,
-		ChainId: types.INT64(chainId),
-		McmsId:  types.TEXT(mcmsId),
+		Owner:      types.PARTY(participant.Party),
+		InstanceId: types.TEXT(mcmsId),
+		Role:       role,
+		ChainId:    types.INT64(chainId),
+		McmsId:     types.TEXT(mcmsId),
 		Config: mcms.MultisigConfig{
 			Signers:      []mcms.SignerInfo{},
 			GroupQuorums: []types.INT64{types.INT64(1)},
@@ -118,7 +119,7 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Part
 			UserID:     participant.UserName,
 			CommandID:  commandID,
 			ActAs:      []string{participant.Party},
-			Commands:   []*model.Command{{Command: mcmsContract.CreateCommand()}},
+			Commands:   []*model.Command{{Command: mcmsContract.CreateCommandWithPackageID(s.packageIDs[0])}},
 		},
 	}
 
