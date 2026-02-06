@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -41,7 +41,7 @@ func NewEncoder(
 }
 
 func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
-	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -80,7 +80,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 }
 
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
-	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return common.Hash{}, err
 	}

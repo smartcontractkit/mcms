@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/aptos-labs/aptos-go-sdk"
 
@@ -103,7 +103,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 		return types.TransactionResult{
 			Hash:        "", // Returning no hash since the transaction hasn't been sent yet.
-			ChainFamily: chain_selectors.FamilyAptos,
+			ChainFamily: chainsel.FamilyAptos,
 			RawData:     tx, // will be of type types.Transaction
 		}, nil
 	}
@@ -123,7 +123,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 	return types.TransactionResult{
 		Hash:        tx.Hash,
-		ChainFamily: chain_selectors.FamilyAptos,
+		ChainFamily: chainsel.FamilyAptos,
 		RawData:     tx, // will be of type *api.PendingTransaction
 	}, nil
 }

@@ -27,7 +27,7 @@ import (
 
   "github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
   rpc2 "github.com/gagliardetto/solana-go/rpc"
-  chain_selectors "github.com/smartcontractkit/chain-selectors"
+  chainsel "github.com/smartcontractkit/chain-selectors"
 
   "github.com/smartcontractkit/mcms"
   "github.com/smartcontractkit/mcms/sdk"
@@ -52,8 +52,8 @@ func main() {
   }
 
   // 1.1 Convert to MCMS proposal
-  selectorEVM := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector)
-  selectorSolana := types.ChainSelector(chain_selectors.SOLANA_DEVNET.Selector)
+  selectorEVM := types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
+  selectorSolana := types.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
 
   convertersMap := make(map[types.ChainSelector]sdk.TimelockConverter)
   convertersMap[selectorEVM] = &evm.TimelockConverter{}

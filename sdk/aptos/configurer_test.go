@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 
@@ -115,7 +115,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			},
 			want: types.TransactionResult{
 				Hash:        "0x123456789",
-				ChainFamily: cselectors.FamilyAptos,
+				ChainFamily: chainsel.FamilyAptos,
 				RawData: &api.PendingTransaction{
 					Hash: "0x123456789",
 				},
@@ -215,7 +215,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			},
 			want: types.TransactionResult{
 				Hash:        "", // Hash is empty when not sending transaction
-				ChainFamily: cselectors.FamilyAptos,
+				ChainFamily: chainsel.FamilyAptos,
 				RawData: types.Transaction{
 					OperationMetadata: types.OperationMetadata{},
 					To:                mustHexToAddress("0x1234").StringLong(),

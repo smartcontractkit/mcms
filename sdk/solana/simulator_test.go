@@ -10,7 +10,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/programs/system"
@@ -117,7 +117,7 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 	auth, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
 
-	selector := cselectors.SOLANA_DEVNET.Selector
+	selector := chainsel.SOLANA_DEVNET.Selector
 
 	testWallet, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)

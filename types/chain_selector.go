@@ -1,11 +1,13 @@
 package types //nolint:revive,nolintlint // allow pkg name 'types'
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"slices"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
+	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 )
 
 // ChainSelector is a unique identifier for a chain.
@@ -24,23 +26,27 @@ var (
 
 // supportedFamilies is a list of supported chain families that MCMS supports
 var supportedFamilies = []string{
-	cselectors.FamilyEVM,
-	cselectors.FamilySolana,
-	cselectors.FamilyAptos,
-	cselectors.FamilySui,
-	cselectors.FamilyTon,
+	chainsel.FamilyEVM,
+	chainsel.FamilySolana,
+	chainsel.FamilyAptos,
+	chainsel.FamilySui,
+	chainsel.FamilyTon,
 }
 
 // GetChainSelectorFamily returns the family of the chain selector.
 func GetChainSelectorFamily(sel ChainSelector) (string, error) {
-	f, err := cselectors.GetSelectorFamily(uint64(sel))
+	// TODO: pass this ctx as a parameter.
+	// this function is used in a lot of places, and passing the context through all of them would be a big breaking change
+	// so a bigger refactor may be needed to properly pass context through all the layers that use this function
+	ctx := context.Background()
+	details, err := chainselremote.GetChainDetailsBySelector(ctx, uint64(sel))
 	if err != nil {
 		return "", fmt.Errorf("%w for selector %d", ErrChainFamilyNotFound, sel)
 	}
 
-	if !slices.Contains(supportedFamilies, f) {
-		return "", fmt.Errorf("%w: %s", ErrUnsupportedChainFamily, f)
+	if !slices.Contains(supportedFamilies, details.Family) {
+		return "", fmt.Errorf("%w: %s", ErrUnsupportedChainFamily, details.Family)
 	}
 
-	return f, nil
+	return details.Family, nil
 }

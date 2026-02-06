@@ -7,7 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -37,7 +37,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			"RBACTimelock",
 			[]string{"tag1", "tag2"},
 		))},
-		ChainSelector: types.ChainSelector(cselectors.TON_TESTNET.Selector),
+		ChainSelector: types.ChainSelector(chainsel.TON_TESTNET.Selector),
 	}
 
 	testCases := []struct {
@@ -97,7 +97,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 					Data:              []byte("0x1234"),
 					AdditionalFields:  []byte("invalid"),
 				}},
-				ChainSelector: types.ChainSelector(cselectors.TON_TESTNET.Selector),
+				ChainSelector: types.ChainSelector(chainsel.TON_TESTNET.Selector),
 			},
 			delay:       "1h",
 			operation:   types.TimelockActionSchedule,
@@ -114,7 +114,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 					Data:              []byte("0x1234"),
 					AdditionalFields:  []byte("{\"value\":1000}"),
 				}},
-				ChainSelector: types.ChainSelector(cselectors.TON_TESTNET.Selector),
+				ChainSelector: types.ChainSelector(chainsel.TON_TESTNET.Selector),
 			},
 			delay:       "1h",
 			operation:   types.TimelockActionSchedule,

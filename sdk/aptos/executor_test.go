@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 
@@ -95,7 +95,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			},
 			want: types.TransactionResult{
 				Hash:        "0xdeadbeef",
-				ChainFamily: cselectors.FamilyAptos,
+				ChainFamily: chainsel.FamilyAptos,
 				RawData:     &api.PendingTransaction{Hash: "0xdeadbeef"},
 			},
 			wantErr: assert.NoError,
@@ -159,7 +159,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 			},
 			want: types.TransactionResult{
 				Hash:        "0xdeadbeef3",
-				ChainFamily: cselectors.FamilyAptos,
+				ChainFamily: chainsel.FamilyAptos,
 				RawData:     &api.PendingTransaction{Hash: "0xdeadbeef3"},
 			},
 			wantErr: assert.NoError,
@@ -465,7 +465,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 			},
 			want: types.TransactionResult{
 				Hash:        "0x111111",
-				ChainFamily: cselectors.FamilyAptos,
+				ChainFamily: chainsel.FamilyAptos,
 				RawData:     &api.PendingTransaction{Hash: "0x111111"},
 			},
 			wantErr: assert.NoError,

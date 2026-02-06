@@ -11,7 +11,7 @@ import (
 
 	solana2 "github.com/gagliardetto/solana-go"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
@@ -73,13 +73,13 @@ func TestValidateChainMetadata(t *testing.T) {
 	}{
 		{
 			name:             "valid Solana metadata",
-			chainSelector:    types.ChainSelector(cselectors.SOLANA_DEVNET.Selector),
+			chainSelector:    types.ChainSelector(chainsel.SOLANA_DEVNET.Selector),
 			additionalFields: types.ChainMetadata{AdditionalFields: validMetadataJSON},
 			expectedErr:      nil,
 		},
 		{
 			name:             "invalid Solana metadata value",
-			chainSelector:    types.ChainSelector(cselectors.SOLANA_DEVNET.Selector),
+			chainSelector:    types.ChainSelector(chainsel.SOLANA_DEVNET.Selector),
 			additionalFields: types.ChainMetadata{AdditionalFields: invalidMetadataJSON},
 			expectedErr:      errors.New("Key: 'AdditionalFieldsMetadata.ProposerRoleAccessController' Error:Field validation for 'ProposerRoleAccessController' failed on the 'required' tag\nKey: 'AdditionalFieldsMetadata.CancellerRoleAccessController' Error:Field validation for 'CancellerRoleAccessController' failed on the 'required' tag\nKey: 'AdditionalFieldsMetadata.BypasserRoleAccessController' Error:Field validation for 'BypasserRoleAccessController' failed on the 'required' tag"),
 		},
@@ -109,7 +109,7 @@ func TestValidateChainMetadata(t *testing.T) {
 		},
 		{
 			name:             "invalid JSON for Solana metadata",
-			chainSelector:    types.ChainSelector(cselectors.SOLANA_DEVNET.Selector),
+			chainSelector:    types.ChainSelector(chainsel.SOLANA_DEVNET.Selector),
 			additionalFields: types.ChainMetadata{AdditionalFields: []byte("invalid JSON")},
 			expectedErr:      errors.New("unable to unmarshal additional fields: invalid character 'i' looking for beginning of value"),
 		},
@@ -194,7 +194,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		{
 			name: "valid EVM fields",
 			operation: types.Operation{
-				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector),
 				Transaction: types.Transaction{
 					AdditionalFields: validEVMFieldsJSON,
 				},
@@ -205,7 +205,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		{
 			name: "invalid EVM fields",
 			operation: types.Operation{
-				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector),
 				Transaction: types.Transaction{
 					AdditionalFields: invalidEVMFieldsJSON,
 				},
@@ -215,7 +215,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		{
 			name: "valid Solana fields",
 			operation: types.Operation{
-				ChainSelector: types.ChainSelector(cselectors.SOLANA_DEVNET.Selector),
+				ChainSelector: types.ChainSelector(chainsel.SOLANA_DEVNET.Selector),
 				Transaction: types.Transaction{
 					AdditionalFields: validSolanaFieldsJSON,
 				},
@@ -275,7 +275,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		{
 			name: "invalid JSON for EVM fields",
 			operation: types.Operation{
-				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector),
 				Transaction: types.Transaction{
 					AdditionalFields: []byte("invalid JSON"),
 				},

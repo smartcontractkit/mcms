@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
@@ -31,7 +31,7 @@ func TestNewExecutor(t *testing.T) {
 
 	client := &rpc.Client{}
 	auth := solana.MustPrivateKeyFromBase58("DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc")
-	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
+	chainSelector := types.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
 	encoder := NewEncoder(chainSelector, 1, false)
 
 	executor := NewExecutor(encoder, client, auth)
@@ -46,7 +46,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) { //nolint:paralleltest
 		proof    []common.Hash
 		op       types.Operation
 	}
-	selector := cselectors.SOLANA_DEVNET.Selector
+	selector := chainsel.SOLANA_DEVNET.Selector
 	auth, err := solana.PrivateKeyFromBase58(dummyPrivateKey)
 	require.NoError(t, err)
 	contractID := fmt.Sprintf("%s.%s", testMCMProgramID.String(), testPDASeed)
@@ -186,7 +186,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) { //nolint:paralleltest
 
 func TestExecutor_SetRoot(t *testing.T) { //nolint:paralleltest
 	ctx := context.Background()
-	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
+	chainSelector := types.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
 	auth, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
 

@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -124,10 +124,12 @@ func TestEncoder_HashMetadata(t *testing.T) {
 
 func TestEncoder_ToGethOperation(t *testing.T) {
 	t.Parallel()
-
+	mapsels, err := chainselremote.EvmChainIdToChainSelector(t.Context())
+	require.NoError(t, err)
 	var (
-		evmChainID    = uint64(1)
-		chainSelector = types.ChainSelector(cselectors.EvmChainIdToChainSelector()[evmChainID])
+		evmChainID = uint64(1)
+
+		chainSelector = types.ChainSelector(mapsels[evmChainID])
 
 		// Static argument values to ToGethOperation since they don't affect the test
 		giveOpCount  = uint32(0)

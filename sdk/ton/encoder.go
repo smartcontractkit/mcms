@@ -10,7 +10,7 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
@@ -124,7 +124,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 }
 
 func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (mcms.Op, error) {
-	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.TonChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return mcms.Op{}, &sdkerrors.InvalidChainIDError{ReceivedChainID: e.ChainSelector}
 	}
@@ -162,7 +162,7 @@ func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op t
 }
 
 func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadata, error) {
-	chainID, err := chain_selectors.TonChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.TonChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return mcms.RootMetadata{}, &sdkerrors.InvalidChainIDError{ReceivedChainID: e.ChainSelector}
 	}

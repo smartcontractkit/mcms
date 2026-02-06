@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
@@ -288,13 +288,13 @@ func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sd
 
 		var converter sdk.TimelockConverter
 		switch fam {
-		case chain_selectors.FamilyEVM:
+		case chainsel.FamilyEVM:
 			converter = evm.NewTimelockConverter()
-		case chain_selectors.FamilySolana:
+		case chainsel.FamilySolana:
 			converter = solana.NewTimelockConverter()
-		case chain_selectors.FamilyAptos:
+		case chainsel.FamilyAptos:
 			converter = aptos.NewTimelockConverter()
-		case chain_selectors.FamilySui:
+		case chainsel.FamilySui:
 			converter, err = sui.NewTimelockConverter()
 			if err != nil {
 				return nil, fmt.Errorf("failed to create Sui timelock converter: %w", err)

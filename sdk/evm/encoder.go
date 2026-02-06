@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"context"
 	"encoding/json"
 	"math/big"
 
@@ -95,7 +96,10 @@ func (e *Encoder) ToGethOperation(
 	metadata types.ChainMetadata,
 	op types.Operation,
 ) (bindings.ManyChainMultiSigOp, error) {
-	evmChainID, err := getEVMChainID(e.ChainSelector, e.IsSim)
+
+	// TODO: passing this as param requires a breaking change to the Encoder interfaces
+	// which requires changes too all chain specific SDKs. Consider refactoring later.
+	evmChainID, err := getEVMChainID(context.Background(), e.ChainSelector, e.IsSim)
 	if err != nil {
 		return bindings.ManyChainMultiSigOp{}, err
 	}
@@ -119,7 +123,9 @@ func (e *Encoder) ToGethOperation(
 // ToGethRootMetadata converts the MCMS ChainMetadata into the format expected by the EVM
 // ManyChainMultiSig contract.
 func (e *Encoder) ToGethRootMetadata(metadata types.ChainMetadata) (bindings.ManyChainMultiSigRootMetadata, error) {
-	evmChainID, err := getEVMChainID(e.ChainSelector, e.IsSim)
+	// TODO: passing this as param requires a breaking change to the Encoder interfaces
+	// which requires changes too all chain specific SDKs. Consider refactoring later.
+	evmChainID, err := getEVMChainID(context.Background(), e.ChainSelector, e.IsSim)
 	if err != nil {
 		return bindings.ManyChainMultiSigRootMetadata{}, err
 	}

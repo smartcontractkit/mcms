@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 
 	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
@@ -61,7 +61,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 
 	s.mcmsContract = s.deployMCMSContract()
 	s.timelockContract = s.deployTimelockContract(s.mcmsContract.Address().String())
-	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
+	chainDetails, err := chainselremote.GetChainDetailsByChainIDAndFamily(s.T().Context(), s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)
 	s.chainSelector = mcmtypes.ChainSelector(chainDetails.ChainSelector)
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 	"github.com/smartcontractkit/mcms/types"
@@ -39,7 +39,7 @@ func TestTimelockExecutor_Execute(t *testing.T) { //nolint:paralleltest
 		predecessor     [32]byte
 		timelockAddress string
 	}
-	selector := cselectors.SOLANA_DEVNET.Selector
+	selector := chainsel.SOLANA_DEVNET.Selector
 	auth, err := solana.PrivateKeyFromBase58(dummyPrivateKey)
 	require.NoError(t, err)
 

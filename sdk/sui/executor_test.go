@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 
 	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
@@ -226,7 +226,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 		mcmsPackageID: "0x123456789abcdef",
 		mcmsObj:       mcmsObj,
 		Encoder: &Encoder{
-			ChainSelector:        types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector:        types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:              5,
 			OverridePreviousRoot: false,
 		},
@@ -296,7 +296,7 @@ func TestExecutor_ExecuteOperation_InvalidAdditionalFields(t *testing.T) {
 		mcmsObj:       mcmsObj,
 		client:        mockClient,
 		Encoder: &Encoder{
-			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
 	}
@@ -343,7 +343,7 @@ func TestExecutor_ExecuteOperation_Success_ScheduleBatch(t *testing.T) {
 		accountObj:    accountObj,
 		client:        mockClient,
 		Encoder: &Encoder{
-			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
 		// Mock ExecutePTB function directly in the struct
@@ -437,7 +437,7 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 		accountObj:    accountObj,
 		client:        mockClient,
 		Encoder: &Encoder{
-			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
 		// Mock ExecutePTB function directly in the struct
@@ -543,7 +543,7 @@ func TestExecutor_ExecuteOperation_Success_Cancel(t *testing.T) {
 		accountObj:    accountObj,
 		client:        mockClient,
 		Encoder: &Encoder{
-			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
 		// Mock ExecutePTB function directly in the struct
@@ -638,7 +638,7 @@ func TestExecutor_ExecuteOperation_Cancel_InvalidOperationID(t *testing.T) {
 		accountObj:    accountObj,
 		client:        mockClient,
 		Encoder: &Encoder{
-			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
 	}
