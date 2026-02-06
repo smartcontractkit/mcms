@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
@@ -72,13 +72,13 @@ func (e *Executor) ExecuteOperation(
 		execErr := BuildExecutionError(ctx, err, txPreview, &opts, mcmsAddr, e.client, timelockAddr, timelockCallData)
 
 		return types.TransactionResult{
-			ChainFamily: chain_selectors.FamilyEVM,
+			ChainFamily: chainsel.FamilyEVM,
 		}, execErr
 	}
 
 	return types.TransactionResult{
 		Hash:        tx.Hash().Hex(),
-		ChainFamily: chain_selectors.FamilyEVM,
+		ChainFamily: chainsel.FamilyEVM,
 		RawData:     tx,
 	}, err
 }
@@ -135,13 +135,13 @@ func (e *Executor) SetRoot(
 		// SetRoot doesn't involve timelock, so pass empty values
 		execErr := BuildExecutionError(ctx, err, txPreview, &opts, mcmsAddr, e.client, common.Address{}, nil)
 		return types.TransactionResult{
-			ChainFamily: chain_selectors.FamilyEVM,
+			ChainFamily: chainsel.FamilyEVM,
 		}, execErr
 	}
 
 	return types.TransactionResult{
 		Hash:        tx.Hash().Hex(),
-		ChainFamily: chain_selectors.FamilyEVM,
+		ChainFamily: chainsel.FamilyEVM,
 		RawData:     tx,
 	}, err
 }

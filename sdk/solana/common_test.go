@@ -9,7 +9,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/types"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
@@ -25,7 +25,7 @@ import (
 )
 
 var (
-	testChainSelector     = types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
+	testChainSelector     = types.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
 	testTimelockProgramID = solana.MustPublicKeyFromBase58("LoCoNsJFuhTkSQjfdDfn3yuwqhSYoPujmviRHVCzsqn")
 	testMCMProgramID      = solana.MustPublicKeyFromBase58("6UmMZr5MEqiKWD5jqTJd1WCR5kT8oZuFYBLJFi1o6GQX")
 	testCPIStubProgramID  = solana.MustPublicKeyFromBase58("4HeqEoSyfYpeC2goFLj9eHgkxV33mR5G7JYAbRsN14uQ")

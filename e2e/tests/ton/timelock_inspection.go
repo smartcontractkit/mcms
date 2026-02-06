@@ -14,7 +14,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
@@ -381,7 +381,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	s.Require().NoError(err, "Failed to create TimelockExecutor")
 
 	bop := types.BatchOperation{
-		ChainSelector: types.ChainSelector(cselectors.TON_LOCALNET.Selector),
+		ChainSelector: types.ChainSelector(chainsel.TON_LOCALNET.Selector),
 		Transactions: []types.Transaction{
 			{
 				To:               counterAddr.String(),

@@ -5,7 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
+	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 
 	"github.com/block-vision/sui-go-sdk/sui"
 
@@ -45,7 +46,7 @@ func NewConfigurer(client sui.ISuiAPI, signer bindutils.SuiSigner, role Timelock
 }
 
 func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
-	chainID, err := cselectors.SuiChainIdFromSelector(c.chainSelector)
+	chainID, err := chainsel.SuiChainIdFromSelector(c.chainSelector)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -82,7 +83,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
-		ChainFamily: cselectors.FamilySui,
+		ChainFamily: chainsel.FamilySui,
 		RawData:     tx,
 	}, nil
 }

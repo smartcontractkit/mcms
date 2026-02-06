@@ -20,11 +20,15 @@ object.
 package main
 
 import (
-  "log"
-  "os"
-  "io"
+"io"
+"log"
+"os"
 
-  "github.com/smartcontractkit/mcms"
+
+
+
+
+"github.com/smartcontractkit/mcms"
 )
 
 func main() {
@@ -49,7 +53,7 @@ For the JSON structure of the proposal please check the [MCMS Proposal Format Do
 
 ### Build Proposal Given Staged but Non-Executed Predecessor Proposals
 
-In scenarios where a proposal is generated with the assumption that multiple proposals are executed beforehand, 
+In scenarios where a proposal is generated with the assumption that multiple proposals are executed beforehand,
 you can enable proposals to be signed in parallel with a pre-determined execution order. This can be achieved
 by passing a list of files using the `WithPredecessors` functional option, as shown below:
 
@@ -57,9 +61,9 @@ by passing a list of files using the `WithPredecessors` functional option, as sh
 package main
 
 import (
+  "io"
   "log"
   "os"
-  "io"
 
   "github.com/smartcontractkit/mcms"
 )
@@ -102,7 +106,7 @@ package main
 import (
   "log"
 
-  chain_selectors "github.com/smartcontractkit/chain-selectors"
+  chainsel "github.com/smartcontractkit/chain-selectors"
 
   "github.com/smartcontractkit/mcms"
   "github.com/smartcontractkit/mcms/types"
@@ -111,7 +115,7 @@ import (
 func main() {
   // Step 1: Initialize the ProposalBuilder
   timelockBuilder := mcms.NewProposalBuilder()
-  selector := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector)
+  selector := types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
 
   // Step 2: Set Proposal Details
   timelockBuilder.
@@ -198,7 +202,7 @@ package main
 import (
   "log"
 
-  chain_selectors "github.com/smartcontractkit/chain-selectors"
+  chainsel "github.com/smartcontractkit/chain-selectors"
 
   "github.com/smartcontractkit/mcms"
   "github.com/smartcontractkit/mcms/types"
@@ -207,7 +211,7 @@ import (
 func main() {
   // Step 1: Initialize the ProposalBuilder
   builder := mcms.NewTimelockProposalBuilder()
-  selector := types.ChainSelector(chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector)
+  selector := types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
 
   delay, err := types.ParseDuration("1h")
   if err != nil {

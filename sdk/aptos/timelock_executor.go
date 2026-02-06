@@ -8,7 +8,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -78,7 +78,7 @@ func (t *TimelockExecutor) Execute(
 
 	return types.TransactionResult{
 		Hash:        tx.Hash,
-		ChainFamily: chain_selectors.FamilyAptos,
+		ChainFamily: chainsel.FamilyAptos,
 		RawData:     tx,
 	}, nil
 }

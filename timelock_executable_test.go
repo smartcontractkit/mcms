@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
@@ -207,7 +207,7 @@ func TestTimelockExecutable_Execute(t *testing.T) {
 					Execute(ctx, mock.Anything, "0x5678", mock.Anything, mock.Anything).
 					Return(types.TransactionResult{
 						Hash:        "signature",
-						ChainFamily: chain_selectors.FamilyEVM,
+						ChainFamily: chainsel.FamilyEVM,
 					}, nil).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
@@ -225,7 +225,7 @@ func TestTimelockExecutable_Execute(t *testing.T) {
 					Execute(ctx, mock.Anything, "0xABCD", mock.Anything, mock.Anything).
 					Return(types.TransactionResult{
 						Hash:        "signature",
-						ChainFamily: chain_selectors.FamilyEVM,
+						ChainFamily: chainsel.FamilyEVM,
 					}, nil).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 

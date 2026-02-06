@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
@@ -69,7 +69,7 @@ func (s *SetRootTestSuite) SetupSuite() {
 
 	s.deployMCMSContract()
 
-	chainDetails, err := cselectors.GetChainDetailsByChainIDAndFamily(s.TonBlockchain.ChainID, s.TonBlockchain.Family)
+	chainDetails, err := chainsel.GetChainDetailsByChainIDAndFamily(s.TonBlockchain.ChainID, s.TonBlockchain.Family)
 	s.Require().NoError(err)
 	s.chainSelector = types.ChainSelector(chainDetails.ChainSelector)
 }
