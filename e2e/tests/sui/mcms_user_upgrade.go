@@ -111,10 +111,12 @@ func RunMCMSUserUpgradeProposal(s *MCMSUserUpgradeTestSuite) {
 	s.Require().NoError(err)
 
 	compiledPackage, err := bind.CompilePackage(contracts.MCMSUserV2, map[string]string{
-		"mcms":       s.mcmsPackageID,
-		"mcms_owner": signerAddr,
-		"mcms_test":  "0x0",
-	})
+		"mcms":                      s.mcmsPackageID,
+		"mcms_owner":                signerAddr,
+		"original_mcms_user_v2_pkg": s.mcmsUserPackageID,
+		"signer":                    signerAddr,
+		"mcms_test":                 "0x0",
+	}, false, s.SuiNodeURL)
 	s.Require().NoError(err)
 
 	newAddress := executeUpgradePTB(s.T(), s, compiledPackage, proposerConfig)

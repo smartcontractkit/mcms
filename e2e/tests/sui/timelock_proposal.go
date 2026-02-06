@@ -243,7 +243,7 @@ func RunAcceptOwnershipProposal(s *TimelockProposalTestSuite, role suisdk.Timelo
 			s.Require().NoError(err, "IsOperationDone should not return an error")
 			s.Require().False(isDone, "Operation should not be done before execution")
 
-			time.Sleep(delay5s)
+			time.Sleep(delay5s + time.Second*10) // Sleep for delay duration plus a buffer to ensure the operation is ready
 
 			// The operation should still exist
 			exists, err = timelockInspector.IsOperation(s.T().Context(), s.timelockObj, scheduledOpID)
