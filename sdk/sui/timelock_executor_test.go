@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 
 	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
@@ -197,7 +197,7 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 	// Verify the result
 	require.NoError(t, err)
 	assert.Equal(t, "9WzSXdwbky8tNbH7juvyaui4QzMUYEjdCEKMrMgLhXHT", result.Hash)
-	assert.Equal(t, cselectors.FamilySui, result.ChainFamily)
+	assert.Equal(t, chainsel.FamilySui, result.ChainFamily)
 	assert.NotNil(t, result.RawData)
 }
 

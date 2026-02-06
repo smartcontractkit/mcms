@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"time"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
@@ -43,7 +43,7 @@ func SendTx(ctx context.Context, opts TxOpts) (types.TransactionResult, error) {
 
 	return types.TransactionResult{
 		Hash:        hex.EncodeToString(tx.Hash),
-		ChainFamily: cselectors.FamilyTon,
+		ChainFamily: chainsel.FamilyTon,
 		RawData:     tx, // *tlb.Transaction
 	}, nil
 }

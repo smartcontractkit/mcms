@@ -6,7 +6,6 @@ import (
 	"math/big"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
-	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 
 	"github.com/block-vision/sui-go-sdk/sui"
 
