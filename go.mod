@@ -1,6 +1,6 @@
 module github.com/smartcontractkit/mcms
 
-go 1.25.3
+go 1.25.5
 
 //nolint:gomoddirectives // allow replace directive
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
@@ -20,7 +20,7 @@ require (
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20251024142440-51f2ad2652a2
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
-	github.com/smartcontractkit/chainlink-sui v0.0.0-20251104205009-00bd79b81471
+	github.com/smartcontractkit/chainlink-sui v0.0.0-20260205175622-33e65031f9a9
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.12.1
 	github.com/smartcontractkit/chainlink-ton v0.0.0-20260204205804-642f6ebe4e7e
 	github.com/smartcontractkit/freeport v0.1.3-0.20250716200817-cb5dfd0e369e
@@ -43,7 +43,6 @@ require (
 	github.com/Masterminds/semver/v3 v3.4.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/ProjectZKM/Ziren/crates/go-runtime/zkvm_runtime v0.0.0-20251001021608-1fe7b43fc4d6 // indirect
-	github.com/TyphonHill/go-mermaid v1.0.0 // indirect
 	github.com/VictoriaMetrics/fastcache v1.13.0 // indirect
 	github.com/XSAM/otelsql v0.37.0 // indirect
 	github.com/bahlo/generic-list-go v0.2.0 // indirect

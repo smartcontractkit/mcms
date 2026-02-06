@@ -61,6 +61,7 @@ type TestSetup struct {
 	AptosBlockchain  *blockchain.Output
 	SuiClient        sui.ISuiAPI
 	SuiBlockchain    *blockchain.Output
+	SuiNodeURL       string
 	TonClient        *ton.APIClient
 	TonBlockchain    *blockchain.Output
 	Config
@@ -186,11 +187,13 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 		var (
 			suiClient           sui.ISuiAPI
 			suiBlockchainOutput *blockchain.Output
+			suiNodeURL          string
 		)
 		if in.Settings.LocalSuiNodeURL != "" {
 			// Connect to local Sui node (highest priority)
-			suiClient = sui.NewSuiClient(in.Settings.LocalSuiNodeURL)
-			t.Logf("Connected to local Sui node @ %s", in.Settings.LocalSuiNodeURL)
+			suiNodeURL = in.Settings.LocalSuiNodeURL
+			suiClient = sui.NewSuiClient(suiNodeURL)
+			t.Logf("Connected to local Sui node @ %s", suiNodeURL)
 		} else if in.SuiChain != nil {
 			// Use blockchain network setup (fallback)
 			ports := freeport.GetN(t, 2)
@@ -202,11 +205,11 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			suiBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.SuiChain)
 			require.NoError(t, err, "Failed to initialize Sui blockchain")
 
-			nodeURL := suiBlockchainOutput.Nodes[0].ExternalHTTPUrl
-			suiClient = sui.NewSuiClient(nodeURL)
+			suiNodeURL = suiBlockchainOutput.Nodes[0].ExternalHTTPUrl
+			suiClient = sui.NewSuiClient(suiNodeURL)
 
 			// Test liveness, will also fetch ChainID
-			t.Logf("Initialized Sui RPC client @ %s", nodeURL)
+			t.Logf("Initialized Sui RPC client @ %s", suiNodeURL)
 		}
 
 		var (
@@ -243,6 +246,7 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			AptosBlockchain:  aptosBlockchainOutput,
 			SuiClient:        suiClient,
 			SuiBlockchain:    suiBlockchainOutput,
+			SuiNodeURL:       suiNodeURL,
 			TonClient:        tonClient,
 			TonBlockchain:    tonBlockchainOutput,
 			Config:           *in,
