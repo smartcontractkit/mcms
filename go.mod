@@ -27,17 +27,13 @@ require (
 	github.com/samber/lo v1.52.0
 	github.com/smartcontractkit/chain-selectors v1.0.91
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20251024142440-51f2ad2652a2
+	github.com/smartcontractkit/chainlink-canton v0.0.0-20260202190435-99f4e19d8d2e
+	github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260202190435-99f4e19d8d2e
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260205175622-33e65031f9a9
-	github.com/smartcontractkit/chainlink-testing-framework/framework v0.12.1
-	github.com/smartcontractkit/chainlink-ton v0.0.0-20260204205804-642f6ebe4e7e
-	github.com/smartcontractkit/chainlink-canton v0.0.0-20260202190435-99f4e19d8d2e
-	github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260202190435-99f4e19d8d2e
-	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260119161343-499241536dea
-	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20250908144012-8184001834b5
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.13.9
-	github.com/smartcontractkit/chainlink-ton v0.0.0-20260130134551-8ebf4f73b668
+	github.com/smartcontractkit/chainlink-ton v0.0.0-20260204205804-642f6ebe4e7e
 	github.com/smartcontractkit/freeport v0.1.3-0.20250716200817-cb5dfd0e369e
 	github.com/spf13/cast v1.10.0
 	github.com/stretchr/testify v1.11.1
