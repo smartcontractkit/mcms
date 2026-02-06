@@ -88,7 +88,7 @@ func BuildInspector(
 	case chainsel.FamilyTon:
 		client, ok := chains.TonClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Sui chain client for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing Ton chain client for selector %d", rawSelector)
 		}
 
 		return ton.NewInspector(client), nil
