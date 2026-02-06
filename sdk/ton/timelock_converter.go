@@ -23,21 +23,21 @@ import (
 // Default amount to send with timelock transactions (to cover gas fees)
 var DefaultSendAmount = tlb.MustFromTON("0.15")
 
-var _ sdk.TimelockConverter = (*timelockConverter)(nil)
+var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
-type timelockConverter struct {
+type TimelockConverter struct {
 	// Transaction opts
 	amount tlb.Coins
 }
 
 // NewTimelockConverter creates a new TimelockConverter
 func NewTimelockConverter(amount tlb.Coins) sdk.TimelockConverter {
-	return &timelockConverter{
+	return &TimelockConverter{
 		amount: amount,
 	}
 }
 
-func (t *timelockConverter) ConvertBatchToChainOperations(
+func (t *TimelockConverter) ConvertBatchToChainOperations(
 	_ context.Context,
 	metadata types.ChainMetadata,
 	bop types.BatchOperation,

@@ -9,7 +9,8 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
-	sdkSui "github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -78,12 +79,19 @@ func BuildInspector(
 		if !ok {
 			return nil, fmt.Errorf("missing Sui chain client for selector %d", rawSelector)
 		}
-		suiMetadata, err := sdkSui.SuiMetadata(metadata)
+		suiMetadata, err := sui.SuiMetadata(metadata)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing sui metadata: %w", err)
 		}
 
-		return sdkSui.NewInspector(client, signer, suiMetadata.McmsPackageID, suiMetadata.Role)
+		return sui.NewInspector(client, signer, suiMetadata.McmsPackageID, suiMetadata.Role)
+	case chainsel.FamilyTon:
+		client, ok := chains.TonClient(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing Ton chain client for selector %d", rawSelector)
+		}
+
+		return ton.NewInspector(client), nil
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}
