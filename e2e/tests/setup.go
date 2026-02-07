@@ -43,6 +43,7 @@ type Config struct {
 	AptosChain  *blockchain.Input `toml:"aptos_config"`
 	SuiChain    *blockchain.Input `toml:"sui_config"`
 	TonChain    *blockchain.Input `toml:"ton_config"`
+	CantonChain *blockchain.Input `toml:"canton_config"`
 
 	Settings struct {
 		PrivateKeys     []string `toml:"private_keys"`
@@ -64,6 +65,7 @@ type TestSetup struct {
 	SuiNodeURL       string
 	TonClient        *ton.APIClient
 	TonBlockchain    *blockchain.Output
+	CantonBlockchain *blockchain.Output
 	Config
 }
 
@@ -236,6 +238,21 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			t.Logf("Initialized TON RPC client @ %s", nodeURL)
 		}
 
+		var (
+			cantonBlockchainOutput *blockchain.Output
+		)
+		if in.CantonChain != nil {
+			// Use blockchain network setup (fallback)
+			ports := freeport.GetN(t, 2)
+			port := ports[0]
+			faucetPort := ports[1]
+			in.CantonChain.Port = strconv.Itoa(port)
+			in.CantonChain.FaucetPort = strconv.Itoa(faucetPort)
+
+			cantonBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.CantonChain)
+			require.NoError(t, err, "Failed to initialize Canton blockchain")
+		}
+
 		sharedSetup = &TestSetup{
 			ClientA:          ethClientA,
 			ClientB:          ethClientB,
@@ -249,6 +266,7 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			SuiNodeURL:       suiNodeURL,
 			TonClient:        tonClient,
 			TonBlockchain:    tonBlockchainOutput,
+			CantonBlockchain: cantonBlockchainOutput,
 			Config:           *in,
 		}
 	})
