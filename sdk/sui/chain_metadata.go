@@ -10,6 +10,19 @@ import (
 
 type TimelockRole uint8
 
+func TimelockRoleFromAction(action types.TimelockAction) TimelockRole {
+	switch action {
+	case types.TimelockActionSchedule:
+		return TimelockRoleProposer
+	case types.TimelockActionBypass:
+		return TimelockRoleBypasser
+	case types.TimelockActionCancel:
+		return TimelockRoleCanceller
+	}
+
+	return TimelockRoleProposer // FIXME: the enum should have an Unset/Unknown value
+}
+
 func (t TimelockRole) String() string {
 	switch t {
 	case TimelockRoleBypasser:
