@@ -16,7 +16,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
 	github.com/samber/lo v1.52.0
-	github.com/smartcontractkit/chain-selectors v1.0.89
+	github.com/smartcontractkit/chain-selectors v1.0.92
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20251024142440-51f2ad2652a2
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
