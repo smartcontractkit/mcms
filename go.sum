@@ -743,8 +743,8 @@ github.com/spf13/cast v1.10.0/go.mod h1:jNfB8QC9IA6ZuY2ZjDp0KtFO2LZZlg4S/7bzP6qq
 github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
 github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad/go.mod h1:qLr4V1qq6nMqFKkMo8ZTx3f+BZEkzsRUY10Xsm2mwU0=
-github.com/stackman27/go-daml v0.0.0-20260129035354-bee9c994446f h1:I79FWYle5/t1QxAZHClHc8OWJoKeUc97PNEX0XV9meM=
-github.com/stackman27/go-daml v0.0.0-20260129035354-bee9c994446f/go.mod h1:yi458NGE4dlDOhlyCZvQ2XgsIOdHHvepwoHRgEusbo8=
+github.com/stackman27/go-daml v0.0.0-20260204001938-550ee9d8ab10 h1:vihbDjQcH7ipRkIWQSIWcmjQ/wJQn2G4aBVc+erx4fM=
+github.com/stackman27/go-daml v0.0.0-20260204001938-550ee9d8ab10/go.mod h1:yi458NGE4dlDOhlyCZvQ2XgsIOdHHvepwoHRgEusbo8=
 github.com/stephenlacy/go-ethereum-hdwallet v0.0.0-20230913225845-a4fa94429863 h1:ba4VRWSkRzgdP5hB5OxexIzBXZbSwgcw8bEu06ivGQI=
 github.com/stephenlacy/go-ethereum-hdwallet v0.0.0-20230913225845-a4fa94429863/go.mod h1:oPTjPNrRucLv9mU27iNPj6n0CWWcNFhoXFOLVGJwHCA=
 github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 h1:RN5mrigyirb8anBEtdjtHFIufXdacyTi6i4KBfeNXeo=
