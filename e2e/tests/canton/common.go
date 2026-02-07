@@ -119,7 +119,7 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Part
 			UserID:     participant.UserName,
 			CommandID:  commandID,
 			ActAs:      []string{participant.Party},
-			Commands:   []*model.Command{{Command: mcmsContract.CreateCommandWithPackageID(s.packageIDs[0])}},
+			Commands:   []*model.Command{{Command: mcmsContract.CreateCommand()}},
 		},
 	}
 

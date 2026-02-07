@@ -93,7 +93,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 			ActAs:      []string{c.party},
 			Commands: []*model.Command{{
 				Command: &model.ExerciseCommand{
-					TemplateID: fmt.Sprintf("%s:%s:%s", mcmsPkgID, "MCMS.Main", "MCMS"),
+					TemplateID: mcmsContract.GetTemplateID(),
 					ContractID: exerciseCmd.ContractID,
 					Choice:     exerciseCmd.Choice,
 					Arguments:  exerciseCmd.Arguments,
