@@ -128,8 +128,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 	s.Require().NoError(err)
 
 	// Create inspector and executor
-	inspector, err := cantonsdk.NewInspector()
-	s.Require().NoError(err)
+	inspector := cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party)
 
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
@@ -274,8 +273,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 	s.Require().NoError(err)
 
 	// Create inspector and executor
-	inspector, err := cantonsdk.NewInspector()
-	s.Require().NoError(err)
+	inspector := cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party)
 
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
