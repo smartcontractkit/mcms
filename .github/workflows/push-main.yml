@@ -15,7 +15,7 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@0d56f0b754ad71c938b4ff823c5616a36cb63dde # ci-lint-go@1.4.0
         with:
           golangci-lint-version: v2.6.2
           use-go-cache: true
@@ -31,7 +31,7 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@0d56f0b754ad71c938b4ff823c5616a36cb63dde # ci-lint-go@1.4.0
         with:
           golangci-lint-version: v2.6.2
           golangci-lint-args: --build-tags="e2e"
@@ -44,7 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Linting Misc (yaml + sh files)
-        uses: smartcontractkit/.github/actions/ci-lint-misc@9fc306ac63d8997c9ca0da283e56caaf71589f83 # ci-lint-misc@1.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-misc@0d56f0b754ad71c938b4ff823c5616a36cb63dde # ci-lint-misc@1.4.0
 
   ci-test:
     runs-on: ubuntu-latest
@@ -54,7 +54,7 @@ jobs:
       actions: read
     steps:
       - name: ci-test
-        uses: smartcontractkit/.github/actions/ci-test-go@2b1d964024bb001ae9fba4f840019ac86ad1d824 # ci-test-go@1.1.0
+        uses: smartcontractkit/.github/actions/ci-test-go@0d56f0b754ad71c938b4ff823c5616a36cb63dde # ci-test-go@1.4.0
         with:
           go-test-cmd: go test -coverprofile=coverage.txt $(go list ./...)
           use-go-cache: true
@@ -113,7 +113,7 @@ jobs:
           ./e2e/tests/solana/compile-mcm-contracts.sh
 
       - name: Run e2e tests
-        uses: smartcontractkit/.github/actions/ci-test-go@2b1d964024bb001ae9fba4f840019ac86ad1d824 # ci-test-go@1.1.0
+        uses: smartcontractkit/.github/actions/ci-test-go@0d56f0b754ad71c938b4ff823c5616a36cb63dde # ci-test-go@1.4.0
         with:
           checkout-repo: false
           use-go-cache: true
@@ -154,7 +154,7 @@ jobs:
       contents: read
     steps:
       - name: cd-release
-        uses: smartcontractkit/.github/actions/cicd-changesets@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # cicd-changesets@0.3.6
+        uses: smartcontractkit/.github/actions/cicd-changesets@0d56f0b754ad71c938b4ff823c5616a36cb63dde # cicd-changesets@0.3.6
         with:
           # general inputs
           git-user: app-token-issuer-infra-releng[bot]
@@ -171,7 +171,7 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Scanning with Sonarqube
-        uses: smartcontractkit/.github/actions/ci-sonarqube-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-sonarqube-go@0.3.1
+        uses: smartcontractkit/.github/actions/ci-sonarqube-go@0d56f0b754ad71c938b4ff823c5616a36cb63dde # ci-sonarqube-go@0.3.1
         with:
           # sonarqube inputs
           sonar-token: ${{ secrets.SONAR_TOKEN }}

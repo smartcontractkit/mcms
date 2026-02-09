@@ -14,7 +14,7 @@ jobs:
       actions: read
     steps:
       - name: ci-lint
-        uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@0d56f0b754ad71c938b4ff823c5616a36cb63dde # ci-lint-go@1.4.0
         with:
           golangci-lint-version: v2.6.2
           golangci-lint-config: .golangci.yml
@@ -28,7 +28,7 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@0d56f0b754ad71c938b4ff823c5616a36cb63dde # ci-lint-go@1.4.0
         with:
           golangci-lint-version: v2.6.2
           golangci-lint-args: --build-tags="e2e"
@@ -42,7 +42,7 @@ jobs:
       actions: read
     steps:
       - name: ci-test
-        uses: smartcontractkit/.github/actions/ci-test-go@2b1d964024bb001ae9fba4f840019ac86ad1d824 # ci-test-go@1.1.0
+        uses: smartcontractkit/.github/actions/ci-test-go@0d56f0b754ad71c938b4ff823c5616a36cb63dde # ci-test-go@1.4.0
 
   cicd-publish-release:
     runs-on: ubuntu-latest
@@ -52,7 +52,7 @@ jobs:
       actions: read
     steps:
       - name: cicd-publish-release
-        uses: smartcontractkit/.github/actions/cicd-build-publish-artifacts-go@b4737861584f88fa9569d6978f70fedf8b1ae67c # cicd-build-publish-artifacts-go@0.4.0
+        uses: smartcontractkit/.github/actions/cicd-build-publish-artifacts-go@0d56f0b754ad71c938b4ff823c5616a36cb63dde # cicd-build-publish-artifacts-go@0.4.0
         with:
           # general inputs
           app-name: mcms-lib
@@ -79,7 +79,7 @@ jobs:
         shell: bash
 
       - name: Notify Slack
-        uses: smartcontractkit/.github/actions/slack-notify-git-ref@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # slack-notify-git-ref@0.1.4
+        uses: smartcontractkit/.github/actions/slack-notify-git-ref@0d56f0b754ad71c938b4ff823c5616a36cb63dde # slack-notify-git-ref@0.1.4
         with:
           slack-channel-id: ${{ secrets.SLACK_CHANNEL_MCMS }}
           slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN_RELENG }} # Releng Bot
