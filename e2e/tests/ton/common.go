@@ -9,7 +9,6 @@ import (
 	"path/filepath"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/suite"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
@@ -21,7 +20,6 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
 
 	"github.com/smartcontractkit/mcms/internal/testutils"
@@ -86,41 +84,6 @@ func DeployContract(ctx context.Context, opts DeployOpts) (*address.Address, err
 	}
 
 	return contract.Address, nil
-}
-
-func NewInitializedAddress(ctx context.Context, s *suite.Suite, tonClient *ton.APIClient, w *wallet.Wallet) *address.Address {
-	walletA, err := tvm.NewRandomV5R1TestWallet(tonClient, -217)
-	s.Require().NoError(err)
-	// Fund wallet
-	signedClient := tracetracking.NewSignedAPIClient(tonClient, *w)
-	_, err = signedClient.SendAndWaitForTrace(ctx, *walletA.WalletAddress(),
-		&wallet.Message{
-			Mode: wallet.PayGasSeparately,
-			InternalMessage: &tlb.InternalMessage{
-				IHRDisabled: true,
-				Bounce:      false,
-				DstAddr:     walletA.WalletAddress(),
-				Amount:      tlb.MustFromTON("0.1"),
-				Body:        nil,
-			},
-		})
-	s.Require().NoError(err)
-
-	// Init wallet
-	newSignedClient := tracetracking.NewSignedAPIClient(tonClient, *walletA)
-	_, err = newSignedClient.SendAndWaitForTrace(ctx, *walletA.WalletAddress(), &wallet.Message{
-		Mode: wallet.PayGasSeparately,
-		InternalMessage: &tlb.InternalMessage{
-			IHRDisabled: true,
-			Bounce:      false,
-			DstAddr:     walletA.WalletAddress(),
-			Amount:      tlb.MustFromTON("0.1"),
-			Body:        nil,
-		},
-	})
-	s.Require().NoError(err)
-
-	return walletA.WalletAddress().Bounce(true)
 }
 
 func DeployMCMSContract(ctx context.Context, client *ton.APIClient, w *wallet.Wallet, amount tlb.Coins, data mcms.Data) (*address.Address, error) {
