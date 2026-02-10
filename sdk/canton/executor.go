@@ -150,7 +150,7 @@ func (e Executor) ExecuteOperation(
 			ActAs:      []string{e.party},
 			Commands: []*model.Command{{
 				Command: &model.ExerciseCommand{
-					TemplateID: fmt.Sprintf("%s:%s:%s", mcmsPkgID, "MCMS.Main", "MCMS"),
+					TemplateID: exerciseCmd.TemplateID,
 					ContractID: exerciseCmd.ContractID,
 					Choice:     exerciseCmd.Choice,
 					Arguments:  exerciseCmd.Arguments,
@@ -306,7 +306,7 @@ func (e Executor) SetRoot(
 			ActAs:      []string{e.party},
 			Commands: []*model.Command{{
 				Command: &model.ExerciseCommand{
-					TemplateID: fmt.Sprintf("%s:%s:%s", mcmsPkgID, "MCMS.Main", "MCMS"),
+					TemplateID: exerciseCmd.TemplateID,
 					ContractID: exerciseCmd.ContractID,
 					Choice:     exerciseCmd.Choice,
 					Arguments:  exerciseCmd.Arguments,
