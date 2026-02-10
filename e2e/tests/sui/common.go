@@ -86,7 +86,7 @@ func (s *TestSuite) DeployMCMSContract() {
 		Signer:           s.signer,
 		GasBudget:        &gasBudget,
 		WaitForExecution: true,
-	}, s.client)
+	}, s.client, s.SuiNodeURL)
 	s.Require().NoError(err, "Failed to publish MCMS package")
 	s.mcmsPackageID = mcmsPackage.Address()
 	s.mcms = mcmsPackage.MCMS()
@@ -129,7 +129,7 @@ func (s *TestSuite) DeployMCMSUserContract() {
 		Signer:           s.signer,
 		GasBudget:        &gasBudget,
 		WaitForExecution: true,
-	}, s.client, s.mcmsPackageID, signerAddress)
+	}, s.client, s.mcmsPackageID, signerAddress, s.SuiNodeURL)
 	s.Require().NoError(err, "Failed to publish MCMS user package")
 
 	s.mcmsUserPackageID = mcmsUserPackage.Address()
