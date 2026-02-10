@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
-	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
 
@@ -35,7 +34,7 @@ type TestSuite struct {
 
 func (a *TestSuite) SetupSuite() {
 	a.TestSetup = *e2e.InitializeSharedTestSetup(a.T())
-	details, err := chainselremote.GetChainDetailsByChainIDAndFamily(a.T().Context(), a.AptosChain.ChainID, chainsel.FamilyAptos)
+	details, err := chainsel.GetChainDetailsByChainIDAndFamily(a.AptosChain.ChainID, chainsel.FamilyAptos)
 	a.Require().NoError(err)
 	a.ChainSelector = types.ChainSelector(details.ChainSelector)
 

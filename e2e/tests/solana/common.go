@@ -15,7 +15,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
-	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 
 	"go.uber.org/zap"
 
@@ -124,7 +123,7 @@ func (s *TestSuite) SetupSuite() {
 	s.AccessControllerProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["access_controller"])
 	s.CPIStubProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["external_program_cpi_stub"])
 
-	details, err := chainselremote.GetChainDetailsByChainIDAndFamily(s.T().Context(), s.SolanaChain.ChainID, chainsel.FamilySolana)
+	details, err := chainsel.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, chainsel.FamilySolana)
 	s.Require().NoError(err)
 	s.ChainSelector = types.ChainSelector(details.ChainSelector)
 }

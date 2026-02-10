@@ -14,7 +14,7 @@ import (
 	"github.com/samber/lo"
 	"github.com/stretchr/testify/suite"
 
-	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
@@ -76,7 +76,7 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.ChainA.auth, err = bind.NewKeyedTransactorWithChainID(privateKey, chainIDA)
 	s.Require().NoError(err, "Failed to create transactor for Chain A")
 
-	chainDetailsA, err := chainselremote.GetChainDetailsByChainIDAndFamily(s.T().Context(), s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
+	chainDetailsA, err := chainsel.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)
 	s.ChainA.chainSelector = mcmtypes.ChainSelector(chainDetailsA.ChainSelector)
 
@@ -87,7 +87,7 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.ChainB.auth, err = bind.NewKeyedTransactorWithChainID(privateKey, chainIDB)
 	s.Require().NoError(err, "Failed to create transactor for Chain B")
 
-	chainDetailsB, err := chainselremote.GetChainDetailsByChainIDAndFamily(s.T().Context(), s.BlockchainB.Out.ChainID, s.BlockchainB.Out.Family)
+	chainDetailsB, err := chainsel.GetChainDetailsByChainIDAndFamily(s.BlockchainB.Out.ChainID, s.BlockchainB.Out.Family)
 	s.Require().NoError(err)
 	s.ChainB.chainSelector = mcmtypes.ChainSelector(chainDetailsB.ChainSelector)
 

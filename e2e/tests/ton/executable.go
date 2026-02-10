@@ -12,7 +12,6 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
-	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
@@ -73,7 +72,7 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.signers = testutils.MakeNewECDSASigners(2)
 
 	// Initialize chains
-	details, err := chainselremote.GetChainDetailsByChainIDAndFamily(s.T().Context(), s.TonBlockchain.ChainID, s.TonBlockchain.Family)
+	details, err := chainsel.GetChainDetailsByChainIDAndFamily(s.TonBlockchain.ChainID, s.TonBlockchain.Family)
 	s.Require().NoError(err)
 	s.ChainA = types.ChainSelector(details.ChainSelector)
 

@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
@@ -153,9 +153,9 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	ctx := context.Background()
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
-	chainDetailsEVM, err := chainselremote.GetChainDetailsByChainIDAndFamily(s.T().Context(), s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
+	chainDetailsEVM, err := chainsel.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)
-	chainDetailsSolana, err := chainselremote.GetChainDetailsByChainIDAndFamily(s.T().Context(), s.SolanaChain.ChainID, s.SolanaChain.Out.Family)
+	chainDetailsSolana, err := chainsel.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, s.SolanaChain.Out.Family)
 	s.Require().NoError(err)
 
 	s.chainSelectorEVM = types.ChainSelector(chainDetailsEVM.ChainSelector)
