@@ -40,8 +40,10 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 
 	signers := make([]mcms.SignerInfo, len(signerAddresses))
 	for i, addr := range signerAddresses {
+		addrStr := strings.ToLower(addr.String())
+		addrStr = strings.TrimPrefix(addrStr, "0x")
 		signers[i] = mcms.SignerInfo{
-			SignerAddress: cantontypes.TEXT(addr.String()),
+			SignerAddress: cantontypes.TEXT(addrStr),
 			SignerGroup:   cantontypes.INT64(signerGroups[i]),
 			SignerIndex:   cantontypes.INT64(i),
 		}
