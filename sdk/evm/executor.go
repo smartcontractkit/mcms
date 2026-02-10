@@ -43,7 +43,8 @@ func (e *Executor) ExecuteOperation(
 		return types.TransactionResult{}, errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil")
 	}
 
-	bindOp, err := e.ToGethOperation(nonce, metadata, op)
+	// TODO: we should pass the context once we remove background context in the remote chain selectors api
+	bindOp, err := e.ToGethOperation(nonce, metadata, op) //nolint:contextcheck
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -95,7 +96,7 @@ func (e *Executor) SetRoot(
 		return types.TransactionResult{}, errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil")
 	}
 
-	bindMeta, err := e.ToGethRootMetadata(metadata)
+	bindMeta, err := e.ToGethRootMetadata(ctx, metadata)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}

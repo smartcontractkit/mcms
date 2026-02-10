@@ -241,7 +241,7 @@ func TestEncoder_ToGethRootMetadata(t *testing.T) {
 	for _, tt := range tests {
 		encoder := NewEncoder(tt.giveSelector, 5, false, false)
 
-		got, err := encoder.ToGethRootMetadata(tt.giveMetadata)
+		got, err := encoder.ToGethRootMetadata(t.Context(), tt.giveMetadata)
 
 		if tt.wantErr != "" {
 			require.EqualError(t, err, tt.wantErr)

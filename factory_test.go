@@ -163,7 +163,7 @@ func TestNewTimelockConverter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := newTimelockConverter(tt.chainSelector)
+			got, err := newTimelockConverter(t.Context(), tt.chainSelector)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)

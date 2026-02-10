@@ -278,10 +278,11 @@ func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, 
 }
 
 // buildTimelockConverters builds a map of chain selectors to their corresponding TimelockConverter implementations.
-func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sdk.TimelockConverter, error) {
+func (m *TimelockProposal) buildTimelockConverters(_ context.Context) (map[types.ChainSelector]sdk.TimelockConverter, error) {
 	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
 	for chain := range m.ChainMetadata {
-		fam, err := types.GetChainSelectorFamily(chain)
+		// TODO: we need to pass in the context param once we remove background context in the remote chain selectors api
+		fam, err := types.GetChainSelectorFamily(chain) //nolint:contextcheck
 		if err != nil {
 			return nil, fmt.Errorf("error getting chain family: %w", err)
 		}
@@ -315,7 +316,7 @@ func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.Chain
 	// Start with raw counts (works for all non-converted chains)
 	out := m.TransactionCounts()
 
-	converters, err := m.buildTimelockConverters()
+	converters, err := m.buildTimelockConverters(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build timelock converters: %w", err)
 	}

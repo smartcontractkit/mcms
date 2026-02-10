@@ -646,7 +646,7 @@ func TestExecutable_TxNonce(t *testing.T) {
 	t.Parallel()
 
 	chainSelector1 := types.ChainSelector(chainsel.GETH_TESTNET.Selector)
-	chainSelector2 := types.ChainSelector(chainsel.GETH_DEVNET_2.Selector)
+	chainSelector2 := types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
 	executor := mocks.NewExecutor(t)
 	executors := map[types.ChainSelector]sdk.Executor{
 		chainSelector1: executor,

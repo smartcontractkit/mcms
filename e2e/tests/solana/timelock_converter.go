@@ -135,7 +135,8 @@ func (s *TestSuite) TestTimelockConverter() {
 		timelockProposal, err := timelockProposalBuilder().
 			AddChainMetadata(s.ChainSelector, cMetadata).
 			SetAction(types.TimelockActionSchedule).
-			Build()
+			// TODO: we should pass the context once we remove background context in the remote chain selectors api
+			Build() //nolint:contextcheck
 		s.Require().NoError(err)
 
 		proposerAC := s.Roles[timelock.Proposer_Role].AccessController.PublicKey()
@@ -323,7 +324,8 @@ func (s *TestSuite) TestTimelockConverter() {
 					},
 				}),
 			}}).
-			Build()
+			// TODO: we should pass the context once we remove background context in the remote chain selectors api
+			Build() //nolint:contextcheck
 		s.Require().NoError(err)
 
 		// --- act ---
@@ -352,7 +354,8 @@ func (s *TestSuite) TestTimelockConverter() {
 		timelockProposal, err := timelockProposalBuilder().
 			AddChainMetadata(s.ChainSelector, metadata).
 			SetAction(types.TimelockActionCancel).
-			Build()
+			// TODO: we should pass the context once we remove background context in the remote chain selectors api
+			Build() //nolint:contextcheck
 		s.Require().NoError(err)
 
 		// build expected output Proposal
@@ -390,7 +393,8 @@ func (s *TestSuite) TestTimelockConverter() {
 					},
 				}),
 			}}).
-			Build()
+			// TODO: we should pass the context once we remove background context in the remote chain selectors api
+			Build() //nolint:contextcheck
 		s.Require().NoError(err)
 
 		// --- act ---
@@ -411,10 +415,11 @@ func (s *TestSuite) TestTimelockConverter() {
 		s.Require().NoError(err)
 
 		metadata := chainMetadata()
+		// TODO: we should pass the context once we remove background context in the remote chain selectors api
 		timelockProposal, err := timelockProposalBuilder().
 			AddChainMetadata(s.ChainSelector, metadata).
 			SetAction(types.TimelockActionBypass).
-			Build()
+			Build() //nolint:contextcheck
 		s.Require().NoError(err)
 
 		bypasserAC := s.Roles[timelock.Bypasser_Role].AccessController.PublicKey()
@@ -609,7 +614,7 @@ func (s *TestSuite) TestTimelockConverter() {
 					},
 				}),
 			}}).
-			Build()
+			Build() //nolint:contextcheck
 		s.Require().NoError(err)
 
 		// --- act: convert proposal ---
@@ -643,17 +648,21 @@ func (s *TestSuite) executeConvertedProposal(
 
 	// sign
 	inspectors := map[types.ChainSelector]sdk.Inspector{s.ChainSelector: solanasdk.NewInspector(s.SolanaClient)}
-	signable, err := mcms.NewSignable(&gotProposal, inspectors)
+	// TODO: we should pass the context once we remove background context in the remote chain selectors api
+	signable, err := mcms.NewSignable(&gotProposal, inspectors) //nolint:contextcheck
 	s.Require().NoError(err)
-	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey))
+	// TODO: we should pass the context once we remove background context in the remote chain selectors api
+	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey)) //nolint:contextcheck
 	s.Require().NoError(err)
 
 	// set root
-	encoders, err := gotProposal.GetEncoders()
+	// TODO: we should pass the context once we remove background context in the remote chain selectors api
+	encoders, err := gotProposal.GetEncoders() //nolint:contextcheck
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*solanasdk.Encoder)
 	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: solanasdk.NewExecutor(encoder, s.SolanaClient, wallet)}
-	executable, err := mcms.NewExecutable(&gotProposal, executors)
+	// TODO: we should pass the context once we remove background context in the remote chain selectors api
+	executable, err := mcms.NewExecutable(&gotProposal, executors) //nolint:contextcheck
 	s.Require().NoError(err)
 
 	_, err = executable.SetRoot(ctx, s.ChainSelector)
