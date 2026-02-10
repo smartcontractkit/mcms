@@ -5,9 +5,9 @@ package canton
 import (
 	"slices"
 
+	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/noders-team/go-daml/pkg/model"
 
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 
@@ -78,7 +78,7 @@ func (s *MCMSConfigurerTestSuite) TestSetConfig() {
 
 	// Set config
 	{
-		configurer, err := cantonsdk.NewConfigurer(s.client, s.participant.UserName, s.participant.Party)
+		configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party)
 		s.Require().NoError(err, "creating configurer for Canton mcms contract")
 		tx, err := configurer.SetConfig(s.T().Context(), s.mcmsContractID, proposerConfig, true)
 		s.Require().NoError(err, "setting config on Canton mcms contract")
@@ -89,23 +89,24 @@ func (s *MCMSConfigurerTestSuite) TestSetConfig() {
 		rawTx, ok := rawData["RawTx"]
 		s.Require().True(ok)
 
-		submitResp, ok := rawTx.(*model.SubmitAndWaitForTransactionResponse)
+		submitResp, ok := rawTx.(*apiv2.SubmitAndWaitForTransactionResponse)
 		s.Require().True(ok)
 
-		// Verify CompletionOffset exists
-		s.Require().NotZero(submitResp.CompletionOffset, "transaction should have CompletionOffset")
+		// Get transaction and events
+		transaction := submitResp.GetTransaction()
+		s.Require().NotNil(transaction, "transaction should not be nil")
 
-		events := submitResp.Transaction.Events
+		events := transaction.GetEvents()
 		s.Require().Len(events, 2, "transaction should have exactly 2 events (archived + created)")
 
 		// Verify event[0] is Archived (old contract)
-		s.Require().NotNil(events[0].Archived, "first event should be Archived event")
-		s.Require().Nil(events[0].Created, "first event should not be Created event")
-		s.Require().Equal(s.mcmsContractID, events[0].Archived.ContractID, "archived contract should be the old MCMS contract")
+		s.Require().NotNil(events[0].GetArchived(), "first event should be Archived event")
+		s.Require().Nil(events[0].GetCreated(), "first event should not be Created event")
+		s.Require().Equal(s.mcmsContractID, events[0].GetArchived().GetContractId(), "archived contract should be the old MCMS contract")
 
 		// Verify event[1] is Created (new contract)
-		s.Require().NotNil(events[1].Created, "second event should be Created event")
-		s.Require().Nil(events[1].Archived, "second event should not be Archived event")
+		s.Require().NotNil(events[1].GetCreated(), "second event should be Created event")
+		s.Require().Nil(events[1].GetArchived(), "second event should not be Archived event")
 
 		// Verify Template ID matches
 		rawData, ok = tx.RawData.(map[string]any)
@@ -113,13 +114,16 @@ func (s *MCMSConfigurerTestSuite) TestSetConfig() {
 		newMCMSTemplateID, ok := rawData["NewMCMSTemplateID"].(string)
 		s.Require().True(ok)
 		s.Require().Contains(newMCMSTemplateID, "MCMS.Main:MCMS", "template ID should match MCMS template")
-		s.Require().Equal(newMCMSTemplateID, events[1].Created.TemplateID, "created event template ID should match returned template ID")
+
+		createdTemplateID := cantonsdk.NormalizeTemplateKey(newMCMSTemplateID)
+		eventTemplateID := cantonsdk.NormalizeTemplateKey(cantonsdk.FormatTemplateID(events[1].GetCreated().GetTemplateId()))
+		s.Require().Equal(createdTemplateID, eventTemplateID, "created event template ID should match returned template ID")
 
 		// Verify new contract ID is different from old
 		newMCMSContractID, ok := rawData["NewMCMSContractID"].(string)
 		s.Require().True(ok)
 		s.Require().NotEmpty(newMCMSContractID, "new contract ID should not be empty")
 		s.Require().NotEqual(s.mcmsContractID, newMCMSContractID, "new contract ID should be different from old contract ID")
-		s.Require().Equal(newMCMSContractID, events[1].Created.ContractID, "created event contract ID should match returned contract ID")
+		s.Require().Equal(newMCMSContractID, events[1].GetCreated().GetContractId(), "created event contract ID should match returned contract ID")
 	}
 }

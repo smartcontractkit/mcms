@@ -9,15 +9,15 @@ import (
 	"strings"
 	"time"
 
+	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	"github.com/noders-team/go-daml/pkg/client"
-	"github.com/noders-team/go-daml/pkg/model"
 	cselectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 
-	cantontypes "github.com/noders-team/go-daml/pkg/types"
 	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
+	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -27,12 +27,12 @@ var _ sdk.Executor = &Executor{}
 type Executor struct {
 	*Encoder
 	*Inspector
-	client *client.DamlBindingClient
+	client apiv2.CommandServiceClient
 	userId string
 	party  string
 }
 
-func NewExecutor(encoder *Encoder, inspector *Inspector, client *client.DamlBindingClient, userId string, party string) (*Executor, error) {
+func NewExecutor(encoder *Encoder, inspector *Inspector, client apiv2.CommandServiceClient, userId string, party string) (*Executor, error) {
 	return &Executor{
 		Encoder:   encoder,
 		Inspector: inspector,
@@ -103,7 +103,8 @@ func (e Executor) ExecuteOperation(
 
 	// Build exercise command using generated bindings
 	mcmsContract := mcms.MCMS{}
-	var exerciseCmd *model.ExerciseCommand
+	var choice string
+	var choiceArgument *apiv2.Value
 	// Use different input struct depending on whether the operation is targeting the MCMS contract itself or another contract
 	if cantonOpFields.TargetInstanceId == "self" {
 		input := mcms.ExecuteMcmsOp{
@@ -111,7 +112,9 @@ func (e Executor) ExecuteOperation(
 			Op:        cantonOp,
 			OpProof:   opProof,
 		}
-		exerciseCmd = mcmsContract.ExecuteMcmsOp(metadata.MCMAddress, input)
+		exerciseCmd := mcmsContract.ExecuteMcmsOp(metadata.MCMAddress, input)
+		choice = exerciseCmd.Choice
+		choiceArgument = ledger.MapToValue(input)
 	} else {
 		input := mcms.ExecuteOp{
 			Submitter:   cantontypes.PARTY(e.party),
@@ -120,46 +123,39 @@ func (e Executor) ExecuteOperation(
 			OpProof:     opProof,
 			ContractIds: contractIds,
 		}
-		exerciseCmd = mcmsContract.ExecuteOp(metadata.MCMAddress, input)
-
+		exerciseCmd := mcmsContract.ExecuteOp(metadata.MCMAddress, input)
+		choice = exerciseCmd.Choice
+		choiceArgument = ledger.MapToValue(input)
 	}
 
-	// List known packages to find the package ID for mcms
-	ListKnownPackagesResp, err := e.client.PackageMng.ListKnownPackages(ctx)
+	// Parse template ID
+	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to list known packages: %w", err)
-	}
-
-	var mcmsPkgID string
-	for _, p := range ListKnownPackagesResp {
-		if strings.Contains(strings.ToLower(p.Name), "mcms") {
-			mcmsPkgID = p.PackageID
-			break
-		}
-	}
-	if mcmsPkgID == "" {
-		return types.TransactionResult{}, fmt.Errorf("failed to find mcms package")
+		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
 	}
 
 	commandID := uuid.Must(uuid.NewUUID()).String()
-	cmds := &model.SubmitAndWaitRequest{
-		Commands: &model.Commands{
-			WorkflowID: "mcms-execute-op",
-			UserID:     e.userId,
-			CommandID:  commandID,
+	submitResp, err := e.client.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
+		Commands: &apiv2.Commands{
+			WorkflowId: "mcms-execute-op",
+			CommandId:  commandID,
 			ActAs:      []string{e.party},
-			Commands: []*model.Command{{
-				Command: &model.ExerciseCommand{
-					TemplateID: exerciseCmd.TemplateID,
-					ContractID: exerciseCmd.ContractID,
-					Choice:     exerciseCmd.Choice,
-					Arguments:  exerciseCmd.Arguments,
+			Commands: []*apiv2.Command{{
+				Command: &apiv2.Command_Exercise{
+					Exercise: &apiv2.ExerciseCommand{
+						TemplateId: &apiv2.Identifier{
+							PackageId:  packageID,
+							ModuleName: moduleName,
+							EntityName: entityName,
+						},
+						ContractId:     metadata.MCMAddress,
+						Choice:         choice,
+						ChoiceArgument: choiceArgument,
+					},
 				},
 			}},
 		},
-	}
-
-	submitResp, err := e.client.CommandService.SubmitAndWaitForTransaction(ctx, cmds)
+	})
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to execute operation: %w", err)
 	}
@@ -167,15 +163,16 @@ func (e Executor) ExecuteOperation(
 	// Extract NEW MCMS CID from Created event
 	newMCMSContractID := ""
 	newMCMSTemplateID := ""
-	for _, ev := range submitResp.Transaction.Events {
-		if ev.Created == nil {
-			continue
-		}
-		normalized := NormalizeTemplateKey(ev.Created.TemplateID)
-		if normalized == MCMSTemplateKey {
-			newMCMSContractID = ev.Created.ContractID
-			newMCMSTemplateID = ev.Created.TemplateID
-			break
+	transaction := submitResp.GetTransaction()
+	for _, ev := range transaction.GetEvents() {
+		if createdEv := ev.GetCreated(); createdEv != nil {
+			templateID := formatTemplateID(createdEv.GetTemplateId())
+			normalized := NormalizeTemplateKey(templateID)
+			if normalized == MCMSTemplateKey {
+				newMCMSContractID = createdEv.GetContractId()
+				newMCMSTemplateID = templateID
+				break
+			}
 		}
 	}
 
@@ -281,41 +278,37 @@ func (e Executor) SetRoot(
 	mcmsContract := mcms.MCMS{}
 	exerciseCmd := mcmsContract.SetRoot(metadata.MCMAddress, input)
 
-	ListKnownPackagesResp, err := e.client.PackageMng.ListKnownPackages(ctx)
+	// Parse template ID
+	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to list known packages: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
 	}
 
-	var mcmsPkgID string
-	for _, p := range ListKnownPackagesResp {
-		if strings.Contains(strings.ToLower(p.Name), "mcms") {
-			mcmsPkgID = p.PackageID
-			break
-		}
-	}
-	if mcmsPkgID == "" {
-		return types.TransactionResult{}, fmt.Errorf("failed to find mcms package")
-	}
+	// Convert input to choice argument
+	choiceArgument := ledger.MapToValue(input)
 
 	commandID := uuid.Must(uuid.NewUUID()).String()
-	cmds := &model.SubmitAndWaitRequest{
-		Commands: &model.Commands{
-			WorkflowID: "mcms-set-root",
-			UserID:     e.userId,
-			CommandID:  commandID,
+	submitResp, err := e.client.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
+		Commands: &apiv2.Commands{
+			WorkflowId: "mcms-set-root",
+			CommandId:  commandID,
 			ActAs:      []string{e.party},
-			Commands: []*model.Command{{
-				Command: &model.ExerciseCommand{
-					TemplateID: exerciseCmd.TemplateID,
-					ContractID: exerciseCmd.ContractID,
-					Choice:     exerciseCmd.Choice,
-					Arguments:  exerciseCmd.Arguments,
+			Commands: []*apiv2.Command{{
+				Command: &apiv2.Command_Exercise{
+					Exercise: &apiv2.ExerciseCommand{
+						TemplateId: &apiv2.Identifier{
+							PackageId:  packageID,
+							ModuleName: moduleName,
+							EntityName: entityName,
+						},
+						ContractId:     metadata.MCMAddress,
+						Choice:         exerciseCmd.Choice,
+						ChoiceArgument: choiceArgument,
+					},
 				},
 			}},
 		},
-	}
-
-	submitResp, err := e.client.CommandService.SubmitAndWaitForTransaction(ctx, cmds)
+	})
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to set root: %w", err)
 	}
@@ -323,15 +316,16 @@ func (e Executor) SetRoot(
 	// Extract NEW MCMS CID from Created event
 	newMCMSContractID := ""
 	newMCMSTemplateID := ""
-	for _, ev := range submitResp.Transaction.Events {
-		if ev.Created == nil {
-			continue
-		}
-		normalized := NormalizeTemplateKey(ev.Created.TemplateID)
-		if normalized == MCMSTemplateKey {
-			newMCMSContractID = ev.Created.ContractID
-			newMCMSTemplateID = ev.Created.TemplateID
-			break
+	transaction := submitResp.GetTransaction()
+	for _, ev := range transaction.GetEvents() {
+		if createdEv := ev.GetCreated(); createdEv != nil {
+			templateID := formatTemplateID(createdEv.GetTemplateId())
+			normalized := NormalizeTemplateKey(templateID)
+			if normalized == MCMSTemplateKey {
+				newMCMSContractID = createdEv.GetContractId()
+				newMCMSTemplateID = templateID
+				break
+			}
 		}
 	}
 

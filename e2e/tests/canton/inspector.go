@@ -86,7 +86,7 @@ func (s *MCMSInspectorTestSuite) TestGetConfig() {
 	}
 
 	// Set config using configurer
-	configurer, err := cantonsdk.NewConfigurer(s.client, s.participant.UserName, s.participant.Party)
+	configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party)
 	s.Require().NoError(err, "creating configurer")
 
 	_, err = configurer.SetConfig(ctx, s.mcmsContractID, expectedConfig, true)

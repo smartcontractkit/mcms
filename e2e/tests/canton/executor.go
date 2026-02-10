@@ -10,9 +10,9 @@ import (
 	"testing"
 	"time"
 
+	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/noders-team/go-daml/pkg/model"
 	"github.com/stretchr/testify/suite"
 
 	mcmscore "github.com/smartcontractkit/mcms"
@@ -134,7 +134,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
 
-	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.client, s.participant.UserName, s.participant.Party)
+	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party)
 	s.Require().NoError(err)
 
 	executors := map[mcmstypes.ChainSelector]sdk.Executor{
@@ -184,19 +184,21 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 	// Verify the counter was incremented by checking transaction events
 	rawTx, ok := txExecute.RawData.(map[string]any)["RawTx"]
 	s.Require().True(ok)
-	submitResp, ok := rawTx.(*model.SubmitAndWaitForTransactionResponse)
+	submitResp, ok := rawTx.(*apiv2.SubmitAndWaitForTransactionResponse)
 	s.Require().True(ok)
 
 	s.verifyCounterIncremented(submitResp)
 
 	// Verify MCMS contract was recreated with incremented opCount
 	foundMCMS := false
-	for _, event := range submitResp.Transaction.Events {
-		if event.Created != nil {
-			normalized := cantonsdk.NormalizeTemplateKey(event.Created.TemplateID)
+	transaction := submitResp.GetTransaction()
+	for _, event := range transaction.GetEvents() {
+		if createdEv := event.GetCreated(); createdEv != nil {
+			templateID := cantonsdk.FormatTemplateID(createdEv.GetTemplateId())
+			normalized := cantonsdk.NormalizeTemplateKey(templateID)
 			if normalized == cantonsdk.MCMSTemplateKey {
 				foundMCMS = true
-				newMCMSCID := event.Created.ContractID
+				newMCMSCID := createdEv.GetContractId()
 				s.Require().NotEmpty(newMCMSCID)
 				s.Require().NotEqual(s.mcmsContractID, newMCMSCID, "MCMS should be recreated after execute")
 				s.mcmsContractID = newMCMSCID
@@ -279,7 +281,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
 
-	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.client, s.participant.UserName, s.participant.Party)
+	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party)
 	s.Require().NoError(err)
 
 	executors := map[mcmstypes.ChainSelector]sdk.Executor{
@@ -335,16 +337,18 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 	// Verify MCMS contract was recreated with new config
 	rawTx, ok := txExecute.RawData.(map[string]any)["RawTx"]
 	s.Require().True(ok)
-	submitResp, ok := rawTx.(*model.SubmitAndWaitForTransactionResponse)
+	submitResp, ok := rawTx.(*apiv2.SubmitAndWaitForTransactionResponse)
 	s.Require().True(ok)
 
 	foundMCMS := false
-	for _, event := range submitResp.Transaction.Events {
-		if event.Created != nil {
-			normalized := cantonsdk.NormalizeTemplateKey(event.Created.TemplateID)
+	transaction := submitResp.GetTransaction()
+	for _, event := range transaction.GetEvents() {
+		if createdEv := event.GetCreated(); createdEv != nil {
+			templateID := cantonsdk.FormatTemplateID(createdEv.GetTemplateId())
+			normalized := cantonsdk.NormalizeTemplateKey(templateID)
 			if normalized == cantonsdk.MCMSTemplateKey {
 				foundMCMS = true
-				newMCMSCID := event.Created.ContractID
+				newMCMSCID := createdEv.GetContractId()
 				s.Require().NotEmpty(newMCMSCID)
 				s.Require().NotEqual(oldMCMSContractID, newMCMSCID, "MCMS should be recreated after SetConfig")
 				s.mcmsContractID = newMCMSCID
@@ -361,11 +365,13 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 }
 
 // Helper functions
-func (s *MCMSExecutorTestSuite) verifyCounterIncremented(submitResp *model.SubmitAndWaitForTransactionResponse) {
+func (s *MCMSExecutorTestSuite) verifyCounterIncremented(submitResp *apiv2.SubmitAndWaitForTransactionResponse) {
 	// Look for Counter contract in created events
-	for _, event := range submitResp.Transaction.Events {
-		if event.Created != nil {
-			normalized := cantonsdk.NormalizeTemplateKey(event.Created.TemplateID)
+	transaction := submitResp.GetTransaction()
+	for _, event := range transaction.GetEvents() {
+		if createdEv := event.GetCreated(); createdEv != nil {
+			templateID := cantonsdk.FormatTemplateID(createdEv.GetTemplateId())
+			normalized := cantonsdk.NormalizeTemplateKey(templateID)
 			if normalized == "MCMS.Counter:Counter" {
 				// Counter was recreated, which means it was successfully executed
 				s.T().Log("Counter contract was successfully incremented")

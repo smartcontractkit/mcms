@@ -10,14 +10,14 @@ import (
 	"strings"
 	"time"
 
+	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
-	"github.com/noders-team/go-daml/pkg/client"
-	"github.com/noders-team/go-daml/pkg/model"
-	"github.com/noders-team/go-daml/pkg/types"
 	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 	"github.com/smartcontractkit/chainlink-canton/integration-tests/testhelpers"
+	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
+	"github.com/smartcontractkit/go-daml/pkg/types"
 
 	mcmscore "github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
@@ -32,7 +32,6 @@ type TestSuite struct {
 
 	env testhelpers.TestEnvironment
 
-	client      *client.DamlBindingClient
 	participant testhelpers.Participant
 
 	chainSelector  mcmstypes.ChainSelector
@@ -42,26 +41,10 @@ type TestSuite struct {
 	mcmsId         string
 }
 
-func NewBindingClient(ctx context.Context, jwtToken, ledgerAPIURL, adminAPIURL string) (*client.DamlBindingClient, error) {
-	bindingClient, err := client.NewDamlClient(jwtToken, ledgerAPIURL).
-		WithAdminAddress(adminAPIURL).
-		Build(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create DAML binding client: %w", err)
-	}
-
-	return bindingClient, nil
-}
-
 func (s *TestSuite) SetupSuite() {
 	s.T().Log("Spinning up Canton test environment...")
 	s.env = testhelpers.NewTestEnvironment(s.T(), testhelpers.WithNumberOfParticipants(1))
-	jwt, err := s.env.Participant(1).GetToken(s.T().Context())
-	s.Require().NoError(err)
 	participant := s.env.Participant(1)
-	config := participant.GetConfig()
-	s.client, err = NewBindingClient(s.T().Context(), jwt, config.GRPCLedgerAPIURL, config.AdminAPIURL)
-	s.Require().NoError(err)
 	s.participant = participant
 	s.chainSelector = mcmstypes.ChainSelector(s.env.Chain.ChainSelector())
 }
@@ -93,7 +76,7 @@ func (s *TestSuite) DeployMCMSWithConfig(config *mcmstypes.Config) {
 	s.DeployMCMSContract()
 
 	// Set the config
-	configurer, err := cantonsdk.NewConfigurer(s.client, s.participant.UserName, s.participant.Party)
+	configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party)
 	s.Require().NoError(err)
 
 	tx, err := configurer.SetConfig(s.T().Context(), s.mcmsContractID, config, true)
@@ -117,25 +100,45 @@ func (s *MCMSExecutorTestSuite) DeployCounterContract() {
 		Value:      types.INT64(0),
 	}
 
-	commandID := uuid.Must(uuid.NewUUID()).String()
-	cmds := &model.SubmitAndWaitRequest{
-		Commands: &model.Commands{
-			WorkflowID: "counter-deploy",
-			UserID:     s.participant.UserName,
-			CommandID:  commandID,
-			ActAs:      []string{s.participant.Party},
-			Commands:   []*model.Command{{Command: counterContract.CreateCommand()}},
-		},
-	}
+	// Parse template ID
+	exerciseCmd := counterContract.CreateCommand()
+	packageID, moduleName, entityName, err := cantonsdk.ParseTemplateIDFromString(exerciseCmd.TemplateID)
+	s.Require().NoError(err, "failed to parse template ID")
 
-	submitResp, err := s.client.CommandService.SubmitAndWaitForTransaction(s.T().Context(), cmds)
+	// Convert create arguments to apiv2 format
+	createArguments := ledger.ConvertToRecord(exerciseCmd.Arguments)
+
+	commandID := uuid.Must(uuid.NewUUID()).String()
+	submitResp, err := s.participant.CommandServiceClient.SubmitAndWaitForTransaction(s.T().Context(), &apiv2.SubmitAndWaitForTransactionRequest{
+		Commands: &apiv2.Commands{
+			WorkflowId: "counter-deploy",
+			CommandId:  commandID,
+			ActAs:      []string{s.participant.Party},
+			Commands: []*apiv2.Command{{
+				Command: &apiv2.Command_Create{
+					Create: &apiv2.CreateCommand{
+						TemplateId: &apiv2.Identifier{
+							PackageId:  packageID,
+							ModuleName: moduleName,
+							EntityName: entityName,
+						},
+						CreateArguments: createArguments,
+					},
+				},
+			}},
+		},
+	})
 	s.Require().NoError(err)
 
 	// Extract contract ID
-	for _, event := range submitResp.Transaction.Events {
-		if event.Created != nil && event.Created.TemplateID != "" {
-			s.counterCID = event.Created.ContractID
-			break
+	transaction := submitResp.GetTransaction()
+	for _, event := range transaction.GetEvents() {
+		if createdEv := event.GetCreated(); createdEv != nil {
+			templateID := cantonsdk.FormatTemplateID(createdEv.GetTemplateId())
+			if templateID != "" {
+				s.counterCID = createdEv.GetContractId()
+				break
+			}
 		}
 	}
 	s.Require().NotEmpty(s.counterCID)
@@ -175,35 +178,50 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Part
 		RootMetadata: emptyRootMetadata,
 	}
 
-	// Submit via binding client's CommandService
-	commandID := uuid.Must(uuid.NewUUID()).String()
-	cmds := &model.SubmitAndWaitRequest{
-		Commands: &model.Commands{
-			WorkflowID: "mcms-deploy",
-			UserID:     participant.UserName,
-			CommandID:  commandID,
-			ActAs:      []string{participant.Party},
-			Commands:   []*model.Command{{Command: mcmsContract.CreateCommand()}},
-		},
-	}
+	// Parse template ID
+	exerciseCmd := mcmsContract.CreateCommand()
+	packageID, moduleName, entityName, err := cantonsdk.ParseTemplateIDFromString(exerciseCmd.TemplateID)
+	s.Require().NoError(err, "failed to parse template ID")
 
-	submitResp, err := s.client.CommandService.SubmitAndWaitForTransaction(ctx, cmds)
+	// Convert create arguments to apiv2 format
+	createArguments := ledger.ConvertToRecord(exerciseCmd.Arguments)
+
+	// Submit via CommandService
+	commandID := uuid.Must(uuid.NewUUID()).String()
+	submitResp, err := participant.CommandServiceClient.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
+		Commands: &apiv2.Commands{
+			WorkflowId: "mcms-deploy",
+			CommandId:  commandID,
+			ActAs:      []string{participant.Party},
+			Commands: []*apiv2.Command{{
+				Command: &apiv2.Command_Create{
+					Create: &apiv2.CreateCommand{
+						TemplateId: &apiv2.Identifier{
+							PackageId:  packageID,
+							ModuleName: moduleName,
+							EntityName: entityName,
+						},
+						CreateArguments: createArguments,
+					},
+				},
+			}},
+		},
+	})
 	s.Require().NoError(err, "failed to submit MCMS deploy transaction")
 
 	// Retrieve the contract ID and template ID from the create event
 	mcmsContractID := ""
 	mcmsTemplateID := ""
-	for _, event := range submitResp.Transaction.Events {
-		if event.Created == nil {
-			continue
-		}
-
-		normalizedTemplateID := cantonsdk.NormalizeTemplateKey(event.Created.TemplateID)
-		if normalizedTemplateID == cantonsdk.MCMSTemplateKey {
-			mcmsContractID = event.Created.ContractID
-			mcmsTemplateID = event.Created.TemplateID
-
-			break
+	transaction := submitResp.GetTransaction()
+	for _, event := range transaction.GetEvents() {
+		if createdEv := event.GetCreated(); createdEv != nil {
+			templateID := cantonsdk.FormatTemplateID(createdEv.GetTemplateId())
+			normalizedTemplateID := cantonsdk.NormalizeTemplateKey(templateID)
+			if normalizedTemplateID == cantonsdk.MCMSTemplateKey {
+				mcmsContractID = createdEv.GetContractId()
+				mcmsTemplateID = templateID
+				break
+			}
 		}
 	}
 
