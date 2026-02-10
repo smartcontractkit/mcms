@@ -419,6 +419,7 @@ func (s *TestSuite) TestTimelockConverter() {
 		timelockProposal, err := timelockProposalBuilder().
 			AddChainMetadata(s.ChainSelector, metadata).
 			SetAction(types.TimelockActionBypass).
+			// TODO: we should pass the context once we remove background context in the remote chain selectors api
 			Build() //nolint:contextcheck
 		s.Require().NoError(err)
 
@@ -614,6 +615,7 @@ func (s *TestSuite) TestTimelockConverter() {
 					},
 				}),
 			}}).
+			// TODO: we should pass the context once we remove background context in the remote chain selectors api
 			Build() //nolint:contextcheck
 		s.Require().NoError(err)
 
