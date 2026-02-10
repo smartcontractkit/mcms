@@ -71,8 +71,8 @@ func getEVMChainID(ctx context.Context, sel types.ChainSelector, isSim bool) (ui
 		return SimulatedEVMChainID, nil
 	}
 
-	evmChain, _, err := chainselremote.EvmChainBySelector(ctx, uint64(sel))
-	if err != nil {
+	evmChain, exists, err := chainselremote.EvmChainBySelector(ctx, uint64(sel), chainselremote.WithFallbackToLocal(true))
+	if err != nil || !exists {
 		return 0, &sdkerrors.InvalidChainIDError{
 			ReceivedChainID: sel,
 		}

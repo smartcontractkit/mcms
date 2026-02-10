@@ -39,7 +39,7 @@ func GetChainSelectorFamily(sel ChainSelector) (string, error) {
 	// this function is used in a lot of places, and passing the context through all of them would be a big breaking change
 	// so a bigger refactor may be needed to properly pass context through all the layers that use this function
 	ctx := context.Background()
-	details, err := chainselremote.GetChainDetailsBySelector(ctx, uint64(sel))
+	details, err := chainselremote.GetChainDetailsBySelector(ctx, uint64(sel), chainselremote.WithFallbackToLocal(true))
 	if err != nil {
 		return "", fmt.Errorf("%w for selector %d", ErrChainFamilyNotFound, sel)
 	}
