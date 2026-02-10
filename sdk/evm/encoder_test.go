@@ -4,10 +4,9 @@ import (
 	"math/big"
 	"testing"
 
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -124,8 +123,7 @@ func TestEncoder_HashMetadata(t *testing.T) {
 
 func TestEncoder_ToGethOperation(t *testing.T) {
 	t.Parallel()
-	mapsels, err := chainselremote.EvmChainIdToChainSelector(t.Context())
-	require.NoError(t, err)
+	mapsels := chainsel.EvmChainIdToChainSelector()
 	var (
 		evmChainID = uint64(1)
 
