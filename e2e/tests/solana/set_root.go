@@ -90,7 +90,7 @@ func (s *TestSuite) TestSetRoot() {
 
 		// --- act: call SetRoot ---
 		// TODO: we should pass the context once we remove background context in the remote chain selectors api
-		executable, err := mcms.NewExecutable(proposal, executors) //nolint:contextcheck
+		executable, err := mcms.NewExecutable(proposal, executors) //nolint:contextcheck,nolintlint
 		s.Require().NoError(err)
 		signature, err := executable.SetRoot(ctx, s.ChainSelector)
 		s.Require().NoError(err)
@@ -125,12 +125,12 @@ func (s *TestSuite) TestSetRoot() {
 		proposal = buildProposal()
 
 		// TODO: we should pass the context once we remove background context in the remote chain selectors api
-		signable, err := mcms.NewSignable(proposal, inspectors) //nolint:contextcheck
+		signable, err := mcms.NewSignable(proposal, inspectors) //nolint:contextcheck,nolintlint
 		s.Require().NoError(err)
 		s.Require().NotNil(signable)
 		for _, mcmsSigner := range mcmsSigners {
 			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			_, err = signable.SignAndAppend(mcmsSigner) //nolint:contextcheck
+			_, err = signable.SignAndAppend(mcmsSigner) //nolint:contextcheck,nolintlint
 		}
 		s.Require().NoError(err)
 
@@ -140,7 +140,7 @@ func (s *TestSuite) TestSetRoot() {
 		s.Require().NoError(err)
 
 		// TODO: we should pass the context once we remove background context in the remote chain selectors api
-		executable, err := mcms.NewExecutable(proposal, executors) //nolint:contextcheck
+		executable, err := mcms.NewExecutable(proposal, executors) //nolint:contextcheck,nolintlint
 		s.Require().NoError(err)
 
 		// --- act: call SetRoot with "0" CU limit - will use Solana's default ---
