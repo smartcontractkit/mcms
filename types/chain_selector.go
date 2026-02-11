@@ -39,7 +39,7 @@ func GetChainSelectorFamily(sel ChainSelector) (string, error) {
 	// this function is used in a lot of places, and passing the context through all of them would be a big breaking change
 	// so a bigger refactor may be needed to properly pass context through all the layers that use this function
 	ctx := context.Background()
-	details, err := chainselremote.GetChainDetailsBySelector(ctx, uint64(sel), chainselremote.WithFallbackToLocal(true))
+	details, err := chainselremote.GetChainDetailsBySelector(ctx, uint64(sel))
 	if err != nil {
 		// Remote selectors may not include dev/test selectors; fall back to local map.
 		family, localErr := chainsel.GetSelectorFamily(uint64(sel))
