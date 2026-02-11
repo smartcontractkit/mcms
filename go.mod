@@ -8,9 +8,10 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 // Coming from chainlink-deployments-framework
 replace github.com/fbsobreira/gotron-sdk => github.com/smartcontractkit/chainlink-tron/relayer/gotron-sdk v0.0.5-0.20251014120029-d73d15cc23f7
 
-replace github.com/digital-asset/dazl-client/v8 => github.com/noders-team/dazl-client/v8 v8.7.1-2
-
-replace github.com/noders-team/go-daml => github.com/stackman27/go-daml v0.0.0-20260204001938-550ee9d8ab10
+replace (
+	github.com/digital-asset/dazl-client/v8 => github.com/noders-team/dazl-client/v8 v8.7.1-2
+	github.com/smartcontractkit/go-daml => github.com/smartcontractkit/go-daml v0.0.0-20260209201116-eac8a15b0b35
+)
 
 require (
 	github.com/aptos-labs/aptos-go-sdk v1.11.0
@@ -24,18 +25,18 @@ require (
 	github.com/google/uuid v1.6.0
 	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
-	github.com/noders-team/go-daml v0.6.0
 	github.com/samber/lo v1.52.0
 	github.com/smartcontractkit/chain-selectors v1.0.92
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20251212131933-e5e85d6fa4d3
-	github.com/smartcontractkit/chainlink-canton v0.0.0-20260205203303-a74a56b3565d
-	github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260205203303-a74a56b3565d
+	github.com/smartcontractkit/chainlink-canton v0.0.0-20260210001114-c07a75050603
+	github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260210001114-c07a75050603
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260205175622-33e65031f9a9
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.13.9
 	github.com/smartcontractkit/chainlink-ton v0.0.0-20260204205804-642f6ebe4e7e
 	github.com/smartcontractkit/freeport v0.1.3-0.20250716200817-cb5dfd0e369e
+	github.com/smartcontractkit/go-daml v0.6.0
 	github.com/spf13/cast v1.10.0
 	github.com/stretchr/testify v1.11.1
 	github.com/xssnick/tonutils-go v1.14.1

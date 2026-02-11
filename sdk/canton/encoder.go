@@ -58,8 +58,6 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 	}
 
 	// Build the encoded data following Canton's hashOpLeafNative:
-	// encoded = padLeft32(chainId) + asciiToHex(multisigId) + padLeft32(nonce) +
-	//           asciiToHex(targetInstanceId) + asciiToHex(functionName) + operationData
 	encoded := padLeft32(intToHex(int(metadataFields.ChainId))) +
 		asciiToHex(metadataFields.MultisigId) +
 		padLeft32(intToHex(int(opCount))) +
@@ -91,9 +89,6 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		overrideFlag = "01"
 	}
 
-	// Build the encoded data following Canton's hashMetadataLeafNative:
-	// encoded = padLeft32(chainId) + asciiToHex(multisigId) +
-	//           padLeft32(preOpCount) + padLeft32(postOpCount) + overrideFlag
 	encoded := padLeft32(intToHex(int(metadataFields.ChainId))) +
 		asciiToHex(metadataFields.MultisigId) +
 		padLeft32(intToHex(int(metadataFields.PreOpCount))) +
