@@ -136,7 +136,7 @@ func (s *TestSuite) TestTimelockConverter() {
 			AddChainMetadata(s.ChainSelector, cMetadata).
 			SetAction(types.TimelockActionSchedule).
 			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck,nolintlint
 		s.Require().NoError(err)
 
 		proposerAC := s.Roles[timelock.Proposer_Role].AccessController.PublicKey()
@@ -325,7 +325,7 @@ func (s *TestSuite) TestTimelockConverter() {
 				}),
 			}}).
 			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck,nolintlint
 		s.Require().NoError(err)
 
 		// --- act ---
@@ -355,7 +355,7 @@ func (s *TestSuite) TestTimelockConverter() {
 			AddChainMetadata(s.ChainSelector, metadata).
 			SetAction(types.TimelockActionCancel).
 			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck,nolintlint
 		s.Require().NoError(err)
 
 		// build expected output Proposal
