@@ -28,8 +28,8 @@ require (
 	github.com/samber/lo v1.52.0
 	github.com/smartcontractkit/chain-selectors v1.0.92
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20251212131933-e5e85d6fa4d3
-	github.com/smartcontractkit/chainlink-canton v0.0.0-20260205203303-a74a56b3565d
-	github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260205203303-a74a56b3565d
+	github.com/smartcontractkit/chainlink-canton v0.0.0-20260210001114-c07a75050603
+	github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260210001114-c07a75050603
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260205175622-33e65031f9a9
@@ -191,7 +191,6 @@ require (
 	github.com/mostynb/zstdpool-freelist v0.0.0-20201229113212-927304c0c3b1 // indirect
 	github.com/mr-tron/base58 v1.2.0 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/noders-team/go-daml v0.6.0 // indirect
 	github.com/oapi-codegen/runtime v1.1.2 // indirect
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect

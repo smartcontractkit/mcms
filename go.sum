@@ -568,8 +568,6 @@ github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 h1:C3w9PqII01/Oq
 github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822/go.mod h1:+n7T8mK8HuQTcFwEeznm/DIxMOiR9yIdICNftLE1DvQ=
 github.com/noders-team/dazl-client/v8 v8.7.1-2 h1:a8PXw76lE6ozb/MVW/Akw56qXrPM6xUnpz/rT2MXzTA=
 github.com/noders-team/dazl-client/v8 v8.7.1-2/go.mod h1:q1KevCJ8FpH8je2MnnjN8/QUfhstB4fKpyKyqDtqFh0=
-github.com/noders-team/go-daml v0.6.0 h1:gKBjEpXxgzouRW+K9stIrccV4WBt5JMvn4PFeQxepeo=
-github.com/noders-team/go-daml v0.6.0/go.mod h1:yi458NGE4dlDOhlyCZvQ2XgsIOdHHvepwoHRgEusbo8=
 github.com/nxadm/tail v1.4.4/go.mod h1:kenIhsEOeOJmVchQTgglprH7qJGnHDVpk1VPCcaMI8A=
 github.com/nxadm/tail v1.4.8 h1:nPr65rt6Y5JFSKQO7qToXr7pePgD6Gwiw05lkbyAQTE=
 github.com/nxadm/tail v1.4.8/go.mod h1:+ncqLTQzXmGhMZNUePPaPqPvBxHAIsmXswZKocGu+AU=
@@ -694,10 +692,10 @@ github.com/smartcontractkit/chain-selectors v1.0.92 h1:cEapBC3DBDKNAZddp01Xj1qAA
 github.com/smartcontractkit/chain-selectors v1.0.92/go.mod h1:qy7whtgG5g+7z0jt0nRyii9bLND9m15NZTzuQPkMZ5w=
 github.com/smartcontractkit/chainlink-aptos v0.0.0-20251212131933-e5e85d6fa4d3 h1:bbVSKb++R+rpLkydNvyS4nZPNkcjtolUuFC8YVwtMVk=
 github.com/smartcontractkit/chainlink-aptos v0.0.0-20251212131933-e5e85d6fa4d3/go.mod h1:OywVThRaVXwknATT2B8QAwjOJ1LoYBB9bTsmRpf6RPw=
-github.com/smartcontractkit/chainlink-canton v0.0.0-20260205203303-a74a56b3565d h1:Nr/kiMTtpHUuxbwz3gULcX4ijxg+fpofFgFhXfEjcTQ=
-github.com/smartcontractkit/chainlink-canton v0.0.0-20260205203303-a74a56b3565d/go.mod h1:nFmWvUy8OOMdJiqFWbsicxp/UkGa72oEinn8+yPjPmY=
-github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260205203303-a74a56b3565d h1:dwG5CQ2Zh5OCNiccvS6QPEc5SuGyUxQTLo4X3cK93ME=
-github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260205203303-a74a56b3565d/go.mod h1:hIxBBlwFD5prwcA4Cbc7TW/Q1vrDuO7dsC0yvbdCF1I=
+github.com/smartcontractkit/chainlink-canton v0.0.0-20260210001114-c07a75050603 h1:nOoFhjYBPJRY0vk8vElgJJbmVHLIIWODOLovY0zw1Yc=
+github.com/smartcontractkit/chainlink-canton v0.0.0-20260210001114-c07a75050603/go.mod h1:YtmPpxrWQTgzy4F/ObYTvR4EkjFuc8KeXFbka993Kbk=
+github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260210001114-c07a75050603 h1:KpoERuSiEjOXZiNwdqB2jLHsfvtdUL3xAUng1m9Cnf0=
+github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260210001114-c07a75050603/go.mod h1:6e5xlgAPM7PhYAaZ6jyplkqlJ1koJkIky1w2HDBbNu4=
 github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139 h1:jkChf04hhdiMBApbb+lLDxHMY62Md6UeM7v++GSw3K8=
 github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139/go.mod h1:wuhagkM/lU0GbV2YcrROOH0GlsfXJYwm6qmpa4CK70w=
 github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139 h1:tw3K4UkH5XfW5SoyYkvAlbzrccoGSLdz/XkxD6nyGC8=

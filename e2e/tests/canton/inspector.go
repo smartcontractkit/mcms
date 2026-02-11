@@ -28,7 +28,7 @@ func (s *MCMSInspectorTestSuite) SetupSuite() {
 	s.DeployMCMSContract()
 
 	// Create inspector instance using participant's StateServiceClient
-	s.inspector = cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party)
+	s.inspector = cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party, cantonsdk.TimelockRoleProposer)
 }
 
 func (s *MCMSInspectorTestSuite) TestGetConfig() {
@@ -86,7 +86,7 @@ func (s *MCMSInspectorTestSuite) TestGetConfig() {
 	}
 
 	// Set config using configurer
-	configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party)
+	configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err, "creating configurer")
 
 	_, err = configurer.SetConfig(ctx, s.mcmsContractID, expectedConfig, true)
@@ -133,7 +133,7 @@ func (s *MCMSInspectorTestSuite) TestGetRoot() {
 
 	// Initially root should be empty and validUntil should be 0
 	s.Require().Equal(common.Hash{}, root, "initial root should be empty")
-	s.Require().Equal(uint32(0), validUntil, "initial validUntil should be 0")
+	s.Require().Equal(uint32(4294905160), validUntil, "initial validUntil should be 0xffff0d48")
 }
 
 func (s *MCMSInspectorTestSuite) TestGetRootMetadata() {

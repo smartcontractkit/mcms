@@ -22,13 +22,15 @@ type Configurer struct {
 	client apiv2.CommandServiceClient
 	userId string
 	party  string
+	role   TimelockRole
 }
 
-func NewConfigurer(client apiv2.CommandServiceClient, userId string, party string) (*Configurer, error) {
+func NewConfigurer(client apiv2.CommandServiceClient, userId string, party string, role TimelockRole) (*Configurer, error) {
 	return &Configurer{
 		client: client,
 		userId: userId,
 		party:  party,
+		role:   role,
 	}, nil
 }
 
@@ -60,6 +62,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	}
 
 	input := mcms.SetConfig{
+		TargetRole:      mcms.Role(c.role.String()),
 		NewSigners:      signers,
 		NewGroupQuorums: groupQuorumsTyped,
 		NewGroupParents: groupParentsTyped,

@@ -92,7 +92,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 		0, // preOpCount
 		1,
 		s.chainId,
-		s.mcmsId,
+		s.proposerMcmsId,
 		s.mcmsContractID,
 		false,
 	)
@@ -128,13 +128,13 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 	s.Require().NoError(err)
 
 	// Create inspector and executor
-	inspector := cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party)
+	inspector := cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party, cantonsdk.TimelockRoleProposer)
 
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
 
-	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party)
+	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err)
 
 	executors := map[mcmstypes.ChainSelector]sdk.Executor{
@@ -142,10 +142,8 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 	}
 
 	// Sign with first 2 sorted signers
-	for i := 0; i < 2; i++ {
-		_ = s.SignProposal(proposal, *s.sortedWallets[i])
-		s.Require().NoError(err)
-	}
+	_, _, err = s.SignProposal(proposal, inspector, s.sortedSigners[:2], 2)
+	s.Require().NoError(err)
 
 	// Create executable
 	executable, err := mcmscore.NewExecutable(proposal, executors)
@@ -171,7 +169,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 		0, // preOpCount
 		1, // postOp
 		s.chainId,
-		s.mcmsId,
+		s.proposerMcmsId,
 		s.mcmsContractID,
 		false,
 	)
@@ -239,7 +237,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 		1, // preOpCount
 		2, // postOp
 		s.chainId,
-		s.mcmsId,
+		s.proposerMcmsId,
 		s.mcmsContractID,
 		false,
 	)
@@ -275,24 +273,22 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 	s.Require().NoError(err)
 
 	// Create inspector and executor
-	inspector := cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party)
+	inspector := cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party, cantonsdk.TimelockRoleProposer)
 
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
 
-	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party)
+	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err)
 
 	executors := map[mcmstypes.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
 	}
 
-	// Sign with first 2 sorted signers (current quorum is 2)
-	for i := 0; i < 2; i++ {
-		_ = s.SignProposal(proposal, *s.sortedWallets[i])
-		s.Require().NoError(err)
-	}
+	// Sign with first 2 sorted signers
+	_, _, err = s.SignProposal(proposal, inspector, s.sortedSigners[:2], 2)
+	s.Require().NoError(err)
 
 	// Create executable
 	executable, err := mcmscore.NewExecutable(proposal, executors)
@@ -321,7 +317,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 		1, // preOpCount
 		2, // postOp
 		s.chainId,
-		s.mcmsId,
+		s.proposerMcmsId,
 		newMCMSContractID,
 		false,
 	)

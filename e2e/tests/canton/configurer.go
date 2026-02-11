@@ -78,7 +78,7 @@ func (s *MCMSConfigurerTestSuite) TestSetConfig() {
 
 	// Set config
 	{
-		configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party)
+		configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
 		s.Require().NoError(err, "creating configurer for Canton mcms contract")
 		tx, err := configurer.SetConfig(s.T().Context(), s.mcmsContractID, proposerConfig, true)
 		s.Require().NoError(err, "setting config on Canton mcms contract")

@@ -18,9 +18,12 @@ import (
 
 	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
+	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+const SignMsgABI = `[{"type":"bytes32"},{"type":"uint32"}]`
 
 var _ sdk.Executor = &Executor{}
 
@@ -30,15 +33,17 @@ type Executor struct {
 	client apiv2.CommandServiceClient
 	userId string
 	party  string
+	role   TimelockRole
 }
 
-func NewExecutor(encoder *Encoder, inspector *Inspector, client apiv2.CommandServiceClient, userId string, party string) (*Executor, error) {
+func NewExecutor(encoder *Encoder, inspector *Inspector, client apiv2.CommandServiceClient, userId string, party string, role TimelockRole) (*Executor, error) {
 	return &Executor{
 		Encoder:   encoder,
 		Inspector: inspector,
 		client:    client,
 		userId:    userId,
 		party:     party,
+		role:      role,
 	}, nil
 }
 
@@ -96,37 +101,26 @@ func (e Executor) ExecuteOperation(
 	}
 
 	// Convert contract IDs
-	contractIds := make([]cantontypes.CONTRACT_ID, len(cantonOpFields.ContractIds))
+	targetCids := make([]cantontypes.CONTRACT_ID, len(cantonOpFields.ContractIds))
 	for i, cid := range cantonOpFields.ContractIds {
-		contractIds[i] = cantontypes.CONTRACT_ID(cid)
+		targetCids[i] = cantontypes.CONTRACT_ID(cid)
 	}
 
 	// Build exercise command using generated bindings
 	mcmsContract := mcms.MCMS{}
 	var choice string
 	var choiceArgument *apiv2.Value
-	// Use different input struct depending on whether the operation is targeting the MCMS contract itself or another contract
-	if cantonOpFields.TargetInstanceId == "self" {
-		input := mcms.ExecuteMcmsOp{
-			Submitter: cantontypes.PARTY(e.party),
-			Op:        cantonOp,
-			OpProof:   opProof,
-		}
-		exerciseCmd := mcmsContract.ExecuteMcmsOp(metadata.MCMAddress, input)
-		choice = exerciseCmd.Choice
-		choiceArgument = ledger.MapToValue(input)
-	} else {
-		input := mcms.ExecuteOp{
-			Submitter:   cantontypes.PARTY(e.party),
-			TargetCid:   cantontypes.CONTRACT_ID(cantonOpFields.TargetCid),
-			Op:          cantonOp,
-			OpProof:     opProof,
-			ContractIds: contractIds,
-		}
-		exerciseCmd := mcmsContract.ExecuteOp(metadata.MCMAddress, input)
-		choice = exerciseCmd.Choice
-		choiceArgument = ledger.MapToValue(input)
+
+	input := mcms.ExecuteOp{
+		TargetRole: mcms.Role(e.role.String()),
+		Submitter:  cantontypes.PARTY(e.party),
+		Op:         cantonOp,
+		OpProof:    opProof,
+		TargetCids: targetCids,
 	}
+	exerciseCmd := mcmsContract.ExecuteOp(metadata.MCMAddress, input)
+	choice = exerciseCmd.Choice
+	choiceArgument = ledger.MapToValue(input)
 
 	// Parse template ID
 	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
@@ -199,16 +193,13 @@ func (e Executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
-	// Calculate the hash to sign according to Canton's expectations, and extract signers from it
 	rootHex := hex.EncodeToString(root[:])
-	validUntilHexForSigning := strings.Repeat("0", 64) // TODO: Remove, Canton placeholder (64 zeros)
-	concatenated := rootHex + validUntilHexForSigning
-
-	innerData, err := hex.DecodeString(concatenated)
+	// Recalculate msg hash to recover signers
+	inner, err := abi.Encode(SignMsgABI, root, validUntil)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to decode hex for signing: %w", err)
 	}
-	innerHash := crypto.Keccak256(innerData)
+	innerHash := crypto.Keccak256(inner)
 
 	// Apply EIP-191 prefix
 	prefix := []byte("\x19Ethereum Signed Message:\n32")
@@ -266,6 +257,7 @@ func (e Executor) SetRoot(
 
 	validUntilTime := time.Unix(time.Unix(int64(validUntil), 0).UnixMicro(), 0)
 	input := mcms.SetRoot{
+		TargetRole:    mcms.Role(e.role.String()),
 		Submitter:     cantontypes.PARTY(e.party),
 		NewRoot:       cantontypes.TEXT(rootHex),
 		ValidUntil:    cantontypes.TIMESTAMP(validUntilTime),
@@ -342,4 +334,12 @@ func (e Executor) SetRoot(
 			"RawTx":             submitResp,
 		},
 	}, nil
+}
+
+func PadLeft32(hexStr string) string {
+	if len(hexStr) >= 64 {
+		return hexStr[:64]
+	}
+
+	return strings.Repeat("0", 64-len(hexStr)) + hexStr
 }
