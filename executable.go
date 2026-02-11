@@ -68,7 +68,7 @@ func (e *Executable) SetRoot(ctx context.Context, chainSelector types.ChainSelec
 	}
 
 	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	hash, err := e.proposal.SigningHash() //nolint:contextcheck
+	hash, err := e.proposal.SigningHash() //nolint:contextcheck,nolintlint
 	if err != nil {
 		return types.TransactionResult{}, err
 	}

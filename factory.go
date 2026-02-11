@@ -69,7 +69,7 @@ func newEncoder(
 // for the given chain.
 func newTimelockConverter(_ context.Context, csel types.ChainSelector) (sdk.TimelockConverter, error) {
 	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	family, err := types.GetChainSelectorFamily(csel) //nolint:contextcheck
+	family, err := types.GetChainSelectorFamily(csel) //nolint:contextcheck,nolintlint
 	if err != nil {
 		return nil, err
 	}
