@@ -8,6 +8,31 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+type TimelockRole uint8
+
+func (t TimelockRole) String() string {
+	switch t {
+	case TimelockRoleBypasser:
+		return "Bypasser"
+	case TimelockRoleProposer:
+		return "Proposer"
+	case TimelockRoleCanceller:
+		return "Canceller"
+	}
+
+	return "unknown"
+}
+
+func (t TimelockRole) Byte() uint8 {
+	return uint8(t)
+}
+
+const (
+	TimelockRoleBypasser TimelockRole = iota
+	TimelockRoleCanceller
+	TimelockRoleProposer
+)
+
 // AdditionalFieldsMetadata represents the Canton-specific metadata fields
 type AdditionalFieldsMetadata struct {
 	ChainId              int64  `json:"chainId"`
