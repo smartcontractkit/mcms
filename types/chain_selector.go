@@ -41,6 +41,12 @@ func GetChainSelectorFamily(sel ChainSelector) (string, error) {
 	ctx := context.Background()
 	details, err := chainselremote.GetChainDetailsBySelector(ctx, uint64(sel), chainselremote.WithFallbackToLocal(true))
 	if err != nil {
+		// Remote selectors may not include dev/test selectors; fall back to local map.
+		family, localErr := chainsel.GetSelectorFamily(uint64(sel))
+		if localErr == nil {
+			return family, nil
+		}
+
 		return "", fmt.Errorf("%w for selector %d", ErrChainFamilyNotFound, sel)
 	}
 

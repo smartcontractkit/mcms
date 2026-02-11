@@ -15,7 +15,7 @@ type = "anvil"
 family = "evm"
 
 [evm_config_b]
-chain_id = "2337"
+chain_id = "11155111"
 image = "f4hrenh9it/foundry:latest"
 port = "8546"
 type = "anvil"
