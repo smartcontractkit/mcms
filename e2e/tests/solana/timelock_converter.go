@@ -394,7 +394,7 @@ func (s *TestSuite) TestTimelockConverter() {
 				}),
 			}}).
 			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck,nolintlint
 		s.Require().NoError(err)
 
 		// --- act ---
@@ -420,7 +420,7 @@ func (s *TestSuite) TestTimelockConverter() {
 			AddChainMetadata(s.ChainSelector, metadata).
 			SetAction(types.TimelockActionBypass).
 			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck,nolintlint
 		s.Require().NoError(err)
 
 		bypasserAC := s.Roles[timelock.Bypasser_Role].AccessController.PublicKey()
@@ -616,7 +616,7 @@ func (s *TestSuite) TestTimelockConverter() {
 				}),
 			}}).
 			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck,nolintlint
 		s.Require().NoError(err)
 
 		// --- act: convert proposal ---
@@ -651,20 +651,20 @@ func (s *TestSuite) executeConvertedProposal(
 	// sign
 	inspectors := map[types.ChainSelector]sdk.Inspector{s.ChainSelector: solanasdk.NewInspector(s.SolanaClient)}
 	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	signable, err := mcms.NewSignable(&gotProposal, inspectors) //nolint:contextcheck
+	signable, err := mcms.NewSignable(&gotProposal, inspectors) //nolint:contextcheck,nolintlint
 	s.Require().NoError(err)
 	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey)) //nolint:contextcheck
+	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey)) //nolint:contextcheck,nolintlint
 	s.Require().NoError(err)
 
 	// set root
 	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	encoders, err := gotProposal.GetEncoders() //nolint:contextcheck
+	encoders, err := gotProposal.GetEncoders() //nolint:contextcheck,nolintlint
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*solanasdk.Encoder)
 	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: solanasdk.NewExecutor(encoder, s.SolanaClient, wallet)}
 	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	executable, err := mcms.NewExecutable(&gotProposal, executors) //nolint:contextcheck
+	executable, err := mcms.NewExecutable(&gotProposal, executors) //nolint:contextcheck,nolintlint
 	s.Require().NoError(err)
 
 	_, err = executable.SetRoot(ctx, s.ChainSelector)
