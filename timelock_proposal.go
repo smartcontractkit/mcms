@@ -282,7 +282,7 @@ func (m *TimelockProposal) buildTimelockConverters(_ context.Context) (map[types
 	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
 	for chain := range m.ChainMetadata {
 		// TODO: we need to pass in the context param once we remove background context in the remote chain selectors api
-		fam, err := types.GetChainSelectorFamily(chain) //nolint:contextcheck,nolintlint
+		fam, err := types.GetChainSelectorFamily(chain) //nolint:contextcheck
 		if err != nil {
 			return nil, fmt.Errorf("error getting chain family: %w", err)
 		}

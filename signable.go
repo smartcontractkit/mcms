@@ -162,7 +162,7 @@ func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (
 	}
 
 	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	hash, err := s.proposal.SigningHash() //nolint:contextcheck,nolintlint
+	hash, err := s.proposal.SigningHash() //nolint:contextcheck
 	if err != nil {
 		return false, err
 	}
