@@ -20,15 +20,11 @@ object.
 package main
 
 import (
-"io"
-"log"
-"os"
+  "io"
+  "log"
+  "os"
 
-
-
-
-
-"github.com/smartcontractkit/mcms"
+  "github.com/smartcontractkit/mcms"
 )
 
 func main() {
@@ -314,16 +310,16 @@ Use the `evm.NewTransaction` helper to build an EVM specific transaction.
 ```go
 // Create an evm specific tx for the proposal operation
 tx := evm.NewTransaction(
-  common.Address{},
-  []byte("data bytes of the transaction"),
-  5, // Value in GWEI
-  "MyEVMContractType",
-  []string{"tag1", "tag2"},
+common.Address{},
+[]byte("data bytes of the transaction"),
+5, // Value in GWEI
+"MyEVMContractType",
+[]string{"tag1", "tag2"},
 )
 
 builder.AddOperation(types.Operation{
-  ChainSelector: selector,
-  Transaction:   tx,
+ChainSelector: selector,
+Transaction:   tx,
 })
 ```
 
@@ -334,19 +330,19 @@ Use the `solana.NewTransaction` helper to build a Solana specific transaction.
 ```go
 // Create a solana specific tx for the proposal operation
 accounts := []*solana.AccountMeta{
-  {
-    PublicKey:  solana.MustPublicKeyFromBase58("account pub key"),
-    IsSigner:   false,
-    IsWritable: true,
-  }
+{
+PublicKey:  solana.MustPublicKeyFromBase58("account pub key"),
+IsSigner:   false,
+IsWritable: true,
+}
 }
 
 tx := solana.NewTransaction(
-  "programIDGoesHere",
-  []byte("data bytes of the instruction"),
-  accounts,
-  "MySolanaContractType",
-  []string{"tag1", "tag2"}
+"programIDGoesHere",
+[]byte("data bytes of the instruction"),
+accounts,
+"MySolanaContractType",
+[]string{"tag1", "tag2"}
 )
 
 builder.AddOperation(types.Operation{ChainSelector: selector, Transaction: tx})
@@ -361,24 +357,24 @@ Please note that MCMS on Aptos does not support non-timelock proposals. All oper
 ```go
 toAddress := aptos.AccountAddress{}
 if err := toAddress.ParseStringRelaxed("0xe2bb72029d2e1f48b7bede6569a9226653c43ab44e1a7e0df21eac31b3c91bf4"); err != nil {
-  panic(err)
+panic(err)
 }
 
 tx, err := aptossdk.NewTransaction(
-  "package",
-  "module",
-  "function",
-  toAddress,
-  []byte("calldata"),
-  "MyAptosContractType",
-  []string("tag1", "tag2")
+"package",
+"module",
+"function",
+toAddress,
+[]byte("calldata"),
+"MyAptosContractType",
+[]string("tag1", "tag2")
 )
 if err != nil {
-  panic(err)
+panic(err)
 }
 
 timelockBuilder.AddOperation(types.BatchOperation{
-  ChainSelector: selector,
-  Transactions:  []types.Transaction{tx},
+ChainSelector: selector,
+Transactions:  []types.Transaction{tx},
 })
 ```
