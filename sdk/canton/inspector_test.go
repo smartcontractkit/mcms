@@ -1,193 +1,663 @@
-//go:build e2e
-
 package canton
 
 import (
+	"context"
+	"io"
 	"testing"
+	"time"
 
+	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
-	"github.com/smartcontractkit/go-daml/pkg/types"
-	mcmstypes "github.com/smartcontractkit/mcms/types"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/grpc"
+
+	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
+	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
+	mock_apiv2 "github.com/smartcontractkit/mcms/sdk/canton/mocks/apiv2"
+	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestToConfig(t *testing.T) {
+// mockGetActiveContractsClient implements the streaming client for GetActiveContracts
+type mockGetActiveContractsClient struct {
+	grpc.ClientStream
+	responses []*apiv2.GetActiveContractsResponse
+	index     int
+}
+
+func (m *mockGetActiveContractsClient) Recv() (*apiv2.GetActiveContractsResponse, error) {
+	if m.index >= len(m.responses) {
+		return nil, io.EOF
+	}
+	resp := m.responses[m.index]
+	m.index++
+	return resp, nil
+}
+
+func (m *mockGetActiveContractsClient) CloseSend() error {
+	return nil
+}
+
+func TestNewInspector(t *testing.T) {
+	t.Parallel()
+
+	mockStateClient := mock_apiv2.NewStateServiceClient(t)
+	party := "Alice::party123"
+	role := TimelockRoleProposer
+
+	inspector := NewInspector(mockStateClient, party, role)
+
+	require.NotNil(t, inspector)
+	assert.Equal(t, mockStateClient, inspector.stateClient)
+	assert.Equal(t, party, inspector.party)
+	assert.Equal(t, role, inspector.role)
+	assert.Nil(t, inspector.contractCache)
+}
+
+func TestInspector_GetConfig(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
-		name        string
-		description string
-		input       mcms.MultisigConfig
-		expected    mcmstypes.Config
+		name      string
+		mcmsAddr  string
+		role      TimelockRole
+		mockSetup func(*mock_apiv2.StateServiceClient) *mcms.MCMS
+		want      *types.Config
+		wantErr   string
 	}{
 		{
-			name:        "simple_2of3",
-			description: "Simple 2-of-3 multisig with all signers in root group (group 0)",
-			input: mcms.MultisigConfig{
-				Signers: []mcms.SignerInfo{
-					{SignerAddress: types.TEXT("0x1111111111111111111111111111111111111111"), SignerIndex: types.INT64(0), SignerGroup: types.INT64(0)},
-					{SignerAddress: types.TEXT("0x2222222222222222222222222222222222222222"), SignerIndex: types.INT64(1), SignerGroup: types.INT64(0)},
-					{SignerAddress: types.TEXT("0x3333333333333333333333333333333333333333"), SignerIndex: types.INT64(2), SignerGroup: types.INT64(0)},
-				},
-				GroupQuorums: []types.INT64{2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-				GroupParents: []types.INT64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			},
-			expected: mcmstypes.Config{
-				Quorum: 2,
-				Signers: []common.Address{
-					common.HexToAddress("1111111111111111111111111111111111111111"),
-					common.HexToAddress("2222222222222222222222222222222222222222"),
-					common.HexToAddress("3333333333333333333333333333333333333333"),
-				},
-				GroupSigners: []mcmstypes.Config{},
-			},
-		},
-		{
-			name:        "hierarchical_2level",
-			description: "2-level hierarchy: root group 0 has 1 direct signer + group 1 as child. Group 1 has 3 signers with quorum 2. Root quorum is 1 (can be satisfied by direct signer OR group 1 reaching quorum).",
-			input: mcms.MultisigConfig{
-				Signers: []mcms.SignerInfo{
-					{SignerAddress: types.TEXT("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), SignerIndex: types.INT64(0), SignerGroup: types.INT64(0)},
-					{SignerAddress: types.TEXT("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"), SignerIndex: types.INT64(1), SignerGroup: types.INT64(1)},
-					{SignerAddress: types.TEXT("0xcccccccccccccccccccccccccccccccccccccccc"), SignerIndex: types.INT64(2), SignerGroup: types.INT64(1)},
-					{SignerAddress: types.TEXT("0xdddddddddddddddddddddddddddddddddddddddd"), SignerIndex: types.INT64(3), SignerGroup: types.INT64(1)},
-				},
-				GroupQuorums: []types.INT64{1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-				GroupParents: []types.INT64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			},
-			expected: mcmstypes.Config{
-				Quorum: 1,
-				Signers: []common.Address{
-					common.HexToAddress("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"),
-				},
-				GroupSigners: []mcmstypes.Config{
-					{
-						Quorum: 2,
-						Signers: []common.Address{
-							common.HexToAddress("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"),
-							common.HexToAddress("cccccccccccccccccccccccccccccccccccccccc"),
-							common.HexToAddress("dddddddddddddddddddddddddddddddddddddddd"),
-						},
-						GroupSigners: []mcmstypes.Config{},
-					},
-				},
-			},
-		},
-		{
-			name:        "complex_3level",
-			description: "3-level hierarchy: Group 0 (root) quorum 2, Group 1 (parent 0) quorum 2, Group 2 (parent 0) quorum 1, Group 3 (parent 1) quorum 2. Tests deeper nesting with multiple child groups at same level.",
-			input: mcms.MultisigConfig{
-				Signers: []mcms.SignerInfo{
-					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000001"), SignerIndex: types.INT64(0), SignerGroup: types.INT64(0)},
-					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000002"), SignerIndex: types.INT64(1), SignerGroup: types.INT64(1)},
-					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000003"), SignerIndex: types.INT64(2), SignerGroup: types.INT64(1)},
-					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000004"), SignerIndex: types.INT64(3), SignerGroup: types.INT64(2)},
-					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000005"), SignerIndex: types.INT64(4), SignerGroup: types.INT64(2)},
-					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000006"), SignerIndex: types.INT64(5), SignerGroup: types.INT64(3)},
-					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000007"), SignerIndex: types.INT64(6), SignerGroup: types.INT64(3)},
-					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000008"), SignerIndex: types.INT64(7), SignerGroup: types.INT64(3)},
-				},
-				GroupQuorums: []types.INT64{2, 2, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-				GroupParents: []types.INT64{0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			},
-			expected: mcmstypes.Config{
-				Quorum: 2,
-				Signers: []common.Address{
-					common.HexToAddress("1000000000000000000000000000000000000001"),
-				},
-				GroupSigners: []mcmstypes.Config{
-					{
-						Quorum: 2,
-						Signers: []common.Address{
-							common.HexToAddress("1000000000000000000000000000000000000002"),
-							common.HexToAddress("1000000000000000000000000000000000000003"),
-						},
-						GroupSigners: []mcmstypes.Config{
-							{
-								Quorum: 2,
-								Signers: []common.Address{
-									common.HexToAddress("1000000000000000000000000000000000000006"),
-									common.HexToAddress("1000000000000000000000000000000000000007"),
-									common.HexToAddress("1000000000000000000000000000000000000008"),
+			name:     "success - proposer role",
+			mcmsAddr: "contract-id-123",
+			role:     TimelockRoleProposer,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) *mcms.MCMS {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-123", &mcms.MCMS{
+					Owner:      "Alice::party123",
+					InstanceId: "instance-123",
+					ChainId:    1,
+					Proposer: mcms.RoleState{
+						Config: mcms.MultisigConfig{
+							Signers: []mcms.SignerInfo{
+								{
+									SignerAddress: "1122334455667788",
+									SignerGroup:   0,
+									SignerIndex:   0,
 								},
-								GroupSigners: []mcmstypes.Config{},
+								{
+									SignerAddress: "2233445566778899",
+									SignerGroup:   1,
+									SignerIndex:   1,
+								},
 							},
+							GroupQuorums: []cantontypes.INT64{2, 1},
+							GroupParents: []cantontypes.INT64{0, 0},
 						},
 					},
+				})
+				return nil
+			},
+			want: &types.Config{
+				Quorum: 2,
+				Signers: []common.Address{
+					common.HexToAddress("0x1122334455667788"),
+				},
+				GroupSigners: []types.Config{
 					{
 						Quorum: 1,
 						Signers: []common.Address{
-							common.HexToAddress("1000000000000000000000000000000000000004"),
-							common.HexToAddress("1000000000000000000000000000000000000005"),
+							common.HexToAddress("0x2233445566778899"),
 						},
-						GroupSigners: []mcmstypes.Config{},
+						GroupSigners: []types.Config{},
 					},
 				},
 			},
+			wantErr: "",
 		},
 		{
-			name:        "empty_groups_edge_case",
-			description: "Edge case: groups with quorum 0 (disabled) interspersed with active groups. Group 0 active (quorum 1), Group 1 disabled (quorum 0), Group 2 active (quorum 2, parent 0). The toConfig function should skip disabled groups.",
-			input: mcms.MultisigConfig{
-				Signers: []mcms.SignerInfo{
-					{SignerAddress: types.TEXT("0xdead000000000000000000000000000000000001"), SignerIndex: types.INT64(0), SignerGroup: types.INT64(0)},
-					{SignerAddress: types.TEXT("0xdead000000000000000000000000000000000002"), SignerIndex: types.INT64(1), SignerGroup: types.INT64(2)},
-					{SignerAddress: types.TEXT("0xdead000000000000000000000000000000000003"), SignerIndex: types.INT64(2), SignerGroup: types.INT64(2)},
-				},
-				GroupQuorums: []types.INT64{1, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-				GroupParents: []types.INT64{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			name:     "success - bypasser role",
+			mcmsAddr: "contract-id-456",
+			role:     TimelockRoleBypasser,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) *mcms.MCMS {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-456", &mcms.MCMS{
+					Owner:      "Bob::party456",
+					InstanceId: "instance-456",
+					ChainId:    2,
+					Bypasser: mcms.RoleState{
+						Config: mcms.MultisigConfig{
+							Signers: []mcms.SignerInfo{
+								{
+									SignerAddress: "aabbccddeeff0011",
+									SignerGroup:   0,
+									SignerIndex:   0,
+								},
+							},
+							GroupQuorums: []cantontypes.INT64{1},
+							GroupParents: []cantontypes.INT64{0},
+						},
+					},
+				})
+				return nil
 			},
-			expected: mcmstypes.Config{
+			want: &types.Config{
 				Quorum: 1,
 				Signers: []common.Address{
-					common.HexToAddress("dead000000000000000000000000000000000001"),
+					common.HexToAddress("0xaabbccddeeff0011"),
 				},
-				GroupSigners: []mcmstypes.Config{
-					{
-						Quorum: 2,
-						Signers: []common.Address{
-							common.HexToAddress("dead000000000000000000000000000000000002"),
-							common.HexToAddress("dead000000000000000000000000000000000003"),
-						},
-						GroupSigners: []mcmstypes.Config{},
-					},
-				},
+				GroupSigners: []types.Config{},
 			},
+			wantErr: "",
+		},
+		{
+			name:     "success - canceller role",
+			mcmsAddr: "contract-id-789",
+			role:     TimelockRoleCanceller,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) *mcms.MCMS {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-789", &mcms.MCMS{
+					Owner:      "Carol::party789",
+					InstanceId: "instance-789",
+					ChainId:    3,
+					Canceller: mcms.RoleState{
+						Config: mcms.MultisigConfig{
+							Signers: []mcms.SignerInfo{
+								{
+									SignerAddress: "ffeeddccbbaa9988",
+									SignerGroup:   0,
+									SignerIndex:   0,
+								},
+							},
+							GroupQuorums: []cantontypes.INT64{1},
+							GroupParents: []cantontypes.INT64{0},
+						},
+					},
+				})
+				return nil
+			},
+			want: &types.Config{
+				Quorum: 1,
+				Signers: []common.Address{
+					common.HexToAddress("0xffeeddccbbaa9988"),
+				},
+				GroupSigners: []types.Config{},
+			},
+			wantErr: "",
+		},
+		{
+			name:     "failure - contract not found",
+			mcmsAddr: "nonexistent-contract",
+			role:     TimelockRoleProposer,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) *mcms.MCMS {
+				mockClient.EXPECT().GetLedgerEnd(mock.Anything, mock.Anything).Return(
+					&apiv2.GetLedgerEndResponse{
+						Offset: 123,
+					},
+					nil,
+				)
+
+				streamClient := &mockGetActiveContractsClient{
+					responses: []*apiv2.GetActiveContractsResponse{},
+				}
+				mockClient.EXPECT().GetActiveContracts(mock.Anything, mock.Anything).Return(
+					streamClient,
+					nil,
+				)
+				return nil
+			},
+			want:    nil,
+			wantErr: "MCMS contract with ID nonexistent-contract not found",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := toConfig(tt.input)
-			require.NoError(t, err, tt.description)
-			require.NotNil(t, result)
+			t.Parallel()
+			ctx := context.Background()
 
-			// Compare the result with expected
-			require.Equal(t, tt.expected.Quorum, result.Quorum, "quorum mismatch")
-			require.Equal(t, len(tt.expected.Signers), len(result.Signers), "signers count mismatch")
-
-			// Compare signers
-			for i, expectedSigner := range tt.expected.Signers {
-				require.Equal(t, expectedSigner, result.Signers[i], "signer mismatch at index %d", i)
+			mockStateClient := mock_apiv2.NewStateServiceClient(t)
+			if tt.mockSetup != nil {
+				tt.mockSetup(mockStateClient)
 			}
 
-			// Compare group signers recursively
-			compareGroupSigners(t, tt.expected.GroupSigners, result.GroupSigners)
+			inspector := NewInspector(mockStateClient, "Alice::party123", tt.role)
+
+			got, err := inspector.GetConfig(ctx, tt.mcmsAddr)
+
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+				assert.Nil(t, got)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
 		})
 	}
 }
 
-func compareGroupSigners(t *testing.T, expected, actual []mcmstypes.Config) {
-	require.Equal(t, len(expected), len(actual), "group signers count mismatch")
+func TestInspector_GetOpCount(t *testing.T) {
+	t.Parallel()
 
-	for i := range expected {
-		require.Equal(t, expected[i].Quorum, actual[i].Quorum, "group %d quorum mismatch", i)
-		require.Equal(t, len(expected[i].Signers), len(actual[i].Signers), "group %d signers count mismatch", i)
-
-		for j, expectedSigner := range expected[i].Signers {
-			require.Equal(t, expectedSigner, actual[i].Signers[j], "group %d signer mismatch at index %d", i, j)
-		}
-
-		// Recursively compare nested group signers
-		compareGroupSigners(t, expected[i].GroupSigners, actual[i].GroupSigners)
+	tests := []struct {
+		name      string
+		mcmsAddr  string
+		role      TimelockRole
+		mockSetup func(*mock_apiv2.StateServiceClient)
+		want      uint64
+		wantErr   string
+	}{
+		{
+			name:     "success - proposer role",
+			mcmsAddr: "contract-id-123",
+			role:     TimelockRoleProposer,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-123", &mcms.MCMS{
+					Proposer: mcms.RoleState{
+						ExpiringRoot: mcms.ExpiringRoot{
+							OpCount: 5,
+						},
+					},
+				})
+			},
+			want:    5,
+			wantErr: "",
+		},
+		{
+			name:     "success - bypasser role",
+			mcmsAddr: "contract-id-456",
+			role:     TimelockRoleBypasser,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-456", &mcms.MCMS{
+					Bypasser: mcms.RoleState{
+						ExpiringRoot: mcms.ExpiringRoot{
+							OpCount: 10,
+						},
+					},
+				})
+			},
+			want:    10,
+			wantErr: "",
+		},
+		{
+			name:     "success - canceller role with zero op count",
+			mcmsAddr: "contract-id-789",
+			role:     TimelockRoleCanceller,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-789", &mcms.MCMS{
+					Canceller: mcms.RoleState{
+						ExpiringRoot: mcms.ExpiringRoot{
+							OpCount: 0,
+						},
+					},
+				})
+			},
+			want:    0,
+			wantErr: "",
+		},
 	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctx := context.Background()
+
+			mockStateClient := mock_apiv2.NewStateServiceClient(t)
+			if tt.mockSetup != nil {
+				tt.mockSetup(mockStateClient)
+			}
+
+			inspector := NewInspector(mockStateClient, "Alice::party123", tt.role)
+
+			got, err := inspector.GetOpCount(ctx, tt.mcmsAddr)
+
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestInspector_GetRoot(t *testing.T) {
+	t.Parallel()
+
+	validUntilTime := time.Date(2026, 3, 15, 10, 30, 0, 0, time.UTC)
+
+	tests := []struct {
+		name           string
+		mcmsAddr       string
+		role           TimelockRole
+		mockSetup      func(*mock_apiv2.StateServiceClient)
+		wantRoot       common.Hash
+		wantValidUntil uint32
+		wantErr        string
+	}{
+		{
+			name:     "success - proposer role",
+			mcmsAddr: "contract-id-123",
+			role:     TimelockRoleProposer,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-123", &mcms.MCMS{
+					Proposer: mcms.RoleState{
+						ExpiringRoot: mcms.ExpiringRoot{
+							Root:       "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+							ValidUntil: cantontypes.TIMESTAMP(validUntilTime),
+						},
+					},
+				})
+			},
+			wantRoot:       common.HexToHash("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"),
+			wantValidUntil: uint32(validUntilTime.Unix()),
+			wantErr:        "",
+		},
+		{
+			name:     "success - bypasser role",
+			mcmsAddr: "contract-id-456",
+			role:     TimelockRoleBypasser,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-456", &mcms.MCMS{
+					Bypasser: mcms.RoleState{
+						ExpiringRoot: mcms.ExpiringRoot{
+							Root:       "abcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890",
+							ValidUntil: cantontypes.TIMESTAMP(validUntilTime),
+						},
+					},
+				})
+			},
+			wantRoot:       common.HexToHash("0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"),
+			wantValidUntil: uint32(validUntilTime.Unix()),
+			wantErr:        "",
+		},
+		{
+			name:     "failure - invalid root hex",
+			mcmsAddr: "contract-id-bad",
+			role:     TimelockRoleProposer,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-bad", &mcms.MCMS{
+					Proposer: mcms.RoleState{
+						ExpiringRoot: mcms.ExpiringRoot{
+							Root:       "invalid-hex-string",
+							ValidUntil: cantontypes.TIMESTAMP(validUntilTime),
+						},
+					},
+				})
+			},
+			wantRoot:       common.Hash{},
+			wantValidUntil: 0,
+			wantErr:        "failed to decode root hash",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctx := context.Background()
+
+			mockStateClient := mock_apiv2.NewStateServiceClient(t)
+			if tt.mockSetup != nil {
+				tt.mockSetup(mockStateClient)
+			}
+
+			inspector := NewInspector(mockStateClient, "Alice::party123", tt.role)
+
+			gotRoot, gotValidUntil, err := inspector.GetRoot(ctx, tt.mcmsAddr)
+
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.wantRoot, gotRoot)
+				assert.Equal(t, tt.wantValidUntil, gotValidUntil)
+			}
+		})
+	}
+}
+
+func TestInspector_GetRootMetadata(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name      string
+		mcmsAddr  string
+		role      TimelockRole
+		mockSetup func(*mock_apiv2.StateServiceClient)
+		want      types.ChainMetadata
+		wantErr   string
+	}{
+		{
+			name:     "success - proposer role",
+			mcmsAddr: "contract-id-123",
+			role:     TimelockRoleProposer,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-123", &mcms.MCMS{
+					InstanceId: "instance-123",
+					Proposer: mcms.RoleState{
+						RootMetadata: mcms.RootMetadata{
+							ChainId:     1,
+							PreOpCount:  5,
+							PostOpCount: 10,
+						},
+					},
+				})
+			},
+			want: types.ChainMetadata{
+				StartingOpCount: 5,
+				MCMAddress:      "instance-123",
+			},
+			wantErr: "",
+		},
+		{
+			name:     "success - bypasser role",
+			mcmsAddr: "contract-id-456",
+			role:     TimelockRoleBypasser,
+			mockSetup: func(mockClient *mock_apiv2.StateServiceClient) {
+				setupMockGetMCMSContract(t, mockClient, "contract-id-456", &mcms.MCMS{
+					InstanceId: "instance-456",
+					Bypasser: mcms.RoleState{
+						RootMetadata: mcms.RootMetadata{
+							ChainId:     2,
+							PreOpCount:  0,
+							PostOpCount: 3,
+						},
+					},
+				})
+			},
+			want: types.ChainMetadata{
+				StartingOpCount: 0,
+				MCMAddress:      "instance-456",
+			},
+			wantErr: "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			ctx := context.Background()
+
+			mockStateClient := mock_apiv2.NewStateServiceClient(t)
+			if tt.mockSetup != nil {
+				tt.mockSetup(mockStateClient)
+			}
+
+			inspector := NewInspector(mockStateClient, "Alice::party123", tt.role)
+
+			got, err := inspector.GetRootMetadata(ctx, tt.mcmsAddr)
+
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+func TestToConfig(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name       string
+		bindConfig mcms.MultisigConfig
+		want       *types.Config
+		wantErr    string
+	}{
+		{
+			name: "success - simple single group",
+			bindConfig: mcms.MultisigConfig{
+				Signers: []mcms.SignerInfo{
+					{
+						SignerAddress: "1122334455667788",
+						SignerGroup:   0,
+						SignerIndex:   0,
+					},
+					{
+						SignerAddress: "2233445566778899",
+						SignerGroup:   0,
+						SignerIndex:   1,
+					},
+				},
+				GroupQuorums: []cantontypes.INT64{2},
+				GroupParents: []cantontypes.INT64{0},
+			},
+			want: &types.Config{
+				Quorum: 2,
+				Signers: []common.Address{
+					common.HexToAddress("0x1122334455667788"),
+					common.HexToAddress("0x2233445566778899"),
+				},
+				GroupSigners: []types.Config{},
+			},
+			wantErr: "",
+		},
+		{
+			name: "success - hierarchical groups",
+			bindConfig: mcms.MultisigConfig{
+				Signers: []mcms.SignerInfo{
+					{
+						SignerAddress: "1122334455667788",
+						SignerGroup:   0,
+						SignerIndex:   0,
+					},
+					{
+						SignerAddress: "2233445566778899",
+						SignerGroup:   1,
+						SignerIndex:   1,
+					},
+					{
+						SignerAddress: "3344556677889900",
+						SignerGroup:   1,
+						SignerIndex:   2,
+					},
+				},
+				GroupQuorums: []cantontypes.INT64{2, 2},
+				GroupParents: []cantontypes.INT64{0, 0},
+			},
+			want: &types.Config{
+				Quorum: 2,
+				Signers: []common.Address{
+					common.HexToAddress("0x1122334455667788"),
+				},
+				GroupSigners: []types.Config{
+					{
+						Quorum: 2,
+						Signers: []common.Address{
+							common.HexToAddress("0x2233445566778899"),
+							common.HexToAddress("0x3344556677889900"),
+						},
+						GroupSigners: []types.Config{},
+					},
+				},
+			},
+			wantErr: "",
+		},
+		{
+			name: "failure - empty config",
+			bindConfig: mcms.MultisigConfig{
+				Signers:      []mcms.SignerInfo{},
+				GroupQuorums: []cantontypes.INT64{},
+				GroupParents: []cantontypes.INT64{},
+			},
+			want:    nil,
+			wantErr: "Quorum must be greater than 0",
+		},
+		{
+			name: "failure - group index exceeds maximum",
+			bindConfig: mcms.MultisigConfig{
+				Signers: []mcms.SignerInfo{
+					{
+						SignerAddress: "1122334455667788",
+						SignerGroup:   32, // Exceeds maximum of 31
+						SignerIndex:   0,
+					},
+				},
+				GroupQuorums: []cantontypes.INT64{1},
+				GroupParents: []cantontypes.INT64{0},
+			},
+			want:    nil,
+			wantErr: "signer group index 32 exceeds maximum of 31",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := toConfig(tt.bindConfig)
+
+			if tt.wantErr != "" {
+				require.Error(t, err)
+				assert.Contains(t, err.Error(), tt.wantErr)
+				assert.Nil(t, got)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+// Helper function to setup mock for getMCMSContract
+func setupMockGetMCMSContract(t *testing.T, mockClient *mock_apiv2.StateServiceClient, contractID string, mcmsContract *mcms.MCMS) {
+	// Mock GetLedgerEnd
+	mockClient.EXPECT().GetLedgerEnd(mock.Anything, mock.Anything).Return(
+		&apiv2.GetLedgerEndResponse{
+			Offset: 123,
+		},
+		nil,
+	)
+
+	// Create the created event for the MCMS contract
+	createdEvent := &apiv2.CreatedEvent{
+		ContractId: contractID,
+		TemplateId: &apiv2.Identifier{
+			PackageId:  "#mcms",
+			ModuleName: "MCMS.Main",
+			EntityName: "MCMS",
+		},
+	}
+
+	// Create response with the active contract
+	responses := []*apiv2.GetActiveContractsResponse{
+		{
+			ContractEntry: &apiv2.GetActiveContractsResponse_ActiveContract{
+				ActiveContract: &apiv2.ActiveContract{
+					CreatedEvent: createdEvent,
+				},
+			},
+		},
+	}
+
+	streamClient := &mockGetActiveContractsClient{
+		responses: responses,
+	}
+
+	mockClient.EXPECT().GetActiveContracts(mock.Anything, mock.Anything).Return(
+		streamClient,
+		nil,
+	)
 }

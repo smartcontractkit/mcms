@@ -123,7 +123,7 @@ func (e Executor) ExecuteOperation(
 	choiceArgument = ledger.MapToValue(input)
 
 	// Parse template ID
-	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
+	packageID, moduleName, entityName, err := ParseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
 	}

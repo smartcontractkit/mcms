@@ -73,7 +73,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	exerciseCmd := mcmsContract.SetConfig(mcmsAddr, input)
 
 	// Parse template ID
-	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
+	packageID, moduleName, entityName, err := ParseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
 	}
@@ -113,7 +113,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	transaction := submitResp.GetTransaction()
 	for _, ev := range transaction.GetEvents() {
 		if createdEv := ev.GetCreated(); createdEv != nil {
-			templateID := formatTemplateID(createdEv.GetTemplateId())
+			templateID := FormatTemplateID(createdEv.GetTemplateId())
 			normalized := NormalizeTemplateKey(templateID)
 			if normalized == MCMSTemplateKey {
 				newMCMSContractID = createdEv.GetContractId()
