@@ -158,7 +158,7 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	// Generate few test wallets
-	chainID := cselectors.TON_LOCALNET.ChainID
+	chainID := chainsel.TON_LOCALNET.ChainID
 	s.accounts = []*address.Address{
 		must(tvm.NewRandomV5R1TestWallet(s.TonClient, chainID)).Address(),
 		must(tvm.NewRandomV5R1TestWallet(s.TonClient, chainID)).Address(),
