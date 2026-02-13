@@ -128,7 +128,6 @@ func (s *TestSuite) TestSetRoot() {
 		s.Require().NoError(err)
 		s.Require().NotNil(signable)
 		for _, mcmsSigner := range mcmsSigners {
-
 			_, err = signable.SignAndAppend(mcmsSigner) //nolint:contextcheck //OPT-400
 		}
 		s.Require().NoError(err)

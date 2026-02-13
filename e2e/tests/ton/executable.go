@@ -76,8 +76,8 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 	s.ChainA = types.ChainSelector(details.ChainSelector)
 
-	s.ChainB = types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
-	s.ChainC = types.ChainSelector(chainsel.ETHEREUM_TESTNET_HOLESKY.Selector)
+	s.ChainB = types.ChainSelector(chainsel.GETH_TESTNET.Selector)
+	s.ChainC = types.ChainSelector(chainsel.GETH_DEVNET_2.Selector)
 
 	// Deploy contracts on chain A (the one we execute on)
 	s.deployMCMSContract(hash.CRC32("test.executable.mcms"))

@@ -68,7 +68,6 @@ func newEncoder(
 // newTimelockConverter a new TimelockConverter that can convert timelock proposals
 // for the given chain.
 func newTimelockConverter(_ context.Context, csel types.ChainSelector) (sdk.TimelockConverter, error) {
-
 	family, err := types.GetChainSelectorFamily(csel) //nolint:contextcheck //OPT-400
 	if err != nil {
 		return nil, err
