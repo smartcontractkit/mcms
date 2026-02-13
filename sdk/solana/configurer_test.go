@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -30,7 +30,7 @@ func TestNewConfigurer(t *testing.T) {
 
 	client := &rpc.Client{}
 	auth := solana.MustPrivateKeyFromBase58("DmPfeHBC8Brf8s5qQXi25bmJ996v6BHRtaLc6AH51yFGSqQpUMy1oHkbbXobPNBdgGH2F29PAmoq9ZZua4K9vCc")
-	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
+	chainSelector := types.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
 
 	newAuthorityAccount := solana.NewWallet().PublicKey()
 
@@ -79,7 +79,7 @@ func TestNewConfigurer(t *testing.T) {
 
 func TestConfigurer_SetConfig(t *testing.T) { //nolint:paralleltest // https://github.com/kunwardeep/paralleltest/issues/49
 	ctx := context.Background()
-	chainSelector := types.ChainSelector(cselectors.SOLANA_DEVNET.Selector)
+	chainSelector := types.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
 	auth, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
 	defaultMcmConfig := &types.Config{Quorum: 1, Signers: []common.Address{common.HexToAddress("0x1")}}

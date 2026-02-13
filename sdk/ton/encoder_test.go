@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk/ton"
@@ -131,7 +131,7 @@ func TestEncoder_ToOperation(t *testing.T) {
 
 	var (
 		chainID       = int32(-217)
-		chainSelector = types.ChainSelector(cselectors.TonChainIdToChainSelector()[chainID])
+		chainSelector = types.ChainSelector(chainsel.TonChainIdToChainSelector()[chainID])
 
 		// Static argument values to ToGethOperation since they don't affect the test
 		giveOpCount  = uint32(0)

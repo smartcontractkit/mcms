@@ -13,7 +13,7 @@ import (
 
   "github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
   "github.com/gagliardetto/solana-go/rpc"
-  chain_selectors "github.com/smartcontractkit/chain-selectors"
+  chainsel "github.com/smartcontractkit/chain-selectors"
 
   "github.com/smartcontractkit/mcms"
   "github.com/smartcontractkit/mcms/sdk"
@@ -36,7 +36,7 @@ func main() {
   }
 
   // 2. Create the signable type from the proposal
-  selector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
+  selector := chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector
 
   // if evm required: Add EVM Inspector
   backend := backends.SimulatedBackend{}
@@ -45,7 +45,7 @@ func main() {
 
   // if solana required: Add Solana Inspector
   client := rpc.New("https://api.devnet.solana.com")
-  inspectorsMap[types.ChainSelector(chain_selectors.SOLANA_DEVNET.Selector)] = solana.NewInspector(client)
+  inspectorsMap[types.ChainSelector(chainsel.SOLANA_DEVNET.Selector)] = solana.NewInspector(client)
 
   // Create Signable
   signable, err := mcms.NewSignable(proposal, inspectorsMap)

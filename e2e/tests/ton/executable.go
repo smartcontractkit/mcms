@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
@@ -73,12 +73,12 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.signers = testutils.MakeNewECDSASigners(2)
 
 	// Initialize chains
-	details, err := cselectors.GetChainDetailsByChainIDAndFamily(s.TonBlockchain.ChainID, s.TonBlockchain.Family)
+	details, err := chainsel.GetChainDetailsByChainIDAndFamily(s.TonBlockchain.ChainID, s.TonBlockchain.Family)
 	s.Require().NoError(err)
 	s.ChainA = types.ChainSelector(details.ChainSelector)
 
-	s.ChainB = types.ChainSelector(cselectors.GETH_TESTNET.Selector)
-	s.ChainC = types.ChainSelector(cselectors.GETH_DEVNET_2.Selector)
+	s.ChainB = types.ChainSelector(chainsel.GETH_TESTNET.Selector)
+	s.ChainC = types.ChainSelector(chainsel.GETH_DEVNET_2.Selector)
 
 	// Deploy contracts on chain A (the one we execute on)
 	s.deployMCMSContract(hash.CRC32("test.executable.mcms"))

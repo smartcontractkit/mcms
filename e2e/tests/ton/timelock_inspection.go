@@ -13,7 +13,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
@@ -158,7 +158,7 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	// Generate few test wallets
-	chainID := cselectors.TON_LOCALNET.ChainID
+	chainID := chainsel.TON_LOCALNET.ChainID
 	s.accounts = []*address.Address{
 		must(tvm.NewRandomV5R1TestWallet(s.TonClient, chainID)).Address(),
 		must(tvm.NewRandomV5R1TestWallet(s.TonClient, chainID)).Address(),
@@ -382,7 +382,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	s.Require().NoError(err, "Failed to create TimelockExecutor")
 
 	bop := types.BatchOperation{
-		ChainSelector: types.ChainSelector(cselectors.TON_LOCALNET.Selector),
+		ChainSelector: types.ChainSelector(chainsel.TON_LOCALNET.Selector),
 		Transactions: []types.Transaction{
 			{
 				To:               counterAddr.String(),

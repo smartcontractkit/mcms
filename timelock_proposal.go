@@ -13,7 +13,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
@@ -278,23 +278,24 @@ func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, 
 }
 
 // buildTimelockConverters builds a map of chain selectors to their corresponding TimelockConverter implementations.
-func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sdk.TimelockConverter, error) {
+func (m *TimelockProposal) buildTimelockConverters(_ context.Context) (map[types.ChainSelector]sdk.TimelockConverter, error) {
 	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
 	for chain := range m.ChainMetadata {
-		fam, err := types.GetChainSelectorFamily(chain)
+		// TODO: we need to pass in the context param once we remove background context in the remote chain selectors api
+		fam, err := types.GetChainSelectorFamily(chain) //nolint:contextcheck //OPT-400
 		if err != nil {
 			return nil, fmt.Errorf("error getting chain family: %w", err)
 		}
 
 		var converter sdk.TimelockConverter
 		switch fam {
-		case chain_selectors.FamilyEVM:
+		case chainsel.FamilyEVM:
 			converter = evm.NewTimelockConverter()
-		case chain_selectors.FamilySolana:
+		case chainsel.FamilySolana:
 			converter = solana.NewTimelockConverter()
-		case chain_selectors.FamilyAptos:
+		case chainsel.FamilyAptos:
 			converter = aptos.NewTimelockConverter()
-		case chain_selectors.FamilySui:
+		case chainsel.FamilySui:
 			converter, err = sui.NewTimelockConverter()
 			if err != nil {
 				return nil, fmt.Errorf("failed to create Sui timelock converter: %w", err)
@@ -315,7 +316,7 @@ func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.Chain
 	// Start with raw counts (works for all non-converted chains)
 	out := m.TransactionCounts()
 
-	converters, err := m.buildTimelockConverters()
+	converters, err := m.buildTimelockConverters(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build timelock converters: %w", err)
 	}

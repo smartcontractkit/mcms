@@ -7,7 +7,7 @@ import (
 	"math"
 	"regexp"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -121,7 +121,7 @@ func (e *Executor) ExecuteOperation(
 
 	return types.TransactionResult{
 		Hash:        signature,
-		ChainFamily: chain_selectors.FamilySolana,
+		ChainFamily: chainsel.FamilySolana,
 		RawData:     tx,
 	}, nil
 }
@@ -202,7 +202,7 @@ func (e *Executor) SetRoot(
 
 	return types.TransactionResult{
 		Hash:        signature,
-		ChainFamily: chain_selectors.FamilySolana,
+		ChainFamily: chainsel.FamilySolana,
 		RawData:     tx,
 	}, nil
 }

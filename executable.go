@@ -67,7 +67,7 @@ func (e *Executable) SetRoot(ctx context.Context, chainSelector types.ChainSelec
 		return types.TransactionResult{}, err
 	}
 
-	hash, err := e.proposal.SigningHash()
+	hash, err := e.proposal.SigningHash() //nolint:contextcheck //OPT-400
 	if err != nil {
 		return types.TransactionResult{}, err
 	}

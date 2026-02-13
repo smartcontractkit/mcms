@@ -13,7 +13,7 @@ import (
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -140,7 +140,7 @@ func (t *TimelockExecutor) Execute(
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
-		ChainFamily: cselectors.FamilySui,
+		ChainFamily: chainsel.FamilySui,
 		RawData:     tx,
 	}, nil
 }

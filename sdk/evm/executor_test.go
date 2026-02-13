@@ -14,7 +14,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	evmTypes "github.com/ethereum/go-ethereum/core/types"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -202,7 +202,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 					require.ErrorAs(t, err, &execErr, errMsgExecErrType)
 					if execErr != nil {
 						require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
-						require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+						require.Equal(t, chainsel.FamilyEVM, tx.ChainFamily)
 					}
 				} else {
 					// For other errors, just check the error message matches
@@ -276,7 +276,7 @@ func TestExecutor_ExecuteOperationWithEIP1559GasFees(t *testing.T) {
 	require.ErrorAs(t, err, &execErr, errMsgExecErrType)
 	require.NotNil(t, execErr, errMsgExecErrNotNil)
 	require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
-	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	require.Equal(t, chainsel.FamilyEVM, tx.ChainFamily)
 	// Verify it's a DynamicFeeTx (EIP-1559)
 	require.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
 }
@@ -336,7 +336,7 @@ func TestExecutor_SetRootWithEIP1559GasFees(t *testing.T) {
 	require.ErrorAs(t, err, &execErr, errMsgExecErrType)
 	require.NotNil(t, execErr, errMsgExecErrNotNil)
 	require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
-	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	require.Equal(t, chainsel.FamilyEVM, tx.ChainFamily)
 	// Verify it's a DynamicFeeTx (EIP-1559)
 	require.Equal(t, uint8(2), execErr.Transaction.Type(), "transaction should be EIP-1559 type")
 }
@@ -400,7 +400,7 @@ func TestExecutor_ExecuteOperationWithLegacyGasPrice(t *testing.T) {
 	require.ErrorAs(t, err, &execErr, errMsgExecErrType)
 	require.NotNil(t, execErr, errMsgExecErrNotNil)
 	require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
-	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	require.Equal(t, chainsel.FamilyEVM, tx.ChainFamily)
 	// Verify it's a LegacyTx
 	require.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
 }
@@ -459,7 +459,7 @@ func TestExecutor_SetRootWithLegacyGasPrice(t *testing.T) {
 	require.ErrorAs(t, err, &execErr, errMsgExecErrType)
 	require.NotNil(t, execErr, errMsgExecErrNotNil)
 	require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
-	require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+	require.Equal(t, chainsel.FamilyEVM, tx.ChainFamily)
 	// Verify it's a LegacyTx
 	require.Equal(t, uint8(0), execErr.Transaction.Type(), "transaction should be legacy type")
 }
@@ -691,7 +691,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 					require.ErrorAs(t, err, &execErr, errMsgExecErrType)
 					if execErr != nil {
 						require.NotNil(t, execErr.Transaction, errMsgExecErrTxData)
-						require.Equal(t, chain_selectors.FamilyEVM, tx.ChainFamily)
+						require.Equal(t, chainsel.FamilyEVM, tx.ChainFamily)
 					}
 				} else {
 					require.EqualError(t, err, tt.wantErr.Error())

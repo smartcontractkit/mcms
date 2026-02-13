@@ -1,9 +1,10 @@
 package mcms
 
 import (
+	"context"
 	"fmt"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
@@ -27,33 +28,33 @@ func newEncoder(
 
 	var encoder sdk.Encoder
 	switch family {
-	case cselectors.FamilyEVM:
+	case chainsel.FamilyEVM:
 		encoder = evm.NewEncoder(
 			csel,
 			txCount,
 			overridePreviousRoot,
 			isSim,
 		)
-	case cselectors.FamilySolana:
+	case chainsel.FamilySolana:
 		encoder = solana.NewEncoder(
 			csel,
 			txCount,
 			overridePreviousRoot,
 			// isSim,
 		)
-	case cselectors.FamilyAptos:
+	case chainsel.FamilyAptos:
 		encoder = aptos.NewEncoder(
 			csel,
 			txCount,
 			overridePreviousRoot,
 		)
-	case cselectors.FamilySui:
+	case chainsel.FamilySui:
 		encoder = sui.NewEncoder(
 			csel,
 			txCount,
 			overridePreviousRoot,
 		)
-	case cselectors.FamilyTon:
+	case chainsel.FamilyTon:
 		encoder = ton.NewEncoder(
 			csel,
 			txCount,
@@ -66,26 +67,26 @@ func newEncoder(
 
 // newTimelockConverter a new TimelockConverter that can convert timelock proposals
 // for the given chain.
-func newTimelockConverter(csel types.ChainSelector) (sdk.TimelockConverter, error) {
-	family, err := types.GetChainSelectorFamily(csel)
+func newTimelockConverter(_ context.Context, csel types.ChainSelector) (sdk.TimelockConverter, error) {
+	family, err := types.GetChainSelectorFamily(csel) //nolint:contextcheck //OPT-400
 	if err != nil {
 		return nil, err
 	}
 
 	switch family {
-	case cselectors.FamilyEVM:
+	case chainsel.FamilyEVM:
 		return &evm.TimelockConverter{}, nil
 
-	case cselectors.FamilySolana:
+	case chainsel.FamilySolana:
 		return &solana.TimelockConverter{}, nil
 
-	case cselectors.FamilyAptos:
+	case chainsel.FamilyAptos:
 		return aptos.NewTimelockConverter(), nil
 
-	case cselectors.FamilySui:
+	case chainsel.FamilySui:
 		return &sui.TimelockConverter{}, nil
 
-	case cselectors.FamilyTon:
+	case chainsel.FamilyTon:
 		// Notice: we need to define the send amount from MCMS to Timelock,
 		// to cover gas fees. We use a static default value here for now.
 		return ton.NewTimelockConverter(ton.DefaultSendAmount), nil

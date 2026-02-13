@@ -161,7 +161,7 @@ func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (
 		return false, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 	}
 
-	hash, err := s.proposal.SigningHash()
+	hash, err := s.proposal.SigningHash() //nolint:contextcheck //OPT-400
 	if err != nil {
 		return false, err
 	}

@@ -160,7 +160,7 @@ func TestGetEVMChainID(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := getEVMChainID(tt.giveSel, tt.giveIsSim)
+			got, err := getEVMChainID(t.Context(), tt.giveSel, tt.giveIsSim)
 			if tt.wantErr {
 				require.Error(t, err)
 			} else {

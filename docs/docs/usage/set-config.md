@@ -14,7 +14,7 @@ import (
   "github.com/ethereum/go-ethereum/common"
   "github.com/gagliardetto/solana-go"
   rpc2 "github.com/gagliardetto/solana-go/rpc"
-  chain_selectors "github.com/smartcontractkit/chain-selectors"
+  chainsel "github.com/smartcontractkit/chain-selectors"
 
   "github.com/smartcontractkit/mcms/sdk/evm"
   mcmsSolana "github.com/smartcontractkit/mcms/sdk/solana"
@@ -45,7 +45,7 @@ func main() {
   ctx := context.Background()
 
   // On EVM
-  solanaSelector := chain_selectors.SOLANA_DEVNET.Selector
+  solanaSelector := chainsel.SOLANA_DEVNET.Selector
   mcmsContractAddr := "0x123"
   backend := backends.SimulatedBackend{}
   auth := &bind.TransactOpts{}

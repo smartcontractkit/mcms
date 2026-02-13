@@ -11,7 +11,8 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk/api"
 	"github.com/ethereum/go-ethereum/common"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 
@@ -73,7 +74,7 @@ func (e Executor) ExecuteOperation(
 			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
 		}
 	}
-	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -161,7 +162,7 @@ func (e Executor) ExecuteOperation(
 
 	return types.TransactionResult{
 		Hash:        tx.Hash,
-		ChainFamily: chain_selectors.FamilyAptos,
+		ChainFamily: chainsel.FamilyAptos,
 		RawData:     tx,
 	}, nil
 }
@@ -185,7 +186,7 @@ func (e Executor) SetRoot(
 			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields metadata: %w", err)
 		}
 	}
-	chainID, err := chain_selectors.AptosChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.AptosChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -218,7 +219,7 @@ func (e Executor) SetRoot(
 
 	return types.TransactionResult{
 		Hash:        tx.Hash,
-		ChainFamily: chain_selectors.FamilyAptos,
+		ChainFamily: chainsel.FamilyAptos,
 		RawData:     tx,
 	}, nil
 }

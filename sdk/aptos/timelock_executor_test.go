@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
@@ -95,7 +95,7 @@ func TestExecutor_Execute(t *testing.T) {
 			},
 			want: types.TransactionResult{
 				Hash:        "0xcoffee",
-				ChainFamily: cselectors.FamilyAptos,
+				ChainFamily: chainsel.FamilyAptos,
 				RawData:     &api.PendingTransaction{Hash: "0xcoffee"},
 			},
 			wantErr: assert.NoError,

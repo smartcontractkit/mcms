@@ -11,7 +11,7 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
@@ -108,7 +108,8 @@ func (s *ManualLedgerSigningTestSuite) setRootEVM(
 	s.Require().NoError(err, "Failed to mine set config transaction")
 
 	// set root
-	executable, err := mcms.NewExecutable(proposal, executorsMap)
+
+	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
 	tx, err = executable.SetRoot(ctx, s.chainSelectorEVM)
 	s.Require().NoError(err)
@@ -134,7 +135,8 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 	s.Require().NoError(err)
 
 	// set root
-	executable, err := mcms.NewExecutable(proposal, executorsMap)
+
+	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
 	tx, err := executable.SetRoot(ctx, s.chainSelectorSolana)
 	s.Require().NoError(err)
@@ -151,9 +153,9 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	ctx := context.Background()
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
-	chainDetailsEVM, err := cselectors.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
+	chainDetailsEVM, err := chainsel.GetChainDetailsByChainIDAndFamily(s.BlockchainA.Out.ChainID, s.BlockchainA.Out.Family)
 	s.Require().NoError(err)
-	chainDetailsSolana, err := cselectors.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, s.SolanaChain.Out.Family)
+	chainDetailsSolana, err := chainsel.GetChainDetailsByChainIDAndFamily(s.SolanaChain.ChainID, s.SolanaChain.Out.Family)
 	s.Require().NoError(err)
 
 	s.chainSelectorEVM = types.ChainSelector(chainDetailsEVM.ChainSelector)

@@ -12,7 +12,7 @@ import (
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
@@ -99,7 +99,7 @@ func (e Executor) ExecuteOperation(
 		}
 	}
 
-	chainID, err := cselectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.SuiChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -217,7 +217,7 @@ func (e Executor) ExecuteOperation(
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
-		ChainFamily: cselectors.FamilySui,
+		ChainFamily: chainsel.FamilySui,
 		RawData:     tx,
 	}, nil
 }
@@ -237,7 +237,7 @@ func (e Executor) SetRoot(
 		}
 	}
 
-	chainID, err := cselectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.SuiChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -280,7 +280,7 @@ func (e Executor) SetRoot(
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
-		ChainFamily: cselectors.FamilySui,
+		ChainFamily: chainsel.FamilySui,
 		RawData:     tx,
 	}, nil
 }

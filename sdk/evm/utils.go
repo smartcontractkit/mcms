@@ -1,9 +1,12 @@
 package evm
 
 import (
+	"context"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	cselectors "github.com/smartcontractkit/chain-selectors"
+
+	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/types"
@@ -63,17 +66,17 @@ func toGethSignature(s types.Signature) bindings.ManyChainMultiSigSignature {
 // To support simulated chains in testing, the isSim flag can be set to true. Simulated chains
 // always have EVM chain ID of 1337. We need to override the chain ID for setRoot to execute and
 // not throw WrongChainId.
-func getEVMChainID(sel types.ChainSelector, isSim bool) (uint64, error) {
+func getEVMChainID(ctx context.Context, sel types.ChainSelector, isSim bool) (uint64, error) {
 	if isSim {
 		return SimulatedEVMChainID, nil
 	}
 
-	evmChainID, err := cselectors.ChainIdFromSelector(uint64(sel))
-	if err != nil {
+	evmChain, exists, err := chainselremote.EvmChainBySelector(ctx, uint64(sel))
+	if err != nil || !exists {
 		return 0, &sdkerrors.InvalidChainIDError{
 			ReceivedChainID: sel,
 		}
 	}
 
-	return evmChainID, nil
+	return evmChain.EvmChainID, nil
 }
