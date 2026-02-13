@@ -1,5 +1,19 @@
 # @smartcontractkit/mcms
 
+## 0.36.0
+
+### Minor Changes
+
+- [#614](https://github.com/smartcontractkit/mcms/pull/614) [`13c0665`](https://github.com/smartcontractkit/mcms/commit/13c0665b7846b604e5ddf422b93762b51ba85e26) Thanks [@ecPablo](https://github.com/ecPablo)! - feat: add remote chain selectors API
+
+### Patch Changes
+
+- [#615](https://github.com/smartcontractkit/mcms/pull/615) [`043ba6d`](https://github.com/smartcontractkit/mcms/commit/043ba6dd2e73ea4a3adb11d3f4c86576cc703733) Thanks [@krebernisak](https://github.com/krebernisak)! - Bump smartcontractkit/chainlink-ton - improve trace tracking
+
+- [#615](https://github.com/smartcontractkit/mcms/pull/615) [`043ba6d`](https://github.com/smartcontractkit/mcms/commit/043ba6dd2e73ea4a3adb11d3f4c86576cc703733) Thanks [@krebernisak](https://github.com/krebernisak)! - Bump ghcr.io/neodix42/mylocalton-docker:v3.99 - speedup
+
+- [#617](https://github.com/smartcontractkit/mcms/pull/617) [`b68b54b`](https://github.com/smartcontractkit/mcms/commit/b68b54b6e8d024f4e66c56c32e086e679a1f249f) Thanks [@krebernisak](https://github.com/krebernisak)! - Revert chainlink-ccip/chains/solana to 85accaf3d28d (availabel contract release)
+
 ## 0.35.0
 
 ### Minor Changes
