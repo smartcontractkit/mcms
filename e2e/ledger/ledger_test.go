@@ -108,8 +108,8 @@ func (s *ManualLedgerSigningTestSuite) setRootEVM(
 	s.Require().NoError(err, "Failed to mine set config transaction")
 
 	// set root
-	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck
+
+	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
 	tx, err = executable.SetRoot(ctx, s.chainSelectorEVM)
 	s.Require().NoError(err)
@@ -135,8 +135,8 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 	s.Require().NoError(err)
 
 	// set root
-	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck
+
+	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
 	tx, err := executable.SetRoot(ctx, s.chainSelectorSolana)
 	s.Require().NoError(err)

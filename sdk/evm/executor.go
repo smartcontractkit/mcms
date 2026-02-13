@@ -43,8 +43,7 @@ func (e *Executor) ExecuteOperation(
 		return types.TransactionResult{}, errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil")
 	}
 
-	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	bindOp, err := e.ToGethOperation(nonce, metadata, op) //nolint:contextcheck
+	bindOp, err := e.ToGethOperation(nonce, metadata, op) //nolint:contextcheck //OPT-400
 	if err != nil {
 		return types.TransactionResult{}, err
 	}

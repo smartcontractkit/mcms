@@ -135,8 +135,7 @@ func (s *TestSuite) TestTimelockConverter() {
 		timelockProposal, err := timelockProposalBuilder().
 			AddChainMetadata(s.ChainSelector, cMetadata).
 			SetAction(types.TimelockActionSchedule).
-			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		proposerAC := s.Roles[timelock.Proposer_Role].AccessController.PublicKey()
@@ -324,8 +323,7 @@ func (s *TestSuite) TestTimelockConverter() {
 					},
 				}),
 			}}).
-			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		// --- act ---
@@ -354,8 +352,7 @@ func (s *TestSuite) TestTimelockConverter() {
 		timelockProposal, err := timelockProposalBuilder().
 			AddChainMetadata(s.ChainSelector, metadata).
 			SetAction(types.TimelockActionCancel).
-			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		// build expected output Proposal
@@ -393,8 +390,7 @@ func (s *TestSuite) TestTimelockConverter() {
 					},
 				}),
 			}}).
-			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		// --- act ---
@@ -415,12 +411,11 @@ func (s *TestSuite) TestTimelockConverter() {
 		s.Require().NoError(err)
 
 		metadata := chainMetadata()
-		// TODO: we should pass the context once we remove background context in the remote chain selectors api
+
 		timelockProposal, err := timelockProposalBuilder().
 			AddChainMetadata(s.ChainSelector, metadata).
 			SetAction(types.TimelockActionBypass).
-			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		bypasserAC := s.Roles[timelock.Bypasser_Role].AccessController.PublicKey()
@@ -615,8 +610,7 @@ func (s *TestSuite) TestTimelockConverter() {
 					},
 				}),
 			}}).
-			// TODO: we should pass the context once we remove background context in the remote chain selectors api
-			Build() //nolint:contextcheck
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		// --- act: convert proposal ---
@@ -650,21 +644,21 @@ func (s *TestSuite) executeConvertedProposal(
 
 	// sign
 	inspectors := map[types.ChainSelector]sdk.Inspector{s.ChainSelector: solanasdk.NewInspector(s.SolanaClient)}
-	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	signable, err := mcms.NewSignable(&gotProposal, inspectors) //nolint:contextcheck
+
+	signable, err := mcms.NewSignable(&gotProposal, inspectors) //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
-	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey)) //nolint:contextcheck
+
+	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey)) //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
 
 	// set root
-	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	encoders, err := gotProposal.GetEncoders() //nolint:contextcheck
+
+	encoders, err := gotProposal.GetEncoders() //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*solanasdk.Encoder)
 	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: solanasdk.NewExecutor(encoder, s.SolanaClient, wallet)}
-	// TODO: we should pass the context once we remove background context in the remote chain selectors api
-	executable, err := mcms.NewExecutable(&gotProposal, executors) //nolint:contextcheck
+
+	executable, err := mcms.NewExecutable(&gotProposal, executors) //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
 
 	_, err = executable.SetRoot(ctx, s.ChainSelector)
