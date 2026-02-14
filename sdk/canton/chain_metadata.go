@@ -37,6 +37,7 @@ const (
 type AdditionalFieldsMetadata struct {
 	ChainId              int64  `json:"chainId"`
 	MultisigId           string `json:"multisigId"`
+	InstanceId           string `json:"instanceId"` // MCMS contract instanceId (without role suffix)
 	PreOpCount           uint64 `json:"preOpCount"`
 	PostOpCount          uint64 `json:"postOpCount"`
 	OverridePreviousRoot bool   `json:"overridePreviousRoot"`
@@ -48,6 +49,9 @@ func (f AdditionalFieldsMetadata) Validate() error {
 	}
 	if f.MultisigId == "" {
 		return errors.New("multisigId is required")
+	}
+	if f.InstanceId == "" {
+		return errors.New("instanceId is required")
 	}
 	if f.PostOpCount < f.PreOpCount {
 		return errors.New("postOpCount must be >= preOpCount")
@@ -76,6 +80,7 @@ func NewChainMetadata(
 	postOpCount uint64,
 	chainId int64,
 	multisigId string,
+	instanceId string, // MCMS contract instanceId (without role suffix)
 	mcmsContractID string,
 	overridePreviousRoot bool,
 ) (types.ChainMetadata, error) {
@@ -86,6 +91,7 @@ func NewChainMetadata(
 	additionalFields := AdditionalFieldsMetadata{
 		ChainId:              chainId,
 		MultisigId:           multisigId,
+		InstanceId:           instanceId,
 		PreOpCount:           preOpCount,
 		PostOpCount:          postOpCount,
 		OverridePreviousRoot: overridePreviousRoot,

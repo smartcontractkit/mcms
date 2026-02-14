@@ -93,6 +93,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 		1,
 		s.chainId,
 		s.proposerMcmsId,
+		s.mcmsId, // MCMS instanceId (without role suffix)
 		s.mcmsContractID,
 		false,
 	)
@@ -170,6 +171,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 		1, // postOp
 		s.chainId,
 		s.proposerMcmsId,
+		s.mcmsId, // MCMS instanceId (without role suffix)
 		s.mcmsContractID,
 		false,
 	)
@@ -185,7 +187,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 	submitResp, ok := rawTx.(*apiv2.SubmitAndWaitForTransactionResponse)
 	s.Require().True(ok)
 
-	s.verifyCounterIncremented(submitResp)
+	s.verifyCounterValue(submitResp, 1)
 
 	// Verify MCMS contract was recreated with incremented opCount
 	foundMCMS := false
@@ -238,6 +240,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 		2, // postOp
 		s.chainId,
 		s.proposerMcmsId,
+		s.mcmsId, // MCMS instanceId (without role suffix)
 		s.mcmsContractID,
 		false,
 	)
@@ -318,6 +321,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 		2, // postOp
 		s.chainId,
 		s.proposerMcmsId,
+		s.mcmsId, // MCMS instanceId (without role suffix)
 		newMCMSContractID,
 		false,
 	)
@@ -361,16 +365,29 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 }
 
 // Helper functions
-func (s *MCMSExecutorTestSuite) verifyCounterIncremented(submitResp *apiv2.SubmitAndWaitForTransactionResponse) {
-	// Look for Counter contract in created events
+func (s *MCMSExecutorTestSuite) verifyCounterValue(submitResp *apiv2.SubmitAndWaitForTransactionResponse, expectedValue int64) {
 	transaction := submitResp.GetTransaction()
 	for _, event := range transaction.GetEvents() {
 		if createdEv := event.GetCreated(); createdEv != nil {
 			templateID := cantonsdk.FormatTemplateID(createdEv.GetTemplateId())
 			normalized := cantonsdk.NormalizeTemplateKey(templateID)
 			if normalized == "MCMS.Counter:Counter" {
-				// Counter was recreated, which means it was successfully executed
-				s.T().Log("Counter contract was successfully incremented")
+				// Extract and verify the counter value from create arguments
+				args := createdEv.GetCreateArguments()
+				s.Require().NotNil(args, "Counter create arguments should not be nil")
+
+				var counterValue int64
+				foundValue := false
+				for _, field := range args.GetFields() {
+					if field.GetLabel() == "value" {
+						counterValue = field.GetValue().GetInt64()
+						foundValue = true
+						break
+					}
+				}
+				s.Require().True(foundValue, "Counter 'value' field not found in create arguments")
+				s.Require().Equal(expectedValue, counterValue, "Counter value should be %d", expectedValue)
+				s.T().Logf("Counter value verified: %d", counterValue)
 				return
 			}
 		}

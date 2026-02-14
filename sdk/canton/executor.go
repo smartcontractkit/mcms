@@ -255,7 +255,7 @@ func (e Executor) SetRoot(
 		metadataProof[i] = cantontypes.TEXT(hex.EncodeToString(p[:]))
 	}
 
-	validUntilTime := time.Unix(time.Unix(int64(validUntil), 0).UnixMicro(), 0)
+	validUntilTime := time.Unix(int64(validUntil), 0)
 	input := mcms.SetRoot{
 		TargetRole:    mcms.Role(e.role.String()),
 		Submitter:     cantontypes.PARTY(e.party),

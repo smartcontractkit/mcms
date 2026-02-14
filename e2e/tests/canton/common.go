@@ -12,7 +12,6 @@ import (
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/google/uuid"
 	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
-	"github.com/smartcontractkit/chainlink-canton/contracts"
 	"github.com/smartcontractkit/chainlink-canton/integration-tests/testhelpers"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 	"github.com/smartcontractkit/go-daml/pkg/types"
@@ -42,28 +41,27 @@ type TestSuite struct {
 }
 
 func (s *TestSuite) SetupSuite() {
-	s.T().Log("Spinning up Canton test environment...")
-	s.env = testhelpers.NewTestEnvironment(s.T(), testhelpers.WithNumberOfParticipants(1))
-	participant := s.env.Participant(1)
-	s.participant = participant
-	s.chainSelector = mcmstypes.ChainSelector(s.env.Chain.ChainSelector())
+	shared := GetSharedEnvironment(s.T())
+	s.env = shared.Env
+	s.participant = shared.Env.Participant(1)
+	s.packageIDs = shared.PackageIDs
+
+	if s.env.Chain != nil {
+		s.chainSelector = mcmstypes.ChainSelector(s.env.Chain.ChainSelector())
+	} else {
+		s.chainSelector = mcmstypes.ChainSelector(s.env.Selector)
+	}
 }
 
 const NumGroups = 32
 
 func (s *TestSuite) DeployMCMSContract() {
-	s.T().Log("Uploading MCMS DAR...")
-
-	mcmsDar, err := contracts.GetDar(contracts.MCMS, contracts.CurrentVersion)
-	s.Require().NoError(err)
-
-	packageIDs, err := testhelpers.UploadDARstoMultipleParticipants(s.T().Context(), [][]byte{mcmsDar}, s.participant)
-	s.Require().NoError(err)
-	s.packageIDs = packageIDs
+	// DAR already uploaded in GetSharedEnvironment()
+	// s.packageIDs is already set from shared setup
 
 	mcmsOwner := s.participant.Party
 	chainId := int64(1)
-	mcmsId := "mcms-test-001"
+	mcmsId := "mcms-timelock-" + uuid.New().String()[:8] // Unique per test
 
 	mcmsContractId := s.createMCMS(s.T().Context(), s.participant, mcmsOwner, chainId, mcmsId, mcms.RoleProposer)
 	s.mcmsContractID = mcmsContractId

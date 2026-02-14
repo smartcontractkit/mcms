@@ -97,6 +97,9 @@ func newTimelockConverter(csel types.ChainSelector) (sdk.TimelockConverter, erro
 		// to cover gas fees. We use a static default value here for now.
 		return ton.NewTimelockConverter(ton.DefaultSendAmount), nil
 
+	case cselectors.FamilyCanton:
+		return canton.NewTimelockConverter(), nil
+
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}
