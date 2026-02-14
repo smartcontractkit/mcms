@@ -25,6 +25,7 @@ type Inspector struct {
 	stateClient   apiv2.StateServiceClient
 	party         string
 	contractCache *mcms.MCMS // Cache MCMS to avoid repeated RPC calls
+	cachedAddress string     // Track which contract address is cached
 	role          TimelockRole
 }
 
@@ -37,12 +38,13 @@ func NewInspector(stateClient apiv2.StateServiceClient, party string, role Timel
 }
 
 func (i *Inspector) GetConfig(ctx context.Context, mcmsAddr string) (*types.Config, error) {
-	if i.contractCache == nil {
+	if i.contractCache == nil || i.cachedAddress != mcmsAddr {
 		mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 		}
 		i.contractCache = mcmsContract
+		i.cachedAddress = mcmsAddr
 	}
 
 	switch i.role {
@@ -58,12 +60,13 @@ func (i *Inspector) GetConfig(ctx context.Context, mcmsAddr string) (*types.Conf
 }
 
 func (i *Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, error) {
-	if i.contractCache == nil {
+	if i.contractCache == nil || i.cachedAddress != mcmsAddr {
 		mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
 		if err != nil {
 			return 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 		}
 		i.contractCache = mcmsContract
+		i.cachedAddress = mcmsAddr
 	}
 
 	switch i.role {
@@ -79,12 +82,13 @@ func (i *Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, er
 }
 
 func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, uint32, error) {
-	if i.contractCache == nil {
+	if i.contractCache == nil || i.cachedAddress != mcmsAddr {
 		mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
 		if err != nil {
 			return common.Hash{}, 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 		}
 		i.contractCache = mcmsContract
+		i.cachedAddress = mcmsAddr
 	}
 
 	var expiringRoot mcms.ExpiringRoot
@@ -118,12 +122,13 @@ func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, 
 }
 
 func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types.ChainMetadata, error) {
-	if i.contractCache == nil {
+	if i.contractCache == nil || i.cachedAddress != mcmsAddr {
 		mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
 		if err != nil {
 			return types.ChainMetadata{}, fmt.Errorf("failed to get MCMS contract: %w", err)
 		}
 		i.contractCache = mcmsContract
+		i.cachedAddress = mcmsAddr
 	}
 
 	var rootMetadata mcms.RootMetadata

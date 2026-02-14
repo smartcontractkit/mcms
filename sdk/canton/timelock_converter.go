@@ -8,7 +8,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-
+	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
+	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -92,31 +93,65 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	// Build the timelock operation based on action type
 	var timelockFunctionName string
 	var operationDataEncoded string
+	var err error
 
 	switch action {
 	case types.TimelockActionSchedule:
-		timelockFunctionName = "schedule_batch"
-		operationDataEncoded = encodeScheduleBatchParams(calls, predecessorHex, saltHex, uint32(delay.Seconds()))
+		params := mcms.ScheduleBatchParams{
+			Calls:       toMCMSTimelockCalls(calls),
+			Predecessor: cantontypes.TEXT(predecessorHex),
+			Salt:        cantontypes.TEXT(saltHex),
+			DelaySecs:   cantontypes.INT64(delay.Seconds()),
+		}
+		operationDataEncoded, err = params.MarshalHex()
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to encode ScheduleBatchParams: %w", err)
+		}
+		timelockFunctionName = "ScheduleBatch"
 
 	case types.TimelockActionBypass:
-		timelockFunctionName = "bypasser_execute_batch"
-		operationDataEncoded = encodeBypasserExecuteParams(calls)
+		params := mcms.BypasserExecuteBatchParams{
+			Calls: toMCMSTimelockCalls(calls),
+		}
+		operationDataEncoded, err = params.MarshalHex()
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to encode BypasserExecuteBatchParams: %w", err)
+		}
+		timelockFunctionName = "BypasserExecuteBatch"
 
 	case types.TimelockActionCancel:
-		timelockFunctionName = "cancel_batch"
-		// For cancel, the operationId is passed as the parameter
-		operationDataEncoded = encodeCancelBatchParams(hex.EncodeToString(operationID[:]))
+		params := mcms.CancelBatchParams{
+			OpId: cantontypes.TEXT(hex.EncodeToString(operationID[:])),
+		}
+		operationDataEncoded, err = params.MarshalHex()
+		if err != nil {
+			return nil, common.Hash{}, fmt.Errorf("failed to encode CancelBatchParams: %w", err)
+		}
+		timelockFunctionName = "CancelBatch"
 
 	default:
 		return nil, common.Hash{}, fmt.Errorf("unsupported timelock action: %s", action)
 	}
 
+	// Collect all target CIDs from the original batch transactions
+	// These are needed for BypasserExecuteBatch and other operations that call external contracts
+	var allContractIds []string
+	for _, tx := range bop.Transactions {
+		var additionalFields AdditionalFields
+		if len(tx.AdditionalFields) > 0 {
+			if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err == nil {
+				allContractIds = append(allContractIds, additionalFields.ContractIds...)
+			}
+		}
+	}
+
 	// Build the Canton operation additional fields
 	opAdditionalFields := AdditionalFields{
-		TargetInstanceId: metadataFields.MultisigId, // Self-dispatch to MCMS
+		TargetInstanceId: metadataFields.InstanceId, // Self-dispatch to MCMS (uses instanceId, not multisigId)
 		FunctionName:     timelockFunctionName,
 		OperationData:    operationDataEncoded,
-		TargetCid:        mcmAddress, // MCMS contract ID
+		TargetCid:        mcmAddress,     // MCMS contract ID
+		ContractIds:      allContractIds, // Pass through original target contract IDs
 	}
 
 	opAdditionalFieldsBytes, err := json.Marshal(opAdditionalFields)
@@ -125,11 +160,13 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	// Create the operation
+	// Note: Data must be non-empty for validation, but Canton uses AdditionalFields.OperationData
+	// We use a placeholder byte to satisfy the validator
 	op := types.Operation{
 		ChainSelector: bop.ChainSelector,
 		Transaction: types.Transaction{
 			To:               mcmAddress,
-			Data:             nil, // Data is in AdditionalFields.OperationData
+			Data:             []byte{0x00}, // Placeholder - actual data is in AdditionalFields.OperationData
 			AdditionalFields: opAdditionalFieldsBytes,
 		},
 	}
@@ -184,67 +221,15 @@ func isValidHex(s string) bool {
 	return true
 }
 
-// encodeScheduleBatchParams encodes parameters for schedule_batch.
-// Format: numCalls (1 byte) + calls + predecessor (text) + salt (text) + delay (4 bytes)
-func encodeScheduleBatchParams(calls []TimelockCall, predecessor, salt string, delaySecs uint32) string {
-	var encoded string
-
-	// Encode calls list
-	encoded += encodeUint8(uint8(len(calls)))
-	for _, call := range calls {
-		encoded += encodeTimelockCall(call)
+// toMCMSTimelockCalls converts local TimelockCall slice to mcms.TimelockCall slice for encoding.
+func toMCMSTimelockCalls(calls []TimelockCall) []mcms.TimelockCall {
+	result := make([]mcms.TimelockCall, len(calls))
+	for i, c := range calls {
+		result[i] = mcms.TimelockCall{
+			TargetInstanceId: cantontypes.TEXT(c.TargetInstanceId),
+			FunctionName:     cantontypes.TEXT(c.FunctionName),
+			OperationData:    cantontypes.TEXT(c.OperationData),
+		}
 	}
-
-	// Encode predecessor and salt as length-prefixed text
-	encoded += encodeText(predecessor)
-	encoded += encodeText(salt)
-
-	// Encode delay as 4-byte uint32
-	encoded += encodeUint32(delaySecs)
-
-	return encoded
-}
-
-// encodeBypasserExecuteParams encodes parameters for bypasser_execute_batch.
-// Format: numCalls (1 byte) + calls
-func encodeBypasserExecuteParams(calls []TimelockCall) string {
-	var encoded string
-
-	// Encode calls list
-	encoded += encodeUint8(uint8(len(calls)))
-	for _, call := range calls {
-		encoded += encodeTimelockCall(call)
-	}
-
-	return encoded
-}
-
-// encodeCancelBatchParams encodes parameters for cancel_batch.
-// Format: opId (text)
-func encodeCancelBatchParams(opId string) string {
-	return encodeText(opId)
-}
-
-// encodeTimelockCall encodes a single TimelockCall.
-// Format: targetInstanceId (text) + functionName (text) + operationData (text)
-func encodeTimelockCall(call TimelockCall) string {
-	return encodeText(call.TargetInstanceId) + encodeText(call.FunctionName) + encodeText(call.OperationData)
-}
-
-// encodeText encodes a text string as length-prefixed bytes.
-// Format: length (1 byte) + hex-encoded UTF-8 bytes
-func encodeText(s string) string {
-	hexStr := hex.EncodeToString([]byte(s))
-	length := len(s)
-	return encodeUint8(uint8(length)) + hexStr
-}
-
-// encodeUint8 encodes a uint8 as a 2-character hex string.
-func encodeUint8(n uint8) string {
-	return fmt.Sprintf("%02x", n)
-}
-
-// encodeUint32 encodes a uint32 as an 8-character hex string (big-endian).
-func encodeUint32(n uint32) string {
-	return fmt.Sprintf("%08x", n)
+	return result
 }

@@ -9,13 +9,13 @@ import (
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
-	"github.com/noders-team/go-daml/pkg/client"
-	"github.com/noders-team/go-daml/pkg/model"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-
-	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
+	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
+	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
 )
 
 var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
@@ -23,7 +23,7 @@ var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
 // TimelockExecutor executes scheduled timelock operations on Canton MCMS contracts.
 type TimelockExecutor struct {
 	*TimelockInspector
-	client *client.DamlBindingClient
+	client apiv2.CommandServiceClient
 	userId string
 	party  string
 }
@@ -31,7 +31,7 @@ type TimelockExecutor struct {
 // NewTimelockExecutor creates a new TimelockExecutor for Canton.
 func NewTimelockExecutor(
 	stateClient apiv2.StateServiceClient,
-	client *client.DamlBindingClient,
+	client apiv2.CommandServiceClient,
 	userId, party string,
 ) *TimelockExecutor {
 	return &TimelockExecutor{
@@ -108,37 +108,65 @@ func (t *TimelockExecutor) Execute(
 
 	// Build exercise command manually since bindings don't have ExecuteScheduledBatch
 	mcmsContract := mcms.MCMS{}
-	exerciseCmd := &model.ExerciseCommand{
-		TemplateID: mcmsContract.GetTemplateID(),
-		ContractID: timelockAddress,
-		Choice:     "ExecuteScheduledBatch",
-		Arguments: map[string]interface{}{
-			"submitter":   t.party,
-			"opId":        opIdHex,
-			"calls":       calls,
-			"predecessor": predecessorHex,
-			"salt":        saltHex,
-			"targetCids":  targetCids,
-		},
+
+	// Parse template ID
+	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
 	}
+
+	// Convert calls to mcms.TimelockCall slice
+	typedCalls := make([]mcms.TimelockCall, len(calls))
+	for i, call := range calls {
+		typedCalls[i] = mcms.TimelockCall{
+			TargetInstanceId: cantontypes.TEXT(call["targetInstanceId"].(string)),
+			FunctionName:     cantontypes.TEXT(call["functionName"].(string)),
+			OperationData:    cantontypes.TEXT(call["operationData"].(string)),
+		}
+	}
+
+	// Convert targetCids to typed slice
+	typedTargetCids := make([]cantontypes.CONTRACT_ID, len(targetCids))
+	for i, cid := range targetCids {
+		typedTargetCids[i] = cantontypes.CONTRACT_ID(cid.(string))
+	}
+
+	// Build choice argument using binding type
+	input := mcms.ExecuteScheduledBatch{
+		Submitter:   cantontypes.PARTY(t.party),
+		OpId:        cantontypes.TEXT(opIdHex),
+		Calls:       typedCalls,
+		Predecessor: cantontypes.TEXT(predecessorHex),
+		Salt:        cantontypes.TEXT(saltHex),
+		TargetCids:  typedTargetCids,
+	}
+	choiceArgument := ledger.MapToValue(input)
 
 	// Generate command ID
 	commandID := uuid.Must(uuid.NewUUID()).String()
 
 	// Submit the exercise command
-	cmds := &model.SubmitAndWaitRequest{
-		Commands: &model.Commands{
-			WorkflowID: "mcms-timelock-execute",
-			UserID:     t.userId,
-			CommandID:  commandID,
+	submitResp, err := t.client.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
+		Commands: &apiv2.Commands{
+			WorkflowId: "mcms-timelock-execute",
+			CommandId:  commandID,
 			ActAs:      []string{t.party},
-			Commands: []*model.Command{{
-				Command: exerciseCmd,
+			Commands: []*apiv2.Command{{
+				Command: &apiv2.Command_Exercise{
+					Exercise: &apiv2.ExerciseCommand{
+						TemplateId: &apiv2.Identifier{
+							PackageId:  packageID,
+							ModuleName: moduleName,
+							EntityName: entityName,
+						},
+						ContractId:     timelockAddress,
+						Choice:         "ExecuteScheduledBatch",
+						ChoiceArgument: choiceArgument,
+					},
+				},
 			}},
 		},
-	}
-
-	submitResp, err := t.client.CommandService.SubmitAndWaitForTransaction(ctx, cmds)
+	})
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to execute scheduled batch: %w", err)
 	}
@@ -146,15 +174,16 @@ func (t *TimelockExecutor) Execute(
 	// Extract NEW MCMS CID from Created event
 	newMCMSContractID := ""
 	newMCMSTemplateID := ""
-	for _, ev := range submitResp.Transaction.Events {
-		if ev.Created == nil {
-			continue
-		}
-		normalized := NormalizeTemplateKey(ev.Created.TemplateID)
-		if normalized == MCMSTemplateKey {
-			newMCMSContractID = ev.Created.ContractID
-			newMCMSTemplateID = ev.Created.TemplateID
-			break
+	transaction := submitResp.GetTransaction()
+	for _, ev := range transaction.GetEvents() {
+		if createdEv := ev.GetCreated(); createdEv != nil {
+			templateID := formatTemplateID(createdEv.GetTemplateId())
+			normalized := NormalizeTemplateKey(templateID)
+			if normalized == MCMSTemplateKey {
+				newMCMSContractID = createdEv.GetContractId()
+				newMCMSTemplateID = templateID
+				break
+			}
 		}
 	}
 
