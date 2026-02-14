@@ -35,6 +35,10 @@ var (
 	Chain7Selector    = types.ChainSelector(Chain7RawSelector)
 	Chain7TONID       = cselectors.TON_TESTNET.ChainID
 
+	Chain8RawSelector = cselectors.ETHEREUM_MAINNET_STARKNET_1.Selector
+	Chain8Selector    = types.ChainSelector(Chain8RawSelector)
+	Chain8StarknetID  = cselectors.ETHEREUM_MAINNET_STARKNET_1.ChainID
+
 	// ChainInvalidSelector is a chain selector that doesn't exist.
 	ChainInvalidSelector = types.ChainSelector(0)
 )

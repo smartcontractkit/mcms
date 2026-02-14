@@ -9,6 +9,8 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -27,17 +29,21 @@ func TestBuildConverters(t *testing.T) {
 				chaintest.Chain2Selector: {},
 				chaintest.Chain4Selector: {},
 				chaintest.Chain5Selector: {},
+				chaintest.Chain6Selector: {},
+				chaintest.Chain7Selector: {},
 			},
 			expectTypes: map[types.ChainSelector]any{
 				chaintest.Chain2Selector: (*evm.TimelockConverter)(nil),
 				chaintest.Chain4Selector: (*solana.TimelockConverter)(nil),
 				chaintest.Chain5Selector: (*aptos.TimelockConverter)(nil),
+				chaintest.Chain6Selector: (*sui.TimelockConverter)(nil),
+				chaintest.Chain7Selector: (*ton.TimelockConverter)(nil),
 			},
 		},
 		{
 			name: "unsupported family",
 			metadata: map[types.ChainSelector]types.ChainMetadata{
-				chaintest.Chain6Selector: {},
+				chaintest.Chain8Selector: {},
 			},
 			expectErr: "unsupported chain family",
 		},
