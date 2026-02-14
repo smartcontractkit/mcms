@@ -1,21 +1,5 @@
 # @smartcontractkit/mcms
 
-## 0.35.0
-
-### Minor Changes
-
-- [#586](https://github.com/smartcontractkit/mcms/pull/586) [`19074d4`](https://github.com/smartcontractkit/mcms/commit/19074d4019d02a236f4c54669daff8c9e110c09b) Thanks [@krebernisak](https://github.com/krebernisak)! - Update to latest chainlink-ton MCMS contracts version + misc fixes/improvements
-
-### Patch Changes
-
-- [#603](https://github.com/smartcontractkit/mcms/pull/603) [`2cd7db1`](https://github.com/smartcontractkit/mcms/commit/2cd7db171382385d0bc9e3099eef2ea8248ae622) Thanks [@krebernisak](https://github.com/krebernisak)! - Add wait (pending op) support for TON executors
-
-- [#610](https://github.com/smartcontractkit/mcms/pull/610) [`95b0666`](https://github.com/smartcontractkit/mcms/commit/95b06665fbee59ee5140d5e60dc1766346615af8) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: add sui and ton to chainwrappers helpers
-
-- [#611](https://github.com/smartcontractkit/mcms/pull/611) [`94f50e5`](https://github.com/smartcontractkit/mcms/commit/94f50e5011f831cbb9a32ee849a7ed384d82f0cb) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Bumps chainlink-sui version
-
-- [#607](https://github.com/smartcontractkit/mcms/pull/607) [`40f2af0`](https://github.com/smartcontractkit/mcms/commit/40f2af06bc327ee4993420c9cfde3557e46f6884) Thanks [@patricios-space](https://github.com/patricios-space)! - Bump chainlink-ton version to latest (642f6eb)
-
 ## 0.34.0
 
 ### Minor Changes

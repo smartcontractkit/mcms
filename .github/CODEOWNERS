@@ -1,4 +1,4 @@
-* @smartcontractkit/operations-platform
+* @smartcontractkit/op-tooling
 
 # Nix shell setup (supports TON e2e tests)
 /.github/workflows/pull-request-main-nix.yml @smartcontractkit/ccip-ton
