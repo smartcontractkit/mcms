@@ -21,7 +21,9 @@ import (
 	mcmstypes "github.com/smartcontractkit/mcms/types"
 )
 
-type MCMSExecutorTestSuite struct {
+// mcmsExecutorSetup holds shared setup (MCMS + config + counter + signers) for suites that need it.
+// It has no Test* methods, so embedding it only adds SetupSuite and fields; test methods come from the embedding suite.
+type mcmsExecutorSetup struct {
 	TestSuite
 
 	// Test signers
@@ -35,12 +37,8 @@ type MCMSExecutorTestSuite struct {
 	counterCID        string
 }
 
-func TestMCMSExecutorTestSuite(t *testing.T) {
-	suite.Run(t, new(MCMSExecutorTestSuite))
-}
-
-// SetupSuite runs before the test suite
-func (s *MCMSExecutorTestSuite) SetupSuite() {
+// SetupSuite runs before the test suite.
+func (s *mcmsExecutorSetup) SetupSuite() {
 	s.TestSuite.SetupSuite()
 
 	// Create 3 signers for 2-of-3 multisig
@@ -77,11 +75,20 @@ func (s *MCMSExecutorTestSuite) SetupSuite() {
 	s.DeployCounterContract()
 }
 
-func (s *MCMSExecutorTestSuite) create2of3Config() *mcmstypes.Config {
+func (s *mcmsExecutorSetup) create2of3Config() *mcmstypes.Config {
 	return &mcmstypes.Config{
 		Quorum:  2,
 		Signers: s.signerAddrs,
 	}
+}
+
+// MCMSExecutorTestSuite runs SetRoot + ExecuteOp tests (counter and MCMS op).
+type MCMSExecutorTestSuite struct {
+	mcmsExecutorSetup
+}
+
+func TestMCMSExecutorTestSuite(t *testing.T) {
+	suite.Run(t, new(MCMSExecutorTestSuite))
 }
 
 func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {

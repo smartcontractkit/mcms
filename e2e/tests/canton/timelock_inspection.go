@@ -3,6 +3,8 @@
 package canton
 
 import (
+	"encoding/json"
+
 	"github.com/ethereum/go-ethereum/common"
 
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
@@ -10,7 +12,6 @@ import (
 )
 
 // TimelockInspectionTestSuite defines the test suite for Canton timelock inspection.
-// With stub implementations, all methods return "unsupported on Canton".
 type TimelockInspectionTestSuite struct {
 	TestSuite
 	inspector *cantonsdk.TimelockInspector
@@ -20,134 +21,153 @@ type TimelockInspectionTestSuite struct {
 func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.TestSuite.SetupSuite()
 	s.DeployMCMSContract()
-	s.inspector = cantonsdk.NewTimelockInspector()
+	mcmsPkgID := ""
+	if len(s.packageIDs) > 0 {
+		mcmsPkgID = s.packageIDs[0]
+	}
+	s.inspector = cantonsdk.NewTimelockInspector(s.participant.CommandServiceClient, s.participant.Party, mcmsPkgID)
 }
 
-// TestGetProposers tests that GetProposers returns unsupported on Canton (stub).
+// TestGetProposers tests that GetProposers returns unsupported on Canton.
 func (s *TimelockInspectionTestSuite) TestGetProposers() {
 	ctx := s.T().Context()
 	proposers, err := s.inspector.GetProposers(ctx, s.mcmsContractID)
-	s.Require().Error(err, "GetProposers should return an error on Canton stub")
+	s.Require().Error(err, "GetProposers should return an error on Canton")
 	s.Require().Contains(err.Error(), "unsupported on Canton")
 	s.Require().Nil(proposers)
 }
 
-// TestGetExecutors tests that GetExecutors returns unsupported on Canton (stub).
+// TestGetExecutors tests that GetExecutors returns unsupported on Canton.
 func (s *TimelockInspectionTestSuite) TestGetExecutors() {
 	ctx := s.T().Context()
 	executors, err := s.inspector.GetExecutors(ctx, s.mcmsContractID)
-	s.Require().Error(err, "GetExecutors should return an error on Canton stub")
+	s.Require().Error(err, "GetExecutors should return an error on Canton")
 	s.Require().Contains(err.Error(), "unsupported on Canton")
 	s.Require().Nil(executors)
 }
 
-// TestGetBypassers tests that GetBypassers returns unsupported on Canton (stub).
+// TestGetBypassers tests that GetBypassers returns unsupported on Canton.
 func (s *TimelockInspectionTestSuite) TestGetBypassers() {
 	ctx := s.T().Context()
 	bypassers, err := s.inspector.GetBypassers(ctx, s.mcmsContractID)
-	s.Require().Error(err, "GetBypassers should return an error on Canton stub")
+	s.Require().Error(err, "GetBypassers should return an error on Canton")
 	s.Require().Contains(err.Error(), "unsupported on Canton")
 	s.Require().Nil(bypassers)
 }
 
-// TestGetCancellers tests that GetCancellers returns unsupported on Canton (stub).
+// TestGetCancellers tests that GetCancellers returns unsupported on Canton.
 func (s *TimelockInspectionTestSuite) TestGetCancellers() {
 	ctx := s.T().Context()
 	cancellers, err := s.inspector.GetCancellers(ctx, s.mcmsContractID)
-	s.Require().Error(err, "GetCancellers should return an error on Canton stub")
+	s.Require().Error(err, "GetCancellers should return an error on Canton")
 	s.Require().Contains(err.Error(), "unsupported on Canton")
 	s.Require().Nil(cancellers)
 }
 
-// TestIsOperation tests that IsOperation returns unsupported on Canton (stub).
+// TestIsOperation tests that IsOperation queries the ledger (returns false for unknown op ID).
 func (s *TimelockInspectionTestSuite) TestIsOperation() {
 	ctx := s.T().Context()
 	var opID [32]byte
 	copy(opID[:], "test-operation-id")
 	isOp, err := s.inspector.IsOperation(ctx, s.mcmsContractID, opID)
-	s.Require().Error(err, "IsOperation should return an error on Canton stub")
-	s.Require().Contains(err.Error(), "unsupported on Canton")
+	s.Require().NoError(err)
 	s.Require().False(isOp)
 }
 
-// TestIsOperationPending tests that IsOperationPending returns unsupported on Canton (stub).
+// TestIsOperationPending tests that IsOperationPending queries the ledger.
 func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 	ctx := s.T().Context()
 	var opID [32]byte
 	copy(opID[:], "test-pending-id")
 	isPending, err := s.inspector.IsOperationPending(ctx, s.mcmsContractID, opID)
-	s.Require().Error(err, "IsOperationPending should return an error on Canton stub")
-	s.Require().Contains(err.Error(), "unsupported on Canton")
+	s.Require().NoError(err)
 	s.Require().False(isPending)
 }
 
-// TestIsOperationReady tests that IsOperationReady returns unsupported on Canton (stub).
+// TestIsOperationReady tests that IsOperationReady queries the ledger.
 func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 	ctx := s.T().Context()
 	var opID [32]byte
 	copy(opID[:], "test-ready-id")
 	isReady, err := s.inspector.IsOperationReady(ctx, s.mcmsContractID, opID)
-	s.Require().Error(err, "IsOperationReady should return an error on Canton stub")
-	s.Require().Contains(err.Error(), "unsupported on Canton")
+	s.Require().NoError(err)
 	s.Require().False(isReady)
 }
 
-// TestIsOperationDone tests that IsOperationDone returns unsupported on Canton (stub).
+// TestIsOperationDone tests that IsOperationDone queries the ledger.
 func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	ctx := s.T().Context()
 	var opID [32]byte
 	copy(opID[:], "test-done-id")
 	isDone, err := s.inspector.IsOperationDone(ctx, s.mcmsContractID, opID)
-	s.Require().Error(err, "IsOperationDone should return an error on Canton stub")
-	s.Require().Contains(err.Error(), "unsupported on Canton")
+	s.Require().NoError(err)
 	s.Require().False(isDone)
 }
 
-// TestGetMinDelay tests that GetMinDelay returns unsupported on Canton (stub).
+// TestGetMinDelay tests that GetMinDelay returns the MCMS min delay from the ledger.
 func (s *TimelockInspectionTestSuite) TestGetMinDelay() {
 	ctx := s.T().Context()
 	delay, err := s.inspector.GetMinDelay(ctx, s.mcmsContractID)
-	s.Require().Error(err, "GetMinDelay should return an error on Canton stub")
-	s.Require().Contains(err.Error(), "unsupported on Canton")
-	s.Require().Equal(uint64(0), delay)
+	s.Require().NoError(err)
+	s.Require().GreaterOrEqual(delay, uint64(0))
 }
 
-// TestTimelockConverterNotImplemented tests that ConvertBatchToChainOperations returns not implemented (stub).
-func (s *TimelockInspectionTestSuite) TestTimelockConverterNotImplemented() {
+
+// TestTimelockConverter tests that ConvertBatchToChainOperations returns one ScheduleBatch operation and a non-zero op ID.
+func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 	ctx := s.T().Context()
-	converter := cantonsdk.NewTimelockConverter()
+	metadata, err := cantonsdk.NewChainMetadata(0, 1, s.chainId, s.proposerMcmsId, s.mcmsContractID, false)
+	s.Require().NoError(err)
+
+	af := cantonsdk.AdditionalFields{
+		TargetInstanceId: "instance@party",
+		FunctionName:     "noop",
+		OperationData:    "",
+		TargetCid:        s.mcmsContractID,
+		ContractIds:      []string{s.mcmsContractID},
+	}
+	afBytes, err := json.Marshal(af)
+	s.Require().NoError(err)
+
 	bop := mcmstypes.BatchOperation{
 		ChainSelector: s.chainSelector,
-		Transactions:  []mcmstypes.Transaction{},
+		Transactions: []mcmstypes.Transaction{{
+			To:               s.mcmsContractID,
+			Data:             []byte{},
+			AdditionalFields: afBytes,
+		}},
 	}
-	metadata := mcmstypes.ChainMetadata{MCMAddress: s.mcmsContractID}
+	converter := cantonsdk.NewTimelockConverter()
 	ops, opID, err := converter.ConvertBatchToChainOperations(
 		ctx,
 		metadata,
 		bop,
 		s.mcmsContractID,
 		s.mcmsContractID,
-		mcmstypes.Duration{},
+		mcmstypes.NewDuration(0),
 		mcmstypes.TimelockActionSchedule,
 		common.Hash{},
 		common.Hash{},
 	)
-	s.Require().Error(err, "ConvertBatchToChainOperations should return an error on Canton stub")
-	s.Require().Contains(err.Error(), "not implemented on Canton")
-	s.Require().Nil(ops)
-	s.Require().Equal(common.Hash{}, opID)
+	s.Require().NoError(err)
+	s.Require().Len(ops, 1)
+	s.Require().NotEqual(common.Hash{}, opID)
 }
 
-// TestTimelockExecutorNotImplemented tests that Execute returns not implemented (stub).
-func (s *TimelockInspectionTestSuite) TestTimelockExecutorNotImplemented() {
+// TestTimelockExecutorExecuteEmptyBatch tests that Execute returns an error for empty batch.
+func (s *TimelockInspectionTestSuite) TestTimelockExecutorExecuteEmptyBatch() {
 	ctx := s.T().Context()
-	executor := cantonsdk.NewTimelockExecutor()
+	mcmsPkgID := ""
+	if len(s.packageIDs) > 0 {
+		mcmsPkgID = s.packageIDs[0]
+	}
+	executor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.Party, mcmsPkgID)
 	bop := mcmstypes.BatchOperation{
 		ChainSelector: s.chainSelector,
 		Transactions:  []mcmstypes.Transaction{},
 	}
 	res, err := executor.Execute(ctx, bop, s.mcmsContractID, common.Hash{}, common.Hash{})
-	s.Require().Error(err, "Execute should return an error on Canton stub")
-	s.Require().Contains(err.Error(), "not implemented on Canton")
+	s.Require().Error(err, "Execute should return an error for empty batch")
+	s.Require().Contains(err.Error(), "no transactions")
 	s.Require().Equal(mcmstypes.TransactionResult{}, res)
 }

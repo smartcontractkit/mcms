@@ -90,7 +90,7 @@ func (s *TestSuite) DeployMCMSWithConfig(config *mcmstypes.Config) {
 	s.mcmsContractID = newContractID
 }
 
-func (s *MCMSExecutorTestSuite) DeployCounterContract() {
+func (s *mcmsExecutorSetup) DeployCounterContract() {
 	s.counterInstanceID = "counter-" + uuid.New().String()[:8]
 
 	// Create Counter contract

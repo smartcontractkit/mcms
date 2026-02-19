@@ -255,7 +255,8 @@ func (e Executor) SetRoot(
 		metadataProof[i] = cantontypes.TEXT(hex.EncodeToString(p[:]))
 	}
 
-	validUntilTime := time.Unix(time.Unix(int64(validUntil), 0).UnixMicro(), 0)
+	// validUntil is Unix seconds; Canton/Daml Timestamp expects time in seconds (binding serializes correctly)
+	validUntilTime := time.Unix(int64(validUntil), 0)
 	input := mcms.SetRoot{
 		TargetRole:    mcms.Role(e.role.String()),
 		Submitter:     cantontypes.PARTY(e.party),
