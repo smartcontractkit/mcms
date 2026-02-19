@@ -19,6 +19,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -299,6 +300,8 @@ func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sd
 			if err != nil {
 				return nil, fmt.Errorf("failed to create Sui timelock converter: %w", err)
 			}
+		case chain_selectors.FamilyCanton:
+			converter = canton.NewTimelockConverter()
 		default:
 			return nil, fmt.Errorf("unsupported chain family %s", fam)
 		}
