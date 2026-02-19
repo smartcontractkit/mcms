@@ -107,6 +107,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("invalid timelock address: %w", err)
 	}
 
+	// TODO (ton): amount can be taken from metadata.AdditionalFields
 	// Notice: EVM just sets 0 here, but on TON we need to set some value to cover gas fees
 	var tx types.Transaction
 	tx, err = NewTransaction(dstAddr, data.BeginParse(), t.amount.Nano(), "RBACTimelock", tags)

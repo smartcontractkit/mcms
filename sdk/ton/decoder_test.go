@@ -11,23 +11,13 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
-	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
-
-// Map of contract type to TL-B definitions (type -> opcode -> TL-B struct)
-var typeToTLBMap = map[string]tvm.TLBMap{
-	// MCMS contract types
-	"com.chainlink.ton.lib.access.RBAC": rbac.TLBs,
-	"com.chainlink.ton.mcms.MCMS":       mcms.TLBs,
-	"com.chainlink.ton.mcms.Timelock":   timelock.TLBs,
-}
 
 func TestDecoder(t *testing.T) {
 	t.Parallel()
@@ -63,9 +53,9 @@ func TestDecoder(t *testing.T) {
 					[]string{"topUp"},
 				)),
 			},
-			contractInterfaces: "com.chainlink.ton.lib.access.RBAC",
+			contractInterfaces: bindings.TypeRBAC,
 			want: &ton.DecodedOperation{
-				ContractType: "com.chainlink.ton.lib.access.RBAC",
+				ContractType: bindings.TypeRBAC,
 				MsgType:      "",
 				MsgDecoded:   map[string]any{},
 				InputKeys:    []string{},
@@ -85,9 +75,9 @@ func TestDecoder(t *testing.T) {
 					[]string{"grantRole"},
 				)),
 			},
-			contractInterfaces: "com.chainlink.ton.lib.access.RBAC",
+			contractInterfaces: bindings.TypeRBAC,
 			want: &ton.DecodedOperation{
-				ContractType: "com.chainlink.ton.lib.access.RBAC",
+				ContractType: bindings.TypeRBAC,
 				MsgType:      "GrantRole",
 				MsgOpcode:    0x95cd540f,
 				MsgDecoded: map[string]any{
@@ -106,7 +96,7 @@ func TestDecoder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			d := ton.NewDecoder(typeToTLBMap)
+			d := ton.NewDecoder(bindings.Registry)
 			got, err := d.Decode(tt.give.Transaction, tt.contractInterfaces)
 			if tt.wantErr != "" {
 				require.Error(t, err)
