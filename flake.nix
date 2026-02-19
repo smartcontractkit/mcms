@@ -5,7 +5,7 @@
     nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
 
-    chainlink-ton.url = "github:smartcontractkit/chainlink-ton"; # TODO: nix flake update when chainlink-ton is merged
+    chainlink-ton.url = "github:smartcontractkit/chainlink-ton";
   };
 
   outputs = inputs @ {
