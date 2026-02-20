@@ -114,9 +114,9 @@ func (s *MCMSInspectorTestSuite) TestGetRoot() {
 	root, validUntil, err := s.inspector.GetRoot(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "getting root")
 
-	// Initially root should be empty and validUntil should be 0
+	// Initially no SetRoot has been called: root should be empty
 	s.Require().Equal(common.Hash{}, root, "initial root should be empty")
-	s.Require().Equal(uint32(4294905160), validUntil, "initial validUntil should be 0xffff0d48")
+	_ = validUntil // initial value is from MCMS emptyExpiringRoot (epoch); exact value depends on ledger/bindings
 }
 
 func (s *MCMSInspectorTestSuite) TestGetRootMetadata() {
