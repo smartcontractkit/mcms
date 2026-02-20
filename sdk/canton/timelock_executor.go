@@ -28,11 +28,12 @@ type TimelockExecutor struct {
 	mcmsPackageID string // empty => use mcms.PackageName
 }
 
-// NewTimelockExecutor creates a TimelockExecutor that submits ExecuteScheduledBatch via the given client and party.
+// NewTimelockExecutor creates a TimelockExecutor that submits ExecuteScheduledBatch via the given clients and party.
+// timelockAddress (in Execute) is InstanceAddress hex; it is resolved to contract ID when submitting.
 // mcmsPackageID is optional; if empty, the bindings' default package name is used for the template ID.
-func NewTimelockExecutor(client apiv2.CommandServiceClient, party string, mcmsPackageID string) *TimelockExecutor {
+func NewTimelockExecutor(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, party string, mcmsPackageID string) *TimelockExecutor {
 	return &TimelockExecutor{
-		TimelockInspector: NewTimelockInspector(client, party, mcmsPackageID),
+		TimelockInspector: NewTimelockInspector(client, stateClient, party, mcmsPackageID),
 		client:            client,
 		party:             party,
 		mcmsPackageID:     mcmsPackageID,
@@ -40,6 +41,7 @@ func NewTimelockExecutor(client apiv2.CommandServiceClient, party string, mcmsPa
 }
 
 // Execute submits ExecuteScheduledBatch for the given batch operation (same opId hash as converter).
+// timelockAddress is InstanceAddress hex; it is resolved to the current MCMS contract ID before submit.
 func (t *TimelockExecutor) Execute(
 	ctx context.Context,
 	bop types.BatchOperation,
@@ -47,6 +49,11 @@ func (t *TimelockExecutor) Execute(
 	predecessor common.Hash,
 	salt common.Hash,
 ) (types.TransactionResult, error) {
+	contractID, err := ResolveMCMSContractID(ctx, t.TimelockInspector.StateServiceClient(), t.party, timelockAddress)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("resolve MCMS contract ID: %w", err)
+	}
+
 	if len(bop.Transactions) == 0 {
 		return types.TransactionResult{}, fmt.Errorf("batch operation has no transactions")
 	}
@@ -72,7 +79,7 @@ func (t *TimelockExecutor) Execute(
 		targetCids = af.ContractIds
 	}
 	if len(targetCids) == 0 {
-		targetCids = []string{timelockAddress}
+		targetCids = []string{contractID}
 	}
 
 	predecessorHex := hex.EncodeToString(predecessor[:])
@@ -111,7 +118,7 @@ func (t *TimelockExecutor) Execute(
 							ModuleName: "MCMS.Main",
 							EntityName: "MCMS",
 						},
-						ContractId:     timelockAddress,
+						ContractId:     contractID,
 						Choice:         "ExecuteScheduledBatch",
 						ChoiceArgument: ledger.MapToValue(executeArgs),
 					},

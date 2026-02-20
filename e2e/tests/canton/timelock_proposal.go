@@ -27,16 +27,16 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	ctx := s.T().Context()
 
 	inspector := cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party, cantonsdk.TimelockRoleProposer)
-	currentOpCount, err := inspector.GetOpCount(ctx, s.mcmsContractID)
+	currentOpCount, err := inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "get current op count")
 
-	// Canton chain metadata for timelock (Proposer schedule)
+	// Canton chain metadata for timelock (Proposer schedule); MCMAddress is InstanceAddress hex
 	metadata, err := cantonsdk.NewChainMetadata(
 		currentOpCount,
 		currentOpCount+1,
 		s.chainId,
 		s.proposerMcmsId,
-		s.mcmsContractID,
+		s.mcmsInstanceAddress,
 		false,
 	)
 	s.Require().NoError(err)
@@ -64,12 +64,12 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 		}},
 	}
 
-	// Build timelock proposal (Schedule action)
+	// Build timelock proposal (Schedule action); timelock address is InstanceAddress hex
 	timelockProposal, err := mcms.NewTimelockProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(validUntil).
 		SetDescription("Canton timelock - schedule counter increment").
-		AddTimelockAddress(s.chainSelector, s.mcmsContractID).
+		AddTimelockAddress(s.chainSelector, s.mcmsInstanceAddress).
 		AddChainMetadata(s.chainSelector, metadata).
 		SetAction(types.TimelockActionSchedule).
 		SetDelay(delay).
@@ -112,43 +112,13 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	s.Require().NoError(err)
 	txSetRoot, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
-
-	// SetRoot archives the old MCMS and creates a new one; extract new contract ID and update proposal/state
-	rawData, ok := txSetRoot.RawData.(map[string]any)
-	s.Require().True(ok)
-	newMCMSContractID, ok := rawData["NewMCMSContractID"].(string)
-	s.Require().True(ok, "SetRoot must return NewMCMSContractID")
-	s.Require().NotEmpty(newMCMSContractID)
-	oldMCMSContractID := s.mcmsContractID
-	s.mcmsContractID = newMCMSContractID
-
-	// Update proposal so Execute uses the new MCMS contract ID (executable holds a pointer to proposal)
-	meta := proposal.ChainMetadata[s.chainSelector]
-	meta.MCMAddress = newMCMSContractID
-	proposal.ChainMetadata[s.chainSelector] = meta
-	for i := range proposal.Operations {
-		op := &proposal.Operations[i]
-		op.Transaction.To = newMCMSContractID
-		var af cantonsdk.AdditionalFields
-		if err := json.Unmarshal(op.Transaction.AdditionalFields, &af); err == nil {
-			af.TargetCid = newMCMSContractID
-			if len(af.ContractIds) > 0 && af.ContractIds[0] == oldMCMSContractID {
-				af.ContractIds[0] = newMCMSContractID
-			}
-			op.Transaction.AdditionalFields, _ = json.Marshal(af)
-		}
-	}
+	s.Require().NotEmpty(txSetRoot.Hash)
+	// No proposal mutation: proposal keeps InstanceAddress hex; executor resolves at submit time
 
 	// Execute proposal operations (schedules the batch on-chain)
 	for i := range proposal.Operations {
-		txExecute, execErr := executable.Execute(ctx, i)
+		_, execErr := executable.Execute(ctx, i)
 		s.Require().NoError(execErr, "execute scheduled operation %d", i)
-		// ExecuteOp may recreate MCMS; keep suite state in sync for GetOpCount later
-		if rd, ok := txExecute.RawData.(map[string]any); ok {
-			if cid, ok := rd["NewMCMSContractID"].(string); ok && cid != "" {
-				s.mcmsContractID = cid
-			}
-		}
 	}
 
 	// Timelock execution: wait for ready then execute batch
@@ -156,7 +126,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	if len(s.packageIDs) > 0 {
 		mcmsPkgID = s.packageIDs[0]
 	}
-	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.Party, mcmsPkgID)
+	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party, mcmsPkgID)
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 		s.chainSelector: timelockExecutor,
 	}
@@ -172,8 +142,8 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 		s.Require().NoError(terr, "timelock execute operation %d", i)
 	}
 
-	// Verify: op count increased (and counter was incremented when inspection is available)
-	postOpCount, err := inspector.GetOpCount(ctx, s.mcmsContractID)
+	// Verify: op count increased (inspector resolves InstanceAddress when querying)
+	postOpCount, err := inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err)
 	s.Require().Equal(currentOpCount+1, postOpCount, "op count should increment after timelock execute")
 }

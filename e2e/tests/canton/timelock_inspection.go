@@ -25,13 +25,13 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	if len(s.packageIDs) > 0 {
 		mcmsPkgID = s.packageIDs[0]
 	}
-	s.inspector = cantonsdk.NewTimelockInspector(s.participant.CommandServiceClient, s.participant.Party, mcmsPkgID)
+	s.inspector = cantonsdk.NewTimelockInspector(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party, mcmsPkgID)
 }
 
 // TestGetProposers tests that GetProposers returns unsupported on Canton.
 func (s *TimelockInspectionTestSuite) TestGetProposers() {
 	ctx := s.T().Context()
-	proposers, err := s.inspector.GetProposers(ctx, s.mcmsContractID)
+	proposers, err := s.inspector.GetProposers(ctx, s.mcmsInstanceAddress)
 	s.Require().Error(err, "GetProposers should return an error on Canton")
 	s.Require().Contains(err.Error(), "unsupported on Canton")
 	s.Require().Nil(proposers)
@@ -40,7 +40,7 @@ func (s *TimelockInspectionTestSuite) TestGetProposers() {
 // TestGetExecutors tests that GetExecutors returns unsupported on Canton.
 func (s *TimelockInspectionTestSuite) TestGetExecutors() {
 	ctx := s.T().Context()
-	executors, err := s.inspector.GetExecutors(ctx, s.mcmsContractID)
+	executors, err := s.inspector.GetExecutors(ctx, s.mcmsInstanceAddress)
 	s.Require().Error(err, "GetExecutors should return an error on Canton")
 	s.Require().Contains(err.Error(), "unsupported on Canton")
 	s.Require().Nil(executors)
@@ -49,7 +49,7 @@ func (s *TimelockInspectionTestSuite) TestGetExecutors() {
 // TestGetBypassers tests that GetBypassers returns unsupported on Canton.
 func (s *TimelockInspectionTestSuite) TestGetBypassers() {
 	ctx := s.T().Context()
-	bypassers, err := s.inspector.GetBypassers(ctx, s.mcmsContractID)
+	bypassers, err := s.inspector.GetBypassers(ctx, s.mcmsInstanceAddress)
 	s.Require().Error(err, "GetBypassers should return an error on Canton")
 	s.Require().Contains(err.Error(), "unsupported on Canton")
 	s.Require().Nil(bypassers)
@@ -58,7 +58,7 @@ func (s *TimelockInspectionTestSuite) TestGetBypassers() {
 // TestGetCancellers tests that GetCancellers returns unsupported on Canton.
 func (s *TimelockInspectionTestSuite) TestGetCancellers() {
 	ctx := s.T().Context()
-	cancellers, err := s.inspector.GetCancellers(ctx, s.mcmsContractID)
+	cancellers, err := s.inspector.GetCancellers(ctx, s.mcmsInstanceAddress)
 	s.Require().Error(err, "GetCancellers should return an error on Canton")
 	s.Require().Contains(err.Error(), "unsupported on Canton")
 	s.Require().Nil(cancellers)
@@ -69,7 +69,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperation() {
 	ctx := s.T().Context()
 	var opID [32]byte
 	copy(opID[:], "test-operation-id")
-	isOp, err := s.inspector.IsOperation(ctx, s.mcmsContractID, opID)
+	isOp, err := s.inspector.IsOperation(ctx, s.mcmsInstanceAddress, opID)
 	s.Require().NoError(err)
 	s.Require().False(isOp)
 }
@@ -79,7 +79,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationPending() {
 	ctx := s.T().Context()
 	var opID [32]byte
 	copy(opID[:], "test-pending-id")
-	isPending, err := s.inspector.IsOperationPending(ctx, s.mcmsContractID, opID)
+	isPending, err := s.inspector.IsOperationPending(ctx, s.mcmsInstanceAddress, opID)
 	s.Require().NoError(err)
 	s.Require().False(isPending)
 }
@@ -89,7 +89,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationReady() {
 	ctx := s.T().Context()
 	var opID [32]byte
 	copy(opID[:], "test-ready-id")
-	isReady, err := s.inspector.IsOperationReady(ctx, s.mcmsContractID, opID)
+	isReady, err := s.inspector.IsOperationReady(ctx, s.mcmsInstanceAddress, opID)
 	s.Require().NoError(err)
 	s.Require().False(isReady)
 }
@@ -99,7 +99,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	ctx := s.T().Context()
 	var opID [32]byte
 	copy(opID[:], "test-done-id")
-	isDone, err := s.inspector.IsOperationDone(ctx, s.mcmsContractID, opID)
+	isDone, err := s.inspector.IsOperationDone(ctx, s.mcmsInstanceAddress, opID)
 	s.Require().NoError(err)
 	s.Require().False(isDone)
 }
@@ -107,7 +107,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 // TestGetMinDelay tests that GetMinDelay returns the MCMS min delay from the ledger.
 func (s *TimelockInspectionTestSuite) TestGetMinDelay() {
 	ctx := s.T().Context()
-	delay, err := s.inspector.GetMinDelay(ctx, s.mcmsContractID)
+	delay, err := s.inspector.GetMinDelay(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err)
 	s.Require().GreaterOrEqual(delay, uint64(0))
 }
@@ -116,15 +116,15 @@ func (s *TimelockInspectionTestSuite) TestGetMinDelay() {
 // TestTimelockConverter tests that ConvertBatchToChainOperations returns one ScheduleBatch operation and a non-zero op ID.
 func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 	ctx := s.T().Context()
-	metadata, err := cantonsdk.NewChainMetadata(0, 1, s.chainId, s.proposerMcmsId, s.mcmsContractID, false)
+	metadata, err := cantonsdk.NewChainMetadata(0, 1, s.chainId, s.proposerMcmsId, s.mcmsInstanceAddress, false)
 	s.Require().NoError(err)
 
 	af := cantonsdk.AdditionalFields{
 		TargetInstanceId: "instance@party",
 		FunctionName:     "noop",
 		OperationData:    "",
-		TargetCid:        s.mcmsContractID,
-		ContractIds:      []string{s.mcmsContractID},
+		TargetCid:        s.mcmsInstanceAddress,
+		ContractIds:      []string{s.mcmsInstanceAddress},
 	}
 	afBytes, err := json.Marshal(af)
 	s.Require().NoError(err)
@@ -132,7 +132,7 @@ func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 	bop := mcmstypes.BatchOperation{
 		ChainSelector: s.chainSelector,
 		Transactions: []mcmstypes.Transaction{{
-			To:               s.mcmsContractID,
+			To:               s.mcmsInstanceAddress,
 			Data:             []byte{},
 			AdditionalFields: afBytes,
 		}},
@@ -142,8 +142,8 @@ func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 		ctx,
 		metadata,
 		bop,
-		s.mcmsContractID,
-		s.mcmsContractID,
+		s.mcmsInstanceAddress,
+		s.mcmsInstanceAddress,
 		mcmstypes.NewDuration(0),
 		mcmstypes.TimelockActionSchedule,
 		common.Hash{},
@@ -161,12 +161,12 @@ func (s *TimelockInspectionTestSuite) TestTimelockExecutorExecuteEmptyBatch() {
 	if len(s.packageIDs) > 0 {
 		mcmsPkgID = s.packageIDs[0]
 	}
-	executor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.Party, mcmsPkgID)
+	executor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party, mcmsPkgID)
 	bop := mcmstypes.BatchOperation{
 		ChainSelector: s.chainSelector,
 		Transactions:  []mcmstypes.Transaction{},
 	}
-	res, err := executor.Execute(ctx, bop, s.mcmsContractID, common.Hash{}, common.Hash{})
+	res, err := executor.Execute(ctx, bop, s.mcmsInstanceAddress, common.Hash{}, common.Hash{})
 	s.Require().Error(err, "Execute should return an error for empty batch")
 	s.Require().Contains(err.Error(), "no transactions")
 	s.Require().Equal(mcmstypes.TransactionResult{}, res)

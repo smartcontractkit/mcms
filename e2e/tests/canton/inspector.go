@@ -3,12 +3,9 @@
 package canton
 
 import (
-	"context"
-	"io"
 	"slices"
 	"testing"
 
-	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/suite"
@@ -85,19 +82,15 @@ func (s *MCMSInspectorTestSuite) TestGetConfig() {
 		},
 	}
 
-	// Set config using configurer
-	configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
+	// Set config using configurer (InstanceAddress is stable across SetConfig)
+	configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err, "creating configurer")
 
-	_, err = configurer.SetConfig(ctx, s.mcmsContractID, expectedConfig, true)
+	_, err = configurer.SetConfig(ctx, s.mcmsInstanceAddress, expectedConfig, true)
 	s.Require().NoError(err, "setting config")
 
-	// Get the new contract ID after SetConfig (which archives old and creates new)
-	newContractID, err := s.getLatestMCMSContractID(ctx)
-	s.Require().NoError(err, "getting latest MCMS contract ID")
-
-	// Now test the inspector
-	actualConfig, err := s.inspector.GetConfig(ctx, newContractID)
+	// Inspector resolves InstanceAddress when querying
+	actualConfig, err := s.inspector.GetConfig(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "getting config from inspector")
 	s.Require().NotNil(actualConfig, "config should not be nil")
 
@@ -108,12 +101,7 @@ func (s *MCMSInspectorTestSuite) TestGetConfig() {
 func (s *MCMSInspectorTestSuite) TestGetOpCount() {
 	ctx := s.T().Context()
 
-	// Get the latest contract ID
-	contractID, err := s.getLatestMCMSContractID(ctx)
-	s.Require().NoError(err, "getting latest MCMS contract ID")
-
-	// Get op count
-	opCount, err := s.inspector.GetOpCount(ctx, contractID)
+	opCount, err := s.inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "getting op count")
 
 	// Initially should be 0
@@ -123,12 +111,7 @@ func (s *MCMSInspectorTestSuite) TestGetOpCount() {
 func (s *MCMSInspectorTestSuite) TestGetRoot() {
 	ctx := s.T().Context()
 
-	// Get the latest contract ID
-	contractID, err := s.getLatestMCMSContractID(ctx)
-	s.Require().NoError(err, "getting latest MCMS contract ID")
-
-	// Get root
-	root, validUntil, err := s.inspector.GetRoot(ctx, contractID)
+	root, validUntil, err := s.inspector.GetRoot(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "getting root")
 
 	// Initially root should be empty and validUntil should be 0
@@ -139,81 +122,12 @@ func (s *MCMSInspectorTestSuite) TestGetRoot() {
 func (s *MCMSInspectorTestSuite) TestGetRootMetadata() {
 	ctx := s.T().Context()
 
-	// Get the latest contract ID
-	contractID, err := s.getLatestMCMSContractID(ctx)
-	s.Require().NoError(err, "getting latest MCMS contract ID")
-
-	// Get root metadata
-	metadata, err := s.inspector.GetRootMetadata(ctx, contractID)
+	metadata, err := s.inspector.GetRootMetadata(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "getting root metadata")
 
 	// Verify metadata structure
 	s.Require().Equal(uint64(0), metadata.StartingOpCount, "initial starting op count should be 0")
 	s.Require().NotEmpty(metadata.MCMAddress, "MCM address should not be empty")
-}
-
-// Helper function to get the latest MCMS contract ID
-func (s *MCMSInspectorTestSuite) getLatestMCMSContractID(ctx context.Context) (string, error) {
-	// Get current ledger offset
-	ledgerEndResp, err := s.participant.StateServiceClient.GetLedgerEnd(ctx, &apiv2.GetLedgerEndRequest{})
-	if err != nil {
-		return "", err
-	}
-
-	// Query active contracts
-	activeContractsResp, err := s.participant.StateServiceClient.GetActiveContracts(ctx, &apiv2.GetActiveContractsRequest{
-		ActiveAtOffset: ledgerEndResp.GetOffset(),
-		EventFormat: &apiv2.EventFormat{
-			FiltersByParty: map[string]*apiv2.Filters{
-				s.participant.Party: {
-					Cumulative: []*apiv2.CumulativeFilter{
-						{
-							IdentifierFilter: &apiv2.CumulativeFilter_TemplateFilter{
-								TemplateFilter: &apiv2.TemplateFilter{
-									TemplateId: &apiv2.Identifier{
-										PackageId:  "#mcms",
-										ModuleName: "MCMS.Main",
-										EntityName: "MCMS",
-									},
-									IncludeCreatedEventBlob: false,
-								},
-							},
-						},
-					},
-				},
-			},
-			Verbose: true,
-		},
-	})
-	if err != nil {
-		return "", err
-	}
-	defer activeContractsResp.CloseSend()
-
-	// Get the first (and should be only) active MCMS contract
-	for {
-		resp, err := activeContractsResp.Recv()
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return "", err
-		}
-
-		activeContract, ok := resp.GetContractEntry().(*apiv2.GetActiveContractsResponse_ActiveContract)
-		if !ok {
-			continue
-		}
-
-		createdEvent := activeContract.ActiveContract.GetCreatedEvent()
-		if createdEvent == nil {
-			continue
-		}
-
-		return createdEvent.ContractId, nil
-	}
-
-	return "", nil
 }
 
 // Helper to verify config matches

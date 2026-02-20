@@ -22,20 +22,28 @@ var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 // TimelockInspector inspects Canton timelock state via MCMS read-only choices
 // (IsOperation, IsOperationPending, IsOperationReady, IsOperationDone, GetMinDelay).
 // Role lists (GetProposers, etc.) return "unsupported on Canton" like Aptos.
+// address parameters are InstanceAddress hex (Canton); they are resolved to contract ID when exercising.
 type TimelockInspector struct {
 	client        apiv2.CommandServiceClient
+	stateClient   apiv2.StateServiceClient
 	party         string
 	mcmsPackageID string
 }
 
-// NewTimelockInspector creates a TimelockInspector that queries the ledger via the given client.
+// NewTimelockInspector creates a TimelockInspector that queries the ledger via the given clients.
 // mcmsPackageID may be empty to use the bindings' default package name.
-func NewTimelockInspector(client apiv2.CommandServiceClient, party string, mcmsPackageID string) *TimelockInspector {
+func NewTimelockInspector(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, party string, mcmsPackageID string) *TimelockInspector {
 	return &TimelockInspector{
 		client:        client,
+		stateClient:   stateClient,
 		party:         party,
 		mcmsPackageID: mcmsPackageID,
 	}
+}
+
+// StateServiceClient returns the state service client for resolution (InstanceAddress to contract ID).
+func (t *TimelockInspector) StateServiceClient() apiv2.StateServiceClient {
+	return t.stateClient
 }
 
 func (t *TimelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
@@ -79,12 +87,16 @@ func (t *TimelockInspector) IsOperationDone(ctx context.Context, address string,
 }
 
 func (t *TimelockInspector) GetMinDelay(ctx context.Context, address string) (uint64, error) {
+	contractID, err := ResolveMCMSContractID(ctx, t.stateClient, t.party, address)
+	if err != nil {
+		return 0, fmt.Errorf("resolve MCMS contract ID: %w", err)
+	}
 	pkgID := t.mcmsPackageID
 	if pkgID == "" {
 		pkgID = mcms.PackageName
 	}
 	args := mcms.GetMinDelay{Submitter: cantontypes.PARTY(t.party)}
-	req := t.exerciseRequest(pkgID, address, "GetMinDelay", ledger.MapToValue(args))
+	req := t.exerciseRequest(pkgID, contractID, "GetMinDelay", ledger.MapToValue(args))
 	resp, err := t.client.SubmitAndWaitForTransaction(ctx, req)
 	if err != nil {
 		return 0, fmt.Errorf("GetMinDelay: %w", err)
@@ -115,6 +127,10 @@ func (t *TimelockInspector) GetMinDelay(ctx context.Context, address string) (ui
 }
 
 func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address string, choice string, opID [32]byte) (bool, error) {
+	contractID, err := ResolveMCMSContractID(ctx, t.stateClient, t.party, address)
+	if err != nil {
+		return false, fmt.Errorf("resolve MCMS contract ID: %w", err)
+	}
 	pkgID := t.mcmsPackageID
 	if pkgID == "" {
 		pkgID = mcms.PackageName
@@ -134,7 +150,7 @@ func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address stri
 	default:
 		return false, fmt.Errorf("unknown choice %s", choice)
 	}
-	req := t.exerciseRequest(pkgID, address, choice, choiceArg)
+	req := t.exerciseRequest(pkgID, contractID, choice, choiceArg)
 	resp, err := t.client.SubmitAndWaitForTransaction(ctx, req)
 	if err != nil {
 		return false, fmt.Errorf("%s: %w", choice, err)

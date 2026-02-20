@@ -62,6 +62,12 @@ func (e Executor) ExecuteOperation(
 		}
 	}
 
+	// Resolve MCMAddress (InstanceAddress hex) to current contract ID before submitting
+	mcmsContractID, err := ResolveMCMSContractID(ctx, e.Inspector.StateServiceClient(), e.party, metadata.MCMAddress)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to resolve MCMS contract ID: %w", err)
+	}
+
 	// Validate required Canton fields
 	if cantonOpFields.TargetInstanceId == "" {
 		return types.TransactionResult{}, errors.New("targetInstanceId is required in operation additional fields")
@@ -118,7 +124,7 @@ func (e Executor) ExecuteOperation(
 		OpProof:    opProof,
 		TargetCids: targetCids,
 	}
-	exerciseCmd := mcmsContract.ExecuteOp(metadata.MCMAddress, input)
+	exerciseCmd := mcmsContract.ExecuteOp(mcmsContractID, input)
 	choice = exerciseCmd.Choice
 	choiceArgument = ledger.MapToValue(input)
 
@@ -142,7 +148,7 @@ func (e Executor) ExecuteOperation(
 							ModuleName: moduleName,
 							EntityName: entityName,
 						},
-						ContractId:     metadata.MCMAddress,
+						ContractId:     mcmsContractID,
 						Choice:         choice,
 						ChoiceArgument: choiceArgument,
 					},
@@ -154,7 +160,7 @@ func (e Executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("failed to execute operation: %w", err)
 	}
 
-	// Extract NEW MCMS CID from Created event
+	// Extract NEW MCMS CID from Created event (for RawData only; proposal keeps InstanceAddress)
 	newMCMSContractID := ""
 	newMCMSTemplateID := ""
 	transaction := submitResp.GetTransaction()
@@ -171,7 +177,7 @@ func (e Executor) ExecuteOperation(
 	}
 
 	if newMCMSContractID == "" {
-		return types.TransactionResult{}, fmt.Errorf("execute-op tx had no Created MCMS event; refusing to continue with old CID=%s", metadata.MCMAddress)
+		return types.TransactionResult{}, fmt.Errorf("execute-op tx had no Created MCMS event; refusing to continue with old CID=%s", mcmsContractID)
 	}
 
 	return types.TransactionResult{
@@ -193,6 +199,12 @@ func (e Executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
+	// Resolve MCMAddress (InstanceAddress hex) to current contract ID before submitting
+	mcmsContractID, err := ResolveMCMSContractID(ctx, e.Inspector.StateServiceClient(), e.party, metadata.MCMAddress)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to resolve MCMS contract ID: %w", err)
+	}
+
 	rootHex := hex.EncodeToString(root[:])
 	// Recalculate msg hash to recover signers
 	inner, err := abi.Encode(SignMsgABI, root, validUntil)
@@ -269,7 +281,7 @@ func (e Executor) SetRoot(
 
 	// Build exercise command using generated bindings
 	mcmsContract := mcms.MCMS{}
-	exerciseCmd := mcmsContract.SetRoot(metadata.MCMAddress, input)
+	exerciseCmd := mcmsContract.SetRoot(mcmsContractID, input)
 
 	// Parse template ID
 	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
@@ -294,7 +306,7 @@ func (e Executor) SetRoot(
 							ModuleName: moduleName,
 							EntityName: entityName,
 						},
-						ContractId:     metadata.MCMAddress,
+						ContractId:     mcmsContractID,
 						Choice:         exerciseCmd.Choice,
 						ChoiceArgument: choiceArgument,
 					},
@@ -323,7 +335,7 @@ func (e Executor) SetRoot(
 	}
 
 	if newMCMSContractID == "" {
-		return types.TransactionResult{}, fmt.Errorf("set-root tx had no Created MCMS event; refusing to continue with old CID=%s", metadata.MCMAddress)
+		return types.TransactionResult{}, fmt.Errorf("set-root tx had no Created MCMS event; refusing to continue with old CID=%s", mcmsContractID)
 	}
 
 	return types.TransactionResult{

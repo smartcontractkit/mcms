@@ -94,13 +94,13 @@ func TestMCMSExecutorTestSuite(t *testing.T) {
 func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 	ctx := s.T().Context()
 
-	// Create metadata for Canton chain
+	// Create metadata for Canton chain (MCMAddress is InstanceAddress hex)
 	metadata, err := cantonsdk.NewChainMetadata(
 		0, // preOpCount
 		1,
 		s.chainId,
 		s.proposerMcmsId,
-		s.mcmsContractID,
+		s.mcmsInstanceAddress,
 		false,
 	)
 	s.Require().NoError(err)
@@ -156,28 +156,19 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 	executable, err := mcmscore.NewExecutable(proposal, executors)
 	s.Require().NoError(err)
 
-	// First, set the root
+	// First, set the root (proposal keeps InstanceAddress; no mutation)
 	txSetRoot, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txSetRoot.Hash)
+	s.T().Logf("✅ SetRoot completed (MCMS InstanceAddress: %s)", s.mcmsInstanceAddress)
 
-	// Update contract ID after SetRoot
-	rawData, ok := txSetRoot.RawData.(map[string]any)
-	s.Require().True(ok)
-	newMCMSContractID, ok := rawData["NewMCMSContractID"].(string)
-	s.Require().True(ok)
-	s.Require().NotEmpty(newMCMSContractID)
-	s.mcmsContractID = newMCMSContractID
-
-	s.T().Logf("✅ SetRoot completed, new MCMS CID: %s", s.mcmsContractID)
-
-	// Update proposal with new multisig id
+	// Same metadata (InstanceAddress) for execute
 	newMetadata, err := cantonsdk.NewChainMetadata(
 		0, // preOpCount
 		1, // postOp
 		s.chainId,
 		s.proposerMcmsId,
-		s.mcmsContractID,
+		s.mcmsInstanceAddress,
 		false,
 	)
 	proposal.ChainMetadata[s.chainSelector] = newMetadata
@@ -194,7 +185,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 
 	s.verifyCounterIncremented(submitResp)
 
-	// Verify MCMS contract was recreated with incremented opCount
+	// Verify MCMS contract was recreated (ExecuteOp archives and creates new MCMS)
 	foundMCMS := false
 	transaction := submitResp.GetTransaction()
 	for _, event := range transaction.GetEvents() {
@@ -203,11 +194,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 			normalized := cantonsdk.NormalizeTemplateKey(templateID)
 			if normalized == cantonsdk.MCMSTemplateKey {
 				foundMCMS = true
-				newMCMSCID := createdEv.GetContractId()
-				s.Require().NotEmpty(newMCMSCID)
-				s.Require().NotEqual(s.mcmsContractID, newMCMSCID, "MCMS should be recreated after execute")
-				s.mcmsContractID = newMCMSCID
-				s.T().Logf("✅ MCMS contract recreated: %s", s.mcmsContractID)
+				s.Require().NotEmpty(createdEv.GetContractId())
 				break
 			}
 		}
@@ -239,25 +226,25 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 	// This follows the format from chainlink-canton integration tests
 	operationData := EncodeSetConfigParams(&s.TestSuite, signerAddresses, groupQuorums, groupParents, false)
 
-	// Create metadata for Canton chain
+	// Create metadata for Canton chain (MCMAddress is InstanceAddress hex)
 	metadata, err := cantonsdk.NewChainMetadata(
 		1, // preOpCount
 		2, // postOp
 		s.chainId,
 		s.proposerMcmsId,
-		s.mcmsContractID,
+		s.mcmsInstanceAddress,
 		false,
 	)
 	s.Require().NoError(err)
 
-	// Build a proposal with SetConfig operation targeting MCMS itself
+	// Build a proposal with SetConfig operation targeting MCMS (To/TargetCid/ContractIds are InstanceAddress hex)
 	validUntil := time.Now().Add(24 * time.Hour)
 	opAdditionalFields := cantonsdk.AdditionalFields{
 		TargetInstanceId: "self",
 		FunctionName:     "set_config",
 		OperationData:    operationData,
-		TargetCid:        s.mcmsContractID,
-		ContractIds:      []string{s.mcmsContractID},
+		TargetCid:        s.mcmsInstanceAddress,
+		ContractIds:      []string{s.mcmsInstanceAddress},
 	}
 	opAdditionalFieldsBytes, err := json.Marshal(opAdditionalFields)
 	s.Require().NoError(err)
@@ -271,7 +258,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 		AddOperation(mcmstypes.Operation{
 			ChainSelector: s.chainSelector,
 			Transaction: mcmstypes.Transaction{
-				To:               s.mcmsContractID,
+				To:               s.mcmsInstanceAddress,
 				Data:             []byte{},
 				AdditionalFields: opAdditionalFieldsBytes,
 			},
@@ -301,38 +288,13 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 	executable, err := mcmscore.NewExecutable(proposal, executors)
 	s.Require().NoError(err)
 
-	// First, set the root
+	// First, set the root (no proposal mutation; we use InstanceAddress)
 	txSetRoot, err := executable.SetRoot(ctx, s.chainSelector)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txSetRoot.Hash)
+	s.T().Logf("✅ SetRoot completed (MCMS InstanceAddress: %s)", s.mcmsInstanceAddress)
 
-	// Update contract ID after SetRoot
-	rawData, ok := txSetRoot.RawData.(map[string]any)
-	s.Require().True(ok)
-	newMCMSContractID, ok := rawData["NewMCMSContractID"].(string)
-	s.Require().True(ok)
-	s.Require().NotEmpty(newMCMSContractID)
-	oldMCMSContractID := s.mcmsContractID
-	s.mcmsContractID = newMCMSContractID
-	s.Require().NotEqual(oldMCMSContractID, s.mcmsContractID, "MCMS contract ID should change after SetRoot")
-
-	// Update proposal with new MCMS contract ID in metadata
-
-	s.T().Logf("✅ SetRoot completed, new MCMS CID: %s", s.mcmsContractID)
-
-	newMetadata, err := cantonsdk.NewChainMetadata(
-		1, // preOpCount
-		2, // postOp
-		s.chainId,
-		s.proposerMcmsId,
-		newMCMSContractID,
-		false,
-	)
-	s.Require().NoError(err)
-	// Override proposal metadata with new MCMS contract ID
-	proposal.ChainMetadata[s.chainSelector] = newMetadata
-
-	// Now execute the SetConfig operation (index 0)
+	// Proposal already has InstanceAddress; execute SetConfig (index 0)
 	txExecute, err := executable.Execute(ctx, 0)
 	s.Require().NoError(err)
 	s.Require().NotEmpty(txExecute.Hash)
@@ -351,11 +313,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 			normalized := cantonsdk.NormalizeTemplateKey(templateID)
 			if normalized == cantonsdk.MCMSTemplateKey {
 				foundMCMS = true
-				newMCMSCID := createdEv.GetContractId()
-				s.Require().NotEmpty(newMCMSCID)
-				s.Require().NotEqual(oldMCMSContractID, newMCMSCID, "MCMS should be recreated after SetConfig")
-				s.mcmsContractID = newMCMSCID
-				s.T().Logf("✅ MCMS contract recreated with new config: %s", s.mcmsContractID)
+				s.Require().NotEmpty(createdEv.GetContractId())
 				break
 			}
 		}
