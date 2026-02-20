@@ -1,5 +1,13 @@
 # @smartcontractkit/mcms
 
+## 0.36.1
+
+### Patch Changes
+
+- [#635](https://github.com/smartcontractkit/mcms/pull/635) [`4be4e75`](https://github.com/smartcontractkit/mcms/commit/4be4e75afdc5fd4a00f3520ab81b40a5f572a629) Thanks [@ecPablo](https://github.com/ecPablo)! - add error details on remote chain selectors api
+
+- [#633](https://github.com/smartcontractkit/mcms/pull/633) [`d34ae76`](https://github.com/smartcontractkit/mcms/commit/d34ae76388f139c303c386ab6e6350e860b6af9c) Thanks [@krebernisak](https://github.com/krebernisak)! - Bump github.com/smartcontractkit/chainlink-ton to 054376f21418
+
 ## 0.36.0
 
 ### Minor Changes
