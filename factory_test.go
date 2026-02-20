@@ -99,7 +99,7 @@ func TestNewEncoder(t *testing.T) {
 			name:         "failure: chain not found for selector",
 			giveSelector: chaintest.ChainInvalidSelector,
 			giveIsSim:    true,
-			wantErr:      "chain family not found for selector 0",
+			wantErr:      "chain family not found for selector 0: unknown chain selector 0",
 		},
 	}
 

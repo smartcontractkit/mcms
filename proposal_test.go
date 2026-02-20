@@ -566,7 +566,7 @@ func TestProposal_GetEncoders(t *testing.T) {
 					types.ChainSelector(0): {},
 				}
 			},
-			wantErr: "unable to create encoder: chain family not found for selector 0",
+			wantErr: "unable to create encoder: chain family not found for selector 0: unknown chain selector 0",
 		},
 	}
 
@@ -686,7 +686,7 @@ func TestProposal_MerkleTree(t *testing.T) {
 					types.ChainSelector(1): {StartingOpCount: 5},
 				}
 			},
-			wantErr: "merkle tree generation error: unable to create encoder: chain family not found for selector 1",
+			wantErr: "merkle tree generation error: unable to create encoder: chain family not found for selector 1: unknown chain selector 1",
 		},
 		{
 			name: "failure: missing metadata when fetching nonces",

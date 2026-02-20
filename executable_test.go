@@ -47,7 +47,7 @@ func TestNewExecutable(t *testing.T) {
 			giveExecutors: map[types.ChainSelector]sdk.Executor{
 				types.ChainSelector(1): executor,
 			},
-			wantErr: "unable to create encoder: chain family not found for selector 1",
+			wantErr: "unable to create encoder: chain family not found for selector 1: unknown chain selector 1",
 		},
 		{
 			name: "failure: could not generate tx nonces from proposal (tx does not have matching chain metadata)",
