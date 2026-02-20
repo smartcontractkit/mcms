@@ -41,7 +41,7 @@ func GetChainSelectorFamily(sel ChainSelector) (string, error) {
 	ctx := context.Background()
 	details, err := chainselremote.GetChainDetailsBySelector(ctx, uint64(sel))
 	if err != nil {
-		return "", fmt.Errorf("%w for selector %d", ErrChainFamilyNotFound, sel)
+		return "", fmt.Errorf("%w for selector %d: %w", ErrChainFamilyNotFound, sel, err)
 	}
 
 	if !slices.Contains(supportedFamilies, details.Family) {
