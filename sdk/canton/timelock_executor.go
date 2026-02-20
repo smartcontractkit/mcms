@@ -86,9 +86,15 @@ func (t *TimelockExecutor) Execute(
 	saltHex := hex.EncodeToString(salt[:])
 	opIDStr := HashTimelockOpId(callsForHash, predecessorHex, saltHex)
 
+	// Resolve InstanceAddress hex to current contract ID so Canton can parse them
+	stateClient := t.TimelockInspector.StateServiceClient()
 	targetCidSlice := make([]cantontypes.CONTRACT_ID, len(targetCids))
 	for i, cid := range targetCids {
-		targetCidSlice[i] = cantontypes.CONTRACT_ID(cid)
+		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, t.party, cid)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, err)
+		}
+		targetCidSlice[i] = cantontypes.CONTRACT_ID(resolved)
 	}
 
 	executeArgs := mcms.ExecuteScheduledBatch{

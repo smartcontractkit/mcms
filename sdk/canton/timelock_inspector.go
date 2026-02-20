@@ -187,6 +187,11 @@ func (t *TimelockInspector) exerciseRequest(pkgID, contractID, choice string, ch
 			}},
 		},
 		TransactionFormat: &apiv2.TransactionFormat{
+			EventFormat: &apiv2.EventFormat{
+				FiltersByParty: map[string]*apiv2.Filters{
+					t.party: {},
+				},
+			},
 			TransactionShape: apiv2.TransactionShape_TRANSACTION_SHAPE_LEDGER_EFFECTS,
 		},
 	}

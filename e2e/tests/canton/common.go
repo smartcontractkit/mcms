@@ -37,8 +37,8 @@ type TestSuite struct {
 	chainId             int64
 	packageIDs          []string
 	mcmsInstanceAddress string // InstanceAddress hex (stable across SetRoot/ExecuteOp); use this everywhere instead of contract ID
-	mcmsId              string
-	proposerMcmsId      string
+	mcmsId              string // MCMS contract instanceId (base); DAML expects metadata.multisigId = makeMcmsId(instanceId, role) e.g. "mcms-test-001-proposer"
+	proposerMcmsId      string // makeMcmsId(mcmsId, Proposer) for chain metadata and Op.multisigId
 }
 
 func (s *TestSuite) SetupSuite() {
@@ -85,11 +85,13 @@ func (s *TestSuite) DeployMCMSWithConfig(config *mcmstypes.Config) {
 
 func (s *mcmsExecutorSetup) DeployCounterContract() {
 	s.counterInstanceID = "counter-" + uuid.New().String()[:8]
+	// DAML MCMSReceiver expects instanceId in format "baseId@partyId"; use same in batch TargetInstanceId
+	counterInstanceIdOnChain := fmt.Sprintf("%s@%s", s.counterInstanceID, s.participant.Party)
 
 	// Create Counter contract
 	counterContract := mcms.Counter{
 		Owner:      types.PARTY(s.participant.Party),
-		InstanceId: types.TEXT(s.counterInstanceID),
+		InstanceId: types.TEXT(counterInstanceIdOnChain),
 		Value:      types.INT64(0),
 	}
 

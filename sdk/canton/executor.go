@@ -106,10 +106,15 @@ func (e Executor) ExecuteOperation(
 		opProof[i] = cantontypes.TEXT(hex.EncodeToString(p[:]))
 	}
 
-	// Convert contract IDs
+	// Convert contract IDs; resolve InstanceAddress hex to current contract ID so Canton can parse them
+	stateClient := e.Inspector.StateServiceClient()
 	targetCids := make([]cantontypes.CONTRACT_ID, len(cantonOpFields.ContractIds))
 	for i, cid := range cantonOpFields.ContractIds {
-		targetCids[i] = cantontypes.CONTRACT_ID(cid)
+		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, e.party, cid)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, err)
+		}
+		targetCids[i] = cantontypes.CONTRACT_ID(resolved)
 	}
 
 	// Build exercise command using generated bindings

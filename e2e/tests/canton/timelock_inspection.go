@@ -116,7 +116,7 @@ func (s *TimelockInspectionTestSuite) TestGetMinDelay() {
 // TestTimelockConverter tests that ConvertBatchToChainOperations returns one ScheduleBatch operation and a non-zero op ID.
 func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 	ctx := s.T().Context()
-	metadata, err := cantonsdk.NewChainMetadata(0, 1, s.chainId, s.proposerMcmsId, s.mcmsInstanceAddress, false)
+	metadata, err := cantonsdk.NewChainMetadata(0, 1, s.chainId, s.proposerMcmsId, s.mcmsInstanceAddress, false, s.mcmsId)
 	s.Require().NoError(err)
 
 	af := cantonsdk.AdditionalFields{

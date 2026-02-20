@@ -21,10 +21,9 @@ import (
 var _ sdk.Inspector = &Inspector{}
 
 type Inspector struct {
-	stateClient   apiv2.StateServiceClient
-	party         string
-	contractCache *mcms.MCMS // Cache MCMS to avoid repeated RPC calls
-	role          TimelockRole
+	stateClient apiv2.StateServiceClient
+	party       string
+	role        TimelockRole
 }
 
 func NewInspector(stateClient apiv2.StateServiceClient, party string, role TimelockRole) *Inspector {
@@ -41,64 +40,55 @@ func (i *Inspector) StateServiceClient() apiv2.StateServiceClient {
 }
 
 func (i *Inspector) GetConfig(ctx context.Context, mcmsAddr string) (*types.Config, error) {
-	if i.contractCache == nil {
-		mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
-		}
-		i.contractCache = mcmsContract
+	mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
 
 	switch i.role {
 	case TimelockRoleProposer:
-		return toConfig(i.contractCache.Proposer.Config)
+		return toConfig(mcmsContract.Proposer.Config)
 	case TimelockRoleBypasser:
-		return toConfig(i.contractCache.Bypasser.Config)
+		return toConfig(mcmsContract.Bypasser.Config)
 	case TimelockRoleCanceller:
-		return toConfig(i.contractCache.Canceller.Config)
+		return toConfig(mcmsContract.Canceller.Config)
 	default:
 		return nil, fmt.Errorf("unknown timelock role: %s", i.role)
 	}
 }
 
 func (i *Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, error) {
-	if i.contractCache == nil {
-		mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
-		if err != nil {
-			return 0, fmt.Errorf("failed to get MCMS contract: %w", err)
-		}
-		i.contractCache = mcmsContract
+	mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
+	if err != nil {
+		return 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
 
 	switch i.role {
 	case TimelockRoleProposer:
-		return uint64(i.contractCache.Proposer.ExpiringRoot.OpCount), nil
+		return uint64(mcmsContract.Proposer.ExpiringRoot.OpCount), nil
 	case TimelockRoleBypasser:
-		return uint64(i.contractCache.Bypasser.ExpiringRoot.OpCount), nil
+		return uint64(mcmsContract.Bypasser.ExpiringRoot.OpCount), nil
 	case TimelockRoleCanceller:
-		return uint64(i.contractCache.Canceller.ExpiringRoot.OpCount), nil
+		return uint64(mcmsContract.Canceller.ExpiringRoot.OpCount), nil
 	default:
 		return 0, fmt.Errorf("unknown timelock role: %s", i.role)
 	}
 }
 
 func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, uint32, error) {
-	if i.contractCache == nil {
-		mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
-		if err != nil {
-			return common.Hash{}, 0, fmt.Errorf("failed to get MCMS contract: %w", err)
-		}
-		i.contractCache = mcmsContract
+	mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
+	if err != nil {
+		return common.Hash{}, 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
 
 	var expiringRoot mcms.ExpiringRoot
 	switch i.role {
 	case TimelockRoleProposer:
-		expiringRoot = i.contractCache.Proposer.ExpiringRoot
+		expiringRoot = mcmsContract.Proposer.ExpiringRoot
 	case TimelockRoleBypasser:
-		expiringRoot = i.contractCache.Bypasser.ExpiringRoot
+		expiringRoot = mcmsContract.Bypasser.ExpiringRoot
 	case TimelockRoleCanceller:
-		expiringRoot = i.contractCache.Canceller.ExpiringRoot
+		expiringRoot = mcmsContract.Canceller.ExpiringRoot
 	default:
 		return common.Hash{}, 0, fmt.Errorf("unknown timelock role: %s", i.role)
 	}
@@ -122,28 +112,25 @@ func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, 
 }
 
 func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types.ChainMetadata, error) {
-	if i.contractCache == nil {
-		mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
-		if err != nil {
-			return types.ChainMetadata{}, fmt.Errorf("failed to get MCMS contract: %w", err)
-		}
-		i.contractCache = mcmsContract
+	mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
+	if err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
 
 	var rootMetadata mcms.RootMetadata
 	switch i.role {
 	case TimelockRoleProposer:
-		rootMetadata = i.contractCache.Proposer.RootMetadata
+		rootMetadata = mcmsContract.Proposer.RootMetadata
 	case TimelockRoleBypasser:
-		rootMetadata = i.contractCache.Bypasser.RootMetadata
+		rootMetadata = mcmsContract.Bypasser.RootMetadata
 	case TimelockRoleCanceller:
-		rootMetadata = i.contractCache.Canceller.RootMetadata
+		rootMetadata = mcmsContract.Canceller.RootMetadata
 	default:
 		return types.ChainMetadata{}, fmt.Errorf("unknown timelock role: %s", i.role)
 	}
 
 	// For Canton, MCMAddress is the InstanceAddress hex (stable across SetRoot/ExecuteOp)
-	mcmAddress := contracts.InstanceID(string(i.contractCache.InstanceId)).RawInstanceAddress(cantontypes.PARTY(i.contractCache.Owner)).InstanceAddress().Hex()
+	mcmAddress := contracts.InstanceID(string(mcmsContract.InstanceId)).RawInstanceAddress(cantontypes.PARTY(mcmsContract.Owner)).InstanceAddress().Hex()
 	return types.ChainMetadata{
 		StartingOpCount: uint64(rootMetadata.PreOpCount),
 		MCMAddress:      mcmAddress,

@@ -130,3 +130,28 @@ func ResolveMCMSContractID(ctx context.Context, stateService apiv2.StateServiceC
 	templateID := mcms.MCMS{}.GetTemplateID()
 	return FindActiveContractIDByInstanceAddress(ctx, stateService, party, templateID, addr)
 }
+
+// IsInstanceAddressHex returns true if s looks like an InstanceAddress hex string (64 hex chars, optional 0x prefix).
+// Canton contract IDs use a different format; when we have 0x-prefixed 64-char hex we treat it as InstanceAddress.
+func IsInstanceAddressHex(s string) bool {
+	s = strings.TrimPrefix(s, "0x")
+	if len(s) != 64 {
+		return false
+	}
+	for _, c := range s {
+		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') {
+			continue
+		}
+		return false
+	}
+	return true
+}
+
+// ResolveContractIDIfInstanceAddress returns the current MCMS contract ID if cid is InstanceAddress hex;
+// otherwise returns cid unchanged. Use when building TargetCids so Canton receives real contract IDs.
+func ResolveContractIDIfInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, party, cid string) (string, error) {
+	if !IsInstanceAddressHex(cid) {
+		return cid, nil
+	}
+	return ResolveMCMSContractID(ctx, stateService, party, cid)
+}

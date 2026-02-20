@@ -52,10 +52,10 @@ func TestTONSuite(t *testing.T) {
 }
 
 func TestCantonSuite(t *testing.T) {
-	// suite.Run(t, new(cantone2e.MCMSConfigurerTestSuite))
-	// suite.Run(t, new(cantone2e.MCMSInspectorTestSuite))
+	suite.Run(t, new(cantone2e.MCMSConfigurerTestSuite))
+	suite.Run(t, new(cantone2e.MCMSInspectorTestSuite))
 	// TODO: Proposals need to be updated to use Timelock instead of direct execution
-	// suite.Run(t, new(cantone2e.MCMSExecutorTestSuite))
+	suite.Run(t, new(cantone2e.MCMSExecutorTestSuite))
 	// TODO: implement timelock inspection tests later
 	// suite.Run(t, new(cantone2e.TimelockInspectionTestSuite))
 	suite.Run(t, new(cantone2e.TimelockProposalTestSuite))

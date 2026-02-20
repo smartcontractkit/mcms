@@ -94,7 +94,7 @@ func TestMCMSExecutorTestSuite(t *testing.T) {
 func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 	ctx := s.T().Context()
 
-	// Create metadata for Canton chain (MCMAddress is InstanceAddress hex)
+	// Create metadata for Canton chain (multisigId = makeMcmsId(instanceId, Proposer))
 	metadata, err := cantonsdk.NewChainMetadata(
 		0, // preOpCount
 		1,
@@ -102,6 +102,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 		s.proposerMcmsId,
 		s.mcmsInstanceAddress,
 		false,
+		s.mcmsId,
 	)
 	s.Require().NoError(err)
 
@@ -170,6 +171,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteCounterOp() {
 		s.proposerMcmsId,
 		s.mcmsInstanceAddress,
 		false,
+		s.mcmsId,
 	)
 	proposal.ChainMetadata[s.chainSelector] = newMetadata
 	// Now execute the operation (index 0)
@@ -234,6 +236,7 @@ func (s *MCMSExecutorTestSuite) TestSetRootAndExecuteMCMSOp() {
 		s.proposerMcmsId,
 		s.mcmsInstanceAddress,
 		false,
+		s.mcmsId,
 	)
 	s.Require().NoError(err)
 

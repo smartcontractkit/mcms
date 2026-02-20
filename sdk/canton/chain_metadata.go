@@ -34,10 +34,13 @@ const (
 	TimelockRoleProposer
 )
 
-// AdditionalFieldsMetadata represents the Canton-specific metadata fields
+// AdditionalFieldsMetadata represents the Canton-specific metadata fields.
+// MultisigId must be makeMcmsId(instanceId, role) e.g. "mcms-001-proposer" (DAML SetRoot/ExecuteOp).
+// InstanceId is the base MCMS instanceId for self-dispatch TargetInstanceId (DAML E_NOT_SELF_DISPATCH).
 type AdditionalFieldsMetadata struct {
 	ChainId              int64  `json:"chainId"`
 	MultisigId           string `json:"multisigId"`
+	InstanceId           string `json:"instanceId,omitempty"` // base instanceId; converter uses for TargetInstanceId in ScheduleBatch etc.
 	PreOpCount           uint64 `json:"preOpCount"`
 	PostOpCount          uint64 `json:"postOpCount"`
 	OverridePreviousRoot bool   `json:"overridePreviousRoot"`
@@ -72,8 +75,9 @@ func ValidateChainMetadata(metadata types.ChainMetadata) error {
 }
 
 // NewChainMetadata creates new Canton chain metadata.
-// mcmsInstanceAddress is the MCMS InstanceAddress hex string (32-byte Keccak256 of "instanceId@party").
-// It may be prefixed with "0x". The executor and other components resolve it to the current contract ID when submitting.
+// multisigId must be makeMcmsId(instanceId, role) e.g. "mcms-001-proposer" (DAML expects this in SetRoot/Op).
+// baseInstanceId is the MCMS contract instanceId; if non-empty, converter uses it for TargetInstanceId in self-dispatch ops.
+// mcmsInstanceAddress is the MCMS InstanceAddress hex (32-byte Keccak256 of "instanceId@party"); may be prefixed with "0x".
 func NewChainMetadata(
 	preOpCount uint64,
 	postOpCount uint64,
@@ -81,6 +85,7 @@ func NewChainMetadata(
 	multisigId string,
 	mcmsInstanceAddress string,
 	overridePreviousRoot bool,
+	baseInstanceId string,
 ) (types.ChainMetadata, error) {
 	if mcmsInstanceAddress == "" {
 		return types.ChainMetadata{}, errors.New("MCMS InstanceAddress is required")
@@ -93,6 +98,7 @@ func NewChainMetadata(
 	additionalFields := AdditionalFieldsMetadata{
 		ChainId:              chainId,
 		MultisigId:           multisigId,
+		InstanceId:           baseInstanceId,
 		PreOpCount:           preOpCount,
 		PostOpCount:          postOpCount,
 		OverridePreviousRoot: overridePreviousRoot,

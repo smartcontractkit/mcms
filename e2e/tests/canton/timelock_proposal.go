@@ -30,7 +30,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	currentOpCount, err := inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "get current op count")
 
-	// Canton chain metadata for timelock (Proposer schedule); MCMAddress is InstanceAddress hex
+	// Canton chain metadata: multisigId = makeMcmsId(instanceId, Proposer); baseInstanceId for converter TargetInstanceId
 	metadata, err := cantonsdk.NewChainMetadata(
 		currentOpCount,
 		currentOpCount+1,
@@ -38,6 +38,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 		s.proposerMcmsId,
 		s.mcmsInstanceAddress,
 		false,
+		s.mcmsId,
 	)
 	s.Require().NoError(err)
 
@@ -47,7 +48,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	// Batch operation: increment counter (same shape as in TestSetRootAndExecuteCounterOp)
 	opAdditionalFields := cantonsdk.AdditionalFields{
 		TargetInstanceId: fmt.Sprintf("%s@%s", s.counterInstanceID, s.participant.Party),
-		FunctionName:     "increment",
+		FunctionName:     "Increment",
 		OperationData:    "",
 		TargetCid:        s.counterCID,
 		ContractIds:      []string{s.counterCID},
@@ -134,6 +135,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	s.Require().NoError(err)
 
 	// Wait until operation is ready (delay has passed)
+	time.Sleep(timelockProposal.Delay.Duration + time.Second)
 	s.Require().NoError(timelockExecutable.IsReady(ctx), "timelock operation should become ready")
 
 	// Execute the scheduled batch via timelock

@@ -90,8 +90,12 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 			return nil, common.Hash{}, fmt.Errorf("marshal ScheduleBatchParams: %w", err)
 		}
 
+		targetInstanceId := meta.InstanceId
+		if targetInstanceId == "" {
+			targetInstanceId = meta.MultisigId
+		}
 		opAdditionalFields := AdditionalFields{
-			TargetInstanceId: meta.MultisigId,
+			TargetInstanceId: targetInstanceId,
 			FunctionName:     "ScheduleBatch",
 			OperationData:    opDataHex,
 			TargetCid:        mcmAddress,
@@ -121,8 +125,12 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("marshal BypasserExecuteBatchParams: %w", err)
 		}
+		targetInstanceId := meta.InstanceId
+		if targetInstanceId == "" {
+			targetInstanceId = meta.MultisigId
+		}
 		opAdditionalFields := AdditionalFields{
-			TargetInstanceId: meta.MultisigId,
+			TargetInstanceId: targetInstanceId,
 			FunctionName:     "BypasserExecuteBatch",
 			OperationData:    opDataHex,
 			TargetCid:        mcmAddress,
