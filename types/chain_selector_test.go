@@ -36,7 +36,7 @@ func TestGetChainSelectorFamily(t *testing.T) {
 		{
 			name:    "invalid chain selector",
 			give:    0,
-			wantErr: "chain family not found for selector 0",
+			wantErr: "chain family not found for selector 0: unknown chain selector 0",
 		},
 	}
 
