@@ -1,5 +1,13 @@
 # @smartcontractkit/mcms
 
+## 0.36.2
+
+### Patch Changes
+
+- [#638](https://github.com/smartcontractkit/mcms/pull/638) [`94dfd62`](https://github.com/smartcontractkit/mcms/commit/94dfd62257d0cef9946a104b406cbfd5b3502962) Thanks [@krebernisak](https://github.com/krebernisak)! - Add TON option to buildTimelockConverters
+
+- [#638](https://github.com/smartcontractkit/mcms/pull/638) [`94dfd62`](https://github.com/smartcontractkit/mcms/commit/94dfd62257d0cef9946a104b406cbfd5b3502962) Thanks [@krebernisak](https://github.com/krebernisak)! - Bump ghcr.io/neodix42/mylocalton-docker:v4.0.0 - speedup
+
 ## 0.36.1
 
 ### Patch Changes
