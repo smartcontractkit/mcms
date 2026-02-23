@@ -22,6 +22,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -300,6 +301,8 @@ func (m *TimelockProposal) buildTimelockConverters(_ context.Context) (map[types
 			if err != nil {
 				return nil, fmt.Errorf("failed to create Sui timelock converter: %w", err)
 			}
+		case chainsel.FamilyTon:
+			converter = ton.NewTimelockConverter(ton.DefaultSendAmount)
 		default:
 			return nil, fmt.Errorf("unsupported chain family %s", fam)
 		}
