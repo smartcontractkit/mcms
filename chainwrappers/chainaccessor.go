@@ -16,5 +16,5 @@ type ChainAccessor interface {
 	SolanaClient(selector uint64) (*solrpc.Client, bool)
 	AptosClient(selector uint64) (aptoslib.AptosRpcClient, bool)
 	SuiClient(selector uint64) (sui.ISuiAPI, suisuisdk.SuiSigner, bool)
-	TonClient(selector uint64) (*ton.APIClient, bool)
+	TonClient(selector uint64) (ton.APIClientWrapped, bool)
 }
