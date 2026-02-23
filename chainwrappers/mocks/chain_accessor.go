@@ -320,23 +320,23 @@ func (_c *ChainAccessor_SuiClient_Call) RunAndReturn(run func(uint64) (sui.ISuiA
 }
 
 // TonClient provides a mock function with given fields: selector
-func (_m *ChainAccessor) TonClient(selector uint64) (*ton.APIClient, bool) {
+func (_m *ChainAccessor) TonClient(selector uint64) (ton.APIClientWrapped, bool) {
 	ret := _m.Called(selector)
 
 	if len(ret) == 0 {
 		panic("no return value specified for TonClient")
 	}
 
-	var r0 *ton.APIClient
+	var r0 ton.APIClientWrapped
 	var r1 bool
-	if rf, ok := ret.Get(0).(func(uint64) (*ton.APIClient, bool)); ok {
+	if rf, ok := ret.Get(0).(func(uint64) (ton.APIClientWrapped, bool)); ok {
 		return rf(selector)
 	}
-	if rf, ok := ret.Get(0).(func(uint64) *ton.APIClient); ok {
+	if rf, ok := ret.Get(0).(func(uint64) ton.APIClientWrapped); ok {
 		r0 = rf(selector)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*ton.APIClient)
+			r0 = ret.Get(0).(ton.APIClientWrapped)
 		}
 	}
 
@@ -367,12 +367,12 @@ func (_c *ChainAccessor_TonClient_Call) Run(run func(selector uint64)) *ChainAcc
 	return _c
 }
 
-func (_c *ChainAccessor_TonClient_Call) Return(_a0 *ton.APIClient, _a1 bool) *ChainAccessor_TonClient_Call {
+func (_c *ChainAccessor_TonClient_Call) Return(_a0 ton.APIClientWrapped, _a1 bool) *ChainAccessor_TonClient_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ChainAccessor_TonClient_Call) RunAndReturn(run func(uint64) (*ton.APIClient, bool)) *ChainAccessor_TonClient_Call {
+func (_c *ChainAccessor_TonClient_Call) RunAndReturn(run func(uint64) (ton.APIClientWrapped, bool)) *ChainAccessor_TonClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
