@@ -43,12 +43,5 @@
   },
   "engines": {
     "node": ">=18.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "js-yaml": "^3.14.2",
-      "mdast-util-to-hast": "^13.2.1",
-      "qs": "^6.14.1"
-    }
   }
 }
