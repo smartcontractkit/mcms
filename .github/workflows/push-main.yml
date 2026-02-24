@@ -42,6 +42,8 @@ jobs:
   ci-lint-misc:
     name: Lint GH Actions and scripts
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Linting Misc (yaml + sh files)
         uses: smartcontractkit/.github/actions/ci-lint-misc@9fc306ac63d8997c9ca0da283e56caaf71589f83 # ci-lint-misc@1.0.0
@@ -166,8 +168,12 @@ jobs:
 
   ci-sonarqube:
     name: Sonarqube Scan
-    needs: [ci-lint, ci-lint-misc, ci-test]
     runs-on: ubuntu-latest
+    needs: [ci-lint, ci-lint-misc, ci-test]
+    permissions:
+      contents: read
+      actions: read
+
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Scanning with Sonarqube
