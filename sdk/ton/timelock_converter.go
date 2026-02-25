@@ -17,7 +17,6 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
 // Default amount to send with timelock transactions (to cover gas fees)
@@ -64,17 +63,18 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, errHash
 	}
 
-	qID, err := tvm.RandomQueryID()
-	if err != nil {
-		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to generate random query ID: %w", err)
-	}
+	// TODO: Re-introduce QueryID using a deterministic derivation (e.g. from calls, predecessor, salt, action) to preserve proposal signing determinism. (NONEVM-3847)
+	// qID, err := tvm.RandomQueryID()
+	// if err != nil {
+	//	 return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	// }
 
 	// Encode the data based on the operation
 	var data *cell.Cell
 	switch action {
 	case types.TimelockActionSchedule:
 		data, err = tlb.ToCell(timelock.ScheduleBatch{
-			QueryID: qID,
+			// QueryID: qID,
 
 			Calls:       calls,
 			Predecessor: tlbe.NewUint256(predecessor.Big()),
@@ -83,13 +83,13 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		})
 	case types.TimelockActionCancel:
 		data, err = tlb.ToCell(timelock.Cancel{
-			QueryID: qID,
+			// QueryID: qID,
 
 			ID: tlbe.NewUint256(operationID.Big()),
 		})
 	case types.TimelockActionBypass:
 		data, err = tlb.ToCell(timelock.BypasserExecuteBatch{
-			QueryID: qID,
+			// QueryID: qID,
 
 			Calls: calls,
 		})
