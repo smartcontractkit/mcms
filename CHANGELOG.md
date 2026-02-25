@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.36.3
+
+### Patch Changes
+
+- [#645](https://github.com/smartcontractkit/mcms/pull/645) [`93369ca`](https://github.com/smartcontractkit/mcms/commit/93369ca34d3f361e120a9b7e0028086d1e229736) Thanks [@huangzhen1997](https://github.com/huangzhen1997)! - Comment out randomQuery ID for TON timelock converter to have static proposal hash
+
 ## 0.36.2
 
 ### Patch Changes
