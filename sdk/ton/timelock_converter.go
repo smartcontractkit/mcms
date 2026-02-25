@@ -74,7 +74,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	switch action {
 	case types.TimelockActionSchedule:
 		data, err = tlb.ToCell(timelock.ScheduleBatch{
-			//QueryID: qID,
+			// QueryID: qID,
 
 			Calls:       calls,
 			Predecessor: tlbe.NewUint256(predecessor.Big()),
@@ -83,13 +83,13 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		})
 	case types.TimelockActionCancel:
 		data, err = tlb.ToCell(timelock.Cancel{
-			//QueryID: qID,
+			// QueryID: qID,
 
 			ID: tlbe.NewUint256(operationID.Big()),
 		})
 	case types.TimelockActionBypass:
 		data, err = tlb.ToCell(timelock.BypasserExecuteBatch{
-			//QueryID: qID,
+			// QueryID: qID,
 
 			Calls: calls,
 		})
