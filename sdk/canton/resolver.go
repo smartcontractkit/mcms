@@ -9,16 +9,39 @@ import (
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/smartcontractkit/go-daml/pkg/types"
+	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 
+	"github.com/smartcontractkit/chainlink-canton/bindings"
 	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 )
 
-// FindActiveContractByInstanceAddress finds an active contract by its instance address.
+// ResolveMCMSContractID resolves an MCMS InstanceAddress (hex string) to the current active contract ID.
+// instanceAddressHex is the hex-encoded InstanceAddress (keccak256 of "instanceId@party"); it may be prefixed with "0x".
+func ResolveMCMSContractID(ctx context.Context, stateService apiv2.StateServiceClient, party, instanceAddressHex string) (string, error) {
+	instanceAddressHex = strings.TrimPrefix(instanceAddressHex, "0x")
+	if instanceAddressHex == "" {
+		return "", fmt.Errorf("instance address hex is required")
+	}
+	addr := contracts.HexToInstanceAddress(instanceAddressHex)
+	templateID := mcms.MCMS{}.GetTemplateID()
+	return findActiveContractIDByInstanceAddress(ctx, stateService, party, templateID, addr)
+}
+
+// findActiveContractIDByInstanceAddress returns the active contract ID for the given instance address.
+func findActiveContractIDByInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, party, templateID string, instanceAddress contracts.InstanceAddress) (string, error) {
+	activeContract, err := findActiveContractByInstanceAddress(ctx, stateService, party, templateID, instanceAddress)
+	if err != nil {
+		return "", err
+	}
+	return activeContract.GetCreatedEvent().GetContractId(), nil
+}
+
+// findActiveContractByInstanceAddress finds an active contract by its instance address.
 // It returns an error if there are multiple or zero active contracts matching the instance address.
 // TODO: copied from chainlink-canton deployment/utils/operations/contract/exercise.go to avoid importing
 // unwanted dependencies. We should move the helper function to the bindings package and use it here.
-func FindActiveContractByInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, party, templateID string, instanceAddress contracts.InstanceAddress) (*apiv2.ActiveContract, error) {
+func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, party, templateID string, instanceAddress contracts.InstanceAddress) (*apiv2.ActiveContract, error) {
 	ledgerEndResp, err := stateService.GetLedgerEnd(ctx, &apiv2.GetLedgerEndRequest{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ledger end: %w", err)
@@ -110,25 +133,50 @@ func FindActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 	return activeContract, nil
 }
 
-// FindActiveContractIDByInstanceAddress returns the active contract ID for the given instance address.
-func FindActiveContractIDByInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, party, templateID string, instanceAddress contracts.InstanceAddress) (string, error) {
-	activeContract, err := FindActiveContractByInstanceAddress(ctx, stateService, party, templateID, instanceAddress)
-	if err != nil {
-		return "", err
+// GetMCMSContract queries the active MCMS contract by InstanceAddress (hex).
+// mcmsAddr is the InstanceAddress hex string (may be prefixed with "0x").
+func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient, party, mcmsAddr string) (*mcms.MCMS, error) {
+	mcmsAddr = strings.TrimPrefix(mcmsAddr, "0x")
+	if mcmsAddr == "" {
+		return nil, fmt.Errorf("MCMS instance address is required")
 	}
-	return activeContract.GetCreatedEvent().GetContractId(), nil
-}
-
-// ResolveMCMSContractID resolves an MCMS InstanceAddress (hex string) to the current active contract ID.
-// instanceAddressHex is the hex-encoded InstanceAddress (keccak256 of "instanceId@party"); it may be prefixed with "0x".
-func ResolveMCMSContractID(ctx context.Context, stateService apiv2.StateServiceClient, party, instanceAddressHex string) (string, error) {
-	instanceAddressHex = strings.TrimPrefix(instanceAddressHex, "0x")
-	if instanceAddressHex == "" {
-		return "", fmt.Errorf("instance address hex is required")
-	}
-	addr := contracts.HexToInstanceAddress(instanceAddressHex)
+	addr := contracts.HexToInstanceAddress(mcmsAddr)
 	templateID := mcms.MCMS{}.GetTemplateID()
-	return FindActiveContractIDByInstanceAddress(ctx, stateService, party, templateID, addr)
+	activeContract, err := findActiveContractByInstanceAddress(ctx, stateService, party, templateID, addr)
+	if err != nil {
+		return nil, fmt.Errorf("MCMS contract for InstanceAddress %s: %w", mcmsAddr, err)
+	}
+
+	// Wrap for bindings unmarshal
+	wrapped := &apiv2.GetActiveContractsResponse_ActiveContract{ActiveContract: activeContract}
+
+	// TODO: MinDelay type from binding doesnt correspond to actual type from contract
+	type NoMinDelayMCMS struct {
+		Owner              cantontypes.PARTY      `json:"owner"`
+		InstanceId         cantontypes.TEXT       `json:"instanceId"`
+		ChainId            cantontypes.INT64      `json:"chainId"`
+		Proposer           mcms.RoleState         `json:"proposer"`
+		Canceller          mcms.RoleState         `json:"canceller"`
+		Bypasser           mcms.RoleState         `json:"bypasser"`
+		BlockedFunctions   []mcms.BlockedFunction `json:"blockedFunctions"`
+		TimelockTimestamps cantontypes.GENMAP     `json:"timelockTimestamps"`
+	}
+	mcmsContractNoMinDelay, err := bindings.UnmarshalActiveContract[NoMinDelayMCMS](wrapped)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal MCMS contract: %w", err)
+	}
+
+	return &mcms.MCMS{
+		Owner:              mcmsContractNoMinDelay.Owner,
+		InstanceId:         mcmsContractNoMinDelay.InstanceId,
+		ChainId:            mcmsContractNoMinDelay.ChainId,
+		Proposer:           mcmsContractNoMinDelay.Proposer,
+		Canceller:          mcmsContractNoMinDelay.Canceller,
+		Bypasser:           mcmsContractNoMinDelay.Bypasser,
+		BlockedFunctions:   mcmsContractNoMinDelay.BlockedFunctions,
+		TimelockTimestamps: mcmsContractNoMinDelay.TimelockTimestamps,
+		MinDelay:           0, // TODO: Fix bindings type
+	}, nil
 }
 
 // IsInstanceAddressHex returns true if s looks like an InstanceAddress hex string (64 hex chars, optional 0x prefix).

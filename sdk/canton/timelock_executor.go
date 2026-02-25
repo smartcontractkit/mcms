@@ -23,20 +23,17 @@ var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
 // TimelockExecutor executes scheduled Canton timelock operations (ExecuteScheduledBatch).
 type TimelockExecutor struct {
 	*TimelockInspector
-	client        apiv2.CommandServiceClient
-	party         string
-	mcmsPackageID string // empty => use mcms.PackageName
+	client apiv2.CommandServiceClient
+	party  string
 }
 
 // NewTimelockExecutor creates a TimelockExecutor that submits ExecuteScheduledBatch via the given clients and party.
 // timelockAddress (in Execute) is InstanceAddress hex; it is resolved to contract ID when submitting.
-// mcmsPackageID is optional; if empty, the bindings' default package name is used for the template ID.
-func NewTimelockExecutor(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, party string, mcmsPackageID string) *TimelockExecutor {
+func NewTimelockExecutor(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, party string) *TimelockExecutor {
 	return &TimelockExecutor{
-		TimelockInspector: NewTimelockInspector(client, stateClient, party, mcmsPackageID),
+		TimelockInspector: NewTimelockInspector(client, stateClient, party),
 		client:            client,
 		party:             party,
-		mcmsPackageID:     mcmsPackageID,
 	}
 }
 
@@ -106,9 +103,10 @@ func (t *TimelockExecutor) Execute(
 		TargetCids:  targetCidSlice,
 	}
 
-	pkgID := t.mcmsPackageID
-	if pkgID == "" {
-		pkgID = mcms.PackageName
+	mcmsContract := mcms.MCMS{}
+	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
 	}
 
 	commandID := uuid.Must(uuid.NewUUID()).String()
@@ -120,9 +118,9 @@ func (t *TimelockExecutor) Execute(
 				Command: &apiv2.Command_Exercise{
 					Exercise: &apiv2.ExerciseCommand{
 						TemplateId: &apiv2.Identifier{
-							PackageId:  pkgID,
-							ModuleName: "MCMS.Main",
-							EntityName: "MCMS",
+							PackageId:  packageID,
+							ModuleName: moduleName,
+							EntityName: entityName,
 						},
 						ContractId:     contractID,
 						Choice:         "ExecuteScheduledBatch",
@@ -138,9 +136,31 @@ func (t *TimelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("submit ExecuteScheduledBatch: %w", err)
 	}
 
+	// Extract new MCMS contract ID from Created event (callers need it for subsequent resolution)
+	newMCMSContractID := ""
+	newMCMSTemplateID := ""
+	transaction := resp.GetTransaction()
+	for _, ev := range transaction.GetEvents() {
+		if createdEv := ev.GetCreated(); createdEv != nil {
+			templateID := formatTemplateID(createdEv.GetTemplateId())
+			if NormalizeTemplateKey(templateID) == MCMSTemplateKey {
+				newMCMSContractID = createdEv.GetContractId()
+				newMCMSTemplateID = templateID
+				break
+			}
+		}
+	}
+	if newMCMSContractID == "" {
+		return types.TransactionResult{}, fmt.Errorf("ExecuteScheduledBatch tx had no Created MCMS event; refusing to continue with old CID=%s", contractID)
+	}
+
 	return types.TransactionResult{
 		Hash:        commandID,
 		ChainFamily: cselectors.FamilyCanton,
-		RawData:     map[string]any{"RawTx": resp},
+		RawData: map[string]any{
+			"NewMCMSContractID": newMCMSContractID,
+			"NewMCMSTemplateID": newMCMSTemplateID,
+			"RawTx":             resp,
+		},
 	}, nil
 }

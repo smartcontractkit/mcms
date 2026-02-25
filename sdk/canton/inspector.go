@@ -10,7 +10,6 @@ import (
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings"
 	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
@@ -40,7 +39,7 @@ func (i *Inspector) StateServiceClient() apiv2.StateServiceClient {
 }
 
 func (i *Inspector) GetConfig(ctx context.Context, mcmsAddr string) (*types.Config, error) {
-	mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
+	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.party, mcmsAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -58,7 +57,7 @@ func (i *Inspector) GetConfig(ctx context.Context, mcmsAddr string) (*types.Conf
 }
 
 func (i *Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, error) {
-	mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
+	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.party, mcmsAddr)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -76,7 +75,7 @@ func (i *Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, er
 }
 
 func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, uint32, error) {
-	mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
+	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.party, mcmsAddr)
 	if err != nil {
 		return common.Hash{}, 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -112,7 +111,7 @@ func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, 
 }
 
 func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types.ChainMetadata, error) {
-	mcmsContract, err := i.getMCMSContract(ctx, mcmsAddr)
+	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.party, mcmsAddr)
 	if err != nil {
 		return types.ChainMetadata{}, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -134,52 +133,6 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types
 	return types.ChainMetadata{
 		StartingOpCount: uint64(rootMetadata.PreOpCount),
 		MCMAddress:      mcmAddress,
-	}, nil
-}
-
-// getMCMSContract queries the active MCMS contract by InstanceAddress (hex).
-// mcmsAddr is the InstanceAddress hex string (may be prefixed with "0x").
-func (i *Inspector) getMCMSContract(ctx context.Context, mcmsAddr string) (*mcms.MCMS, error) {
-	mcmsAddr = strings.TrimPrefix(mcmsAddr, "0x")
-	if mcmsAddr == "" {
-		return nil, fmt.Errorf("MCMS instance address is required")
-	}
-	addr := contracts.HexToInstanceAddress(mcmsAddr)
-	templateID := mcms.MCMS{}.GetTemplateID()
-	activeContract, err := FindActiveContractByInstanceAddress(ctx, i.stateClient, i.party, templateID, addr)
-	if err != nil {
-		return nil, fmt.Errorf("MCMS contract for InstanceAddress %s: %w", mcmsAddr, err)
-	}
-
-	// Wrap for bindings unmarshal
-	wrapped := &apiv2.GetActiveContractsResponse_ActiveContract{ActiveContract: activeContract}
-
-	// TODO: MinDelay type from binding doesnt correspond to actual type from contract
-	type NoMinDelayMCMS struct {
-		Owner              cantontypes.PARTY      `json:"owner"`
-		InstanceId         cantontypes.TEXT       `json:"instanceId"`
-		ChainId            cantontypes.INT64      `json:"chainId"`
-		Proposer           mcms.RoleState         `json:"proposer"`
-		Canceller          mcms.RoleState         `json:"canceller"`
-		Bypasser           mcms.RoleState         `json:"bypasser"`
-		BlockedFunctions   []mcms.BlockedFunction `json:"blockedFunctions"`
-		TimelockTimestamps cantontypes.GENMAP     `json:"timelockTimestamps"`
-	}
-	mcmsContractNoMinDelay, err := bindings.UnmarshalActiveContract[NoMinDelayMCMS](wrapped)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal MCMS contract: %w", err)
-	}
-
-	return &mcms.MCMS{
-		Owner:              mcmsContractNoMinDelay.Owner,
-		InstanceId:         mcmsContractNoMinDelay.InstanceId,
-		ChainId:            mcmsContractNoMinDelay.ChainId,
-		Proposer:           mcmsContractNoMinDelay.Proposer,
-		Canceller:          mcmsContractNoMinDelay.Canceller,
-		Bypasser:           mcmsContractNoMinDelay.Bypasser,
-		BlockedFunctions:   mcmsContractNoMinDelay.BlockedFunctions,
-		TimelockTimestamps: mcmsContractNoMinDelay.TimelockTimestamps,
-		MinDelay:           0, // TODO: Fix bindings type
 	}, nil
 }
 

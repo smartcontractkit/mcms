@@ -15,8 +15,6 @@ import (
 	"github.com/smartcontractkit/mcms/sdk"
 )
 
-const errMsgUnsupported = "unsupported on Canton"
-
 var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 
 // TimelockInspector inspects Canton timelock state via MCMS read-only choices
@@ -24,20 +22,17 @@ var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 // Role lists (GetProposers, etc.) return "unsupported on Canton" like Aptos.
 // address parameters are InstanceAddress hex (Canton); they are resolved to contract ID when exercising.
 type TimelockInspector struct {
-	client        apiv2.CommandServiceClient
-	stateClient   apiv2.StateServiceClient
-	party         string
-	mcmsPackageID string
+	client      apiv2.CommandServiceClient
+	stateClient apiv2.StateServiceClient
+	party       string
 }
 
 // NewTimelockInspector creates a TimelockInspector that queries the ledger via the given clients.
-// mcmsPackageID may be empty to use the bindings' default package name.
-func NewTimelockInspector(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, party string, mcmsPackageID string) *TimelockInspector {
+func NewTimelockInspector(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, party string) *TimelockInspector {
 	return &TimelockInspector{
-		client:        client,
-		stateClient:   stateClient,
-		party:         party,
-		mcmsPackageID: mcmsPackageID,
+		client:      client,
+		stateClient: stateClient,
+		party:       party,
 	}
 }
 
@@ -46,28 +41,45 @@ func (t *TimelockInspector) StateServiceClient() apiv2.StateServiceClient {
 	return t.stateClient
 }
 
+// GetProposers returns the signer addresses for the Proposer role.
 func (t *TimelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
-	// TODO: implement this method
-	_ = address
-	return nil, errors.New(errMsgUnsupported)
+	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.party, address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
+	}
+	return extractSignerAddresses(mcmsContract.Proposer.Config.Signers), nil
 }
 
-func (t *TimelockInspector) GetExecutors(ctx context.Context, address string) ([]string, error) {
-	// TODO: implement this method
-	_ = address
-	return nil, errors.New(errMsgUnsupported)
+// GetExecutors is unsupported on Canton: there is no separate executor role.
+func (t *TimelockInspector) GetExecutors(_ context.Context, _ string) ([]string, error) {
+	return nil, errors.New("unsupported on Canton: no separate executor role")
 }
 
+// GetBypassers returns the signer addresses for the Bypasser role.
 func (t *TimelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
-	// TODO: implement this method
-	_ = address
-	return nil, errors.New(errMsgUnsupported)
+	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.party, address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
+	}
+	return extractSignerAddresses(mcmsContract.Bypasser.Config.Signers), nil
 }
 
+// GetCancellers returns the signer addresses for the Canceller role.
 func (t *TimelockInspector) GetCancellers(ctx context.Context, address string) ([]string, error) {
-	// TODO: implement this method
-	_ = address
-	return nil, errors.New(errMsgUnsupported)
+	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.party, address)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
+	}
+	return extractSignerAddresses(mcmsContract.Canceller.Config.Signers), nil
+}
+
+// extractSignerAddresses extracts signer addresses from a slice of SignerInfo.
+func extractSignerAddresses(signers []mcms.SignerInfo) []string {
+	result := make([]string, len(signers))
+	for i, s := range signers {
+		result[i] = string(s.SignerAddress)
+	}
+	return result
 }
 
 func (t *TimelockInspector) IsOperation(ctx context.Context, address string, opID [32]byte) (bool, error) {
@@ -91,12 +103,11 @@ func (t *TimelockInspector) GetMinDelay(ctx context.Context, address string) (ui
 	if err != nil {
 		return 0, fmt.Errorf("resolve MCMS contract ID: %w", err)
 	}
-	pkgID := t.mcmsPackageID
-	if pkgID == "" {
-		pkgID = mcms.PackageName
-	}
 	args := mcms.GetMinDelay{Submitter: cantontypes.PARTY(t.party)}
-	req := t.exerciseRequest(pkgID, contractID, "GetMinDelay", ledger.MapToValue(args))
+	req, err := t.exerciseRequest(contractID, "GetMinDelay", ledger.MapToValue(args))
+	if err != nil {
+		return 0, fmt.Errorf("failed to create exercise request: %w", err)
+	}
 	resp, err := t.client.SubmitAndWaitForTransaction(ctx, req)
 	if err != nil {
 		return 0, fmt.Errorf("GetMinDelay: %w", err)
@@ -131,10 +142,6 @@ func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address stri
 	if err != nil {
 		return false, fmt.Errorf("resolve MCMS contract ID: %w", err)
 	}
-	pkgID := t.mcmsPackageID
-	if pkgID == "" {
-		pkgID = mcms.PackageName
-	}
 	opIDStr := hex.EncodeToString(opID[:])
 	party := cantontypes.PARTY(t.party)
 	var choiceArg *apiv2.Value
@@ -150,7 +157,10 @@ func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address stri
 	default:
 		return false, fmt.Errorf("unknown choice %s", choice)
 	}
-	req := t.exerciseRequest(pkgID, contractID, choice, choiceArg)
+	req, err := t.exerciseRequest(contractID, choice, choiceArg)
+	if err != nil {
+		return false, fmt.Errorf("failed to create exercise request: %w", err)
+	}
 	resp, err := t.client.SubmitAndWaitForTransaction(ctx, req)
 	if err != nil {
 		return false, fmt.Errorf("%s: %w", choice, err)
@@ -166,7 +176,14 @@ func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address stri
 	return valueToBool(ex.GetExerciseResult())
 }
 
-func (t *TimelockInspector) exerciseRequest(pkgID, contractID, choice string, choiceArg *apiv2.Value) *apiv2.SubmitAndWaitForTransactionRequest {
+func (t *TimelockInspector) exerciseRequest(contractID, choice string, choiceArg *apiv2.Value) (*apiv2.SubmitAndWaitForTransactionRequest, error) {
+	// Parse template ID
+	mcmsContract := mcms.MCMS{}
+	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
+	if err != nil {
+		return nil, fmt.Errorf("failed to parse template ID: %w", err)
+	}
+
 	return &apiv2.SubmitAndWaitForTransactionRequest{
 		Commands: &apiv2.Commands{
 			CommandId: uuid.Must(uuid.NewUUID()).String(),
@@ -175,9 +192,9 @@ func (t *TimelockInspector) exerciseRequest(pkgID, contractID, choice string, ch
 				Command: &apiv2.Command_Exercise{
 					Exercise: &apiv2.ExerciseCommand{
 						TemplateId: &apiv2.Identifier{
-							PackageId:  pkgID,
-							ModuleName: "MCMS.Main",
-							EntityName: "MCMS",
+							PackageId:  packageID,
+							ModuleName: moduleName,
+							EntityName: entityName,
 						},
 						ContractId:     contractID,
 						Choice:         choice,
@@ -194,7 +211,7 @@ func (t *TimelockInspector) exerciseRequest(pkgID, contractID, choice string, ch
 			},
 			TransactionShape: apiv2.TransactionShape_TRANSACTION_SHAPE_LEDGER_EFFECTS,
 		},
-	}
+	}, nil
 }
 
 func valueToBool(v *apiv2.Value) (bool, error) {
