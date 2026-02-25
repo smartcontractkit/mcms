@@ -64,10 +64,10 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	// TODO: Re-introduce QueryID using a deterministic derivation (e.g. from calls, predecessor, salt, action) to preserve proposal signing determinism. (NONEVM-3847)
-	//qID, err := tvm.RandomQueryID()
-	//if err != nil {
-	//	return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to generate random query ID: %w", err)
-	//}
+	// qID, err := tvm.RandomQueryID()
+	// if err != nil {
+	//	 return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	// }
 
 	// Encode the data based on the operation
 	var data *cell.Cell
