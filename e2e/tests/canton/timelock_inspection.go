@@ -21,20 +21,16 @@ type TimelockInspectionTestSuite struct {
 func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.TestSuite.SetupSuite()
 	s.DeployMCMSContract()
-	mcmsPkgID := ""
-	if len(s.packageIDs) > 0 {
-		mcmsPkgID = s.packageIDs[0]
-	}
-	s.inspector = cantonsdk.NewTimelockInspector(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party, mcmsPkgID)
+	s.inspector = cantonsdk.NewTimelockInspector(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party)
 }
 
-// TestGetProposers tests that GetProposers returns unsupported on Canton.
+// TestGetProposers tests that GetProposers returns proposer signers from the MCMS contract.
 func (s *TimelockInspectionTestSuite) TestGetProposers() {
 	ctx := s.T().Context()
 	proposers, err := s.inspector.GetProposers(ctx, s.mcmsInstanceAddress)
-	s.Require().Error(err, "GetProposers should return an error on Canton")
-	s.Require().Contains(err.Error(), "unsupported on Canton")
-	s.Require().Nil(proposers)
+	s.Require().NoError(err)
+	s.Require().NotNil(proposers)
+	// Fresh MCMS has no signers configured; list may be empty
 }
 
 // TestGetExecutors tests that GetExecutors returns unsupported on Canton.
@@ -46,22 +42,22 @@ func (s *TimelockInspectionTestSuite) TestGetExecutors() {
 	s.Require().Nil(executors)
 }
 
-// TestGetBypassers tests that GetBypassers returns unsupported on Canton.
+// TestGetBypassers tests that GetBypassers returns bypasser signers from the MCMS contract.
 func (s *TimelockInspectionTestSuite) TestGetBypassers() {
 	ctx := s.T().Context()
 	bypassers, err := s.inspector.GetBypassers(ctx, s.mcmsInstanceAddress)
-	s.Require().Error(err, "GetBypassers should return an error on Canton")
-	s.Require().Contains(err.Error(), "unsupported on Canton")
-	s.Require().Nil(bypassers)
+	s.Require().NoError(err)
+	s.Require().NotNil(bypassers)
+	// Fresh MCMS has no signers configured; list may be empty
 }
 
-// TestGetCancellers tests that GetCancellers returns unsupported on Canton.
+// TestGetCancellers tests that GetCancellers returns canceller signers from the MCMS contract.
 func (s *TimelockInspectionTestSuite) TestGetCancellers() {
 	ctx := s.T().Context()
 	cancellers, err := s.inspector.GetCancellers(ctx, s.mcmsInstanceAddress)
-	s.Require().Error(err, "GetCancellers should return an error on Canton")
-	s.Require().Contains(err.Error(), "unsupported on Canton")
-	s.Require().Nil(cancellers)
+	s.Require().NoError(err)
+	s.Require().NotNil(cancellers)
+	// Fresh MCMS has no signers configured; list may be empty
 }
 
 // TestIsOperation tests that IsOperation queries the ledger (returns false for unknown op ID).
@@ -157,11 +153,7 @@ func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 // TestTimelockExecutorExecuteEmptyBatch tests that Execute returns an error for empty batch.
 func (s *TimelockInspectionTestSuite) TestTimelockExecutorExecuteEmptyBatch() {
 	ctx := s.T().Context()
-	mcmsPkgID := ""
-	if len(s.packageIDs) > 0 {
-		mcmsPkgID = s.packageIDs[0]
-	}
-	executor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party, mcmsPkgID)
+	executor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party)
 	bop := mcmstypes.BatchOperation{
 		ChainSelector: s.chainSelector,
 		Transactions:  []mcmstypes.Transaction{},

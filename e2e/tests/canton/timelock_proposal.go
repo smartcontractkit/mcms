@@ -123,11 +123,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	}
 
 	// Timelock execution: wait for ready then execute batch
-	mcmsPkgID := ""
-	if len(s.packageIDs) > 0 {
-		mcmsPkgID = s.packageIDs[0]
-	}
-	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party, mcmsPkgID)
+	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party)
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 		s.chainSelector: timelockExecutor,
 	}
