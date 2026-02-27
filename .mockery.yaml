@@ -160,6 +160,19 @@ packages:
         config:
           dir: "./sdk/sui/mocks/mcmsdeployer"
           filename: "mcmsdeployerencoder.go"
+  github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2:
+    config:
+      all: false
+      outpkg: "mock_apiv2"
+    interfaces:
+      CommandServiceClient:
+        config:
+          dir: "./sdk/canton/mocks/apiv2"
+          filename: "command_service_client.go"
+      StateServiceClient:
+        config:
+          dir: "./sdk/canton/mocks/apiv2"
+          filename: "state_service_client.go"
 
 # Required to fix the following deprecation warning:
 # https://vektra.github.io/mockery/v2.48/deprecations/#issue-845-fix
