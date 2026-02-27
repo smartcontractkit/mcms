@@ -19,22 +19,30 @@ import (
 var _ sdk.Configurer = &Configurer{}
 
 type Configurer struct {
-	client apiv2.CommandServiceClient
-	userId string
-	party  string
-	role   TimelockRole
+	client       apiv2.CommandServiceClient
+	stateClient  apiv2.StateServiceClient
+	userId       string
+	party        string
+	role         TimelockRole
 }
 
-func NewConfigurer(client apiv2.CommandServiceClient, userId string, party string, role TimelockRole) (*Configurer, error) {
+func NewConfigurer(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, userId string, party string, role TimelockRole) (*Configurer, error) {
 	return &Configurer{
-		client: client,
-		userId: userId,
-		party:  party,
-		role:   role,
+		client:      client,
+		stateClient: stateClient,
+		userId:      userId,
+		party:       party,
+		role:        role,
 	}, nil
 }
 
 func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
+	// mcmsAddr is InstanceAddress hex for Canton; resolve to current contract ID
+	mcmsContractID, err := ResolveMCMSContractID(ctx, c.stateClient, c.party, mcmsAddr)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to resolve MCMS contract ID: %w", err)
+	}
+
 	groupQuorum, groupParents, signerAddresses, signerGroups, err := sdk.ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
@@ -70,7 +78,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	}
 	// Build exercise command using generated bindings
 	mcmsContract := mcms.MCMS{}
-	exerciseCmd := mcmsContract.SetConfig(mcmsAddr, input)
+	exerciseCmd := mcmsContract.SetConfig(mcmsContractID, input)
 
 	// Parse template ID
 	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
@@ -124,7 +132,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	}
 
 	if newMCMSContractID == "" {
-		return types.TransactionResult{}, fmt.Errorf("set-config tx had no Created MCMS event; refusing to continue with old CID=%s", mcmsAddr)
+		return types.TransactionResult{}, fmt.Errorf("set-config tx had no Created MCMS event; refusing to continue with old CID=%s", mcmsContractID)
 	}
 
 	return types.TransactionResult{

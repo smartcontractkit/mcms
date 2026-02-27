@@ -33,12 +33,12 @@ type TestSuite struct {
 
 	participant testhelpers.Participant
 
-	chainSelector  mcmstypes.ChainSelector
-	chainId        int64
-	packageIDs     []string
-	mcmsContractID string
-	mcmsId         string
-	proposerMcmsId string
+	chainSelector       mcmstypes.ChainSelector
+	chainId             int64
+	packageIDs          []string
+	mcmsInstanceAddress string // InstanceAddress hex (stable across SetRoot/ExecuteOp); use this everywhere instead of contract ID
+	mcmsId              string // MCMS contract instanceId (base); DAML expects metadata.multisigId = makeMcmsId(instanceId, role) e.g. "mcms-test-001-proposer"
+	proposerMcmsId      string // makeMcmsId(mcmsId, Proposer) for chain metadata and Op.multisigId
 }
 
 func (s *TestSuite) SetupSuite() {
@@ -65,8 +65,8 @@ func (s *TestSuite) DeployMCMSContract() {
 	chainId := int64(1)
 	mcmsId := "mcms-test-001"
 
-	mcmsContractId := s.createMCMS(s.T().Context(), s.participant, mcmsOwner, chainId, mcmsId, mcms.RoleProposer)
-	s.mcmsContractID = mcmsContractId
+	mcmsInstanceAddr := s.createMCMS(s.T().Context(), s.participant, mcmsOwner, chainId, mcmsId, mcms.RoleProposer)
+	s.mcmsInstanceAddress = mcmsInstanceAddr
 	s.mcmsId = mcmsId
 	s.proposerMcmsId = fmt.Sprintf("%s-%s", mcmsId, "proposer")
 	s.chainId = chainId
@@ -75,28 +75,23 @@ func (s *TestSuite) DeployMCMSContract() {
 func (s *TestSuite) DeployMCMSWithConfig(config *mcmstypes.Config) {
 	s.DeployMCMSContract()
 
-	// Set the config
-	configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
+	// Set the config (use InstanceAddress; no need to update suite after — InstanceAddress is stable)
+	configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err)
 
-	tx, err := configurer.SetConfig(s.T().Context(), s.mcmsContractID, config, true)
+	_, err = configurer.SetConfig(s.T().Context(), s.mcmsInstanceAddress, config, true)
 	s.Require().NoError(err)
-
-	// Extract new contract ID
-	rawData, ok := tx.RawData.(map[string]any)
-	s.Require().True(ok)
-	newContractID, ok := rawData["NewMCMSContractID"].(string)
-	s.Require().True(ok)
-	s.mcmsContractID = newContractID
 }
 
-func (s *MCMSExecutorTestSuite) DeployCounterContract() {
+func (s *mcmsExecutorSetup) DeployCounterContract() {
 	s.counterInstanceID = "counter-" + uuid.New().String()[:8]
+	// DAML MCMSReceiver expects instanceId in format "baseId@partyId"; use same in batch TargetInstanceId
+	counterInstanceIdOnChain := fmt.Sprintf("%s@%s", s.counterInstanceID, s.participant.Party)
 
 	// Create Counter contract
 	counterContract := mcms.Counter{
 		Owner:      types.PARTY(s.participant.Party),
-		InstanceId: types.TEXT(s.counterInstanceID),
+		InstanceId: types.TEXT(counterInstanceIdOnChain),
 		Value:      types.INT64(0),
 	}
 
@@ -144,6 +139,7 @@ func (s *MCMSExecutorTestSuite) DeployCounterContract() {
 	s.Require().NotEmpty(s.counterCID)
 }
 
+// createMCMS creates an MCMS contract and returns its InstanceAddress hex (stable reference for Canton).
 func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Participant, owner string, chainId int64, mcmsId string, role mcms.Role) string {
 	// Create empty config
 	emptyConfig := mcms.MultisigConfig{
@@ -240,7 +236,9 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Part
 	s.Require().NotEmpty(mcmsContractID, "failed to find MCMS contract in transaction events")
 	s.Require().NotEmpty(mcmsTemplateID, "failed to find MCMS template ID in transaction events")
 
-	return mcmsContractID
+	// Return InstanceAddress hex so callers use a stable reference (contract ID changes after SetRoot/ExecuteOp)
+	instanceAddress := contracts.InstanceID(mcmsId).RawInstanceAddress(types.PARTY(owner)).InstanceAddress()
+	return instanceAddress.Hex()
 }
 
 // encodeSetConfigParams encodes SetConfig parameters for Canton MCMS

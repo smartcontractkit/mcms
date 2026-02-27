@@ -76,11 +76,15 @@ func (s *MCMSConfigurerTestSuite) TestSetConfig() {
 		},
 	}
 
-	// Set config
+	// Set config (use InstanceAddress); resolve once to get current contract ID for event assertions
 	{
-		configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
+		ctx := s.T().Context()
+		oldContractID, err := cantonsdk.ResolveMCMSContractID(ctx, s.participant.StateServiceClient, s.participant.Party, s.mcmsInstanceAddress)
+		s.Require().NoError(err, "resolve MCMS contract ID before SetConfig")
+
+		configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
 		s.Require().NoError(err, "creating configurer for Canton mcms contract")
-		tx, err := configurer.SetConfig(s.T().Context(), s.mcmsContractID, proposerConfig, true)
+		tx, err := configurer.SetConfig(ctx, s.mcmsInstanceAddress, proposerConfig, true)
 		s.Require().NoError(err, "setting config on Canton mcms contract")
 
 		// Verify transaction result
@@ -102,7 +106,7 @@ func (s *MCMSConfigurerTestSuite) TestSetConfig() {
 		// Verify event[0] is Archived (old contract)
 		s.Require().NotNil(events[0].GetArchived(), "first event should be Archived event")
 		s.Require().Nil(events[0].GetCreated(), "first event should not be Created event")
-		s.Require().Equal(s.mcmsContractID, events[0].GetArchived().GetContractId(), "archived contract should be the old MCMS contract")
+		s.Require().Equal(oldContractID, events[0].GetArchived().GetContractId(), "archived contract should be the old MCMS contract")
 
 		// Verify event[1] is Created (new contract)
 		s.Require().NotNil(events[1].GetCreated(), "second event should be Created event")
@@ -123,7 +127,7 @@ func (s *MCMSConfigurerTestSuite) TestSetConfig() {
 		newMCMSContractID, ok := rawData["NewMCMSContractID"].(string)
 		s.Require().True(ok)
 		s.Require().NotEmpty(newMCMSContractID, "new contract ID should not be empty")
-		s.Require().NotEqual(s.mcmsContractID, newMCMSContractID, "new contract ID should be different from old contract ID")
+		s.Require().NotEqual(oldContractID, newMCMSContractID, "new contract ID should be different from old contract ID")
 		s.Require().Equal(newMCMSContractID, events[1].GetCreated().GetContractId(), "created event contract ID should match returned contract ID")
 	}
 }

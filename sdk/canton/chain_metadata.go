@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -33,10 +34,13 @@ const (
 	TimelockRoleProposer
 )
 
-// AdditionalFieldsMetadata represents the Canton-specific metadata fields
+// AdditionalFieldsMetadata represents the Canton-specific metadata fields.
+// MultisigId must be makeMcmsId(instanceId, role) e.g. "mcms-001-proposer" (DAML SetRoot/ExecuteOp).
+// InstanceId is the base MCMS instanceId for self-dispatch TargetInstanceId (DAML E_NOT_SELF_DISPATCH).
 type AdditionalFieldsMetadata struct {
 	ChainId              int64  `json:"chainId"`
 	MultisigId           string `json:"multisigId"`
+	InstanceId           string `json:"instanceId,omitempty"` // base instanceId; converter uses for TargetInstanceId in ScheduleBatch etc.
 	PreOpCount           uint64 `json:"preOpCount"`
 	PostOpCount          uint64 `json:"postOpCount"`
 	OverridePreviousRoot bool   `json:"overridePreviousRoot"`
@@ -70,22 +74,31 @@ func ValidateChainMetadata(metadata types.ChainMetadata) error {
 	return nil
 }
 
-// NewChainMetadata creates new Canton chain metadata
+// NewChainMetadata creates new Canton chain metadata.
+// multisigId must be makeMcmsId(instanceId, role) e.g. "mcms-001-proposer" (DAML expects this in SetRoot/Op).
+// baseInstanceId is the MCMS contract instanceId; if non-empty, converter uses it for TargetInstanceId in self-dispatch ops.
+// mcmsInstanceAddress is the MCMS InstanceAddress hex (32-byte Keccak256 of "instanceId@party"); may be prefixed with "0x".
 func NewChainMetadata(
 	preOpCount uint64,
 	postOpCount uint64,
 	chainId int64,
 	multisigId string,
-	mcmsContractID string,
+	mcmsInstanceAddress string,
 	overridePreviousRoot bool,
+	baseInstanceId string,
 ) (types.ChainMetadata, error) {
-	if mcmsContractID == "" {
-		return types.ChainMetadata{}, errors.New("MCMS contract ID is required")
+	if mcmsInstanceAddress == "" {
+		return types.ChainMetadata{}, errors.New("MCMS InstanceAddress is required")
+	}
+	hexStr := strings.TrimPrefix(mcmsInstanceAddress, "0x")
+	if len(hexStr) != 64 {
+		return types.ChainMetadata{}, fmt.Errorf("MCMS InstanceAddress hex must be 64 characters (with or without 0x prefix), got %d", len(hexStr))
 	}
 
 	additionalFields := AdditionalFieldsMetadata{
 		ChainId:              chainId,
 		MultisigId:           multisigId,
+		InstanceId:           baseInstanceId,
 		PreOpCount:           preOpCount,
 		PostOpCount:          postOpCount,
 		OverridePreviousRoot: overridePreviousRoot,
@@ -101,8 +114,8 @@ func NewChainMetadata(
 	}
 
 	return types.ChainMetadata{
-		StartingOpCount:  preOpCount,
+		StartingOpCount:   preOpCount,
 		AdditionalFields: additionalFieldsBytes,
-		MCMAddress:       mcmsContractID,
+		MCMAddress:        mcmsInstanceAddress,
 	}, nil
 }
