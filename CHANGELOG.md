@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.36.4
+
+### Patch Changes
+
+- [#650](https://github.com/smartcontractkit/mcms/pull/650) [`c037579`](https://github.com/smartcontractkit/mcms/commit/c037579efe47fb441d87e7deb7c2d7d2f1321550) Thanks [@ecPablo](https://github.com/ecPablo)! - fix garbage characters getting printed in the derivation path during ledger signing
+
 ## 0.36.3
 
 ### Patch Changes
