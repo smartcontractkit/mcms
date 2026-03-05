@@ -136,7 +136,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 	acceptOwnershipProposal, _, err := acceptOwnershipTimelockProposal.Convert(a.T().Context(), convertersMap)
 	a.Require().NoError(err)
 
-	proposerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer)
+	proposerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer, false)
 	proposerInspectorsMap := map[types.ChainSelector]sdk.Inspector{
 		a.ChainSelector: proposerInspector,
 	}
@@ -226,7 +226,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 	cancelProposal, _, err := cancelTimelockProposal.Convert(a.T().Context(), convertersMap)
 	a.Require().NoError(err)
 
-	cancellerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleCanceller)
+	cancellerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleCanceller, false)
 	cancellerInspectorMap := map[types.ChainSelector]sdk.Inspector{
 		a.ChainSelector: cancellerInspector,
 	}

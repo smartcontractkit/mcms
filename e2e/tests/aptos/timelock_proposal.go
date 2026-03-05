@@ -160,7 +160,7 @@ func (a *TestSuite) TestTimelockProposal() {
 		acceptOwnershipProposal, _, err = acceptOwnershipTimelockProposal.Convert(a.T().Context(), convertersMap)
 		a.Require().NoError(err)
 
-		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer)
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer, false)
 		inspectorsMap := map[types.ChainSelector]sdk.Inspector{
 			a.ChainSelector: inspector,
 		}
@@ -283,7 +283,7 @@ func (a *TestSuite) TestTimelockProposal() {
 	arg4 := big.NewInt(42)
 
 	{
-		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleBypasser)
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleBypasser, false)
 		inspectorsMaps := map[types.ChainSelector]sdk.Inspector{
 			a.ChainSelector: inspector,
 		}

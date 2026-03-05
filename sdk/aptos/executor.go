@@ -41,7 +41,7 @@ type Executor struct {
 func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole) *Executor {
 	return &Executor{
 		Encoder:   encoder,
-		Inspector: NewInspector(client, role),
+		Inspector: NewInspector(client, role, false),
 		client:    client,
 		auth:      auth,
 		bindingFn: mcms.Bind,
