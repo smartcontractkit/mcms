@@ -27,6 +27,8 @@ const (
 
 var _ sdk.Inspector = &Inspector{}
 
+type RPCClient sui.ISuiAPI
+
 type Inspector struct {
 	ConfigTransformer
 	client        sui.ISuiAPI
