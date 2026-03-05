@@ -39,10 +39,11 @@ func (c *curseMcmsViewer) GetConfig(opts *bind.CallOpts, role byte) (module_mcms
 	if err != nil {
 		return module_mcms.Config{}, err
 	}
-	var signers []module_mcms.Signer
+	signers := make([]module_mcms.Signer, 0, len(cfg.Signers))
 	for _, s := range cfg.Signers {
 		signers = append(signers, module_mcms.Signer{Addr: s.Addr, Index: s.Index, Group: s.Group})
 	}
+
 	return module_mcms.Config{
 		Signers:      signers,
 		GroupQuorums: cfg.GroupQuorums,
@@ -63,6 +64,7 @@ func (c *curseMcmsViewer) GetRootMetadata(opts *bind.CallOpts, role byte) (modul
 	if err != nil {
 		return module_mcms.RootMetadata{}, err
 	}
+
 	return module_mcms.RootMetadata{
 		Role:                 rm.Role,
 		ChainId:              rm.ChainId,
@@ -95,6 +97,7 @@ func NewInspector(client aptos.AptosRpcClient, role TimelockRole, isCurseMCMS bo
 			return mcms_pkg.Bind(addr, c).MCMS()
 		}
 	}
+
 	return &Inspector{
 		client:   client,
 		role:     role,
