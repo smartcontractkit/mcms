@@ -20,6 +20,7 @@ func TestIsCurseMCMSFromOperations(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+
 		return b
 	}
 
