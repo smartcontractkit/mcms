@@ -6,7 +6,7 @@ go 1.25.5
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 require (
-	github.com/aptos-labs/aptos-go-sdk v1.11.0
+	github.com/aptos-labs/aptos-go-sdk v1.12.0
 	github.com/block-vision/sui-go-sdk v1.1.4
 	github.com/ethereum/go-ethereum v1.17.1
 	github.com/gagliardetto/binary v0.8.0
@@ -123,7 +123,7 @@ require (
 	github.com/hashicorp/go-hclog v1.6.3 // indirect
 	github.com/hashicorp/go-plugin v1.7.0 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
-	github.com/hasura/go-graphql-client v0.14.5 // indirect
+	github.com/hasura/go-graphql-client v0.15.1 // indirect
 	github.com/hdevalence/ed25519consensus v0.2.0 // indirect
 	github.com/holiman/billy v0.0.0-20250707135307-f2f9b9aae7db // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect

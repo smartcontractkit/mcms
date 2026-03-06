@@ -31,8 +31,8 @@ github.com/allegro/bigcache v1.2.1 h1:hg1sY1raCwic3Vnsvje6TT7/pnZba83LeFck5NrFKS
 github.com/allegro/bigcache v1.2.1/go.mod h1:Cb/ax3seSYIx7SuZdm2G2xzfwmv3TPSk2ucNfQESPXM=
 github.com/apache/arrow-go/v18 v18.3.1 h1:oYZT8FqONiK74JhlH3WKVv+2NKYoyZ7C2ioD4Dj3ixk=
 github.com/apache/arrow-go/v18 v18.3.1/go.mod h1:12QBya5JZT6PnBihi5NJTzbACrDGXYkrgjujz3MRQXU=
-github.com/aptos-labs/aptos-go-sdk v1.11.0 h1:vIL1hpjECUiu7zMl9Wz6VV8ttXsrDqKUj0HxoeaIER4=
-github.com/aptos-labs/aptos-go-sdk v1.11.0/go.mod h1:8YvYwRg93UcG6pTStCpZdYiscCtKh51sYfeLgIy/41c=
+github.com/aptos-labs/aptos-go-sdk v1.12.0 h1:deHZ7NJlFhHm2i+eaPHt6EPa3BuXXnIYx2X5J3/U0Es=
+github.com/aptos-labs/aptos-go-sdk v1.12.0/go.mod h1:FTgKp0RLfEefllCdkCj0jPU14xWk11yA7SFVfCDLUj8=
 github.com/avast/retry-go/v4 v4.6.1 h1:VkOLRubHdisGrHnTu89g08aQEWEgRU7LVEop3GbIcMk=
 github.com/avast/retry-go/v4 v4.6.1/go.mod h1:V6oF8njAwxJ5gRo1Q7Cxab24xs5NCWZBeaHHBklR8mA=
 github.com/bahlo/generic-list-go v0.2.0 h1:5sz/EEAK+ls5wF+NeqDpk5+iNdMDXrh3z3nPnH1Wvgk=
@@ -331,8 +331,8 @@ github.com/hashicorp/golang-lru v1.0.2 h1:dV3g9Z/unq5DpblPpw+Oqcv4dU/1omnb4Ok8iP
 github.com/hashicorp/golang-lru v1.0.2/go.mod h1:iADmTwqILo4mZ8BN3D2Q6+9jd8WM5uGBxy+E8yxSoD4=
 github.com/hashicorp/yamux v0.1.2 h1:XtB8kyFOyHXYVFnwT5C3+Bdo8gArse7j2AQ0DA0Uey8=
 github.com/hashicorp/yamux v0.1.2/go.mod h1:C+zze2n6e/7wshOZep2A70/aQU6QBRWJO/G6FT1wIns=
-github.com/hasura/go-graphql-client v0.14.5 h1:M9HxxGLCcDZnxJGYyWXAzDYEpommgjW+sUW3V8EaGms=
-github.com/hasura/go-graphql-client v0.14.5/go.mod h1:jfSZtBER3or+88Q9vFhWHiFMPppfYILRyl+0zsgPIIw=
+github.com/hasura/go-graphql-client v0.15.1 h1:mCb5I+8Bk3FU3GKWvf/zDXkTh7FbGlqJmP3oisBdnN8=
+github.com/hasura/go-graphql-client v0.15.1/go.mod h1:jfSZtBER3or+88Q9vFhWHiFMPppfYILRyl+0zsgPIIw=
 github.com/hdevalence/ed25519consensus v0.2.0 h1:37ICyZqdyj0lAZ8P4D1d1id3HqbbG1N3iBb1Tb4rdcU=
 github.com/hdevalence/ed25519consensus v0.2.0/go.mod h1:w3BHWjwJbFU29IRHL1Iqkw3sus+7FctEyM4RqDxYNzo=
 github.com/holiman/billy v0.0.0-20250707135307-f2f9b9aae7db h1:IZUYC/xb3giYwBLMnr8d0TGTzPKFGNTCGgGLoyeX330=
