@@ -26,5 +26,6 @@ func IsCurseMCMSFromOperations(ops []types.BatchOperation, cs types.ChainSelecto
 			}
 		}
 	}
+
 	return false
 }

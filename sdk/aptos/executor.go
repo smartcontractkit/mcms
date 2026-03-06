@@ -37,8 +37,8 @@ type Executor struct {
 	auth        aptos.TransactionSigner
 	isCurseMCMS bool
 
-	bindingFn         func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms_pkg.MCMS
-	curseMcmsBindFn   func(address aptos.AccountAddress, client aptos.AptosRpcClient) curse_mcms_pkg.CurseMCMS
+	bindingFn       func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms_pkg.MCMS
+	curseMcmsBindFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) curse_mcms_pkg.CurseMCMS
 }
 
 func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole, isCurseMCMS bool) *Executor {
@@ -93,6 +93,7 @@ func (e Executor) ExecuteOperation(
 	if e.isCurseMCMS {
 		return e.executeCurseMCMS(opts, additionalFieldsMetadata, additionalFields, chainIDBig, mcmsAddress, nonce, toAddress, op, proofBytes)
 	}
+
 	return e.executeMCMS(opts, additionalFieldsMetadata, additionalFields, chainIDBig, mcmsAddress, nonce, toAddress, op, proofBytes)
 }
 
@@ -126,6 +127,7 @@ func (e Executor) executeCurseMCMS(
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("executing operation on Aptos curse_mcms contract: %w", err)
 	}
+
 	return types.TransactionResult{
 		Hash:        tx.Hash,
 		ChainFamily: chainsel.FamilyAptos,

@@ -28,6 +28,8 @@ type mcmsViewer interface {
 	GetRootMetadata(opts *bind.CallOpts, role byte) (module_mcms.RootMetadata, error)
 }
 
+var _ mcmsViewer = &curseMcmsViewer{}
+
 // curseMcmsViewer adapts a CurseMCMSInterface to mcmsViewer by converting
 // curse_mcms types to module_mcms types (struct fields are identical).
 type curseMcmsViewer struct {
