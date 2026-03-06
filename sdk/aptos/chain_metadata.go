@@ -26,5 +26,6 @@ const (
 )
 
 type AdditionalFieldsMetadata struct {
-	Role TimelockRole `json:"role"`
+	Role        TimelockRole `json:"role"`
+	IsCurseMCMS bool         `json:"isCurseMCMS,omitempty"`
 }
