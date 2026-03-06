@@ -14,7 +14,8 @@ import (
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
+	curse_mcms_pkg "github.com/smartcontractkit/chainlink-aptos/bindings/curse_mcms"
+	mcms_pkg "github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -32,19 +33,23 @@ var _ sdk.Executor = &Executor{}
 type Executor struct {
 	*Encoder
 	*Inspector
-	client aptos.AptosRpcClient
-	auth   aptos.TransactionSigner
+	client      aptos.AptosRpcClient
+	auth        aptos.TransactionSigner
+	isCurseMCMS bool
 
-	bindingFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms.MCMS
+	bindingFn       func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms_pkg.MCMS
+	curseMcmsBindFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) curse_mcms_pkg.CurseMCMS
 }
 
-func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole) *Executor {
+func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole, isCurseMCMS bool) *Executor {
 	return &Executor{
-		Encoder:   encoder,
-		Inspector: NewInspector(client, role),
-		client:    client,
-		auth:      auth,
-		bindingFn: mcms.Bind,
+		Encoder:         encoder,
+		Inspector:       NewInspector(client, role, isCurseMCMS),
+		client:          client,
+		auth:            auth,
+		isCurseMCMS:     isCurseMCMS,
+		bindingFn:       mcms_pkg.Bind,
+		curseMcmsBindFn: curse_mcms_pkg.Bind,
 	}
 }
 
@@ -59,7 +64,6 @@ func (e Executor) ExecuteOperation(
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse MCMS address %q: %w", metadata.MCMAddress, err)
 	}
-	mcmsBinding := e.bindingFn(mcmsAddress, e.client)
 	toAddress, err := hexToAddress(op.Transaction.To)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse To address %q: %w", op.Transaction.To, err)
@@ -86,17 +90,76 @@ func (e Executor) ExecuteOperation(
 
 	opts := &bind.TransactOpts{Signer: e.auth}
 
+	if e.isCurseMCMS {
+		return e.executeCurseMCMS(opts, additionalFieldsMetadata, additionalFields, chainIDBig, mcmsAddress, nonce, toAddress, op, proofBytes)
+	}
+
+	return e.executeMCMS(opts, additionalFieldsMetadata, additionalFields, chainIDBig, mcmsAddress, nonce, toAddress, op, proofBytes)
+}
+
+func (e Executor) executeCurseMCMS(
+	opts *bind.TransactOpts,
+	afm AdditionalFieldsMetadata,
+	af AdditionalFields,
+	chainID *big.Int,
+	mcmsAddress aptos.AccountAddress,
+	nonce uint32,
+	toAddress aptos.AccountAddress,
+	op types.Operation,
+	proofBytes [][]byte,
+) (types.TransactionResult, error) {
+	if len(op.Transaction.Data) > ChunkSizeBytes {
+		return types.TransactionResult{}, fmt.Errorf("CurseMCMS does not support chunked execution; data size %d exceeds limit %d", len(op.Transaction.Data), ChunkSizeBytes)
+	}
+	binding := e.curseMcmsBindFn(mcmsAddress, e.client)
+	tx, err := binding.CurseMCMS().Execute(
+		opts,
+		afm.Role.Byte(),
+		chainID,
+		mcmsAddress,
+		uint64(nonce),
+		toAddress,
+		af.ModuleName,
+		af.Function,
+		op.Transaction.Data,
+		proofBytes,
+	)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("executing operation on Aptos curse_mcms contract: %w", err)
+	}
+
+	return types.TransactionResult{
+		Hash:        tx.Hash,
+		ChainFamily: chainsel.FamilyAptos,
+		RawData:     tx,
+	}, nil
+}
+
+func (e Executor) executeMCMS(
+	opts *bind.TransactOpts,
+	afm AdditionalFieldsMetadata,
+	af AdditionalFields,
+	chainID *big.Int,
+	mcmsAddress aptos.AccountAddress,
+	nonce uint32,
+	toAddress aptos.AccountAddress,
+	op types.Operation,
+	proofBytes [][]byte,
+) (types.TransactionResult, error) {
+	mcmsBinding := e.bindingFn(mcmsAddress, e.client)
+
 	var tx *api.PendingTransaction
+	var err error
 	if len(op.Transaction.Data) <= ChunkSizeBytes {
 		tx, err = mcmsBinding.MCMS().Execute(
 			opts,
-			additionalFieldsMetadata.Role.Byte(),
-			chainIDBig,
+			afm.Role.Byte(),
+			chainID,
 			mcmsAddress,
 			uint64(nonce),
 			toAddress,
-			additionalFields.ModuleName,
-			additionalFields.Function,
+			af.ModuleName,
+			af.Function,
 			op.Transaction.Data,
 			proofBytes,
 		)
@@ -104,7 +167,6 @@ func (e Executor) ExecuteOperation(
 			return types.TransactionResult{}, fmt.Errorf("executing operation on Aptos mcms contract: %w", err)
 		}
 	} else {
-		// Split the data into chunks
 		var chunks [][]byte
 		for chunk := range slices.Chunk(op.Transaction.Data, ChunkSizeBytes) {
 			chunks = append(chunks, chunk)
@@ -128,17 +190,15 @@ func (e Executor) ExecuteOperation(
 			seqNo := startSeqNo + uint64(i)
 			opts.SequenceNumber = &seqNo
 			if i == len(chunks)-1 {
-				// Last chunk needs to call StageDataAndExecute
-				// Also, add the proof to this last call
 				tx, err = mcmsBinding.MCMSExecutor().StageDataAndExecute(
 					opts,
-					additionalFieldsMetadata.Role.Byte(),
-					chainIDBig,
+					afm.Role.Byte(),
+					chainID,
 					mcmsAddress,
 					uint64(nonce),
 					toAddress,
-					additionalFields.ModuleName,
-					additionalFields.Function,
+					af.ModuleName,
+					af.Function,
 					chunk,
 					proofBytes,
 				)
@@ -148,7 +208,6 @@ func (e Executor) ExecuteOperation(
 
 				break
 			}
-			// All other chunks will be staged and executed with the last chunk
 			tx, err = mcmsBinding.MCMSExecutor().StageData(
 				opts,
 				chunk,
@@ -179,7 +238,6 @@ func (e Executor) SetRoot(
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse MCMS address %q: %w", metadata.MCMAddress, err)
 	}
-	mcmsBinding := e.bindingFn(mcmsAddress, e.client)
 	var additionalFieldsMetadata AdditionalFieldsMetadata
 	if len(metadata.AdditionalFields) > 0 {
 		if err = json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
@@ -200,19 +258,38 @@ func (e Executor) SetRoot(
 
 	opts := &bind.TransactOpts{Signer: e.auth}
 
-	tx, err := mcmsBinding.MCMS().SetRoot(
-		opts,
-		additionalFieldsMetadata.Role.Byte(),
-		root[:],
-		uint64(validUntil),
-		chainIDBig,
-		mcmsAddress,
-		metadata.StartingOpCount,
-		metadata.StartingOpCount+e.TxCount,
-		e.OverridePreviousRoot,
-		proofBytes,
-		signatures,
-	)
+	var tx *api.PendingTransaction
+	if e.isCurseMCMS {
+		binding := e.curseMcmsBindFn(mcmsAddress, e.client)
+		tx, err = binding.CurseMCMS().SetRoot(
+			opts,
+			additionalFieldsMetadata.Role.Byte(),
+			root[:],
+			uint64(validUntil),
+			chainIDBig,
+			mcmsAddress,
+			metadata.StartingOpCount,
+			metadata.StartingOpCount+e.TxCount,
+			e.OverridePreviousRoot,
+			proofBytes,
+			signatures,
+		)
+	} else {
+		mcmsBinding := e.bindingFn(mcmsAddress, e.client)
+		tx, err = mcmsBinding.MCMS().SetRoot(
+			opts,
+			additionalFieldsMetadata.Role.Byte(),
+			root[:],
+			uint64(validUntil),
+			chainIDBig,
+			mcmsAddress,
+			metadata.StartingOpCount,
+			metadata.StartingOpCount+e.TxCount,
+			e.OverridePreviousRoot,
+			proofBytes,
+			signatures,
+		)
+	}
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("setting root on Aptos mcms contract: %w", err)
 	}

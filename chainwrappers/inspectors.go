@@ -73,7 +73,7 @@ func BuildInspector(
 			return nil, fmt.Errorf("error determining aptos role: %w", err)
 		}
 
-		return aptos.NewInspector(client, role), nil
+		return aptos.NewInspector(client, role, false), nil
 	case chainsel.FamilySui:
 		client, signer, ok := chains.SuiClient(rawSelector)
 		if !ok {
