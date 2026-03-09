@@ -136,7 +136,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 	acceptOwnershipProposal, _, err := acceptOwnershipTimelockProposal.Convert(a.T().Context(), convertersMap)
 	a.Require().NoError(err)
 
-	proposerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer, aptossdk.MCMSTypeRegular)
+	proposerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer)
 	proposerInspectorsMap := map[types.ChainSelector]sdk.Inspector{
 		a.ChainSelector: proposerInspector,
 	}
@@ -159,7 +159,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 	a.Require().NoError(err)
 	aptosEncoder := encoders[a.ChainSelector].(*aptossdk.Encoder)
 	proposerExecutors := map[types.ChainSelector]sdk.Executor{
-		a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleProposer, aptossdk.MCMSTypeRegular),
+		a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleProposer),
 	}
 	proposerExecutable, err := mcms.NewExecutable(&acceptOwnershipProposal, proposerExecutors)
 	a.Require().NoError(err, "Error creating executable")
@@ -226,7 +226,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 	cancelProposal, _, err := cancelTimelockProposal.Convert(a.T().Context(), convertersMap)
 	a.Require().NoError(err)
 
-	cancellerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleCanceller, aptossdk.MCMSTypeRegular)
+	cancellerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleCanceller)
 	cancellerInspectorMap := map[types.ChainSelector]sdk.Inspector{
 		a.ChainSelector: cancellerInspector,
 	}
@@ -244,7 +244,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 
 	// Set Root
 	cancellerExecutors := map[types.ChainSelector]sdk.Executor{
-		a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleCanceller, aptossdk.MCMSTypeRegular),
+		a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleCanceller),
 	}
 	cancelExecutable, err := mcms.NewExecutable(&cancelProposal, cancellerExecutors)
 	a.Require().NoError(err)
