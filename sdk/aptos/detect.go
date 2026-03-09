@@ -8,11 +8,11 @@ import (
 
 const curseMCMSPackageName = "curse_mcms"
 
-// IsCurseMCMSFromOperations returns true if any Aptos transaction for the
-// given chain selector has package_name == "curse_mcms" in its additional
-// fields. This is a reliable self-describing signal already present in every
-// CurseMCMS proposal.
-func IsCurseMCMSFromOperations(ops []types.BatchOperation, cs types.ChainSelector) bool {
+// MCMSTypeFromOperations inspects the Aptos transactions for the given chain
+// selector and returns MCMSTypeCurse when any transaction has
+// package_name == "curse_mcms" in its additional fields. Otherwise it returns
+// MCMSTypeRegular (the zero value).
+func MCMSTypeFromOperations(ops []types.BatchOperation, cs types.ChainSelector) MCMSType {
 	for _, batchOp := range ops {
 		if batchOp.ChainSelector != cs {
 			continue
@@ -21,11 +21,11 @@ func IsCurseMCMSFromOperations(ops []types.BatchOperation, cs types.ChainSelecto
 			var af AdditionalFields
 			if err := json.Unmarshal(tx.AdditionalFields, &af); err == nil {
 				if af.PackageName == curseMCMSPackageName {
-					return true
+					return MCMSTypeCurse
 				}
 			}
 		}
 	}
 
-	return false
+	return MCMSTypeRegular
 }

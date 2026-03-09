@@ -9,7 +9,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestIsCurseMCMSFromOperations(t *testing.T) {
+func TestMCMSTypeFromOperations(t *testing.T) {
 	t.Parallel()
 
 	chainA := types.ChainSelector(100)
@@ -28,13 +28,13 @@ func TestIsCurseMCMSFromOperations(t *testing.T) {
 		name     string
 		ops      []types.BatchOperation
 		cs       types.ChainSelector
-		expected bool
+		expected MCMSType
 	}{
 		{
 			name:     "empty operations",
 			ops:      nil,
 			cs:       chainA,
-			expected: false,
+			expected: MCMSTypeRegular,
 		},
 		{
 			name: "standard mcms",
@@ -47,7 +47,7 @@ func TestIsCurseMCMSFromOperations(t *testing.T) {
 				},
 			},
 			cs:       chainA,
-			expected: false,
+			expected: MCMSTypeRegular,
 		},
 		{
 			name: "curse_mcms detected",
@@ -60,7 +60,7 @@ func TestIsCurseMCMSFromOperations(t *testing.T) {
 				},
 			},
 			cs:       chainA,
-			expected: true,
+			expected: MCMSTypeCurse,
 		},
 		{
 			name: "different chain selector not matched",
@@ -73,7 +73,7 @@ func TestIsCurseMCMSFromOperations(t *testing.T) {
 				},
 			},
 			cs:       chainA,
-			expected: false,
+			expected: MCMSTypeRegular,
 		},
 		{
 			name: "mixed transactions — one curse_mcms is enough",
@@ -87,7 +87,7 @@ func TestIsCurseMCMSFromOperations(t *testing.T) {
 				},
 			},
 			cs:       chainA,
-			expected: true,
+			expected: MCMSTypeCurse,
 		},
 		{
 			name: "invalid additional fields ignored",
@@ -100,14 +100,14 @@ func TestIsCurseMCMSFromOperations(t *testing.T) {
 				},
 			},
 			cs:       chainA,
-			expected: false,
+			expected: MCMSTypeRegular,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
-			got := IsCurseMCMSFromOperations(tt.ops, tt.cs)
+			got := MCMSTypeFromOperations(tt.ops, tt.cs)
 			assert.Equal(t, tt.expected, got)
 		})
 	}

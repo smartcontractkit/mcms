@@ -25,7 +25,21 @@ const (
 	TimelockRoleProposer
 )
 
+// MCMSType distinguishes the on-chain MCMS contract variant.
+// The zero value is MCMSTypeRegular, so existing proposals that omit this
+// field are handled correctly.
+type MCMSType string
+
+const (
+	MCMSTypeRegular MCMSType = ""
+	MCMSTypeCurse   MCMSType = "curse"
+)
+
+func (m MCMSType) IsCurseMCMS() bool {
+	return m == MCMSTypeCurse
+}
+
 type AdditionalFieldsMetadata struct {
-	Role        TimelockRole `json:"role"`
-	IsCurseMCMS bool         `json:"isCurseMCMS,omitempty"`
+	Role     TimelockRole `json:"role"`
+	MCMSType MCMSType     `json:"mcmsType,omitempty"`
 }

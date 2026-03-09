@@ -32,12 +32,12 @@ func TestNewExecutor(t *testing.T) {
 	encoder := NewEncoder(chaintest.Chain5Selector, 1, true)
 	mockClient := mock_aptossdk.NewAptosRpcClient(t)
 	mockSigner := mock_aptossdk.NewTransactionSigner(t)
-	executor := NewExecutor(mockClient, mockSigner, encoder, TimelockRoleProposer, false)
+	executor := NewExecutor(mockClient, mockSigner, encoder, TimelockRoleProposer, MCMSTypeRegular)
 	assert.Equal(t, mockClient, executor.client)
 	assert.Equal(t, mockSigner, executor.auth)
 	assert.Equal(t, encoder, executor.Encoder)
 	assert.Equal(t, TimelockRoleProposer, executor.role)
-	assert.False(t, executor.isCurseMCMS)
+	assert.Equal(t, MCMSTypeRegular, executor.mcmsType)
 }
 
 func TestExecutor_ExecuteOperation(t *testing.T) {

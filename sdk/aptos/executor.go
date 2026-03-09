@@ -33,21 +33,21 @@ var _ sdk.Executor = &Executor{}
 type Executor struct {
 	*Encoder
 	*Inspector
-	client      aptos.AptosRpcClient
-	auth        aptos.TransactionSigner
-	isCurseMCMS bool
+	client   aptos.AptosRpcClient
+	auth     aptos.TransactionSigner
+	mcmsType MCMSType
 
 	bindingFn       func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms_pkg.MCMS
 	curseMcmsBindFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) curse_mcms_pkg.CurseMCMS
 }
 
-func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole, isCurseMCMS bool) *Executor {
+func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole, mcmsType MCMSType) *Executor {
 	return &Executor{
 		Encoder:         encoder,
-		Inspector:       NewInspector(client, role, isCurseMCMS),
+		Inspector:       NewInspector(client, role, mcmsType),
 		client:          client,
 		auth:            auth,
-		isCurseMCMS:     isCurseMCMS,
+		mcmsType:        mcmsType,
 		bindingFn:       mcms_pkg.Bind,
 		curseMcmsBindFn: curse_mcms_pkg.Bind,
 	}
@@ -90,7 +90,7 @@ func (e Executor) ExecuteOperation(
 
 	opts := &bind.TransactOpts{Signer: e.auth}
 
-	if e.isCurseMCMS {
+	if e.mcmsType.IsCurseMCMS() {
 		return e.executeCurseMCMS(opts, additionalFieldsMetadata, additionalFields, chainIDBig, mcmsAddress, nonce, toAddress, op, proofBytes)
 	}
 
@@ -259,7 +259,7 @@ func (e Executor) SetRoot(
 	opts := &bind.TransactOpts{Signer: e.auth}
 
 	var tx *api.PendingTransaction
-	if e.isCurseMCMS {
+	if e.mcmsType.IsCurseMCMS() {
 		binding := e.curseMcmsBindFn(mcmsAddress, e.client)
 		tx, err = binding.CurseMCMS().SetRoot(
 			opts,

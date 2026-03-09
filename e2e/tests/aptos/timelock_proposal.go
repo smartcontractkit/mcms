@@ -160,7 +160,7 @@ func (a *TestSuite) TestTimelockProposal() {
 		acceptOwnershipProposal, _, err = acceptOwnershipTimelockProposal.Convert(a.T().Context(), convertersMap)
 		a.Require().NoError(err)
 
-		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer, false)
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer, aptossdk.MCMSTypeRegular)
 		inspectorsMap := map[types.ChainSelector]sdk.Inspector{
 			a.ChainSelector: inspector,
 		}
@@ -186,7 +186,7 @@ func (a *TestSuite) TestTimelockProposal() {
 		a.Require().NoError(err)
 		aptosEncoder := encoders[a.ChainSelector].(*aptossdk.Encoder)
 		executors := map[types.ChainSelector]sdk.Executor{
-			a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleProposer, false),
+			a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleProposer, aptossdk.MCMSTypeRegular),
 		}
 		var executable *mcms.Executable
 		executable, err = mcms.NewExecutable(&acceptOwnershipProposal, executors)

@@ -23,7 +23,7 @@ func TestNewInspector(t *testing.T) {
 	t.Parallel()
 	mockClient := mock_aptossdk.NewAptosRpcClient(t)
 
-	inspector := NewInspector(mockClient, TimelockRoleProposer, false)
+	inspector := NewInspector(mockClient, TimelockRoleProposer, MCMSTypeRegular)
 	assert.NotNil(t, inspector)
 	assert.Equal(t, mockClient, inspector.client)
 	assert.Equal(t, TimelockRoleProposer, inspector.role)
@@ -34,7 +34,7 @@ func TestNewInspector_CurseMCMS(t *testing.T) {
 	t.Parallel()
 	mockClient := mock_aptossdk.NewAptosRpcClient(t)
 
-	inspector := NewInspector(mockClient, TimelockRoleProposer, true)
+	inspector := NewInspector(mockClient, TimelockRoleProposer, MCMSTypeCurse)
 	assert.NotNil(t, inspector)
 	assert.Equal(t, mockClient, inspector.client)
 	assert.Equal(t, TimelockRoleProposer, inspector.role)

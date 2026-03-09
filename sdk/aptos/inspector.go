@@ -86,15 +86,17 @@ type Inspector struct {
 	viewerFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcmsViewer
 }
 
-// NewInspector creates an Inspector. When isCurseMCMS is true the Inspector
-// talks to a CurseMCMS contract; when false it talks to a standard MCMS contract.
-func NewInspector(client aptos.AptosRpcClient, role TimelockRole, isCurseMCMS bool) *Inspector {
+// NewInspector creates an Inspector that talks to either a standard MCMS or
+// CurseMCMS contract depending on mcmsType. Unrecognized values default to
+// standard MCMS.
+func NewInspector(client aptos.AptosRpcClient, role TimelockRole, mcmsType MCMSType) *Inspector {
 	var vfn func(aptos.AccountAddress, aptos.AptosRpcClient) mcmsViewer
-	if isCurseMCMS {
+	switch mcmsType {
+	case MCMSTypeCurse:
 		vfn = func(addr aptos.AccountAddress, c aptos.AptosRpcClient) mcmsViewer {
 			return &curseMcmsViewer{inner: curse_mcms_pkg.Bind(addr, c).CurseMCMS()}
 		}
-	} else {
+	default:
 		vfn = func(addr aptos.AccountAddress, c aptos.AptosRpcClient) mcmsViewer {
 			return mcms_pkg.Bind(addr, c).MCMS()
 		}
