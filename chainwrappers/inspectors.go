@@ -80,7 +80,7 @@ func BuildInspector(
 			}
 		}
 
-		return aptos.NewInspector(client, role, afm.MCMSType), nil
+		return aptos.NewInspectorWithMCMSType(client, role, afm.MCMSType), nil
 	case chainsel.FamilySui:
 		client, signer, ok := chains.SuiClient(rawSelector)
 		if !ok {

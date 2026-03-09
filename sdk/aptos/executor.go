@@ -41,10 +41,14 @@ type Executor struct {
 	curseMcmsBindFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) curse_mcms_pkg.CurseMCMS
 }
 
-func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole, mcmsType MCMSType) *Executor {
+func NewExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole) *Executor {
+	return NewExecutorWithMCMSType(client, auth, encoder, role, MCMSTypeRegular)
+}
+
+func NewExecutorWithMCMSType(client aptos.AptosRpcClient, auth aptos.TransactionSigner, encoder *Encoder, role TimelockRole, mcmsType MCMSType) *Executor {
 	return &Executor{
 		Encoder:         encoder,
-		Inspector:       NewInspector(client, role, mcmsType),
+		Inspector:       NewInspectorWithMCMSType(client, role, mcmsType),
 		client:          client,
 		auth:            auth,
 		mcmsType:        mcmsType,
