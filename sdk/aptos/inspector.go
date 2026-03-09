@@ -86,10 +86,15 @@ type Inspector struct {
 	viewerFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcmsViewer
 }
 
-// NewInspector creates an Inspector that talks to either a standard MCMS or
-// CurseMCMS contract depending on mcmsType. Unrecognized values default to
-// standard MCMS.
-func NewInspector(client aptos.AptosRpcClient, role TimelockRole, mcmsType MCMSType) *Inspector {
+// NewInspector creates an Inspector that talks to a standard MCMS contract.
+func NewInspector(client aptos.AptosRpcClient, role TimelockRole) *Inspector {
+	return NewInspectorWithMCMSType(client, role, MCMSTypeRegular)
+}
+
+// NewInspectorWithMCMSType creates an Inspector that talks to either a
+// standard MCMS or CurseMCMS contract depending on mcmsType. Unrecognized
+// values default to standard MCMS.
+func NewInspectorWithMCMSType(client aptos.AptosRpcClient, role TimelockRole, mcmsType MCMSType) *Inspector {
 	var vfn func(aptos.AccountAddress, aptos.AptosRpcClient) mcmsViewer
 	switch mcmsType {
 	case MCMSTypeCurse:
