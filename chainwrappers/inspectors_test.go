@@ -78,10 +78,14 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 				mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector): {
 					MCMAddress: "0xaptos",
 					AdditionalFields: func() json.RawMessage {
-						b, _ := json.Marshal(aptos.AdditionalFieldsMetadata{
+						b, err := json.Marshal(aptos.AdditionalFieldsMetadata{
 							Role:     aptos.TimelockRoleProposer,
 							MCMSType: aptos.MCMSTypeCurse,
 						})
+						if err != nil {
+							t.Fatal(err)
+						}
+
 						return b
 					}(),
 				},
