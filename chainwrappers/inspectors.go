@@ -1,6 +1,7 @@
 package chainwrappers
 
 import (
+	"encoding/json"
 	"fmt"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
@@ -72,8 +73,14 @@ func BuildInspector(
 		if err != nil {
 			return nil, fmt.Errorf("error determining aptos role: %w", err)
 		}
+		var afm aptos.AdditionalFieldsMetadata
+		if len(metadata.AdditionalFields) > 0 {
+			if err = json.Unmarshal(metadata.AdditionalFields, &afm); err != nil {
+				return nil, fmt.Errorf("error parsing aptos metadata: %w", err)
+			}
+		}
 
-		return aptos.NewInspector(client, role), nil
+		return aptos.NewInspector(client, role, afm.MCMSType), nil
 	case chainsel.FamilySui:
 		client, signer, ok := chains.SuiClient(rawSelector)
 		if !ok {

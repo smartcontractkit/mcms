@@ -160,7 +160,7 @@ func (a *TestSuite) TestTimelockProposal() {
 		acceptOwnershipProposal, _, err = acceptOwnershipTimelockProposal.Convert(a.T().Context(), convertersMap)
 		a.Require().NoError(err)
 
-		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer)
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer, aptossdk.MCMSTypeRegular)
 		inspectorsMap := map[types.ChainSelector]sdk.Inspector{
 			a.ChainSelector: inspector,
 		}
@@ -186,7 +186,7 @@ func (a *TestSuite) TestTimelockProposal() {
 		a.Require().NoError(err)
 		aptosEncoder := encoders[a.ChainSelector].(*aptossdk.Encoder)
 		executors := map[types.ChainSelector]sdk.Executor{
-			a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleProposer),
+			a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleProposer, aptossdk.MCMSTypeRegular),
 		}
 		var executable *mcms.Executable
 		executable, err = mcms.NewExecutable(&acceptOwnershipProposal, executors)
@@ -283,7 +283,7 @@ func (a *TestSuite) TestTimelockProposal() {
 	arg4 := big.NewInt(42)
 
 	{
-		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleBypasser)
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleBypasser, aptossdk.MCMSTypeRegular)
 		inspectorsMaps := map[types.ChainSelector]sdk.Inspector{
 			a.ChainSelector: inspector,
 		}
@@ -365,7 +365,7 @@ func (a *TestSuite) TestTimelockProposal() {
 		a.Require().NoError(errr)
 		aptosEncoder := encoders[a.ChainSelector].(*aptossdk.Encoder)
 		executors := map[types.ChainSelector]sdk.Executor{
-			a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleBypasser),
+			a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleBypasser, aptossdk.MCMSTypeRegular),
 		}
 		executable, errr := mcms.NewExecutable(&mcmsTestProposal, executors)
 		a.Require().NoError(errr)
