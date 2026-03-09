@@ -1,5 +1,15 @@
 # @smartcontractkit/mcms
 
+## 0.36.4
+
+### Patch Changes
+
+- [#650](https://github.com/smartcontractkit/mcms/pull/650) [`c037579`](https://github.com/smartcontractkit/mcms/commit/c037579efe47fb441d87e7deb7c2d7d2f1321550) Thanks [@ecPablo](https://github.com/ecPablo)! - fix garbage characters getting printed in the derivation path during ledger signing
+
+- [#663](https://github.com/smartcontractkit/mcms/pull/663) [`279dae9`](https://github.com/smartcontractkit/mcms/commit/279dae9c39af976245ac84b7ead7e8a52f37dc19) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - make executor interface backwards compatible
+
+- [#658](https://github.com/smartcontractkit/mcms/pull/658) [`f3650e8`](https://github.com/smartcontractkit/mcms/commit/f3650e8fcc978d5078b92d4e6b574fca959a9ddf) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - enhance the aptos mcms inspector with different mcms (regular and curse)
+
 ## 0.36.3
 
 ### Patch Changes
