@@ -1,6 +1,7 @@
 package chainwrappers
 
 import (
+	"encoding/json"
 	"testing"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
@@ -8,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/chainwrappers/mocks"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
 
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
 )
@@ -69,6 +71,27 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 				access.EXPECT().TonClient(mock.Anything).Return(nil, true)
 			},
 			expectedInspectorsCount: 5,
+		},
+		{
+			name: "aptos curse mcms from metadata",
+			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
+				mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector): {
+					MCMAddress: "0xaptos",
+					AdditionalFields: func() json.RawMessage {
+						b, _ := json.Marshal(aptos.AdditionalFieldsMetadata{
+							Role:     aptos.TimelockRoleProposer,
+							MCMSType: aptos.MCMSTypeCurse,
+						})
+						return b
+					}(),
+				},
+			},
+			chainAccess: mocks.NewChainAccessor(t),
+			expectErr:   false,
+			setup: func(access *mocks.ChainAccessor) {
+				access.EXPECT().AptosClient(mock.Anything).Return(nil, true)
+			},
+			expectedInspectorsCount: 1,
 		},
 	}
 
