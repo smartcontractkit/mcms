@@ -157,21 +157,21 @@ func (a *TestSuite) TestSetConfig() {
 
 	// Assert that config has been set
 	{
-		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleBypasser, false)
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleBypasser, aptossdk.MCMSTypeRegular)
 		gotConfig, err := inspector.GetConfig(a.T().Context(), mcmsAddress.StringLong())
 		a.Require().NoError(err)
 		a.Require().NotNil(gotConfig)
 		a.Require().Equal(bypasserConfig, gotConfig)
 	}
 	{
-		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleCanceller, false)
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleCanceller, aptossdk.MCMSTypeRegular)
 		gotConfig, err := inspector.GetConfig(a.T().Context(), mcmsAddress.StringLong())
 		a.Require().NoError(err)
 		a.Require().NotNil(gotConfig)
 		a.Require().Equal(cancellerConfig, gotConfig)
 	}
 	{
-		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer, false)
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer, aptossdk.MCMSTypeRegular)
 		gotConfig, err := inspector.GetConfig(a.T().Context(), mcmsAddress.StringLong())
 		a.Require().NoError(err)
 		a.Require().NotNil(gotConfig)

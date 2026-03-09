@@ -283,7 +283,7 @@ func (a *TestSuite) TestTimelockProposal() {
 	arg4 := big.NewInt(42)
 
 	{
-		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleBypasser, false)
+		inspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleBypasser, aptossdk.MCMSTypeRegular)
 		inspectorsMaps := map[types.ChainSelector]sdk.Inspector{
 			a.ChainSelector: inspector,
 		}
@@ -365,7 +365,7 @@ func (a *TestSuite) TestTimelockProposal() {
 		a.Require().NoError(errr)
 		aptosEncoder := encoders[a.ChainSelector].(*aptossdk.Encoder)
 		executors := map[types.ChainSelector]sdk.Executor{
-			a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleBypasser, false),
+			a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleBypasser, aptossdk.MCMSTypeRegular),
 		}
 		executable, errr := mcms.NewExecutable(&mcmsTestProposal, executors)
 		a.Require().NoError(errr)

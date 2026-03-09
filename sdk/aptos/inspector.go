@@ -96,6 +96,10 @@ func NewInspector(client aptos.AptosRpcClient, role TimelockRole, mcmsType MCMST
 		vfn = func(addr aptos.AccountAddress, c aptos.AptosRpcClient) mcmsViewer {
 			return &curseMcmsViewer{inner: curse_mcms_pkg.Bind(addr, c).CurseMCMS()}
 		}
+	case MCMSTypeRegular:
+		vfn = func(addr aptos.AccountAddress, c aptos.AptosRpcClient) mcmsViewer {
+			return mcms_pkg.Bind(addr, c).MCMS()
+		}
 	default:
 		vfn = func(addr aptos.AccountAddress, c aptos.AptosRpcClient) mcmsViewer {
 			return mcms_pkg.Bind(addr, c).MCMS()
