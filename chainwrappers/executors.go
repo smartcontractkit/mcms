@@ -55,17 +55,17 @@ func BuildExecutor(
 
 	switch family {
 	case chainsel.FamilyEVM:
-		client, ok := chains.EVMClient(rawSelector)
-		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", chainSelector)
-		}
 		evmEncoder, ok := encoder.(*evm.Encoder)
 		if !ok {
-			return nil, fmt.Errorf("invalid encoder type for EVM chain selector %d: expected *evm.Encoder, got %T", rawSelector, encoder)
+			return nil, fmt.Errorf("invalid encoder type for selector %d: %T", chainSelector, encoder)
+		}
+		client, ok := chains.EVMClient(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing evm chain client for selector %d", chainSelector)
 		}
 		auth, ok := chains.EVMSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM auth for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing evm signer for selector %d", rawSelector)
 		}
 
 		evmChainMetadata, err := evm.ParseChainMetadata(metadata)
@@ -80,15 +80,15 @@ func BuildExecutor(
 	case chainsel.FamilySolana:
 		solanaEncoder, ok := encoder.(*solana.Encoder)
 		if !ok {
-			return nil, fmt.Errorf("invalid encoder type: %T", encoder)
+			return nil, fmt.Errorf("invalid encoder type for selector %d: %T", chainSelector, encoder)
 		}
 		client, ok := chains.SolanaClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing solana chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.SolanaSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing solana chain signer for selector %d", chainSelector)
 		}
 
 		return solana.NewExecutor(solanaEncoder, client, *signer), nil
@@ -96,7 +96,7 @@ func BuildExecutor(
 	case chainsel.FamilyAptos:
 		encoder, ok := encoder.(*aptos.Encoder)
 		if !ok {
-			return nil, fmt.Errorf("error getting encoder for chain %d", chainSelector)
+			return nil, fmt.Errorf("invalid encoder type for selector %d: %T", chainSelector, encoder)
 		}
 		role, err := aptos.AptosRoleFromAction(action)
 		if err != nil {
@@ -104,11 +104,11 @@ func BuildExecutor(
 		}
 		client, ok := chains.AptosClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing aptos chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.AptosSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing aptos chain signer for selector %d", chainSelector)
 		}
 
 		return aptos.NewExecutor(client, signer, encoder, role), nil
@@ -116,15 +116,15 @@ func BuildExecutor(
 	case chainsel.FamilySui:
 		encoder, ok := encoder.(*sui.Encoder)
 		if !ok {
-			return nil, fmt.Errorf("error getting encoder for chain %d", chainSelector)
+			return nil, fmt.Errorf("invalid encoder type for selector %d: %T", chainSelector, encoder)
 		}
 		client, ok := chains.SuiClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Sui chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing sui chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.SuiSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Sui chain signer for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing sui chain signer for selector %d", chainSelector)
 		}
 
 		suiMetadata, err := sui.SuiMetadata(metadata)
@@ -139,15 +139,15 @@ func BuildExecutor(
 	case chainsel.FamilyTon:
 		tonEncoder, ok := encoder.(*ton.Encoder)
 		if !ok {
-			return nil, fmt.Errorf("error getting encoder for chain %d", chainSelector)
+			return nil, fmt.Errorf("invalid encoder type for selector %d: %T", chainSelector, encoder)
 		}
 		client, ok := chains.TonClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Ton chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing ton chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.TonSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Ton client wallet for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing ton client signer for selector %d", chainSelector)
 		}
 
 		return ton.NewExecutor(ton.ExecutorOpts{

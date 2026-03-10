@@ -50,11 +50,11 @@ func BuildTimelockExecutor(
 	case chainsel.FamilyEVM:
 		client, ok := chains.EVMClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing evm chain client for selector %d", chainSelector)
 		}
 		auth, ok := chains.EVMSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM auth for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing evm signer for selector %d", rawSelector)
 		}
 
 		evmChainMetadata, err := evm.ParseChainMetadata(metadata)
@@ -69,11 +69,11 @@ func BuildTimelockExecutor(
 	case chainsel.FamilySolana:
 		client, ok := chains.SolanaClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing solana chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.SolanaSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing solana chain signer for selector %d", chainSelector)
 		}
 
 		return solana.NewTimelockExecutor(client, *signer), nil
@@ -81,11 +81,11 @@ func BuildTimelockExecutor(
 	case chainsel.FamilyAptos:
 		client, ok := chains.AptosClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing aptos chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.AptosSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing aptos chain signer for selector %d", chainSelector)
 		}
 
 		return aptos.NewTimelockExecutor(client, signer), nil
@@ -93,11 +93,11 @@ func BuildTimelockExecutor(
 	case chainsel.FamilySui:
 		client, ok := chains.SuiClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Sui chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing sui chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.SuiSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Sui chain signer for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing sui chain signer for selector %d", chainSelector)
 		}
 
 		suiMetadata, err := sui.SuiMetadata(metadata)
@@ -112,11 +112,11 @@ func BuildTimelockExecutor(
 	case chainsel.FamilyTon:
 		client, ok := chains.TonClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Ton chain client for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing ton chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.TonSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Ton client wallet for selector %d", chainSelector)
+			return nil, fmt.Errorf("missing ton client signer for selector %d", chainSelector)
 		}
 
 		return ton.NewTimelockExecutor(ton.TimelockExecutorOpts{
