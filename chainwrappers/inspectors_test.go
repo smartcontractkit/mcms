@@ -67,7 +67,8 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 				access.EXPECT().EVMClient(mock.Anything).Return(nil, true)
 				access.EXPECT().SolanaClient(mock.Anything).Return(nil, true)
 				access.EXPECT().AptosClient(mock.Anything).Return(nil, true)
-				access.EXPECT().SuiClient(mock.Anything).Return(nil, nil, true)
+				access.EXPECT().SuiClient(mock.Anything).Return(nil, true)
+				access.EXPECT().SuiSigner(mock.Anything).Return(nil, true)
 				access.EXPECT().TonClient(mock.Anything).Return(nil, true)
 			},
 			expectedInspectorsCount: 5,

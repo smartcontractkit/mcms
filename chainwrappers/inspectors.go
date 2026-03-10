@@ -82,7 +82,11 @@ func BuildInspector(
 
 		return aptos.NewInspectorWithMCMSType(client, role, afm.MCMSType), nil
 	case chainsel.FamilySui:
-		client, signer, ok := chains.SuiClient(rawSelector)
+		client, ok := chains.SuiClient(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing Sui chain client for selector %d", rawSelector)
+		}
+		signer, ok := chains.SuiSigner(rawSelector)
 		if !ok {
 			return nil, fmt.Errorf("missing Sui chain client for selector %d", rawSelector)
 		}

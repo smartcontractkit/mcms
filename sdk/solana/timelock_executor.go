@@ -3,6 +3,7 @@ package solana
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -102,4 +103,8 @@ func (e *TimelockExecutor) Execute(
 		ChainFamily: chainsel.FamilySolana,
 		RawData:     tx,
 	}, nil
+}
+
+func (e TimelockExecutor) Equal(other TimelockExecutor) bool {
+	return slices.Equal(e.auth, other.auth)
 }

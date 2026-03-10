@@ -146,6 +146,12 @@ func (e *Executor) SetRoot(
 	}, err
 }
 
+func (e Executor) Equal(other Executor) bool {
+	return e.Encoder == other.Encoder &&
+		e.auth.GasLimit == other.auth.GasLimit &&
+		e.auth.GasPrice == other.auth.GasPrice
+}
+
 // buildExecuteCallData packs calldata for ManyChainMultiSig.execute(...)
 func buildExecuteTxData(
 	opts *bind.TransactOpts,

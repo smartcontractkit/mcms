@@ -144,3 +144,9 @@ func (t *TimelockExecutor) Execute(
 		RawData:     tx,
 	}, nil
 }
+
+func (t TimelockExecutor) Equal(other TimelockExecutor) bool {
+	return t.mcmsPackageID == other.mcmsPackageID &&
+		t.registryObj == other.registryObj &&
+		t.accountObj == other.accountObj
+}

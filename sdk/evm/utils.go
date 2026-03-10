@@ -2,6 +2,9 @@ package evm
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
+	"math/big"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
@@ -25,6 +28,30 @@ const (
 type ContractDeployBackend interface {
 	bind.ContractBackend
 	bind.DeployBackend
+}
+
+type TransactOpts = bind.TransactOpts
+
+type ChainMetadata struct {
+	GasPrice *big.Int `json:"gasPrice,omitempty"`
+	GasLimit uint64   `json:"gasLimit,omitempty"`
+}
+
+func ParseChainMetadata(chainMetadata types.ChainMetadata) (ChainMetadata, error) {
+	if len(chainMetadata.AdditionalFields) == 0 {
+		return ChainMetadata{}, nil
+	}
+
+	var evmChainMetadata ChainMetadata
+	err := json.Unmarshal(chainMetadata.AdditionalFields, &evmChainMetadata)
+	if err != nil {
+		return ChainMetadata{}, fmt.Errorf("failed to unmarshal chain metadata additional fields: %w", err)
+	}
+	if evmChainMetadata.GasPrice != nil && evmChainMetadata.GasPrice.Sign() < 0 {
+		return ChainMetadata{}, fmt.Errorf("invalid gas price: %v", evmChainMetadata.GasPrice)
+	}
+
+	return evmChainMetadata, nil
 }
 
 // transformHashes transforms a slice of common.Hash to a slice of [32]byte.

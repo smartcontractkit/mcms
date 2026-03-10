@@ -82,3 +82,7 @@ func (t *TimelockExecutor) Execute(
 		RawData:     tx,
 	}, nil
 }
+
+func (t TimelockExecutor) Equal(other TimelockExecutor) bool {
+	return true
+}

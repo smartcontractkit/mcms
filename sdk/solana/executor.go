@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"slices"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
@@ -205,6 +206,10 @@ func (e *Executor) SetRoot(
 		ChainFamily: chainsel.FamilySolana,
 		RawData:     tx,
 	}, nil
+}
+
+func (e Executor) Equal(other Executor) bool {
+	return e.Encoder == other.Encoder && slices.Equal(e.auth, other.auth)
 }
 
 // preloadSignatures preloads the signatures into the MCM program by looping can calling the
