@@ -305,6 +305,10 @@ func (e Executor) SetRoot(
 	}, nil
 }
 
+func (e Executor) Equal(other Executor) bool {
+	return e.Encoder == other.Encoder && e.mcmsType == other.mcmsType
+}
+
 func encodeSignatures(signatures []types.Signature) [][]byte {
 	sigs := make([][]byte, len(signatures))
 	for i, signature := range signatures {

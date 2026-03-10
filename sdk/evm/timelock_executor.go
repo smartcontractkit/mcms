@@ -87,6 +87,11 @@ func (t *TimelockExecutor) Execute(
 	}, nil
 }
 
+func (t TimelockExecutor) Equal(other TimelockExecutor) bool {
+	return t.auth.GasPrice == other.auth.GasPrice &&
+		t.auth.GasLimit == other.auth.GasLimit
+}
+
 // buildTimelockExecuteTxData packs call data for RBACTimelock.executeBatch(...)
 func buildTimelockExecuteTxData(
 	opts *bind.TransactOpts,

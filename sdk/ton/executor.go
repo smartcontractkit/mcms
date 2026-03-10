@@ -240,3 +240,12 @@ func (e *executor) CheckPendingSend(ctx context.Context, dstAddr *address.Addres
 
 	return SendTxAfter(ctx, tx, uint64(now), info.ValidAfter, DefaultWaitBuffer, e.wait)
 }
+
+func (e executor) Equal(otherSdkExec sdk.Executor) bool {
+	other, ok := otherSdkExec.(*executor)
+	return ok &&
+		e.Encoder == other.Encoder &&
+		e.wallet == other.wallet &&
+		e.amount == other.amount &&
+		e.wait == other.wait
+}
