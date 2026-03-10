@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.37.0
+
+### Minor Changes
+
+- [#664](https://github.com/smartcontractkit/mcms/pull/664) [`378c6d5`](https://github.com/smartcontractkit/mcms/commit/378c6d5164458a61530b951c1b802dd0bf8953ab) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add chainwrappers.BuildExecutors supporting EVM gas params
+
 ## 0.36.4
 
 ### Patch Changes
