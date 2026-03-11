@@ -1,6 +1,7 @@
 package chainwrappers
 
 import (
+	"encoding/json"
 	"fmt"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
@@ -111,7 +112,16 @@ func BuildExecutor(
 			return nil, fmt.Errorf("missing aptos chain signer for selector %d", chainSelector)
 		}
 
-		return aptos.NewExecutor(client, signer, encoder, role), nil
+		var mcmsType aptos.MCMSType
+		if len(metadata.AdditionalFields) > 0 {
+			var afm aptos.AdditionalFieldsMetadata
+			if err := json.Unmarshal(metadata.AdditionalFields, &afm); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal aptos additional fields metadata for selector %d: %w", rawSelector, err)
+			}
+			mcmsType = afm.MCMSType
+		}
+
+		return aptos.NewExecutorWithMCMSType(client, signer, encoder, role, mcmsType), nil
 
 	case chainsel.FamilySui:
 		encoder, ok := encoder.(*sui.Encoder)
