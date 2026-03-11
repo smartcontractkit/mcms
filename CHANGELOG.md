@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.37.1
+
+### Patch Changes
+
+- [#666](https://github.com/smartcontractkit/mcms/pull/666) [`dc1d043`](https://github.com/smartcontractkit/mcms/commit/dc1d043d73fe4e1f66514541c7077cb050433ef3) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - build aptos executor with mcms type
+
 ## 0.37.0
 
 ### Minor Changes
