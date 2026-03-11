@@ -49,6 +49,10 @@ func TestBuildExecutors(t *testing.T) {
 	aptosSigner := aptosmocks.NewTransactionSigner(t)
 	aptosEncoder := aptos.NewEncoder(aptosSelector, 0, false)
 	aptosExecutor := aptos.NewExecutor(aptosClient, aptosSigner, aptosEncoder, aptos.TimelockRoleProposer)
+	aptosCurseClient := aptosmocks.NewAptosRpcClient(t)
+	aptosCurseSigner := aptosmocks.NewTransactionSigner(t)
+	aptosCurseEncoder := aptos.NewEncoder(aptosSelector, 0, false)
+	aptosCurseExecutor := aptos.NewExecutorWithMCMSType(aptosCurseClient, aptosCurseSigner, aptosCurseEncoder, aptos.TimelockRoleProposer, aptos.MCMSTypeCurse)
 	suiClient := suimocks.NewISuiAPI(t)
 	suiSigner := suibindmocks.NewSuiSigner(t)
 	suiEncoder := sui.NewEncoder(suiSelector, 0, false)
@@ -128,6 +132,26 @@ func TestBuildExecutors(t *testing.T) {
 				aptosSelector: aptosExecutor,
 				suiSelector:   suiExecutor,
 				tonSelector:   tonExecutor,
+			},
+		},
+		{
+			name: "success with aptos curse_mcms",
+			encoders: map[mcmstypes.ChainSelector]mcmssdk.Encoder{
+				aptosSelector: aptosCurseEncoder,
+			},
+			chainMetadata: map[mcmstypes.ChainSelector]mcmstypes.ChainMetadata{
+				mcmstypes.ChainSelector(chainsel.APTOS_TESTNET.Selector): {
+					MCMAddress:       "0xaptos_curse",
+					StartingOpCount:  0,
+					AdditionalFields: []byte(`{"role":2,"mcmsType":"curse"}`),
+				},
+			},
+			setup: func(accessor *mocks.ChainAccessor) {
+				accessor.EXPECT().AptosClient(mock.Anything).Return(aptosCurseClient, true)
+				accessor.EXPECT().AptosSigner(mock.Anything).Return(aptosCurseSigner, true)
+			},
+			want: map[mcmstypes.ChainSelector]mcmssdk.Executor{
+				aptosSelector: aptosCurseExecutor,
 			},
 		},
 	}
