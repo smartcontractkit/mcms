@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.38.0
+
+### Minor Changes
+
+- [#668](https://github.com/smartcontractkit/mcms/pull/668) [`3977e3a`](https://github.com/smartcontractkit/mcms/commit/3977e3af435bd0e7ba150a3a93e02a60e64f39ab) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - support Aptos curse mcms in timelock
+
 ## 0.37.1
 
 ### Patch Changes
