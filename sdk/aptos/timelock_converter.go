@@ -15,18 +15,37 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
+	curse_mcms "github.com/smartcontractkit/chainlink-aptos/bindings/curse_mcms"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 )
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
+// timelockEncoder is the subset of encoder methods needed for timelock conversion.
+// Both mcms.MCMSEncoder and curse_mcms.CurseMCMSEncoder satisfy this interface.
+type timelockEncoder interface {
+	TimelockScheduleBatch(targets []aptos.AccountAddress, moduleNames []string, functionNames []string, datas [][]byte, predecessor []byte, salt []byte, delay uint64) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)
+	TimelockBypasserExecuteBatch(targets []aptos.AccountAddress, moduleNames []string, functionNames []string, datas [][]byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)
+	TimelockCancel(id []byte) (bind.ModuleInformation, string, []aptos.TypeTag, [][]byte, error)
+}
+
 type TimelockConverter struct {
-	bindingFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms.MCMS
+	encoderFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) timelockEncoder
 }
 
 func NewTimelockConverter() *TimelockConverter {
 	return &TimelockConverter{
-		bindingFn: mcms.Bind,
+		encoderFn: func(address aptos.AccountAddress, client aptos.AptosRpcClient) timelockEncoder {
+			return mcms.Bind(address, client).MCMS().Encoder()
+		},
+	}
+}
+
+func NewCurseTimelockConverter() *TimelockConverter {
+	return &TimelockConverter{
+		encoderFn: func(address aptos.AccountAddress, client aptos.AptosRpcClient) timelockEncoder {
+			return curse_mcms.Bind(address, client).CurseMCMS().Encoder()
+		},
 	}
 }
 
@@ -45,7 +64,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	if mcmsErr != nil {
 		return nil, common.Hash{}, fmt.Errorf("failed to parse MCMS address %q: %w", mcmAddress, mcmsErr)
 	}
-	mcmsBinding := t.bindingFn(mcmsAddress, nil)
+	encoder := t.encoderFn(mcmsAddress, nil)
 
 	targets := make([]aptos.AccountAddress, len(bop.Transactions))
 	moduleNames := make([]string, len(bop.Transactions))
@@ -83,17 +102,17 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	)
 	switch action {
 	case types.TimelockActionSchedule:
-		module, function, _, args, err = mcmsBinding.MCMS().Encoder().TimelockScheduleBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes(), uint64(delay.Seconds()))
+		module, function, _, args, err = encoder.TimelockScheduleBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes(), uint64(delay.Seconds()))
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to encode timelock_schedule_batch: %w", err)
 		}
 	case types.TimelockActionBypass:
-		module, function, _, args, err = mcmsBinding.MCMS().Encoder().TimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
+		module, function, _, args, err = encoder.TimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to encode timelock_bypasser_execute_batch: %w", err)
 		}
 	case types.TimelockActionCancel:
-		module, function, _, args, err = mcmsBinding.MCMS().Encoder().TimelockCancel(operationID[:])
+		module, function, _, args, err = encoder.TimelockCancel(operationID[:])
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to encode timelock_cancel: %w", err)
 		}
