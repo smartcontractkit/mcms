@@ -13,16 +13,9 @@ import (
 
 	"github.com/go-playground/validator/v10"
 
-	chainsel "github.com/smartcontractkit/chain-selectors"
-
 	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/aptos"
-	"github.com/smartcontractkit/mcms/sdk/evm"
-	"github.com/smartcontractkit/mcms/sdk/solana"
-	"github.com/smartcontractkit/mcms/sdk/sui"
-	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -280,37 +273,7 @@ func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, 
 
 // buildTimelockConverters builds a map of chain selectors to their corresponding TimelockConverter implementations.
 func (m *TimelockProposal) buildTimelockConverters(_ context.Context) (map[types.ChainSelector]sdk.TimelockConverter, error) {
-	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
-	for chain := range m.ChainMetadata {
-		// TODO: we need to pass in the context param once we remove background context in the remote chain selectors api
-		fam, err := types.GetChainSelectorFamily(chain) //nolint:contextcheck //OPT-400
-		if err != nil {
-			return nil, fmt.Errorf("error getting chain family: %w", err)
-		}
-
-		var converter sdk.TimelockConverter
-		switch fam {
-		case chainsel.FamilyEVM:
-			converter = evm.NewTimelockConverter()
-		case chainsel.FamilySolana:
-			converter = solana.NewTimelockConverter()
-		case chainsel.FamilyAptos:
-			converter = aptos.NewTimelockConverter()
-		case chainsel.FamilySui:
-			converter, err = sui.NewTimelockConverter()
-			if err != nil {
-				return nil, fmt.Errorf("failed to create Sui timelock converter: %w", err)
-			}
-		case chainsel.FamilyTon:
-			converter = ton.NewTimelockConverter(ton.DefaultSendAmount)
-		default:
-			return nil, fmt.Errorf("unsupported chain family %s", fam)
-		}
-
-		converters[chain] = converter
-	}
-
-	return converters, nil
+	return chainwrappers.BuildConverters(m.ChainMetadata)
 }
 
 // OperationCounts returns per-chain counts *after* conversion for all chains in
