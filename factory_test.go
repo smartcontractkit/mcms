@@ -1,6 +1,7 @@
 package mcms
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -127,29 +128,48 @@ func TestNewEncoder(t *testing.T) {
 func TestNewTimelockConverter(t *testing.T) {
 	t.Parallel()
 
+	aptosRegularMetadata := types.ChainMetadata{}
+	aptosCurseMetadata := types.ChainMetadata{
+		AdditionalFields: mustMarshal(t, aptos.AdditionalFieldsMetadata{MCMSType: aptos.MCMSTypeCurse}),
+	}
+
 	tests := []struct {
 		name          string
 		chainSelector types.ChainSelector
+		metadata      types.ChainMetadata
 		want          sdk.TimelockConverter
+		wantType      interface{} // used instead of want when exact equality isn't possible (e.g. function fields)
 		wantErr       string
 	}{
 		{
-			name:          "success: EVM executor",
+			name:          "success: EVM converter",
 			chainSelector: chaintest.Chain1Selector,
 			want:          &evm.TimelockConverter{},
 		},
 		{
-			name:          "success: Solana executor",
+			name:          "success: Solana converter",
 			chainSelector: chaintest.Chain4Selector,
 			want:          &solana.TimelockConverter{},
 		},
 		{
-			name:          "success: Sui executor",
+			name:          "success: Aptos regular converter",
+			chainSelector: chaintest.Chain5Selector,
+			metadata:      aptosRegularMetadata,
+			wantType:      &aptos.TimelockConverter{},
+		},
+		{
+			name:          "success: Aptos curse_mcms converter",
+			chainSelector: chaintest.Chain5Selector,
+			metadata:      aptosCurseMetadata,
+			wantType:      &aptos.TimelockConverter{},
+		},
+		{
+			name:          "success: Sui converter",
 			chainSelector: chaintest.Chain6Selector,
 			want:          &sui.TimelockConverter{},
 		},
 		{
-			name:          "success: TON executor",
+			name:          "success: TON converter",
 			chainSelector: chaintest.Chain7Selector,
 			want:          ton.NewTimelockConverter(ton.DefaultSendAmount),
 		},
@@ -163,14 +183,26 @@ func TestNewTimelockConverter(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := newTimelockConverter(t.Context(), tt.chainSelector)
+			got, err := newTimelockConverter(t.Context(), tt.chainSelector, tt.metadata)
 
-			if tt.wantErr == "" {
-				require.NoError(t, err)
-				require.Equal(t, tt.want, got)
-			} else {
+			if tt.wantErr != "" {
 				require.ErrorContains(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				if tt.want != nil {
+					require.Equal(t, tt.want, got)
+				} else {
+					require.IsType(t, tt.wantType, got)
+					require.NotNil(t, got)
+				}
 			}
 		})
 	}
+}
+
+func mustMarshal(t *testing.T, v interface{}) json.RawMessage {
+	t.Helper()
+	data, err := json.Marshal(v)
+	require.NoError(t, err)
+	return data
 }

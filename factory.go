@@ -2,6 +2,7 @@ package mcms
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
@@ -66,8 +67,9 @@ func newEncoder(
 }
 
 // newTimelockConverter a new TimelockConverter that can convert timelock proposals
-// for the given chain.
-func newTimelockConverter(_ context.Context, csel types.ChainSelector) (sdk.TimelockConverter, error) {
+// for the given chain. The metadata parameter is used to select the correct
+// converter variant (e.g. curse_mcms on Aptos).
+func newTimelockConverter(_ context.Context, csel types.ChainSelector, metadata types.ChainMetadata) (sdk.TimelockConverter, error) {
 	family, err := types.GetChainSelectorFamily(csel) //nolint:contextcheck //OPT-400
 	if err != nil {
 		return nil, err
@@ -81,6 +83,15 @@ func newTimelockConverter(_ context.Context, csel types.ChainSelector) (sdk.Time
 		return &solana.TimelockConverter{}, nil
 
 	case chainsel.FamilyAptos:
+		if len(metadata.AdditionalFields) > 0 {
+			var af aptos.AdditionalFieldsMetadata
+			if err := json.Unmarshal(metadata.AdditionalFields, &af); err != nil {
+				return nil, fmt.Errorf("failed to unmarshal Aptos chain metadata: %w", err)
+			}
+			if af.MCMSType.IsCurseMCMS() {
+				return aptos.NewCurseTimelockConverter(), nil
+			}
+		}
 		return aptos.NewTimelockConverter(), nil
 
 	case chainsel.FamilySui:
