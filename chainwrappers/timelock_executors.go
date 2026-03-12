@@ -58,9 +58,9 @@ func BuildTimelockExecutor(
 			return nil, fmt.Errorf("missing evm signer for selector %d", rawSelector)
 		}
 
-		evmChainMetadata, err := evm.ParseChainMetadata(metadata)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse EVM chain metadata for selector %d: %w", rawSelector, err)
+		evmChainMetadata, err1 := evm.ParseChainMetadata(metadata)
+		if err1 != nil {
+			return nil, fmt.Errorf("failed to parse EVM chain metadata for selector %d: %w", rawSelector, err1)
 		}
 		auth.GasPrice = evmChainMetadata.GasPrice
 		auth.GasLimit = evmChainMetadata.GasLimit

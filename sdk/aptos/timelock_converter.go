@@ -15,7 +15,7 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk/bcs"
 
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-	curse_mcms "github.com/smartcontractkit/chainlink-aptos/bindings/curse_mcms"
+	"github.com/smartcontractkit/chainlink-aptos/bindings/curse_mcms"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 )
 

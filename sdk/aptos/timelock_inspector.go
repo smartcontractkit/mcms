@@ -11,7 +11,7 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk/api"
 
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-	curse_mcms "github.com/smartcontractkit/chainlink-aptos/bindings/curse_mcms"
+	"github.com/smartcontractkit/chainlink-aptos/bindings/curse_mcms"
 	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 )
 
@@ -48,6 +48,10 @@ func NewTimelockInspectorWithMCMSType(client aptos.AptosRpcClient, mcmsType MCMS
 	case MCMSTypeCurse:
 		fn = func(addr aptos.AccountAddress, c aptos.AptosRpcClient) timelockContract {
 			return curse_mcms.Bind(addr, c).CurseMCMS()
+		}
+	case MCMSTypeRegular:
+		fn = func(addr aptos.AccountAddress, c aptos.AptosRpcClient) timelockContract {
+			return mcms.Bind(addr, c).MCMS()
 		}
 	default:
 		fn = func(addr aptos.AccountAddress, c aptos.AptosRpcClient) timelockContract {
