@@ -25,14 +25,12 @@ import (
 
 func TestNewTimelockConverter(t *testing.T) {
 	t.Parallel()
+
 	converter := NewTimelockConverter()
 	assert.NotNil(t, converter)
 	assert.NotNil(t, converter.encoderFn)
-}
 
-func TestNewCurseTimelockConverter(t *testing.T) {
-	t.Parallel()
-	converter := NewCurseTimelockConverter()
+	converter = NewTimelockConverter(WithMCMSType(MCMSTypeCurse))
 	assert.NotNil(t, converter)
 	assert.NotNil(t, converter.encoderFn)
 }
