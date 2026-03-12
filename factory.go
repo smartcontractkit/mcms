@@ -92,6 +92,7 @@ func newTimelockConverter(_ context.Context, csel types.ChainSelector, metadata 
 				return aptos.NewCurseTimelockConverter(), nil
 			}
 		}
+
 		return aptos.NewTimelockConverter(), nil
 
 	case chainsel.FamilySui:

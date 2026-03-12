@@ -55,8 +55,8 @@ func TestNewTimelockExecutable(t *testing.T) {
 
 		chainMetadataAptosCurse = map[types.ChainSelector]types.ChainMetadata{
 			chaintest.Chain5Selector: {
-				StartingOpCount: 1,
-				MCMAddress:      "0x1234",
+				StartingOpCount:  1,
+				MCMAddress:       "0x1234",
 				AdditionalFields: aptosCurseMetadataFields,
 			},
 		}

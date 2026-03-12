@@ -138,7 +138,7 @@ func TestNewTimelockConverter(t *testing.T) {
 		chainSelector types.ChainSelector
 		metadata      types.ChainMetadata
 		want          sdk.TimelockConverter
-		wantType      interface{} // used instead of want when exact equality isn't possible (e.g. function fields)
+		wantType      any // used instead of want when exact equality isn't possible (e.g. function fields)
 		wantErr       string
 	}{
 		{
@@ -200,9 +200,10 @@ func TestNewTimelockConverter(t *testing.T) {
 	}
 }
 
-func mustMarshal(t *testing.T, v interface{}) json.RawMessage {
+func mustMarshal(t *testing.T, v any) json.RawMessage {
 	t.Helper()
 	data, err := json.Marshal(v)
 	require.NoError(t, err)
+
 	return data
 }
