@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.38.1
+
+### Patch Changes
+
+- [#674](https://github.com/smartcontractkit/mcms/pull/674) [`1f9d636`](https://github.com/smartcontractkit/mcms/commit/1f9d6360e50520e107e681b489992fd7f8bc89ae) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - fix up factory and timelock executable
+
 ## 0.38.0
 
 ### Minor Changes
