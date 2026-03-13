@@ -33,18 +33,35 @@ type TimelockConverter struct {
 	encoderFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) timelockEncoder
 }
 
-func NewTimelockConverter() *TimelockConverter {
-	return &TimelockConverter{
-		encoderFn: func(address aptos.AccountAddress, client aptos.AptosRpcClient) timelockEncoder {
-			return mcms.Bind(address, client).MCMS().Encoder()
-		},
+type TimelockConverterOption func(*timelockConverterOptions)
+
+type timelockConverterOptions struct {
+	mcmsType MCMSType
+}
+
+func WithMCMSType(mcmsType MCMSType) TimelockConverterOption {
+	return func(opts *timelockConverterOptions) {
+		opts.mcmsType = mcmsType
 	}
 }
 
-func NewCurseTimelockConverter() *TimelockConverter {
+func NewTimelockConverter(opts ...TimelockConverterOption) *TimelockConverter {
+	converterOptions := timelockConverterOptions{mcmsType: MCMSTypeRegular}
+	for _, opt := range opts {
+		opt(&converterOptions)
+	}
+
+	if converterOptions.mcmsType == MCMSTypeCurse {
+		return &TimelockConverter{
+			encoderFn: func(address aptos.AccountAddress, client aptos.AptosRpcClient) timelockEncoder {
+				return curse_mcms.Bind(address, client).CurseMCMS().Encoder()
+			},
+		}
+	}
+
 	return &TimelockConverter{
 		encoderFn: func(address aptos.AccountAddress, client aptos.AptosRpcClient) timelockEncoder {
-			return curse_mcms.Bind(address, client).CurseMCMS().Encoder()
+			return mcms.Bind(address, client).MCMS().Encoder()
 		},
 	}
 }

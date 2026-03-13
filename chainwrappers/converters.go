@@ -33,7 +33,7 @@ func BuildConverters(chainMetadata map[types.ChainSelector]types.ChainMetadata) 
 		case chainsel.FamilyAptos:
 			converter, err = buildAptosTimelockConverter(metadata)
 			if err != nil {
-				return nil, fmt.Errorf("error creating Aptos converter for selector %d: %w", selector, err)
+				return nil, fmt.Errorf("failed to create Aptos converter for selector %d: %w", selector, err)
 			}
 		case chainsel.FamilySui:
 			converter, _ = sui.NewTimelockConverter()
@@ -59,9 +59,10 @@ func buildAptosTimelockConverter(metadata types.ChainMetadata) (sdk.TimelockConv
 		return nil, fmt.Errorf("failed to unmarshal Aptos additional fields: %w", err)
 	}
 
+	opts := []aptos.TimelockConverterOption{}
 	if af.MCMSType.IsCurseMCMS() {
-		return aptos.NewCurseTimelockConverter(), nil
+		opts = append(opts, aptos.WithMCMSType(aptos.MCMSTypeCurse))
 	}
 
-	return aptos.NewTimelockConverter(), nil
+	return aptos.NewTimelockConverter(opts...), nil
 }
