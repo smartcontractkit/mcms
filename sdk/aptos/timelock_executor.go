@@ -15,7 +15,6 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk"
 
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 )
 
 var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
@@ -25,17 +24,20 @@ type TimelockExecutor struct {
 	TimelockInspector
 	client aptos.AptosRpcClient
 	auth   aptos.TransactionSigner
-
-	bindingFn func(address aptos.AccountAddress, client aptos.AptosRpcClient) mcms.MCMS
 }
 
-// NewTimelockExecutor creates a new TimelockExecutor
+// NewTimelockExecutor creates a new TimelockExecutor that talks to a standard MCMS contract.
 func NewTimelockExecutor(client aptos.AptosRpcClient, auth aptos.TransactionSigner) *TimelockExecutor {
+	return NewTimelockExecutorWithMCMSType(client, auth, MCMSTypeRegular)
+}
+
+// NewTimelockExecutorWithMCMSType creates a TimelockExecutor that talks to either a
+// standard MCMS or CurseMCMS contract depending on mcmsType.
+func NewTimelockExecutorWithMCMSType(client aptos.AptosRpcClient, auth aptos.TransactionSigner, mcmsType MCMSType) *TimelockExecutor {
 	return &TimelockExecutor{
-		TimelockInspector: *NewTimelockInspector(client),
+		TimelockInspector: *NewTimelockInspectorWithMCMSType(client, mcmsType),
 		client:            client,
 		auth:              auth,
-		bindingFn:         mcms.Bind,
 	}
 }
 
@@ -46,7 +48,7 @@ func (t *TimelockExecutor) Execute(
 	if timelockErr != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse Timelock address %q: %w", timelockAddress, timelockErr)
 	}
-	mcmsBinding := t.bindingFn(mcmsAddress, t.client)
+	contract := t.contractFn(mcmsAddress, t.client)
 	opts := &bind.TransactOpts{Signer: t.auth}
 
 	targets := make([]aptos.AccountAddress, len(bop.Transactions))
@@ -71,7 +73,7 @@ func (t *TimelockExecutor) Execute(
 		datas[i] = tx.Data
 	}
 
-	tx, err := mcmsBinding.MCMS().TimelockExecuteBatch(opts, targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes())
+	tx, err := contract.TimelockExecuteBatch(opts, targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes())
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to execute batch: %w", err)
 	}

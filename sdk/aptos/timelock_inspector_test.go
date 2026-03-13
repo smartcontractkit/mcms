@@ -11,10 +11,7 @@ import (
 
 	"github.com/aptos-labs/aptos-go-sdk"
 
-	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
-
 	mock_aptossdk "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
-	mock_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms"
 	mock_module_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms/mcms"
 )
 
@@ -25,7 +22,17 @@ func TestNewTimelockInspector(t *testing.T) {
 	inspector := NewTimelockInspector(mockClient)
 	assert.NotNil(t, inspector)
 	assert.Equal(t, mockClient, inspector.client)
-	assert.NotNil(t, inspector.bindingFn)
+	assert.NotNil(t, inspector.contractFn)
+}
+
+func TestNewTimelockInspectorWithMCMSType_Curse(t *testing.T) {
+	t.Parallel()
+	mockClient := mock_aptossdk.NewAptosRpcClient(t)
+
+	inspector := NewTimelockInspectorWithMCMSType(mockClient, MCMSTypeCurse)
+	assert.NotNil(t, inspector)
+	assert.Equal(t, mockClient, inspector.client)
+	assert.NotNil(t, inspector.contractFn)
 }
 
 func TestTimelockInspector_GetProposers(t *testing.T) {
@@ -61,7 +68,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		mockSetup func(m *mock_mcms.MCMS)
+		mockSetup func(m *mock_module_mcms.MCMSInterface)
 		want      bool
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -71,10 +78,8 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 				mcmsAddr: "0x123",
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockIsOperation(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockIsOperation(
 					mock.Anything,
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				).Return(true, nil)
@@ -93,10 +98,8 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 				mcmsAddr: "0x123",
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockIsOperation(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockIsOperation(
 					mock.Anything,
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				).Return(false, errors.New("error during TimelockIsOperation"))
@@ -109,16 +112,16 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mcmsBinding := mock_mcms.NewMCMS(t)
+			mockContract := mock_module_mcms.NewMCMSInterface(t)
 			inspector := TimelockInspector{
-				bindingFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
+				contractFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) timelockContract {
 					require.Equal(t, Must(hexToAddress(tt.args.mcmsAddr)), mcmsAddress)
-					return mcmsBinding
+					return mockContract
 				},
 			}
 
 			if tt.mockSetup != nil {
-				tt.mockSetup(mcmsBinding)
+				tt.mockSetup(mockContract)
 			}
 
 			got, err := inspector.IsOperation(t.Context(), tt.args.mcmsAddr, tt.args.opID)
@@ -139,7 +142,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		mockSetup func(m *mock_mcms.MCMS)
+		mockSetup func(m *mock_module_mcms.MCMSInterface)
 		want      bool
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -149,10 +152,8 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 				mcmsAddr: "0x123",
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockIsOperationPending(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockIsOperationPending(
 					mock.Anything,
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				).Return(true, nil)
@@ -171,10 +172,8 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 				mcmsAddr: "0x123",
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockIsOperationPending(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockIsOperationPending(
 					mock.Anything,
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				).Return(false, errors.New("error during TimelockIsOperationPending"))
@@ -187,16 +186,16 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mcmsBinding := mock_mcms.NewMCMS(t)
+			mockContract := mock_module_mcms.NewMCMSInterface(t)
 			inspector := TimelockInspector{
-				bindingFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
+				contractFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) timelockContract {
 					require.Equal(t, Must(hexToAddress(tt.args.mcmsAddr)), mcmsAddress)
-					return mcmsBinding
+					return mockContract
 				},
 			}
 
 			if tt.mockSetup != nil {
-				tt.mockSetup(mcmsBinding)
+				tt.mockSetup(mockContract)
 			}
 
 			got, err := inspector.IsOperationPending(t.Context(), tt.args.mcmsAddr, tt.args.opID)
@@ -217,7 +216,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		mockSetup func(m *mock_mcms.MCMS)
+		mockSetup func(m *mock_module_mcms.MCMSInterface)
 		want      bool
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -227,10 +226,8 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 				mcmsAddr: "0x123",
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockIsOperationReady(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockIsOperationReady(
 					mock.Anything,
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				).Return(true, nil)
@@ -249,10 +246,8 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 				mcmsAddr: "0x123",
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockIsOperationReady(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockIsOperationReady(
 					mock.Anything,
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				).Return(false, errors.New("error during TimelockIsOperationReady"))
@@ -265,16 +260,16 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mcmsBinding := mock_mcms.NewMCMS(t)
+			mockContract := mock_module_mcms.NewMCMSInterface(t)
 			inspector := TimelockInspector{
-				bindingFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
+				contractFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) timelockContract {
 					require.Equal(t, Must(hexToAddress(tt.args.mcmsAddr)), mcmsAddress)
-					return mcmsBinding
+					return mockContract
 				},
 			}
 
 			if tt.mockSetup != nil {
-				tt.mockSetup(mcmsBinding)
+				tt.mockSetup(mockContract)
 			}
 
 			got, err := inspector.IsOperationReady(t.Context(), tt.args.mcmsAddr, tt.args.opID)
@@ -295,7 +290,7 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		mockSetup func(m *mock_mcms.MCMS)
+		mockSetup func(m *mock_module_mcms.MCMSInterface)
 		want      bool
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -305,10 +300,8 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 				mcmsAddr: "0x123",
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockIsOperationDone(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockIsOperationDone(
 					mock.Anything,
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				).Return(true, nil)
@@ -327,10 +320,8 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 				mcmsAddr: "0x123",
 				opID:     [32]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10},
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockIsOperationDone(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockIsOperationDone(
 					mock.Anything,
 					[]byte{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 				).Return(false, errors.New("error during TimelockIsOperationDone"))
@@ -343,16 +334,16 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mcmsBinding := mock_mcms.NewMCMS(t)
+			mockContract := mock_module_mcms.NewMCMSInterface(t)
 			inspector := TimelockInspector{
-				bindingFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
+				contractFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) timelockContract {
 					require.Equal(t, Must(hexToAddress(tt.args.mcmsAddr)), mcmsAddress)
-					return mcmsBinding
+					return mockContract
 				},
 			}
 
 			if tt.mockSetup != nil {
-				tt.mockSetup(mcmsBinding)
+				tt.mockSetup(mockContract)
 			}
 
 			got, err := inspector.IsOperationDone(t.Context(), tt.args.mcmsAddr, tt.args.opID)
@@ -373,7 +364,7 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		mockSetup func(m *mock_mcms.MCMS)
+		mockSetup func(m *mock_module_mcms.MCMSInterface)
 		want      uint64
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -382,10 +373,8 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 			args: args{
 				mcmsAddr: "0x123",
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockMinDelay(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockMinDelay(
 					mock.Anything,
 				).Return(uint64(321), nil)
 			},
@@ -404,10 +393,8 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 			args: args{
 				mcmsAddr: "0x123",
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockMinDelay(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockMinDelay(
 					mock.Anything,
 				).Return(uint64(0), errors.New("error during TimelockMinDelay"))
 			},
@@ -420,20 +407,19 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mcmsBinding := mock_mcms.NewMCMS(t)
+			mockContract := mock_module_mcms.NewMCMSInterface(t)
 			inspector := TimelockInspector{
-				bindingFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
-					// only validate hex address if parsing was supposed to succeed
+				contractFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) timelockContract {
 					if tt.name != "failure - invalid MCMS address" {
 						require.Equal(t, Must(hexToAddress(tt.args.mcmsAddr)), mcmsAddress)
 					}
 
-					return mcmsBinding
+					return mockContract
 				},
 			}
 
 			if tt.mockSetup != nil {
-				tt.mockSetup(mcmsBinding)
+				tt.mockSetup(mockContract)
 			}
 
 			got, err := inspector.GetMinDelay(t.Context(), tt.args.mcmsAddr)

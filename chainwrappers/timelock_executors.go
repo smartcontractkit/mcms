@@ -1,6 +1,7 @@
 package chainwrappers
 
 import (
+	"encoding/json"
 	"fmt"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
@@ -57,9 +58,9 @@ func BuildTimelockExecutor(
 			return nil, fmt.Errorf("missing evm signer for selector %d", rawSelector)
 		}
 
-		evmChainMetadata, err := evm.ParseChainMetadata(metadata)
-		if err != nil {
-			return nil, fmt.Errorf("failed to parse EVM chain metadata for selector %d: %w", rawSelector, err)
+		evmChainMetadata, err1 := evm.ParseChainMetadata(metadata)
+		if err1 != nil {
+			return nil, fmt.Errorf("failed to parse EVM chain metadata for selector %d: %w", rawSelector, err1)
 		}
 		auth.GasPrice = evmChainMetadata.GasPrice
 		auth.GasLimit = evmChainMetadata.GasLimit
@@ -88,7 +89,16 @@ func BuildTimelockExecutor(
 			return nil, fmt.Errorf("missing aptos chain signer for selector %d", chainSelector)
 		}
 
-		return aptos.NewTimelockExecutor(client, signer), nil
+		mcmsType := aptos.MCMSTypeRegular
+		if len(metadata.AdditionalFields) > 0 {
+			var afm aptos.AdditionalFieldsMetadata
+			if err = json.Unmarshal(metadata.AdditionalFields, &afm); err != nil {
+				return nil, fmt.Errorf("failed to parse Aptos metadata for selector %d: %w", rawSelector, err)
+			}
+			mcmsType = afm.MCMSType
+		}
+
+		return aptos.NewTimelockExecutorWithMCMSType(client, signer, mcmsType), nil
 
 	case chainsel.FamilySui:
 		client, ok := chains.SuiClient(rawSelector)

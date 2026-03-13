@@ -19,9 +19,7 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk"
 
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
-	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
 
-	mock_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms"
 	mock_module_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms/mcms"
 )
 
@@ -29,7 +27,14 @@ func TestNewTimelockConverter(t *testing.T) {
 	t.Parallel()
 	converter := NewTimelockConverter()
 	assert.NotNil(t, converter)
-	assert.NotNil(t, converter.bindingFn)
+	assert.NotNil(t, converter.encoderFn)
+}
+
+func TestNewCurseTimelockConverter(t *testing.T) {
+	t.Parallel()
+	converter := NewCurseTimelockConverter()
+	assert.NotNil(t, converter)
+	assert.NotNil(t, converter.encoderFn)
 }
 
 func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
@@ -47,7 +52,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 	tests := []struct {
 		name           string
 		args           args
-		mockSetup      func(m *mock_mcms.MCMS)
+		mockSetup      func(m *mock_module_mcms.MCMSEncoder)
 		wantOperations []types.Operation
 		wantHash       common.Hash
 		wantErr        assert.ErrorAssertionFunc
@@ -89,12 +94,8 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				predecessor: common.Hash{},
 				salt:        common.HexToHash("0xabcd"),
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMS)
-				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
-				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
-				mockMCMSEncoder.EXPECT().TimelockScheduleBatch(
+			mockSetup: func(m *mock_module_mcms.MCMSEncoder) {
+				m.EXPECT().TimelockScheduleBatch(
 					[]aptos.AccountAddress{Must(hexToAddress("0x456")), Must(hexToAddress("0x789"))},
 					[]string{"module1", "module2"},
 					[]string{"function_one", "function_two"},
@@ -178,12 +179,8 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				predecessor: common.Hash{},
 				salt:        common.HexToHash("0xabcd"),
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMS)
-				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
-				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
-				mockMCMSEncoder.EXPECT().TimelockBypasserExecuteBatch(
+			mockSetup: func(m *mock_module_mcms.MCMSEncoder) {
+				m.EXPECT().TimelockBypasserExecuteBatch(
 					[]aptos.AccountAddress{Must(hexToAddress("0x456")), Must(hexToAddress("0x789"))},
 					[]string{"module1", "module2"},
 					[]string{"function_one", "function_two"},
@@ -264,12 +261,8 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				predecessor: common.Hash{},
 				salt:        common.HexToHash("0xabcd"),
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMS)
-				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
-				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
-				mockMCMSEncoder.EXPECT().TimelockCancel(
+			mockSetup: func(m *mock_module_mcms.MCMSEncoder) {
+				m.EXPECT().TimelockCancel(
 					Must(HashOperationBatch(
 						[]aptos.AccountAddress{Must(hexToAddress("0x456")), Must(hexToAddress("0x789"))},
 						[]string{"module1", "module2"},
@@ -396,12 +389,8 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				mcmAddress: "0x123",
 				action:     types.TimelockActionSchedule,
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMS)
-				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
-				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
-				mockMCMSEncoder.EXPECT().TimelockScheduleBatch(
+			mockSetup: func(m *mock_module_mcms.MCMSEncoder) {
+				m.EXPECT().TimelockScheduleBatch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return(
 					bind.ModuleInformation{}, "", nil, nil,
@@ -415,12 +404,8 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				mcmAddress: "0x123",
 				action:     types.TimelockActionBypass,
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMS)
-				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
-				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
-				mockMCMSEncoder.EXPECT().TimelockBypasserExecuteBatch(
+			mockSetup: func(m *mock_module_mcms.MCMSEncoder) {
+				m.EXPECT().TimelockBypasserExecuteBatch(
 					mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 				).Return(
 					bind.ModuleInformation{}, "", nil, nil,
@@ -434,12 +419,8 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				mcmAddress: "0x123",
 				action:     types.TimelockActionCancel,
 			},
-			mockSetup: func(m *mock_mcms.MCMS) {
-				mockMCMS := mock_module_mcms.NewMCMSInterface(t)
-				m.EXPECT().MCMS().Return(mockMCMS)
-				mockMCMSEncoder := mock_module_mcms.NewMCMSEncoder(t)
-				mockMCMS.EXPECT().Encoder().Return(mockMCMSEncoder)
-				mockMCMSEncoder.EXPECT().TimelockCancel(
+			mockSetup: func(m *mock_module_mcms.MCMSEncoder) {
+				m.EXPECT().TimelockCancel(
 					mock.Anything,
 				).Return(
 					bind.ModuleInformation{}, "", nil, nil,
@@ -453,16 +434,16 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mcmsBinding := mock_mcms.NewMCMS(t)
+			mockEncoder := mock_module_mcms.NewMCMSEncoder(t)
 			converter := TimelockConverter{
-				bindingFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
+				encoderFn: func(mcmsAddress aptos.AccountAddress, _ aptos.AptosRpcClient) timelockEncoder {
 					require.Equal(t, Must(hexToAddress(tt.args.mcmAddress)), mcmsAddress)
-					return mcmsBinding
+					return mockEncoder
 				},
 			}
 
 			if tt.mockSetup != nil {
-				tt.mockSetup(mcmsBinding)
+				tt.mockSetup(mockEncoder)
 			}
 
 			gotOperations, gotHash, err := converter.ConvertBatchToChainOperations(t.Context(), tt.args.metadata, tt.args.bop, tt.args.timelockAddress, tt.args.mcmAddress, tt.args.delay, tt.args.action, tt.args.predecessor, tt.args.salt)
