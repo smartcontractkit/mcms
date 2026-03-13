@@ -18,3 +18,16 @@ func AptosRoleFromAction(action types.TimelockAction) (TimelockRole, error) {
 		return 0, errors.New("unknown timelock action")
 	}
 }
+
+func ActionFromAptosRole(role TimelockRole) (types.TimelockAction, error) {
+	switch role {
+	case TimelockRoleBypasser:
+		return types.TimelockActionBypass, nil
+	case TimelockRoleProposer:
+		return types.TimelockActionSchedule, nil
+	case TimelockRoleCanceller:
+		return types.TimelockActionCancel, nil
+	default:
+		return "unknown", errors.New("unknown timelock role")
+	}
+}

@@ -61,3 +61,51 @@ func TestAptosRoleFromAction(t *testing.T) {
 		})
 	}
 }
+
+func TestActionFromAptosRole(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		role    TimelockRole
+		want    mcmsTypes.TimelockAction
+		wantErr string
+	}{
+		{
+			name: "bypasser role returns bypass action",
+			role: TimelockRoleBypasser,
+			want: mcmsTypes.TimelockActionBypass,
+		},
+		{
+			name: "proposer role returns schedule action",
+			role: TimelockRoleProposer,
+			want: mcmsTypes.TimelockActionSchedule,
+		},
+		{
+			name: "canceller role returns cancel action",
+			role: TimelockRoleCanceller,
+			want: mcmsTypes.TimelockActionCancel,
+		},
+		{
+			name:    "unknown role returns error",
+			role:    TimelockRole(99),
+			want:    "unknown",
+			wantErr: "unknown timelock role",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := ActionFromAptosRole(tt.role)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, got)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+		})
+	}
+}
