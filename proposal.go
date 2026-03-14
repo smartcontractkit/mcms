@@ -33,6 +33,35 @@ type ProposalInterface interface {
 	Validate() error
 }
 
+// ProposalKindFromJSON extracts the Kind from a JSON representation of a Proposal
+// or TimelockProposal. It returns an error if the JSON is invalid or the kind
+// is not recognized.
+func ProposalKindFromJSON(r io.Reader) (types.ProposalKind, error) {
+	var partial struct {
+		Kind types.ProposalKind `json:"kind"`
+	}
+
+	if err := json.NewDecoder(r).Decode(&partial); err != nil {
+		return "", fmt.Errorf("failed to parse proposal JSON: %w", err)
+	}
+
+	if partial.Kind == "" {
+		return "", errors.New("proposal JSON missing required 'kind' field")
+	}
+
+	if _, ok := types.StringToProposalKind[string(partial.Kind)]; !ok {
+		return "", fmt.Errorf("unknown proposal kind: %q", partial.Kind)
+	}
+
+	return partial.Kind, nil
+}
+
+// ProposalKindFromJSONString is a convenience wrapper around ProposalKindFromJSON
+// that accepts a string instead of an io.Reader.
+func ProposalKindFromJSONString(s string) (types.ProposalKind, error) {
+	return ProposalKindFromJSON(strings.NewReader(s))
+}
+
 func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInterface, error) {
 	switch proposalType {
 	case types.KindProposal:
