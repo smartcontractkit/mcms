@@ -79,6 +79,8 @@ func (c *curseMcmsViewer) GetRootMetadata(opts *bind.CallOpts, role byte) (modul
 
 var _ sdk.Inspector = &Inspector{}
 
+type RPCClient aptos.AptosRpcClient
+
 type Inspector struct {
 	ConfigTransformer
 	client   aptos.AptosRpcClient
