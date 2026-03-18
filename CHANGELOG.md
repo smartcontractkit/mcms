@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.38.2
+
+### Patch Changes
+
+- [#676](https://github.com/smartcontractkit/mcms/pull/676) [`ff96b5b`](https://github.com/smartcontractkit/mcms/commit/ff96b5bd7be5fd3c406863af8095107b4d2c9a3f) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add role conversion helper to aptos sdk
+
 ## 0.38.1
 
 ### Patch Changes
