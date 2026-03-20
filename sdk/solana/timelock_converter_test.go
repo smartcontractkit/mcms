@@ -107,6 +107,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			wantOperations: []types.Operation{
 				{
 					// initialize operation
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -126,6 +127,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// initialize first instruction
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -145,6 +147,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// append first instruction data
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -164,6 +167,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// initialize second instruction
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -183,6 +187,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// append second instruction data
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -202,6 +207,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// finalize
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -220,6 +226,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// schedule batch
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -252,6 +259,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			wantOperations: []types.Operation{
 				{
 					// schedule batch
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -284,6 +292,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			wantOperations: []types.Operation{
 				{
 					// initialize
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -303,6 +312,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// initialize first instruction
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -322,6 +332,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// append first instruction
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -341,6 +352,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// initialize second instruction
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -360,6 +372,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// append second instruction
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -379,6 +392,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// finalize
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -397,6 +411,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// bypass batch execute
+					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -501,23 +516,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 	}
 }
 
-// ----- helpers -----
-func toJSON(t *testing.T, payload any) []byte {
-	t.Helper()
-	marshalled, err := json.Marshal(&payload)
-	require.NoError(t, err)
-
-	return marshalled
-}
-
-func base64Decode(t *testing.T, str string) []byte {
-	t.Helper()
-	decodedBytes, err := base64.StdEncoding.DecodeString(str)
-	require.NoError(t, err)
-
-	return decodedBytes
-}
-
 func TestAppendIxDataChunkSize(t *testing.T) {
 	tests := []struct {
 		name      string
@@ -539,4 +537,129 @@ func TestAppendIxDataChunkSize(t *testing.T) {
 			require.Equal(t, tt.want, AppendIxDataChunkSize())
 		})
 	}
+}
+
+func TestOperationID(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		batchOp     types.BatchOperation
+		action      types.TimelockAction
+		predecessor common.Hash
+		salt        common.Hash
+		want        common.Hash
+		wantErr     string
+	}{
+		{
+			name: "success: schedule proposal",
+			batchOp: types.BatchOperation{
+				ChainSelector: chaintest.Chain4Selector,
+				Transactions: []types.Transaction{{
+					To:   "GwAQ33PbytKignFmKvyVSLp7pD8tKMaBXXNwFTTkGsME",
+					Data: []byte("0x1234"),
+					AdditionalFields: []byte(`{
+						"accounts": [{
+							"PublicKey": "8na2HyqgS15GcjiWmMQvQ87o8kw188QgaVSTa6q94orU",
+							"IsWritable": true,
+							"IsSigner": true
+						}, {
+							"PublicKey": "AjfVZUFzzC8nyA37GXBEdB57RfqPYXifYNtP9jRdRtCw",
+							"IsWritable": true
+						}],
+						"value": 123
+					}`),
+					OperationMetadata: types.OperationMetadata{},
+				}, {
+					To:                "t3ChqFTKHUFdjNPDf8CuhFGwkwzqR47LL7sDbeU99XD",
+					Data:              []byte("0x5678"),
+					AdditionalFields:  []byte{},
+					OperationMetadata: types.OperationMetadata{},
+				}},
+			},
+			action:      types.TimelockActionSchedule,
+			predecessor: common.HexToHash("0x0123"),
+			salt:        common.HexToHash("0xabcd"),
+			want:        common.HexToHash("0x6b6cdd5d076633e336ced0996555e37bb4895c9f18bdfabfe7f068bfab37c080"),
+		},
+		{
+			name: "success: bypass proposal",
+			batchOp: types.BatchOperation{
+				ChainSelector: chaintest.Chain4Selector,
+				Transactions: []types.Transaction{{
+					To:   "GwAQ33PbytKignFmKvyVSLp7pD8tKMaBXXNwFTTkGsME",
+					Data: []byte("0x1234"),
+					AdditionalFields: []byte(`{
+						"accounts": [{
+							"PublicKey": "8na2HyqgS15GcjiWmMQvQ87o8kw188QgaVSTa6q94orU",
+							"IsWritable": true,
+							"IsSigner": true
+						}, {
+							"PublicKey": "AjfVZUFzzC8nyA37GXBEdB57RfqPYXifYNtP9jRdRtCw",
+							"IsWritable": true
+						}],
+						"value": 123
+					}`),
+					OperationMetadata: types.OperationMetadata{},
+				}, {
+					To:                "t3ChqFTKHUFdjNPDf8CuhFGwkwzqR47LL7sDbeU99XD",
+					Data:              []byte("0x5678"),
+					AdditionalFields:  []byte{},
+					OperationMetadata: types.OperationMetadata{},
+				}},
+			},
+			action:      types.TimelockActionBypass,
+			predecessor: common.HexToHash("0x0123"),
+			salt:        common.HexToHash("0xabcd"),
+			want:        common.HexToHash("0x342cfab7d5a36183bab6c3e35e7ddfa800e0746d5112857021c5cbe96ace2b4b"),
+		},
+		{
+			name: "failure: bad additional fields",
+			batchOp: types.BatchOperation{
+				ChainSelector: chaintest.Chain4Selector,
+				Transactions: []types.Transaction{{
+					To:                "GwAQ33PbytKignFmKvyVSLp7pD8tKMaBXXNwFTTkGsME",
+					Data:              []byte("0x1234"),
+					AdditionalFields:  []byte(`invalid`),
+					OperationMetadata: types.OperationMetadata{},
+				}},
+			},
+			action:      types.TimelockActionSchedule,
+			predecessor: common.HexToHash("0x0123"),
+			salt:        common.HexToHash("0xabcd"),
+			wantErr:     "unable to convert batchop to solana instructions: unable to unmarshal additional fields: invalid character",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			operationID, err := OperationID(tt.batchOp, tt.action, tt.predecessor, tt.salt)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, operationID)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+// ----- helpers -----
+
+func toJSON(t *testing.T, payload any) []byte {
+	t.Helper()
+	marshalled, err := json.Marshal(&payload)
+	require.NoError(t, err)
+
+	return marshalled
+}
+
+func base64Decode(t *testing.T, str string) []byte {
+	t.Helper()
+	decodedBytes, err := base64.StdEncoding.DecodeString(str)
+	require.NoError(t, err)
+
+	return decodedBytes
 }

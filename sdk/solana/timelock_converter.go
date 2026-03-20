@@ -115,12 +115,30 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to build %v instruction: %w", action, err)
 	}
 
-	operations, err := solanaInstructionToMcmsOperation(instructions, batchOp.ChainSelector, tags, mcmSignerPDA)
+	operations, err := solanaInstructionToMcmsOperation(instructions, operationID, batchOp.ChainSelector, tags, mcmSignerPDA)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to convert instructions to mcms operations: %w", err)
 	}
 
 	return operations, operationID, nil
+}
+
+func OperationID(
+	batchOp types.BatchOperation,
+	action types.TimelockAction,
+	predecessor common.Hash,
+	salt common.Hash,
+) (common.Hash, error) {
+	instructionsData, err := getInstructionDataFromBatchOperation(batchOp)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("unable to convert batchop to solana instructions: %w", err)
+	}
+
+	if action == types.TimelockActionBypass {
+		predecessor = common.Hash{}
+	}
+
+	return HashOperation(instructionsData, predecessor, salt)
 }
 
 // HashOperation replicates the hash calculation from Solidity
@@ -261,7 +279,8 @@ func getTagsFromBatchOperation(batchOp types.BatchOperation) []string {
 }
 
 func solanaInstructionToMcmsOperation(
-	instructions []solana.Instruction, chainSelector types.ChainSelector, tags []string, signerPDA solana.PublicKey,
+	instructions []solana.Instruction, operationID common.Hash, chainSelector types.ChainSelector,
+	tags []string, signerPDA solana.PublicKey,
 ) ([]types.Operation, error) {
 	operations := make([]types.Operation, 0, len(instructions))
 	for _, instruction := range instructions {
@@ -282,7 +301,12 @@ func solanaInstructionToMcmsOperation(
 			return []types.Operation{}, fmt.Errorf("unable to create new transaction: %w", err)
 		}
 
-		operations = append(operations, types.Operation{ChainSelector: chainSelector, Transaction: transaction})
+		operation := types.Operation{
+			OperationID:   operationID,
+			ChainSelector: chainSelector,
+			Transaction:   transaction,
+		}
+		operations = append(operations, operation)
 	}
 
 	return operations, nil

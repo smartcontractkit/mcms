@@ -130,17 +130,49 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		return nil, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)
 	}
 
-	op := types.Operation{
-		ChainSelector: bop.ChainSelector,
-		Transaction:   tx,
-	}
-
 	operationID, hashErr := HashOperationBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes())
 	if hashErr != nil {
 		return nil, common.Hash{}, fmt.Errorf("failed to hash operation batch: %w", hashErr)
 	}
 
+	op := types.Operation{
+		OperationID:   operationID,
+		ChainSelector: bop.ChainSelector,
+		Transaction:   tx,
+	}
+
 	return []types.Operation{op}, operationID, nil
+}
+
+func OperationID(
+	batchOp types.BatchOperation,
+	action types.TimelockAction,
+	predecessor common.Hash,
+	salt common.Hash,
+) (common.Hash, error) {
+	targets := make([][]byte, len(batchOp.Transactions))
+	moduleNames := make([]string, len(batchOp.Transactions))
+	functionNames := make([]string, len(batchOp.Transactions))
+	datas := make([][]byte, len(batchOp.Transactions))
+
+	for i, tx := range batchOp.Transactions {
+		var additionalFields AdditionalFields
+		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+			return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+		}
+
+		targetAddr, err := AddressFromHex(tx.To)
+		if err != nil {
+			return common.Hash{}, fmt.Errorf("failed to parse target address %q: %w", tx.To, err)
+		}
+
+		targets[i] = targetAddr.Bytes()
+		moduleNames[i] = additionalFields.ModuleName
+		functionNames[i] = additionalFields.Function
+		datas[i] = tx.Data
+	}
+
+	return HashOperationBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes())
 }
 
 // HashOperationBatch calculates the hash of a batch operation using BCS serialization

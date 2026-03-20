@@ -132,11 +132,43 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	op := types.Operation{
+		OperationID:   operationID,
 		ChainSelector: bop.ChainSelector,
 		Transaction:   tx,
 	}
 
 	return []types.Operation{op}, operationID, nil
+}
+
+func OperationID(
+	batchOp types.BatchOperation,
+	action types.TimelockAction,
+	predecessor common.Hash,
+	salt common.Hash,
+) (common.Hash, error) {
+	targets := make([]aptos.AccountAddress, len(batchOp.Transactions))
+	moduleNames := make([]string, len(batchOp.Transactions))
+	functionNames := make([]string, len(batchOp.Transactions))
+	datas := make([][]byte, len(batchOp.Transactions))
+
+	for i, tx := range batchOp.Transactions {
+		var additionalFields AdditionalFields
+		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+			return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+		}
+
+		toAddress, err := hexToAddress(tx.To)
+		if err != nil {
+			return common.Hash{}, fmt.Errorf("failed to parse To address %q: %w", tx.To, err)
+		}
+
+		targets[i] = toAddress
+		moduleNames[i] = additionalFields.ModuleName
+		functionNames[i] = additionalFields.Function
+		datas[i] = tx.Data
+	}
+
+	return HashOperationBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes())
 }
 
 func HashOperationBatch(targets []aptos.AccountAddress, moduleNames, functionNames []string, datas [][]byte, predecessor, salt []byte) (common.Hash, error) {

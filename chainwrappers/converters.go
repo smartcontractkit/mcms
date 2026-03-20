@@ -19,34 +19,43 @@ import (
 func BuildConverters(chainMetadata map[types.ChainSelector]types.ChainMetadata) (map[types.ChainSelector]sdk.TimelockConverter, error) {
 	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
 	for selector, metadata := range chainMetadata {
-		fam, err := types.GetChainSelectorFamily(selector)
+		converter, err := BuildConverter(selector, metadata)
 		if err != nil {
-			return nil, fmt.Errorf("error getting chain family: %w", err)
-		}
-
-		var converter sdk.TimelockConverter
-		switch fam {
-		case chainsel.FamilyEVM:
-			converter = evm.NewTimelockConverter()
-		case chainsel.FamilySolana:
-			converter = solana.NewTimelockConverter()
-		case chainsel.FamilyAptos:
-			converter, err = buildAptosTimelockConverter(metadata)
-			if err != nil {
-				return nil, fmt.Errorf("error creating Aptos converter for selector %d: %w", selector, err)
-			}
-		case chainsel.FamilySui:
-			converter, _ = sui.NewTimelockConverter()
-		case chainsel.FamilyTon:
-			converter = ton.NewTimelockConverter(ton.DefaultSendAmount)
-		default:
-			return nil, fmt.Errorf("unsupported chain family %s", fam)
+			return nil, fmt.Errorf("failed to build converter for selector %d: %w", selector, err)
 		}
 
 		converters[selector] = converter
 	}
 
 	return converters, nil
+}
+
+func BuildConverter(selector types.ChainSelector, metadata types.ChainMetadata) (sdk.TimelockConverter, error) {
+	fam, err := types.GetChainSelectorFamily(selector)
+	if err != nil {
+		return nil, fmt.Errorf("error getting chain family: %w", err)
+	}
+
+	var converter sdk.TimelockConverter
+	switch fam {
+	case chainsel.FamilyEVM:
+		converter = evm.NewTimelockConverter()
+	case chainsel.FamilySolana:
+		converter = solana.NewTimelockConverter()
+	case chainsel.FamilyAptos:
+		converter, err = buildAptosTimelockConverter(metadata)
+		if err != nil {
+			return nil, fmt.Errorf("error creating Aptos converter for selector %d: %w", selector, err)
+		}
+	case chainsel.FamilySui:
+		converter, _ = sui.NewTimelockConverter()
+	case chainsel.FamilyTon:
+		converter = ton.NewTimelockConverter(ton.DefaultSendAmount)
+	default:
+		return nil, fmt.Errorf("unsupported chain family %s", fam)
+	}
+
+	return converter, nil
 }
 
 func buildAptosTimelockConverter(metadata types.ChainMetadata) (sdk.TimelockConverter, error) {

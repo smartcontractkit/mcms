@@ -19,7 +19,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 )
 
-// Default amount to send with timelock transactions (to cover gas fees)
+// DefaultSendAmount amount to send with timelock transactions (to cover gas fees)
 var DefaultSendAmount = tlb.MustFromTON("0.15")
 
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
@@ -116,11 +116,26 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	op := types.Operation{
+		OperationID:   operationID,
 		ChainSelector: bop.ChainSelector,
 		Transaction:   tx,
 	}
 
 	return []types.Operation{op}, operationID, nil
+}
+
+func OperationID(
+	batchOp types.BatchOperation,
+	action types.TimelockAction,
+	predecessor common.Hash,
+	salt common.Hash,
+) (common.Hash, error) {
+	calls, err := ConvertBatchToCalls(batchOp)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to convert batch to calls: %w", err)
+	}
+
+	return HashOperationBatch(calls, predecessor, salt)
 }
 
 func ConvertBatchToCalls(bop types.BatchOperation) ([]timelock.Call, error) {
