@@ -158,7 +158,7 @@ func OperationID(
 	for i, tx := range batchOp.Transactions {
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return common.Hash{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+			return common.Hash{}, fmt.Errorf("failed to unmarshal Sui additional fields: %w", err)
 		}
 
 		targetAddr, err := AddressFromHex(tx.To)

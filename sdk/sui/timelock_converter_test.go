@@ -449,7 +449,7 @@ func TestOperationID(t *testing.T) {
 			action:      types.TimelockActionSchedule,
 			predecessor: common.HexToHash("0x0123"),
 			salt:        common.HexToHash("0xabcd"),
-			wantErr:     "failed to unmarshal additional fields: invalid character",
+			wantErr:     "failed to unmarshal Sui additional fields: invalid character",
 		},
 		{
 

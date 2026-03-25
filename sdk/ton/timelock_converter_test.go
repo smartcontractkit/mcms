@@ -103,7 +103,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:   types.TimelockActionSchedule,
 			predecessor: zeroHash,
 			salt:        zeroHash,
-			wantErr:     "failed to unmarshal additional fields: invalid character 'i' looking for beginning of value",
+			wantErr:     "failed to unmarshal TON additional fields: invalid character 'i' looking for beginning of value",
 		},
 		{
 			name: "Invalid address in transaction",
@@ -203,7 +203,7 @@ func TestOperationID(t *testing.T) {
 			action:      types.TimelockActionSchedule,
 			predecessor: common.HexToHash("0x0123"),
 			salt:        common.HexToHash("0xabcd"),
-			wantErr:     "failed to unmarshal additional fields: invalid character",
+			wantErr:     "failed to unmarshal TON additional fields: invalid character",
 		},
 		{
 			name: "failure: bad To address",

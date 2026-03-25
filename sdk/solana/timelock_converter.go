@@ -55,7 +55,7 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	tags := getTagsFromBatchOperation(batchOp)
 	instructionsData, err := getInstructionDataFromBatchOperation(batchOp)
 	if err != nil {
-		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to convert batchop to solana instructions: %w", err)
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to convert batch operation to solana instructions: %w", err)
 	}
 
 	if action == types.TimelockActionBypass {
@@ -131,7 +131,7 @@ func OperationID(
 ) (common.Hash, error) {
 	instructionsData, err := getInstructionDataFromBatchOperation(batchOp)
 	if err != nil {
-		return common.Hash{}, fmt.Errorf("unable to convert batchop to solana instructions: %w", err)
+		return common.Hash{}, fmt.Errorf("unable to convert batch operation to solana instructions: %w", err)
 	}
 
 	if action == types.TimelockActionBypass {
@@ -202,7 +202,7 @@ func getInstructionDataFromBatchOperation(batchOp types.BatchOperation) ([]bindi
 		if len(tx.AdditionalFields) > 0 {
 			err = json.Unmarshal(tx.AdditionalFields, &additionalFields)
 			if err != nil {
-				return nil, fmt.Errorf("unable to unmarshal additional fields: %w\n%v", err, string(tx.AdditionalFields))
+				return nil, fmt.Errorf("unable to unmarshal Solana additional fields: %w\n%v", err, string(tx.AdditionalFields))
 			}
 		}
 

@@ -144,7 +144,7 @@ func ConvertBatchToCalls(bop types.BatchOperation) ([]timelock.Call, error) {
 		// Unmarshal the AdditionalFields from the operation
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+			return nil, fmt.Errorf("failed to unmarshal TON additional fields: %w", err)
 		}
 
 		// Map to Ton Address type

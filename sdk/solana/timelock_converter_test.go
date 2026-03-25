@@ -469,7 +469,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			action:          types.TimelockActionSchedule,
 			predecessor:     common.Hash{},
 			salt:            defaultSalt,
-			wantErr:         "unable to convert batchop to solana instructions: unable to parse program id from To field: ",
+			wantErr:         "unable to convert batch operation to solana instructions: unable to parse program id from To field: ",
 			batchOp: func(bop types.BatchOperation) types.BatchOperation {
 				bop.Transactions[0].To = "invalid-address"
 				return bop
@@ -627,7 +627,7 @@ func TestOperationID(t *testing.T) {
 			action:      types.TimelockActionSchedule,
 			predecessor: common.HexToHash("0x0123"),
 			salt:        common.HexToHash("0xabcd"),
-			wantErr:     "unable to convert batchop to solana instructions: unable to unmarshal additional fields: invalid character",
+			wantErr:     "unable to convert batch operation to solana instructions: unable to unmarshal Solana additional fields: invalid character",
 		},
 	}
 	for _, tt := range tests {
