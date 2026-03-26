@@ -82,7 +82,7 @@ func (p *BaseProposal) AppendSignature(signature types.Signature) {
 	p.Signatures = append(p.Signatures, signature)
 }
 
-// ChainMetadata returns the chain metadata for the proposal.
+// ChainMetadatas returns the chain metadata for the proposal.
 func (p *BaseProposal) ChainMetadatas() map[types.ChainSelector]types.ChainMetadata {
 	cmCopy := make(map[types.ChainSelector]types.ChainMetadata, len(p.ChainMetadata))
 	for k, v := range p.ChainMetadata {
@@ -392,32 +392,6 @@ func proposalValidateBasic(proposalObj Proposal) error {
 // merkle tree generation.
 func wrapTreeGenErr(err error) error {
 	return fmt.Errorf("merkle tree generation error: %w", err)
-}
-
-func mergeMetadata(m1, m2 map[string]any) map[string]any {
-	if len(m2) == 0 {
-		return m1
-	}
-
-	return mergeMetadataMaps(m1, m2)
-}
-
-func mergeMetadataMaps(a, b map[string]any) map[string]any {
-	out := make(map[string]any, len(a))
-	maps.Copy(out, a)
-	for k, v := range b {
-		if v, ok := v.(map[string]any); ok {
-			if bv, ok := out[k]; ok {
-				if bv, ok := bv.(map[string]any); ok {
-					out[k] = mergeMetadataMaps(bv, v)
-					continue
-				}
-			}
-		}
-		out[k] = v
-	}
-
-	return out
 }
 
 // validateNoDuplicateSigners ensures all signers are unique based on their raw bytes.

@@ -189,7 +189,7 @@ func TestNewTimelockExecutable(t *testing.T) {
 				types.ChainSelector(1): executor,
 			},
 			wantErr:    true,
-			wantErrMsg: "unable to set predecessors: unable to create converter from executor: chain family not found for selector",
+			wantErrMsg: "unable to set predecessors: unable to create converter from executor: error getting chain family: chain family not found for selector 1",
 		},
 	}
 

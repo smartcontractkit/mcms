@@ -41,7 +41,9 @@ func generateQueuedProposalStartingOpCounts[T ProposalInterface](predecessorProp
 func decodeAndValidateProposal[T ProposalInterface](reader io.Reader) (T, error) {
 	// Decode the proposal
 	var proposal T
-	if err := json.NewDecoder(reader).Decode(&proposal); err != nil {
+	decoder := json.NewDecoder(reader)
+	decoder.UseNumber()
+	if err := decoder.Decode(&proposal); err != nil {
 		return proposal, fmt.Errorf("failed to decode proposal: %w", err)
 	}
 

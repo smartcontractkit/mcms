@@ -36,10 +36,17 @@ tasks:
     cmds:
       - CTF_CONFIGS=$CTF_CONFIGS go test -v -tags=e2e -test.run TestEVMSuite {{.CLI_ARGS}} ./e2e/tests...
 
+  e2e:solana:
+    desc: "Run Solana e2e tests"
+    env:
+      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.solana.toml" }}'
+    cmds:
+      - CTF_CONFIGS=$CTF_CONFIGS go test -tags=e2e -test.run TestSuite {{.CLI_ARGS}} ./e2e/tests...
+
   e2e:aptos:
     desc: "Run Aptos e2e tests"
     env:
-      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.toml" }}'
+      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.aptos.toml" }}'
     cmds:
       - CTF_CONFIGS=$CTF_CONFIGS go test -tags=e2e -test.run TestAptosSuite {{.CLI_ARGS}} ./e2e/tests...
 
