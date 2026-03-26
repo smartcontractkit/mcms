@@ -46,12 +46,12 @@ func NewTimelockProposal(r io.Reader, opts ...ProposalOption) (*TimelockProposal
 
 	proposal, err := newProposal[*TimelockProposal](r, options.predecessors)
 	if err != nil {
-		return nil, err
+		return proposal, err
 	}
 
 	_, err = proposal.SetOperationIDs(context.Background(), true) // TODO: OPT-400
 	if err != nil {
-		return nil, fmt.Errorf("failed to set operation IDs: %w", err)
+		return proposal, fmt.Errorf("failed to set operation IDs: %w", err)
 	}
 
 	return proposal, nil
