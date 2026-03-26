@@ -1,5 +1,15 @@
 # @smartcontractkit/mcms
 
+## 0.39.0
+
+### Minor Changes
+
+- [#684](https://github.com/smartcontractkit/mcms/pull/684) [`aef0e32`](https://github.com/smartcontractkit/mcms/commit/aef0e32f8b860ddef251dbb77fccf2acde92c426) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add an `OperationID` field to the Operation types
+
+### Patch Changes
+
+- [#680](https://github.com/smartcontractkit/mcms/pull/680) [`b439d72`](https://github.com/smartcontractkit/mcms/commit/b439d7234691c008ccf3a570e5682d7cec5077a8) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - remove unused function
+
 ## 0.38.2
 
 ### Patch Changes
