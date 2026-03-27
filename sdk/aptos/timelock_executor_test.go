@@ -19,10 +19,7 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk"
 	"github.com/aptos-labs/aptos-go-sdk/api"
 
-	"github.com/smartcontractkit/chainlink-aptos/bindings/mcms"
-
 	mock_aptossdk "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
-	mock_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms"
 	mock_module_mcms "github.com/smartcontractkit/mcms/sdk/aptos/mocks/mcms/mcms"
 )
 
@@ -33,7 +30,17 @@ func TestNewTimelockExecutor(t *testing.T) {
 	executor := NewTimelockExecutor(mockClient, mockSigner)
 	assert.Equal(t, mockClient, executor.client)
 	assert.Equal(t, mockSigner, executor.auth)
-	assert.NotNil(t, executor.bindingFn)
+	assert.NotNil(t, executor.contractFn)
+}
+
+func TestNewTimelockExecutorWithMCMSType_Curse(t *testing.T) {
+	t.Parallel()
+	mockClient := mock_aptossdk.NewAptosRpcClient(t)
+	mockSigner := mock_aptossdk.NewTransactionSigner(t)
+	executor := NewTimelockExecutorWithMCMSType(mockClient, mockSigner, MCMSTypeCurse)
+	assert.Equal(t, mockClient, executor.client)
+	assert.Equal(t, mockSigner, executor.auth)
+	assert.NotNil(t, executor.contractFn)
 }
 
 func TestExecutor_Execute(t *testing.T) {
@@ -47,7 +54,7 @@ func TestExecutor_Execute(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		mockSetup func(mcms *mock_mcms.MCMS)
+		mockSetup func(m *mock_module_mcms.MCMSInterface)
 		want      types.TransactionResult
 		wantErr   assert.ErrorAssertionFunc
 	}{
@@ -80,10 +87,8 @@ func TestExecutor_Execute(t *testing.T) {
 				predecessor:     common.Hash{},
 				salt:            common.HexToHash("0xabcd"),
 			},
-			mockSetup: func(mcms *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				mcms.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockExecuteBatch(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockExecuteBatch(
 					mock.Anything,
 					[]aptos.AccountAddress{Must(hexToAddress("0x456")), Must(hexToAddress("0x789"))},
 					[]string{"module1", "module2"},
@@ -168,10 +173,8 @@ func TestExecutor_Execute(t *testing.T) {
 				predecessor:     common.Hash{},
 				salt:            common.HexToHash("0xabcd"),
 			},
-			mockSetup: func(mcms *mock_mcms.MCMS) {
-				mockMCMSModule := mock_module_mcms.NewMCMSInterface(t)
-				mcms.EXPECT().MCMS().Return(mockMCMSModule)
-				mockMCMSModule.EXPECT().TimelockExecuteBatch(
+			mockSetup: func(m *mock_module_mcms.MCMSInterface) {
+				m.EXPECT().TimelockExecuteBatch(
 					mock.Anything,
 					[]aptos.AccountAddress{Must(hexToAddress("0x456")), Must(hexToAddress("0x789"))},
 					[]string{"module1", "module2"},
@@ -189,15 +192,17 @@ func TestExecutor_Execute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mcmsBinding := mock_mcms.NewMCMS(t)
+			mockContract := mock_module_mcms.NewMCMSInterface(t)
 			executor := TimelockExecutor{
-				bindingFn: func(_ aptos.AccountAddress, _ aptos.AptosRpcClient) mcms.MCMS {
-					return mcmsBinding
+				TimelockInspector: TimelockInspector{
+					contractFn: func(_ aptos.AccountAddress, _ aptos.AptosRpcClient) timelockContract {
+						return mockContract
+					},
 				},
 			}
 
 			if tt.mockSetup != nil {
-				tt.mockSetup(mcmsBinding)
+				tt.mockSetup(mockContract)
 			}
 
 			got, err := executor.Execute(t.Context(), tt.args.bop, tt.args.timelockAddress, tt.args.predecessor, tt.args.salt)

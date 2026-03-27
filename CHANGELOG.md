@@ -1,5 +1,33 @@
 # @smartcontractkit/mcms
 
+## 0.39.0
+
+### Minor Changes
+
+- [#684](https://github.com/smartcontractkit/mcms/pull/684) [`aef0e32`](https://github.com/smartcontractkit/mcms/commit/aef0e32f8b860ddef251dbb77fccf2acde92c426) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add an `OperationID` field to the Operation types
+
+### Patch Changes
+
+- [#680](https://github.com/smartcontractkit/mcms/pull/680) [`b439d72`](https://github.com/smartcontractkit/mcms/commit/b439d7234691c008ccf3a570e5682d7cec5077a8) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - remove unused function
+
+## 0.38.2
+
+### Patch Changes
+
+- [#676](https://github.com/smartcontractkit/mcms/pull/676) [`ff96b5b`](https://github.com/smartcontractkit/mcms/commit/ff96b5bd7be5fd3c406863af8095107b4d2c9a3f) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add role conversion helper to aptos sdk
+
+## 0.38.1
+
+### Patch Changes
+
+- [#674](https://github.com/smartcontractkit/mcms/pull/674) [`1f9d636`](https://github.com/smartcontractkit/mcms/commit/1f9d6360e50520e107e681b489992fd7f8bc89ae) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - fix up factory and timelock executable
+
+## 0.38.0
+
+### Minor Changes
+
+- [#668](https://github.com/smartcontractkit/mcms/pull/668) [`3977e3a`](https://github.com/smartcontractkit/mcms/commit/3977e3af435bd0e7ba150a3a93e02a60e64f39ab) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - support Aptos curse mcms in timelock
+
 ## 0.37.1
 
 ### Patch Changes

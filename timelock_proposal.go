@@ -10,19 +10,13 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/samber/lo"
 
 	"github.com/go-playground/validator/v10"
-
-	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/aptos"
-	"github.com/smartcontractkit/mcms/sdk/evm"
-	"github.com/smartcontractkit/mcms/sdk/solana"
-	"github.com/smartcontractkit/mcms/sdk/sui"
-	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -50,7 +44,17 @@ func NewTimelockProposal(r io.Reader, opts ...ProposalOption) (*TimelockProposal
 		opt(options)
 	}
 
-	return newProposal[*TimelockProposal](r, options.predecessors)
+	proposal, err := newProposal[*TimelockProposal](r, options.predecessors)
+	if err != nil {
+		return proposal, err
+	}
+
+	_, err = proposal.SetOperationIDs(context.Background(), true) // TODO: OPT-400
+	if err != nil {
+		return proposal, fmt.Errorf("failed to set operation IDs: %w", err)
+	}
+
+	return proposal, nil
 }
 
 func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
@@ -249,6 +253,31 @@ func (m *TimelockProposal) Convert(
 	return result, predecessors, nil
 }
 
+func (m *TimelockProposal) OperationIDs(ctx context.Context) ([]common.Hash, []common.Hash, error) {
+	predecessors, err := m.SetOperationIDs(ctx, false)
+	if err != nil {
+		return nil, nil, err
+	}
+	operationIDs := lo.Map(m.Operations, func(op types.BatchOperation, _ int) common.Hash { return op.OperationID })
+
+	return operationIDs, predecessors, nil
+}
+
+func (m *TimelockProposal) OperationID(ctx context.Context, index int) (common.Hash, error) {
+	if index < 0 || index >= len(m.Operations) {
+		return common.Hash{}, fmt.Errorf("operation index %d out of range", index)
+	}
+
+	if lo.IsEmpty(m.Operations[index].OperationID) {
+		_, err := m.SetOperationIDs(ctx, false)
+		if err != nil {
+			return common.Hash{}, fmt.Errorf("failed to set operation IDs: %w", err)
+		}
+	}
+
+	return m.Operations[index].OperationID, nil
+}
+
 // Decode decodes the raw transactions into a list of human-readable operations.
 func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, contractInterfaces map[string]string) ([][]sdk.DecodedOperation, error) {
 	decodedOps := make([][]sdk.DecodedOperation, len(m.Operations))
@@ -280,37 +309,53 @@ func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, 
 
 // buildTimelockConverters builds a map of chain selectors to their corresponding TimelockConverter implementations.
 func (m *TimelockProposal) buildTimelockConverters(_ context.Context) (map[types.ChainSelector]sdk.TimelockConverter, error) {
-	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
-	for chain := range m.ChainMetadata {
-		// TODO: we need to pass in the context param once we remove background context in the remote chain selectors api
-		fam, err := types.GetChainSelectorFamily(chain) //nolint:contextcheck //OPT-400
-		if err != nil {
-			return nil, fmt.Errorf("error getting chain family: %w", err)
-		}
+	return chainwrappers.BuildConverters(m.ChainMetadata)
+}
 
-		var converter sdk.TimelockConverter
-		switch fam {
-		case chainsel.FamilyEVM:
-			converter = evm.NewTimelockConverter()
-		case chainsel.FamilySolana:
-			converter = solana.NewTimelockConverter()
-		case chainsel.FamilyAptos:
-			converter = aptos.NewTimelockConverter()
-		case chainsel.FamilySui:
-			converter, err = sui.NewTimelockConverter()
-			if err != nil {
-				return nil, fmt.Errorf("failed to create Sui timelock converter: %w", err)
-			}
-		case chainsel.FamilyTon:
-			converter = ton.NewTimelockConverter(ton.DefaultSendAmount)
-		default:
-			return nil, fmt.Errorf("unsupported chain family %s", fam)
-		}
-
-		converters[chain] = converter
+// SetOperationIDs computes and saves the id of each batch operation. It returns the
+// list of predecessor operation ids (for each batch operation). If "updateMetadata"
+// is true, it introspects the "metadata" field and replaces any occurrences of an
+// old operation id with its updated value.
+func (m *TimelockProposal) SetOperationIDs(ctx context.Context, updateMetadata bool) ([]common.Hash, error) {
+	predecessors := make([]common.Hash, len(m.Operations))
+	lastOpID := make(map[types.ChainSelector]common.Hash)
+	for sel := range m.ChainMetadata {
+		lastOpID[sel] = ZeroHash
 	}
 
-	return converters, nil
+	oldToNewOperationIDsMap := make(map[common.Hash]common.Hash)
+
+	for i, batchOp := range m.Operations {
+		predecessors[i] = lastOpID[batchOp.ChainSelector]
+		prevOperationID := batchOp.OperationID
+
+		calculateOperationID, err := operationIDFn(ctx, batchOp.ChainSelector)
+		if err != nil {
+			return nil, fmt.Errorf("no operation ID function found for chain selector %d: %w", batchOp.ChainSelector, err)
+		}
+
+		newOperationID, err := calculateOperationID(batchOp, m.Action, predecessors[i], m.Salt())
+		if err != nil {
+			return nil, fmt.Errorf("failed to calculate operation ID for chain selector %d: %w", batchOp.ChainSelector, err)
+		}
+
+		if lo.IsNotEmpty(prevOperationID) && prevOperationID != newOperationID {
+			oldToNewOperationIDsMap[prevOperationID] = newOperationID
+		}
+
+		lastOpID[batchOp.ChainSelector] = newOperationID
+		m.Operations[i].OperationID = newOperationID
+	}
+
+	if updateMetadata && m.Metadata != nil && len(oldToNewOperationIDsMap) > 0 {
+		updatedMetadata, ok := updateOpIDsInMetadata(m.Metadata, oldToNewOperationIDsMap).(map[string]any)
+		if !ok {
+			return nil, fmt.Errorf("failed to update operation IDs in metadata: unexpected type after update: %T", updatedMetadata)
+		}
+		m.Metadata = updatedMetadata
+	}
+
+	return predecessors, nil
 }
 
 // OperationCounts returns per-chain counts *after* conversion for all chains in
@@ -390,79 +435,6 @@ func WithInspector(inspector sdk.Inspector) GetOpCountOption {
 	return func(o *getOpCountOptions) {
 		o.inspector = inspector
 	}
-}
-
-// Merge merges the given timelock proposal with the current one
-func (m *TimelockProposal) Merge(_ context.Context, other *TimelockProposal) (*TimelockProposal, error) {
-	if m.Version != other.Version {
-		return nil, errors.New("cannot merge proposals with different versions")
-	}
-	if m.Kind != other.Kind {
-		return nil, errors.New("cannot merge proposals with different kinds")
-	}
-	if m.Action != other.Action {
-		return nil, errors.New("cannot merge proposals with different actions")
-	}
-
-	if m.OverridePreviousRoot || other.OverridePreviousRoot {
-		// FIXME: log warning when DX-1650 is done
-		m.OverridePreviousRoot = true
-	}
-
-	if other.Description != "" {
-		if m.Description != "" {
-			m.Description += "\n"
-		}
-		m.Description += other.Description
-	}
-
-	m.Signatures = nil // reset signatures, as existing ones are no longer valid
-
-	m.Metadata = mergeMetadata(m.Metadata, other.Metadata)
-
-	for chainSelector, otherMetadata := range other.ChainMetadata {
-		thisMetadata, exists := m.ChainMetadata[chainSelector]
-		if !exists {
-			m.ChainMetadata[chainSelector] = otherMetadata
-			continue
-		}
-
-		mergedMetadata, err := thisMetadata.Merge(otherMetadata)
-		if err != nil {
-			return nil, fmt.Errorf("failed to merge metadata for chain %v: %w", chainSelector, err)
-		}
-
-		m.ChainMetadata[chainSelector] = mergedMetadata
-	}
-
-	m.ValidUntil = min(m.ValidUntil, other.ValidUntil)
-	m.Delay = types.NewDuration(time.Duration(max(m.Delay.Nanoseconds(), other.Delay.Nanoseconds())))
-
-	for chainSelector, otherTimelockAddress := range other.TimelockAddresses {
-		currentAddress, exists := m.TimelockAddresses[chainSelector]
-		if exists {
-			if currentAddress != otherTimelockAddress {
-				return nil, fmt.Errorf("cannot merge proposals with different timelock addresses (chain %v): %q vs %q",
-					chainSelector, currentAddress, otherTimelockAddress)
-			}
-		} else {
-			m.TimelockAddresses[chainSelector] = otherTimelockAddress
-		}
-	}
-
-	m.Operations = append(m.Operations, other.Operations...)
-
-	if other.SaltOverride != nil {
-		if m.SaltOverride == nil {
-			m.SaltOverride = other.SaltOverride
-		} else {
-			for i := range m.SaltOverride {
-				m.SaltOverride[i] ^= other.SaltOverride[i]
-			}
-		}
-	}
-
-	return m, nil
 }
 
 // timeLockProposalValidateBasic basic validation for an MCMS proposal

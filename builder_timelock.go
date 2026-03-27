@@ -1,6 +1,9 @@
 package mcms
 
 import (
+	"context"
+	"fmt"
+
 	eth "github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/types"
@@ -44,7 +47,7 @@ func (b *TimelockProposalBuilder) SetDelay(delay types.Duration) *TimelockPropos
 	return b
 }
 
-// SetTimelockAddress adds a timelock address to the timelock proposal.
+// SetTimelockAddresses adds a timelock address to the timelock proposal.
 func (b *TimelockProposalBuilder) SetTimelockAddresses(
 	addrs map[types.ChainSelector]string,
 ) *TimelockProposalBuilder {
@@ -84,6 +87,11 @@ func (b *TimelockProposalBuilder) SetSalt(salt *eth.Hash) *TimelockProposalBuild
 func (b *TimelockProposalBuilder) Build() (*TimelockProposal, error) {
 	if err := b.proposal.Validate(); err != nil {
 		return nil, err
+	}
+
+	_, err := b.proposal.SetOperationIDs(context.Background(), true) // TODO:OPT-400
+	if err != nil {
+		return nil, fmt.Errorf("failed to set operation IDs: %w", err)
 	}
 
 	return &b.proposal, nil

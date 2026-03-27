@@ -47,35 +47,7 @@ func NewTimelockExecutable(
 }
 
 func (t *TimelockExecutable) GetOpID(ctx context.Context, opIdx int, bop types.BatchOperation, selector types.ChainSelector) (common.Hash, error) {
-	// Convert the batch operation
-	converter, err := newTimelockConverter(ctx, selector)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("unable to create converter from executor: %w", err)
-	}
-	timelockAddr, ok := t.proposal.TimelockAddresses[selector]
-	if !ok {
-		return common.Hash{}, fmt.Errorf("timelock address not found for chain selector %v", selector)
-	}
-	chainMetadata, ok := t.proposal.ChainMetadata[selector]
-	if !ok {
-		return common.Hash{}, fmt.Errorf("chain metadata not found for chain selector %v", selector)
-	}
-	_, operationID, err := converter.ConvertBatchToChainOperations(
-		ctx,
-		chainMetadata,
-		bop,
-		timelockAddr,
-		chainMetadata.MCMAddress,
-		t.proposal.Delay,
-		t.proposal.Action,
-		t.predecessors[opIdx],
-		t.proposal.Salt(),
-	)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("unable to convert batch to chain operations: %w", err)
-	}
-
-	return operationID, nil
+	return t.proposal.OperationID(ctx, opIdx)
 }
 
 // IsReady checks if ALL the operations in the proposal are ready
@@ -263,8 +235,8 @@ func (t *TimelockExecutable) setPredecessors(ctx context.Context) error {
 	if len(t.predecessors) == 0 && len(t.executors) > 0 {
 		var err error
 		var converters = make(map[types.ChainSelector]sdk.TimelockConverter)
-		for chainSelector := range t.proposal.ChainMetadata {
-			converters[chainSelector], err = newTimelockConverter(ctx, chainSelector)
+		for chainSelector, metadata := range t.proposal.ChainMetadata {
+			converters[chainSelector], err = newTimelockConverter(chainSelector, metadata)
 			if err != nil {
 				return fmt.Errorf("unable to create converter from executor: %w", err)
 			}
