@@ -380,6 +380,97 @@ func TestLoadProposal(t *testing.T) {
 	})
 }
 
+func TestProposalKindFromJSON(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		give    string
+		want    types.ProposalKind
+		wantErr string
+	}{
+		{
+			name: "success: Proposal kind",
+			give: `{"kind": "Proposal"}`,
+			want: types.KindProposal,
+		},
+		{
+			name: "success: TimelockProposal kind",
+			give: `{"kind": "TimelockProposal"}`,
+			want: types.KindTimelockProposal,
+		},
+		{
+			name:    "error: missing kind field",
+			give:    `{"version": "v1"}`,
+			wantErr: "proposal JSON missing required 'kind' field",
+		},
+		{
+			name:    "error: unknown kind",
+			give:    `{"kind": "UnknownKind"}`,
+			wantErr: `unknown proposal kind: "UnknownKind"`,
+		},
+		{
+			name:    "error: invalid JSON",
+			give:    `not json`,
+			wantErr: "failed to parse proposal JSON:",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := ProposalKindFromJSON(strings.NewReader(tt.give))
+
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
+// This is just a convenience wrapper around TestProposalKindFromJSON to test the string version,
+// so we don't need to duplicate the tests, just cover the basic cases.
+func TestProposalKindFromJSONString(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		give    string
+		want    types.ProposalKind
+		wantErr string
+	}{
+		{
+			name: "success",
+			give: `{"kind": "Proposal"}`,
+			want: types.KindProposal,
+		},
+		{
+			name:    "error",
+			give:    `{"version": "v1"}`,
+			wantErr: "proposal JSON missing required 'kind' field",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := ProposalKindFromJSONString(tt.give)
+
+			if tt.wantErr != "" {
+				require.ErrorContains(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+				assert.Equal(t, tt.want, got)
+			}
+		})
+	}
+}
+
 func TestProposalValidate(t *testing.T) {
 	t.Parallel()
 
