@@ -115,7 +115,7 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to build %v instruction: %w", action, err)
 	}
 
-	operations, err := solanaInstructionToMcmsOperation(instructions, operationID, batchOp.ChainSelector, tags, mcmSignerPDA)
+	operations, err := solanaInstructionToMcmsOperation(instructions, batchOp.ChainSelector, tags, mcmSignerPDA)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to convert instructions to mcms operations: %w", err)
 	}
@@ -279,7 +279,7 @@ func getTagsFromBatchOperation(batchOp types.BatchOperation) []string {
 }
 
 func solanaInstructionToMcmsOperation(
-	instructions []solana.Instruction, operationID common.Hash, chainSelector types.ChainSelector,
+	instructions []solana.Instruction, chainSelector types.ChainSelector,
 	tags []string, signerPDA solana.PublicKey,
 ) ([]types.Operation, error) {
 	operations := make([]types.Operation, 0, len(instructions))
@@ -302,7 +302,6 @@ func solanaInstructionToMcmsOperation(
 		}
 
 		operation := types.Operation{
-			OperationID:   operationID,
 			ChainSelector: chainSelector,
 			Transaction:   transaction,
 		}

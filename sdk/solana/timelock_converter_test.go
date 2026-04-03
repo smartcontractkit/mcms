@@ -107,7 +107,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			wantOperations: []types.Operation{
 				{
 					// initialize operation
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -127,7 +126,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// initialize first instruction
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -147,7 +145,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// append first instruction data
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -167,7 +164,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// initialize second instruction
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -187,7 +183,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// append second instruction data
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -207,7 +202,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// finalize
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -226,7 +220,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// schedule batch
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -259,7 +252,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			wantOperations: []types.Operation{
 				{
 					// schedule batch
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -292,7 +284,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			wantOperations: []types.Operation{
 				{
 					// initialize
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -312,7 +303,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// initialize first instruction
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -332,7 +322,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// append first instruction
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -352,7 +341,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// initialize second instruction
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -372,7 +360,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// append second instruction
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -392,7 +379,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// finalize
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),
@@ -411,7 +397,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 				},
 				{
 					// bypass batch execute
-					OperationID:   common.HexToHash("0xeccdce20b98da2001e6ae8c81c34a3aae1ce4aa757897906f15a2f257132dc7f"),
 					ChainSelector: chaintest.Chain4Selector,
 					Transaction: types.Transaction{
 						To:   testTimelockProgramID.String(),

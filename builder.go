@@ -53,6 +53,22 @@ func (b *BaseProposalBuilder[T]) SetChainMetadata(metadata map[types.ChainSelect
 	return b.builder
 }
 
+// AddMetadata adds an item to the BaseProposal's metadata.
+func (b *BaseProposalBuilder[T]) AddMetadata(key string, value any) T {
+	if b.baseProposal.Metadata == nil {
+		b.baseProposal.Metadata = map[string]any{}
+	}
+	b.baseProposal.Metadata[key] = value
+
+	return b.builder
+}
+
+// SetMetadata sets the metadata of the BaseProposal.
+func (b *BaseProposalBuilder[T]) SetMetadata(metadata map[string]any) T {
+	b.baseProposal.Metadata = metadata
+	return b.builder
+}
+
 // SetDescription sets the description of the BaseProposal.
 func (b *BaseProposalBuilder[T]) SetDescription(description string) T {
 	b.baseProposal.Description = description

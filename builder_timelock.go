@@ -89,7 +89,7 @@ func (b *TimelockProposalBuilder) Build() (*TimelockProposal, error) {
 		return nil, err
 	}
 
-	_, err := b.proposal.SetOperationIDs(context.Background(), true) // TODO:OPT-400
+	_, err := b.proposal.setOperationIDs(context.Background(), false) // TODO:OPT-400
 	if err != nil {
 		return nil, fmt.Errorf("failed to set operation IDs: %w", err)
 	}

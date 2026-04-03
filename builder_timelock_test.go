@@ -1,4 +1,4 @@
-package mcms_test
+package mcms
 
 import (
 	"encoding/json"
@@ -8,7 +8,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -27,13 +26,13 @@ func TestTimelockProposal_Builder(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		setup   func(*mcms.TimelockProposalBuilder)
-		want    *mcms.TimelockProposal
+		setup   func(*TimelockProposalBuilder)
+		want    *TimelockProposal
 		wantErr bool
 	}{
 		{
 			name: "valid timelock proposal with setters",
-			setup: func(b *mcms.TimelockProposalBuilder) {
+			setup: func(b *TimelockProposalBuilder) {
 				b.SetVersion("v1").
 					SetValidUntil(validUntil).
 					SetDescription("Valid Timelock Proposal").
@@ -49,11 +48,10 @@ func TestTimelockProposal_Builder(t *testing.T) {
 					SetOperations([]types.BatchOperation{{
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions:  []types.Transaction{tx1},
-					},
-					})
+					}})
 			},
-			want: &mcms.TimelockProposal{
-				BaseProposal: mcms.BaseProposal{
+			want: &TimelockProposal{
+				BaseProposal: BaseProposal{
 					Version:              "v1",
 					Kind:                 types.KindTimelockProposal,
 					ValidUntil:           validUntil,
@@ -68,18 +66,18 @@ func TestTimelockProposal_Builder(t *testing.T) {
 				TimelockAddresses: map[types.ChainSelector]string{
 					chaintest.Chain2Selector: "0xTimelockAddress",
 				},
-				Operations: []types.BatchOperation{
-					{
-						OperationID:   gethcommon.HexToHash("0x21c87d56b1f601035753b9185028df6297d146128dda08349d3a2bb7730510f0"),
-						ChainSelector: chaintest.Chain2Selector,
-						Transactions:  []types.Transaction{tx1},
-					},
+				Operations: []types.BatchOperation{{
+					ChainSelector: chaintest.Chain2Selector,
+					Transactions:  []types.Transaction{tx1},
+				}},
+				operationIDs: []gethcommon.Hash{
+					gethcommon.HexToHash("0x21c87d56b1f601035753b9185028df6297d146128dda08349d3a2bb7730510f0"),
 				},
 			},
 		},
 		{
 			name: "valid timelock proposal with adders",
-			setup: func(b *mcms.TimelockProposalBuilder) {
+			setup: func(b *TimelockProposalBuilder) {
 				b.SetVersion("v1").
 					SetValidUntil(validUntil).
 					SetDescription("Valid Timelock Proposal").
@@ -93,8 +91,8 @@ func TestTimelockProposal_Builder(t *testing.T) {
 						Transactions:  []types.Transaction{tx1},
 					})
 			},
-			want: &mcms.TimelockProposal{
-				BaseProposal: mcms.BaseProposal{
+			want: &TimelockProposal{
+				BaseProposal: BaseProposal{
 					Version:              "v1",
 					Kind:                 types.KindTimelockProposal,
 					ValidUntil:           validUntil,
@@ -109,12 +107,12 @@ func TestTimelockProposal_Builder(t *testing.T) {
 				TimelockAddresses: map[types.ChainSelector]string{
 					chaintest.Chain2Selector: "0xTimelockAddress",
 				},
-				Operations: []types.BatchOperation{
-					{
-						OperationID:   gethcommon.HexToHash("0x21c87d56b1f601035753b9185028df6297d146128dda08349d3a2bb7730510f0"),
-						ChainSelector: chaintest.Chain2Selector,
-						Transactions:  []types.Transaction{tx1},
-					},
+				Operations: []types.BatchOperation{{
+					ChainSelector: chaintest.Chain2Selector,
+					Transactions:  []types.Transaction{tx1},
+				}},
+				operationIDs: []gethcommon.Hash{
+					gethcommon.HexToHash("0x21c87d56b1f601035753b9185028df6297d146128dda08349d3a2bb7730510f0"),
 				},
 			},
 		},
@@ -128,7 +126,7 @@ func TestTimelockProposal_Builder(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			builder := mcms.NewTimelockProposalBuilder()
+			builder := NewTimelockProposalBuilder()
 
 			if tt.setup != nil {
 				tt.setup(builder)

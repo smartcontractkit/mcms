@@ -81,7 +81,8 @@ func (m *TimelockProposal) Merge(ctx context.Context, other *TimelockProposal) (
 	}
 
 	m.Operations = append(m.Operations, other.Operations...)
-	_, err := m.SetOperationIDs(ctx, true)
+	m.operationIDs = append(m.operationIDs, other.operationIDs...)
+	_, err := m.setOperationIDs(ctx, true)
 	if err != nil {
 		return nil, fmt.Errorf("failed to set operation IDs after merging: %w", err)
 	}

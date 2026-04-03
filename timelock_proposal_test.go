@@ -93,7 +93,6 @@ func TestNewTimelockProposal(t *testing.T) {
 				},
 				Operations: []types.BatchOperation{
 					{
-						OperationID:   common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
@@ -103,6 +102,9 @@ func TestNewTimelockProposal(t *testing.T) {
 							},
 						},
 					},
+				},
+				operationIDs: []common.Hash{
+					common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 				},
 			},
 		},
@@ -131,7 +133,6 @@ func TestNewTimelockProposal(t *testing.T) {
 				},
 				Operations: []types.BatchOperation{
 					{
-						OperationID:   common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
@@ -141,6 +142,9 @@ func TestNewTimelockProposal(t *testing.T) {
 							},
 						},
 					},
+				},
+				operationIDs: []common.Hash{
+					common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 				},
 			},
 		},
@@ -169,7 +173,6 @@ func TestNewTimelockProposal(t *testing.T) {
 				},
 				Operations: []types.BatchOperation{
 					{
-						OperationID:   common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
@@ -179,6 +182,9 @@ func TestNewTimelockProposal(t *testing.T) {
 							},
 						},
 					},
+				},
+				operationIDs: []common.Hash{
+					common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 				},
 			},
 		},
@@ -236,7 +242,6 @@ func TestNewTimelockProposal(t *testing.T) {
 				},
 				Operations: []types.BatchOperation{
 					{
-						OperationID:   common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
@@ -246,6 +251,9 @@ func TestNewTimelockProposal(t *testing.T) {
 							},
 						},
 					},
+				},
+				operationIDs: []common.Hash{
+					common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 				},
 			},
 		},
@@ -1288,34 +1296,34 @@ func TestTimelockProposal_SetOperationIDs(t *testing.T) {
 			name: "success: computes operation ids and updates the metadata field",
 			proposal: func() TimelockProposal {
 				proposal := buildDummyProposal(types.TimelockActionSchedule)
-				proposal.Operations[0].OperationID = common.HexToHash("0x901c023cd7e806f2d0047f8cceac79cff3c720552c2acf22343ae8227da31ccf")
 				proposal.Metadata = map[string]any{
-					"Changesets": map[string]any{
+					"changesets": map[string]any{
 						"Inputs": []any{1, 2, 3},
 						"OperationIDs": []any{
 							"0xf85f161dbb005ae93623f0ad9f868b69f771353e3efc536944f7a3f9267c4b65",
 							"0x0000000000000000000000000000000000000000000000000000000000000000",
-							"0x901c023cd7e806f2d0047f8cceac79cff3c720552c2acf22343ae8227da31ccf",
+							"0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195",
 						},
 					},
 				}
+				proposal.ValidUntil = 2004259682 // invalidate the operation ids
 
 				return proposal
 			}(),
 			updateMetadata: true,
 			wantOperationIDs: []string{
-				"0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195",
+				"0x426f11ed69ab93ed1e9af191fb205e6636efe23a2239acf6eeedfb418e955597",
 			},
 			wantPredecessors: []string{
 				"0x0000000000000000000000000000000000000000000000000000000000000000",
 			},
 			wantMetadata: map[string]any{
-				"Changesets": map[string]any{
+				"changesets": map[string]any{
 					"Inputs": []any{1, 2, 3},
 					"OperationIDs": []any{
 						"0xf85f161dbb005ae93623f0ad9f868b69f771353e3efc536944f7a3f9267c4b65",
 						"0x0000000000000000000000000000000000000000000000000000000000000000",
-						"0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195",
+						"0x426f11ed69ab93ed1e9af191fb205e6636efe23a2239acf6eeedfb418e955597",
 					},
 				},
 			},
@@ -1345,13 +1353,11 @@ func TestTimelockProposal_SetOperationIDs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			predecessors, err := tt.proposal.SetOperationIDs(t.Context(), tt.updateMetadata)
-			operationIDs := lo.Map(tt.proposal.Operations,
-				func(op types.BatchOperation, _ int) common.Hash { return op.OperationID })
+			predecessors, err := tt.proposal.setOperationIDs(t.Context(), tt.updateMetadata)
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Equal(t, tt.wantOperationIDs, hashesToHexes(operationIDs))
+				require.Equal(t, tt.wantOperationIDs, hashesToHexes(tt.proposal.operationIDs))
 				require.Equal(t, tt.wantPredecessors, hashesToHexes(predecessors))
 				require.Equal(t, tt.wantMetadata, tt.proposal.Metadata)
 			} else {

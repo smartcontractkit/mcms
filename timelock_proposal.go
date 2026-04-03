@@ -33,6 +33,7 @@ type TimelockProposal struct {
 	TimelockAddresses map[types.ChainSelector]string `json:"timelockAddresses" validate:"required,min=1"`
 	Operations        []types.BatchOperation         `json:"operations" validate:"required,min=1,dive"`
 	SaltOverride      *common.Hash                   `json:"salt,omitempty"`
+	operationIDs      []common.Hash
 }
 
 var _ ProposalInterface = (*TimelockProposal)(nil)
@@ -49,7 +50,7 @@ func NewTimelockProposal(r io.Reader, opts ...ProposalOption) (*TimelockProposal
 		return proposal, err
 	}
 
-	_, err = proposal.SetOperationIDs(context.Background(), true) // TODO: OPT-400
+	_, err = proposal.setOperationIDs(context.Background(), false) // TODO: OPT-400
 	if err != nil {
 		return proposal, fmt.Errorf("failed to set operation IDs: %w", err)
 	}
@@ -254,13 +255,12 @@ func (m *TimelockProposal) Convert(
 }
 
 func (m *TimelockProposal) OperationIDs(ctx context.Context) ([]common.Hash, []common.Hash, error) {
-	predecessors, err := m.SetOperationIDs(ctx, false)
+	predecessors, err := m.setOperationIDs(ctx, true)
 	if err != nil {
 		return nil, nil, err
 	}
-	operationIDs := lo.Map(m.Operations, func(op types.BatchOperation, _ int) common.Hash { return op.OperationID })
 
-	return operationIDs, predecessors, nil
+	return m.operationIDs, predecessors, nil
 }
 
 func (m *TimelockProposal) OperationID(ctx context.Context, index int) (common.Hash, error) {
@@ -268,14 +268,12 @@ func (m *TimelockProposal) OperationID(ctx context.Context, index int) (common.H
 		return common.Hash{}, fmt.Errorf("operation index %d out of range", index)
 	}
 
-	if lo.IsEmpty(m.Operations[index].OperationID) {
-		_, err := m.SetOperationIDs(ctx, false)
-		if err != nil {
-			return common.Hash{}, fmt.Errorf("failed to set operation IDs: %w", err)
-		}
+	_, err := m.setOperationIDs(ctx, true)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to set operation IDs: %w", err)
 	}
 
-	return m.Operations[index].OperationID, nil
+	return m.operationIDs[index], nil
 }
 
 // Decode decodes the raw transactions into a list of human-readable operations.
@@ -316,18 +314,25 @@ func (m *TimelockProposal) buildTimelockConverters(_ context.Context) (map[types
 // list of predecessor operation ids (for each batch operation). If "updateMetadata"
 // is true, it introspects the "metadata" field and replaces any occurrences of an
 // old operation id with its updated value.
-func (m *TimelockProposal) SetOperationIDs(ctx context.Context, updateMetadata bool) ([]common.Hash, error) {
+func (m *TimelockProposal) setOperationIDs(ctx context.Context, updateMetadata bool) ([]common.Hash, error) {
 	predecessors := make([]common.Hash, len(m.Operations))
 	lastOpID := make(map[types.ChainSelector]common.Hash)
 	for sel := range m.ChainMetadata {
 		lastOpID[sel] = ZeroHash
 	}
 
+	if len(m.operationIDs) == 0 {
+		m.operationIDs = make([]common.Hash, len(m.Operations))
+	}
+	if len(m.Operations) != len(m.operationIDs) {
+		return []common.Hash{}, errors.New("operations and operationIDs length mismatch")
+	}
+
 	oldToNewOperationIDsMap := make(map[common.Hash]common.Hash)
 
 	for i, batchOp := range m.Operations {
 		predecessors[i] = lastOpID[batchOp.ChainSelector]
-		prevOperationID := batchOp.OperationID
+		prevOperationID := m.operationIDs[i]
 
 		calculateOperationID, err := operationIDFn(ctx, batchOp.ChainSelector)
 		if err != nil {
@@ -344,7 +349,7 @@ func (m *TimelockProposal) SetOperationIDs(ctx context.Context, updateMetadata b
 		}
 
 		lastOpID[batchOp.ChainSelector] = newOperationID
-		m.Operations[i].OperationID = newOperationID
+		m.operationIDs[i] = newOperationID
 	}
 
 	if updateMetadata && m.Metadata != nil && len(oldToNewOperationIDsMap) > 0 {
@@ -422,6 +427,37 @@ func (m *TimelockProposal) GetOpCount(
 	}
 
 	return inspector.GetOpCount(ctx, metadata.MCMAddress)
+}
+
+func (m TimelockProposal) MarshalJSON() ([]byte, error) {
+	type Alias TimelockProposal
+	type marshalBatchOperation struct {
+		types.BatchOperation
+		OperationID common.Hash `json:"operationID"`
+	}
+
+	operationIDs, _, err := m.OperationIDs(context.Background()) // FIXME: is it possible received the context?
+	if err != nil {
+		return []byte{}, fmt.Errorf("failed to get operation IDs: %w", err)
+	}
+	if len(operationIDs) != len(m.Operations) {
+		return []byte{}, fmt.Errorf("mismatch between len(operationIDs) and len(operations): %d vs %d",
+			len(operationIDs), len(m.Operations))
+	}
+
+	operations := make([]marshalBatchOperation, len(m.Operations))
+	for i, batchOp := range m.Operations {
+		operations[i].OperationID = operationIDs[i]
+		operations[i].BatchOperation = batchOp
+	}
+
+	return json.Marshal(&struct {
+		*Alias
+		Operations []marshalBatchOperation `json:"operations"`
+	}{
+		Alias:      (*Alias)(&m),
+		Operations: operations,
+	})
 }
 
 type getOpCountOptions struct {
