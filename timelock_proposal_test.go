@@ -93,7 +93,6 @@ func TestNewTimelockProposal(t *testing.T) {
 				},
 				Operations: []types.BatchOperation{
 					{
-						OperationID:   common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
@@ -131,7 +130,6 @@ func TestNewTimelockProposal(t *testing.T) {
 				},
 				Operations: []types.BatchOperation{
 					{
-						OperationID:   common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
@@ -169,7 +167,6 @@ func TestNewTimelockProposal(t *testing.T) {
 				},
 				Operations: []types.BatchOperation{
 					{
-						OperationID:   common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
@@ -236,7 +233,6 @@ func TestNewTimelockProposal(t *testing.T) {
 				},
 				Operations: []types.BatchOperation{
 					{
-						OperationID:   common.HexToHash("0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195"),
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions: []types.Transaction{
 							{
@@ -481,7 +477,6 @@ func Test_WriteTimelockProposal(t *testing.T) {
 				},
 				"operations": [
 					{
-						"operationID":   "0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195",
 						"chainSelector": 16015286601757825753,
 						"transactions":  [
 							{
@@ -1238,16 +1233,14 @@ func TestTimelockProposal_ConvertedOperationCounts(t *testing.T) {
 	assert.Equal(t, uint64(4), counts[chaintest.Chain4Selector])
 }
 
-func TestTimelockProposal_SetOperationIDs(t *testing.T) {
+func TestTimelockProposal_OperationIDs(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
 		name             string
 		proposal         TimelockProposal
-		updateMetadata   bool
 		wantOperationIDs []string
 		wantPredecessors []string
-		wantMetadata     map[string]any
 		wantErr          string
 	}{
 		{
@@ -1273,7 +1266,6 @@ func TestTimelockProposal_SetOperationIDs(t *testing.T) {
 					},
 				}}).
 				Build()),
-			updateMetadata: false,
 			wantOperationIDs: []string{
 				"0xf85f161dbb005ae93623f0ad9f868b69f771353e3efc536944f7a3f9267c4b65",
 				"0x230f358f825a6c8d866b406e9282f55eb91ea3366f1d150066ef0f604e5a758e",
@@ -1281,43 +1273,6 @@ func TestTimelockProposal_SetOperationIDs(t *testing.T) {
 			wantPredecessors: []string{
 				"0x0000000000000000000000000000000000000000000000000000000000000000",
 				"0xf85f161dbb005ae93623f0ad9f868b69f771353e3efc536944f7a3f9267c4b65",
-			},
-			wantMetadata: nil,
-		},
-		{
-			name: "success: computes operation ids and updates the metadata field",
-			proposal: func() TimelockProposal {
-				proposal := buildDummyProposal(types.TimelockActionSchedule)
-				proposal.Operations[0].OperationID = common.HexToHash("0x901c023cd7e806f2d0047f8cceac79cff3c720552c2acf22343ae8227da31ccf")
-				proposal.Metadata = map[string]any{
-					"Changesets": map[string]any{
-						"Inputs": []any{1, 2, 3},
-						"OperationIDs": []any{
-							"0xf85f161dbb005ae93623f0ad9f868b69f771353e3efc536944f7a3f9267c4b65",
-							"0x0000000000000000000000000000000000000000000000000000000000000000",
-							"0x901c023cd7e806f2d0047f8cceac79cff3c720552c2acf22343ae8227da31ccf",
-						},
-					},
-				}
-
-				return proposal
-			}(),
-			updateMetadata: true,
-			wantOperationIDs: []string{
-				"0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195",
-			},
-			wantPredecessors: []string{
-				"0x0000000000000000000000000000000000000000000000000000000000000000",
-			},
-			wantMetadata: map[string]any{
-				"Changesets": map[string]any{
-					"Inputs": []any{1, 2, 3},
-					"OperationIDs": []any{
-						"0xf85f161dbb005ae93623f0ad9f868b69f771353e3efc536944f7a3f9267c4b65",
-						"0x0000000000000000000000000000000000000000000000000000000000000000",
-						"0x342ae55e5f86f04edeb7f9294370354a07ca69e8c9e95c92b71b7e28ca799195",
-					},
-				},
 			},
 		},
 		{
@@ -1345,15 +1300,100 @@ func TestTimelockProposal_SetOperationIDs(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			predecessors, err := tt.proposal.SetOperationIDs(t.Context(), tt.updateMetadata)
-			operationIDs := lo.Map(tt.proposal.Operations,
-				func(op types.BatchOperation, _ int) common.Hash { return op.OperationID })
+			operationIDs, predecessors, err := tt.proposal.OperationIDs(t.Context())
 
 			if tt.wantErr == "" {
 				require.NoError(t, err)
 				require.Equal(t, tt.wantOperationIDs, hashesToHexes(operationIDs))
 				require.Equal(t, tt.wantPredecessors, hashesToHexes(predecessors))
-				require.Equal(t, tt.wantMetadata, tt.proposal.Metadata)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestTimelockProposal_OperationID(t *testing.T) {
+	t.Parallel()
+
+	proposal, err := dummyProposalBuilder(types.TimelockActionSchedule).
+		SetOperations([]types.BatchOperation{{
+			ChainSelector: chaintest.Chain2Selector,
+			Transactions: []types.Transaction{
+				{
+					To:               "0x0000000000000000000000000000000000000001",
+					AdditionalFields: []byte(`{"value": 1}`),
+					Data:             []byte("data1"),
+				},
+			},
+		}, {
+			ChainSelector: chaintest.Chain2Selector,
+			Transactions: []types.Transaction{
+				{
+					To:               "0x0000000000000000000000000000000000000002",
+					AdditionalFields: []byte(`{"value": 2}`),
+					Data:             []byte("data2"),
+				},
+			},
+		}}).
+		Build()
+	require.NoError(t, err)
+
+	tests := []struct {
+		name     string
+		proposal TimelockProposal
+		index    int
+		want     string
+		wantErr  string
+	}{
+		{
+			name:     "success: computes operation id with index 0",
+			proposal: *proposal,
+			index:    0,
+			want:     "0xf85f161dbb005ae93623f0ad9f868b69f771353e3efc536944f7a3f9267c4b65",
+		},
+		{
+			name:     "success: computes operation id with index 0",
+			proposal: *proposal,
+			index:    1,
+			want:     "0x230f358f825a6c8d866b406e9282f55eb91ea3366f1d150066ef0f604e5a758e",
+		},
+		{
+			name:     "failure: index out of range",
+			proposal: *proposal,
+			index:    2,
+			wantErr:  "index 2 is out of range (2 operations in proposal)",
+		},
+		{
+			name: "failure: no OperationID found for chain selector",
+			proposal: func() TimelockProposal {
+				proposal := buildDummyProposal(types.TimelockActionSchedule)
+				proposal.Operations[0].ChainSelector = chaintest.Chain8Selector
+
+				return proposal
+			}(),
+			wantErr: "no operation ID function found for chain selector 511843109281680063: unsupported chain family: starknet",
+		},
+		{
+			name: "failure: error when calculating OperationID",
+			proposal: func() TimelockProposal {
+				proposal := buildDummyProposal(types.TimelockActionSchedule)
+				proposal.Operations[0].Transactions[0].AdditionalFields = []byte(`invalid`)
+
+				return proposal
+			}(),
+			wantErr: "failed to calculate operation ID for chain selector 16015286601757825753:",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			operationID, err := tt.proposal.OperationID(t.Context(), tt.index)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, operationID.Hex())
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}

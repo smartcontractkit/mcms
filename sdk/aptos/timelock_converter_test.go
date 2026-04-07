@@ -112,7 +112,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			},
 			wantOperations: []types.Operation{
 				{
-					OperationID:   common.HexToHash("0x1357ca35c43c8c8e82712bf1a81b4f8dbdaf32249283e149cb506760936320bb"),
 					ChainSelector: chaintest.Chain5Selector,
 					Transaction: types.Transaction{
 						OperationMetadata: types.OperationMetadata{
@@ -195,7 +194,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			},
 			wantOperations: []types.Operation{
 				{
-					OperationID:   common.HexToHash("0x1357ca35c43c8c8e82712bf1a81b4f8dbdaf32249283e149cb506760936320bb"),
 					ChainSelector: chaintest.Chain5Selector,
 					Transaction: types.Transaction{
 						OperationMetadata: types.OperationMetadata{
@@ -282,7 +280,6 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 			},
 			wantOperations: []types.Operation{
 				{
-					OperationID:   common.HexToHash("0x1357ca35c43c8c8e82712bf1a81b4f8dbdaf32249283e149cb506760936320bb"),
 					ChainSelector: chaintest.Chain5Selector,
 					Transaction: types.Transaction{
 						OperationMetadata: types.OperationMetadata{

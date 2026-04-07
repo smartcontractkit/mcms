@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	gethcommon "github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -70,7 +69,6 @@ func TestTimelockProposal_Builder(t *testing.T) {
 				},
 				Operations: []types.BatchOperation{
 					{
-						OperationID:   gethcommon.HexToHash("0x21c87d56b1f601035753b9185028df6297d146128dda08349d3a2bb7730510f0"),
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions:  []types.Transaction{tx1},
 					},
@@ -111,7 +109,6 @@ func TestTimelockProposal_Builder(t *testing.T) {
 				},
 				Operations: []types.BatchOperation{
 					{
-						OperationID:   gethcommon.HexToHash("0x21c87d56b1f601035753b9185028df6297d146128dda08349d3a2bb7730510f0"),
 						ChainSelector: chaintest.Chain2Selector,
 						Transactions:  []types.Transaction{tx1},
 					},

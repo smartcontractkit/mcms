@@ -2,8 +2,6 @@ package types //nolint:revive,nolintlint // allow pkg name 'types'
 
 import (
 	"encoding/json"
-
-	gethcommon "github.com/ethereum/go-ethereum/common"
 )
 
 // OperationMetadata contains metadata about an operation
@@ -23,14 +21,12 @@ type Transaction struct {
 
 // Operation represents an operation with a single transaction to be executed
 type Operation struct {
-	OperationID   gethcommon.Hash `json:"operationID,omitzero"`
-	ChainSelector ChainSelector   `json:"chainSelector" validate:"required"`
-	Transaction   Transaction     `json:"transaction" validate:"required"`
+	ChainSelector ChainSelector `json:"chainSelector" validate:"required"`
+	Transaction   Transaction   `json:"transaction" validate:"required"`
 }
 
 // BatchOperation represents an operation with a batch of transactions to be executed.
 type BatchOperation struct {
-	OperationID   gethcommon.Hash `json:"operationID,omitzero"`
-	ChainSelector ChainSelector   `json:"chainSelector" validate:"required"`
-	Transactions  []Transaction   `json:"transactions" validate:"required,min=1,dive"`
+	ChainSelector ChainSelector `json:"chainSelector" validate:"required"`
+	Transactions  []Transaction `json:"transactions" validate:"required,min=1,dive"`
 }

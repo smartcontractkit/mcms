@@ -10,8 +10,6 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/samber/lo"
-
 	"github.com/go-playground/validator/v10"
 
 	"github.com/smartcontractkit/mcms/chainwrappers"
@@ -47,11 +45,6 @@ func NewTimelockProposal(r io.Reader, opts ...ProposalOption) (*TimelockProposal
 	proposal, err := newProposal[*TimelockProposal](r, options.predecessors)
 	if err != nil {
 		return proposal, err
-	}
-
-	_, err = proposal.SetOperationIDs(context.Background(), true) // TODO: OPT-400
-	if err != nil {
-		return proposal, fmt.Errorf("failed to set operation IDs: %w", err)
 	}
 
 	return proposal, nil
@@ -253,29 +246,32 @@ func (m *TimelockProposal) Convert(
 	return result, predecessors, nil
 }
 
+// OperationIDs returns the list of operation IDs for each batch operation in the proposal, as well
+// as their predecessors.
 func (m *TimelockProposal) OperationIDs(ctx context.Context) ([]common.Hash, []common.Hash, error) {
-	predecessors, err := m.SetOperationIDs(ctx, false)
+	// TODO: evaluate if it's possible to implement a caching strategy that doesn't
+	// break when clients manually update ValidUntil, SaltOverride, etc.
+
+	operationIDs, predecessors, err := m.calcOperationIDs(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
-	operationIDs := lo.Map(m.Operations, func(op types.BatchOperation, _ int) common.Hash { return op.OperationID })
 
 	return operationIDs, predecessors, nil
 }
 
+// OperationID returns the operation ID for the batch operation at the given index.
 func (m *TimelockProposal) OperationID(ctx context.Context, index int) (common.Hash, error) {
 	if index < 0 || index >= len(m.Operations) {
-		return common.Hash{}, fmt.Errorf("operation index %d out of range", index)
+		return common.Hash{}, fmt.Errorf("index %d is out of range (%d operations in proposal)", index, len(m.Operations))
 	}
 
-	if lo.IsEmpty(m.Operations[index].OperationID) {
-		_, err := m.SetOperationIDs(ctx, false)
-		if err != nil {
-			return common.Hash{}, fmt.Errorf("failed to set operation IDs: %w", err)
-		}
+	operationIDs, _, err := m.calcOperationIDs(ctx)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to calculate operation IDs: %w", err)
 	}
 
-	return m.Operations[index].OperationID, nil
+	return operationIDs[index], nil
 }
 
 // Decode decodes the raw transactions into a list of human-readable operations.
@@ -312,50 +308,34 @@ func (m *TimelockProposal) buildTimelockConverters(_ context.Context) (map[types
 	return chainwrappers.BuildConverters(m.ChainMetadata)
 }
 
-// SetOperationIDs computes and saves the id of each batch operation. It returns the
-// list of predecessor operation ids (for each batch operation). If "updateMetadata"
-// is true, it introspects the "metadata" field and replaces any occurrences of an
-// old operation id with its updated value.
-func (m *TimelockProposal) SetOperationIDs(ctx context.Context, updateMetadata bool) ([]common.Hash, error) {
+// calcOperationIDs computes and returns the id of each batch operation, along with
+// the predecessor operation id for each batch operation.
+func (m *TimelockProposal) calcOperationIDs(ctx context.Context) ([]common.Hash, []common.Hash, error) {
+	operationIDs := make([]common.Hash, len(m.Operations))
 	predecessors := make([]common.Hash, len(m.Operations))
 	lastOpID := make(map[types.ChainSelector]common.Hash)
 	for sel := range m.ChainMetadata {
 		lastOpID[sel] = ZeroHash
 	}
 
-	oldToNewOperationIDsMap := make(map[common.Hash]common.Hash)
-
 	for i, batchOp := range m.Operations {
 		predecessors[i] = lastOpID[batchOp.ChainSelector]
-		prevOperationID := batchOp.OperationID
 
 		calculateOperationID, err := operationIDFn(ctx, batchOp.ChainSelector)
 		if err != nil {
-			return nil, fmt.Errorf("no operation ID function found for chain selector %d: %w", batchOp.ChainSelector, err)
+			return nil, nil, fmt.Errorf("no operation ID function found for chain selector %d: %w", batchOp.ChainSelector, err)
 		}
 
 		newOperationID, err := calculateOperationID(batchOp, m.Action, predecessors[i], m.Salt())
 		if err != nil {
-			return nil, fmt.Errorf("failed to calculate operation ID for chain selector %d: %w", batchOp.ChainSelector, err)
-		}
-
-		if lo.IsNotEmpty(prevOperationID) && prevOperationID != newOperationID {
-			oldToNewOperationIDsMap[prevOperationID] = newOperationID
+			return nil, nil, fmt.Errorf("failed to calculate operation ID for chain selector %d: %w", batchOp.ChainSelector, err)
 		}
 
 		lastOpID[batchOp.ChainSelector] = newOperationID
-		m.Operations[i].OperationID = newOperationID
+		operationIDs[i] = newOperationID
 	}
 
-	if updateMetadata && m.Metadata != nil && len(oldToNewOperationIDsMap) > 0 {
-		updatedMetadata, ok := updateOpIDsInMetadata(m.Metadata, oldToNewOperationIDsMap).(map[string]any)
-		if !ok {
-			return nil, fmt.Errorf("failed to update operation IDs in metadata: unexpected type after update: %T", updatedMetadata)
-		}
-		m.Metadata = updatedMetadata
-	}
-
-	return predecessors, nil
+	return operationIDs, predecessors, nil
 }
 
 // OperationCounts returns per-chain counts *after* conversion for all chains in

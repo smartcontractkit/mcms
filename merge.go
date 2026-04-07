@@ -7,8 +7,6 @@ import (
 	"maps"
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -81,10 +79,6 @@ func (m *TimelockProposal) Merge(ctx context.Context, other *TimelockProposal) (
 	}
 
 	m.Operations = append(m.Operations, other.Operations...)
-	_, err := m.SetOperationIDs(ctx, true)
-	if err != nil {
-		return nil, fmt.Errorf("failed to set operation IDs after merging: %w", err)
-	}
 
 	return m, nil
 }
@@ -127,55 +121,4 @@ func mergeMetadataMaps(a, b map[string]any) map[string]any {
 	}
 
 	return out
-}
-
-// updateOpIDsInMetadata updates any operation IDs in the metadata according to the given mapping
-// from old to new operation IDs.
-func updateOpIDsInMetadata(value any, opIDsMap map[common.Hash]common.Hash) any {
-	switch val := value.(type) {
-	case map[string]any:
-		for mapKey, mapValue := range val {
-			updatedMapValue := updateOpIDsInMetadata(mapValue, opIDsMap)
-			val[mapKey] = updatedMapValue
-		}
-
-	case []any:
-		for i := range val {
-			updatedMapValue := updateOpIDsInMetadata(val[i], opIDsMap)
-			val[i] = updatedMapValue
-		}
-
-	case *string:
-		if val != nil {
-			hashVal, found := opIDsMap[common.HexToHash(*val)]
-			if found {
-				return pointerTo(hashVal.Hex())
-			}
-		}
-
-	case string:
-		hashVal, found := opIDsMap[common.HexToHash(val)]
-		if found {
-			return hashVal.Hex()
-		}
-
-	case *common.Hash:
-		if val != nil {
-			hashVal, found := opIDsMap[*val]
-			if found {
-				return pointerTo(hashVal)
-			}
-		}
-
-	case common.Hash:
-		hashVal, found := opIDsMap[val]
-		if found {
-			return hashVal
-		}
-
-	default:
-		return val
-	}
-
-	return value
 }
