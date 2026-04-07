@@ -35,6 +35,7 @@ type AdditionalFields struct {
 	CompiledModules      [][]byte            `json:"compiled_modules,omitempty"`       // compiled Move modules, if deploying modules
 	Dependencies         []models.SuiAddress `json:"dependencies,omitempty"`           // dependencies for compiled Move modules, if deploying modules
 	PackageToUpgrade     string              `json:"package_to_upgrade,omitempty"`     // package to upgrade, if deploying modules
+	LatestPackageID      string              `json:"latest_package_id,omitempty"`      // overrides the MoveCall package address for upgraded packages; tx.To remains the original package ID for on-chain MCMS identity
 }
 
 var _ sdk.Encoder = &Encoder{}

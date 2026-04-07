@@ -195,12 +195,20 @@ func (e Executor) ExecuteOperation(
 			return types.TransactionResult{}, errors.New("mismatched call and state object count")
 		}
 		for i, call := range calls {
+			callTarget := call.Target
+			if additionalFields.LatestPackageID != "" {
+				latestAddr, latestErr := AddressFromHex(additionalFields.LatestPackageID)
+				if latestErr != nil {
+					return types.TransactionResult{}, fmt.Errorf("failed to parse latest_package_id %q: %w", additionalFields.LatestPackageID, latestErr)
+				}
+				callTarget = latestAddr.Bytes()
+			}
 			calls[i] = Call{
 				ModuleName:   call.ModuleName,
 				FunctionName: call.FunctionName,
 				StateObj:     additionalFields.InternalStateObjects[i],
 				Data:         call.Data,
-				Target:       call.Target,
+				Target:       callTarget,
 				TypeArgs:     additionalFields.InternalTypeArgs[i],
 			}
 		}
