@@ -1,5 +1,17 @@
 # @smartcontractkit/mcms
 
+## 0.40.0
+
+### Minor Changes
+
+- [#670](https://github.com/smartcontractkit/mcms/pull/670) [`77a6110`](https://github.com/smartcontractkit/mcms/commit/77a6110a9e4054a3ca309405b7de3df769fd5f06) Thanks [@jkongie](https://github.com/jkongie)! - Add `ProposalKindFromJSON` and `ProposalKindFromJSONString` helpers
+
+  Adds two new functions to extract a `ProposalKind` from a JSON representation of a `Proposal` or `TimelockProposal`.
+
+### Patch Changes
+
+- [#696](https://github.com/smartcontractkit/mcms/pull/696) [`f7d4bee`](https://github.com/smartcontractkit/mcms/commit/f7d4bee82df5d5191e0301050d2914c1e8a17a51) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - update sui package resolution
+
 ## 0.39.0
 
 ### Minor Changes
