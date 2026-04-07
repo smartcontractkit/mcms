@@ -83,9 +83,21 @@ func (t *TimelockExecutor) Execute(
 			return types.TransactionResult{}, fmt.Errorf("failed to parse target address %q: %w", tx.To, err)
 		}
 
+		// Use LatestPackageID for the MoveCall target if specified, so the PTB
+		// executes upgraded bytecode. tx.To (original package ID) is still used
+		// in the on-chain targets array for MCMS registry identity checks.
+		callTarget := targetAddress.Bytes()
+		if additionalFields.LatestPackageID != "" {
+			latestAddr, err := AddressFromHex(additionalFields.LatestPackageID)
+			if err != nil {
+				return types.TransactionResult{}, fmt.Errorf("failed to parse latest_package_id %q: %w", additionalFields.LatestPackageID, err)
+			}
+			callTarget = latestAddr.Bytes()
+		}
+
 		calls = append(calls, Call{
 			StateObj:         additionalFields.StateObj,
-			Target:           targetAddress.Bytes(),
+			Target:           callTarget,
 			ModuleName:       additionalFields.ModuleName,
 			FunctionName:     additionalFields.Function,
 			Data:             tx.Data,
