@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.40.1
+
+### Patch Changes
+
+- [#695](https://github.com/smartcontractkit/mcms/pull/695) [`5d0e94e`](https://github.com/smartcontractkit/mcms/commit/5d0e94ea6d17948f48f744beda1e7db4fddba3d6) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: partially revert #684 and remove OperationID from Op types
+
 ## 0.40.0
 
 ### Minor Changes
