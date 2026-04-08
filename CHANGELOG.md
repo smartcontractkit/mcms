@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.40.3
+
+### Patch Changes
+
+- [#703](https://github.com/smartcontractkit/mcms/pull/703) [`580a2ac`](https://github.com/smartcontractkit/mcms/commit/580a2ac8145ea4d279681cd5b24c62b09daab471) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - update SUI CLI version
+
 ## 0.40.2
 
 ### Patch Changes
