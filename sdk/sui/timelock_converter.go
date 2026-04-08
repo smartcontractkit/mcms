@@ -136,7 +136,6 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	op := types.Operation{
-		OperationID:   operationID,
 		ChainSelector: bop.ChainSelector,
 		Transaction:   tx,
 	}

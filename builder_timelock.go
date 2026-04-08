@@ -1,9 +1,6 @@
 package mcms
 
 import (
-	"context"
-	"fmt"
-
 	eth "github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/types"
@@ -87,11 +84,6 @@ func (b *TimelockProposalBuilder) SetSalt(salt *eth.Hash) *TimelockProposalBuild
 func (b *TimelockProposalBuilder) Build() (*TimelockProposal, error) {
 	if err := b.proposal.Validate(); err != nil {
 		return nil, err
-	}
-
-	_, err := b.proposal.SetOperationIDs(context.Background(), true) // TODO:OPT-400
-	if err != nil {
-		return nil, fmt.Errorf("failed to set operation IDs: %w", err)
 	}
 
 	return &b.proposal, nil
