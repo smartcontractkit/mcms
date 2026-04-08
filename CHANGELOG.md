@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.40.2
+
+### Patch Changes
+
+- [#701](https://github.com/smartcontractkit/mcms/pull/701) [`69e57b0`](https://github.com/smartcontractkit/mcms/commit/69e57b08b2b9edb2ab60c58a442f928ec205a9d9) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - update chainlink-sui version
+
 ## 0.40.1
 
 ### Patch Changes
