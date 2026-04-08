@@ -22,11 +22,10 @@ type TimelockProposalTestSuite struct {
 
 // TestTimelockProposal runs the full timelock flow: build a Schedule proposal (increment counter),
 // convert to MCMS proposal, sign, set root, execute (schedule batch), then execute via timelock.
-// Fails at Convert() until Canton TimelockConverter is implemented (Phase C).
 func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	ctx := s.T().Context()
 
-	inspector := cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party, cantonsdk.TimelockRoleProposer)
+	inspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
 	currentOpCount, err := inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "get current op count")
 
@@ -47,11 +46,11 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 
 	// Batch operation: increment counter (same shape as in TestSetRootAndExecuteCounterOp)
 	opAdditionalFields := cantonsdk.AdditionalFields{
-		TargetInstanceId: fmt.Sprintf("%s@%s", s.counterInstanceID, s.participant.Party),
-		FunctionName:     "Increment",
-		OperationData:    "",
-		TargetCid:        s.counterCID,
-		ContractIds:      []string{s.counterCID},
+		TargetInstanceAddress: fmt.Sprintf("%s@%s", s.counterInstanceID, s.participant.PartyID),
+		FunctionName:          "Increment",
+		OperationData:         "",
+		TargetCid:             s.counterCID,
+		ContractIds:           []string{s.counterCID},
 	}
 	opAdditionalFieldsBytes, err := json.Marshal(opAdditionalFields)
 	s.Require().NoError(err)
@@ -104,7 +103,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
-	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.CommandServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
+	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.participant.UserID, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err)
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
@@ -123,7 +122,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	}
 
 	// Timelock execution: wait for ready then execute batch
-	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party)
+	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.PartyID)
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 		s.chainSelector: timelockExecutor,
 	}

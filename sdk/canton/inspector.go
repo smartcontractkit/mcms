@@ -10,7 +10,7 @@ import (
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
+	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"

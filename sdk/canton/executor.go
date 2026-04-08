@@ -16,7 +16,7 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
+	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -69,8 +69,8 @@ func (e Executor) ExecuteOperation(
 	}
 
 	// Validate required Canton fields
-	if cantonOpFields.TargetInstanceId == "" {
-		return types.TransactionResult{}, errors.New("targetInstanceId is required in operation additional fields")
+	if cantonOpFields.TargetInstanceAddress == "" {
+		return types.TransactionResult{}, errors.New("targetInstanceAddress is required in operation additional fields")
 	}
 	if cantonOpFields.FunctionName == "" {
 		return types.TransactionResult{}, errors.New("functionName is required in operation additional fields")
@@ -92,12 +92,12 @@ func (e Executor) ExecuteOperation(
 
 	// Build Canton Op struct
 	cantonOp := mcms.Op{
-		ChainId:          cantontypes.INT64(metadataFields.ChainId),
-		MultisigId:       cantontypes.TEXT(metadataFields.MultisigId),
-		Nonce:            cantontypes.INT64(nonce),
-		TargetInstanceId: cantontypes.TEXT(cantonOpFields.TargetInstanceId),
-		FunctionName:     cantontypes.TEXT(cantonOpFields.FunctionName),
-		OperationData:    cantontypes.TEXT(cantonOpFields.OperationData),
+		ChainId:               cantontypes.INT64(metadataFields.ChainId),
+		MultisigId:            cantontypes.TEXT(metadataFields.MultisigId),
+		Nonce:                 cantontypes.INT64(nonce),
+		TargetInstanceAddress: cantontypes.TEXT(cantonOpFields.TargetInstanceAddress),
+		FunctionName:          cantontypes.TEXT(cantonOpFields.FunctionName),
+		OperationData:         cantontypes.TEXT(cantonOpFields.OperationData),
 	}
 
 	// Convert proof to Canton TEXT array
@@ -106,15 +106,17 @@ func (e Executor) ExecuteOperation(
 		opProof[i] = cantontypes.TEXT(hex.EncodeToString(p[:]))
 	}
 
-	// Convert contract IDs; resolve InstanceAddress hex to current contract ID so Canton can parse them
+	// Convert contract IDs to GENMAP; resolve InstanceAddress hex to current contract ID so Canton can parse them
+	// GENMAP maps instanceAddress -> CONTRACT_ID
 	stateClient := e.Inspector.StateServiceClient()
-	targetCids := make([]cantontypes.CONTRACT_ID, len(cantonOpFields.ContractIds))
-	for i, cid := range cantonOpFields.ContractIds {
+	targetCids := make(cantontypes.GENMAP)
+	for _, cid := range cantonOpFields.ContractIds {
 		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, e.party, cid)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, err)
 		}
-		targetCids[i] = cantontypes.CONTRACT_ID(resolved)
+		// Use the original instance address as key, resolved contract ID as value
+		targetCids[cid] = cantontypes.CONTRACT_ID(resolved)
 	}
 
 	// Build exercise command using generated bindings

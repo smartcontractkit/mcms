@@ -56,4 +56,7 @@ func TestCantonSuite(t *testing.T) {
 	suite.Run(t, new(cantone2e.MCMSInspectorTestSuite))
 	suite.Run(t, new(cantone2e.TimelockInspectionTestSuite))
 	suite.Run(t, new(cantone2e.TimelockProposalTestSuite))
+	suite.Run(t, new(cantone2e.TimelockCancelTestSuite))
+	suite.Run(t, new(cantone2e.TimelockBypassTestSuite))
+	suite.Run(t, new(cantone2e.SetRootExecuteTestSuite))
 }

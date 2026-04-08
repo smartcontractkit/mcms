@@ -21,7 +21,7 @@ type TimelockInspectionTestSuite struct {
 func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.TestSuite.SetupSuite()
 	s.DeployMCMSContract()
-	s.inspector = cantonsdk.NewTimelockInspector(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party)
+	s.inspector = cantonsdk.NewTimelockInspector(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.PartyID)
 }
 
 // TestGetProposers tests that GetProposers returns proposer signers from the MCMS contract.
@@ -108,7 +108,6 @@ func (s *TimelockInspectionTestSuite) TestGetMinDelay() {
 	s.Require().GreaterOrEqual(delay, uint64(0))
 }
 
-
 // TestTimelockConverter tests that ConvertBatchToChainOperations returns one ScheduleBatch operation and a non-zero op ID.
 func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 	ctx := s.T().Context()
@@ -116,11 +115,11 @@ func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 	s.Require().NoError(err)
 
 	af := cantonsdk.AdditionalFields{
-		TargetInstanceId: "instance@party",
-		FunctionName:     "noop",
-		OperationData:    "",
-		TargetCid:        s.mcmsInstanceAddress,
-		ContractIds:      []string{s.mcmsInstanceAddress},
+		TargetInstanceAddress: "instance@party",
+		FunctionName:          "noop",
+		OperationData:         "",
+		TargetCid:             s.mcmsInstanceAddress,
+		ContractIds:           []string{s.mcmsInstanceAddress},
 	}
 	afBytes, err := json.Marshal(af)
 	s.Require().NoError(err)
@@ -153,7 +152,7 @@ func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 // TestTimelockExecutorExecuteEmptyBatch tests that Execute returns an error for empty batch.
 func (s *TimelockInspectionTestSuite) TestTimelockExecutorExecuteEmptyBatch() {
 	ctx := s.T().Context()
-	executor := cantonsdk.NewTimelockExecutor(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.Party)
+	executor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.PartyID)
 	bop := mcmstypes.BatchOperation{
 		ChainSelector: s.chainSelector,
 		Transactions:  []mcmstypes.Transaction{},

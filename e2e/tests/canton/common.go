@@ -5,15 +5,15 @@ package canton
 import (
 	"context"
 	"crypto/ecdsa"
-	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/google/uuid"
-	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
+	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
+	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/mcmstest"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 	"github.com/smartcontractkit/chainlink-canton/integration-tests/testhelpers"
+	"github.com/smartcontractkit/chainlink-deployments-framework/chain/canton"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 	"github.com/smartcontractkit/go-daml/pkg/types"
 
@@ -31,7 +31,7 @@ type TestSuite struct {
 
 	env testhelpers.TestEnvironment
 
-	participant testhelpers.Participant
+	participant canton.Participant
 
 	chainSelector       mcmstypes.ChainSelector
 	chainId             int64
@@ -42,56 +42,54 @@ type TestSuite struct {
 }
 
 func (s *TestSuite) SetupSuite() {
-	s.T().Log("Spinning up Canton test environment...")
-	s.env = testhelpers.NewTestEnvironment(s.T(), testhelpers.WithNumberOfParticipants(1))
-	participant := s.env.Participant(1)
-	s.participant = participant
-	s.chainSelector = mcmstypes.ChainSelector(s.env.Chain.ChainSelector())
+	shared := GetSharedEnvironment(s.T())
+	s.env = shared.Env
+	s.participant = shared.Env.Chain.Participants[0]
+	s.chainSelector = shared.ChainSelector
+	s.packageIDs = shared.PackageIDs
 }
 
 const NumGroups = 32
 
 func (s *TestSuite) DeployMCMSContract() {
-	s.T().Log("Uploading MCMS DAR...")
-
-	mcmsDar, err := contracts.GetDar(contracts.MCMS, contracts.CurrentVersion)
-	s.Require().NoError(err)
-
-	packageIDs, err := testhelpers.UploadDARstoMultipleParticipants(s.T().Context(), [][]byte{mcmsDar}, s.participant)
-	s.Require().NoError(err)
-	s.packageIDs = packageIDs
-
-	mcmsOwner := s.participant.Party
+	mcmsOwner := s.participant.PartyID
 	chainId := int64(1)
-	mcmsId := "mcms-test-001"
+	mcmsId := "mcms-" + uuid.New().String()[:8]
 
 	mcmsInstanceAddr := s.createMCMS(s.T().Context(), s.participant, mcmsOwner, chainId, mcmsId, mcms.RoleProposer)
 	s.mcmsInstanceAddress = mcmsInstanceAddr
 	s.mcmsId = mcmsId
-	s.proposerMcmsId = fmt.Sprintf("%s-%s", mcmsId, "proposer")
+	// multisigId format: instanceId@partyId-role (see MCMS.Main.daml makeMcmsId)
+	s.proposerMcmsId = fmt.Sprintf("%s@%s-proposer", mcmsId, mcmsOwner)
 	s.chainId = chainId
 }
 
 func (s *TestSuite) DeployMCMSWithConfig(config *mcmstypes.Config) {
 	s.DeployMCMSContract()
 
-	// Set the config (use InstanceAddress; no need to update suite after — InstanceAddress is stable)
-	configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
-	s.Require().NoError(err)
+	// Set the config for all roles (proposer, canceller, bypasser) so tests can use any role
+	roles := []cantonsdk.TimelockRole{
+		cantonsdk.TimelockRoleProposer,
+		cantonsdk.TimelockRoleCanceller,
+		cantonsdk.TimelockRoleBypasser,
+	}
+	for _, role := range roles {
+		configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.UserID, s.participant.PartyID, role)
+		s.Require().NoError(err)
 
-	_, err = configurer.SetConfig(s.T().Context(), s.mcmsInstanceAddress, config, true)
-	s.Require().NoError(err)
+		_, err = configurer.SetConfig(s.T().Context(), s.mcmsInstanceAddress, config, true)
+		s.Require().NoError(err)
+	}
 }
 
 func (s *mcmsExecutorSetup) DeployCounterContract() {
 	s.counterInstanceID = "counter-" + uuid.New().String()[:8]
-	// DAML MCMSReceiver expects instanceId in format "baseId@partyId"; use same in batch TargetInstanceId
-	counterInstanceIdOnChain := fmt.Sprintf("%s@%s", s.counterInstanceID, s.participant.Party)
+	// DAML Counter.instanceId must NOT contain "@" - the full instanceAddress is calculated as instanceId@partyId
 
 	// Create Counter contract
-	counterContract := mcms.Counter{
-		Owner:      types.PARTY(s.participant.Party),
-		InstanceId: types.TEXT(counterInstanceIdOnChain),
+	counterContract := mcmstest.Counter{
+		Owner:      types.PARTY(s.participant.PartyID),
+		InstanceId: types.TEXT(s.counterInstanceID),
 		Value:      types.INT64(0),
 	}
 
@@ -104,11 +102,11 @@ func (s *mcmsExecutorSetup) DeployCounterContract() {
 	createArguments := ledger.ConvertToRecord(exerciseCmd.Arguments)
 
 	commandID := uuid.Must(uuid.NewUUID()).String()
-	submitResp, err := s.participant.CommandServiceClient.SubmitAndWaitForTransaction(s.T().Context(), &apiv2.SubmitAndWaitForTransactionRequest{
+	submitResp, err := s.participant.LedgerServices.Command.SubmitAndWaitForTransaction(s.T().Context(), &apiv2.SubmitAndWaitForTransactionRequest{
 		Commands: &apiv2.Commands{
 			WorkflowId: "counter-deploy",
 			CommandId:  commandID,
-			ActAs:      []string{s.participant.Party},
+			ActAs:      []string{s.participant.PartyID},
 			Commands: []*apiv2.Command{{
 				Command: &apiv2.Command_Create{
 					Create: &apiv2.CreateCommand{
@@ -140,7 +138,7 @@ func (s *mcmsExecutorSetup) DeployCounterContract() {
 }
 
 // createMCMS creates an MCMS contract and returns its InstanceAddress hex (stable reference for Canton).
-func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Participant, owner string, chainId int64, mcmsId string, role mcms.Role) string {
+func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participant, owner string, chainId int64, mcmsId string, role mcms.Role) string {
 	// Create empty config
 	emptyConfig := mcms.MultisigConfig{
 		Signers:      []mcms.SignerInfo{},
@@ -164,7 +162,7 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Part
 
 	// Create MCMS contract with new structure
 	mcmsContract := mcms.MCMS{
-		Owner:              types.PARTY(participant.Party),
+		Owner:              types.PARTY(participant.PartyID),
 		InstanceId:         types.TEXT(mcmsId),
 		ChainId:            types.INT64(chainId),
 		Proposer:           emptyRoleState,
@@ -193,11 +191,11 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Part
 
 	// Submit via CommandService
 	commandID := uuid.Must(uuid.NewUUID()).String()
-	submitResp, err := participant.CommandServiceClient.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
+	submitResp, err := participant.LedgerServices.Command.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
 		Commands: &apiv2.Commands{
 			WorkflowId: "mcms-deploy",
 			CommandId:  commandID,
-			ActAs:      []string{participant.Party},
+			ActAs:      []string{participant.PartyID},
 			Commands: []*apiv2.Command{{
 				Command: &apiv2.Command_Create{
 					Create: &apiv2.CreateCommand{
@@ -239,55 +237,6 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant testhelpers.Part
 	// Return InstanceAddress hex so callers use a stable reference (contract ID changes after SetRoot/ExecuteOp)
 	instanceAddress := contracts.InstanceID(mcmsId).RawInstanceAddress(types.PARTY(owner)).InstanceAddress()
 	return instanceAddress.Hex()
-}
-
-// encodeSetConfigParams encodes SetConfig parameters for Canton MCMS
-func EncodeSetConfigParams(s *TestSuite, signerAddresses []string, groupQuorums, groupParents []int64, clearRoot bool) string {
-	var buf []byte
-
-	// Encode signers list
-	buf = append(buf, byte(len(signerAddresses))) // numSigners (1 byte)
-	for i, signer := range signerAddresses {
-		addrBytes, err := hex.DecodeString(signer)
-		s.Require().NoError(err, "failed to decode signer address hex")
-		buf = append(buf, byte(len(addrBytes))) // addressLen (1 byte)
-		buf = append(buf, addrBytes...)         // address bytes
-
-		// SignerIndex (4 bytes, big-endian)
-		indexBytes := make([]byte, 4)
-		binary.BigEndian.PutUint32(indexBytes, uint32(i)) //nolint:gosec
-		buf = append(buf, indexBytes...)
-
-		// SignerGroup (4 bytes, big-endian)
-		groupBytes := make([]byte, 4)
-		binary.BigEndian.PutUint32(groupBytes, uint32(0)) //nolint:gosec
-		buf = append(buf, groupBytes...)
-	}
-
-	// Encode group quorums
-	buf = append(buf, byte(len(groupQuorums))) // numQuorums (1 byte)
-	for _, quorum := range groupQuorums {
-		quorumBytes := make([]byte, 4)
-		binary.BigEndian.PutUint32(quorumBytes, uint32(quorum)) //nolint:gosec
-		buf = append(buf, quorumBytes...)
-	}
-
-	// Encode group parents
-	buf = append(buf, byte(len(groupParents))) // numParents (1 byte)
-	for _, parent := range groupParents {
-		parentBytes := make([]byte, 4)
-		binary.BigEndian.PutUint32(parentBytes, uint32(parent)) //nolint:gosec
-		buf = append(buf, parentBytes...)
-	}
-
-	// Encode clearRoot (1 byte)
-	if clearRoot {
-		buf = append(buf, 0x01)
-	} else {
-		buf = append(buf, 0x00)
-	}
-
-	return hex.EncodeToString(buf)
 }
 
 func (s *TestSuite) SignProposal(proposal *mcmscore.Proposal, inspector sdk.Inspector, keys []*ecdsa.PrivateKey, quorum int) (*mcmscore.Signable, []mcmstypes.Signature, error) {
