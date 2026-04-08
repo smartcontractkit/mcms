@@ -5,10 +5,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
+	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -73,11 +74,11 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		return nil, common.Hash{}, err
 	}
 
-	targetInstanceId := metadataFields.InstanceId
-	if targetInstanceId == "" {
-		targetInstanceId = metadataFields.MultisigId
-	}
-	op, err := buildTimelockOperation(bop, mcmAddress, targetInstanceId, functionName, opDataHex, allContractIds)
+	// For timelock operations (schedule/cancel/bypass), the target is the MCMS contract itself.
+	// Canton expects TargetInstanceAddress in "baseId@partyId" format, not hex.
+	// MultisigId is in format "baseId@partyId-role"; extract "baseId@partyId".
+	targetInstanceAddress := extractInstanceAddressFromMultisigId(metadataFields.MultisigId)
+	op, err := buildTimelockOperation(bop, mcmAddress, targetInstanceAddress, functionName, opDataHex, allContractIds)
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -97,23 +98,23 @@ func buildCallsFromBatch(bop types.BatchOperation) ([]mcms.TimelockCall, []Timel
 				return nil, nil, nil, fmt.Errorf("unmarshal transaction additional fields: %w", err)
 			}
 		}
-		targetInstanceId := af.TargetInstanceId
-		if targetInstanceId == "" {
-			targetInstanceId = tx.To
+		targetInstanceAddress := af.TargetInstanceAddress
+		if targetInstanceAddress == "" {
+			targetInstanceAddress = tx.To
 		}
 		operationData := af.OperationData
 		if operationData == "" && len(tx.Data) > 0 {
 			operationData = hex.EncodeToString(tx.Data)
 		}
 		calls = append(calls, mcms.TimelockCall{
-			TargetInstanceId: cantontypes.TEXT(targetInstanceId),
-			FunctionName:     cantontypes.TEXT(af.FunctionName),
-			OperationData:    cantontypes.TEXT(operationData),
+			TargetInstanceAddress: cantontypes.TEXT(targetInstanceAddress),
+			FunctionName:          cantontypes.TEXT(af.FunctionName),
+			OperationData:         cantontypes.TEXT(operationData),
 		})
 		callsForHash = append(callsForHash, TimelockCallForHash{
-			TargetInstanceId: targetInstanceId,
-			FunctionName:     af.FunctionName,
-			OperationData:    operationData,
+			TargetInstanceAddress: targetInstanceAddress,
+			FunctionName:          af.FunctionName,
+			OperationData:         operationData,
 		})
 		allContractIds = append(allContractIds, af.ContractIds...)
 	}
@@ -159,15 +160,27 @@ func cancelActionData(operationIDStr string) (functionName, opDataHex string, er
 	return "CancelBatch", opDataHex, nil
 }
 
+// extractInstanceAddressFromMultisigId extracts "baseId@partyId" from "baseId@partyId-role".
+// MultisigId format: "baseId@partyId-role" (e.g., "mcms-abc123@party::hash-proposer")
+// Returns: "baseId@partyId" (e.g., "mcms-abc123@party::hash")
+func extractInstanceAddressFromMultisigId(multisigId string) string {
+	// Find the last dash that separates the role suffix
+	lastDash := strings.LastIndex(multisigId, "-")
+	if lastDash == -1 {
+		return multisigId
+	}
+	return multisigId[:lastDash]
+}
+
 // buildTimelockOperation builds a single types.Operation for the given timelock action.
 // allContractIds are the target contract IDs from the batch (for ExecuteOp TargetCids); mcmAddress is included as TargetCid.
-func buildTimelockOperation(bop types.BatchOperation, mcmAddress, targetInstanceId, functionName, opDataHex string, allContractIds []string) (types.Operation, error) {
+func buildTimelockOperation(bop types.BatchOperation, mcmAddress, targetInstanceAddress, functionName, opDataHex string, allContractIds []string) (types.Operation, error) {
 	opAdditionalFields := AdditionalFields{
-		TargetInstanceId: targetInstanceId,
-		FunctionName:     functionName,
-		OperationData:    opDataHex,
-		TargetCid:        mcmAddress,
-		ContractIds:      allContractIds,
+		TargetInstanceAddress: targetInstanceAddress,
+		FunctionName:          functionName,
+		OperationData:         opDataHex,
+		TargetCid:             mcmAddress,
+		ContractIds:           allContractIds,
 	}
 	opAdditionalFieldsBytes, err := json.Marshal(opAdditionalFields)
 	if err != nil {

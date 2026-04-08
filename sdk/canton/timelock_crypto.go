@@ -8,11 +8,11 @@ import (
 )
 
 // TimelockCallForHash is used for computing the operation ID hash.
-// Field semantics match mcms.TimelockCall (TargetInstanceId, FunctionName, OperationData).
+// Field semantics match mcms.TimelockCall (TargetInstanceAddress, FunctionName, OperationData).
 type TimelockCallForHash struct {
-	TargetInstanceId string
-	FunctionName     string
-	OperationData    string
+	TargetInstanceAddress string // Format: "instanceId@partyId"
+	FunctionName          string
+	OperationData         string
 }
 
 // HashTimelockOpId computes the operation ID for timelock operations.
@@ -20,13 +20,31 @@ type TimelockCallForHash struct {
 // predecessor and salt should be hex-encoded (e.g. 64-char hex for 32-byte hashes).
 func HashTimelockOpId(calls []TimelockCallForHash, predecessor, salt string) string {
 	var sb strings.Builder
+
+	// Length prefix for calls array (32-byte padded)
+	sb.WriteString(padLeft32(intToHex(len(calls))))
+
+	// Encode each call with 32-byte padded length prefixes
 	for _, call := range calls {
-		sb.WriteString(asciiToHex(call.TargetInstanceId))
+		// Length prefix for targetInstanceAddress (UTF-8 byte count)
+		sb.WriteString(padLeft32(intToHex(len(call.TargetInstanceAddress))))
+		sb.WriteString(asciiToHex(call.TargetInstanceAddress))
+		// Length prefix for functionName (UTF-8 byte count)
+		sb.WriteString(padLeft32(intToHex(len(call.FunctionName))))
 		sb.WriteString(asciiToHex(call.FunctionName))
-		sb.WriteString(encodeOperationDataForHash(call.OperationData))
+		// Length prefix for operationData (byte count = hex length / 2)
+		opData := encodeOperationDataForHash(call.OperationData)
+		sb.WriteString(padLeft32(intToHex(len(opData) / 2)))
+		sb.WriteString(opData)
 	}
-	sb.WriteString(asciiToHex(predecessor))
-	sb.WriteString(asciiToHex(salt))
+
+	// Length prefix for predecessor (byte count = hex length / 2)
+	sb.WriteString(padLeft32(intToHex(len(predecessor) / 2)))
+	sb.WriteString(predecessor)
+
+	// Length prefix for salt (byte count = hex length / 2)
+	sb.WriteString(padLeft32(intToHex(len(salt) / 2)))
+	sb.WriteString(salt)
 
 	data, err := hex.DecodeString(sb.String())
 	if err != nil {
@@ -36,9 +54,9 @@ func HashTimelockOpId(calls []TimelockCallForHash, predecessor, salt string) str
 	return hex.EncodeToString(crypto.Keccak256(data))
 }
 
-// encodeOperationDataForHash matches on-chain MCMS.Crypto.encodeOperationData:
-// - If operationData is valid hex (even length, hex digits only), use as-is.
-// - Otherwise, treat as ASCII and hex-encode it.
+// encodeOperationDataForHash normalizes operationData for hashing:
+// - If operationData is valid hex (even length, hex digits only), use as-is (matches Daml BytesHex type).
+// - Otherwise, treat as ASCII and hex-encode it (SDK convenience for non-hex inputs).
 func encodeOperationDataForHash(operationData string) string {
 	if isValidHex(operationData) {
 		return operationData

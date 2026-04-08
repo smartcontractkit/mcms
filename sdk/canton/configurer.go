@@ -10,7 +10,7 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
+	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -19,11 +19,11 @@ import (
 var _ sdk.Configurer = &Configurer{}
 
 type Configurer struct {
-	client       apiv2.CommandServiceClient
-	stateClient  apiv2.StateServiceClient
-	userId       string
-	party        string
-	role         TimelockRole
+	client      apiv2.CommandServiceClient
+	stateClient apiv2.StateServiceClient
+	userId      string
+	party       string
+	role        TimelockRole
 }
 
 func NewConfigurer(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, userId string, party string, role TimelockRole) (*Configurer, error) {

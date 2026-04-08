@@ -4,11 +4,9 @@ package canton
 
 import (
 	"slices"
-	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
-	"github.com/stretchr/testify/suite"
 
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	mcmstypes "github.com/smartcontractkit/mcms/types"
@@ -24,8 +22,8 @@ func (s *MCMSInspectorTestSuite) SetupSuite() {
 	s.TestSuite.SetupSuite()
 	s.DeployMCMSContract()
 
-	// Create inspector instance using participant's StateServiceClient
-	s.inspector = cantonsdk.NewInspector(s.participant.StateServiceClient, s.participant.Party, cantonsdk.TimelockRoleProposer)
+	// Create inspector instance using participant's State service client
+	s.inspector = cantonsdk.NewInspector(s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
 }
 
 func (s *MCMSInspectorTestSuite) TestGetConfig() {
@@ -83,7 +81,7 @@ func (s *MCMSInspectorTestSuite) TestGetConfig() {
 	}
 
 	// Set config using configurer (InstanceAddress is stable across SetConfig)
-	configurer, err := cantonsdk.NewConfigurer(s.participant.CommandServiceClient, s.participant.StateServiceClient, s.participant.UserName, s.participant.Party, cantonsdk.TimelockRoleProposer)
+	configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.UserID, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err, "creating configurer")
 
 	_, err = configurer.SetConfig(ctx, s.mcmsInstanceAddress, expectedConfig, true)
@@ -145,8 +143,4 @@ func (s *MCMSInspectorTestSuite) verifyConfigMatch(expected, actual *mcmstypes.C
 	for i, expectedGroup := range expected.GroupSigners {
 		s.verifyConfigMatch(&expectedGroup, &actual.GroupSigners[i])
 	}
-}
-
-func TestMCMSInspectorSuite(t *testing.T) {
-	suite.Run(t, new(MCMSInspectorTestSuite))
 }

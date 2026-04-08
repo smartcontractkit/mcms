@@ -13,13 +13,21 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// Domain separators matching Canton's Crypto.daml
+var (
+	opLeafDomainSeparator = hex.EncodeToString(crypto.Keccak256(
+		[]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_OP_CANTON")))
+	metadataLeafDomainSeparator = hex.EncodeToString(crypto.Keccak256(
+		[]byte("MANY_CHAIN_MULTI_SIG_DOMAIN_SEPARATOR_METADATA_CANTON")))
+)
+
 // AdditionalFields represents the additional fields in Canton MCMS operations
 type AdditionalFields struct {
-	TargetInstanceId string   `json:"targetInstanceId"`
-	FunctionName     string   `json:"functionName"`
-	OperationData    string   `json:"operationData"`
-	TargetCid        string   `json:"targetCid"`
-	ContractIds      []string `json:"contractIds"`
+	TargetInstanceAddress string   `json:"targetInstanceAddress"` // Format: "instanceId@partyId"
+	FunctionName          string   `json:"functionName"`
+	OperationData         string   `json:"operationData"`
+	TargetCid             string   `json:"targetCid"`
+	ContractIds           []string `json:"contractIds"`
 }
 
 var _ sdk.Encoder = &Encoder{}
@@ -43,7 +51,7 @@ func NewEncoder(
 }
 
 // HashOperation hashes an operation to get its Merkle leaf
-// Matches Canton's hashOpLeafNative from Crypto.daml
+// Matches Canton's hashOpLeafNative from Crypto.daml with domain separator and length prefixes
 func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
 	// Unmarshal Canton-specific metadata
 	var metadataFields AdditionalFieldsMetadata
@@ -57,12 +65,22 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		return common.Hash{}, fmt.Errorf("failed to unmarshal operation additional fields: %w", err)
 	}
 
-	// Build the encoded data following Canton's hashOpLeafNative:
-	encoded := padLeft32(intToHex(int(metadataFields.ChainId))) +
-		asciiToHex(metadataFields.MultisigId) +
+	// Convert variable-length fields to hex
+	multisigIdHex := asciiToHex(metadataFields.MultisigId)
+	targetAddressHex := asciiToHex(opFields.TargetInstanceAddress)
+	functionNameHex := asciiToHex(opFields.FunctionName)
+
+	// Build the encoded data following Canton's hashOpLeafNative with domain separator and length prefixes
+	encoded := opLeafDomainSeparator +
+		padLeft32(intToHex(int(metadataFields.ChainId))) +
+		padLeft32(intToHex(len(metadataFields.MultisigId))) + // Length prefix for multisigId
+		multisigIdHex +
 		padLeft32(intToHex(int(opCount))) +
-		asciiToHex(opFields.TargetInstanceId) +
-		asciiToHex(opFields.FunctionName) +
+		padLeft32(intToHex(len(opFields.TargetInstanceAddress))) + // Length prefix for targetInstanceAddress
+		targetAddressHex +
+		padLeft32(intToHex(len(opFields.FunctionName))) + // Length prefix for functionName
+		functionNameHex +
+		padLeft32(intToHex(len(opFields.OperationData)/2)) + // Length prefix for operationData (byte count)
 		opFields.OperationData
 
 	// Decode hex string and hash
@@ -75,7 +93,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 }
 
 // HashMetadata hashes metadata to get its Merkle leaf
-// Matches Canton's hashMetadataLeafNative from Crypto.daml
+// Matches Canton's hashMetadataLeafNative from Crypto.daml with domain separator and length prefixes
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
 	// Unmarshal Canton-specific metadata
 	var metadataFields AdditionalFieldsMetadata
@@ -89,8 +107,14 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		overrideFlag = "01"
 	}
 
-	encoded := padLeft32(intToHex(int(metadataFields.ChainId))) +
-		asciiToHex(metadataFields.MultisigId) +
+	// Convert multisigId to hex
+	multisigIdHex := asciiToHex(metadataFields.MultisigId)
+
+	// Build the encoded data with domain separator and length prefix for multisigId
+	encoded := metadataLeafDomainSeparator +
+		padLeft32(intToHex(int(metadataFields.ChainId))) +
+		padLeft32(intToHex(len(metadataFields.MultisigId))) + // Length prefix for multisigId
+		multisigIdHex +
 		padLeft32(intToHex(int(metadataFields.PreOpCount))) +
 		padLeft32(intToHex(int(metadataFields.PostOpCount))) +
 		overrideFlag
@@ -106,16 +130,24 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 
 // Helper functions matching Canton Crypto.daml
 
-// padLeft32 pads hex string to 64 chars (32 bytes)
+// padLeft32 pads hex string to 64 chars (32 bytes). Panics if input exceeds 32 bytes,
+// matching Canton's Crypto.daml behavior.
 func padLeft32(hexStr string) string {
-	if len(hexStr) >= 64 {
-		return hexStr[:64]
+	if len(hexStr) > 64 {
+		panic(fmt.Sprintf("padLeft32: input exceeds 32 bytes: %d hex chars", len(hexStr)))
+	}
+	if len(hexStr) == 64 {
+		return hexStr
 	}
 	return strings.Repeat("0", 64-len(hexStr)) + hexStr
 }
 
-// intToHex converts int to hex string (without padding)
+// intToHex converts a non-negative int to hex string (without padding). Panics on negative input,
+// matching Canton's Crypto.daml behavior.
 func intToHex(n int) string {
+	if n < 0 {
+		panic("intToHex: negative numbers not supported")
+	}
 	if n == 0 {
 		return "0"
 	}

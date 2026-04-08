@@ -12,7 +12,7 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/mcms"
+	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -57,41 +57,44 @@ func (t *TimelockExecutor) Execute(
 
 	calls := make([]mcms.TimelockCall, 0, len(bop.Transactions))
 	callsForHash := make([]TimelockCallForHash, 0, len(bop.Transactions))
-	var targetCids []string
+	// Map from instance address -> contract ID for targetCids
+	instanceToContractID := make(map[string]string)
 	for _, tx := range bop.Transactions {
 		var af AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &af); err != nil {
 			return types.TransactionResult{}, fmt.Errorf("unmarshal transaction additional fields: %w", err)
 		}
 		calls = append(calls, mcms.TimelockCall{
-			TargetInstanceId: cantontypes.TEXT(af.TargetInstanceId),
-			FunctionName:     cantontypes.TEXT(af.FunctionName),
-			OperationData:    cantontypes.TEXT(af.OperationData),
+			TargetInstanceAddress: cantontypes.TEXT(af.TargetInstanceAddress),
+			FunctionName:          cantontypes.TEXT(af.FunctionName),
+			OperationData:         cantontypes.TEXT(af.OperationData),
 		})
 		callsForHash = append(callsForHash, TimelockCallForHash{
-			TargetInstanceId: af.TargetInstanceId,
-			FunctionName:     af.FunctionName,
-			OperationData:    af.OperationData,
+			TargetInstanceAddress: af.TargetInstanceAddress,
+			FunctionName:          af.FunctionName,
+			OperationData:         af.OperationData,
 		})
-		targetCids = af.ContractIds
-	}
-	if len(targetCids) == 0 {
-		targetCids = []string{contractID}
+		// Map the target instance address to its contract ID
+		if af.TargetInstanceAddress != "" && af.TargetCid != "" {
+			instanceToContractID[af.TargetInstanceAddress] = af.TargetCid
+		}
 	}
 
 	predecessorHex := hex.EncodeToString(predecessor[:])
 	saltHex := hex.EncodeToString(salt[:])
 	opIDStr := HashTimelockOpId(callsForHash, predecessorHex, saltHex)
 
-	// Resolve InstanceAddress hex to current contract ID so Canton can parse them
+	// Build targetCidsMap: instanceAddress -> CONTRACT_ID
+	// Canton MCMS expects a map keyed by instance address
 	stateClient := t.TimelockInspector.StateServiceClient()
-	targetCidSlice := make([]cantontypes.CONTRACT_ID, len(targetCids))
-	for i, cid := range targetCids {
+	targetCidsMap := make(cantontypes.GENMAP)
+	for instanceAddr, cid := range instanceToContractID {
 		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, t.party, cid)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, err)
 		}
-		targetCidSlice[i] = cantontypes.CONTRACT_ID(resolved)
+		// Key is instance address, value is resolved contract ID
+		targetCidsMap[instanceAddr] = cantontypes.CONTRACT_ID(resolved)
 	}
 
 	executeArgs := mcms.ExecuteScheduledBatch{
@@ -100,7 +103,7 @@ func (t *TimelockExecutor) Execute(
 		Calls:       calls,
 		Predecessor: cantontypes.TEXT(predecessorHex),
 		Salt:        cantontypes.TEXT(saltHex),
-		TargetCids:  targetCidSlice,
+		TargetCids:  targetCidsMap,
 	}
 
 	mcmsContract := mcms.MCMS{}
