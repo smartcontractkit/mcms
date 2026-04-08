@@ -4,6 +4,7 @@ go 1.25.5
 
 //nolint:gomoddirectives // allow replace directive
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+replace github.com/smartcontractkit/chainlink-protos/cre/go => github.com/smartcontractkit/chainlink-protos/cre/go v0.0.0-20260331131315-f08a616d8dcd
 
 require (
 	github.com/aptos-labs/aptos-go-sdk v1.12.0
@@ -269,3 +270,5 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
+
+replace github.com/smartcontractkit/chainlink-protos/cre/go => github.com/smartcontractkit/chainlink-protos/cre/go v0.0.0-20260331131315-f08a616d8dcd
