@@ -269,5 +269,3 @@ require (
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
-
-replace github.com/smartcontractkit/chainlink-protos/cre/go => github.com/smartcontractkit/chainlink-protos/cre/go v0.0.0-20260331131315-f08a616d8dcd
