@@ -988,3 +988,90 @@ func TestCreateUpgradeTransaction(t *testing.T) {
 		})
 	}
 }
+
+func TestSetLatestPackageID(t *testing.T) {
+	t.Parallel()
+
+	t.Run("sets LatestPackageID on a transaction without one", func(t *testing.T) {
+		t.Parallel()
+
+		tx, err := NewTransaction("some_module", "some_func", "0xoriginal", nil, "Contract", nil)
+		require.NoError(t, err)
+
+		err = SetLatestPackageID(&tx, "0xlatest")
+		require.NoError(t, err)
+
+		var fields AdditionalFields
+		require.NoError(t, json.Unmarshal(tx.AdditionalFields, &fields))
+		assert.Equal(t, "0xlatest", fields.LatestPackageID)
+		// tx.To (the original package id / MCMS identity) must be unchanged
+		assert.Equal(t, "0xoriginal", tx.To)
+	})
+
+	t.Run("overwrites an existing LatestPackageID", func(t *testing.T) {
+		t.Parallel()
+
+		tx, err := NewTransaction("some_module", "some_func", "0xoriginal", nil, "Contract", nil)
+		require.NoError(t, err)
+
+		require.NoError(t, SetLatestPackageID(&tx, "0xfirst"))
+		require.NoError(t, SetLatestPackageID(&tx, "0xsecond"))
+
+		var fields AdditionalFields
+		require.NoError(t, json.Unmarshal(tx.AdditionalFields, &fields))
+		assert.Equal(t, "0xsecond", fields.LatestPackageID)
+	})
+
+	t.Run("clears LatestPackageID when set to empty string", func(t *testing.T) {
+		t.Parallel()
+
+		tx, err := NewTransaction("some_module", "some_func", "0xoriginal", nil, "Contract", nil)
+		require.NoError(t, err)
+		require.NoError(t, SetLatestPackageID(&tx, "0xlatest"))
+		require.NoError(t, SetLatestPackageID(&tx, ""))
+
+		var fields AdditionalFields
+		require.NoError(t, json.Unmarshal(tx.AdditionalFields, &fields))
+		assert.Empty(t, fields.LatestPackageID)
+	})
+
+	t.Run("returns error when AdditionalFields is invalid JSON", func(t *testing.T) {
+		t.Parallel()
+
+		tx := types.Transaction{
+			To:               "0xoriginal",
+			AdditionalFields: []byte(`not valid json`),
+		}
+
+		err := SetLatestPackageID(&tx, "0xlatest")
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "failed to unmarshal additional fields")
+	})
+
+	t.Run("preserves all other AdditionalFields unchanged", func(t *testing.T) {
+		t.Parallel()
+
+		tx, err := newTransactionWithManyStateObj(
+			"mod", "fn", "0xto", []byte("data"), "T", nil,
+			"0xstateobj",
+			[]string{"typearg"},
+			[]string{"0xinternal1", "0xinternal2"},
+			[][]string{{"0xInternalType"}},
+			nil,
+		)
+		require.NoError(t, err)
+
+		err = SetLatestPackageID(&tx, "0xnewlatest")
+		require.NoError(t, err)
+
+		var fields AdditionalFields
+		require.NoError(t, json.Unmarshal(tx.AdditionalFields, &fields))
+		assert.Equal(t, "mod", fields.ModuleName)
+		assert.Equal(t, "fn", fields.Function)
+		assert.Equal(t, "0xstateobj", fields.StateObj)
+		assert.Equal(t, []string{"typearg"}, fields.TypeArgs)
+		assert.Equal(t, []string{"0xinternal1", "0xinternal2"}, fields.InternalStateObjects)
+		assert.Equal(t, [][]string{{"0xInternalType"}}, fields.InternalTypeArgs)
+		assert.Equal(t, "0xnewlatest", fields.LatestPackageID)
+	})
+}
