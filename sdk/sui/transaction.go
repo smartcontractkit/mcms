@@ -77,6 +77,7 @@ func SetLatestPackageID(tx *types.Transaction, latestPackageID string) error {
 		return fmt.Errorf("failed to marshal additional fields: %w", err)
 	}
 	tx.AdditionalFields = marshalled
+
 	return nil
 }
 
