@@ -196,7 +196,14 @@ func (e Executor) ExecuteOperation(
 		}
 		for i, call := range calls {
 			callTarget := call.Target
-			if additionalFields.LatestPackageID != "" {
+			// Per-call override takes precedence over the batch-level LatestPackageID.
+			if i < len(additionalFields.InternalLatestPackageIDs) && additionalFields.InternalLatestPackageIDs[i] != "" {
+				latestAddr, latestErr := AddressFromHex(additionalFields.InternalLatestPackageIDs[i])
+				if latestErr != nil {
+					return types.TransactionResult{}, fmt.Errorf("failed to parse internal_latest_package_ids[%d] %q: %w", i, additionalFields.InternalLatestPackageIDs[i], latestErr)
+				}
+				callTarget = latestAddr.Bytes()
+			} else if additionalFields.LatestPackageID != "" {
 				latestAddr, latestErr := AddressFromHex(additionalFields.LatestPackageID)
 				if latestErr != nil {
 					return types.TransactionResult{}, fmt.Errorf("failed to parse latest_package_id %q: %w", additionalFields.LatestPackageID, latestErr)

@@ -37,14 +37,15 @@ func NewTransaction(moduleName, function string, to string, data []byte, contrac
 	return NewTransactionWithStateObj(moduleName, function, to, data, contractType, tags, "", nil)
 }
 
-func newTransactionWithManyStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string, typeArgs []string, internalStateObjects []string, internalTypeArgs [][]string) (types.Transaction, error) {
+func newTransactionWithManyStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string, typeArgs []string, internalStateObjects []string, internalTypeArgs [][]string, internalLatestPackageIDs []string) (types.Transaction, error) {
 	additionalFields := AdditionalFields{
-		ModuleName:           moduleName,
-		Function:             function,
-		StateObj:             stateObj,
-		InternalStateObjects: internalStateObjects,
-		TypeArgs:             typeArgs,
-		InternalTypeArgs:     internalTypeArgs,
+		ModuleName:               moduleName,
+		Function:                 function,
+		StateObj:                 stateObj,
+		InternalStateObjects:     internalStateObjects,
+		TypeArgs:                 typeArgs,
+		InternalTypeArgs:         internalTypeArgs,
+		InternalLatestPackageIDs: internalLatestPackageIDs,
 	}
 	marshalledAdditionalFields, err := json.Marshal(additionalFields)
 	if err != nil {
@@ -62,8 +63,25 @@ func newTransactionWithManyStateObj(moduleName, function string, to string, data
 	}, nil
 }
 
+// SetLatestPackageID sets the LatestPackageID on an existing transaction's AdditionalFields.
+// This allows callers to override the MoveCall package address for upgraded packages without
+// changing the tx.To field (which remains the original package ID for on-chain MCMS identity).
+func SetLatestPackageID(tx *types.Transaction, latestPackageID string) error {
+	var fields AdditionalFields
+	if err := json.Unmarshal(tx.AdditionalFields, &fields); err != nil {
+		return fmt.Errorf("failed to unmarshal additional fields: %w", err)
+	}
+	fields.LatestPackageID = latestPackageID
+	marshalled, err := json.Marshal(fields)
+	if err != nil {
+		return fmt.Errorf("failed to marshal additional fields: %w", err)
+	}
+	tx.AdditionalFields = marshalled
+	return nil
+}
+
 func NewTransactionWithStateObj(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string, typeArgs []string) (types.Transaction, error) {
-	return newTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, typeArgs, nil, nil)
+	return newTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, typeArgs, nil, nil, nil)
 }
 
 func NewTransactionWithUpgradeData(moduleName, function string, to string, data []byte, contractType string, tags []string, stateObj string, internalStateObjects []string, compiledModules [][]byte, dependencies []models.SuiAddress, packageToUpgrade string) (types.Transaction, error) {

@@ -48,6 +48,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	functionNames := make([]string, len(bop.Transactions))
 	typesArgs := make([][]string, len(bop.Transactions))
 	datas := make([][]byte, len(bop.Transactions))
+	latestPkgIDs := make([]string, len(bop.Transactions))
 	tags := make([]string, 0, len(bop.Transactions))
 
 	var additionalFieldsMetadata AdditionalFieldsMetadata
@@ -74,6 +75,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		functionNames[i] = additionalFields.Function
 		datas[i] = tx.Data
 		typesArgs[i] = additionalFields.TypeArgs
+		latestPkgIDs[i] = additionalFields.LatestPackageID
 		tags = append(tags, tx.Tags...)
 	}
 
@@ -125,6 +127,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 		[]string{},
 		stateObjs,
 		typesArgs,
+		latestPkgIDs,
 	)
 	if err != nil {
 		return nil, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)

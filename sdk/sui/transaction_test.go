@@ -505,7 +505,7 @@ func TestNewTransactionWithManyStateObj(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			tx, err := newTransactionWithManyStateObj(tt.moduleName, tt.function, tt.to, tt.data, tt.contractType, tt.tags, tt.stateObj, []string{}, tt.InternalStateObjects, nil)
+			tx, err := newTransactionWithManyStateObj(tt.moduleName, tt.function, tt.to, tt.data, tt.contractType, tt.tags, tt.stateObj, []string{}, tt.InternalStateObjects, nil, nil)
 			require.NoError(t, err)
 
 			tt.expected(t, tx)
@@ -615,7 +615,7 @@ func TestTransactionIntegration(t *testing.T) {
 	require.NoError(t, err)
 
 	// Test NewTransactionWithManyStateObj
-	tx3, err := newTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, typeArgs, InternalStateObjects, nil)
+	tx3, err := newTransactionWithManyStateObj(moduleName, function, to, data, contractType, tags, stateObj, typeArgs, InternalStateObjects, nil, nil)
 	require.NoError(t, err)
 
 	// Test NewTransactionWithUpgradeData
