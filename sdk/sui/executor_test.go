@@ -726,6 +726,7 @@ func newBypassExecutor(
 	t.Helper()
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockClient := mocksui.NewISuiAPI(t)
+
 	return &Executor{
 		signer:        mockSigner,
 		mcms:          mockmcmsContract,
@@ -769,6 +770,7 @@ func buildBypassOp(t *testing.T, extraAdditionalFields string) (types.Operation,
 			AdditionalFields: []byte(extraAdditionalFields),
 		},
 	}
+
 	return op, [][]byte{originalTarget1, originalTarget2}
 }
 
