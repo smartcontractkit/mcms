@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.41.0
+
+### Minor Changes
+
+- [#707](https://github.com/smartcontractkit/mcms/pull/707) [`791471f`](https://github.com/smartcontractkit/mcms/commit/791471f10b7cdec9d6970c10ac5c37d9bc898675) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Add ability to target Sui upgraded contracts
+
 ## 0.40.4
 
 ### Patch Changes
