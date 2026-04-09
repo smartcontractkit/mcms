@@ -8,13 +8,13 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alp
 require (
 	github.com/aptos-labs/aptos-go-sdk v1.12.0
 	github.com/block-vision/sui-go-sdk v1.1.4
-	github.com/ethereum/go-ethereum v1.17.1
+	github.com/ethereum/go-ethereum v1.17.2
 	github.com/gagliardetto/binary v0.8.0
 	github.com/gagliardetto/solana-go v1.13.0
 	github.com/go-playground/validator/v10 v10.30.1
 	github.com/google/go-cmp v0.7.0
 	github.com/joho/godotenv v1.5.1
-	github.com/karalabe/hid v1.0.1-0.20240306101548-573246063e52
+	github.com/karalabe/hid v1.0.1-0.20260315100226-f5d04adeffeb
 	github.com/samber/lo v1.52.0
 	github.com/smartcontractkit/chain-selectors v1.0.97
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20260304220149-1006d5f7bd76
@@ -76,7 +76,7 @@ require (
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cpuguy83/dockercfg v0.3.2 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/crate-crypto/go-eth-kzg v1.4.0 // indirect
+	github.com/crate-crypto/go-eth-kzg v1.5.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/dchest/siphash v1.2.3 // indirect
 	github.com/deckarep/golang-set/v2 v2.6.0 // indirect
