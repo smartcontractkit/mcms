@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.40.4
+
+### Patch Changes
+
+- [#705](https://github.com/smartcontractkit/mcms/pull/705) [`dc47327`](https://github.com/smartcontractkit/mcms/commit/dc47327462d74565bc4f4c6890f2ac38382a75de) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - remove replace in go mod
+
 ## 0.40.3
 
 ### Patch Changes
