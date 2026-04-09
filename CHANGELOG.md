@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## 0.41.1
+
+### Patch Changes
+
+- [#710](https://github.com/smartcontractkit/mcms/pull/710) [`5699a9f`](https://github.com/smartcontractkit/mcms/commit/5699a9fbd852b22aeaee972c39cdb0d95a09a990) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - update sui
+
 ## 0.41.0
 
 ### Minor Changes
