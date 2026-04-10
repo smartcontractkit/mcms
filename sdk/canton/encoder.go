@@ -28,6 +28,10 @@ type AdditionalFields struct {
 	OperationData         string   `json:"operationData"`
 	TargetCid             string   `json:"targetCid"`
 	ContractIds           []string `json:"contractIds"`
+	// TargetTemplateID is the Daml template ID of the target contract (e.g. "#pkg:Module:Entity").
+	// When TargetCid is empty at execution time, the SDK uses TargetTemplateID + TargetInstanceAddress
+	// to dynamically resolve the active contract ID from the ledger.
+	TargetTemplateID string `json:"targetTemplateId,omitempty"`
 }
 
 var _ sdk.Encoder = &Encoder{}

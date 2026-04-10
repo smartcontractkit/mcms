@@ -179,6 +179,24 @@ func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient,
 	}, nil
 }
 
+// ResolveTargetContractID resolves a target contract's active contract ID from a raw instance address
+// ("instanceId@partyId" format) and a Daml template ID (e.g. "#pkg:Module:Entity").
+// This enables dynamic resolution at execution time when TargetCid is not pre-populated in AdditionalFields.
+func ResolveTargetContractID(ctx context.Context, stateService apiv2.StateServiceClient, party, rawInstanceAddress, templateID string) (string, error) {
+	if rawInstanceAddress == "" {
+		return "", fmt.Errorf("raw instance address is required")
+	}
+	if templateID == "" {
+		return "", fmt.Errorf("template ID is required")
+	}
+	raw, err := contracts.RawInstanceAddressFromString(rawInstanceAddress)
+	if err != nil {
+		return "", fmt.Errorf("parse raw instance address %q: %w", rawInstanceAddress, err)
+	}
+	addr := raw.InstanceAddress()
+	return findActiveContractIDByInstanceAddress(ctx, stateService, party, templateID, addr)
+}
+
 // IsInstanceAddressHex returns true if s looks like an InstanceAddress hex string (64 hex chars, optional 0x prefix).
 // Canton contract IDs use a different format; when we have 0x-prefixed 64-char hex we treat it as InstanceAddress.
 func IsInstanceAddressHex(s string) bool {

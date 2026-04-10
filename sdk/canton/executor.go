@@ -76,7 +76,18 @@ func (e Executor) ExecuteOperation(
 		return types.TransactionResult{}, errors.New("functionName is required in operation additional fields")
 	}
 	if cantonOpFields.TargetCid == "" {
-		return types.TransactionResult{}, errors.New("targetCid is required in operation additional fields")
+		if cantonOpFields.TargetTemplateID != "" {
+			resolved, resolveErr := ResolveTargetContractID(ctx, e.Inspector.StateServiceClient(), e.party, cantonOpFields.TargetInstanceAddress, cantonOpFields.TargetTemplateID)
+			if resolveErr != nil {
+				return types.TransactionResult{}, fmt.Errorf("resolve target contract ID: %w", resolveErr)
+			}
+			cantonOpFields.TargetCid = resolved
+			if len(cantonOpFields.ContractIds) == 0 {
+				cantonOpFields.ContractIds = []string{resolved}
+			}
+		} else {
+			return types.TransactionResult{}, errors.New("targetCid or targetTemplateId+targetInstanceAddress is required in operation additional fields")
+		}
 	}
 
 	// Extract metadata fields for chainId and multisigId
