@@ -58,6 +58,7 @@ func (t *TimelockExecutor) Execute(
 	calls := make([]mcms.TimelockCall, 0, len(bop.Transactions))
 	callsForHash := make([]TimelockCallForHash, 0, len(bop.Transactions))
 	// Map from instance address -> contract ID for targetCids
+	stateClient := t.TimelockInspector.StateServiceClient()
 	instanceToContractID := make(map[string]string)
 	for _, tx := range bop.Transactions {
 		var af AdditionalFields
@@ -74,9 +75,16 @@ func (t *TimelockExecutor) Execute(
 			FunctionName:          af.FunctionName,
 			OperationData:         af.OperationData,
 		})
-		// Map the target instance address to its contract ID
-		if af.TargetInstanceAddress != "" && af.TargetCid != "" {
-			instanceToContractID[af.TargetInstanceAddress] = af.TargetCid
+		if af.TargetInstanceAddress != "" {
+			if af.TargetCid != "" {
+				instanceToContractID[af.TargetInstanceAddress] = af.TargetCid
+			} else if af.TargetTemplateID != "" {
+				resolved, resolveErr := ResolveTargetContractID(ctx, stateClient, t.party, af.TargetInstanceAddress, af.TargetTemplateID)
+				if resolveErr != nil {
+					return types.TransactionResult{}, fmt.Errorf("resolve target contract ID for %s: %w", af.TargetInstanceAddress, resolveErr)
+				}
+				instanceToContractID[af.TargetInstanceAddress] = resolved
+			}
 		}
 	}
 
@@ -86,7 +94,6 @@ func (t *TimelockExecutor) Execute(
 
 	// Build targetCidsMap: instanceAddress -> CONTRACT_ID
 	// Canton MCMS expects a map keyed by instance address
-	stateClient := t.TimelockInspector.StateServiceClient()
 	targetCidsMap := make(cantontypes.GENMAP)
 	for instanceAddr, cid := range instanceToContractID {
 		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, t.party, cid)
