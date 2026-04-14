@@ -8,21 +8,26 @@ import (
 
 	"github.com/gagliardetto/solana-go"
 
+	chainsel "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 	timelockutils "github.com/smartcontractkit/chainlink-ccip/chains/solana/utils/timelock"
 
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 )
 
-var testPDASeedTimelockGetProposers = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'p', 'r', 'o', 'p', 'o', 's', 'e', 'r'}
-var testPDASeedTimelockGetExecutors = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'e', 'x', 'e', 'c'}
-var testPDASeedTimelockGetCancellers = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'c', 'a', 'n', 'c', 'e', 'l'}
-var testPDASeedTimelockGetBypassers = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'b', 'y', 'p', 'a', 's', 's'}
-var testPDASeedTimelockIsOperations = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's'}
-var testPDASeedTimelockIsOperationsPending = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'p', 'e', 'n', 'd'}
-var testPDASeedTimelockIsOperationsReady = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'r', 'e', 'a', 'd', 'y'}
-var testPDASeedTimelockIsOperationsDone = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'd', 'o', 'n', 'e'}
-var testPDASeedTimelockMinDelay = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'm', 'i', 'n', 'd', 'e', 'l', 'a', 'y'}
+var (
+	testPDASeedTimelockGetProposers        = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'p', 'r', 'o', 'p', 'o', 's', 'e', 'r'}
+	testPDASeedTimelockGetExecutors        = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'e', 'x', 'e', 'c'}
+	testPDASeedTimelockGetCancellers       = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'c', 'a', 'n', 'c', 'e', 'l'}
+	testPDASeedTimelockGetBypassers        = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'b', 'y', 'p', 'a', 's', 's'}
+	testPDASeedTimelockIsOperations        = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's'}
+	testPDASeedTimelockIsOperationsPending = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'p', 'e', 'n', 'd'}
+	testPDASeedTimelockIsOperationsReady   = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'r', 'e', 'a', 'd', 'y'}
+	testPDASeedTimelockIsOperationsDone    = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'o', 'p', 's', 'd', 'o', 'n', 'e'}
+	testPDASeedTimelockMinDelay            = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'm', 'i', 'n', 'd', 'e', 'l', 'a', 'y'}
+	testPDASeedTimelockUpdateDelay         = [32]byte{'t', 'e', 's', 't', '-', 't', 'i', 'm', 'e', 'u', 'p', 'd', 'a', 't', 'e', 'd'}
+)
 
 func (s *TestSuite) TestGetProposers() {
 	s.SetupTimelock(testPDASeedTimelockGetProposers, 1*time.Second)
@@ -33,7 +38,7 @@ func (s *TestSuite) TestGetProposers() {
 	s.Require().NoError(err, "Failed to get proposers")
 	s.Require().Len(proposers, 2, "Expected 2 proposers")
 
-	var expected = make([]string, 0, len(s.Roles[timelock.Proposer_Role].Accounts))
+	expected := make([]string, 0, len(s.Roles[timelock.Proposer_Role].Accounts))
 	for _, acc := range s.Roles[timelock.Proposer_Role].Accounts {
 		expected = append(expected, acc.PublicKey().String())
 	}
@@ -49,7 +54,7 @@ func (s *TestSuite) TestGetExecutors() {
 	s.Require().NoError(err, "Failed to get executors")
 	s.Require().Len(executors, 2, "Expected 2 executors")
 
-	var expected = make([]string, 0, len(s.Roles[timelock.Executor_Role].Accounts))
+	expected := make([]string, 0, len(s.Roles[timelock.Executor_Role].Accounts))
 	for _, acc := range s.Roles[timelock.Executor_Role].Accounts {
 		expected = append(expected, acc.PublicKey().String())
 	}
@@ -65,7 +70,7 @@ func (s *TestSuite) TestGetCancellers() {
 	s.Require().NoError(err, "Failed to get cancellers")
 	s.Require().Len(cancellers, 2, "Expected 2 cancellers")
 
-	var expected = make([]string, 0, len(s.Roles[timelock.Canceller_Role].Accounts))
+	expected := make([]string, 0, len(s.Roles[timelock.Canceller_Role].Accounts))
 	for _, acc := range s.Roles[timelock.Canceller_Role].Accounts {
 		expected = append(expected, acc.PublicKey().String())
 	}
@@ -81,7 +86,7 @@ func (s *TestSuite) TestGetBypassers() {
 	s.Require().NoError(err, "Failed to get bypassers")
 	s.Require().Len(bypassers, 2, "Expected 2 bypassers")
 
-	var expected = make([]string, 0, len(s.Roles[timelock.Bypasser_Role].Accounts))
+	expected := make([]string, 0, len(s.Roles[timelock.Bypasser_Role].Accounts))
 	for _, acc := range s.Roles[timelock.Bypasser_Role].Accounts {
 		expected = append(expected, acc.PublicKey().String())
 	}
@@ -169,6 +174,32 @@ func (s *TestSuite) TestGetMinDelay() {
 
 	s.Require().NoError(err, "Failed to query min delay")
 	s.Require().Equal(delay, uint64(minDelay.Seconds()), "Min delay should match the configured value")
+}
+
+func (s *TestSuite) TestUpdateDelay() {
+	ctx := context.Background()
+	initialDelay := 1 * time.Second
+	s.SetupTimelock(testPDASeedTimelockUpdateDelay, initialDelay)
+
+	admin, err := solana.PrivateKeyFromBase58(privateKey)
+	s.Require().NoError(err)
+
+	timelockAddr := solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockUpdateDelay)
+	configurer := solanasdk.NewTimelockConfigurer(s.SolanaClient, admin)
+
+	delay, err := configurer.GetMinDelay(ctx, timelockAddr)
+	s.Require().NoError(err, "Failed to get initial min delay")
+	s.Require().Equal(uint64(initialDelay.Seconds()), delay, "Initial delay should match configured value")
+
+	newDelay := uint64(120)
+	result, err := configurer.UpdateDelay(ctx, timelockAddr, newDelay)
+	s.Require().NoError(err, "Failed to update delay")
+	s.Require().NotEmpty(result.Hash, "Transaction hash should not be empty")
+	s.Require().Equal(chainsel.FamilySolana, result.ChainFamily, "Chain family should be Solana")
+
+	delay, err = configurer.GetMinDelay(ctx, timelockAddr)
+	s.Require().NoError(err, "Failed to get updated min delay")
+	s.Require().Equal(newDelay, delay, "Delay should match the updated value")
 }
 
 func (s *TestSuite) createOperation(timelockID [32]byte) timelockutils.Operation {
