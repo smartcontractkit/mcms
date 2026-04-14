@@ -63,7 +63,6 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 		timelockAddress string
 		newDelay        uint64
 		mockSetup       func(m *evm_mocks.ContractDeployBackend)
-		wantTxHash      string
 		wantErr         bool
 	}{
 		{
@@ -75,8 +74,7 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 					Return(nil)
 				sharedMockSetup(m)
 			},
-			wantTxHash: "",
-			wantErr:    false,
+			wantErr: false,
 		},
 		{
 			name:            "failure in tx execution",

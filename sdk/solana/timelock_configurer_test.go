@@ -64,7 +64,7 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) { //nolint:paralleltest
 			},
 		},
 		{
-			name:     "error: send tx fails",
+			name:     "error: get latest blockhash fails",
 			address:  timelockAddress,
 			newDelay: 120,
 			setup: func(t *testing.T, _ *TimelockConfigurer, m *mocks.JSONRPCClient) {
