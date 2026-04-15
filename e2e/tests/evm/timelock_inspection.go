@@ -323,4 +323,3 @@ func (s *TimelockInspectionTestSuite) TestGetMinDelay() {
 	s.Require().NoError(err, "Failed to get min delay")
 	s.Require().EqualValues(0, delay)
 }
-
