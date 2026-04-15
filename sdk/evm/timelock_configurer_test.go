@@ -63,7 +63,7 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 		timelockAddress string
 		newDelay        uint64
 		mockSetup       func(m *evm_mocks.ContractDeployBackend)
-		wantErr         bool
+		wantErr         string
 	}{
 		{
 			name:            "success",
@@ -74,7 +74,6 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 					Return(nil)
 				sharedMockSetup(m)
 			},
-			wantErr: false,
 		},
 		{
 			name:            "failure in tx execution",
@@ -85,7 +84,7 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 					Return(errors.New("error during tx send"))
 				sharedMockSetup(m)
 			},
-			wantErr: true,
+			wantErr: "failed to update delay",
 		},
 	}
 
@@ -101,8 +100,8 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 			configurer := NewTimelockConfigurer(client, mockAuth)
 			result, err := configurer.UpdateDelay(t.Context(), test.timelockAddress, test.newDelay)
 
-			if test.wantErr {
-				require.Error(t, err)
+			if test.wantErr != "" {
+				require.ErrorContains(t, err, test.wantErr)
 			} else {
 				require.NoError(t, err)
 				assert.NotEmpty(t, result.Hash)
