@@ -7,6 +7,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	sdkSui "github.com/smartcontractkit/mcms/sdk/sui"
@@ -48,6 +49,13 @@ func BuildInspector(
 
 	rawSelector := uint64(selector)
 	switch family {
+	case chainsel.FamilyCanton:
+		ch, ok := chains.CantonChain(rawSelector)
+		if !ok || len(ch.Participants) == 0 {
+			return nil, fmt.Errorf("missing Canton chain participant for selector %d", rawSelector)
+		}
+		participant := ch.Participants[0]
+		return cantonsdk.NewInspector(participant.LedgerServices.State, participant.PartyID, cantonRole(action)), nil
 	case chainsel.FamilyEVM:
 		client, ok := chains.EVMClient(rawSelector)
 		if !ok {
@@ -74,9 +82,13 @@ func BuildInspector(
 
 		return aptos.NewInspector(client, role), nil
 	case chainsel.FamilySui:
-		client, signer, ok := chains.SuiClient(rawSelector)
+		client, ok := chains.SuiClient(rawSelector)
 		if !ok {
 			return nil, fmt.Errorf("missing Sui chain client for selector %d", rawSelector)
+		}
+		signer, ok := chains.SuiSigner(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing Sui signer for selector %d", rawSelector)
 		}
 		suiMetadata, err := sdkSui.SuiMetadata(metadata)
 		if err != nil {
@@ -86,5 +98,16 @@ func BuildInspector(
 		return sdkSui.NewInspector(client, signer, suiMetadata.McmsPackageID, suiMetadata.Role)
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
+	}
+}
+
+func cantonRole(action types.TimelockAction) cantonsdk.TimelockRole {
+	switch action {
+	case types.TimelockActionBypass:
+		return cantonsdk.TimelockRoleBypasser
+	case types.TimelockActionCancel:
+		return cantonsdk.TimelockRoleCanceller
+	default:
+		return cantonsdk.TimelockRoleProposer
 	}
 }

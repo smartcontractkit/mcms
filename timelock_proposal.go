@@ -249,6 +249,31 @@ func (m *TimelockProposal) Convert(
 	return result, predecessors, nil
 }
 
+// OperationIDs returns the list of operation IDs for each batch operation in the proposal, as well
+// as their predecessors.
+func (m *TimelockProposal) OperationIDs(ctx context.Context) ([]common.Hash, []common.Hash, error) {
+	operationIDs, predecessors, err := m.calcOperationIDs(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return operationIDs, predecessors, nil
+}
+
+// OperationID returns the operation ID for the batch operation at the given index.
+func (m *TimelockProposal) OperationID(ctx context.Context, index int) (common.Hash, error) {
+	if index < 0 || index >= len(m.Operations) {
+		return common.Hash{}, fmt.Errorf("index %d is out of range (%d operations in proposal)", index, len(m.Operations))
+	}
+
+	operationIDs, _, err := m.calcOperationIDs(ctx)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to calculate operation IDs: %w", err)
+	}
+
+	return operationIDs[index], nil
+}
+
 // Decode decodes the raw transactions into a list of human-readable operations.
 func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, contractInterfaces map[string]string) ([][]sdk.DecodedOperation, error) {
 	decodedOps := make([][]sdk.DecodedOperation, len(m.Operations))
@@ -310,6 +335,56 @@ func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sd
 	}
 
 	return converters, nil
+}
+
+// calcOperationIDs computes and returns the id of each batch operation, along with
+// the predecessor operation id for each batch operation.
+func (m *TimelockProposal) calcOperationIDs(ctx context.Context) ([]common.Hash, []common.Hash, error) {
+	converters, err := m.buildTimelockConverters()
+	if err != nil {
+		return nil, nil, fmt.Errorf("failed to build timelock converters: %w", err)
+	}
+
+	operationIDs := make([]common.Hash, len(m.Operations))
+	predecessors := make([]common.Hash, len(m.Operations))
+	lastOpID := make(map[types.ChainSelector]common.Hash)
+	for sel := range m.ChainMetadata {
+		lastOpID[sel] = ZeroHash
+	}
+
+	for i, batchOp := range m.Operations {
+		converter, ok := converters[batchOp.ChainSelector]
+		if !ok {
+			return nil, nil, fmt.Errorf("no timelock converter found for chain selector %d", batchOp.ChainSelector)
+		}
+
+		chainMetadata, ok := m.ChainMetadata[batchOp.ChainSelector]
+		if !ok {
+			return nil, nil, fmt.Errorf("missing chain metadata for chain selector %d", batchOp.ChainSelector)
+		}
+
+		predecessors[i] = lastOpID[batchOp.ChainSelector]
+
+		_, operationID, err := converter.ConvertBatchToChainOperations(
+			ctx,
+			chainMetadata,
+			batchOp,
+			m.TimelockAddresses[batchOp.ChainSelector],
+			chainMetadata.MCMAddress,
+			m.Delay,
+			m.Action,
+			predecessors[i],
+			m.Salt(),
+		)
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to calculate operation ID for chain selector %d: %w", batchOp.ChainSelector, err)
+		}
+
+		lastOpID[batchOp.ChainSelector] = operationID
+		operationIDs[i] = operationID
+	}
+
+	return operationIDs, predecessors, nil
 }
 
 // OperationCounts returns per-chain counts *after* conversion for all chains in

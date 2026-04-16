@@ -7,6 +7,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/types"
@@ -29,6 +30,8 @@ func BuildConverters(chainMetadata map[types.ChainSelector]types.ChainMetadata) 
 			converter = solana.NewTimelockConverter()
 		case chainsel.FamilyAptos:
 			converter = aptos.NewTimelockConverter()
+		case chainsel.FamilyCanton:
+			converter = canton.NewTimelockConverter()
 		default:
 			return nil, fmt.Errorf("unsupported chain family %s", fam)
 		}
