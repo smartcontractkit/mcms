@@ -39,7 +39,7 @@ func (c *TimelockConfigurer) UpdateDelay(
 		return types.TransactionResult{}, fmt.Errorf("timelock address is required")
 	}
 
-	data, err := serializeTimelockUpdateMinDelay(newDelay)
+	data, err := serializeTimelockUpdateMinDelay(timelockAddress, newDelay)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("encoding timelock_update_min_delay: %w", err)
 	}
@@ -66,9 +66,15 @@ func (c *TimelockConfigurer) UpdateDelay(
 	}, nil
 }
 
-// serializeTimelockUpdateMinDelay BCS-encodes the new delay.
-func serializeTimelockUpdateMinDelay(newMinDelay uint64) ([]byte, error) {
+// serializeTimelockUpdateMinDelay BCS-encodes the timelock object address and new delay.
+func serializeTimelockUpdateMinDelay(timelockAddress string, newMinDelay uint64) ([]byte, error) {
+	timelockAddr, err := AddressFromHex(timelockAddress)
+	if err != nil {
+		return nil, fmt.Errorf("decoding timelock address: %w", err)
+	}
+
 	return bcs.SerializeSingle(func(ser *bcs.Serializer) {
+		ser.FixedBytes(timelockAddr.Bytes())
 		ser.U64(newMinDelay)
 	})
 }

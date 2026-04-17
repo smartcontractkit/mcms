@@ -26,6 +26,7 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 	t.Parallel()
 
 	mcmsPackageID := "0x1"
+	validTimelockAddress := "0x1234"
 
 	configurer := NewTimelockConfigurer(mcmsPackageID)
 
@@ -38,7 +39,7 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 	}{
 		{
 			name:            "success returns prepared tx with empty hash",
-			timelockAddress: "0xtimelock",
+			timelockAddress: validTimelockAddress,
 			newDelay:        3600,
 			assertion:       assert.NoError,
 		},
@@ -48,6 +49,13 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 			newDelay:        3600,
 			assertion:       assert.Error,
 			wantErr:         "timelock address is required",
+		},
+		{
+			name:            "invalid timelock address rejected",
+			timelockAddress: "0xtimelock",
+			newDelay:        3600,
+			assertion:       assert.Error,
+			wantErr:         "decoding timelock address",
 		},
 	}
 
@@ -83,8 +91,13 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 func TestSerializeTimelockUpdateMinDelay(t *testing.T) {
 	t.Parallel()
 
-	data, err := serializeTimelockUpdateMinDelay(3600)
+	timelockAddress := "0x1234"
+	data, err := serializeTimelockUpdateMinDelay(timelockAddress, 3600)
 	require.NoError(t, err)
-	require.Len(t, data, 8)
-	assert.Equal(t, uint64(3600), binary.LittleEndian.Uint64(data))
+	require.Len(t, data, AddressLen+8)
+
+	addr, err := AddressFromHex(timelockAddress)
+	require.NoError(t, err)
+	assert.Equal(t, addr.Bytes(), data[:AddressLen])
+	assert.Equal(t, uint64(3600), binary.LittleEndian.Uint64(data[AddressLen:]))
 }
