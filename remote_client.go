@@ -49,6 +49,7 @@ func NewRemoteClient(httpClient *http.Client, parser ResponseParser) (*RemoteCli
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
+
 	return &RemoteClient{
 		httpClient: httpClient,
 		parser:     parser,
@@ -134,6 +135,7 @@ func RequestRemoteSignatureAndAppend(
 	}
 
 	signable.proposal.AppendSignature(sig)
+
 	return sig, nil
 }
 
@@ -152,6 +154,7 @@ func marshalHTTPBody(body any) ([]byte, error) {
 		if err != nil {
 			return nil, fmt.Errorf("marshal HTTP body: %w", err)
 		}
+
 		return marshaledBody, nil
 	}
 }
@@ -160,5 +163,6 @@ func cloneHeaders(headers http.Header) http.Header {
 	if headers == nil {
 		return make(http.Header)
 	}
+
 	return headers.Clone()
 }

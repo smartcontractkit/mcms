@@ -114,7 +114,7 @@ func TestRemoteClient_Sign_DelegatesParsing(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, parser.returnedSig, sig)
 	require.Equal(t, http.StatusAccepted, parser.receivedStatusCode)
-	require.Equal(t, `{"backend":"response"}`, string(parser.receivedBody))
+	require.JSONEq(t, `{"backend":"response"}`, string(parser.receivedBody))
 }
 
 func TestRemoteClient_Sign_PropagatesParserError(t *testing.T) {
@@ -168,7 +168,7 @@ func TestRequestRemoteSignatureAndAppend(t *testing.T) {
 
 	signable, err := newTestSignableForRemoteFlow()
 	require.NoError(t, err)
-	require.Len(t, signable.proposal.Signatures, 0)
+	require.Empty(t, signable.proposal.Signatures)
 
 	sig, err := RequestRemoteSignatureAndAppend(context.Background(), signable, client, RemoteSignRequest{
 		URL:  serverURL,
@@ -231,5 +231,6 @@ func (p *capturingParser) ParseResponse(statusCode int, headers http.Header, bod
 	if p.returnedErr != nil {
 		return types.Signature{}, p.returnedErr
 	}
+
 	return p.returnedSig, nil
 }
