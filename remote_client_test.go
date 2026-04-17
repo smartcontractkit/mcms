@@ -232,6 +232,16 @@ func TestRequestRemoteSignatureAndAppend(t *testing.T) {
 	require.Equal(t, sig, signable.proposal.Signatures[0])
 }
 
+func TestRequestRemoteSignatureAndAppend_RequiresProposal(t *testing.T) {
+	t.Parallel()
+
+	client, err := NewRemoteClient(http.DefaultClient, &capturingParser{})
+	require.NoError(t, err)
+
+	_, err = RequestRemoteSignatureAndAppend(context.Background(), &Signable{}, client, RemoteSignRequest{})
+	require.EqualError(t, err, "signable proposal is required")
+}
+
 func newTestSignableForRemoteFlow() (*Signable, error) {
 	validUntil, err := safecast.Int64ToUint32(time.Now().Add(10 * time.Minute).Unix())
 	if err != nil {

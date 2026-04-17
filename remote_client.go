@@ -121,6 +121,9 @@ func RequestRemoteSignatureAndAppend(
 	if signable == nil {
 		return types.Signature{}, errors.New("signable is required")
 	}
+	if signable.proposal == nil {
+		return types.Signature{}, errors.New("signable proposal is required")
+	}
 	if client == nil {
 		return types.Signature{}, errors.New("remote client is required")
 	}
