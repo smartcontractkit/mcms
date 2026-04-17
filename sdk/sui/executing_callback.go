@@ -206,6 +206,12 @@ func (e *ExecutingCallbackParams) processMCMSMainModuleCall(ctx context.Context,
 			call.StateObj,
 			executingCallbackParams,
 		)
+	case TimelockActionCancel:
+		executeDispatchCall, err = e.mcms.Encoder().McmsTimelockCancelWithArgs(
+			bind.Object{Id: call.StateObj},
+			bind.Object{Id: e.registryObj},
+			executingCallbackParams,
+		)
 	case suiTimelockUpdateMinDelayFunctionName:
 		executeDispatchCall, err = e.mcms.Encoder().McmsTimelockUpdateMinDelayWithArgs(
 			bind.Object{Id: call.StateObj},
