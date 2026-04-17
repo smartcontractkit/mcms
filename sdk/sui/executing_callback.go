@@ -18,6 +18,8 @@ import (
 
 const (
 	UpgradeGasBudget = 500_000_000
+
+	suiMCMSSetConfigFunctionName = "set_config"
 )
 
 type EntrypointArgEncoder interface {
@@ -190,21 +192,36 @@ func (e *ExecutingCallbackParams) processMCMSAccountCall(ctx context.Context, pt
 }
 
 func (e *ExecutingCallbackParams) processMCMSMainModuleCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, call Call, index int) error {
-	executeDispatchCall, err := e.mcms.Encoder().McmsSetConfigWithArgs(
-		e.registryObj,
-		call.StateObj,
-		executingCallbackParams,
+	var (
+		executeDispatchCall *bind.EncodedCall
+		err                 error
 	)
-	if err != nil {
-		return fmt.Errorf("creating ExecuteDispatchToAccount call %d: %w", index, err)
-	}
 
-	// Adjust function name to match mcms_ prefix
-	executeDispatchCall.Function = "mcms_" + strings.TrimPrefix(call.FunctionName, "mcms_")
+	normalizedFunctionName := strings.TrimPrefix(call.FunctionName, "mcms_")
+
+	switch normalizedFunctionName {
+	case suiMCMSSetConfigFunctionName:
+		executeDispatchCall, err = e.mcms.Encoder().McmsSetConfigWithArgs(
+			e.registryObj,
+			call.StateObj,
+			executingCallbackParams,
+		)
+	case suiTimelockUpdateMinDelayFunctionName:
+		executeDispatchCall, err = e.mcms.Encoder().McmsTimelockUpdateMinDelayWithArgs(
+			bind.Object{Id: call.StateObj},
+			bind.Object{Id: e.registryObj},
+			executingCallbackParams,
+		)
+	default:
+		return fmt.Errorf("unsupported MCMS main module function %q", call.FunctionName)
+	}
+	if err != nil {
+		return fmt.Errorf("creating MCMS main module call %d: %w", index, err)
+	}
 
 	_, err = e.mcms.Bound().AppendPTB(ctx, opts, ptb, executeDispatchCall)
 	if err != nil {
-		return fmt.Errorf("adding ExecuteDispatchToAccount call %d to PTB: %w", index, err)
+		return fmt.Errorf("adding MCMS main module call %d to PTB: %w", index, err)
 	}
 
 	return nil

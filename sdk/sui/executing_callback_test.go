@@ -74,7 +74,7 @@ func TestNewExecutingCallbackParams(t *testing.T) {
 	assert.Equal(t, entrypointEncoder, params.entryPointEncoder)
 }
 
-func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
+func TestExecutingCallbackParams_AppendPTB_WithMCMSSetConfig(t *testing.T) {
 	t.Parallel()
 
 	// Create mock objects
@@ -88,14 +88,14 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
 	mockMcms.EXPECT().Encoder().Return(mockMcmsEncoder)
 	mockMcms.EXPECT().Bound().Return(mockBound)
 
-	// Mock the McmsSetConfigWithArgs call (default case for non-mcms_deployer/mcms_account modules)
+	// Mock the McmsSetConfigWithArgs call.
 	expectedCall := &bind.EncodedCall{
 		Module: bind.ModuleInformation{
 			PackageID:   "0x123456789abcdef",
 			PackageName: "mcms",
-			ModuleName:  "test_module",
+			ModuleName:  "mcms",
 		},
-		Function: "test_function",
+		Function: "mcms_set_config",
 	}
 	mockMcmsEncoder.EXPECT().McmsSetConfigWithArgs(
 		"0xregistry",
@@ -141,19 +141,122 @@ func TestExecutingCallbackParams_AppendPTB_WithMCMSPackageTarget(t *testing.T) {
 	ptb := &transaction.Transaction{}
 	executeCallback := &transaction.Argument{}
 
-	// Create a call that targets the MCMS package (should trigger ExecuteDispatchToAccount)
+	// Create a call that targets the MCMS package and uses set_config.
 	calls := []Call{
 		{
 			Target:       mcmsPackageIDBytes,
 			StateObj:     "0x742d35cc6b8d4c8c8e1b9b3b2d2a8b9c8d7e6f1234567890abcdef0123456789",
-			ModuleName:   "test_module",
-			FunctionName: "test_function",
+			ModuleName:   "mcms",
+			FunctionName: suiMCMSSetConfigFunctionName,
 		},
 	}
 
 	// Execute the method
 	err = params.AppendPTB(ctx, ptb, executeCallback, calls)
 	assert.NoError(t, err)
+}
+
+func TestExecutingCallbackParams_AppendPTB_WithMCMSTimelockUpdateMinDelay(t *testing.T) {
+	t.Parallel()
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockMcms := mockmcms.NewIMcms(t)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
+	mockMcmsEncoder := mockmcms.NewMcmsEncoder(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
+
+	mockMcms.EXPECT().Encoder().Return(mockMcmsEncoder)
+	mockMcms.EXPECT().Bound().Return(mockBound)
+
+	expectedCall := &bind.EncodedCall{
+		Module: bind.ModuleInformation{
+			PackageID:   "0x123456789abcdef",
+			PackageName: "mcms",
+			ModuleName:  "mcms",
+		},
+		Function: "mcms_timelock_update_min_delay",
+	}
+	mockMcmsEncoder.EXPECT().McmsTimelockUpdateMinDelayWithArgs(
+		bind.Object{Id: "0xtimelock"},
+		bind.Object{Id: "0xregistry"},
+		mock.AnythingOfType("*transaction.Argument"),
+	).Return(expectedCall, nil)
+
+	mockBound.EXPECT().AppendPTB(
+		mock.Anything,
+		mock.AnythingOfType("*bind.CallOpts"),
+		mock.AnythingOfType("*transaction.Transaction"),
+		expectedCall,
+	).Return(nil, nil)
+
+	mcmsPackageIDHex := "123456789abcdef0" + strings.Repeat("0", 48)
+	mcmsPackageIDBytes, err := hex.DecodeString(mcmsPackageIDHex)
+	require.NoError(t, err)
+	mcmsPackageID := "0x" + mcmsPackageIDHex
+
+	params := NewExecutingCallbackParams(
+		mockClient,
+		mockMcms,
+		mcmsPackageID,
+		entrypointEncoder,
+		"0xregistry",
+		"0xaccount",
+	)
+	params.extractExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
+		return &transaction.Argument{}, nil
+	}
+	params.closeExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
+		return nil
+	}
+
+	err = params.AppendPTB(context.Background(), &transaction.Transaction{}, &transaction.Argument{}, []Call{
+		{
+			Target:       mcmsPackageIDBytes,
+			StateObj:     "0xtimelock",
+			ModuleName:   "mcms",
+			FunctionName: suiTimelockUpdateMinDelayFunctionName,
+		},
+	})
+	assert.NoError(t, err)
+}
+
+func TestExecutingCallbackParams_AppendPTB_WithUnsupportedMCMSMainModuleCall(t *testing.T) {
+	t.Parallel()
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockMcms := mockmcms.NewIMcms(t)
+	entrypointEncoder := &MockEntrypointArgEncoder{t: t, registryObj: "0xregistry"}
+
+	mcmsPackageIDHex := "123456789abcdef0" + strings.Repeat("0", 48)
+	mcmsPackageIDBytes, err := hex.DecodeString(mcmsPackageIDHex)
+	require.NoError(t, err)
+	mcmsPackageID := "0x" + mcmsPackageIDHex
+
+	params := NewExecutingCallbackParams(
+		mockClient,
+		mockMcms,
+		mcmsPackageID,
+		entrypointEncoder,
+		"0xregistry",
+		"0xaccount",
+	)
+	params.extractExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error) {
+		return &transaction.Argument{}, nil
+	}
+	params.closeExecutingCallbackParams = func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error {
+		return nil
+	}
+
+	err = params.AppendPTB(context.Background(), &transaction.Transaction{}, &transaction.Argument{}, []Call{
+		{
+			Target:       mcmsPackageIDBytes,
+			StateObj:     "0xstate",
+			ModuleName:   "mcms",
+			FunctionName: "unknown_function",
+		},
+	})
+	require.Error(t, err)
+	assert.ErrorContains(t, err, `unsupported MCMS main module function "unknown_function"`)
 }
 
 func TestExecutingCallbackParams_AppendPTB_WithMCMSAccountModule(t *testing.T) {
