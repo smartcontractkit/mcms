@@ -12,9 +12,11 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -33,18 +35,18 @@ func TestRemoteClient_Execute_DefaultsToPOSTAndSetsJSONContentType(t *testing.T)
 	const testBody = `{"hello":"world"}`
 
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		require.Equal(t, http.MethodPost, r.Method)
-		require.Equal(t, customHeaderValue, r.Header.Get("X-Test-Header"))
-		require.Equal(t, "application/json", r.Header.Get("Content-Type"))
+		assert.Equal(t, http.MethodPost, r.Method)
+		assert.Equal(t, customHeaderValue, r.Header.Get("X-Test-Header"))
+		assert.Equal(t, "application/json", r.Header.Get("Content-Type"))
 
 		var body map[string]string
 		err := json.NewDecoder(r.Body).Decode(&body)
-		require.NoError(t, err)
-		require.Equal(t, "world", body["hello"])
+		assert.NoError(t, err)
+		assert.Equal(t, "world", body["hello"])
 
 		w.WriteHeader(http.StatusOK)
 		_, err = w.Write([]byte(testBody))
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}))
 	t.Cleanup(testServer.Close)
 
@@ -100,7 +102,7 @@ func TestRemoteClient_Sign_DelegatesParsing(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusAccepted)
 		_, err := w.Write([]byte(`{"backend":"response"}`))
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}))
 	t.Cleanup(testServer.Close)
 
@@ -124,7 +126,7 @@ func TestRemoteClient_Sign_PropagatesParserError(t *testing.T) {
 	testServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		_, err := w.Write([]byte(`{"ok":true}`))
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}))
 	t.Cleanup(testServer.Close)
 
@@ -149,7 +151,7 @@ func TestRequestRemoteSignatureAndAppend(t *testing.T) {
 			"v":27,
 			"signer_address":"0x0000000000000000000000000000000000000000"
 		}`))
-		require.NoError(t, err)
+		assert.NoError(t, err)
 	}))
 	t.Cleanup(testServer.Close)
 
@@ -181,11 +183,16 @@ func TestRequestRemoteSignatureAndAppend(t *testing.T) {
 }
 
 func newTestSignableForRemoteFlow() (*Signable, error) {
+	validUntil, err := safecast.Int64ToUint32(time.Now().Add(10 * time.Minute).Unix())
+	if err != nil {
+		return nil, err
+	}
+
 	proposal := &Proposal{
 		BaseProposal: BaseProposal{
 			Version:              "v1",
 			Kind:                 types.KindProposal,
-			ValidUntil:           uint32(time.Now().Add(10 * time.Minute).Unix()),
+			ValidUntil:           validUntil,
 			Signatures:           []types.Signature{},
 			OverridePreviousRoot: false,
 			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{

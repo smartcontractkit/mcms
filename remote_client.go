@@ -125,7 +125,7 @@ func RequestRemoteSignatureAndAppend(
 		return types.Signature{}, errors.New("remote client is required")
 	}
 
-	if err := signable.proposal.Validate(); err != nil {
+	if err := signable.proposal.Validate(); err != nil { //nolint:contextcheck // Proposal.Validate has no context param; lookups use Background internally.
 		return types.Signature{}, fmt.Errorf("validate proposal: %w", err)
 	}
 
