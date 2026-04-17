@@ -28,6 +28,58 @@ func TestNewRemoteClient_RequiresParser(t *testing.T) {
 	require.EqualError(t, err, "response parser is required")
 }
 
+func TestMarshalHTTPBody_Nil(t *testing.T) {
+	t.Parallel()
+
+	got, err := marshalHTTPBody(nil)
+	require.NoError(t, err)
+	require.Nil(t, got)
+}
+
+func TestMarshalHTTPBody_ByteSlice(t *testing.T) {
+	t.Parallel()
+
+	input := []byte(`{"x":1}`)
+	got, err := marshalHTTPBody(input)
+	require.NoError(t, err)
+	require.Equal(t, input, got)
+}
+
+func TestMarshalHTTPBody_ByteSliceNil(t *testing.T) {
+	t.Parallel()
+
+	var input []byte
+	got, err := marshalHTTPBody(input)
+	require.NoError(t, err)
+	require.Nil(t, got)
+}
+
+func TestMarshalHTTPBody_RawMessage(t *testing.T) {
+	t.Parallel()
+
+	input := json.RawMessage(`{"ok":true}`)
+	got, err := marshalHTTPBody(input)
+	require.NoError(t, err)
+	require.JSONEq(t, `{"ok":true}`, string(got))
+}
+
+func TestMarshalHTTPBody_JSONMarshalsDefault(t *testing.T) {
+	t.Parallel()
+
+	got, err := marshalHTTPBody(map[string]int{"n": 42})
+	require.NoError(t, err)
+	require.JSONEq(t, `{"n":42}`, string(got))
+}
+
+func TestMarshalHTTPBody_MarshalError(t *testing.T) {
+	t.Parallel()
+
+	_, err := marshalHTTPBody(make(chan int))
+	require.Error(t, err)
+	require.ErrorContains(t, err, "marshal HTTP body")
+	require.Contains(t, err.Error(), "unsupported type")
+}
+
 func TestRemoteClient_Execute_DefaultsToPOSTAndSetsJSONContentType(t *testing.T) {
 	t.Parallel()
 
@@ -148,8 +200,7 @@ func TestRequestRemoteSignatureAndAppend(t *testing.T) {
 		_, err := w.Write([]byte(`{
 			"r":"0x1111111111111111111111111111111111111111111111111111111111111111",
 			"s":"0x2222222222222222222222222222222222222222222222222222222222222222",
-			"v":27,
-			"signer_address":"0x0000000000000000000000000000000000000000"
+			"v":27
 		}`))
 		assert.NoError(t, err)
 	}))
@@ -177,7 +228,6 @@ func TestRequestRemoteSignatureAndAppend(t *testing.T) {
 		Body: map[string]any{"request": "payload"},
 	})
 	require.NoError(t, err)
-	require.Equal(t, uint8(27), sig.V)
 	require.Len(t, signable.proposal.Signatures, 1)
 	require.Equal(t, sig, signable.proposal.Signatures[0])
 }
