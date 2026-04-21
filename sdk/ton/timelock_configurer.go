@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
@@ -23,11 +24,26 @@ type TimelockConfigurer struct {
 	wallet *wallet.Wallet
 	// amount is attached to the internal message.
 	amount tlb.Coins
+
+	skipSend bool
 }
 
 // NewTimelockConfigurer creates a new TimelockConfigurer for TON chains.
-func NewTimelockConfigurer(w *wallet.Wallet, amount tlb.Coins) *TimelockConfigurer {
-	return &TimelockConfigurer{wallet: w, amount: amount}
+func NewTimelockConfigurer(w *wallet.Wallet, amount tlb.Coins, opts ...TimelockConfigurerOption) *TimelockConfigurer {
+	c := &TimelockConfigurer{wallet: w, amount: amount}
+	for _, opt := range opts {
+		opt(c)
+	}
+
+	return c
+}
+
+type TimelockConfigurerOption func(*TimelockConfigurer)
+
+func WithDoNotSendTimelockInstructionsOnChain() TimelockConfigurerOption {
+	return func(c *TimelockConfigurer) {
+		c.skipSend = true
+	}
 }
 
 // UpdateDelay sends the RBACTimelock UpdateDelay message to the given timelock
@@ -55,6 +71,19 @@ func (c *TimelockConfigurer) UpdateDelay(
 	})
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to encode UpdateDelay body: %w", err)
+	}
+
+	if c.skipSend {
+		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), "RBACTimelock", []string{"UpdateDelay"})
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("error encoding transaction: %w", err)
+		}
+
+		return types.TransactionResult{
+			Hash:        "",
+			ChainFamily: chainsel.FamilyTon,
+			RawData:     tx,
+		}, nil
 	}
 
 	return SendTx(ctx, TxOpts{
