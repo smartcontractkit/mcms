@@ -58,9 +58,9 @@ func validateChainMetadata(metadata types.ChainMetadata, csel types.ChainSelecto
 		return nil
 	case chainsel.FamilySui:
 		return sui.ValidateChainMetadata(metadata)
-	case cselectors.FamilyCanton:
+	case chainsel.FamilyCanton:
 		return canton.ValidateChainMetadata(metadata)
-	case cselectors.FamilyTon:
+	case chainsel.FamilyTon:
 		// TODO (ton): do we need special chain metadata for TON?
 		// Yes! We could attach MCMS -> Timelock value here which is now hardcoded default in timelock converter
 		return nil

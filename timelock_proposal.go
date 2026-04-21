@@ -338,56 +338,6 @@ func (m *TimelockProposal) calcOperationIDs(ctx context.Context) ([]common.Hash,
 	return operationIDs, predecessors, nil
 }
 
-// calcOperationIDs computes and returns the id of each batch operation, along with
-// the predecessor operation id for each batch operation.
-func (m *TimelockProposal) calcOperationIDs(ctx context.Context) ([]common.Hash, []common.Hash, error) {
-	converters, err := m.buildTimelockConverters()
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to build timelock converters: %w", err)
-	}
-
-	operationIDs := make([]common.Hash, len(m.Operations))
-	predecessors := make([]common.Hash, len(m.Operations))
-	lastOpID := make(map[types.ChainSelector]common.Hash)
-	for sel := range m.ChainMetadata {
-		lastOpID[sel] = ZeroHash
-	}
-
-	for i, batchOp := range m.Operations {
-		converter, ok := converters[batchOp.ChainSelector]
-		if !ok {
-			return nil, nil, fmt.Errorf("no timelock converter found for chain selector %d", batchOp.ChainSelector)
-		}
-
-		chainMetadata, ok := m.ChainMetadata[batchOp.ChainSelector]
-		if !ok {
-			return nil, nil, fmt.Errorf("missing chain metadata for chain selector %d", batchOp.ChainSelector)
-		}
-
-		predecessors[i] = lastOpID[batchOp.ChainSelector]
-
-		_, operationID, err := converter.ConvertBatchToChainOperations(
-			ctx,
-			chainMetadata,
-			batchOp,
-			m.TimelockAddresses[batchOp.ChainSelector],
-			chainMetadata.MCMAddress,
-			m.Delay,
-			m.Action,
-			predecessors[i],
-			m.Salt(),
-		)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to calculate operation ID for chain selector %d: %w", batchOp.ChainSelector, err)
-		}
-
-		lastOpID[batchOp.ChainSelector] = operationID
-		operationIDs[i] = operationID
-	}
-
-	return operationIDs, predecessors, nil
-}
-
 // OperationCounts returns per-chain counts *after* conversion for all chains in
 // the proposal, as some chains have different operation counts after conversion.
 func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.ChainSelector]uint64, error) {

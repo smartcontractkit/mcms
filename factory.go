@@ -62,7 +62,7 @@ func newEncoder(
 			txCount,
 			overridePreviousRoot,
 		)
-	case cselectors.FamilyCanton:
+	case chainsel.FamilyCanton:
 		encoder = canton.NewEncoder(
 			csel,
 			txCount,

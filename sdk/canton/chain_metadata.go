@@ -114,8 +114,8 @@ func NewChainMetadata(
 	}
 
 	return types.ChainMetadata{
-		StartingOpCount:   preOpCount,
+		StartingOpCount:  preOpCount,
 		AdditionalFields: additionalFieldsBytes,
-		MCMAddress:        mcmsInstanceAddress,
+		MCMAddress:       mcmsInstanceAddress,
 	}, nil
 }
