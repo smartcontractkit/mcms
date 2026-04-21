@@ -6,12 +6,12 @@ import (
 	"math"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -60,9 +60,12 @@ func (c *TimelockConfigurer) UpdateDelay(
 		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %w", err)
 	}
 
-	qID, err := tvm.RandomQueryID()
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	qID := uint64(0)
+	if !c.skipSend {
+		qID, err = tvm.RandomQueryID()
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
+		}
 	}
 
 	body, err := tlb.ToCell(timelock.UpdateDelay{

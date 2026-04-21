@@ -89,9 +89,12 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("unable to create group parents dict: %w", err)
 	}
 
-	qID, err := tvm.RandomQueryID()
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	qID := uint64(0)
+	if !c.skipSend {
+		qID, err = tvm.RandomQueryID()
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
+		}
 	}
 
 	body, err := tlb.ToCell(mcms.SetConfig{

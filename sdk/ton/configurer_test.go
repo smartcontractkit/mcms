@@ -34,14 +34,15 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	signers := testutils.MakeNewECDSASigners(16)
 
 	tests := []struct {
-		name      string
-		options   []mcmston.ConfigurerOption
-		mcmAddr   string
-		cfg       *types.Config
-		clearRoot bool
-		mockSetup func(m *ton_mocks.TonAPI)
-		want      string
-		wantErr   error
+		name         string
+		options      []mcmston.ConfigurerOption
+		mcmAddr      string
+		cfg          *types.Config
+		clearRoot    bool
+		mockSetup    func(m *ton_mocks.TonAPI)
+		want         string
+		wantErr      error
+		wantPrepared bool
 	}{
 		{
 			name:    "success",
@@ -112,8 +113,9 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			mockSetup: func(m *ton_mocks.TonAPI) {
 				// No mocks needed as transaction won't be sent
 			},
-			want:    "", // Hash is empty when not sending transaction
-			wantErr: nil,
+			want:         "", // Hash is empty when not sending transaction
+			wantErr:      nil,
+			wantPrepared: true,
 		},
 		{
 			name:    "failure - SendTransaction fails",
@@ -189,6 +191,17 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, tx.Hash)
+				if tt.wantPrepared {
+					preparedTx, ok := tx.RawData.(types.Transaction)
+					require.True(t, ok)
+
+					tx2, err := configurer.SetConfig(ctx, tt.mcmAddr, tt.cfg, tt.clearRoot)
+					require.NoError(t, err)
+					preparedTx2, ok := tx2.RawData.(types.Transaction)
+					require.True(t, ok)
+
+					assert.Equal(t, preparedTx.Data, preparedTx2.Data)
+				}
 			}
 		})
 	}

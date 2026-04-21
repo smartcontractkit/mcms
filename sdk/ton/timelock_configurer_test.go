@@ -130,6 +130,12 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 				require.True(t, ok)
 				assert.Equal(t, "RBACTimelock", tx.ContractType)
 				assert.Equal(t, []string{"UpdateDelay"}, tx.Tags)
+
+				result2, err := configurer.UpdateDelay(t.Context(), tt.timelockAddress, tt.newDelay)
+				require.NoError(t, err)
+				tx2, ok := result2.RawData.(types.Transaction)
+				require.True(t, ok)
+				assert.Equal(t, tx.Data, tx2.Data)
 			}
 		})
 	}
