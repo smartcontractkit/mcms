@@ -2,6 +2,10 @@ package sdk
 
 import (
 	"context"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type TimelockInspector interface {
@@ -15,3 +19,5 @@ type TimelockInspector interface {
 	IsOperationDone(ctx context.Context, address string, opID [32]byte) (bool, error)
 	GetMinDelay(ctx context.Context, address string) (uint64, error)
 }
+
+type OperationID func(types.BatchOperation, types.TimelockAction, common.Hash, common.Hash) (common.Hash, error)

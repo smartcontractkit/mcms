@@ -4,10 +4,9 @@ import (
 	"math/big"
 	"testing"
 
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	cselectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -124,10 +123,11 @@ func TestEncoder_HashMetadata(t *testing.T) {
 
 func TestEncoder_ToGethOperation(t *testing.T) {
 	t.Parallel()
-
+	mapsels := chainsel.EvmChainIdToChainSelector()
 	var (
-		evmChainID    = uint64(1)
-		chainSelector = types.ChainSelector(cselectors.EvmChainIdToChainSelector()[evmChainID])
+		evmChainID = uint64(1)
+
+		chainSelector = types.ChainSelector(mapsels[evmChainID])
 
 		// Static argument values to ToGethOperation since they don't affect the test
 		giveOpCount  = uint32(0)
@@ -239,7 +239,7 @@ func TestEncoder_ToGethRootMetadata(t *testing.T) {
 	for _, tt := range tests {
 		encoder := NewEncoder(tt.giveSelector, 5, false, false)
 
-		got, err := encoder.ToGethRootMetadata(tt.giveMetadata)
+		got, err := encoder.ToGethRootMetadata(t.Context(), tt.giveMetadata)
 
 		if tt.wantErr != "" {
 			require.EqualError(t, err, tt.wantErr)

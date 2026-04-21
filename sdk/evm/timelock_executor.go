@@ -9,7 +9,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	gethtypes "github.com/ethereum/go-ethereum/core/types"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
@@ -76,15 +76,20 @@ func (t *TimelockExecutor) Execute(
 		execErr := BuildExecutionError(ctx, err, txPreview, &opts, timelockAddr, t.client, timelockAddr, timelockCallData)
 
 		return types.TransactionResult{
-			ChainFamily: chain_selectors.FamilyEVM,
+			ChainFamily: chainsel.FamilyEVM,
 		}, execErr
 	}
 
 	return types.TransactionResult{
 		Hash:        tx.Hash().Hex(),
-		ChainFamily: chain_selectors.FamilyEVM,
+		ChainFamily: chainsel.FamilyEVM,
 		RawData:     tx,
 	}, nil
+}
+
+func (t TimelockExecutor) Equal(other TimelockExecutor) bool {
+	return t.auth.GasPrice == other.auth.GasPrice &&
+		t.auth.GasLimit == other.auth.GasLimit
 }
 
 // buildTimelockExecuteTxData packs call data for RBACTimelock.executeBatch(...)

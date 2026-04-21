@@ -2,12 +2,13 @@ package evm
 
 import (
 	"context"
+	"encoding/json"
 	"math/big"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -45,7 +46,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 						[]string{"tag1", "tag2"},
 					),
 				},
-				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			delay:          "1h",
 			operation:      types.TimelockActionSchedule,
@@ -65,7 +66,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 						[]string{"tag1", "tag2"},
 					),
 				},
-				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			delay:          "1h",
 			operation:      types.TimelockActionCancel,
@@ -85,7 +86,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 						[]string{"tag1", "tag2"},
 					),
 				},
-				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			delay:          "1h",
 			operation:      types.TimelockAction("invalid"),
@@ -103,7 +104,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 					Data:              []byte("0x1234"),
 					AdditionalFields:  []byte("invalid"),
 				}},
-				ChainSelector: types.ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				ChainSelector: types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector),
 			},
 			delay:         "1h",
 			operation:     types.TimelockActionSchedule,
@@ -139,6 +140,65 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 				require.Len(t, chainOperations, 1)
 				require.Equal(t, timelockAddress, chainOperations[0].Transaction.To)
 				require.Equal(t, tc.op.ChainSelector, chainOperations[0].ChainSelector)
+			}
+		})
+	}
+}
+
+func TestOperationID(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		batchOp     types.BatchOperation
+		action      types.TimelockAction
+		predecessor common.Hash
+		salt        common.Hash
+		want        common.Hash
+		wantErr     string
+	}{
+		{
+			name: "success",
+			batchOp: types.BatchOperation{
+				ChainSelector: types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Transactions: []types.Transaction{{
+					To:               "0x456",
+					Data:             []byte("data"),
+					AdditionalFields: json.RawMessage(`{"value": 1000}`),
+				}},
+			},
+			action:      types.TimelockActionSchedule,
+			predecessor: common.HexToHash("0x0123"),
+			salt:        common.HexToHash("0xabcd"),
+			want:        common.HexToHash("0xcffb730ae9a09232d2ef7754aaa9b0990d6eb7689e1cc4ef812f0db9f9e1beef"),
+		},
+		{
+			name: "failure: bad additional fields",
+			batchOp: types.BatchOperation{
+				ChainSelector: types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector),
+				Transactions: []types.Transaction{{
+					To:               "0x456",
+					Data:             []byte("data"),
+					AdditionalFields: json.RawMessage(`invalid`),
+				}},
+			},
+			action:      types.TimelockActionSchedule,
+			predecessor: common.HexToHash("0x0123"),
+			salt:        common.HexToHash("0xabcd"),
+			wantErr:     "failed to unmarshal EVM additional fields: invalid character 'i'",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			operationID, err := OperationID(tt.batchOp, tt.action, tt.predecessor, tt.salt)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, operationID)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
 			}
 		})
 	}

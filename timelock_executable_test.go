@@ -15,12 +15,13 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/internal/testutils/evmsim"
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/sdk/mocks"
@@ -37,6 +38,9 @@ var (
 func TestNewTimelockExecutable(t *testing.T) {
 	t.Parallel()
 
+	aptosCurseMetadataFields, err := json.Marshal(aptos.AdditionalFieldsMetadata{MCMSType: aptos.MCMSTypeCurse})
+	require.NoError(t, err)
+
 	var (
 		ctx = context.Background()
 
@@ -46,6 +50,14 @@ func TestNewTimelockExecutable(t *testing.T) {
 			chaintest.Chain1Selector: {
 				StartingOpCount: 1,
 				MCMAddress:      "0x1234",
+			},
+		}
+
+		chainMetadataAptosCurse = map[types.ChainSelector]types.ChainMetadata{
+			chaintest.Chain5Selector: {
+				StartingOpCount:  1,
+				MCMAddress:       "0x1234",
+				AdditionalFields: aptosCurseMetadataFields,
 			},
 		}
 
@@ -60,6 +72,10 @@ func TestNewTimelockExecutable(t *testing.T) {
 			chaintest.Chain1Selector: "0x1234",
 		}
 
+		timelockAddressesAptos = map[types.ChainSelector]string{
+			chaintest.Chain5Selector: "0x1234",
+		}
+
 		tx = types.Transaction{
 			To:               "0x1234",
 			AdditionalFields: json.RawMessage([]byte(`{"value": 0}`)),
@@ -70,11 +86,30 @@ func TestNewTimelockExecutable(t *testing.T) {
 			},
 		}
 
+		aptosTx = types.Transaction{
+			To:               "0x1234",
+			AdditionalFields: json.RawMessage([]byte(`{"package_name": "curse_mcms", "module_name": "curse_mcms", "function": "accept_ownership"}`)),
+			Data:             common.Hex2Bytes("0x0"),
+			OperationMetadata: types.OperationMetadata{
+				ContractType: "Test contract",
+				Tags:         []string{"testTag1"},
+			},
+		}
+
 		batchOps = []types.BatchOperation{
 			{
 				ChainSelector: chaintest.Chain1Selector,
 				Transactions: []types.Transaction{
 					tx,
+				},
+			},
+		}
+
+		batchOpsAptos = []types.BatchOperation{
+			{
+				ChainSelector: chaintest.Chain5Selector,
+				Transactions: []types.Transaction{
+					aptosTx,
 				},
 			},
 		}
@@ -111,6 +146,29 @@ func TestNewTimelockExecutable(t *testing.T) {
 			wantErrMsg: "",
 		},
 		{
+			name: "success: Aptos curse_mcms uses correct converter",
+			giveProposal: &TimelockProposal{
+				BaseProposal: BaseProposal{
+					Version:              "v1",
+					Kind:                 types.KindTimelockProposal,
+					Description:          "description",
+					ValidUntil:           2004259681,
+					OverridePreviousRoot: false,
+					Signatures:           []types.Signature{},
+					ChainMetadata:        chainMetadataAptosCurse,
+				},
+				Action:            types.TimelockActionSchedule,
+				Delay:             types.MustParseDuration("1h"),
+				TimelockAddresses: timelockAddressesAptos,
+				Operations:        batchOpsAptos,
+			},
+			giveExecutors: map[types.ChainSelector]sdk.TimelockExecutor{
+				chaintest.Chain5Selector: executor,
+			},
+			wantErr:    false,
+			wantErrMsg: "",
+		},
+		{
 			name: "failure: converter from executor error",
 			giveProposal: &TimelockProposal{
 				BaseProposal: BaseProposal{
@@ -131,7 +189,7 @@ func TestNewTimelockExecutable(t *testing.T) {
 				types.ChainSelector(1): executor,
 			},
 			wantErr:    true,
-			wantErrMsg: "unable to set predecessors: unable to create converter from executor: chain family not found for selector",
+			wantErrMsg: "unable to set predecessors: unable to create converter from executor: error getting chain family: chain family not found for selector 1",
 		},
 	}
 
@@ -207,7 +265,7 @@ func TestTimelockExecutable_Execute(t *testing.T) {
 					Execute(ctx, mock.Anything, "0x5678", mock.Anything, mock.Anything).
 					Return(types.TransactionResult{
 						Hash:        "signature",
-						ChainFamily: chain_selectors.FamilyEVM,
+						ChainFamily: chainsel.FamilyEVM,
 					}, nil).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 
@@ -225,7 +283,7 @@ func TestTimelockExecutable_Execute(t *testing.T) {
 					Execute(ctx, mock.Anything, "0xABCD", mock.Anything, mock.Anything).
 					Return(types.TransactionResult{
 						Hash:        "signature",
-						ChainFamily: chain_selectors.FamilyEVM,
+						ChainFamily: chainsel.FamilyEVM,
 					}, nil).Once()
 				executors := map[types.ChainSelector]sdk.TimelockExecutor{chaintest.Chain1Selector: executor}
 

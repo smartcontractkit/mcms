@@ -44,7 +44,7 @@ func (b *TimelockProposalBuilder) SetDelay(delay types.Duration) *TimelockPropos
 	return b
 }
 
-// SetTimelockAddress adds a timelock address to the timelock proposal.
+// SetTimelockAddresses adds a timelock address to the timelock proposal.
 func (b *TimelockProposalBuilder) SetTimelockAddresses(
 	addrs map[types.ChainSelector]string,
 ) *TimelockProposalBuilder {

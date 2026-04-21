@@ -2,6 +2,7 @@ package sui
 
 import (
 	"encoding/hex"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -388,4 +390,101 @@ func TestTimelockConverter_ActionConstants(t *testing.T) {
 	assert.Equal(t, "timelock_schedule_batch", TimelockActionSchedule)
 	assert.Equal(t, "timelock_cancel", TimelockActionCancel)
 	assert.Equal(t, "timelock_bypasser_execute_batch", TimelockActionBypass)
+}
+
+func TestOperationID(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name        string
+		batchOp     types.BatchOperation
+		action      types.TimelockAction
+		predecessor common.Hash
+		salt        common.Hash
+		want        common.Hash
+		wantErr     string
+	}{
+		{
+			name: "success",
+			batchOp: types.BatchOperation{
+				ChainSelector: types.ChainSelector(1),
+				Transactions: []types.Transaction{
+					{
+						To:                "0x1234567890123456789012345678901234567890123456789012345678901234",
+						Data:              []byte{0x01, 0x02, 0x03},
+						OperationMetadata: types.OperationMetadata{},
+						AdditionalFields: MustMarshalJSON(t, AdditionalFields{
+							StateObj:   "0xstate1",
+							ModuleName: "module1",
+							Function:   "function1",
+						}),
+					},
+					{
+						To:                "0x5678901234567890123456789012345678901234567890123456789012345678",
+						Data:              []byte{0x03, 0x04},
+						OperationMetadata: types.OperationMetadata{},
+						AdditionalFields: MustMarshalJSON(t, AdditionalFields{
+							StateObj:   "0xstate2",
+							ModuleName: "module2",
+							Function:   "function2",
+						}),
+					},
+				},
+			},
+			action:      types.TimelockActionSchedule,
+			predecessor: common.HexToHash("0x0123"),
+			salt:        common.HexToHash("0xabcd"),
+			want:        common.HexToHash("0x086f6ce983752d129a5669d3b3b68419a283b5cb7ca183f105744e5ed109be3f"),
+		},
+		{
+			name: "failure: bad additional fields",
+			batchOp: types.BatchOperation{
+				ChainSelector: chaintest.Chain5Selector,
+				Transactions: []types.Transaction{{
+					To:               "0x456",
+					Data:             []byte{0x12, 0x34},
+					AdditionalFields: json.RawMessage("invalid"),
+				}},
+			},
+			action:      types.TimelockActionSchedule,
+			predecessor: common.HexToHash("0x0123"),
+			salt:        common.HexToHash("0xabcd"),
+			wantErr:     "failed to unmarshal Sui additional fields: invalid character",
+		},
+		{
+
+			name: "failure: bad To address",
+			batchOp: types.BatchOperation{
+				ChainSelector: chaintest.Chain5Selector,
+				Transactions: []types.Transaction{{
+					To:                "invalid address",
+					Data:              []byte{0x01, 0x02, 0x03},
+					OperationMetadata: types.OperationMetadata{},
+					AdditionalFields: MustMarshalJSON(t, AdditionalFields{
+						StateObj:   "0xstate1",
+						ModuleName: "module1",
+						Function:   "function1",
+					}),
+				}},
+			},
+			action:      types.TimelockActionSchedule,
+			predecessor: common.HexToHash("0x0123"),
+			salt:        common.HexToHash("0xabcd"),
+			wantErr:     "failed to parse target address \"invalid address\"",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			operationID, err := OperationID(tt.batchOp, tt.action, tt.predecessor, tt.salt)
+
+			if tt.wantErr == "" {
+				require.NoError(t, err)
+				require.Equal(t, tt.want, operationID)
+			} else {
+				require.ErrorContains(t, err, tt.wantErr)
+			}
+		})
+	}
 }

@@ -55,7 +55,7 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	tags := getTagsFromBatchOperation(batchOp)
 	instructionsData, err := getInstructionDataFromBatchOperation(batchOp)
 	if err != nil {
-		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to convert batchop to solana instructions: %w", err)
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to convert batch operation to solana instructions: %w", err)
 	}
 
 	if action == types.TimelockActionBypass {
@@ -123,6 +123,24 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	return operations, operationID, nil
 }
 
+func OperationID(
+	batchOp types.BatchOperation,
+	action types.TimelockAction,
+	predecessor common.Hash,
+	salt common.Hash,
+) (common.Hash, error) {
+	instructionsData, err := getInstructionDataFromBatchOperation(batchOp)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("unable to convert batch operation to solana instructions: %w", err)
+	}
+
+	if action == types.TimelockActionBypass {
+		predecessor = common.Hash{}
+	}
+
+	return HashOperation(instructionsData, predecessor, salt)
+}
+
 // HashOperation replicates the hash calculation from Solidity
 func HashOperation(instructions []bindings.InstructionData, predecessor, salt [32]byte) (common.Hash, error) {
 	var encoded bytes.Buffer
@@ -184,7 +202,7 @@ func getInstructionDataFromBatchOperation(batchOp types.BatchOperation) ([]bindi
 		if len(tx.AdditionalFields) > 0 {
 			err = json.Unmarshal(tx.AdditionalFields, &additionalFields)
 			if err != nil {
-				return nil, fmt.Errorf("unable to unmarshal additional fields: %w\n%v", err, string(tx.AdditionalFields))
+				return nil, fmt.Errorf("unable to unmarshal Solana additional fields: %w\n%v", err, string(tx.AdditionalFields))
 			}
 		}
 
@@ -261,7 +279,8 @@ func getTagsFromBatchOperation(batchOp types.BatchOperation) []string {
 }
 
 func solanaInstructionToMcmsOperation(
-	instructions []solana.Instruction, chainSelector types.ChainSelector, tags []string, signerPDA solana.PublicKey,
+	instructions []solana.Instruction, chainSelector types.ChainSelector,
+	tags []string, signerPDA solana.PublicKey,
 ) ([]types.Operation, error) {
 	operations := make([]types.Operation, 0, len(instructions))
 	for _, instruction := range instructions {
@@ -282,7 +301,11 @@ func solanaInstructionToMcmsOperation(
 			return []types.Operation{}, fmt.Errorf("unable to create new transaction: %w", err)
 		}
 
-		operations = append(operations, types.Operation{ChainSelector: chainSelector, Transaction: transaction})
+		operation := types.Operation{
+			ChainSelector: chainSelector,
+			Transaction:   transaction,
+		}
+		operations = append(operations, operation)
 	}
 
 	return operations, nil

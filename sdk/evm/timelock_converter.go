@@ -43,9 +43,11 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	tags := make([]string, 0)
 	for _, tx := range bop.Transactions {
 		// Unmarshal the additional fields
-		var additionalFields AdditionalFields
-		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
+		additionalFields := AdditionalFields{Value: big.NewInt(0)}
+		if len(tx.AdditionalFields) != 0 {
+			if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+				return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
+			}
 		}
 
 		calls = append(calls, bindings.RBACTimelockCall{
@@ -97,6 +99,31 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	}
 
 	return []types.Operation{op}, operationID, nil
+}
+
+func OperationID(
+	batchOp types.BatchOperation,
+	action types.TimelockAction,
+	predecessor common.Hash,
+	salt common.Hash,
+) (common.Hash, error) {
+	calls := make([]bindings.RBACTimelockCall, 0)
+	for _, tx := range batchOp.Transactions {
+		additionalFields := AdditionalFields{Value: big.NewInt(0)}
+		if len(tx.AdditionalFields) != 0 {
+			if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
+				return common.Hash{}, fmt.Errorf("failed to unmarshal EVM additional fields: %w", err)
+			}
+		}
+
+		calls = append(calls, bindings.RBACTimelockCall{
+			Target: common.HexToAddress(tx.To),
+			Data:   tx.Data,
+			Value:  additionalFields.Value,
+		})
+	}
+
+	return HashOperationBatch(calls, predecessor, salt)
 }
 
 // HashOperationBatch replicates the hash calculation from Solidity

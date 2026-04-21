@@ -99,7 +99,7 @@ func TestNewEncoder(t *testing.T) {
 			name:         "failure: chain not found for selector",
 			giveSelector: chaintest.ChainInvalidSelector,
 			giveIsSim:    true,
-			wantErr:      "chain family not found for selector 0",
+			wantErr:      "chain family not found for selector 0: unknown chain selector 0",
 		},
 	}
 
@@ -119,57 +119,6 @@ func TestNewEncoder(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				assert.Equal(t, tt.want, got)
-			}
-		})
-	}
-}
-
-func TestNewTimelockConverter(t *testing.T) {
-	t.Parallel()
-
-	tests := []struct {
-		name          string
-		chainSelector types.ChainSelector
-		want          sdk.TimelockConverter
-		wantErr       string
-	}{
-		{
-			name:          "success: EVM executor",
-			chainSelector: chaintest.Chain1Selector,
-			want:          &evm.TimelockConverter{},
-		},
-		{
-			name:          "success: Solana executor",
-			chainSelector: chaintest.Chain4Selector,
-			want:          &solana.TimelockConverter{},
-		},
-		{
-			name:          "success: Sui executor",
-			chainSelector: chaintest.Chain6Selector,
-			want:          &sui.TimelockConverter{},
-		},
-		{
-			name:          "success: TON executor",
-			chainSelector: chaintest.Chain7Selector,
-			want:          ton.NewTimelockConverter(ton.DefaultSendAmount),
-		},
-		{
-			name:          "failure: unknown selector",
-			chainSelector: types.ChainSelector(123456789),
-			wantErr:       "chain family not found for selector 123456789",
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-
-			got, err := newTimelockConverter(tt.chainSelector)
-
-			if tt.wantErr == "" {
-				require.NoError(t, err)
-				require.Equal(t, tt.want, got)
-			} else {
-				require.ErrorContains(t, err, tt.wantErr)
 			}
 		})
 	}

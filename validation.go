@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/types"
 
@@ -23,19 +23,19 @@ func validateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 	}
 
 	switch chainFamily {
-	case cselectors.FamilyEVM:
+	case chainsel.FamilyEVM:
 		return evm.ValidateAdditionalFields(additionalFields)
 
-	case cselectors.FamilySolana:
+	case chainsel.FamilySolana:
 		return solana.ValidateAdditionalFields(additionalFields)
 
-	case cselectors.FamilyAptos:
+	case chainsel.FamilyAptos:
 		return aptos.ValidateAdditionalFields(additionalFields)
 
-	case cselectors.FamilySui:
+	case chainsel.FamilySui:
 		return sui.ValidateAdditionalFields(additionalFields)
 
-	case cselectors.FamilyTon:
+	case chainsel.FamilyTon:
 		return ton.ValidateAdditionalFields(additionalFields)
 	}
 
@@ -50,13 +50,13 @@ func validateChainMetadata(metadata types.ChainMetadata, csel types.ChainSelecto
 	}
 
 	switch chainFamily {
-	case cselectors.FamilySolana:
+	case chainsel.FamilySolana:
 		return solana.ValidateChainMetadata(metadata)
-	case cselectors.FamilyEVM:
+	case chainsel.FamilyEVM:
 		return nil
-	case cselectors.FamilyAptos:
+	case chainsel.FamilyAptos:
 		return nil
-	case cselectors.FamilySui:
+	case chainsel.FamilySui:
 		return sui.ValidateChainMetadata(metadata)
 	case cselectors.FamilyCanton:
 		return canton.ValidateChainMetadata(metadata)

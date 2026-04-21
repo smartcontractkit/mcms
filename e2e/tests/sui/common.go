@@ -10,7 +10,7 @@ import (
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/stretchr/testify/suite"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
@@ -77,7 +77,7 @@ func (s *TestSuite) SetupSuite() {
 	s.client = s.SuiClient
 	// TODO: Find funded accounts
 	s.signer = testSigner
-	s.chainSelector = types.ChainSelector(cselectors.SUI_TESTNET.Selector)
+	s.chainSelector = types.ChainSelector(chainsel.SUI_TESTNET.Selector)
 }
 
 func (s *TestSuite) DeployMCMSContract() {

@@ -13,7 +13,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -26,15 +26,17 @@ var (
 
 // AdditionalFields represents the additional fields in Sui MCMS operations
 type AdditionalFields struct {
-	ModuleName           string              `json:"module_name"`
-	Function             string              `json:"function"`
-	StateObj             string              `json:"state_obj,omitempty"`              // Needed for calling `mcms_entrypoint`
-	InternalStateObjects []string            `json:"internal_state_objects,omitempty"` // Needed for calling `mcms_entrypoint`. When batching calls, this will contain all state objects
-	TypeArgs             []string            `json:"type_args,omitempty"`              // Needed for generic functions
-	InternalTypeArgs     [][]string          `json:"internal_type_args,omitempty"`     // Needed for batching generic functions.  When batching calls, this will contain all typeargs
-	CompiledModules      [][]byte            `json:"compiled_modules,omitempty"`       // compiled Move modules, if deploying modules
-	Dependencies         []models.SuiAddress `json:"dependencies,omitempty"`           // dependencies for compiled Move modules, if deploying modules
-	PackageToUpgrade     string              `json:"package_to_upgrade,omitempty"`     // package to upgrade, if deploying modules
+	ModuleName               string              `json:"module_name"`
+	Function                 string              `json:"function"`
+	StateObj                 string              `json:"state_obj,omitempty"`                   // Needed for calling `mcms_entrypoint`
+	InternalStateObjects     []string            `json:"internal_state_objects,omitempty"`      // Needed for calling `mcms_entrypoint`. When batching calls, this will contain all state objects
+	TypeArgs                 []string            `json:"type_args,omitempty"`                   // Needed for generic functions
+	InternalTypeArgs         [][]string          `json:"internal_type_args,omitempty"`          // Needed for batching generic functions.  When batching calls, this will contain all typeargs
+	CompiledModules          [][]byte            `json:"compiled_modules,omitempty"`            // compiled Move modules, if deploying modules
+	Dependencies             []models.SuiAddress `json:"dependencies,omitempty"`                // dependencies for compiled Move modules, if deploying modules
+	PackageToUpgrade         string              `json:"package_to_upgrade,omitempty"`          // package to upgrade, if deploying modules
+	LatestPackageID          string              `json:"latest_package_id,omitempty"`           // overrides the MoveCall package address for all calls in the batch; tx.To remains the original package ID for on-chain MCMS identity
+	InternalLatestPackageIDs []string            `json:"internal_latest_package_ids,omitempty"` // per-call override of the MoveCall package address for upgraded packages; takes precedence over LatestPackageID; follows the same indexing as InternalStateObjects
 }
 
 var _ sdk.Encoder = &Encoder{}
@@ -58,7 +60,7 @@ func NewEncoder(
 }
 
 func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
-	chainID, err := cselectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.SuiChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -98,7 +100,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 }
 
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
-	chainID, err := cselectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.SuiChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to get chain ID from selector %d: %w", e.ChainSelector, err)
 	}

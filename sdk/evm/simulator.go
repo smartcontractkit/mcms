@@ -42,7 +42,7 @@ func (s *Simulator) SimulateSetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) error {
-	bindMeta, err := s.ToGethRootMetadata(metadata)
+	bindMeta, err := s.ToGethRootMetadata(ctx, metadata)
 	if err != nil {
 		return err
 	}

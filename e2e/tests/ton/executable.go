@@ -11,13 +11,14 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
@@ -72,12 +73,12 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.signers = testutils.MakeNewECDSASigners(2)
 
 	// Initialize chains
-	details, err := cselectors.GetChainDetailsByChainIDAndFamily(s.TonBlockchain.ChainID, s.TonBlockchain.Family)
+	details, err := chainsel.GetChainDetailsByChainIDAndFamily(s.TonBlockchain.ChainID, s.TonBlockchain.Family)
 	s.Require().NoError(err)
 	s.ChainA = types.ChainSelector(details.ChainSelector)
 
-	s.ChainB = types.ChainSelector(cselectors.GETH_TESTNET.Selector)
-	s.ChainC = types.ChainSelector(cselectors.GETH_DEVNET_2.Selector)
+	s.ChainB = types.ChainSelector(chainsel.GETH_TESTNET.Selector)
+	s.ChainC = types.ChainSelector(chainsel.GETH_DEVNET_2.Selector)
 
 	// Deploy contracts on chain A (the one we execute on)
 	s.deployMCMSContract(hash.CRC32("test.executable.mcms"))
@@ -700,8 +701,13 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	s.Require().NoError(err)
 
 	// Prepare (dummy) accounts to grant roles to
-	accA := NewInitializedAddress(ctx, &s.Suite, s.TonClient, s.wallet)
-	accB := NewInitializedAddress(ctx, &s.Suite, s.TonClient, s.wallet)
+	walletA, err := tvm.NewRandomV5R1TestWallet(s.TonClient, -217)
+	s.Require().NoError(err)
+	accA := walletA.Address()
+
+	walletB, err := tvm.NewRandomV5R1TestWallet(s.TonClient, -217)
+	s.Require().NoError(err)
+	accB := walletB.Address()
 
 	// Construct a proposal
 
@@ -846,7 +852,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	s.Require().NotNil(tx)
 
 	// Wait and check success
-	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx, bindings.DefaultTraceStopCondition)
 	s.Require().NoError(err)
 
 	// Verify the operation count is updated on chain A
@@ -872,7 +878,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 	s.Require().NotNil(tx)
 
 	// Wait and check success
-	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx, bindings.DefaultTraceStopCondition)
 	s.Require().NoError(err)
 
 	// Verify the operation count is updated on chain A

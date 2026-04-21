@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 
 	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
@@ -33,6 +33,16 @@ type executorTestExecutingCallbackParams struct {
 
 func (t *executorTestExecutingCallbackParams) AppendPTB(ctx context.Context, ptb *transaction.Transaction, executeCallback *transaction.Argument, calls []Call) error {
 	// For testing, just return success without actually building the complex PTB
+	return nil
+}
+
+// capturingExecutingCallbackParams captures the calls passed to AppendPTB so tests can assert on them.
+type capturingExecutingCallbackParams struct {
+	capturedCalls []Call
+}
+
+func (c *capturingExecutingCallbackParams) AppendPTB(_ context.Context, _ *transaction.Transaction, _ *transaction.Argument, calls []Call) error {
+	c.capturedCalls = calls
 	return nil
 }
 
@@ -226,7 +236,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 		mcmsPackageID: "0x123456789abcdef",
 		mcmsObj:       mcmsObj,
 		Encoder: &Encoder{
-			ChainSelector:        types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector:        types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:              5,
 			OverridePreviousRoot: false,
 		},
@@ -296,7 +306,7 @@ func TestExecutor_ExecuteOperation_InvalidAdditionalFields(t *testing.T) {
 		mcmsObj:       mcmsObj,
 		client:        mockClient,
 		Encoder: &Encoder{
-			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
 	}
@@ -343,7 +353,7 @@ func TestExecutor_ExecuteOperation_Success_ScheduleBatch(t *testing.T) {
 		accountObj:    accountObj,
 		client:        mockClient,
 		Encoder: &Encoder{
-			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
 		// Mock ExecutePTB function directly in the struct
@@ -437,7 +447,7 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 		accountObj:    accountObj,
 		client:        mockClient,
 		Encoder: &Encoder{
-			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
 		// Mock ExecutePTB function directly in the struct
@@ -543,7 +553,7 @@ func TestExecutor_ExecuteOperation_Success_Cancel(t *testing.T) {
 		accountObj:    accountObj,
 		client:        mockClient,
 		Encoder: &Encoder{
-			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
 		// Mock ExecutePTB function directly in the struct
@@ -638,7 +648,7 @@ func TestExecutor_ExecuteOperation_Cancel_InvalidOperationID(t *testing.T) {
 		accountObj:    accountObj,
 		client:        mockClient,
 		Encoder: &Encoder{
-			ChainSelector: types.ChainSelector(cselectors.SUI_TESTNET.Selector),
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
 	}
@@ -701,4 +711,242 @@ func TestExecutor_ExecuteOperation_Cancel_InvalidOperationID(t *testing.T) {
 	require.NoError(t, err)
 	assert.NotNil(t, result)
 	assert.Equal(t, "0xcancel_invalid_op_digest", result.Hash)
+}
+
+// newBypassExecutor is a helper that creates a bypass-capable Executor with a mock MCMS contract
+// and a capturingExecutingCallbackParams so tests can inspect the Call targets routed to AppendPTB.
+func newBypassExecutor(
+	t *testing.T,
+	mockmcmsContract *mockmcms.IMcms,
+	mockBound *mockbindutils.IBoundContract,
+	mockEncoder *mockmcms.McmsEncoder,
+	capturer *capturingExecutingCallbackParams,
+	responseDigest string,
+) *Executor {
+	t.Helper()
+	mockSigner := mockbindutils.NewSuiSigner(t)
+	mockClient := mocksui.NewISuiAPI(t)
+
+	return &Executor{
+		signer:        mockSigner,
+		mcms:          mockmcmsContract,
+		mcmsPackageID: "0x123456789abcdef",
+		mcmsObj:       mcmsObj,
+		timelockObj:   timelockObj,
+		registryObj:   registryObj,
+		accountObj:    accountObj,
+		client:        mockClient,
+		Encoder: &Encoder{
+			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
+			TxCount:       5,
+		},
+		ExecutePTB: func(_ context.Context, _ *bind.CallOpts, _ sui.ISuiAPI, _ *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
+			return &models.SuiTransactionBlockResponse{Digest: responseDigest}, nil
+		},
+		executingCallbackParams: capturer,
+	}
+}
+
+// buildBypassOp builds a bypass Operation with two calls and the given additional-fields JSON overlay.
+func buildBypassOp(t *testing.T, extraAdditionalFields string) (types.Operation, [][]byte) {
+	t.Helper()
+	originalTarget1 := make([]byte, 32)
+	originalTarget1[31] = 0xAA
+	originalTarget2 := make([]byte, 32)
+	originalTarget2[31] = 0xBB
+
+	data, err := serializeTimelockBypasserExecuteBatch(
+		[][]byte{originalTarget1, originalTarget2},
+		[]string{"mod1", "mod2"},
+		[]string{"fn1", "fn2"},
+		[][]byte{{0x01}, {0x02}},
+	)
+	require.NoError(t, err)
+
+	op := types.Operation{
+		Transaction: types.Transaction{
+			To:               "0x0000000000000000000000000000000000000000000000000000000000000abc",
+			Data:             data,
+			AdditionalFields: []byte(extraAdditionalFields),
+		},
+	}
+
+	return op, [][]byte{originalTarget1, originalTarget2}
+}
+
+// setUpBypassMocks wires the common mock expectations for the bypass path with two inner calls.
+func setUpBypassMocks(
+	t *testing.T,
+	ctx context.Context,
+	mc *mockmcms.IMcms,
+	mb *mockbindutils.IBoundContract,
+	me *mockmcms.McmsEncoder,
+	opData []byte,
+) {
+	t.Helper()
+	mc.EXPECT().Encoder().Return(me).Times(2)
+	me.EXPECT().Execute(
+		mock.AnythingOfType("bind.Object"),
+		mock.AnythingOfType("bind.Object"),
+		byte(1),
+		mock.AnythingOfType("*big.Int"),
+		"0x123456789abcdef",
+		uint64(1),
+		"0000000000000000000000000000000000000000000000000000000000000abc",
+		mock.AnythingOfType("string"),
+		"timelock_bypasser_execute_batch",
+		opData,
+		mock.Anything,
+	).Return(nil, nil)
+	mc.EXPECT().Bound().Return(mb).Times(2)
+	mb.EXPECT().AppendPTB(ctx, mock.Anything, mock.Anything, mock.Anything).Return(&transaction.Argument{}, nil).Once()
+	me.EXPECT().DispatchTimelockBypasserExecuteBatchWithArgs(mock.Anything, mock.Anything).Return(nil, nil)
+	mb.EXPECT().AppendPTB(ctx, mock.Anything, mock.Anything, mock.Anything).Return(&transaction.Argument{}, nil).Once()
+}
+
+func TestExecutor_Bypass_PerCallLatestPackageID(t *testing.T) {
+	t.Parallel()
+	ctx := t.Context()
+
+	// Each call has its own override in InternalLatestPackageIDs.
+	latest1 := "0x0000000000000000000000000000000000000000000000000000000000001111"
+	latest2 := "0x0000000000000000000000000000000000000000000000000000000000002222"
+	additionalFieldsJSON := `{
+		"module_name": "some_module",
+		"function": "timelock_bypasser_execute_batch",
+		"internal_state_objects": ["0xstate1", "0xstate2"],
+		"internal_type_args": [[], []],
+		"internal_latest_package_ids": ["` + latest1 + `", "` + latest2 + `"]
+	}`
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
+	mockEnc := mockmcms.NewMcmsEncoder(t)
+	mockedMcms := mockmcms.NewIMcms(t)
+	capturer := &capturingExecutingCallbackParams{}
+	executor := newBypassExecutor(t, mockedMcms, mockBound, mockEnc, capturer, "0xdigest_per_call")
+	executor.client = mockClient
+
+	op, _ := buildBypassOp(t, additionalFieldsJSON)
+	setUpBypassMocks(t, ctx, mockedMcms, mockBound, mockEnc, op.Transaction.Data)
+
+	metadata := types.ChainMetadata{AdditionalFields: []byte(`{"role":1}`)}
+	result, err := executor.ExecuteOperation(ctx, metadata, 1, []common.Hash{}, op)
+	require.NoError(t, err)
+	assert.Equal(t, "0xdigest_per_call", result.Hash)
+
+	require.Len(t, capturer.capturedCalls, 2)
+
+	// Each call's Target must equal the bytes of the corresponding InternalLatestPackageIDs entry.
+	addr1, err := AddressFromHex(latest1)
+	require.NoError(t, err)
+	addr2, err := AddressFromHex(latest2)
+	require.NoError(t, err)
+
+	assert.Equal(t, addr1.Bytes(), capturer.capturedCalls[0].Target, "call[0] should use InternalLatestPackageIDs[0]")
+	assert.Equal(t, addr2.Bytes(), capturer.capturedCalls[1].Target, "call[1] should use InternalLatestPackageIDs[1]")
+}
+
+func TestExecutor_Bypass_BatchLevelLatestPackageID(t *testing.T) {
+	t.Parallel()
+	ctx := t.Context()
+
+	// Batch-level LatestPackageID, no per-call overrides.
+	latestBatch := "0x0000000000000000000000000000000000000000000000000000000000009999"
+	additionalFieldsJSON := `{
+		"module_name": "some_module",
+		"function": "timelock_bypasser_execute_batch",
+		"internal_state_objects": ["0xstate1", "0xstate2"],
+		"internal_type_args": [[], []],
+		"latest_package_id": "` + latestBatch + `"
+	}`
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
+	mockEnc := mockmcms.NewMcmsEncoder(t)
+	mockedMcms := mockmcms.NewIMcms(t)
+	capturer := &capturingExecutingCallbackParams{}
+	executor := newBypassExecutor(t, mockedMcms, mockBound, mockEnc, capturer, "0xdigest_batch")
+	executor.client = mockClient
+
+	op, _ := buildBypassOp(t, additionalFieldsJSON)
+	setUpBypassMocks(t, ctx, mockedMcms, mockBound, mockEnc, op.Transaction.Data)
+
+	metadata := types.ChainMetadata{AdditionalFields: []byte(`{"role":1}`)}
+	result, err := executor.ExecuteOperation(ctx, metadata, 1, []common.Hash{}, op)
+	require.NoError(t, err)
+	assert.Equal(t, "0xdigest_batch", result.Hash)
+
+	require.Len(t, capturer.capturedCalls, 2)
+
+	addrBatch, err := AddressFromHex(latestBatch)
+	require.NoError(t, err)
+
+	// Both calls must use the batch-level LatestPackageID.
+	assert.Equal(t, addrBatch.Bytes(), capturer.capturedCalls[0].Target, "call[0] should use batch-level LatestPackageID")
+	assert.Equal(t, addrBatch.Bytes(), capturer.capturedCalls[1].Target, "call[1] should use batch-level LatestPackageID")
+}
+
+func TestExecutor_Bypass_NoLatestPackageID(t *testing.T) {
+	t.Parallel()
+	ctx := t.Context()
+
+	// Neither InternalLatestPackageIDs nor LatestPackageID set: original serialised targets must be preserved.
+	additionalFieldsJSON := `{
+		"module_name": "some_module",
+		"function": "timelock_bypasser_execute_batch",
+		"internal_state_objects": ["0xstate1", "0xstate2"],
+		"internal_type_args": [[], []]
+	}`
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
+	mockEnc := mockmcms.NewMcmsEncoder(t)
+	mockedMcms := mockmcms.NewIMcms(t)
+	capturer := &capturingExecutingCallbackParams{}
+	executor := newBypassExecutor(t, mockedMcms, mockBound, mockEnc, capturer, "0xdigest_no_override")
+	executor.client = mockClient
+
+	op, originalTargets := buildBypassOp(t, additionalFieldsJSON)
+	setUpBypassMocks(t, ctx, mockedMcms, mockBound, mockEnc, op.Transaction.Data)
+
+	metadata := types.ChainMetadata{AdditionalFields: []byte(`{"role":1}`)}
+	result, err := executor.ExecuteOperation(ctx, metadata, 1, []common.Hash{}, op)
+	require.NoError(t, err)
+	assert.Equal(t, "0xdigest_no_override", result.Hash)
+
+	require.Len(t, capturer.capturedCalls, 2)
+
+	// Targets must equal the original addresses from the serialised batch.
+	assert.Equal(t, originalTargets[0], capturer.capturedCalls[0].Target, "call[0] should keep original target")
+	assert.Equal(t, originalTargets[1], capturer.capturedCalls[1].Target, "call[1] should keep original target")
+}
+
+func TestExecutor_Bypass_InvalidInternalLatestPackageID(t *testing.T) {
+	t.Parallel()
+	ctx := t.Context()
+
+	additionalFieldsJSON := `{
+		"module_name": "some_module",
+		"function": "timelock_bypasser_execute_batch",
+		"internal_state_objects": ["0xstate1", "0xstate2"],
+		"internal_type_args": [[], []],
+		"internal_latest_package_ids": ["not-a-hex-address", ""]
+	}`
+
+	mockClient := mocksui.NewISuiAPI(t)
+	mockBound := mockbindutils.NewIBoundContract(t)
+	mockEnc := mockmcms.NewMcmsEncoder(t)
+	mockedMcms := mockmcms.NewIMcms(t)
+	capturer := &capturingExecutingCallbackParams{}
+	executor := newBypassExecutor(t, mockedMcms, mockBound, mockEnc, capturer, "should_not_reach")
+	executor.client = mockClient
+
+	op, _ := buildBypassOp(t, additionalFieldsJSON)
+	setUpBypassMocks(t, ctx, mockedMcms, mockBound, mockEnc, op.Transaction.Data)
+
+	metadata := types.ChainMetadata{AdditionalFields: []byte(`{"role":1}`)}
+	_, err := executor.ExecuteOperation(ctx, metadata, 1, []common.Hash{}, op)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "internal_latest_package_ids[0]")
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
@@ -99,7 +99,7 @@ func (e Executor) ExecuteOperation(
 		}
 	}
 
-	chainID, err := cselectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.SuiChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -195,12 +195,27 @@ func (e Executor) ExecuteOperation(
 			return types.TransactionResult{}, errors.New("mismatched call and state object count")
 		}
 		for i, call := range calls {
+			callTarget := call.Target
+			// Per-call override takes precedence over the batch-level LatestPackageID.
+			if i < len(additionalFields.InternalLatestPackageIDs) && additionalFields.InternalLatestPackageIDs[i] != "" {
+				latestAddr, latestErr := AddressFromHex(additionalFields.InternalLatestPackageIDs[i])
+				if latestErr != nil {
+					return types.TransactionResult{}, fmt.Errorf("failed to parse internal_latest_package_ids[%d] %q: %w", i, additionalFields.InternalLatestPackageIDs[i], latestErr)
+				}
+				callTarget = latestAddr.Bytes()
+			} else if additionalFields.LatestPackageID != "" {
+				latestAddr, latestErr := AddressFromHex(additionalFields.LatestPackageID)
+				if latestErr != nil {
+					return types.TransactionResult{}, fmt.Errorf("failed to parse latest_package_id %q: %w", additionalFields.LatestPackageID, latestErr)
+				}
+				callTarget = latestAddr.Bytes()
+			}
 			calls[i] = Call{
 				ModuleName:   call.ModuleName,
 				FunctionName: call.FunctionName,
 				StateObj:     additionalFields.InternalStateObjects[i],
 				Data:         call.Data,
-				Target:       call.Target,
+				Target:       callTarget,
 				TypeArgs:     additionalFields.InternalTypeArgs[i],
 			}
 		}
@@ -217,7 +232,7 @@ func (e Executor) ExecuteOperation(
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
-		ChainFamily: cselectors.FamilySui,
+		ChainFamily: chainsel.FamilySui,
 		RawData:     tx,
 	}, nil
 }
@@ -237,7 +252,7 @@ func (e Executor) SetRoot(
 		}
 	}
 
-	chainID, err := cselectors.SuiChainIdFromSelector(uint64(e.ChainSelector))
+	chainID, err := chainsel.SuiChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -280,9 +295,18 @@ func (e Executor) SetRoot(
 
 	return types.TransactionResult{
 		Hash:        tx.Digest,
-		ChainFamily: cselectors.FamilySui,
+		ChainFamily: chainsel.FamilySui,
 		RawData:     tx,
 	}, nil
+}
+
+func (e Executor) Equal(other Executor) bool {
+	return e.Encoder == other.Encoder &&
+		e.mcmsPackageID == other.mcmsPackageID &&
+		e.mcmsObj == other.mcmsObj &&
+		e.accountObj == other.accountObj &&
+		e.registryObj == other.registryObj &&
+		e.timelockObj == other.timelockObj
 }
 
 func encodeSignatures(signatures []types.Signature) [][]byte {

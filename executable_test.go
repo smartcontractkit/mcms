@@ -6,7 +6,7 @@ import (
 	"math/big"
 	"testing"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/stretchr/testify/require"
 
@@ -47,7 +47,7 @@ func TestNewExecutable(t *testing.T) {
 			giveExecutors: map[types.ChainSelector]sdk.Executor{
 				types.ChainSelector(1): executor,
 			},
-			wantErr: "unable to create encoder: chain family not found for selector 1",
+			wantErr: "unable to create encoder: chain family not found for selector 1: unknown chain selector 1",
 		},
 		{
 			name: "failure: could not generate tx nonces from proposal (tx does not have matching chain metadata)",
@@ -645,8 +645,8 @@ func TestExecutor_ExecuteE2E_SingleChainMultipleSignerMultipleTX_Success(t *test
 func TestExecutable_TxNonce(t *testing.T) {
 	t.Parallel()
 
-	chainSelector1 := types.ChainSelector(cselectors.GETH_TESTNET.Selector)
-	chainSelector2 := types.ChainSelector(cselectors.GETH_DEVNET_2.Selector)
+	chainSelector1 := types.ChainSelector(chainsel.GETH_TESTNET.Selector)
+	chainSelector2 := types.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
 	executor := mocks.NewExecutor(t)
 	executors := map[types.ChainSelector]sdk.Executor{
 		chainSelector1: executor,

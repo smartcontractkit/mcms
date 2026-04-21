@@ -1,6 +1,7 @@
 package chainwrappers
 
 import (
+	"encoding/json"
 	"testing"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
@@ -8,6 +9,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/chainwrappers/mocks"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
 
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
 )
@@ -42,25 +44,66 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 		{
 			name: "valid input",
 			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
-				mcmsTypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): {MCMAddress: "0xabc", StartingOpCount: 0},
-				mcmsTypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector):            {MCMAddress: "0xabc", StartingOpCount: 0},
+				mcmsTypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): {MCMAddress: "0xevm", StartingOpCount: 0},
+				mcmsTypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector):            {MCMAddress: "0xsolana", StartingOpCount: 0},
+				mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector):            {MCMAddress: "0xaptos", StartingOpCount: 0},
+				mcmsTypes.ChainSelector(chainsel.TON_TESTNET.Selector):              {MCMAddress: "0xton", StartingOpCount: 0},
+				mcmsTypes.ChainSelector(chainsel.SUI_TESTNET.Selector): {
+					MCMAddress:      "0xsui",
+					StartingOpCount: 0,
+					AdditionalFields: []byte(`{
+						"role":0,
+						"mcms_package_id":"0x123456789abcdef",
+						"account_obj":"0xaccount123",
+						"registry_obj":"0xregistry456",
+						"timelock_obj":"0xtimelock789",
+						"deployer_state_obj":"0xdeployer"
+					}`),
+				},
 			},
 			chainAccess: mocks.NewChainAccessor(t),
 			expectErr:   false,
 			setup: func(access *mocks.ChainAccessor) {
 				access.EXPECT().EVMClient(mock.Anything).Return(nil, true)
 				access.EXPECT().SolanaClient(mock.Anything).Return(nil, true)
+				access.EXPECT().AptosClient(mock.Anything).Return(nil, true)
+				access.EXPECT().SuiClient(mock.Anything).Return(nil, true)
+				access.EXPECT().SuiSigner(mock.Anything).Return(nil, true)
+				access.EXPECT().TonClient(mock.Anything).Return(nil, true)
 			},
-			expectedInspectorsCount: 2,
+			expectedInspectorsCount: 5,
+		},
+		{
+			name: "aptos curse mcms from metadata",
+			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
+				mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector): {
+					MCMAddress: "0xaptos",
+					AdditionalFields: func() json.RawMessage {
+						b, err := json.Marshal(aptos.AdditionalFieldsMetadata{
+							Role:     aptos.TimelockRoleProposer,
+							MCMSType: aptos.MCMSTypeCurse,
+						})
+						if err != nil {
+							t.Fatal(err)
+						}
+
+						return b
+					}(),
+				},
+			},
+			chainAccess: mocks.NewChainAccessor(t),
+			expectErr:   false,
+			setup: func(access *mocks.ChainAccessor) {
+				access.EXPECT().AptosClient(mock.Anything).Return(nil, true)
+			},
+			expectedInspectorsCount: 1,
 		},
 	}
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
-			if tc.chainAccess == nil {
-				tc.chainAccess = mocks.NewChainAccessor(t)
-			}
+			tc.chainAccess = mocks.NewChainAccessor(t)
 			if tc.expectedInspectorsCount > 0 {
 				tc.setup(tc.chainAccess)
 			}

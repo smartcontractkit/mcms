@@ -1,8 +1,10 @@
 package evm
 
 import (
+	"context"
 	"encoding/json"
 	"math/big"
+	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -74,7 +76,13 @@ func (e *Encoder) HashOperation(
 // HashMetadata converts the MCMS ChainMetadata into the format expected by the EVM
 // ManyChainMultiSig contract, and hashes it.
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
-	bindMeta, err := e.ToGethRootMetadata(metadata)
+	// TODO: passing this as param requires a breaking change to the Encoder interfaces
+	// which requires changes too all chain specific SDKs. Consider refactoring later.
+	// this could even mean not using a ctx, and instead providing the chainID directly to the Encoder
+	// at construction time.
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second) //nolint
+	defer cancel()
+	bindMeta, err := e.ToGethRootMetadata(ctx, metadata)
 	if err != nil {
 		return common.Hash{}, err
 	}
@@ -95,7 +103,9 @@ func (e *Encoder) ToGethOperation(
 	metadata types.ChainMetadata,
 	op types.Operation,
 ) (bindings.ManyChainMultiSigOp, error) {
-	evmChainID, err := getEVMChainID(e.ChainSelector, e.IsSim)
+	// TODO: passing this as param requires a breaking change to the Encoder interfaces
+	// which requires changes too all chain specific SDKs. Consider refactoring later.
+	evmChainID, err := getEVMChainID(context.Background(), e.ChainSelector, e.IsSim)
 	if err != nil {
 		return bindings.ManyChainMultiSigOp{}, err
 	}
@@ -118,8 +128,8 @@ func (e *Encoder) ToGethOperation(
 
 // ToGethRootMetadata converts the MCMS ChainMetadata into the format expected by the EVM
 // ManyChainMultiSig contract.
-func (e *Encoder) ToGethRootMetadata(metadata types.ChainMetadata) (bindings.ManyChainMultiSigRootMetadata, error) {
-	evmChainID, err := getEVMChainID(e.ChainSelector, e.IsSim)
+func (e *Encoder) ToGethRootMetadata(ctx context.Context, metadata types.ChainMetadata) (bindings.ManyChainMultiSigRootMetadata, error) {
+	evmChainID, err := getEVMChainID(ctx, e.ChainSelector, e.IsSim)
 	if err != nil {
 		return bindings.ManyChainMultiSigRootMetadata{}, err
 	}

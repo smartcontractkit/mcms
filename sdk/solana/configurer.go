@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	evmCommon "github.com/ethereum/go-ethereum/common"
 
@@ -152,7 +152,7 @@ func (c *Configurer) SetConfig(
 
 	return types.TransactionResult{
 		Hash:        signature,
-		ChainFamily: chain_selectors.FamilySolana,
+		ChainFamily: chainsel.FamilySolana,
 		RawData:     c.solanaInstructions(),
 	}, nil
 }

@@ -69,6 +69,8 @@ jobs:
     needs:
       - cicd-publish-release
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     environment: build-publish
     steps:
       - name: Checkout repository

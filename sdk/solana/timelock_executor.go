@@ -3,11 +3,12 @@ package solana
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -99,7 +100,11 @@ func (e *TimelockExecutor) Execute(
 
 	return types.TransactionResult{
 		Hash:        signature,
-		ChainFamily: chain_selectors.FamilySolana,
+		ChainFamily: chainsel.FamilySolana,
 		RawData:     tx,
 	}, nil
+}
+
+func (e TimelockExecutor) Equal(other TimelockExecutor) bool {
+	return slices.Equal(e.auth, other.auth)
 }

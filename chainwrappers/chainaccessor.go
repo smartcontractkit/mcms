@@ -3,7 +3,6 @@ package chainwrappers
 import (
 	aptoslib "github.com/aptos-labs/aptos-go-sdk"
 	"github.com/block-vision/sui-go-sdk/sui"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	sol "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	cldfcanton "github.com/smartcontractkit/chainlink-deployments-framework/chain/canton"
@@ -17,7 +16,7 @@ import (
 type ChainAccessor interface {
 	Selectors() []uint64
 	EVMClient(selector uint64) (evmsdk.ContractDeployBackend, bool)
-	EVMSigner(selector uint64) (*bind.TransactOpts, bool)
+	EVMSigner(selector uint64) (*evmsdk.TransactOpts, bool)
 	SolanaClient(selector uint64) (*solrpc.Client, bool)
 	SolanaSigner(selector uint64) (*sol.PrivateKey, bool)
 	AptosClient(selector uint64) (aptoslib.AptosRpcClient, bool)

@@ -1,21 +1,21 @@
 package chainwrappers
 
 import (
+	"encoding/json"
 	"fmt"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
-	mcmsencoder "github.com/smartcontractkit/chainlink-sui/bindings"
 
 	"github.com/smartcontractkit/mcms/sdk"
-	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
-	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
-	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
-	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
-	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
-	tonsdk "github.com/smartcontractkit/mcms/sdk/ton"
+	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/evm"
+	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
+// BuildTimelockExecutors gets a map of timelock executors for the given chain metadata and chain clients
 func BuildTimelockExecutors(
 	chains ChainAccessor,
 	chainMetadata map[types.ChainSelector]types.ChainMetadata,
@@ -29,87 +29,111 @@ func BuildTimelockExecutors(
 		}
 		executors[chainSelector] = executor
 	}
+
 	return executors, nil
 }
 
+// BuildTimelockExecutor constructs a chain-family-specific TimelockExecutor from ChainAccessor plus metadata.
 func BuildTimelockExecutor(
 	chains ChainAccessor,
-	selector types.ChainSelector,
+	chainSelector types.ChainSelector,
 	action types.TimelockAction,
 	metadata types.ChainMetadata,
 ) (sdk.TimelockExecutor, error) {
-	if chains == nil {
-		return nil, fmt.Errorf("chain access is required")
-	}
-	_ = action
-	family, err := types.GetChainSelectorFamily(selector)
+	family, err := types.GetChainSelectorFamily(chainSelector)
 	if err != nil {
 		return nil, fmt.Errorf("error getting chain family: %w", err)
 	}
-	rawSelector := uint64(selector)
+	rawSelector := uint64(chainSelector)
+
 	switch family {
-	case chainsel.FamilyCanton:
-		ch, ok := chains.CantonChain(rawSelector)
-		if !ok || len(ch.Participants) == 0 {
-			return nil, fmt.Errorf("missing Canton chain participant for selector %d", rawSelector)
-		}
-		participant := ch.Participants[0]
-		return cantonsdk.NewTimelockExecutor(participant.LedgerServices.Command, participant.LedgerServices.State, participant.PartyID), nil
 	case chainsel.FamilyEVM:
 		client, ok := chains.EVMClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM chain client for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing evm chain client for selector %d", chainSelector)
 		}
 		auth, ok := chains.EVMSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing EVM signer for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing evm signer for selector %d", rawSelector)
 		}
-		return evmsdk.NewTimelockExecutor(client, auth), nil
+
+		evmChainMetadata, err1 := evm.ParseChainMetadata(metadata)
+		if err1 != nil {
+			return nil, fmt.Errorf("failed to parse EVM chain metadata for selector %d: %w", rawSelector, err1)
+		}
+		auth.GasPrice = evmChainMetadata.GasPrice
+		auth.GasLimit = evmChainMetadata.GasLimit
+
+		return evm.NewTimelockExecutor(client, auth), nil
+
 	case chainsel.FamilySolana:
 		client, ok := chains.SolanaClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Solana chain client for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing solana chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.SolanaSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Solana signer for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing solana chain signer for selector %d", chainSelector)
 		}
-		return solanasdk.NewTimelockExecutor(client, *signer), nil
+
+		return solana.NewTimelockExecutor(client, *signer), nil
+
 	case chainsel.FamilyAptos:
 		client, ok := chains.AptosClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Aptos chain client for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing aptos chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.AptosSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Aptos signer for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing aptos chain signer for selector %d", chainSelector)
 		}
-		return aptossdk.NewTimelockExecutor(client, signer), nil
+
+		mcmsType := aptos.MCMSTypeRegular
+		if len(metadata.AdditionalFields) > 0 {
+			var afm aptos.AdditionalFieldsMetadata
+			if err = json.Unmarshal(metadata.AdditionalFields, &afm); err != nil {
+				return nil, fmt.Errorf("failed to parse Aptos metadata for selector %d: %w", rawSelector, err)
+			}
+			mcmsType = afm.MCMSType
+		}
+
+		return aptos.NewTimelockExecutorWithMCMSType(client, signer, mcmsType), nil
+
 	case chainsel.FamilySui:
 		client, ok := chains.SuiClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Sui chain client for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing sui chain client for selector %d", chainSelector)
 		}
 		signer, ok := chains.SuiSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Sui signer for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing sui chain signer for selector %d", chainSelector)
 		}
-		suiMetadata, err := suisdk.SuiMetadata(metadata)
+
+		suiMetadata, err := sui.SuiMetadata(metadata)
 		if err != nil {
-			return nil, fmt.Errorf("error parsing sui metadata: %w", err)
+			return nil, fmt.Errorf("error getting sui metadata from proposal: %w", err)
 		}
-		entrypointEncoder := mcmsencoder.NewCCIPEntrypointArgEncoder(suiMetadata.RegistryObj, suiMetadata.DeployerStateObj)
-		return suisdk.NewTimelockExecutor(client, signer, entrypointEncoder, suiMetadata.McmsPackageID, suiMetadata.RegistryObj, suiMetadata.AccountObj)
+		entrypointEncoder := sui.NewCCIPEntrypointArgEncoder(suiMetadata.RegistryObj, suiMetadata.DeployerStateObj)
+
+		return sui.NewTimelockExecutor(client, signer, entrypointEncoder, suiMetadata.McmsPackageID,
+			suiMetadata.RegistryObj, suiMetadata.AccountObj)
+
 	case chainsel.FamilyTon:
 		client, ok := chains.TonClient(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing TON chain client for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing ton chain client for selector %d", chainSelector)
 		}
-		wallet, ok := chains.TonSigner(rawSelector)
+		signer, ok := chains.TonSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing TON signer for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing ton client signer for selector %d", chainSelector)
 		}
-		return tonsdk.NewTimelockExecutor(tonsdk.TimelockExecutorOpts{Client: client, Wallet: wallet, Amount: tonsdk.DefaultSendAmount})
+
+		return ton.NewTimelockExecutor(ton.TimelockExecutorOpts{
+			Client: client,
+			Wallet: signer,
+			Amount: ton.DefaultSendAmount,
+		})
+
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}

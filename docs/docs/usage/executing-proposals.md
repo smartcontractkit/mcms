@@ -13,7 +13,7 @@ import (
   "github.com/ethereum/go-ethereum/accounts/abi/bind/backends"
   "github.com/gagliardetto/solana-go"
   "github.com/gagliardetto/solana-go/rpc"
-  chain_selectors "github.com/smartcontractkit/chain-selectors"
+  chainsel "github.com/smartcontractkit/chain-selectors"
 
   "github.com/smartcontractkit/mcms"
   "github.com/smartcontractkit/mcms/sdk"
@@ -38,8 +38,8 @@ func main() {
   }
 
   // Step 2: Initialize the Chain Family Executors
-  evmSelector := chain_selectors.ETHEREUM_TESTNET_SEPOLIA.Selector
-  solanaSelector := chain_selectors.SOLANA_DEVNET.Selector
+  evmSelector := chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector
+  solanaSelector := chainsel.SOLANA_DEVNET.Selector
 
   // EVM executor
   backend := backends.SimulatedBackend{}

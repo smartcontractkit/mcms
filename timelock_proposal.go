@@ -10,19 +10,11 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/go-playground/validator/v10"
-
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/aptos"
-	"github.com/smartcontractkit/mcms/sdk/canton"
-	"github.com/smartcontractkit/mcms/sdk/evm"
-	"github.com/smartcontractkit/mcms/sdk/solana"
-	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -50,7 +42,12 @@ func NewTimelockProposal(r io.Reader, opts ...ProposalOption) (*TimelockProposal
 		opt(options)
 	}
 
-	return newProposal[*TimelockProposal](r, options.predecessors)
+	proposal, err := newProposal[*TimelockProposal](r, options.predecessors)
+	if err != nil {
+		return proposal, err
+	}
+
+	return proposal, nil
 }
 
 func WriteTimelockProposal(w io.Writer, p *TimelockProposal) error {
@@ -252,6 +249,9 @@ func (m *TimelockProposal) Convert(
 // OperationIDs returns the list of operation IDs for each batch operation in the proposal, as well
 // as their predecessors.
 func (m *TimelockProposal) OperationIDs(ctx context.Context) ([]common.Hash, []common.Hash, error) {
+	// TODO: evaluate if it's possible to implement a caching strategy that doesn't
+	// break when clients manually update ValidUntil, SaltOverride, etc.
+
 	operationIDs, predecessors, err := m.calcOperationIDs(ctx)
 	if err != nil {
 		return nil, nil, err
@@ -304,37 +304,38 @@ func (m *TimelockProposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, 
 }
 
 // buildTimelockConverters builds a map of chain selectors to their corresponding TimelockConverter implementations.
-func (m *TimelockProposal) buildTimelockConverters() (map[types.ChainSelector]sdk.TimelockConverter, error) {
-	converters := make(map[types.ChainSelector]sdk.TimelockConverter)
-	for chain := range m.ChainMetadata {
-		fam, err := types.GetChainSelectorFamily(chain)
-		if err != nil {
-			return nil, fmt.Errorf("error getting chain family: %w", err)
-		}
+func (m *TimelockProposal) buildTimelockConverters(_ context.Context) (map[types.ChainSelector]sdk.TimelockConverter, error) {
+	return chainwrappers.BuildConverters(m.ChainMetadata)
+}
 
-		var converter sdk.TimelockConverter
-		switch fam {
-		case chain_selectors.FamilyEVM:
-			converter = evm.NewTimelockConverter()
-		case chain_selectors.FamilySolana:
-			converter = solana.NewTimelockConverter()
-		case chain_selectors.FamilyAptos:
-			converter = aptos.NewTimelockConverter()
-		case chain_selectors.FamilySui:
-			converter, err = sui.NewTimelockConverter()
-			if err != nil {
-				return nil, fmt.Errorf("failed to create Sui timelock converter: %w", err)
-			}
-		case chain_selectors.FamilyCanton:
-			converter = canton.NewTimelockConverter()
-		default:
-			return nil, fmt.Errorf("unsupported chain family %s", fam)
-		}
-
-		converters[chain] = converter
+// calcOperationIDs computes and returns the id of each batch operation, along with
+// the predecessor operation id for each batch operation.
+func (m *TimelockProposal) calcOperationIDs(ctx context.Context) ([]common.Hash, []common.Hash, error) {
+	operationIDs := make([]common.Hash, len(m.Operations))
+	predecessors := make([]common.Hash, len(m.Operations))
+	lastOpID := make(map[types.ChainSelector]common.Hash)
+	for sel := range m.ChainMetadata {
+		lastOpID[sel] = ZeroHash
 	}
 
-	return converters, nil
+	for i, batchOp := range m.Operations {
+		predecessors[i] = lastOpID[batchOp.ChainSelector]
+
+		calculateOperationID, err := operationIDFn(ctx, batchOp.ChainSelector)
+		if err != nil {
+			return nil, nil, fmt.Errorf("no operation ID function found for chain selector %d: %w", batchOp.ChainSelector, err)
+		}
+
+		newOperationID, err := calculateOperationID(batchOp, m.Action, predecessors[i], m.Salt())
+		if err != nil {
+			return nil, nil, fmt.Errorf("failed to calculate operation ID for chain selector %d: %w", batchOp.ChainSelector, err)
+		}
+
+		lastOpID[batchOp.ChainSelector] = newOperationID
+		operationIDs[i] = newOperationID
+	}
+
+	return operationIDs, predecessors, nil
 }
 
 // calcOperationIDs computes and returns the id of each batch operation, along with
@@ -393,7 +394,7 @@ func (m *TimelockProposal) OperationCounts(ctx context.Context) (map[types.Chain
 	// Start with raw counts (works for all non-converted chains)
 	out := m.TransactionCounts()
 
-	converters, err := m.buildTimelockConverters()
+	converters, err := m.buildTimelockConverters(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to build timelock converters: %w", err)
 	}
@@ -464,79 +465,6 @@ func WithInspector(inspector sdk.Inspector) GetOpCountOption {
 	return func(o *getOpCountOptions) {
 		o.inspector = inspector
 	}
-}
-
-// Merge merges the given timelock proposal with the current one
-func (m *TimelockProposal) Merge(_ context.Context, other *TimelockProposal) (*TimelockProposal, error) {
-	if m.Version != other.Version {
-		return nil, errors.New("cannot merge proposals with different versions")
-	}
-	if m.Kind != other.Kind {
-		return nil, errors.New("cannot merge proposals with different kinds")
-	}
-	if m.Action != other.Action {
-		return nil, errors.New("cannot merge proposals with different actions")
-	}
-
-	if m.OverridePreviousRoot || other.OverridePreviousRoot {
-		// FIXME: log warning when DX-1650 is done
-		m.OverridePreviousRoot = true
-	}
-
-	if other.Description != "" {
-		if m.Description != "" {
-			m.Description += "\n"
-		}
-		m.Description += other.Description
-	}
-
-	m.Signatures = nil // reset signatures, as existing ones are no longer valid
-
-	m.Metadata = mergeMetadata(m.Metadata, other.Metadata)
-
-	for chainSelector, otherMetadata := range other.ChainMetadata {
-		thisMetadata, exists := m.ChainMetadata[chainSelector]
-		if !exists {
-			m.ChainMetadata[chainSelector] = otherMetadata
-			continue
-		}
-
-		mergedMetadata, err := thisMetadata.Merge(otherMetadata)
-		if err != nil {
-			return nil, fmt.Errorf("failed to merge metadata for chain %v: %w", chainSelector, err)
-		}
-
-		m.ChainMetadata[chainSelector] = mergedMetadata
-	}
-
-	m.ValidUntil = min(m.ValidUntil, other.ValidUntil)
-	m.Delay = types.NewDuration(time.Duration(max(m.Delay.Nanoseconds(), other.Delay.Nanoseconds())))
-
-	for chainSelector, otherTimelockAddress := range other.TimelockAddresses {
-		currentAddress, exists := m.TimelockAddresses[chainSelector]
-		if exists {
-			if currentAddress != otherTimelockAddress {
-				return nil, fmt.Errorf("cannot merge proposals with different timelock addresses (chain %v): %q vs %q",
-					chainSelector, currentAddress, otherTimelockAddress)
-			}
-		} else {
-			m.TimelockAddresses[chainSelector] = otherTimelockAddress
-		}
-	}
-
-	m.Operations = append(m.Operations, other.Operations...)
-
-	if other.SaltOverride != nil {
-		if m.SaltOverride == nil {
-			m.SaltOverride = other.SaltOverride
-		} else {
-			for i := range m.SaltOverride {
-				m.SaltOverride[i] ^= other.SaltOverride[i]
-			}
-		}
-	}
-
-	return m, nil
 }
 
 // timeLockProposalValidateBasic basic validation for an MCMS proposal

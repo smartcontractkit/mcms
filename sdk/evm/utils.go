@@ -1,9 +1,15 @@
 package evm
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
+	"math/big"
+
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
-	cselectors "github.com/smartcontractkit/chain-selectors"
+
+	chainselremote "github.com/smartcontractkit/chain-selectors/remote"
 
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/types"
@@ -22,6 +28,30 @@ const (
 type ContractDeployBackend interface {
 	bind.ContractBackend
 	bind.DeployBackend
+}
+
+type TransactOpts = bind.TransactOpts
+
+type ChainMetadata struct {
+	GasPrice *big.Int `json:"gasPrice,omitempty"`
+	GasLimit uint64   `json:"gasLimit,omitempty"`
+}
+
+func ParseChainMetadata(chainMetadata types.ChainMetadata) (ChainMetadata, error) {
+	if len(chainMetadata.AdditionalFields) == 0 {
+		return ChainMetadata{}, nil
+	}
+
+	var evmChainMetadata ChainMetadata
+	err := json.Unmarshal(chainMetadata.AdditionalFields, &evmChainMetadata)
+	if err != nil {
+		return ChainMetadata{}, fmt.Errorf("failed to unmarshal chain metadata additional fields: %w", err)
+	}
+	if evmChainMetadata.GasPrice != nil && evmChainMetadata.GasPrice.Sign() < 0 {
+		return ChainMetadata{}, fmt.Errorf("invalid gas price: %v", evmChainMetadata.GasPrice)
+	}
+
+	return evmChainMetadata, nil
 }
 
 // transformHashes transforms a slice of common.Hash to a slice of [32]byte.
@@ -63,17 +93,17 @@ func toGethSignature(s types.Signature) bindings.ManyChainMultiSigSignature {
 // To support simulated chains in testing, the isSim flag can be set to true. Simulated chains
 // always have EVM chain ID of 1337. We need to override the chain ID for setRoot to execute and
 // not throw WrongChainId.
-func getEVMChainID(sel types.ChainSelector, isSim bool) (uint64, error) {
+func getEVMChainID(ctx context.Context, sel types.ChainSelector, isSim bool) (uint64, error) {
 	if isSim {
 		return SimulatedEVMChainID, nil
 	}
 
-	evmChainID, err := cselectors.ChainIdFromSelector(uint64(sel))
-	if err != nil {
+	evmChain, exists, err := chainselremote.EvmChainBySelector(ctx, uint64(sel))
+	if err != nil || !exists {
 		return 0, &sdkerrors.InvalidChainIDError{
 			ReceivedChainID: sel,
 		}
 	}
 
-	return evmChainID, nil
+	return evmChain.EvmChainID, nil
 }

@@ -1,10 +1,12 @@
 package mcms
 
 import (
+	"context"
 	"fmt"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
+	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/canton"
@@ -28,33 +30,33 @@ func newEncoder(
 
 	var encoder sdk.Encoder
 	switch family {
-	case cselectors.FamilyEVM:
+	case chainsel.FamilyEVM:
 		encoder = evm.NewEncoder(
 			csel,
 			txCount,
 			overridePreviousRoot,
 			isSim,
 		)
-	case cselectors.FamilySolana:
+	case chainsel.FamilySolana:
 		encoder = solana.NewEncoder(
 			csel,
 			txCount,
 			overridePreviousRoot,
 			// isSim,
 		)
-	case cselectors.FamilyAptos:
+	case chainsel.FamilyAptos:
 		encoder = aptos.NewEncoder(
 			csel,
 			txCount,
 			overridePreviousRoot,
 		)
-	case cselectors.FamilySui:
+	case chainsel.FamilySui:
 		encoder = sui.NewEncoder(
 			csel,
 			txCount,
 			overridePreviousRoot,
 		)
-	case cselectors.FamilyTon:
+	case chainsel.FamilyTon:
 		encoder = ton.NewEncoder(
 			csel,
 			txCount,
@@ -72,34 +74,29 @@ func newEncoder(
 }
 
 // newTimelockConverter a new TimelockConverter that can convert timelock proposals
-// for the given chain.
-func newTimelockConverter(csel types.ChainSelector) (sdk.TimelockConverter, error) {
-	family, err := types.GetChainSelectorFamily(csel)
+// for the given chain. The metadata parameter is used to select the correct
+// converter variant (e.g. curse_mcms on Aptos).
+func newTimelockConverter(csel types.ChainSelector, metadata types.ChainMetadata) (sdk.TimelockConverter, error) {
+	return chainwrappers.BuildConverter(csel, metadata)
+}
+
+func operationIDFn(_ context.Context, csel types.ChainSelector) (sdk.OperationID, error) {
+	family, err := types.GetChainSelectorFamily(csel) //nolint:contextcheck //OPT-400
 	if err != nil {
 		return nil, err
 	}
 
 	switch family {
-	case cselectors.FamilyEVM:
-		return &evm.TimelockConverter{}, nil
-
-	case cselectors.FamilySolana:
-		return &solana.TimelockConverter{}, nil
-
-	case cselectors.FamilyAptos:
-		return aptos.NewTimelockConverter(), nil
-
-	case cselectors.FamilySui:
-		return &sui.TimelockConverter{}, nil
-
-	case cselectors.FamilyTon:
-		// Notice: we need to define the send amount from MCMS to Timelock,
-		// to cover gas fees. We use a static default value here for now.
-		return ton.NewTimelockConverter(ton.DefaultSendAmount), nil
-
-	case cselectors.FamilyCanton:
-		return canton.NewTimelockConverter(), nil
-
+	case chainsel.FamilyEVM:
+		return evm.OperationID, nil
+	case chainsel.FamilySolana:
+		return solana.OperationID, nil
+	case chainsel.FamilyAptos:
+		return aptos.OperationID, nil
+	case chainsel.FamilySui:
+		return sui.OperationID, nil
+	case chainsel.FamilyTon:
+		return ton.OperationID, nil
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}

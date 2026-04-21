@@ -1,6 +1,8 @@
 package types //nolint:revive,nolintlint // allow pkg name 'types'
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 // OperationMetadata contains metadata about an operation
 type OperationMetadata struct {

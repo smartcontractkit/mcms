@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 
+	suibindings "github.com/smartcontractkit/chainlink-sui/bindings"
+
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -21,3 +23,5 @@ func SuiMetadata(chainMetadata types.ChainMetadata) (AdditionalFieldsMetadata, e
 
 	return metadata, nil
 }
+
+var NewCCIPEntrypointArgEncoder = suibindings.NewCCIPEntrypointArgEncoder

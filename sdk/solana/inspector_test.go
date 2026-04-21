@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/go-cmp/cmp"
@@ -32,7 +32,7 @@ func TestInspector_GetConfig(t *testing.T) {
 	t.Parallel()
 
 	ctx := context.Background()
-	chainSelector := cselectors.SOLANA_DEVNET.Selector
+	chainSelector := chainsel.SOLANA_DEVNET.Selector
 	configPDA, err := FindConfigPDA(testMCMProgramID, testPDASeed)
 	require.NoError(t, err)
 

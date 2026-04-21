@@ -1,6 +1,7 @@
 package chainwrappers
 
 import (
+	"encoding/json"
 	"fmt"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
@@ -10,7 +11,8 @@ import (
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
-	sdkSui "github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -79,8 +81,14 @@ func BuildInspector(
 		if err != nil {
 			return nil, fmt.Errorf("error determining aptos role: %w", err)
 		}
+		var afm aptos.AdditionalFieldsMetadata
+		if len(metadata.AdditionalFields) > 0 {
+			if err = json.Unmarshal(metadata.AdditionalFields, &afm); err != nil {
+				return nil, fmt.Errorf("error parsing aptos metadata: %w", err)
+			}
+		}
 
-		return aptos.NewInspector(client, role), nil
+		return aptos.NewInspectorWithMCMSType(client, role, afm.MCMSType), nil
 	case chainsel.FamilySui:
 		client, ok := chains.SuiClient(rawSelector)
 		if !ok {
@@ -88,14 +96,21 @@ func BuildInspector(
 		}
 		signer, ok := chains.SuiSigner(rawSelector)
 		if !ok {
-			return nil, fmt.Errorf("missing Sui signer for selector %d", rawSelector)
+			return nil, fmt.Errorf("missing Sui chain client for selector %d", rawSelector)
 		}
-		suiMetadata, err := sdkSui.SuiMetadata(metadata)
+		suiMetadata, err := sui.SuiMetadata(metadata)
 		if err != nil {
 			return nil, fmt.Errorf("error parsing sui metadata: %w", err)
 		}
 
-		return sdkSui.NewInspector(client, signer, suiMetadata.McmsPackageID, suiMetadata.Role)
+		return sui.NewInspector(client, signer, suiMetadata.McmsPackageID, suiMetadata.Role)
+	case chainsel.FamilyTon:
+		client, ok := chains.TonClient(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing Ton chain client for selector %d", rawSelector)
+		}
+
+		return ton.NewInspector(client), nil
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}

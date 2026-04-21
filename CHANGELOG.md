@@ -1,5 +1,155 @@
 # @smartcontractkit/mcms
 
+## 0.41.1
+
+### Patch Changes
+
+- [#710](https://github.com/smartcontractkit/mcms/pull/710) [`5699a9f`](https://github.com/smartcontractkit/mcms/commit/5699a9fbd852b22aeaee972c39cdb0d95a09a990) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - update sui
+
+## 0.41.0
+
+### Minor Changes
+
+- [#707](https://github.com/smartcontractkit/mcms/pull/707) [`791471f`](https://github.com/smartcontractkit/mcms/commit/791471f10b7cdec9d6970c10ac5c37d9bc898675) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Add ability to target Sui upgraded contracts
+
+## 0.40.4
+
+### Patch Changes
+
+- [#705](https://github.com/smartcontractkit/mcms/pull/705) [`dc47327`](https://github.com/smartcontractkit/mcms/commit/dc47327462d74565bc4f4c6890f2ac38382a75de) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - remove replace in go mod
+
+## 0.40.3
+
+### Patch Changes
+
+- [#703](https://github.com/smartcontractkit/mcms/pull/703) [`580a2ac`](https://github.com/smartcontractkit/mcms/commit/580a2ac8145ea4d279681cd5b24c62b09daab471) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - update SUI CLI version
+
+## 0.40.2
+
+### Patch Changes
+
+- [#701](https://github.com/smartcontractkit/mcms/pull/701) [`69e57b0`](https://github.com/smartcontractkit/mcms/commit/69e57b08b2b9edb2ab60c58a442f928ec205a9d9) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - update chainlink-sui version
+
+## 0.40.1
+
+### Patch Changes
+
+- [#695](https://github.com/smartcontractkit/mcms/pull/695) [`5d0e94e`](https://github.com/smartcontractkit/mcms/commit/5d0e94ea6d17948f48f744beda1e7db4fddba3d6) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - fix: partially revert #684 and remove OperationID from Op types
+
+## 0.40.0
+
+### Minor Changes
+
+- [#670](https://github.com/smartcontractkit/mcms/pull/670) [`77a6110`](https://github.com/smartcontractkit/mcms/commit/77a6110a9e4054a3ca309405b7de3df769fd5f06) Thanks [@jkongie](https://github.com/jkongie)! - Add `ProposalKindFromJSON` and `ProposalKindFromJSONString` helpers
+
+  Adds two new functions to extract a `ProposalKind` from a JSON representation of a `Proposal` or `TimelockProposal`.
+
+### Patch Changes
+
+- [#696](https://github.com/smartcontractkit/mcms/pull/696) [`f7d4bee`](https://github.com/smartcontractkit/mcms/commit/f7d4bee82df5d5191e0301050d2914c1e8a17a51) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - update sui package resolution
+
+## 0.39.0
+
+### Minor Changes
+
+- [#684](https://github.com/smartcontractkit/mcms/pull/684) [`aef0e32`](https://github.com/smartcontractkit/mcms/commit/aef0e32f8b860ddef251dbb77fccf2acde92c426) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add an `OperationID` field to the Operation types
+
+### Patch Changes
+
+- [#680](https://github.com/smartcontractkit/mcms/pull/680) [`b439d72`](https://github.com/smartcontractkit/mcms/commit/b439d7234691c008ccf3a570e5682d7cec5077a8) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - remove unused function
+
+## 0.38.2
+
+### Patch Changes
+
+- [#676](https://github.com/smartcontractkit/mcms/pull/676) [`ff96b5b`](https://github.com/smartcontractkit/mcms/commit/ff96b5bd7be5fd3c406863af8095107b4d2c9a3f) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add role conversion helper to aptos sdk
+
+## 0.38.1
+
+### Patch Changes
+
+- [#674](https://github.com/smartcontractkit/mcms/pull/674) [`1f9d636`](https://github.com/smartcontractkit/mcms/commit/1f9d6360e50520e107e681b489992fd7f8bc89ae) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - fix up factory and timelock executable
+
+## 0.38.0
+
+### Minor Changes
+
+- [#668](https://github.com/smartcontractkit/mcms/pull/668) [`3977e3a`](https://github.com/smartcontractkit/mcms/commit/3977e3af435bd0e7ba150a3a93e02a60e64f39ab) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - support Aptos curse mcms in timelock
+
+## 0.37.1
+
+### Patch Changes
+
+- [#666](https://github.com/smartcontractkit/mcms/pull/666) [`dc1d043`](https://github.com/smartcontractkit/mcms/commit/dc1d043d73fe4e1f66514541c7077cb050433ef3) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - build aptos executor with mcms type
+
+## 0.37.0
+
+### Minor Changes
+
+- [#664](https://github.com/smartcontractkit/mcms/pull/664) [`378c6d5`](https://github.com/smartcontractkit/mcms/commit/378c6d5164458a61530b951c1b802dd0bf8953ab) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - feat: add chainwrappers.BuildExecutors supporting EVM gas params
+
+## 0.36.4
+
+### Patch Changes
+
+- [#650](https://github.com/smartcontractkit/mcms/pull/650) [`c037579`](https://github.com/smartcontractkit/mcms/commit/c037579efe47fb441d87e7deb7c2d7d2f1321550) Thanks [@ecPablo](https://github.com/ecPablo)! - fix garbage characters getting printed in the derivation path during ledger signing
+
+- [#663](https://github.com/smartcontractkit/mcms/pull/663) [`279dae9`](https://github.com/smartcontractkit/mcms/commit/279dae9c39af976245ac84b7ead7e8a52f37dc19) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - make executor interface backwards compatible
+
+- [#658](https://github.com/smartcontractkit/mcms/pull/658) [`f3650e8`](https://github.com/smartcontractkit/mcms/commit/f3650e8fcc978d5078b92d4e6b574fca959a9ddf) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - enhance the aptos mcms inspector with different mcms (regular and curse)
+
+## 0.36.3
+
+### Patch Changes
+
+- [#645](https://github.com/smartcontractkit/mcms/pull/645) [`93369ca`](https://github.com/smartcontractkit/mcms/commit/93369ca34d3f361e120a9b7e0028086d1e229736) Thanks [@huangzhen1997](https://github.com/huangzhen1997)! - Comment out randomQuery ID for TON timelock converter to have static proposal hash
+
+## 0.36.2
+
+### Patch Changes
+
+- [#638](https://github.com/smartcontractkit/mcms/pull/638) [`94dfd62`](https://github.com/smartcontractkit/mcms/commit/94dfd62257d0cef9946a104b406cbfd5b3502962) Thanks [@krebernisak](https://github.com/krebernisak)! - Add TON option to buildTimelockConverters
+
+- [#638](https://github.com/smartcontractkit/mcms/pull/638) [`94dfd62`](https://github.com/smartcontractkit/mcms/commit/94dfd62257d0cef9946a104b406cbfd5b3502962) Thanks [@krebernisak](https://github.com/krebernisak)! - Bump ghcr.io/neodix42/mylocalton-docker:v4.0.0 - speedup
+
+## 0.36.1
+
+### Patch Changes
+
+- [#635](https://github.com/smartcontractkit/mcms/pull/635) [`4be4e75`](https://github.com/smartcontractkit/mcms/commit/4be4e75afdc5fd4a00f3520ab81b40a5f572a629) Thanks [@ecPablo](https://github.com/ecPablo)! - add error details on remote chain selectors api
+
+- [#633](https://github.com/smartcontractkit/mcms/pull/633) [`d34ae76`](https://github.com/smartcontractkit/mcms/commit/d34ae76388f139c303c386ab6e6350e860b6af9c) Thanks [@krebernisak](https://github.com/krebernisak)! - Bump github.com/smartcontractkit/chainlink-ton to 054376f21418
+
+## 0.36.0
+
+### Minor Changes
+
+- [#614](https://github.com/smartcontractkit/mcms/pull/614) [`13c0665`](https://github.com/smartcontractkit/mcms/commit/13c0665b7846b604e5ddf422b93762b51ba85e26) Thanks [@ecPablo](https://github.com/ecPablo)! - feat: add remote chain selectors API
+
+### Patch Changes
+
+- [#615](https://github.com/smartcontractkit/mcms/pull/615) [`043ba6d`](https://github.com/smartcontractkit/mcms/commit/043ba6dd2e73ea4a3adb11d3f4c86576cc703733) Thanks [@krebernisak](https://github.com/krebernisak)! - Bump smartcontractkit/chainlink-ton - improve trace tracking
+
+- [#615](https://github.com/smartcontractkit/mcms/pull/615) [`043ba6d`](https://github.com/smartcontractkit/mcms/commit/043ba6dd2e73ea4a3adb11d3f4c86576cc703733) Thanks [@krebernisak](https://github.com/krebernisak)! - Bump ghcr.io/neodix42/mylocalton-docker:v3.99 - speedup
+
+- [#617](https://github.com/smartcontractkit/mcms/pull/617) [`b68b54b`](https://github.com/smartcontractkit/mcms/commit/b68b54b6e8d024f4e66c56c32e086e679a1f249f) Thanks [@krebernisak](https://github.com/krebernisak)! - Revert chainlink-ccip/chains/solana to 85accaf3d28d (availabel contract release)
+
+## 0.35.0
+
+### Minor Changes
+
+- [#586](https://github.com/smartcontractkit/mcms/pull/586) [`19074d4`](https://github.com/smartcontractkit/mcms/commit/19074d4019d02a236f4c54669daff8c9e110c09b) Thanks [@krebernisak](https://github.com/krebernisak)! - Update to latest chainlink-ton MCMS contracts version + misc fixes/improvements
+
+### Patch Changes
+
+- [#603](https://github.com/smartcontractkit/mcms/pull/603) [`2cd7db1`](https://github.com/smartcontractkit/mcms/commit/2cd7db171382385d0bc9e3099eef2ea8248ae622) Thanks [@krebernisak](https://github.com/krebernisak)! - Add wait (pending op) support for TON executors
+
+- [#610](https://github.com/smartcontractkit/mcms/pull/610) [`95b0666`](https://github.com/smartcontractkit/mcms/commit/95b06665fbee59ee5140d5e60dc1766346615af8) Thanks [@gustavogama-cll](https://github.com/gustavogama-cll)! - chore: add sui and ton to chainwrappers helpers
+
+- [#611](https://github.com/smartcontractkit/mcms/pull/611) [`94f50e5`](https://github.com/smartcontractkit/mcms/commit/94f50e5011f831cbb9a32ee849a7ed384d82f0cb) Thanks [@RodrigoAD](https://github.com/RodrigoAD)! - Bumps chainlink-sui version
+
+- [#607](https://github.com/smartcontractkit/mcms/pull/607) [`40f2af0`](https://github.com/smartcontractkit/mcms/commit/40f2af06bc327ee4993420c9cfde3557e46f6884) Thanks [@patricios-space](https://github.com/patricios-space)! - Bump chainlink-ton version to latest (642f6eb)
+
 ## 0.34.0
 
 ### Minor Changes

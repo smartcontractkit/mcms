@@ -140,3 +140,11 @@ func (e *timelockExecutor) CheckPendingSend(ctx context.Context, dstAddr *addres
 
 	return SendTxAfter(ctx, tx, uint64(now), info.ValidAfter, DefaultWaitBuffer, e.wait)
 }
+
+func (e timelockExecutor) Equal(otherSdkExe sdk.TimelockExecutor) bool {
+	other, ok := otherSdkExe.(*timelockExecutor)
+	return ok &&
+		e.wallet == other.wallet &&
+		e.amount == other.amount &&
+		e.wait == other.wait
+}

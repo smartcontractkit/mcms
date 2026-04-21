@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 
 	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
@@ -47,7 +47,7 @@ func TestNewConfigurer(t *testing.T) {
 	// Test successful creation
 	mcmsPackageID := "0x123456789abcdef"
 	ownerCap := "0xabcdef123456789"
-	chainSelector := cselectors.SUI_TESTNET.Selector
+	chainSelector := chainsel.SUI_TESTNET.Selector
 
 	configurer, err := NewConfigurer(mockClient, mockSigner, TimelockRoleBypasser, mcmsPackageID, ownerCap, chainSelector)
 	require.NoError(t, err)
@@ -115,9 +115,9 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				clearRoot: true,
 			},
 			role:    TimelockRoleBypasser,
-			chainID: cselectors.SUI_TESTNET.Selector,
+			chainID: chainsel.SUI_TESTNET.Selector,
 			mockSetup: func(mockmcms *mockmodulemcms.IMcms) {
-				expectedChainID := new(big.Int).SetUint64(cselectors.SUI_TESTNET.ChainID)
+				expectedChainID := new(big.Int).SetUint64(chainsel.SUI_TESTNET.ChainID)
 				mockmcms.EXPECT().SetConfig(
 					mock.Anything,
 					mock.Anything,
@@ -147,7 +147,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			},
 			want: types.TransactionResult{
 				Hash:        "0x123456789abcdef",
-				ChainFamily: cselectors.FamilySui,
+				ChainFamily: chainsel.FamilySui,
 				RawData:     expectedTx,
 			},
 			wantErr: assert.NoError,
@@ -163,9 +163,9 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				clearRoot: false,
 			},
 			role:    TimelockRoleCanceller,
-			chainID: cselectors.SUI_TESTNET.Selector,
+			chainID: chainsel.SUI_TESTNET.Selector,
 			mockSetup: func(mockmcms *mockmodulemcms.IMcms) {
-				expectedChainID := new(big.Int).SetUint64(cselectors.SUI_TESTNET.ChainID)
+				expectedChainID := new(big.Int).SetUint64(chainsel.SUI_TESTNET.ChainID)
 				mockmcms.EXPECT().SetConfig(
 					mock.Anything,
 					mock.Anything,
@@ -184,7 +184,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 			},
 			want: types.TransactionResult{
 				Hash:        "0x123456789abcdef",
-				ChainFamily: cselectors.FamilySui,
+				ChainFamily: chainsel.FamilySui,
 				RawData:     expectedTx,
 			},
 			wantErr: assert.NoError,
@@ -213,7 +213,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 				},
 			},
 			role:    TimelockRoleProposer,
-			chainID: cselectors.SUI_TESTNET.Selector,
+			chainID: chainsel.SUI_TESTNET.Selector,
 			mockSetup: func(mockmcms *mockmodulemcms.IMcms) {
 				mockmcms.EXPECT().SetConfig(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil, errors.New("transaction failed"))
 			},

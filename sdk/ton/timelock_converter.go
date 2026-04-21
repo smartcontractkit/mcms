@@ -17,27 +17,26 @@ import (
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
-// Default amount to send with timelock transactions (to cover gas fees)
+// DefaultSendAmount amount to send with timelock transactions (to cover gas fees)
 var DefaultSendAmount = tlb.MustFromTON("0.15")
 
-var _ sdk.TimelockConverter = (*timelockConverter)(nil)
+var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
-type timelockConverter struct {
+type TimelockConverter struct {
 	// Transaction opts
 	amount tlb.Coins
 }
 
 // NewTimelockConverter creates a new TimelockConverter
 func NewTimelockConverter(amount tlb.Coins) sdk.TimelockConverter {
-	return &timelockConverter{
+	return &TimelockConverter{
 		amount: amount,
 	}
 }
 
-func (t *timelockConverter) ConvertBatchToChainOperations(
+func (t *TimelockConverter) ConvertBatchToChainOperations(
 	_ context.Context,
 	metadata types.ChainMetadata,
 	bop types.BatchOperation,
@@ -64,17 +63,18 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, errHash
 	}
 
-	qID, err := tvm.RandomQueryID()
-	if err != nil {
-		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to generate random query ID: %w", err)
-	}
+	// TODO: Re-introduce QueryID using a deterministic derivation (e.g. from calls, predecessor, salt, action) to preserve proposal signing determinism. (NONEVM-3847)
+	// qID, err := tvm.RandomQueryID()
+	// if err != nil {
+	//	 return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to generate random query ID: %w", err)
+	// }
 
 	// Encode the data based on the operation
 	var data *cell.Cell
 	switch action {
 	case types.TimelockActionSchedule:
 		data, err = tlb.ToCell(timelock.ScheduleBatch{
-			QueryID: qID,
+			// QueryID: qID,
 
 			Calls:       calls,
 			Predecessor: tlbe.NewUint256(predecessor.Big()),
@@ -83,13 +83,13 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		})
 	case types.TimelockActionCancel:
 		data, err = tlb.ToCell(timelock.Cancel{
-			QueryID: qID,
+			// QueryID: qID,
 
 			ID: tlbe.NewUint256(operationID.Big()),
 		})
 	case types.TimelockActionBypass:
 		data, err = tlb.ToCell(timelock.BypasserExecuteBatch{
-			QueryID: qID,
+			// QueryID: qID,
 
 			Calls: calls,
 		})
@@ -107,6 +107,7 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("invalid timelock address: %w", err)
 	}
 
+	// TODO (ton): amount can be taken from metadata.AdditionalFields
 	// Notice: EVM just sets 0 here, but on TON we need to set some value to cover gas fees
 	var tx types.Transaction
 	tx, err = NewTransaction(dstAddr, data.BeginParse(), t.amount.Nano(), "RBACTimelock", tags)
@@ -122,13 +123,27 @@ func (t *timelockConverter) ConvertBatchToChainOperations(
 	return []types.Operation{op}, operationID, nil
 }
 
+func OperationID(
+	batchOp types.BatchOperation,
+	action types.TimelockAction,
+	predecessor common.Hash,
+	salt common.Hash,
+) (common.Hash, error) {
+	calls, err := ConvertBatchToCalls(batchOp)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to convert batch to calls: %w", err)
+	}
+
+	return HashOperationBatch(calls, predecessor, salt)
+}
+
 func ConvertBatchToCalls(bop types.BatchOperation) ([]timelock.Call, error) {
 	calls := make([]timelock.Call, len(bop.Transactions))
 	for i, tx := range bop.Transactions {
 		// Unmarshal the AdditionalFields from the operation
 		var additionalFields AdditionalFields
 		if err := json.Unmarshal(tx.AdditionalFields, &additionalFields); err != nil {
-			return nil, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+			return nil, fmt.Errorf("failed to unmarshal TON additional fields: %w", err)
 		}
 
 		// Map to Ton Address type

@@ -33,6 +33,35 @@ type ProposalInterface interface {
 	Validate() error
 }
 
+// ProposalKindFromJSON extracts the Kind from a JSON representation of a Proposal
+// or TimelockProposal. It returns an error if the JSON is invalid or the kind
+// is not recognized.
+func ProposalKindFromJSON(r io.Reader) (types.ProposalKind, error) {
+	var partial struct {
+		Kind types.ProposalKind `json:"kind"`
+	}
+
+	if err := json.NewDecoder(r).Decode(&partial); err != nil {
+		return "", fmt.Errorf("failed to parse proposal JSON: %w", err)
+	}
+
+	if partial.Kind == "" {
+		return "", errors.New("proposal JSON missing required 'kind' field")
+	}
+
+	if _, ok := types.StringToProposalKind[string(partial.Kind)]; !ok {
+		return "", fmt.Errorf("unknown proposal kind: %q", partial.Kind)
+	}
+
+	return partial.Kind, nil
+}
+
+// ProposalKindFromJSONString is a convenience wrapper around ProposalKindFromJSON
+// that accepts a string instead of an io.Reader.
+func ProposalKindFromJSONString(s string) (types.ProposalKind, error) {
+	return ProposalKindFromJSON(strings.NewReader(s))
+}
+
 func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInterface, error) {
 	switch proposalType {
 	case types.KindProposal:
@@ -82,7 +111,7 @@ func (p *BaseProposal) AppendSignature(signature types.Signature) {
 	p.Signatures = append(p.Signatures, signature)
 }
 
-// ChainMetadata returns the chain metadata for the proposal.
+// ChainMetadatas returns the chain metadata for the proposal.
 func (p *BaseProposal) ChainMetadatas() map[types.ChainSelector]types.ChainMetadata {
 	cmCopy := make(map[types.ChainSelector]types.ChainMetadata, len(p.ChainMetadata))
 	for k, v := range p.ChainMetadata {
@@ -392,32 +421,6 @@ func proposalValidateBasic(proposalObj Proposal) error {
 // merkle tree generation.
 func wrapTreeGenErr(err error) error {
 	return fmt.Errorf("merkle tree generation error: %w", err)
-}
-
-func mergeMetadata(m1, m2 map[string]any) map[string]any {
-	if len(m2) == 0 {
-		return m1
-	}
-
-	return mergeMetadataMaps(m1, m2)
-}
-
-func mergeMetadataMaps(a, b map[string]any) map[string]any {
-	out := make(map[string]any, len(a))
-	maps.Copy(out, a)
-	for k, v := range b {
-		if v, ok := v.(map[string]any); ok {
-			if bv, ok := out[k]; ok {
-				if bv, ok := bv.(map[string]any); ok {
-					out[k] = mergeMetadataMaps(bv, v)
-					continue
-				}
-			}
-		}
-		out[k] = v
-	}
-
-	return out
 }
 
 // validateNoDuplicateSigners ensures all signers are unique based on their raw bytes.

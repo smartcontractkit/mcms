@@ -4,7 +4,6 @@ package tone2e
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"math/big"
@@ -14,13 +13,14 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/examples/counter"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
@@ -72,7 +72,7 @@ func (s *TimelockInspectionTestSuite) grantRole(role [32]byte, acc *address.Addr
 	s.Require().NoError(err)
 	s.Require().NotNil(tx)
 
-	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx)
+	err = tracetracking.WaitForTrace(ctx, s.TonClient, tx, bindings.DefaultTraceStopCondition)
 	s.Require().NoError(err)
 }
 
@@ -158,9 +158,10 @@ func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.Require().NoError(err)
 
 	// Generate few test wallets
+	chainID := chainsel.TON_LOCALNET.ChainID
 	s.accounts = []*address.Address{
-		NewInitializedAddress(context.Background(), &s.Suite, s.TonClient, s.wallet),
-		NewInitializedAddress(context.Background(), &s.Suite, s.TonClient, s.wallet),
+		must(tvm.NewRandomV5R1TestWallet(s.TonClient, chainID)).Address(),
+		must(tvm.NewRandomV5R1TestWallet(s.TonClient, chainID)).Address(),
 	}
 
 	// Sort accounts to have deterministic order
@@ -381,7 +382,7 @@ func (s *TimelockInspectionTestSuite) TestIsOperationDone() {
 	s.Require().NoError(err, "Failed to create TimelockExecutor")
 
 	bop := types.BatchOperation{
-		ChainSelector: types.ChainSelector(cselectors.TON_LOCALNET.Selector),
+		ChainSelector: types.ChainSelector(chainsel.TON_LOCALNET.Selector),
 		Transactions: []types.Transaction{
 			{
 				To:               counterAddr.String(),

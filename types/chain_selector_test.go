@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	cselectors "github.com/smartcontractkit/chain-selectors"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 )
 
 func TestGetChainSelectorFamily(t *testing.T) {
@@ -20,23 +20,23 @@ func TestGetChainSelectorFamily(t *testing.T) {
 	}{
 		{
 			name: "success: evm",
-			give: ChainSelector(cselectors.ETHEREUM_TESTNET_SEPOLIA.Selector),
-			want: cselectors.FamilyEVM,
+			give: ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector),
+			want: chainsel.FamilyEVM,
 		},
 		{
 			name: "success: solana",
-			give: ChainSelector(cselectors.SOLANA_DEVNET.Selector),
-			want: cselectors.FamilySolana,
+			give: ChainSelector(chainsel.SOLANA_DEVNET.Selector),
+			want: chainsel.FamilySolana,
 		},
 		{
 			name: "success: aptos",
-			give: ChainSelector(cselectors.APTOS_TESTNET.Selector),
-			want: cselectors.FamilyAptos,
+			give: ChainSelector(chainsel.APTOS_TESTNET.Selector),
+			want: chainsel.FamilyAptos,
 		},
 		{
 			name:    "invalid chain selector",
 			give:    0,
-			wantErr: "chain family not found for selector 0",
+			wantErr: "chain family not found for selector 0: unknown chain selector 0",
 		},
 	}
 

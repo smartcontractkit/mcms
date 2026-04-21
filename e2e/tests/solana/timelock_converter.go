@@ -135,7 +135,7 @@ func (s *TestSuite) TestTimelockConverter() {
 		timelockProposal, err := timelockProposalBuilder().
 			AddChainMetadata(s.ChainSelector, cMetadata).
 			SetAction(types.TimelockActionSchedule).
-			Build()
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		proposerAC := s.Roles[timelock.Proposer_Role].AccessController.PublicKey()
@@ -147,183 +147,219 @@ func (s *TestSuite) TestTimelockConverter() {
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
 			AddChainMetadata(s.ChainSelector, chainMetadata()).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: initialize operation instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "D2DZq3wEcfN0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6QyuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAA="),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: initialize 1st timelock instruction ("empty" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "w+bVh5CUjlV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoAAAAA"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: append 1st timelock instruction ("empty" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "TE1mg4gMLQV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAAAAAAgAAADWLAT3DCnZbg=="),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: initialize 2nd timelock instruction ("u8_value" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "w+bVh5CUjlV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoAAAAA"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: append 2nd timelock instruction ("u8_value" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "TE1mg4gMLQV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAQAAAAkAAAARr5z9W60a5Hs="),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: finalize timelock operation instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "P9AgYlW27Ix0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9O"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: schedule batch instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "8oxXakfiViB0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAQAAAAAAAAA="),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: initialize operation instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "D2DZq3wEcfN0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77rhxammtG2ZpKe8tiMuXj5PsPTSS8FPAxjiAD5VvBE3056QyuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAA="),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: initialize 1st timelock instruction ("account_mut" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "w+bVh5CUjlV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77rHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoDAAAAA0JRWm+fXW6dROTGvs1O7lJ17sSZwXdnofi7kQPhnScAAe5KiXXNoYn8wsyXPimFZjXn1bDQqROtngZAnboEB+hqAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: append 1st timelock instruction ("account_mut" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "TE1mg4gMLQV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77rAAAAAAgAAAAMAokTFuuQRg=="),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: finalize timelock operation instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "P9AgYlW27Ix0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77r"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: schedule batch instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "8oxXakfiViB0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77rAQAAAAAAAAA="),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: proposerAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-					},
-				}),
-			}}).
-			Build()
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: initialize operation instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "D2DZq3wEcfN0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAB6QyuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAIAAAA="),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: initialize 1st timelock instruction ("empty" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "w+bVh5CUjlV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoAAAAA"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: append 1st timelock instruction ("empty" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "TE1mg4gMLQV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAAAAAAgAAADWLAT3DCnZbg=="),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: initialize 2nd timelock instruction ("u8_value" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "w+bVh5CUjlV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoAAAAA"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: append 2nd timelock instruction ("u8_value" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "TE1mg4gMLQV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAQAAAAkAAAARr5z9W60a5Hs="),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: finalize timelock operation instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "P9AgYlW27Ix0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9O"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: schedule batch instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "8oxXakfiViB0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAQAAAAAAAAA="),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: initialize operation instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "D2DZq3wEcfN0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77rhxammtG2ZpKe8tiMuXj5PsPTSS8FPAxjiAD5VvBE3056QyuAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAAAA="),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: initialize 1st timelock instruction ("account_mut" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "w+bVh5CUjlV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77rHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoDAAAAA0JRWm+fXW6dROTGvs1O7lJ17sSZwXdnofi7kQPhnScAAe5KiXXNoYn8wsyXPimFZjXn1bDQqROtngZAnboEB+hqAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: append 1st timelock instruction ("account_mut" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "TE1mg4gMLQV0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77rAAAAAAgAAAAMAokTFuuQRg=="),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: finalize timelock operation instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "P9AgYlW27Ix0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77r"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: schedule batch instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "8oxXakfiViB0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77rAQAAAAAAAAA="),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: proposerAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+						},
+					}),
+				},
+			}).
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		// --- act ---
@@ -352,7 +388,7 @@ func (s *TestSuite) TestTimelockConverter() {
 		timelockProposal, err := timelockProposalBuilder().
 			AddChainMetadata(s.ChainSelector, metadata).
 			SetAction(types.TimelockActionCancel).
-			Build()
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		// build expected output Proposal
@@ -362,35 +398,41 @@ func (s *TestSuite) TestTimelockConverter() {
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
 			AddChainMetadata(s.ChainSelector, metadata).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: cancel operation instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "6NvfKdvs3L50ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9O"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: s.Roles[timelock.Canceller_Role].AccessController.PublicKey()},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: cancel operation instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "6NvfKdvs3L50ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77r"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2PDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: s.Roles[timelock.Canceller_Role].AccessController.PublicKey()},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-					},
-				}),
-			}}).
-			Build()
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: cancel operation instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "6NvfKdvs3L50ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9O"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: s.Roles[timelock.Canceller_Role].AccessController.PublicKey()},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: cancel operation instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "6NvfKdvs3L50ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAACFXPoVMF+S9oZb25RhgTHd22WkmsT74ohH5tLpMg77r"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2PDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: s.Roles[timelock.Canceller_Role].AccessController.PublicKey()},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+						},
+					}),
+				},
+			}).
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		// --- act ---
@@ -411,10 +453,11 @@ func (s *TestSuite) TestTimelockConverter() {
 		s.Require().NoError(err)
 
 		metadata := chainMetadata()
+
 		timelockProposal, err := timelockProposalBuilder().
 			AddChainMetadata(s.ChainSelector, metadata).
 			SetAction(types.TimelockActionBypass).
-			Build()
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		bypasserAC := s.Roles[timelock.Bypasser_Role].AccessController.PublicKey()
@@ -426,190 +469,226 @@ func (s *TestSuite) TestTimelockConverter() {
 			SetOverridePreviousRoot(true).
 			SetVersion("v1").
 			AddChainMetadata(s.ChainSelector, metadata).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: initialize operation instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "OhswzBPFPxp0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OekMrgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAA"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: initialize 1st timelock instruction ("empty" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "MhHNrK+Mwyd0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoAAAAA"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: append 1st timelock instruction ("empty" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "uOiX3m9118V0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAAAAAAgAAADWLAT3DCnZbg=="),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: initialize 2nd timelock instruction ("u8_value" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "MhHNrK+Mwyd0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoAAAAA"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: append 2nd timelock instruction ("u8_value" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "uOiX3m9118V0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAQAAAAkAAAARr5z9W60a5Hs="),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: finalize timelock operation instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "LTfGM3wYqfp0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9O"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op1: bypass execute batch instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "Wj5CBuOuHsJ0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9O"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation1BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: timelockSignerPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: cpistub.ProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: initialize operation instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "OhswzBPFPxp0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAP/2oZhGr1K/K5BdshJs4JU/Wg1GPHPOoJUFwyPB3zXUekMrgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAA"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: initialize 1st timelock instruction ("account_mut" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "MhHNrK+Mwyd0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAP/2oZhGr1K/K5BdshJs4JU/Wg1GPHPOoJUFwyPB3zXUHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoDAAAAA0JRWm+fXW6dROTGvs1O7lJ17sSZwXdnofi7kQPhnScAAe5KiXXNoYn8wsyXPimFZjXn1bDQqROtngZAnboEB+hqAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: append 1st timelock instruction ("account_mut" call)
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "uOiX3m9118V0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAP/2oZhGr1K/K5BdshJs4JU/Wg1GPHPOoJUFwyPB3zXUAAAAAAgAAAAMAokTFuuQRg=="),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: finalize timelock operation instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "LTfGM3wYqfp0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAP/2oZhGr1K/K5BdshJs4JU/Wg1GPHPOoJUFwyPB3zXU"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-					},
-				}),
-			}}).
-			AddOperation(types.Operation{ChainSelector: s.ChainSelector, Transaction: types.Transaction{
-				// op2: bypass execute batch instruction
-				To:                s.TimelockProgramID.String(),
-				Data:              base64Decode(s.T(), "Wj5CBuOuHsJ0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAP/2oZhGr1K/K5BdshJs4JU/Wg1GPHPOoJUFwyPB3zXU"),
-				OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
-				AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
-					Accounts: []*solana.AccountMeta{
-						{PublicKey: operation2BypasserPDA, IsWritable: true},
-						{PublicKey: configPDA},
-						{PublicKey: timelockSignerPDA},
-						{PublicKey: bypasserAC},
-						{PublicKey: mcmSignerPDA, IsWritable: true},
-						{PublicKey: cpistub.ProgramID},
-						{PublicKey: u8ValuePDA, IsWritable: true},
-						{PublicKey: timelockSignerPDA},
-						{PublicKey: solana.SystemProgramID},
-					},
-				}),
-			}}).
-			Build()
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: initialize operation instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "OhswzBPFPxp0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OekMrgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAA"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: initialize 1st timelock instruction ("empty" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "MhHNrK+Mwyd0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoAAAAA"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: append 1st timelock instruction ("empty" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "uOiX3m9118V0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAAAAAAgAAADWLAT3DCnZbg=="),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: initialize 2nd timelock instruction ("u8_value" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "MhHNrK+Mwyd0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoAAAAA"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: append 2nd timelock instruction ("u8_value" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "uOiX3m9118V0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9OAQAAAAkAAAARr5z9W60a5Hs="),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: finalize timelock operation instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "LTfGM3wYqfp0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9O"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op1: bypass execute batch instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "Wj5CBuOuHsJ0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAIcWpprRtmaSnvLYjLl4+T7D00kvBTwMY4gA+VbwRN9O"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op1Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation1BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: timelockSignerPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: cpistub.ProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: initialize operation instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "OhswzBPFPxp0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAP/2oZhGr1K/K5BdshJs4JU/Wg1GPHPOoJUFwyPB3zXUekMrgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAAAA"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: initialize 1st timelock instruction ("account_mut" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "MhHNrK+Mwyd0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAP/2oZhGr1K/K5BdshJs4JU/Wg1GPHPOoJUFwyPB3zXUHZsMOrpAUG6C9rfHs8ScgG/m6HCBWCuHg3gToZkUBSoDAAAAA0JRWm+fXW6dROTGvs1O7lJ17sSZwXdnofi7kQPhnScAAe5KiXXNoYn8wsyXPimFZjXn1bDQqROtngZAnboEB+hqAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: append 1st timelock instruction ("account_mut" call)
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "uOiX3m9118V0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAP/2oZhGr1K/K5BdshJs4JU/Wg1GPHPOoJUFwyPB3zXUAAAAAAgAAAAMAokTFuuQRg=="),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: finalize timelock operation instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "LTfGM3wYqfp0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAP/2oZhGr1K/K5BdshJs4JU/Wg1GPHPOoJUFwyPB3zXU"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+						},
+					}),
+				},
+			}).
+			AddOperation(types.Operation{
+				ChainSelector: s.ChainSelector,
+				Transaction: types.Transaction{
+					// op2: bypass execute batch instruction
+					To:                s.TimelockProgramID.String(),
+					Data:              base64Decode(s.T(), "Wj5CBuOuHsJ0ZXN0LXRpbWVsb2NrY29udmVydGVyAAAAAAAAAAAAAP/2oZhGr1K/K5BdshJs4JU/Wg1GPHPOoJUFwyPB3zXU"),
+					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock", Tags: op2Tags},
+					AdditionalFields: marshalAdditionalFields(s.T(), solanasdk.AdditionalFields{
+						Accounts: []*solana.AccountMeta{
+							{PublicKey: operation2BypasserPDA, IsWritable: true},
+							{PublicKey: configPDA},
+							{PublicKey: timelockSignerPDA},
+							{PublicKey: bypasserAC},
+							{PublicKey: mcmSignerPDA, IsWritable: true},
+							{PublicKey: cpistub.ProgramID},
+							{PublicKey: u8ValuePDA, IsWritable: true},
+							{PublicKey: timelockSignerPDA},
+							{PublicKey: solana.SystemProgramID},
+						},
+					}),
+				},
+			}).
+			Build() //nolint:contextcheck //OPT-400
 		s.Require().NoError(err)
 
 		// --- act: convert proposal ---
@@ -643,17 +722,21 @@ func (s *TestSuite) executeConvertedProposal(
 
 	// sign
 	inspectors := map[types.ChainSelector]sdk.Inspector{s.ChainSelector: solanasdk.NewInspector(s.SolanaClient)}
-	signable, err := mcms.NewSignable(&gotProposal, inspectors)
+
+	signable, err := mcms.NewSignable(&gotProposal, inspectors) //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
-	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey))
+
+	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey)) //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
 
 	// set root
-	encoders, err := gotProposal.GetEncoders()
+
+	encoders, err := gotProposal.GetEncoders() //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*solanasdk.Encoder)
 	executors := map[types.ChainSelector]sdk.Executor{s.ChainSelector: solanasdk.NewExecutor(encoder, s.SolanaClient, wallet)}
-	executable, err := mcms.NewExecutable(&gotProposal, executors)
+
+	executable, err := mcms.NewExecutable(&gotProposal, executors) //nolint:contextcheck //OPT-400
 	s.Require().NoError(err)
 
 	_, err = executable.SetRoot(ctx, s.ChainSelector)
