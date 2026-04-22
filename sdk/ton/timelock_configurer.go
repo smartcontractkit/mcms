@@ -6,12 +6,12 @@ import (
 	"math"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
-
-	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -60,18 +60,25 @@ func (c *TimelockConfigurer) UpdateDelay(
 		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %w", err)
 	}
 
-	qID := uint64(0)
-	if !c.skipSend {
-		qID, err = tvm.RandomQueryID()
+	msg := timelock.UpdateDelay{
+		NewDelay: uint32(newDelay),
+	}
+	var body *cell.Cell
+	if c.skipSend {
+		body, err = tlb.ToCell(msg)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to encode UpdateDelay body: %w", err)
+		}
+
+		msg.QueryID = deterministicPreparedQueryID(dstAddr, "RBACTimelock:UpdateDelay", body)
+	} else {
+		msg.QueryID, err = tvm.RandomQueryID()
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
 		}
 	}
 
-	body, err := tlb.ToCell(timelock.UpdateDelay{
-		QueryID:  qID,
-		NewDelay: uint32(newDelay),
-	})
+	body, err = tlb.ToCell(msg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to encode UpdateDelay body: %w", err)
 	}

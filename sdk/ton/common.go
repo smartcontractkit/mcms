@@ -2,6 +2,8 @@ package ton
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/binary"
 	"encoding/hex"
 	"fmt"
 	"time"
@@ -78,4 +80,21 @@ func SendTxAfter(ctx context.Context, opts TxOpts, now uint64, validAfter uint64
 			return z, fmt.Errorf("context done while waiting to send transaction: %w", ctx.Err())
 		}
 	}
+}
+
+// Prepared TON transactions must be reproducible across identical inputs.
+func deterministicPreparedQueryID(dst *address.Address, operation string, body *cell.Cell) uint64 {
+	sum := sha256.New()
+	sum.Write([]byte(dst.String()))
+	sum.Write([]byte{0})
+	sum.Write([]byte(operation))
+	sum.Write([]byte{0})
+	sum.Write(body.Hash())
+
+	qID := binary.BigEndian.Uint64(sum.Sum(nil)[:8])
+	if qID == 0 {
+		return 1
+	}
+
+	return qID
 }

@@ -6,14 +6,14 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
-
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
@@ -130,12 +130,20 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 				require.True(t, ok)
 				assert.Equal(t, "RBACTimelock", tx.ContractType)
 				assert.Equal(t, []string{"UpdateDelay"}, tx.Tags)
+				body := must(cell.FromBOC(tx.Data))
+				var msg timelock.UpdateDelay
+				require.NoError(t, tlb.LoadFromCell(&msg, body.BeginParse()))
 
 				result2, err := configurer.UpdateDelay(t.Context(), tt.timelockAddress, tt.newDelay)
 				require.NoError(t, err)
 				tx2, ok := result2.RawData.(types.Transaction)
 				require.True(t, ok)
+				body2 := must(cell.FromBOC(tx2.Data))
+				var msg2 timelock.UpdateDelay
+				require.NoError(t, tlb.LoadFromCell(&msg2, body2.BeginParse()))
 				assert.Equal(t, tx.Data, tx2.Data)
+				assert.Equal(t, msg.QueryID, msg2.QueryID)
+				assert.NotZero(t, msg.QueryID)
 			}
 		})
 	}
