@@ -85,6 +85,31 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	return []types.Operation{op}, operationID, nil
 }
 
+func OperationID(
+	batchOp types.BatchOperation,
+	_ types.TimelockAction,
+	predecessor common.Hash,
+	salt common.Hash,
+) (common.Hash, error) {
+	_, callsForHash, _, err := buildCallsFromBatch(batchOp)
+	if err != nil {
+		return common.Hash{}, err
+	}
+
+	predecessorHex := hex.EncodeToString(predecessor[:])
+	saltHex := hex.EncodeToString(salt[:])
+	operationIDStr := HashTimelockOpId(callsForHash, predecessorHex, saltHex)
+
+	operationIDBytes, err := hex.DecodeString(operationIDStr)
+	if err != nil || len(operationIDBytes) != 32 {
+		return common.Hash{}, fmt.Errorf("invalid operation ID hash: %w", err)
+	}
+
+	var operationID common.Hash
+	copy(operationID[:], operationIDBytes)
+	return operationID, nil
+}
+
 // buildCallsFromBatch extracts mcms.TimelockCall, TimelockCallForHash, and all ContractIds from bop.
 // Uses tx.To and tx.Data as fallbacks when AdditionalFields are missing or empty.
 func buildCallsFromBatch(bop types.BatchOperation) ([]mcms.TimelockCall, []TimelockCallForHash, []string, error) {
