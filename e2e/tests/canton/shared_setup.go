@@ -7,7 +7,7 @@ import (
 	"testing"
 
 	"github.com/smartcontractkit/chainlink-canton/contracts"
-	"github.com/smartcontractkit/chainlink-canton/integration-tests/testhelpers"
+	"github.com/smartcontractkit/chainlink-canton/testhelpers"
 	"github.com/stretchr/testify/require"
 
 	mcmstypes "github.com/smartcontractkit/mcms/types"

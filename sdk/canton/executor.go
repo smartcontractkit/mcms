@@ -117,17 +117,16 @@ func (e Executor) ExecuteOperation(
 		opProof[i] = cantontypes.TEXT(hex.EncodeToString(p[:]))
 	}
 
-	// Convert contract IDs to GENMAP; resolve InstanceAddress hex to current contract ID so Canton can parse them
-	// GENMAP maps instanceAddress -> CONTRACT_ID
+	// Resolve InstanceAddress hex values to current contract IDs before submitting.
 	stateClient := e.Inspector.StateServiceClient()
-	targetCids := make(cantontypes.GENMAP)
+	targetCids := make(map[cantontypes.TEXT]cantontypes.CONTRACT_ID)
 	for _, cid := range cantonOpFields.ContractIds {
 		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, e.party, cid)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, err)
 		}
 		// Use the original instance address as key, resolved contract ID as value
-		targetCids[cid] = cantontypes.CONTRACT_ID(resolved)
+		targetCids[cantontypes.TEXT(cid)] = cantontypes.CONTRACT_ID(resolved)
 	}
 
 	// Build exercise command using generated bindings

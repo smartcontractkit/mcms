@@ -159,7 +159,7 @@ func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient,
 		Canceller          mcms.RoleState         `json:"canceller"`
 		Bypasser           mcms.RoleState         `json:"bypasser"`
 		BlockedFunctions   []mcms.BlockedFunction `json:"blockedFunctions"`
-		TimelockTimestamps cantontypes.GENMAP     `json:"timelockTimestamps"`
+		TimelockTimestamps map[cantontypes.TEXT]cantontypes.TIMESTAMP `json:"timelockTimestamps"`
 	}
 	mcmsContractNoMinDelay, err := bindings.UnmarshalActiveContract[NoMinDelayMCMS](wrapped)
 	if err != nil {

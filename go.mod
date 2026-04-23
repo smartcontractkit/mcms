@@ -1,6 +1,6 @@
 module github.com/smartcontractkit/mcms
 
-go 1.25.6
+go 1.26.2
 
 //nolint:gomoddirectives // allow replace directive
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
@@ -10,7 +10,7 @@ replace github.com/fbsobreira/gotron-sdk => github.com/smartcontractkit/chainlin
 
 replace (
 	github.com/digital-asset/dazl-client/v8 => github.com/noders-team/dazl-client/v8 v8.7.1-2
-	github.com/smartcontractkit/go-daml => github.com/smartcontractkit/go-daml v0.0.0-20260331185746-126b4945e013
+	github.com/smartcontractkit/go-daml => github.com/smartcontractkit/go-daml v0.6.1-0.20260423193219-c633889da58e
 )
 
 require (
@@ -28,8 +28,7 @@ require (
 	github.com/samber/lo v1.52.0
 	github.com/smartcontractkit/chain-selectors v1.0.97
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20260306142855-8d629e752265
-	github.com/smartcontractkit/chainlink-canton v0.0.0-20260406090817-ed7fd0be9763
-	github.com/smartcontractkit/chainlink-canton/integration-tests v0.0.0-20260406090817-ed7fd0be9763
+	github.com/smartcontractkit/chainlink-canton v0.0.0-20260423182618-78ffd32b7eb5
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-deployments-framework v0.93.1

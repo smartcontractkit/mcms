@@ -92,16 +92,15 @@ func (t *TimelockExecutor) Execute(
 	saltHex := hex.EncodeToString(salt[:])
 	opIDStr := HashTimelockOpId(callsForHash, predecessorHex, saltHex)
 
-	// Build targetCidsMap: instanceAddress -> CONTRACT_ID
-	// Canton MCMS expects a map keyed by instance address
-	targetCidsMap := make(cantontypes.GENMAP)
+	// Build targetCidsMap: instanceAddress -> CONTRACT_ID.
+	targetCidsMap := make(map[cantontypes.TEXT]cantontypes.CONTRACT_ID)
 	for instanceAddr, cid := range instanceToContractID {
 		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, t.party, cid)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, err)
 		}
 		// Key is instance address, value is resolved contract ID
-		targetCidsMap[instanceAddr] = cantontypes.CONTRACT_ID(resolved)
+		targetCidsMap[cantontypes.TEXT(instanceAddr)] = cantontypes.CONTRACT_ID(resolved)
 	}
 
 	executeArgs := mcms.ExecuteScheduledBatch{
