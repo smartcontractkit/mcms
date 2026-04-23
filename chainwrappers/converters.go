@@ -8,6 +8,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -51,6 +52,8 @@ func BuildConverter(selector types.ChainSelector, metadata types.ChainMetadata) 
 		converter, _ = sui.NewTimelockConverter()
 	case chainsel.FamilyTon:
 		converter = ton.NewTimelockConverter(ton.DefaultSendAmount)
+	case chainsel.FamilyCanton:
+		converter = canton.NewTimelockConverter()
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", fam)
 	}

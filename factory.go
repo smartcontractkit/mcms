@@ -97,6 +97,8 @@ func operationIDFn(_ context.Context, csel types.ChainSelector) (sdk.OperationID
 		return sui.OperationID, nil
 	case chainsel.FamilyTon:
 		return ton.OperationID, nil
+	case chainsel.FamilyCanton:
+		return canton.OperationID, nil
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}
