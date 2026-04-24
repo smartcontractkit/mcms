@@ -383,13 +383,12 @@ func TestHashOperationBatch_Deterministic(t *testing.T) {
 	assert.NotEqual(t, hash1, hash2, "Different inputs should produce different hashes")
 }
 
-func TestTimelockConverter_ActionConstants(t *testing.T) {
+func TestTimelockConverter_FunctionNameConstants(t *testing.T) {
 	t.Parallel()
 
-	// Test that the action constants are correctly defined
-	assert.Equal(t, "timelock_schedule_batch", TimelockActionSchedule)
-	assert.Equal(t, "timelock_cancel", TimelockActionCancel)
-	assert.Equal(t, "timelock_bypasser_execute_batch", TimelockActionBypass)
+	assert.Equal(t, "timelock_schedule_batch", suiTimelockScheduleFunctionName)
+	assert.Equal(t, "timelock_cancel", suiTimelockCancelFunctionName)
+	assert.Equal(t, "timelock_bypasser_execute_batch", suiTimelockBypassFunctionName)
 }
 
 func TestOperationID(t *testing.T) {

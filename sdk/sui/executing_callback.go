@@ -18,8 +18,6 @@ import (
 
 const (
 	UpgradeGasBudget = 500_000_000
-
-	suiMCMSSetConfigFunctionName = "set_config"
 )
 
 type EntrypointArgEncoder interface {
@@ -206,7 +204,7 @@ func (e *ExecutingCallbackParams) processMCMSMainModuleCall(ctx context.Context,
 			call.StateObj,
 			executingCallbackParams,
 		)
-	case TimelockActionCancel:
+	case suiTimelockCancelFunctionName:
 		executeDispatchCall, err = e.mcms.Encoder().McmsTimelockCancelWithArgs(
 			bind.Object{Id: call.StateObj},
 			bind.Object{Id: e.registryObj},

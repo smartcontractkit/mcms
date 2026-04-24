@@ -6,19 +6,19 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
-
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
-
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
@@ -30,9 +30,11 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 		name            string
 		timelockAddress string
 		newDelay        uint64
+		options         []mcmston.TimelockConfigurerOption
 		mockSetup       func(m *ton_mocks.TonAPI)
 		wantHash        string
 		wantErr         string
+		wantPrepared    bool
 	}{
 		{
 			name:            "success",
@@ -53,6 +55,16 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 					Return(&tlb.Transaction{Hash: []byte{0xde, 0xad, 0xbe, 0xef}}, &ton.BlockIDExt{}, []byte{}, nil)
 			},
 			wantHash: "deadbeef",
+		},
+		{
+			name:            "success - WithDoNotSendTimelockInstructionsOnChain option",
+			timelockAddress: validTimelockAddr,
+			newDelay:        3600,
+			options: []mcmston.TimelockConfigurerOption{
+				mcmston.WithDoNotSendTimelockInstructionsOnChain(),
+			},
+			mockSetup:    func(m *ton_mocks.TonAPI) {},
+			wantPrepared: true,
 		},
 		{
 			name:            "invalid timelock address",
@@ -100,7 +112,7 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 
 			tt.mockSetup(api)
 
-			configurer := mcmston.NewTimelockConfigurer(walletOperator, tlb.MustFromTON("0.1"))
+			configurer := mcmston.NewTimelockConfigurer(walletOperator, tlb.MustFromTON("0.1"), tt.options...)
 			result, err := configurer.UpdateDelay(t.Context(), tt.timelockAddress, tt.newDelay)
 
 			if tt.wantErr != "" {
@@ -113,6 +125,26 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 
 			require.NoError(t, err)
 			assert.Equal(t, tt.wantHash, result.Hash)
+			if tt.wantPrepared {
+				tx, ok := result.RawData.(types.Transaction)
+				require.True(t, ok)
+				assert.Equal(t, "RBACTimelock", tx.ContractType)
+				assert.Equal(t, []string{"UpdateDelay"}, tx.Tags)
+				body := must(cell.FromBOC(tx.Data))
+				var msg timelock.UpdateDelay
+				require.NoError(t, tlb.LoadFromCell(&msg, body.BeginParse()))
+
+				result2, err := configurer.UpdateDelay(t.Context(), tt.timelockAddress, tt.newDelay)
+				require.NoError(t, err)
+				tx2, ok := result2.RawData.(types.Transaction)
+				require.True(t, ok)
+				body2 := must(cell.FromBOC(tx2.Data))
+				var msg2 timelock.UpdateDelay
+				require.NoError(t, tlb.LoadFromCell(&msg2, body2.BeginParse()))
+				assert.Equal(t, tx.Data, tx2.Data)
+				assert.Equal(t, msg.QueryID, msg2.QueryID)
+				assert.NotZero(t, msg.QueryID)
+			}
 		})
 	}
 }

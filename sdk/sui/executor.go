@@ -148,11 +148,11 @@ func (e Executor) ExecuteOperation(
 	}
 	// Now build the timelock call using the result from the execute call
 	encoder := e.mcms.Encoder()
-	if additionalFields.Function != TimelockActionBypass && additionalFields.Function != TimelockActionSchedule && additionalFields.Function != TimelockActionCancel {
+	if additionalFields.Function != suiTimelockBypassFunctionName && additionalFields.Function != suiTimelockScheduleFunctionName && additionalFields.Function != suiTimelockCancelFunctionName {
 		return types.TransactionResult{}, fmt.Errorf("unsupported timelock action: %s", additionalFields.Function)
 	}
 
-	if additionalFields.Function == TimelockActionSchedule {
+	if additionalFields.Function == suiTimelockScheduleFunctionName {
 		timelockCall, encodeErr := encoder.DispatchTimelockScheduleBatchWithArgs(e.timelockObj, "0x6", timelockCallback)
 		if encodeErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", encodeErr)
@@ -163,7 +163,7 @@ func (e Executor) ExecuteOperation(
 		}
 	}
 
-	if additionalFields.Function == TimelockActionCancel {
+	if additionalFields.Function == suiTimelockCancelFunctionName {
 		timelockCall, encodeErr := encoder.DispatchTimelockCancelWithArgs(e.timelockObj, timelockCallback)
 		if encodeErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", encodeErr)
@@ -174,7 +174,7 @@ func (e Executor) ExecuteOperation(
 		}
 	}
 
-	if additionalFields.Function == TimelockActionBypass {
+	if additionalFields.Function == suiTimelockBypassFunctionName {
 		timelockCall, timelockErr := encoder.DispatchTimelockBypasserExecuteBatchWithArgs(timelockCallback)
 		if timelockErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("creating timelock call: %w", timelockErr)

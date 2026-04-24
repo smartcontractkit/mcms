@@ -16,6 +16,7 @@ import (
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 )
 
 var _ sdk.Configurer = &configurer{}
@@ -89,21 +90,29 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("unable to create group parents dict: %w", err)
 	}
 
-	qID, err := tvm.RandomQueryID()
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
-	}
-
-	body, err := tlb.ToCell(mcms.SetConfig{
-		QueryID: qID,
-
+	msg := mcms.SetConfig{
 		SignerAddresses: signerKeys,
 		SignerGroups:    signerGroups,
 		GroupQuorums:    gqDict,
 		GroupParents:    gpDict,
+		ClearRoot:       clearRoot,
+	}
+	var body *cell.Cell
+	if c.skipSend {
+		body, err = tlb.ToCell(msg)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to encode SetConfig body: %w", err)
+		}
 
-		ClearRoot: clearRoot,
-	})
+		msg.QueryID = deterministicPreparedQueryID(dstAddr, "MCMS:SetConfig", body)
+	} else {
+		msg.QueryID, err = tvm.RandomQueryID()
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
+		}
+	}
+
+	body, err = tlb.ToCell(msg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to encode SetConfig body: %w", err)
 	}
