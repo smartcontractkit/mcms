@@ -15,6 +15,7 @@ import (
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 )
@@ -110,7 +111,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	// TODO (ton): amount can be taken from metadata.AdditionalFields
 	// Notice: EVM just sets 0 here, but on TON we need to set some value to cover gas fees
 	var tx types.Transaction
-	tx, err = NewTransaction(dstAddr, data.BeginParse(), t.amount.Nano(), "RBACTimelock", tags)
+	tx, err = NewTransaction(dstAddr, data.BeginParse(), t.amount.Nano(), bindings.TypeTimelock, tags)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)
 	}
