@@ -11,11 +11,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-// Names used for the timelock update-min-delay call.
-const (
-	suiTimelockUpdateMinDelayModuleName   = "mcms"
-	suiTimelockUpdateMinDelayFunctionName = "timelock_update_min_delay"
-)
+const suiTimelockUpdateMinDelayModuleName = "mcms"
 
 var _ sdk.TimelockConfigurer = (*TimelockConfigurer)(nil)
 

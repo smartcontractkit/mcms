@@ -25,7 +25,11 @@ type Config struct {
 	GroupSigners []Config `json:"groupSigners"`
 }
 
-// AllSigners returns a deduplicated list of all individual signers recursively.
+// AllSigners returns every distinct address that appears as a direct signer anywhere in this
+// config tree, including nested group signers. Each address appears at most once, regardless of
+// how many times it is listed across branches (use this when you need a unique roster).
+//
+// Contrast with [Config.GetAllSigners], which preserves duplicates from the nested structure.
 func (c *Config) AllSigners() []common.Address {
 	seen := make(map[common.Address]struct{})
 	var signers []common.Address
@@ -121,7 +125,14 @@ func (c *Config) Equals(other *Config) bool {
 	return true
 }
 
-// GetAllSigners returns all signers in the config and all group signers.
+// GetAllSigners returns a flat slice of this node's direct [Config.Signers] followed by the
+// recursive result for each [Config.GroupSigners] entry, in tree order. The same address may
+// appear multiple times if it occurs in more than one branch or is repeated in the JSON/config
+// data (use this when validating membership against a recovered signer list, matching how the
+// tree is laid out).
+//
+// Contrast with [Config.AllSigners], which returns the same logical set of addresses but
+// deduplicated.
 func (c *Config) GetAllSigners() []common.Address {
 	signers := make([]common.Address, 0)
 	signers = append(signers, c.Signers...)
@@ -133,7 +144,14 @@ func (c *Config) GetAllSigners() []common.Address {
 	return signers
 }
 
-// CanSetRoot checks if the recovered signers have reached consensus to set the root.
+// CanSetRoot reports whether recovered signatures satisfy quorum for this config **and**
+// whether every recovered address is a registered signer somewhere in the tree.
+//
+// It is the strict variant for root updates: [Config.GetAllSigners] defines “registered”. If
+// any recovered signer is absent from that flattened list, it returns (false, error) because the
+// on-chain contract rejects roots that include unknown signers.
+//
+// For the same consensus logic without that membership check, use [Config.QuorumMet].
 func (c *Config) CanSetRoot(recoveredSigners []common.Address) (bool, error) {
 	allSigners := c.GetAllSigners()
 	for _, recoveredSigner := range recoveredSigners {
@@ -146,15 +164,24 @@ func (c *Config) CanSetRoot(recoveredSigners []common.Address) (bool, error) {
 	return c.isGroupAtConsensus(recoveredSigners), nil
 }
 
+// QuorumMet returns true if the configured quorum is met by counting, at each level, how many
+// direct signers from [Config.Signers] appear in recoveredSigners and how many nested
+// [Config.GroupSigners] sub-configs already meet their own quorum (recursively). Extra addresses
+// in recoveredSigners that are not configured signers are ignored; they neither satisfy a slot
+// nor cause an error.
+//
+// Use [Config.CanSetRoot] when callers must enforce that every recovered address is registered;
+// use QuorumMet when you only need the threshold check (e.g. analytics or pre-checks).
+func (c *Config) QuorumMet(recoveredSigners []common.Address) bool {
+	return c.isGroupAtConsensus(recoveredSigners)
+}
+
 // isGroupAtConsensus checks if the recovered signers are at consensus for the group.
 func (c *Config) isGroupAtConsensus(recoveredSigners []common.Address) bool {
 	signerApprovalsInGroup := 0
 	for _, signer := range c.Signers {
-		for _, recoveredSigner := range recoveredSigners {
-			if signer == recoveredSigner {
-				signerApprovalsInGroup++
-				break
-			}
+		if slices.Contains(recoveredSigners, signer) {
+			signerApprovalsInGroup++
 		}
 	}
 

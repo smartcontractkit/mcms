@@ -17,7 +17,6 @@ import (
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
-
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
 )
 
@@ -27,8 +26,7 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 	tests := []struct {
 		name          string
 		chainMetadata map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata
-		setup         func(t *testing.T, access *mocks.ChainAccessor)
-		prepare       func(t *testing.T, metadata map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata)
+		setup         func(t *testing.T, access *mocks.ChainAccessor, metadata map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata)
 		expectErr     bool
 		errContains   string
 		expectTypes   map[mcmsTypes.ChainSelector]any
@@ -65,7 +63,7 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 					}`),
 				},
 			},
-			setup: func(t *testing.T, access *mocks.ChainAccessor) {
+			setup: func(t *testing.T, access *mocks.ChainAccessor, metadata map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata) {
 				t.Helper()
 
 				access.EXPECT().EVMClient(mock.Anything).Return(nil, true)
@@ -95,7 +93,7 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 					MCMAddress: "0xaptos",
 				},
 			},
-			prepare: func(t *testing.T, metadata map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata) {
+			setup: func(t *testing.T, access *mocks.ChainAccessor, metadata map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata) {
 				t.Helper()
 
 				b, err := json.Marshal(aptos.AdditionalFieldsMetadata{
@@ -107,9 +105,6 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 				entry := metadata[mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector)]
 				entry.AdditionalFields = b
 				metadata[mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector)] = entry
-			},
-			setup: func(t *testing.T, access *mocks.ChainAccessor) {
-				t.Helper()
 
 				access.EXPECT().AptosClient(mock.Anything).Return(nil, true)
 			},
@@ -122,7 +117,7 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
 				mcmsTypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): {MCMAddress: "0xevm"},
 			},
-			setup: func(t *testing.T, access *mocks.ChainAccessor) {
+			setup: func(t *testing.T, access *mocks.ChainAccessor, metadata map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata) {
 				t.Helper()
 
 				access.EXPECT().EVMClient(mock.Anything).Return(nil, false)
@@ -135,7 +130,7 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
 				mcmsTypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): {MCMAddress: "0xevm"},
 			},
-			setup: func(t *testing.T, access *mocks.ChainAccessor) {
+			setup: func(t *testing.T, access *mocks.ChainAccessor, metadata map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata) {
 				t.Helper()
 
 				access.EXPECT().EVMClient(mock.Anything).Return(nil, true)
@@ -149,7 +144,7 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
 				mcmsTypes.ChainSelector(chainsel.TON_TESTNET.Selector): {MCMAddress: "0xton"},
 			},
-			setup: func(t *testing.T, access *mocks.ChainAccessor) {
+			setup: func(t *testing.T, access *mocks.ChainAccessor, metadata map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata) {
 				t.Helper()
 
 				access.EXPECT().TonSigner(mock.Anything).Return(nil, false)
@@ -163,17 +158,14 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			access := mocks.NewChainAccessor(t)
-			if tc.prepare != nil {
-				tc.prepare(t, tc.chainMetadata)
-			}
 			if tc.setup != nil {
-				tc.setup(t, access)
+				tc.setup(t, access, tc.chainMetadata)
 			}
 
 			configurers, err := BuildTimelockConfigurers(access, tc.chainMetadata, mcmsTypes.TimelockActionSchedule)
 			if tc.expectErr {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.errContains)
+				require.ErrorContains(t, err, tc.errContains)
 
 				return
 			}
@@ -199,7 +191,7 @@ func TestBuildTimelockConfigurer_NilChainAccess(t *testing.T) {
 		mcmsTypes.ChainMetadata{},
 	)
 	require.Error(t, err)
-	require.Contains(t, err.Error(), "chain access is required")
+	require.ErrorContains(t, err, "chain access is required")
 }
 
 func TestBuildTimelockConfigurer_AptosCurseMetadataEncodesCursePackage(t *testing.T) {
