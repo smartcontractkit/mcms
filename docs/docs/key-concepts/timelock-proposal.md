@@ -10,9 +10,6 @@ The **MCMS + Timelock Implementation** is an extended proposal document designed
 
 ## Timelock Proposal Structure
 
-<!-- panels:start -->
-<!-- div:left-panel -->
-
 ```json
 {
   "version": "v1",
@@ -91,8 +88,6 @@ The **MCMS + Timelock Implementation** is an extended proposal document designed
 }
 ```
 
-<!-- div:right-panel -->
-
 ### Proposal Field Descriptions
 
 **version** string<br/>
@@ -144,4 +139,3 @@ For more details about the chain metadata, see [Chain Metadata](./chain-metadata
 A list of operations to be executed across chains. Each operation contains a batch of transaction to be executed atomically. Each transaction in the batch has the same fields as a regular transaction (e.g., `to`, `data`, `value`).
 
 For more details about the operations, see [Operations](./operations.md).
-<!-- panels:end -->
