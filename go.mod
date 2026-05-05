@@ -1,6 +1,6 @@
 module github.com/smartcontractkit/mcms
 
-go 1.25.7
+go 1.26.2
 
 //nolint:gomoddirectives // allow replace directive
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
@@ -20,6 +20,7 @@ require (
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20260428085939-5c70de12dbfc
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260121163256-85accaf3d28d
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20250912190424-fd2e35d7deb5
+	github.com/smartcontractkit/chainlink-stellar/bindings v0.0.0-20260504184804-19e54479f03a
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260428231901-a394dd724761
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.15.19
 	github.com/smartcontractkit/chainlink-ton v0.0.0-20260219201907-054376f21418

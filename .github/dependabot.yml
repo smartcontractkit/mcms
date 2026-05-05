@@ -24,6 +24,7 @@ updates:
       - dependency-name: "github.com/ethereum/go-ethereum"
       - dependency-name: "github.com/gagliardetto/solana-go"
       - dependency-name: "github.com/stellar/go-stellar-sdk"
+      - dependency-name: "github.com/smartcontractkit/chainlink-stellar/bindings"
   - package-ecosystem: npm
     directory: "/"
     schedule:
