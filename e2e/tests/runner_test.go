@@ -10,6 +10,7 @@ import (
 	aptose2e "github.com/smartcontractkit/mcms/e2e/tests/aptos"
 	evme2e "github.com/smartcontractkit/mcms/e2e/tests/evm"
 	solanae2e "github.com/smartcontractkit/mcms/e2e/tests/solana"
+	stellare2e "github.com/smartcontractkit/mcms/e2e/tests/stellar"
 	suie2e "github.com/smartcontractkit/mcms/e2e/tests/sui"
 	tone2e "github.com/smartcontractkit/mcms/e2e/tests/ton"
 )
@@ -39,6 +40,10 @@ func TestSuiSuite(t *testing.T) {
 	suite.Run(t, new(suie2e.MCMSUserTestSuite))
 	suite.Run(t, new(suie2e.TimelockCancelProposalTestSuite))
 	suite.Run(t, new(suie2e.MCMSUserUpgradeTestSuite))
+}
+
+func TestStellarSuite(t *testing.T) {
+	suite.Run(t, new(stellare2e.SmokeSuite))
 }
 
 func TestTONSuite(t *testing.T) {

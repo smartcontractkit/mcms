@@ -140,11 +140,16 @@ jobs:
             CTF_CONFIGS=../config.sui.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestSuiSuite || sui_failure=true
             echo "::endgroup::"
 
+            echo "::group::Stellar"
+            CTF_CONFIGS=../config.stellar.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestStellarSuite || stellar_failure=true
+            echo "::endgroup::"
+
             [[ -n "${evm_failure}" ]] && echo "🚨 EVM e2e tests failed."
             [[ -n "${solana_failure}" ]] && echo "🚨 Solana e2e tests failed."
             [[ -n "${aptos_failure}" ]] && echo "🚨 Aptos e2e tests failed."
             [[ -n "${sui_failure}" ]] && echo "🚨 Sui e2e tests failed."
-            [[ -n "${evm_failure}" || -n "${solana_failure}" || -n "${aptos_failure}" || -n "${sui_failure}" ]] && {
+            [[ -n "${stellar_failure}" ]] && echo "🚨 Stellar e2e tests failed."
+            [[ -n "${evm_failure}" || -n "${solana_failure}" || -n "${aptos_failure}" || -n "${sui_failure}" || -n "${stellar_failure}" ]] && {
               exit 1
             } || {
               echo "Exiting"

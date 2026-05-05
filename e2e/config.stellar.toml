@@ -1,0 +1,10 @@
+# Soroban RPC via chainlink-testing-framework Stellar stack (Docker stellar/quickstart).
+# Port is assigned at runtime in e2e/tests/setup.go (freeport) before starting the network.
+#
+# Run from repo root (go test cwd is e2e/tests for this package):
+#   CTF_CONFIGS=../config.stellar.toml go test -tags=e2e -run=TestStellarSuite ./e2e/tests
+#
+# CI uses the same relative path from the e2e job working directory.
+
+[stellar_config]
+type = "stellar"
