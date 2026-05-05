@@ -23,6 +23,7 @@ updates:
       - dependency-name: "github.com/block-vision/sui-go-sdk"
       - dependency-name: "github.com/ethereum/go-ethereum"
       - dependency-name: "github.com/gagliardetto/solana-go"
+      - dependency-name: "github.com/stellar/go-stellar-sdk"
   - package-ecosystem: npm
     directory: "/"
     schedule:

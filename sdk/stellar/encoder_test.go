@@ -71,7 +71,7 @@ func TestEncoder_HashMetadataAndOperation(t *testing.T) {
 
 func TestParseContractID_Strkey(t *testing.T) {
 	t.Parallel()
-	// Vector from github.com/stellar/go/strkey decode_test ("Contract" case).
+	// Vector from github.com/stellar/go-stellar-sdk/strkey decode_test ("Contract" case).
 	const sample = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
 	want := common.HexToHash("0x3f0c34bf93ad0d9971d04ccc90f705511c838aad9734a4a2fb0d7a03fc7fe89a")
 	got, err := ParseContractID(sample)
