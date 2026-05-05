@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"maps"
 	"math/big"
 	"strings"
 	"testing"
@@ -715,6 +716,71 @@ func TestTimelockProposal_Validate(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestTimelockProposal_Validate_StellarTimelockMetadata(t *testing.T) {
+	t.Parallel()
+
+	sel := chaintest.Chain9Selector
+	stellarMCM := "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
+	acc := "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H"
+
+	base := TimelockProposal{
+		BaseProposal: BaseProposal{
+			Version:    "v1",
+			Kind:       types.KindTimelockProposal,
+			ValidUntil: 2004259681,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				sel: {
+					StartingOpCount:  1,
+					MCMAddress:       stellarMCM,
+					AdditionalFields: json.RawMessage([]byte(`{}`)),
+				},
+			},
+		},
+		Action: types.TimelockActionSchedule,
+		Delay:  types.MustParseDuration("1h"),
+		TimelockAddresses: map[types.ChainSelector]string{
+			sel: stellarMCM,
+		},
+		Operations: []types.BatchOperation{
+			{
+				ChainSelector: sel,
+				Transactions: []types.Transaction{
+					{
+						To:               stellarMCM,
+						AdditionalFields: json.RawMessage([]byte(`{}`)),
+						Data:             []byte{},
+					},
+				},
+			},
+		},
+	}
+
+	t.Run("rejects empty timelock role metadata", func(t *testing.T) {
+		t.Parallel()
+		p := base
+		p.ChainMetadata = maps.Clone(base.ChainMetadata)
+		err := p.Validate()
+		require.Error(t, err)
+		require.Contains(t, err.Error(), "chain metadata")
+		require.Contains(t, err.Error(), "timelockExecutor is required")
+	})
+
+	t.Run("accepts valid stellar timelock metadata", func(t *testing.T) {
+		t.Parallel()
+		p := base
+		p.ChainMetadata = maps.Clone(base.ChainMetadata)
+		p.ChainMetadata[sel] = types.ChainMetadata{
+			StartingOpCount: 1,
+			MCMAddress:      stellarMCM,
+			AdditionalFields: json.RawMessage([]byte(`{
+				"timelockExecutor": "` + acc + `",
+				"timelockProposer": "` + acc + `"
+			}`)),
+		}
+		require.NoError(t, p.Validate())
+	})
 }
 
 func TestTimelockProposal_Convert(t *testing.T) {

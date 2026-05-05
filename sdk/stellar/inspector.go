@@ -30,12 +30,7 @@ func NewInspector(invoker bindings.Invoker) *Inspector {
 }
 
 func (i *Inspector) contractClient(mcmAddr string) (*stellarmcms.McmsClient, error) {
-	id, err := normalizeContractIDStrkey(mcmAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	return stellarmcms.NewMcmsClient(i.invoker, id), nil
+	return newMCMSClient(i.invoker, mcmAddr)
 }
 
 // GetConfig returns the live multisig configuration from the contract.

@@ -12,9 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
 
+	chainsel "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -93,6 +96,18 @@ func (m *TimelockProposal) Validate() error {
 
 	if m.Kind != types.KindTimelockProposal {
 		return NewInvalidProposalKindError(m.Kind, types.KindTimelockProposal)
+	}
+
+	for chainSelector, metadata := range m.ChainMetadata {
+		fam, err := types.GetChainSelectorFamily(chainSelector)
+		if err != nil {
+			return fmt.Errorf("chain metadata %d: %w", chainSelector, err)
+		}
+		if fam == chainsel.FamilyStellar {
+			if err := stellar.ValidateTimelockChainMetadata(metadata, m.Action); err != nil {
+				return fmt.Errorf("chain metadata %d: %w", chainSelector, err)
+			}
+		}
 	}
 
 	// Validate all chains in transactions have an entry in chain metadata

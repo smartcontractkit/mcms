@@ -606,7 +606,9 @@ func scheduleAndExecuteGrantRolesProposal(t *testing.T, targetRoles []common.Has
 	requireOperationNotReady(t, tExecutable, &proposal, opIdx)
 	requireOperationNotDone(t, tExecutable, &proposal, opIdx)
 
-	// sleep for 5 seconds and then mine a block
+	// Advance chain time past the timelock delay. geth's simulated beacon requires an
+	// empty tx pool before AdjustTime (see SimulatedBeacon.AdjustTime).
+	sim.Backend.Rollback()
 	require.NoError(t, sim.Backend.AdjustTime(5*time.Second))
 	sim.Backend.Commit() // Note < 1.14 geth needs a commit after adjusting time.
 

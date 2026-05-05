@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math/big"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -102,6 +103,24 @@ func TestValidateChainMetadata(t *testing.T) {
 			expectedErr:      errors.New("mcms package ID is required"),
 		},
 		{
+			name:             "valid Stellar metadata",
+			chainSelector:    chaintest.Chain9Selector,
+			additionalFields: types.ChainMetadata{MCMAddress: "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20", StartingOpCount: 0},
+			expectedErr:      nil,
+		},
+		{
+			name:             "empty Stellar mcm address",
+			chainSelector:    chaintest.Chain9Selector,
+			additionalFields: types.ChainMetadata{MCMAddress: "", StartingOpCount: 0},
+			expectedErr:      errors.New("mcm address is required"),
+		},
+		{
+			name:             "invalid Stellar mcm address",
+			chainSelector:    chaintest.Chain9Selector,
+			additionalFields: types.ChainMetadata{MCMAddress: "not-a-contract", StartingOpCount: 0},
+			expectedErr:      errors.New("mcmAddress:"),
+		},
+		{
 			name:             "unknown chain family",
 			chainSelector:    types.ChainSelector(999),
 			additionalFields: types.ChainMetadata{AdditionalFields: nil},
@@ -186,6 +205,8 @@ func TestValidateAdditionalFields(t *testing.T) {
 	invalidSuiFieldsJSON, err := json.Marshal(invalidSuiFields)
 	require.NoError(t, err)
 
+	validStellarFieldsJSON := json.RawMessage(`{"value":"0x` + strings.Repeat("00", 32) + `"}`)
+
 	tests := []struct {
 		name        string
 		operation   types.Operation
@@ -261,6 +282,36 @@ func TestValidateAdditionalFields(t *testing.T) {
 				},
 			},
 			expectedErr: errors.New("module name length must be between 1 and 64 characters"),
+		},
+		{
+			name: "valid Stellar fields (empty)",
+			operation: types.Operation{
+				ChainSelector: chaintest.Chain9Selector,
+				Transaction: types.Transaction{
+					AdditionalFields: nil,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "valid Stellar value word",
+			operation: types.Operation{
+				ChainSelector: chaintest.Chain9Selector,
+				Transaction: types.Transaction{
+					AdditionalFields: validStellarFieldsJSON,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid Stellar additional fields JSON",
+			operation: types.Operation{
+				ChainSelector: chaintest.Chain9Selector,
+				Transaction: types.Transaction{
+					AdditionalFields: []byte("{"),
+				},
+			},
+			expectedErr: errors.New("stellar additional fields"),
 		},
 		{
 			name: "unknown chain family",

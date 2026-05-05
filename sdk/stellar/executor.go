@@ -79,7 +79,7 @@ func (e *Executor) ExecuteOperation(
 		Value:    valueWord,
 	}
 
-	mcmsClient, err := e.mcmsClient(metadata.MCMAddress)
+	mcmsClient, err := newMCMSClient(e.invoker, metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -90,7 +90,7 @@ func (e *Executor) ExecuteOperation(
 		return types.TransactionResult{ChainFamily: chainsel.FamilyStellar}, err
 	}
 
-	return e.txResult(), nil
+	return stellarTransactionResult(e.invoker), nil
 }
 
 // SetRoot invokes Soroban `set_root` with metadata and ECDSA signatures (contract ABI layout).
@@ -115,7 +115,7 @@ func (e *Executor) SetRoot(
 		return types.TransactionResult{}, err
 	}
 
-	mcmsClient, err := e.mcmsClient(metadata.MCMAddress)
+	mcmsClient, err := newMCMSClient(e.invoker, metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
@@ -127,16 +127,7 @@ func (e *Executor) SetRoot(
 		return types.TransactionResult{ChainFamily: chainsel.FamilyStellar}, err
 	}
 
-	return e.txResult(), nil
-}
-
-func (e *Executor) mcmsClient(mcmAddr string) (*stellarmcms.McmsClient, error) {
-	id, err := normalizeContractIDStrkey(mcmAddr)
-	if err != nil {
-		return nil, err
-	}
-
-	return stellarmcms.NewMcmsClient(e.invoker, id), nil
+	return stellarTransactionResult(e.invoker), nil
 }
 
 func (e *Executor) stellarRootMetadata(metadata types.ChainMetadata) (stellarmcms.StellarRootMetadata, error) {
@@ -190,19 +181,4 @@ func signatureVecFrom(sorted []types.Signature) stellarmcms.SignatureVec {
 	}
 
 	return stellarmcms.SignatureVec{Inner: inner}
-}
-
-// txHashInvoker is optionally implemented by invokers that expose the last submitted Soroban tx hash.
-type txHashInvoker interface {
-	LastSubmittedTransactionHash() string
-}
-
-func (e *Executor) txResult() types.TransactionResult {
-	hash := ""
-
-	if th, ok := e.invoker.(txHashInvoker); ok {
-		hash = th.LastSubmittedTransactionHash()
-	}
-
-	return types.NewTransactionResult(hash, nil, chainsel.FamilyStellar)
 }

@@ -45,12 +45,12 @@ All chain family integrations must implement interfaces defined in the `/sdk` fo
 
 ### ChainAccess Registry Adapter
 
-The MCMS SDK intentionally avoids importing chain-registry implementations (for example, the Chainlink Deployments Framework). Instead, shared tooling must expose the `ChainAccess` interface defined in [`sdk/chainclient.go`](https://github.com/smartcontractkit/mcms/blob/main/sdk/chainclient.go) so inspectors and proposal tooling can fetch RPC clients without pulling in external dependencies.
+The MCMS SDK intentionally avoids importing chain-registry implementations (for example, the Chainlink Deployments Framework). Instead, shared tooling must expose the `ChainAccessor` interface defined in [`chainwrappers/chainaccessor.go`](https://github.com/smartcontractkit/mcms/blob/main/chainwrappers/chainaccessor.go) so inspectors and proposal tooling can fetch RPC clients without pulling in external dependencies.
 
 Your adapter should:
 
-- Implement `Selectors() []uint64` and the per-family lookup helpers (`EVMClient`, `SolanaClient`, `AptosClient`, `Sui`) by delegating to your registry.
-- Return chain clients that satisfy `bind.ContractBackend`/`bind.DeployBackend` for EVM, `*solrpc.Client` for Solana, `aptoslib.AptosRpcClient` for Aptos, and `(sui.ISuiAPI, SuiSigner)` for Sui, etc.
+- Implement `Selectors() []uint64` and the per-family lookup helpers (`EVMClient`, `SolanaClient`, `AptosClient`, `Sui`, `TonClient` / `TonSigner`, `StellarInvoker`, …) by delegating to your registry.
+- Return chain clients that satisfy `bind.ContractBackend`/`bind.DeployBackend` for EVM, `*solrpc.Client` for Solana, `aptoslib.AptosRpcClient` for Aptos, `(sui.ISuiAPI, SuiSigner)` for Sui, and for Stellar a [`github.com/smartcontractkit/chainlink-stellar/bindings.Invoker`](https://github.com/smartcontractkit/chainlink-stellar/tree/main/bindings) used by `sdk/stellar` to simulate and submit Soroban calls.
 - Live in the repository that already depends on your registry (e.g., CLDF or deployment tooling) so `mcms` itself stays agnostic.
 
 This boundary keeps MCMS reusable across environments while still allowing downstream systems to map their chain catalogs into MCMS inspectors.
@@ -74,6 +74,7 @@ The `Executor` is the primary interface for executing MCMS operations on your ch
 - [Solana Executor](https://github.com/smartcontractkit/mcms/blob/main/sdk/solana/executor.go) - Uses Solana program instructions
 - [Aptos Executor](https://github.com/smartcontractkit/mcms/blob/main/sdk/aptos/executor.go) - Uses Move entry functions
 - [Sui Executor](https://github.com/smartcontractkit/mcms/blob/main/sdk/sui/executor.go) - Uses Sui Move transactions
+- [Stellar Executor](https://github.com/smartcontractkit/mcms/blob/main/sdk/stellar/executor.go) - Uses Soroban `execute` / `set_root` via `chainlink-stellar` `bindings.Invoker`
 
 **Key Considerations:**
 
@@ -100,6 +101,7 @@ The `Inspector` queries on-chain state of MCMS contracts.
 - [Solana Inspector](https://github.com/smartcontractkit/mcms/blob/main/sdk/solana/inspector.go)
 - [Aptos Inspector](https://github.com/smartcontractkit/mcms/blob/main/sdk/aptos/inspector.go)
 - [Sui Inspector](https://github.com/smartcontractkit/mcms/blob/main/sdk/sui/inspector.go)
+- [Stellar Inspector](https://github.com/smartcontractkit/mcms/blob/main/sdk/stellar/inspector.go)
 
 **Key Considerations:**
 
@@ -124,6 +126,7 @@ The `Encoder` creates chain-specific hashes for operations and metadata.
 - [Solana Encoder](https://github.com/smartcontractkit/mcms/blob/main/sdk/solana/encoder.go) - Uses Borsh serialization + SHA256
 - [Aptos Encoder](https://github.com/smartcontractkit/mcms/blob/main/sdk/aptos/encoder.go) - Uses BCS serialization + SHA3-256
 - [Sui Encoder](https://github.com/smartcontractkit/mcms/blob/main/sdk/sui/encoder.go) - Uses BCS serialization + Blake2b
+- [Stellar Encoder](https://github.com/smartcontractkit/mcms/blob/main/sdk/stellar/encoder.go) - Uses keccak256 over Solidity-ABI-shaped `StellarOp` / metadata (see on-chain `abi_encoding.rs` in chainlink-stellar)
 
 **Key Considerations:**
 
@@ -148,6 +151,7 @@ The `ConfigTransformer` converts between chain-agnostic `types.Config` and chain
 - [Solana ConfigTransformer](https://github.com/smartcontractkit/mcms/blob/main/sdk/solana/config_transformer.go)
 - [Aptos ConfigTransformer](https://github.com/smartcontractkit/mcms/blob/main/sdk/aptos/config_transformer.go)
 - [Sui ConfigTransformer](https://github.com/smartcontractkit/mcms/blob/main/sdk/sui/config_transformer.go)
+- [Stellar ConfigTransformer](https://github.com/smartcontractkit/mcms/blob/main/sdk/stellar/config_transformer.go)
 
 **Key Considerations:**
 
@@ -171,6 +175,7 @@ The `Configurer` updates MCMS contract configuration on-chain.
 - [Solana Configurer](https://github.com/smartcontractkit/mcms/blob/main/sdk/solana/configurer.go)
 - [Aptos Configurer](https://github.com/smartcontractkit/mcms/blob/main/sdk/aptos/configurer.go)
 - [Sui Configurer](https://github.com/smartcontractkit/mcms/blob/main/sdk/sui/configurer.go)
+- [Stellar Configurer](https://github.com/smartcontractkit/mcms/blob/main/sdk/stellar/configurer.go)
 
 **Key Considerations:**
 
@@ -282,6 +287,8 @@ Converts batch operations into chain-specific timelock operations.
 - [Aptos TimelockConverter](https://github.com/smartcontractkit/mcms/blob/main/sdk/aptos/timelock_converter.go)
 - [Sui TimelockConverter](https://github.com/smartcontractkit/mcms/blob/main/sdk/sui/timelock_converter.go)
 
+**Note:** Stellar does not yet ship `TimelockExecutor` / `TimelockInspector` / `TimelockConverter` in mcms; `chainwrappers.BuildConverter` returns an error for Stellar selectors until those implementations exist.
+
 ## Implementation Guidelines
 
 ### Package Structure
@@ -311,6 +318,8 @@ sdk/
     ├── timelock_inspector_test.go
     ├── timelock_converter.go         # TimelockConverter (if supported)
     ├── timelock_converter_test.go
+    ├── validation.go                 # ValidateChainMetadata / ValidateAdditionalFields (optional)
+    ├── validation_test.go
     ├── transaction.go                # Transaction utilities
     ├── transaction_test.go
     ├── utils.go                      # Chain-specific helpers
@@ -350,7 +359,7 @@ sdk/
 #### Additional Fields in Operations
 
 - Use `types.Transaction.AdditionalFields` (JSON) for chain-specific data
-- Examples: Solana account lists, Aptos type arguments, Sui object references
+- Examples: Solana account lists, Aptos type arguments, Sui object references, Stellar optional `value` (32-byte hex string for `StellarOp.value` when non-zero)
 - Document expected structure for your chain
 
 ### Error Handling
@@ -365,6 +374,10 @@ Use the `/sdk/errors/` package for standardized error handling:
 - Return specific errors for common failure cases (insufficient signatures, invalid proof, etc.)
 - Use typed errors for cases that callers may need to handle specifically
 
+### Proposal validation (`validation.go`)
+
+Root-level [`validation.go`](https://github.com/smartcontractkit/mcms/blob/main/validation.go) dispatches `ValidateChainMetadata` / `ValidateAdditionalFields` to your SDK package for families that need extra checks (for example Solana access-controller JSON, Sui object IDs, Stellar MCMS contract id parsing and optional `value` JSON). Wire new `case` branches when you add a chain family.
+
 ## Testing Requirements
 
 ### Unit Tests
@@ -376,6 +389,7 @@ Each interface implementation needs a corresponding `_test.go` file with compreh
 - [EVM Tests](https://github.com/smartcontractkit/mcms/blob/main/sdk/evm/executor_test.go) | [Mock Examples](https://github.com/smartcontractkit/mcms/tree/main/sdk/evm/mocks)
 - [Solana Tests](https://github.com/smartcontractkit/mcms/blob/main/sdk/solana/encoder_test.go) | [Mocks](https://github.com/smartcontractkit/mcms/tree/main/sdk/solana/mocks)
 - [Aptos Tests](https://github.com/smartcontractkit/mcms/blob/main/sdk/aptos/inspector_test.go) | [Mocks](https://github.com/smartcontractkit/mcms/tree/main/sdk/aptos/mocks)
+- [Stellar Tests](https://github.com/smartcontractkit/mcms/blob/main/sdk/stellar/encoder_test.go) — table-driven tests alongside `chainwrappers` build tests (`executors_test.go`, `inspectors_test.go`)
 
 ### E2E Tests
 
@@ -408,4 +422,5 @@ When implementing your integration, refer to these existing implementations:
 2. **Solana**: [sdk/solana/](https://github.com/smartcontractkit/mcms/tree/main/sdk/solana) - Excellent example of chain-specific complexity
 3. **Aptos**: [sdk/aptos/](https://github.com/smartcontractkit/mcms/tree/main/sdk/aptos) - Move-based chain without simulation
 4. **Sui**: [sdk/sui/](https://github.com/smartcontractkit/mcms/tree/main/sdk/sui) - Recent addition with good patterns
+5. **Stellar**: [sdk/stellar/](https://github.com/smartcontractkit/mcms/tree/main/sdk/stellar) - Soroban MCMS (encoder, inspector, executor, configurer); timelock parity and e2e still evolving
 
