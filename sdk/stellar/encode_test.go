@@ -87,7 +87,7 @@ func TestHashStellarOpGoldenVector(t *testing.T) {
 	appendUint256FromBytes(&buf, to)
 	appendUint256FromBytes(&buf, value)
 	var off [32]byte
-	off[31] = 192
+	binary.BigEndian.PutUint64(off[abiWordBytes-uint64ByteLen:], stellarOpDataABIByteOffset)
 	appendWord32(&buf, off)
 	appendABIBytes(&buf, data)
 	require.Equal(t, want, crypto.Keccak256Hash(buf), "manual preimage matches HashStellarOp")
@@ -95,14 +95,14 @@ func TestHashStellarOpGoldenVector(t *testing.T) {
 
 func TestHashRootMetadataUint40Overflow(t *testing.T) {
 	t.Parallel()
-	bad := uint64(1 << 40)
+	bad := uint40MaxExclusive
 	_, err := HashRootMetadata(domainMetaStellar, [32]byte{}, [32]byte{}, 0, bad, false)
 	require.ErrorIs(t, err, ErrUint40Overflow)
 }
 
 func TestHashStellarOpUint40Overflow(t *testing.T) {
 	t.Parallel()
-	_, err := HashStellarOp(domainOpStellar, [32]byte{}, [32]byte{}, 1<<40, [32]byte{}, [32]byte{}, nil)
+	_, err := HashStellarOp(domainOpStellar, [32]byte{}, [32]byte{}, uint40MaxExclusive, [32]byte{}, [32]byte{}, nil)
 	require.ErrorIs(t, err, ErrUint40Overflow)
 }
 
@@ -113,7 +113,7 @@ func TestHashSetRootInnerGoldenVector(t *testing.T) {
 	var buf []byte
 	appendWord32(&buf, root)
 	var vu [32]byte
-	binary.BigEndian.PutUint32(vu[28:32], 0)
+	binary.BigEndian.PutUint32(vu[abiWordBytes-uint32ByteLen:], 0)
 	appendWord32(&buf, vu)
 	want := common.HexToHash("0xad3228b676f7d3cd4284a5443f17f1962b36e491b30a40b2405849e597ba5fb5")
 	require.Equal(t, want, crypto.Keccak256Hash(buf))
@@ -122,5 +122,6 @@ func TestHashSetRootInnerGoldenVector(t *testing.T) {
 func hashBytes(t *testing.T, hexNoPrefix string) [32]byte {
 	t.Helper()
 	h := common.HexToHash("0x" + hexNoPrefix)
+
 	return h
 }

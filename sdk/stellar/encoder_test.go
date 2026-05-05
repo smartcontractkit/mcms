@@ -87,7 +87,7 @@ func TestEncoder_PostOpCountOverflow(t *testing.T) {
 	enc := NewEncoder(stellarTestnetSelector, 1<<40, false)
 	_, err := enc.HashMetadata(types.ChainMetadata{
 		StartingOpCount: 0,
-		MCMAddress:      "0x" + strings.Repeat("00", 32),
+		MCMAddress:      "0x" + strings.Repeat("00", stellarContractIDBytes),
 	})
 	require.ErrorIs(t, err, ErrUint40Overflow)
 }

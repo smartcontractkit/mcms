@@ -20,12 +20,13 @@ func ChainNetworkID(sel types.ChainSelector) (common.Hash, error) {
 		return common.Hash{}, fmt.Errorf("stellar chain id for selector %d: %w", sel, err)
 	}
 	chainIDHex = strings.TrimPrefix(strings.TrimPrefix(chainIDHex, "0x"), "0X")
-	if len(chainIDHex) != 64 {
+	if len(chainIDHex) != stellarChainHexCharLen {
 		return common.Hash{}, fmt.Errorf("unexpected stellar chain id length %d (want 64 hex chars)", len(chainIDHex))
 	}
 	raw, err := hex.DecodeString(chainIDHex)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("decode stellar chain id hex: %w", err)
 	}
+
 	return common.BytesToHash(raw), nil
 }

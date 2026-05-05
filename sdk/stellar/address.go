@@ -21,13 +21,14 @@ func ParseContractID(s string) ([32]byte, error) {
 		s = s[2:]
 	}
 
-	if len(s) == 64 && isHex(s) {
+	if len(s) == stellarChainHexCharLen && isHex(s) {
 		raw, err := hex.DecodeString(s)
 		if err != nil {
 			return [32]byte{}, fmt.Errorf("decode hex contract id: %w", err)
 		}
 		var out [32]byte
 		copy(out[:], raw)
+
 		return out, nil
 	}
 
@@ -35,11 +36,12 @@ func ParseContractID(s string) ([32]byte, error) {
 	if err != nil {
 		return [32]byte{}, fmt.Errorf("decode contract strkey: %w", err)
 	}
-	if len(raw) != 32 {
+	if len(raw) != stellarContractIDBytes {
 		return [32]byte{}, fmt.Errorf("contract id must be 32 bytes, got %d", len(raw))
 	}
 	var out [32]byte
 	copy(out[:], raw)
+
 	return out, nil
 }
 
@@ -53,5 +55,6 @@ func isHex(s string) bool {
 			return false
 		}
 	}
+
 	return true
 }

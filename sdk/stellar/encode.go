@@ -1,6 +1,7 @@
 package stellar
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 
@@ -19,28 +20,22 @@ func appendUint256FromBytes(buf *[]byte, word [32]byte) {
 }
 
 func appendUint40(buf *[]byte, v uint64) error {
-	if v >= (1 << 40) {
+	if v >= uint40MaxExclusive {
 		return fmt.Errorf("%w: %d", ErrUint40Overflow, v)
 	}
 	var w [32]byte
-	be := make([]byte, 8)
-	be[0] = byte(v >> 56)
-	be[1] = byte(v >> 48)
-	be[2] = byte(v >> 40)
-	be[3] = byte(v >> 32)
-	be[4] = byte(v >> 24)
-	be[5] = byte(v >> 16)
-	be[6] = byte(v >> 8)
-	be[7] = byte(v)
-	copy(w[27:32], be[3:8])
+	var be [uint64ByteLen]byte
+	binary.BigEndian.PutUint64(be[:], v)
+	copy(w[abiWordBytes-uint40TailBytes:], be[uint64ByteLen-uint40TailBytes:])
 	appendWord32(buf, w)
+
 	return nil
 }
 
 func appendBool(buf *[]byte, v bool) {
 	var w [32]byte
 	if v {
-		w[31] = 1
+		w[abiWordBytes-1] = 1
 	}
 	appendWord32(buf, w)
 }
@@ -49,20 +44,11 @@ func appendBool(buf *[]byte, v bool) {
 func appendABIBytes(buf *[]byte, data []byte) {
 	n := uint64(len(data))
 	var lenWord [32]byte
-	lb := make([]byte, 8)
-	lb[0] = byte(n >> 56)
-	lb[1] = byte(n >> 48)
-	lb[2] = byte(n >> 40)
-	lb[3] = byte(n >> 32)
-	lb[4] = byte(n >> 24)
-	lb[5] = byte(n >> 16)
-	lb[6] = byte(n >> 8)
-	lb[7] = byte(n)
-	copy(lenWord[24:32], lb)
+	binary.BigEndian.PutUint64(lenWord[abiWordBytes-uint64ByteLen:], n)
 	appendWord32(buf, lenWord)
 	*buf = append(*buf, data...)
-	pad := (32 - (len(data) % 32)) % 32
-	for i := 0; i < pad; i++ {
+	pad := (abiWordBytes - (len(data) % abiWordBytes)) % abiWordBytes
+	for range pad {
 		*buf = append(*buf, 0)
 	}
 }
@@ -87,6 +73,7 @@ func HashRootMetadata(
 		return common.Hash{}, err
 	}
 	appendBool(&buf, overridePreviousRoot)
+
 	return crypto.Keccak256Hash(buf), nil
 }
 
@@ -112,8 +99,9 @@ func HashStellarOp(
 	appendUint256FromBytes(&buf, value)
 	// offset of dynamic `data` from start of inner tuple = 6 * 32 = 192
 	var off [32]byte
-	off[31] = 192
+	binary.BigEndian.PutUint64(off[abiWordBytes-uint64ByteLen:], stellarOpDataABIByteOffset)
 	appendWord32(&buf, off)
 	appendABIBytes(&buf, data)
+
 	return crypto.Keccak256Hash(buf), nil
 }

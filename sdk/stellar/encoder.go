@@ -36,7 +36,7 @@ func (e *Encoder) HashOperation(
 	metadata types.ChainMetadata,
 	op types.Operation,
 ) (common.Hash, error) {
-	if uint64(opCount) >= (1 << 40) {
+	if uint64(opCount) >= uint40MaxExclusive {
 		return common.Hash{}, fmt.Errorf("%w: opCount %d", ErrUint40Overflow, opCount)
 	}
 
@@ -72,16 +72,17 @@ func (e *Encoder) HashOperation(
 	if err != nil {
 		return common.Hash{}, err
 	}
+
 	return h, nil
 }
 
 // HashMetadata implements sdk.Encoder.
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
-	if metadata.StartingOpCount >= (1 << 40) {
+	if metadata.StartingOpCount >= uint40MaxExclusive {
 		return common.Hash{}, fmt.Errorf("%w: startingOpCount %d", ErrUint40Overflow, metadata.StartingOpCount)
 	}
 	post := metadata.StartingOpCount + e.TxCount
-	if post >= (1 << 40) {
+	if post >= uint40MaxExclusive {
 		return common.Hash{}, fmt.Errorf("%w: postOpCount (starting+txCount) %d", ErrUint40Overflow, post)
 	}
 
@@ -124,21 +125,22 @@ func parseValueWord(raw json.RawMessage) ([32]byte, error) {
 	}
 
 	s := *af.Value
-	if len(s) >= 2 && (s[0:2] == "0x" || s[0:2] == "0X") {
-		s = s[2:]
+	if len(s) >= hexPrefixLen && (s[0:hexPrefixLen] == "0x" || s[0:hexPrefixLen] == "0X") {
+		s = s[hexPrefixLen:]
 	}
-	if len(s) != 64 {
+	if len(s) != stellarChainHexCharLen {
 		return zero, fmt.Errorf("value must be 32-byte hex (64 chars), got length %d", len(s))
 	}
 	n := new(big.Int)
-	_, ok := n.SetString(s, 16)
+	_, ok := n.SetString(s, hexRadix)
 	if !ok {
 		return zero, fmt.Errorf("invalid value hex")
 	}
-	if n.Sign() < 0 || n.BitLen() > 256 {
+	if n.Sign() < 0 || n.BitLen() > uint256BitWidth {
 		return zero, fmt.Errorf("value out of uint256 range")
 	}
 	var out [32]byte
 	n.FillBytes(out[:])
+
 	return out, nil
 }
