@@ -25,6 +25,7 @@ require (
 	github.com/smartcontractkit/chainlink-ton v0.0.0-20260219201907-054376f21418
 	github.com/smartcontractkit/freeport v0.1.3-0.20250828155247-add56fa28aad
 	github.com/spf13/cast v1.10.0
+	github.com/stellar/go-stellar-sdk v0.5.0
 	github.com/stretchr/testify v1.11.1
 	github.com/xssnick/tonutils-go v1.14.1
 	github.com/zksync-sdk/zksync2-go v1.1.1-0.20250620124214-2c742ee399c6
@@ -221,6 +222,7 @@ require (
 	github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 // indirect
 	github.com/smartcontractkit/libocr v0.0.0-20250912173940-f3ab0246e23d // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
+	github.com/stellar/go-xdr v0.0.0-20260312225820-cc2b0611aabf // indirect
 	github.com/stephenlacy/go-ethereum-hdwallet v0.0.0-20230913225845-a4fa94429863 // indirect
 	github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 // indirect
 	github.com/stretchr/objx v0.5.2 // indirect
