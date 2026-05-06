@@ -190,7 +190,6 @@ func (e Executor) executeMCMS(
 			return types.TransactionResult{}, fmt.Errorf("getting nonce for %v: %w", e.auth.AccountAddress(), err)
 		}
 		for i, chunk := range chunks {
-			//nolint:gosec
 			seqNo := startSeqNo + uint64(i)
 			opts.SequenceNumber = &seqNo
 			if i == len(chunks)-1 {

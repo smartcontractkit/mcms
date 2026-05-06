@@ -12,7 +12,7 @@ func (t TimelockRole) String() string {
 		return "canceller"
 	}
 
-	return "unknown"
+	return aptosTimelockRoleStringUnknown
 }
 
 func (t TimelockRole) Byte() byte {
@@ -23,6 +23,8 @@ const (
 	TimelockRoleBypasser TimelockRole = iota
 	TimelockRoleCanceller
 	TimelockRoleProposer
+
+	aptosTimelockRoleStringUnknown = "unknown"
 )
 
 // MCMSType distinguishes the on-chain MCMS contract variant.
