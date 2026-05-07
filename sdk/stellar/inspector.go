@@ -97,7 +97,7 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmAddr string) (types.
 
 // normalizeContractIDStrkey accepts contract id hex or strkey and returns canonical contract strkey (C…).
 func normalizeContractIDStrkey(s string) (string, error) {
-	raw, err := ParseContractID(s)
+	raw, err := parseContractID(s)
 	if err != nil {
 		return "", err
 	}

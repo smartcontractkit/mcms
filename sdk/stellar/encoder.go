@@ -40,37 +40,37 @@ func (e *Encoder) HashOperation(
 		return common.Hash{}, fmt.Errorf("%w: opCount %d", ErrUint40Overflow, opCount)
 	}
 
-	chainID, err := ChainNetworkID(e.ChainSelector)
+	chainID, err := chainNetworkID(e.ChainSelector)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, fmt.Errorf("HashOperation: chain id: %w", err)
 	}
 
-	multisig, err := ParseContractID(metadata.MCMAddress)
+	multisig, err := parseContractID(metadata.MCMAddress)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("mcmAddress: %w", err)
 	}
 
-	to, err := ParseContractID(op.Transaction.To)
+	to, err := parseContractID(op.Transaction.To)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("transaction.to: %w", err)
 	}
 
 	valueWord, err := parseValueWord(op.Transaction.AdditionalFields)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, fmt.Errorf("HashOperation: additionalFields.value: %w", err)
 	}
 
 	h, err := HashStellarOp(
 		domainOpStellar,
 		chainID,
-		multisig,
+		[32]byte(multisig),
 		uint64(opCount),
-		to,
+		[32]byte(to),
 		valueWord,
 		op.Transaction.Data,
 	)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, fmt.Errorf("HashOperation: stellar op preimage: %w", err)
 	}
 
 	return h, nil
@@ -86,24 +86,29 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		return common.Hash{}, fmt.Errorf("%w: postOpCount (starting+txCount) %d", ErrUint40Overflow, post)
 	}
 
-	chainID, err := ChainNetworkID(e.ChainSelector)
+	chainID, err := chainNetworkID(e.ChainSelector)
 	if err != nil {
-		return common.Hash{}, err
+		return common.Hash{}, fmt.Errorf("HashMetadata: chain id: %w", err)
 	}
 
-	multisig, err := ParseContractID(metadata.MCMAddress)
+	multisig, err := parseContractID(metadata.MCMAddress)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("mcmAddress: %w", err)
 	}
 
-	return HashRootMetadata(
+	h, err := HashRootMetadata(
 		domainMetaStellar,
 		chainID,
-		multisig,
+		[32]byte(multisig),
 		metadata.StartingOpCount,
 		post,
 		e.OverridePreviousRoot,
 	)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("HashMetadata: root metadata preimage: %w", err)
+	}
+
+	return h, nil
 }
 
 // parseValueWord reads optional transaction.additionalFields JSON for StellarOp.value (uint256).

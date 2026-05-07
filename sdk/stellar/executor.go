@@ -50,17 +50,17 @@ func (e *Executor) ExecuteOperation(
 		return types.TransactionResult{}, fmt.Errorf("%w: nonce %d", ErrUint40Overflow, nonce)
 	}
 
-	chainID, err := ChainNetworkID(e.ChainSelector)
+	chainID, err := chainNetworkID(e.ChainSelector)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
 
-	multisig, err := ParseContractID(metadata.MCMAddress)
+	multisig, err := parseContractID(metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("mcmAddress: %w", err)
 	}
 
-	to, err := ParseContractID(op.Transaction.To)
+	to, err := parseContractID(op.Transaction.To)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("transaction.to: %w", err)
 	}
@@ -142,12 +142,12 @@ func (e *Executor) stellarRootMetadata(metadata types.ChainMetadata) (stellarmcm
 		return zero, fmt.Errorf("%w: postOpCount (starting+txCount) %d", ErrUint40Overflow, post)
 	}
 
-	chainID, err := ChainNetworkID(e.ChainSelector)
+	chainID, err := chainNetworkID(e.ChainSelector)
 	if err != nil {
 		return zero, err
 	}
 
-	multisig, err := ParseContractID(metadata.MCMAddress)
+	multisig, err := parseContractID(metadata.MCMAddress)
 	if err != nil {
 		return zero, fmt.Errorf("mcmAddress: %w", err)
 	}

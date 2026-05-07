@@ -125,3 +125,12 @@ func hashBytes(t *testing.T, hexNoPrefix string) [32]byte {
 
 	return h
 }
+
+func Test_appendABIBytes_empty(t *testing.T) {
+	t.Parallel()
+	var buf []byte
+	appendABIBytes(&buf, nil)
+	require.Len(t, buf, abiWordBytes)
+	var zeroWord [32]byte
+	require.Equal(t, zeroWord[:], buf, "length word is zero; no payload or padding for empty bytes")
+}

@@ -56,7 +56,7 @@ func ParseTimelockProposalAdditionalFields(raw json.RawMessage) (TimelockProposa
 func callsFromBatchOperation(bop types.BatchOperation) ([]timelockbindings.Call, error) {
 	out := make([]timelockbindings.Call, 0, len(bop.Transactions))
 	for _, tx := range bop.Transactions {
-		to, err := ParseContractID(tx.To)
+		to, err := parseContractID(tx.To)
 		if err != nil {
 			return nil, fmt.Errorf("batch transaction to: %w", err)
 		}
@@ -84,11 +84,11 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	_ = ctx
 	_ = mcmAddress
 
-	if _, err := ParseContractID(timelockAddress); err != nil {
+	if _, err := parseContractID(timelockAddress); err != nil {
 		return nil, common.Hash{}, fmt.Errorf("timelock address: %w", err)
 	}
 
-	if _, err := ParseContractID(mcmAddress); err != nil {
+	if _, err := parseContractID(mcmAddress); err != nil {
 		return nil, common.Hash{}, fmt.Errorf("mcm address: %w", err)
 	}
 

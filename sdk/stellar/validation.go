@@ -27,7 +27,7 @@ func ValidateChainMetadata(metadata types.ChainMetadata) error {
 		return fmt.Errorf("mcm address is required")
 	}
 
-	if _, err := ParseContractID(metadata.MCMAddress); err != nil {
+	if _, err := parseContractID(metadata.MCMAddress); err != nil {
 		return fmt.Errorf("mcmAddress: %w", err)
 	}
 
