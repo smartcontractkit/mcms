@@ -28,6 +28,6 @@ func ActionFromAptosRole(role TimelockRole) (types.TimelockAction, error) {
 	case TimelockRoleCanceller:
 		return types.TimelockActionCancel, nil
 	default:
-		return "unknown", errors.New("unknown timelock role")
+		return aptosTimelockRoleStringUnknown, errors.New("unknown timelock role")
 	}
 }

@@ -702,7 +702,7 @@ func TestTimelockProposal_Validate(t *testing.T) {
 				if errors.As(err, &errs) {
 					assert.Len(t, errs, len(tt.wantErrs))
 
-					got := []string{}
+					got := make([]string, 0, len(errs))
 					for _, e := range errs {
 						got = append(got, e.Error())
 					}

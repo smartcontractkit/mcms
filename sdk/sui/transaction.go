@@ -136,16 +136,16 @@ func CreateUpgradeTransaction(compiledPackage bind.PackageArtifact, mcmsPackageI
 
 	// Create transaction targeting mcms_deployer::authorize_upgrade with upgrade data
 	return NewTransactionWithUpgradeData(
-		"mcms_deployer",             // Module name
-		"authorize_upgrade",         // Function name
-		mcmsPackageID,               // Package ID (mcms_deployer is in MCMS package)
-		data,                        // BCS-encoded parameters
-		"MCMS",                      // Contract type
-		[]string{"upgrade", "mcms"}, // Tags
-		depStateObj,                 // Main state object (DeployerState)
-		[]string{registryObj},       // Internal objects (Registry for validation)
-		moduleBytes,                 // Compiled modules for upgrade
-		depAddresses,                // Dependencies for upgrade
-		mcmsUserPackageID,           // Package being upgraded
+		suiModuleNameMCMSDeployer,               // Module name
+		suiMcmsDeployerAuthorizeUpgradeFuncName, // Function name
+		mcmsPackageID,                           // Package ID (mcms_deployer is in MCMS package)
+		data,                                    // BCS-encoded parameters
+		"MCMS",                                  // Contract type
+		[]string{suiUpgradeTransactionTagUpgrade, suiTimelockUpdateMinDelayModuleName}, // Tags
+		depStateObj,           // Main state object (DeployerState)
+		[]string{registryObj}, // Internal objects (Registry for validation)
+		moduleBytes,           // Compiled modules for upgrade
+		depAddresses,          // Dependencies for upgrade
+		mcmsUserPackageID,     // Package being upgraded
 	)
 }

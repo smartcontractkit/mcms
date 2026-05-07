@@ -426,7 +426,7 @@ func scheduleGrantRolesProposal(
 	sim.Backend.Commit()
 
 	// Construct example transactions
-	grantRoleDatas := make([][]byte, 0)
+	grantRoleDatas := make([][]byte, 0, len(targetRoles))
 	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
 	var grantRoleData []byte
 	for _, role := range targetRoles {
@@ -445,7 +445,7 @@ func scheduleGrantRolesProposal(
 	}
 
 	// Construct transactions
-	transactions := make([]types.Transaction, 0)
+	transactions := make([]types.Transaction, 0, len(grantRoleDatas))
 	for _, data := range grantRoleDatas {
 		transactions = append(transactions, evm.NewTransaction(
 			timelockC.Address(),
