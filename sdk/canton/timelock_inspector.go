@@ -10,7 +10,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
 )
@@ -74,7 +75,7 @@ func (t *TimelockInspector) GetCancellers(ctx context.Context, address string) (
 }
 
 // extractSignerAddresses extracts signer addresses from a slice of SignerInfo.
-func extractSignerAddresses(signers []mcms.SignerInfo) []string {
+func extractSignerAddresses(signers []mcmsapi.SignerInfo) []string {
 	result := make([]string, len(signers))
 	for i, s := range signers {
 		result[i] = string(s.SignerAddress)
@@ -103,7 +104,7 @@ func (t *TimelockInspector) GetMinDelay(ctx context.Context, address string) (ui
 	if err != nil {
 		return 0, fmt.Errorf("resolve MCMS contract ID: %w", err)
 	}
-	args := mcms.GetMinDelay{Submitter: cantontypes.PARTY(t.party)}
+	args := mcmscore.GetMinDelay{Submitter: cantontypes.PARTY(t.party)}
 	req, err := t.exerciseRequest(contractID, "GetMinDelay", ledger.MapToValue(args))
 	if err != nil {
 		return 0, fmt.Errorf("failed to create exercise request: %w", err)
@@ -147,13 +148,13 @@ func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address stri
 	var choiceArg *apiv2.Value
 	switch choice {
 	case "IsOperation":
-		choiceArg = ledger.MapToValue(mcms.IsOperation{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
+		choiceArg = ledger.MapToValue(mcmscore.IsOperation{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
 	case "IsOperationPending":
-		choiceArg = ledger.MapToValue(mcms.IsOperationPending{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
+		choiceArg = ledger.MapToValue(mcmscore.IsOperationPending{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
 	case "IsOperationReady":
-		choiceArg = ledger.MapToValue(mcms.IsOperationReady{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
+		choiceArg = ledger.MapToValue(mcmscore.IsOperationReady{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
 	case "IsOperationDone":
-		choiceArg = ledger.MapToValue(mcms.IsOperationDone{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
+		choiceArg = ledger.MapToValue(mcmscore.IsOperationDone{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
 	default:
 		return false, fmt.Errorf("unknown choice %s", choice)
 	}
@@ -178,7 +179,7 @@ func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address stri
 
 func (t *TimelockInspector) exerciseRequest(contractID, choice string, choiceArg *apiv2.Value) (*apiv2.SubmitAndWaitForTransactionRequest, error) {
 	// Parse template ID
-	mcmsContract := mcms.MCMS{}
+	mcmsContract := mcmscore.MCMS{}
 	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse template ID: %w", err)

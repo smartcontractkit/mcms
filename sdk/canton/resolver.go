@@ -12,7 +12,8 @@ import (
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-canton/bindings"
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 )
 
@@ -24,7 +25,7 @@ func ResolveMCMSContractID(ctx context.Context, stateService apiv2.StateServiceC
 		return "", fmt.Errorf("instance address hex is required")
 	}
 	addr := contracts.HexToInstanceAddress(instanceAddressHex)
-	templateID := mcms.MCMS{}.GetTemplateID()
+	templateID := mcmscore.MCMS{}.GetTemplateID()
 	return findActiveContractIDByInstanceAddress(ctx, stateService, party, templateID, addr)
 }
 
@@ -135,13 +136,13 @@ func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 
 // GetMCMSContract queries the active MCMS contract by InstanceAddress (hex).
 // mcmsAddr is the InstanceAddress hex string (may be prefixed with "0x").
-func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient, party, mcmsAddr string) (*mcms.MCMS, error) {
+func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient, party, mcmsAddr string) (*mcmscore.MCMS, error) {
 	mcmsAddr = strings.TrimPrefix(mcmsAddr, "0x")
 	if mcmsAddr == "" {
 		return nil, fmt.Errorf("MCMS instance address is required")
 	}
 	addr := contracts.HexToInstanceAddress(mcmsAddr)
-	templateID := mcms.MCMS{}.GetTemplateID()
+	templateID := mcmscore.MCMS{}.GetTemplateID()
 	activeContract, err := findActiveContractByInstanceAddress(ctx, stateService, party, templateID, addr)
 	if err != nil {
 		return nil, fmt.Errorf("MCMS contract for InstanceAddress %s: %w", mcmsAddr, err)
@@ -155,10 +156,10 @@ func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient,
 		Owner              cantontypes.PARTY      `json:"owner"`
 		InstanceId         cantontypes.TEXT       `json:"instanceId"`
 		ChainId            cantontypes.INT64      `json:"chainId"`
-		Proposer           mcms.RoleState         `json:"proposer"`
-		Canceller          mcms.RoleState         `json:"canceller"`
-		Bypasser           mcms.RoleState         `json:"bypasser"`
-		BlockedFunctions   []mcms.BlockedFunction `json:"blockedFunctions"`
+		Proposer           mcmsapi.RoleState         `json:"proposer"`
+		Canceller          mcmsapi.RoleState         `json:"canceller"`
+		Bypasser           mcmsapi.RoleState         `json:"bypasser"`
+		BlockedFunctions   []mcmsapi.BlockedFunction `json:"blockedFunctions"`
 		TimelockTimestamps map[cantontypes.TEXT]cantontypes.TIMESTAMP `json:"timelockTimestamps"`
 	}
 	mcmsContractNoMinDelay, err := bindings.UnmarshalActiveContract[NoMinDelayMCMS](wrapped)
@@ -166,7 +167,7 @@ func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient,
 		return nil, fmt.Errorf("failed to unmarshal MCMS contract: %w", err)
 	}
 
-	return &mcms.MCMS{
+	return &mcmscore.MCMS{
 		Owner:              mcmsContractNoMinDelay.Owner,
 		InstanceId:         mcmsContractNoMinDelay.InstanceId,
 		ChainId:            mcmsContractNoMinDelay.ChainId,

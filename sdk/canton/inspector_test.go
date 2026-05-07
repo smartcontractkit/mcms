@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	"github.com/smartcontractkit/go-daml/pkg/types"
 	mcmstypes "github.com/smartcontractkit/mcms/types"
 	"github.com/stretchr/testify/require"
@@ -16,14 +16,14 @@ func TestToConfig(t *testing.T) {
 	tests := []struct {
 		name        string
 		description string
-		input       mcms.MultisigConfig
+		input       mcmsapi.MultisigConfig
 		expected    mcmstypes.Config
 	}{
 		{
 			name:        "simple_2of3",
 			description: "Simple 2-of-3 multisig with all signers in root group (group 0)",
-			input: mcms.MultisigConfig{
-				Signers: []mcms.SignerInfo{
+			input: mcmsapi.MultisigConfig{
+				Signers: []mcmsapi.SignerInfo{
 					{SignerAddress: types.TEXT("0x1111111111111111111111111111111111111111"), SignerIndex: types.INT64(0), SignerGroup: types.INT64(0)},
 					{SignerAddress: types.TEXT("0x2222222222222222222222222222222222222222"), SignerIndex: types.INT64(1), SignerGroup: types.INT64(0)},
 					{SignerAddress: types.TEXT("0x3333333333333333333333333333333333333333"), SignerIndex: types.INT64(2), SignerGroup: types.INT64(0)},
@@ -44,8 +44,8 @@ func TestToConfig(t *testing.T) {
 		{
 			name:        "hierarchical_2level",
 			description: "2-level hierarchy: root group 0 has 1 direct signer + group 1 as child. Group 1 has 3 signers with quorum 2. Root quorum is 1 (can be satisfied by direct signer OR group 1 reaching quorum).",
-			input: mcms.MultisigConfig{
-				Signers: []mcms.SignerInfo{
+			input: mcmsapi.MultisigConfig{
+				Signers: []mcmsapi.SignerInfo{
 					{SignerAddress: types.TEXT("0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"), SignerIndex: types.INT64(0), SignerGroup: types.INT64(0)},
 					{SignerAddress: types.TEXT("0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"), SignerIndex: types.INT64(1), SignerGroup: types.INT64(1)},
 					{SignerAddress: types.TEXT("0xcccccccccccccccccccccccccccccccccccccccc"), SignerIndex: types.INT64(2), SignerGroup: types.INT64(1)},
@@ -75,8 +75,8 @@ func TestToConfig(t *testing.T) {
 		{
 			name:        "complex_3level",
 			description: "3-level hierarchy: Group 0 (root) quorum 2, Group 1 (parent 0) quorum 2, Group 2 (parent 0) quorum 1, Group 3 (parent 1) quorum 2. Tests deeper nesting with multiple child groups at same level.",
-			input: mcms.MultisigConfig{
-				Signers: []mcms.SignerInfo{
+			input: mcmsapi.MultisigConfig{
+				Signers: []mcmsapi.SignerInfo{
 					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000001"), SignerIndex: types.INT64(0), SignerGroup: types.INT64(0)},
 					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000002"), SignerIndex: types.INT64(1), SignerGroup: types.INT64(1)},
 					{SignerAddress: types.TEXT("0x1000000000000000000000000000000000000003"), SignerIndex: types.INT64(2), SignerGroup: types.INT64(1)},
@@ -127,8 +127,8 @@ func TestToConfig(t *testing.T) {
 		{
 			name:        "empty_groups_edge_case",
 			description: "Edge case: groups with quorum 0 (disabled) interspersed with active groups. Group 0 active (quorum 1), Group 1 disabled (quorum 0), Group 2 active (quorum 2, parent 0). The toConfig function should skip disabled groups.",
-			input: mcms.MultisigConfig{
-				Signers: []mcms.SignerInfo{
+			input: mcmsapi.MultisigConfig{
+				Signers: []mcmsapi.SignerInfo{
 					{SignerAddress: types.TEXT("0xdead000000000000000000000000000000000001"), SignerIndex: types.INT64(0), SignerGroup: types.INT64(0)},
 					{SignerAddress: types.TEXT("0xdead000000000000000000000000000000000002"), SignerIndex: types.INT64(1), SignerGroup: types.INT64(2)},
 					{SignerAddress: types.TEXT("0xdead000000000000000000000000000000000003"), SignerIndex: types.INT64(2), SignerGroup: types.INT64(2)},

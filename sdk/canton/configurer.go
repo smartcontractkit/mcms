@@ -10,7 +10,8 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -48,11 +49,11 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		return types.TransactionResult{}, fmt.Errorf("unable to extract set config inputs: %w", err)
 	}
 
-	signers := make([]mcms.SignerInfo, len(signerAddresses))
+	signers := make([]mcmsapi.SignerInfo, len(signerAddresses))
 	for i, addr := range signerAddresses {
 		addrStr := strings.ToLower(addr.String())
 		addrStr = strings.TrimPrefix(addrStr, "0x")
-		signers[i] = mcms.SignerInfo{
+		signers[i] = mcmsapi.SignerInfo{
 			SignerAddress: cantontypes.TEXT(addrStr),
 			SignerGroup:   cantontypes.INT64(signerGroups[i]),
 			SignerIndex:   cantontypes.INT64(i),
@@ -69,15 +70,15 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		groupParentsTyped[i] = cantontypes.INT64(p)
 	}
 
-	input := mcms.SetConfig{
-		TargetRole:      mcms.Role(c.role.String()),
+	input := mcmscore.SetConfig{
+		TargetRole:      mcmsapi.Role(c.role.String()),
 		NewSigners:      signers,
 		NewGroupQuorums: groupQuorumsTyped,
 		NewGroupParents: groupParentsTyped,
 		ClearRoot:       cantontypes.BOOL(clearRoot),
 	}
 	// Build exercise command using generated bindings
-	mcmsContract := mcms.MCMS{}
+	mcmsContract := mcmscore.MCMS{}
 	exerciseCmd := mcmsContract.SetConfig(mcmsContractID, input)
 
 	// Parse template ID

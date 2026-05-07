@@ -9,7 +9,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -110,10 +110,10 @@ func OperationID(
 	return operationID, nil
 }
 
-// buildCallsFromBatch extracts mcms.TimelockCall, TimelockCallForHash, and all ContractIds from bop.
+// buildCallsFromBatch extracts mcmsapi.TimelockCall, TimelockCallForHash, and all ContractIds from bop.
 // Uses tx.To and tx.Data as fallbacks when AdditionalFields are missing or empty.
-func buildCallsFromBatch(bop types.BatchOperation) ([]mcms.TimelockCall, []TimelockCallForHash, []string, error) {
-	calls := make([]mcms.TimelockCall, 0, len(bop.Transactions))
+func buildCallsFromBatch(bop types.BatchOperation) ([]mcmsapi.TimelockCall, []TimelockCallForHash, []string, error) {
+	calls := make([]mcmsapi.TimelockCall, 0, len(bop.Transactions))
 	callsForHash := make([]TimelockCallForHash, 0, len(bop.Transactions))
 	var allContractIds []string
 	for _, tx := range bop.Transactions {
@@ -131,7 +131,7 @@ func buildCallsFromBatch(bop types.BatchOperation) ([]mcms.TimelockCall, []Timel
 		if operationData == "" && len(tx.Data) > 0 {
 			operationData = hex.EncodeToString(tx.Data)
 		}
-		calls = append(calls, mcms.TimelockCall{
+		calls = append(calls, mcmsapi.TimelockCall{
 			TargetInstanceAddress: cantontypes.TEXT(targetInstanceAddress),
 			FunctionName:          cantontypes.TEXT(af.FunctionName),
 			OperationData:         cantontypes.TEXT(operationData),
@@ -147,12 +147,12 @@ func buildCallsFromBatch(bop types.BatchOperation) ([]mcms.TimelockCall, []Timel
 }
 
 // scheduleActionData returns function name and hex-encoded params for ScheduleBatch.
-func scheduleActionData(calls []mcms.TimelockCall, predecessorHex, saltHex string, delay types.Duration) (functionName, opDataHex string, err error) {
+func scheduleActionData(calls []mcmsapi.TimelockCall, predecessorHex, saltHex string, delay types.Duration) (functionName, opDataHex string, err error) {
 	delaySecs := int64(delay.Duration.Seconds())
 	if delaySecs < 0 {
 		delaySecs = 0
 	}
-	params := mcms.ScheduleBatchParams{
+	params := mcmsapi.ScheduleBatchParams{
 		Calls:       calls,
 		Predecessor: cantontypes.TEXT(predecessorHex),
 		Salt:        cantontypes.TEXT(saltHex),
@@ -166,8 +166,8 @@ func scheduleActionData(calls []mcms.TimelockCall, predecessorHex, saltHex strin
 }
 
 // bypassActionData returns function name and hex-encoded params for BypasserExecuteBatch.
-func bypassActionData(calls []mcms.TimelockCall) (functionName, opDataHex string, err error) {
-	params := mcms.BypasserExecuteBatchParams{Calls: calls}
+func bypassActionData(calls []mcmsapi.TimelockCall) (functionName, opDataHex string, err error) {
+	params := mcmsapi.BypasserExecuteBatchParams{Calls: calls}
 	opDataHex, err = params.MarshalHex()
 	if err != nil {
 		return "", "", fmt.Errorf("marshal BypasserExecuteBatchParams: %w", err)
@@ -177,7 +177,7 @@ func bypassActionData(calls []mcms.TimelockCall) (functionName, opDataHex string
 
 // cancelActionData returns function name and hex-encoded params for CancelBatch.
 func cancelActionData(operationIDStr string) (functionName, opDataHex string, err error) {
-	params := mcms.CancelBatchParams{OpId: cantontypes.TEXT(operationIDStr)}
+	params := mcmsapi.CancelBatchParams{OpId: cantontypes.TEXT(operationIDStr)}
 	opDataHex, err = params.MarshalHex()
 	if err != nil {
 		return "", "", fmt.Errorf("marshal CancelBatchParams: %w", err)

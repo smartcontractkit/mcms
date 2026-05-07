@@ -9,7 +9,8 @@ import (
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/google/uuid"
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
 	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/mcmstest"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 	"github.com/smartcontractkit/chainlink-canton/testhelpers"
@@ -56,7 +57,7 @@ func (s *TestSuite) DeployMCMSContract() {
 	chainId := int64(1)
 	mcmsId := "mcms-" + uuid.New().String()[:8]
 
-	mcmsInstanceAddr := s.createMCMS(s.T().Context(), s.participant, mcmsOwner, chainId, mcmsId, mcms.RoleProposer)
+	mcmsInstanceAddr := s.createMCMS(s.T().Context(), s.participant, mcmsOwner, chainId, mcmsId, mcmsapi.RoleProposer)
 	s.mcmsInstanceAddress = mcmsInstanceAddr
 	s.mcmsId = mcmsId
 	// multisigId format: instanceId@partyId-role (see MCMS.Main.daml makeMcmsId)
@@ -138,20 +139,20 @@ func (s *mcmsExecutorSetup) DeployCounterContract() {
 }
 
 // createMCMS creates an MCMS contract and returns its InstanceAddress hex (stable reference for Canton).
-func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participant, owner string, chainId int64, mcmsId string, role mcms.Role) string {
+func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participant, owner string, chainId int64, mcmsId string, role mcmsapi.Role) string {
 	// Create empty config
-	emptyConfig := mcms.MultisigConfig{
-		Signers:      []mcms.SignerInfo{},
+	emptyConfig := mcmsapi.MultisigConfig{
+		Signers:      []mcmsapi.SignerInfo{},
 		GroupQuorums: []types.INT64{types.INT64(1)},
 		GroupParents: []types.INT64{types.INT64(1)},
 	}
 
 	// Create empty role state using zero values and nil for maps
-	emptyRoleState := mcms.RoleState{
+	emptyRoleState := mcmsapi.RoleState{
 		Config:       emptyConfig,
 		SeenHashes:   nil,
-		ExpiringRoot: mcms.ExpiringRoot{},
-		RootMetadata: mcms.RootMetadata{},
+		ExpiringRoot: mcmsapi.ExpiringRoot{},
+		RootMetadata: mcmsapi.RootMetadata{},
 	}
 
 	minDelayValue := &apiv2.Value{Sum: &apiv2.Value_Record{Record: &apiv2.Record{
@@ -161,7 +162,7 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participa
 	}}}
 
 	// Create MCMS contract with new structure
-	mcmsContract := mcms.MCMS{
+	mcmsContract := mcmscore.MCMS{
 		Owner:              types.PARTY(participant.PartyID),
 		InstanceId:         types.TEXT(mcmsId),
 		ChainId:            types.INT64(chainId),

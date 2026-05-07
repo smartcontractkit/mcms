@@ -12,7 +12,8 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -55,7 +56,7 @@ func (t *TimelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("batch operation has no transactions")
 	}
 
-	calls := make([]mcms.TimelockCall, 0, len(bop.Transactions))
+	calls := make([]mcmsapi.TimelockCall, 0, len(bop.Transactions))
 	callsForHash := make([]TimelockCallForHash, 0, len(bop.Transactions))
 	// Map from instance address -> contract ID for targetCids
 	stateClient := t.TimelockInspector.StateServiceClient()
@@ -65,7 +66,7 @@ func (t *TimelockExecutor) Execute(
 		if err := json.Unmarshal(tx.AdditionalFields, &af); err != nil {
 			return types.TransactionResult{}, fmt.Errorf("unmarshal transaction additional fields: %w", err)
 		}
-		calls = append(calls, mcms.TimelockCall{
+		calls = append(calls, mcmsapi.TimelockCall{
 			TargetInstanceAddress: cantontypes.TEXT(af.TargetInstanceAddress),
 			FunctionName:          cantontypes.TEXT(af.FunctionName),
 			OperationData:         cantontypes.TEXT(af.OperationData),
@@ -103,7 +104,7 @@ func (t *TimelockExecutor) Execute(
 		targetCidsMap[cantontypes.TEXT(instanceAddr)] = cantontypes.CONTRACT_ID(resolved)
 	}
 
-	executeArgs := mcms.ExecuteScheduledBatch{
+	executeArgs := mcmscore.ExecuteScheduledBatch{
 		Submitter:   cantontypes.PARTY(t.party),
 		OpId:        cantontypes.TEXT(opIDStr),
 		Calls:       calls,
@@ -112,7 +113,7 @@ func (t *TimelockExecutor) Execute(
 		TargetCids:  targetCidsMap,
 	}
 
-	mcmsContract := mcms.MCMS{}
+	mcmsContract := mcmscore.MCMS{}
 	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)

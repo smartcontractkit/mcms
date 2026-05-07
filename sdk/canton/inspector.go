@@ -10,7 +10,7 @@ import (
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -80,7 +80,7 @@ func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, 
 		return common.Hash{}, 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
 
-	var expiringRoot mcms.ExpiringRoot
+	var expiringRoot mcmsapi.ExpiringRoot
 	switch i.role {
 	case TimelockRoleProposer:
 		expiringRoot = mcmsContract.Proposer.ExpiringRoot
@@ -116,7 +116,7 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types
 		return types.ChainMetadata{}, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
 
-	var rootMetadata mcms.RootMetadata
+	var rootMetadata mcmsapi.RootMetadata
 	switch i.role {
 	case TimelockRoleProposer:
 		rootMetadata = mcmsContract.Proposer.RootMetadata
@@ -137,7 +137,7 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types
 }
 
 // toConfig converts a Canton MultisigConfig to the chain-agnostic types.Config
-func toConfig(bindConfig mcms.MultisigConfig) (*types.Config, error) {
+func toConfig(bindConfig mcmsapi.MultisigConfig) (*types.Config, error) {
 	// Group signers by group index
 	signersByGroup := make([][]common.Address, 32) // MCMS supports up to 32 groups
 

@@ -16,7 +16,8 @@ import (
 	cselectors "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -102,7 +103,7 @@ func (e Executor) ExecuteOperation(
 	}
 
 	// Build Canton Op struct
-	cantonOp := mcms.Op{
+	cantonOp := mcmsapi.Op{
 		ChainId:               cantontypes.INT64(metadataFields.ChainId),
 		MultisigId:            cantontypes.TEXT(metadataFields.MultisigId),
 		Nonce:                 cantontypes.INT64(nonce),
@@ -130,12 +131,12 @@ func (e Executor) ExecuteOperation(
 	}
 
 	// Build exercise command using generated bindings
-	mcmsContract := mcms.MCMS{}
+	mcmsContract := mcmscore.MCMS{}
 	var choice string
 	var choiceArgument *apiv2.Value
 
-	input := mcms.ExecuteOp{
-		TargetRole: mcms.Role(e.role.String()),
+	input := mcmscore.ExecuteOp{
+		TargetRole: mcmsapi.Role(e.role.String()),
 		Submitter:  cantontypes.PARTY(e.party),
 		Op:         cantonOp,
 		OpProof:    opProof,
@@ -236,7 +237,7 @@ func (e Executor) SetRoot(
 	cantonSignedHash := crypto.Keccak256Hash(prefixedData)
 
 	// Convert signatures to Canton RawSignature array
-	signatures := make([]mcms.RawSignature, len(sortedSignatures))
+	signatures := make([]mcmsapi.RawSignature, len(sortedSignatures))
 	for i, sig := range sortedSignatures {
 		pubKey, err := sig.RecoverPublicKey(cantonSignedHash)
 		if err != nil {
@@ -245,7 +246,7 @@ func (e Executor) SetRoot(
 
 		// Convert public key to hex string
 		pubkeyHex := hex.EncodeToString(crypto.FromECDSAPub(pubKey))
-		signatures[i] = mcms.RawSignature{
+		signatures[i] = mcmsapi.RawSignature{
 			PublicKey: cantontypes.TEXT(pubkeyHex),
 			R:         cantontypes.TEXT(hex.EncodeToString(sig.R[:])),
 			S:         cantontypes.TEXT(hex.EncodeToString(sig.S[:])),
@@ -253,7 +254,7 @@ func (e Executor) SetRoot(
 	}
 
 	// Extract root metadata from ChainMetadata.AdditionalFields
-	var rootMetadata mcms.RootMetadata
+	var rootMetadata mcmsapi.RootMetadata
 	if len(metadata.AdditionalFields) > 0 {
 		var additionalFields map[string]interface{}
 		if err := json.Unmarshal(metadata.AdditionalFields, &additionalFields); err != nil {
@@ -286,8 +287,8 @@ func (e Executor) SetRoot(
 
 	// validUntil is Unix seconds; Canton/Daml Timestamp expects time in seconds (binding serializes correctly)
 	validUntilTime := time.Unix(int64(validUntil), 0)
-	input := mcms.SetRoot{
-		TargetRole:    mcms.Role(e.role.String()),
+	input := mcmscore.SetRoot{
+		TargetRole:    mcmsapi.Role(e.role.String()),
 		Submitter:     cantontypes.PARTY(e.party),
 		NewRoot:       cantontypes.TEXT(rootHex),
 		ValidUntil:    cantontypes.TIMESTAMP(validUntilTime),
@@ -297,7 +298,7 @@ func (e Executor) SetRoot(
 	}
 
 	// Build exercise command using generated bindings
-	mcmsContract := mcms.MCMS{}
+	mcmsContract := mcmscore.MCMS{}
 	exerciseCmd := mcmsContract.SetRoot(mcmsContractID, input)
 
 	// Parse template ID
