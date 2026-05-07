@@ -6,4 +6,9 @@ const (
 	suiTimelockCancelFunctionName         = "timelock_cancel"
 	suiTimelockBypassFunctionName         = "timelock_bypasser_execute_batch"
 	suiTimelockUpdateMinDelayFunctionName = "timelock_update_min_delay"
+
+	suiModuleNameMCMSDeployer               = "mcms_deployer"
+	suiModuleNameMCMSAccount                = "mcms_account"
+	suiMcmsDeployerAuthorizeUpgradeFuncName = "authorize_upgrade"
+	suiUpgradeTransactionTagUpgrade         = "upgrade"
 )

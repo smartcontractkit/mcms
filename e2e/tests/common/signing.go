@@ -1,6 +1,5 @@
 //go:build e2e
 
-//nolint:revive
 package common
 
 import (
