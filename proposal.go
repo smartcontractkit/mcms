@@ -113,15 +113,13 @@ func (p *BaseProposal) AppendSignature(signature types.Signature) {
 
 // ChainMetadatas returns the chain metadata for the proposal.
 func (p *BaseProposal) ChainMetadatas() map[types.ChainSelector]types.ChainMetadata {
-	cmCopy := make(map[types.ChainSelector]types.ChainMetadata, len(p.ChainMetadata))
-	for k, v := range p.ChainMetadata {
-		cmCopy[k] = v
-	}
+	cm := make(map[types.ChainSelector]types.ChainMetadata, len(p.ChainMetadata))
+	maps.Copy(cm, p.ChainMetadata)
 
-	return cmCopy
+	return cm
 }
 
-// SetChainMetadata sets the chain metadata for a given chain selector.
+// setChainMetadata sets the chain metadata for a given chain selector.
 func (p *BaseProposal) setChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata) {
 	p.ChainMetadata[chainSelector] = metadata
 }
@@ -406,6 +404,40 @@ func (p *Proposal) Decode(decoders map[types.ChainSelector]sdk.Decoder, contract
 	return decodedOps, nil
 }
 
+// RecoverSigningAddresses attempts to recover the signer address from every signature on the
+// proposal.
+//
+// It returns the successfully recovered addresses (in signature order) and a
+// SignatureRecoveryFailure entry for each signature whose address could not be recovered.
+//
+// An error is only returned if computing the signing hash fails.
+func (p *Proposal) RecoverSigningAddresses() ([]common.Address, []SignatureRecoveryFailure, error) {
+	signingHash, err := p.SigningHash()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	recovered, failures := RecoverSigningAddresses(signingHash, p.Signatures)
+
+	return recovered, failures, nil
+}
+
+// RecoverSigningAddressesStrict recovers the signer address from every signature on the proposal,
+// returning an error if any signature cannot be recovered.
+func (p *Proposal) RecoverSigningAddressesStrict() ([]common.Address, error) {
+	recovered, failures, err := p.RecoverSigningAddresses()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(failures) > 0 {
+		f := failures[0]
+		return nil, NewInvalidSignatureAtIndexError(f.Index, f.Sig, common.Address{}, f.Err)
+	}
+
+	return recovered, nil
+}
+
 // proposalValidateBasic basic validation for an MCMS proposal
 func proposalValidateBasic(proposalObj Proposal) error {
 	validUntil := time.Unix(int64(proposalObj.ValidUntil), 0)
@@ -436,4 +468,31 @@ func validateNoDuplicateSigners(sigs []types.Signature) error {
 	}
 
 	return nil
+}
+
+// SignatureRecoveryFailure holds the outcome of a failed attempt to recover a signer address from
+// a signature.
+type SignatureRecoveryFailure struct {
+	Index int
+	Sig   types.Signature
+	Err   error
+}
+
+// RecoverSigningAddresses attempts to recover the signer address from every signature.
+//
+// It returns the successfully recovered addresses (in signature order) and a
+// SignatureRecoveryFailure entry for each signature whose address could not be recovered.
+func RecoverSigningAddresses(
+	signingHash common.Hash, signatures []types.Signature,
+) (recovered []common.Address, failures []SignatureRecoveryFailure) {
+	for i, sig := range signatures {
+		addr, rerr := sig.Recover(signingHash)
+		if rerr != nil {
+			failures = append(failures, SignatureRecoveryFailure{Index: i, Sig: sig, Err: rerr})
+		} else {
+			recovered = append(recovered, addr)
+		}
+	}
+
+	return recovered, failures
 }

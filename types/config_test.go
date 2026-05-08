@@ -266,6 +266,110 @@ func TestConfig_CanSetRoot(t *testing.T) {
 		wantErr          string
 	}{
 		{
+			name: "success: reach consensus",
+			config: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1, signer2},
+			},
+			recoveredSigners: []common.Address{signer1, signer2},
+			want:             true,
+		},
+		{
+			name: "failure: does not reach consensus",
+			config: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1, signer2},
+			},
+			recoveredSigners: []common.Address{signer1},
+			want:             false,
+		},
+		{
+			name: "failure: invalid recovered signer",
+			config: Config{
+				Quorum:  1,
+				Signers: []common.Address{signer1},
+			},
+			recoveredSigners: []common.Address{signer4},
+			want:             false,
+			wantErr:          "recovered signer 0x0000000000000000000000000000000000000004 is not a valid signer in the MCMS proposal",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, err := tt.config.CanSetRoot(tt.recoveredSigners)
+
+			if tt.wantErr != "" {
+				require.EqualError(t, err, tt.wantErr)
+			} else {
+				require.NoError(t, err)
+			}
+
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestConfig_QuorumMet(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name             string
+		config           Config
+		recoveredSigners []common.Address
+		want             bool
+	}{
+		{
+			name: "success: reach consensus",
+			config: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1, signer2},
+			},
+			recoveredSigners: []common.Address{signer1, signer2},
+			want:             true,
+		},
+		{
+			name: "success: reach consensus with invalid recovered signers",
+			config: Config{
+				Quorum:  1,
+				Signers: []common.Address{signer1, signer2, signer4},
+			},
+			recoveredSigners: []common.Address{signer1, signer2, signer4},
+			want:             true,
+		},
+		{
+			name: "failure: does not reach consensus",
+			config: Config{
+				Quorum:  2,
+				Signers: []common.Address{signer1, signer2},
+			},
+			recoveredSigners: []common.Address{signer1},
+			want:             false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got := tt.config.QuorumMet(tt.recoveredSigners)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
+func TestConfig_isGroupAtConsensus(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name             string
+		config           Config
+		recoveredSigners []common.Address
+		want             bool
+	}{
+		{
 			name: "success: single level signers reach consensus",
 			config: Config{
 				Quorum:  2,
@@ -319,30 +423,13 @@ func TestConfig_CanSetRoot(t *testing.T) {
 			recoveredSigners: []common.Address{signer1, signer2, signer3},
 			want:             false,
 		},
-		{
-			name: "failure: invalid recovered signer",
-			config: Config{
-				Quorum:  1,
-				Signers: []common.Address{signer1},
-			},
-			recoveredSigners: []common.Address{signer4},
-			want:             false,
-			wantErr:          "recovered signer 0x0000000000000000000000000000000000000004 is not a valid signer in the MCMS proposal",
-		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := tt.config.CanSetRoot(tt.recoveredSigners)
-
-			if tt.wantErr != "" {
-				require.EqualError(t, err, tt.wantErr)
-			} else {
-				require.NoError(t, err)
-			}
-
+			got := tt.config.isGroupAtConsensus(tt.recoveredSigners)
 			assert.Equal(t, tt.want, got)
 		})
 	}

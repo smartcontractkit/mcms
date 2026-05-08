@@ -2,8 +2,6 @@
 
 Chain Metadata is shared across all proposal types and contains the information that allow transactions to be hashed and executed for it's respective chain. It is a map of chain-specific configuration for each blockchain involved in the proposal. The key of the object is the chain selector ID, and the value is the metadata object. An entry is required for every chain referenced in the proposal's operations.
 
-<!-- panels:start -->
-<!-- div:left-panel -->
 ### Chain Metadata Structure
 
 ```json
@@ -14,8 +12,6 @@ Chain Metadata is shared across all proposal types and contains the information 
   }
 }
 ```
-
-<!-- div:right-panel -->
 
 ### Chain Selector ID
 
@@ -31,5 +27,3 @@ The starting operation count, typically used for parallel signing processes.
 
 **mcmAddress** string<br/>
 The MCM contract address that will process this proposal on the respective chain.
-
-<!-- panels:end -->

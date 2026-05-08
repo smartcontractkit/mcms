@@ -14,12 +14,6 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-const (
-	TimelockActionSchedule = "timelock_schedule_batch"
-	TimelockActionCancel   = "timelock_cancel"
-	TimelockActionBypass   = "timelock_bypasser_execute_batch"
-)
-
 var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
 type TimelockConverter struct{}
@@ -85,7 +79,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	var err error
 	switch action {
 	case types.TimelockActionSchedule:
-		function = TimelockActionSchedule
+		function = suiTimelockScheduleFunctionName
 		delaySecs, castErr := safecast.Float64ToUint64(delay.Seconds())
 		if castErr != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to convert delay to uint64: %w", castErr)
@@ -95,7 +89,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock schedule batch: %w", err)
 		}
 	case types.TimelockActionCancel:
-		function = TimelockActionCancel
+		function = suiTimelockCancelFunctionName
 		// For cancellation, we need to serialize the operation ID
 		operationID, hashErr := HashOperationBatch(targets, moduleNames, functionNames, datas, predecessor.Bytes(), salt.Bytes())
 		if hashErr != nil {
@@ -106,7 +100,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock cancel: %w", err)
 		}
 	case types.TimelockActionBypass:
-		function = TimelockActionBypass
+		function = suiTimelockBypassFunctionName
 		data, err = serializeTimelockBypasserExecuteBatch(targets, moduleNames, functionNames, datas)
 		if err != nil {
 			return nil, common.Hash{}, fmt.Errorf("failed to serialize timelock bypasser execute batch: %w", err)
@@ -199,7 +193,7 @@ func HashOperationBatch(targets [][]byte, moduleNames, functionNames []string, d
 		return common.Hash{}, fmt.Errorf("failed to BCS serialize calls: %w", err)
 	}
 
-	var packed []byte
+	packed := make([]byte, 0, len(callsBytes)+len(predecessor)+len(salt))
 	packed = append(packed, callsBytes...)
 	packed = append(packed, predecessor...)
 	packed = append(packed, salt...)

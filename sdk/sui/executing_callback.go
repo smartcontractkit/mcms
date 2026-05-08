@@ -18,8 +18,6 @@ import (
 
 const (
 	UpgradeGasBudget = 500_000_000
-
-	suiMCMSSetConfigFunctionName = "set_config"
 )
 
 type EntrypointArgEncoder interface {
@@ -93,9 +91,9 @@ func (e *ExecutingCallbackParams) isTargetMCMSPackage(targetString string) bool 
 
 func (e *ExecutingCallbackParams) processMCMSPackageCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, call Call, index int) error {
 	switch call.ModuleName {
-	case "mcms_deployer":
+	case suiModuleNameMCMSDeployer:
 		return e.processMCMSDeployerCall(ctx, ptb, opts, executingCallbackParams, call, index)
-	case "mcms_account":
+	case suiModuleNameMCMSAccount:
 		return e.processMCMSAccountCall(ctx, ptb, opts, executingCallbackParams, index)
 	default:
 		return e.processMCMSMainModuleCall(ctx, ptb, opts, executingCallbackParams, call, index)
@@ -103,8 +101,9 @@ func (e *ExecutingCallbackParams) processMCMSPackageCall(ctx context.Context, pt
 }
 
 func (e *ExecutingCallbackParams) processMCMSDeployerCall(ctx context.Context, ptb *transaction.Transaction, opts *bind.CallOpts, executingCallbackParams *transaction.Argument, call Call, index int) error {
-	if call.FunctionName != "authorize_upgrade" {
-		return fmt.Errorf("mcms_deployer calls must have FunctionName 'authorize_upgrade', got: %s", call.FunctionName)
+	if call.FunctionName != suiMcmsDeployerAuthorizeUpgradeFuncName {
+		return fmt.Errorf("%s calls must have FunctionName '%s', got: %s",
+			suiModuleNameMCMSDeployer, suiMcmsDeployerAuthorizeUpgradeFuncName, call.FunctionName)
 	}
 
 	// Step 1: Create and execute dispatch call
@@ -206,7 +205,7 @@ func (e *ExecutingCallbackParams) processMCMSMainModuleCall(ctx context.Context,
 			call.StateObj,
 			executingCallbackParams,
 		)
-	case TimelockActionCancel:
+	case suiTimelockCancelFunctionName:
 		executeDispatchCall, err = e.mcms.Encoder().McmsTimelockCancelWithArgs(
 			bind.Object{Id: call.StateObj},
 			bind.Object{Id: e.registryObj},

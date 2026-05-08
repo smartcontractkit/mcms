@@ -34,8 +34,9 @@ var (
 )
 
 const (
-	selectorSize = 4
-	revertPrefix = "revert:"
+	selectorSize             = 4
+	revertPrefix             = "revert:"
+	errCallRevertedTruncated = "CallReverted(truncated)"
 )
 
 // CustomErrorData contains the error selector and its arguments separately.
@@ -555,7 +556,7 @@ func decodeErrorBySelector(selector []byte, data []byte, contractABI *abi.ABI) s
 		decoded, err := errDef.Unpack(fullData)
 		if err != nil {
 			if name == "CallReverted" && strings.Contains(err.Error(), "length insufficient") {
-				return "CallReverted(truncated)"
+				return errCallRevertedTruncated
 			}
 
 			continue

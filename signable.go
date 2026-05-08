@@ -7,8 +7,6 @@ import (
 	"slices"
 	"strconv"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/smartcontractkit/mcms/internal/core/merkle"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -161,19 +159,9 @@ func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (
 		return false, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 	}
 
-	hash, err := s.proposal.SigningHash() //nolint:contextcheck //OPT-400
+	recoveredSigners, err := s.proposal.RecoverSigningAddressesStrict() //nolint:contextcheck //OPT-400
 	if err != nil {
 		return false, err
-	}
-
-	recoveredSigners := make([]common.Address, len(s.proposal.Signatures))
-	for i, sig := range s.proposal.Signatures {
-		recoveredAddr, rerr := sig.Recover(hash)
-		if rerr != nil {
-			return false, NewInvalidSignatureAtIndexError(i, sig, common.Address{}, rerr)
-		}
-
-		recoveredSigners[i] = recoveredAddr
 	}
 
 	configuration, err := inspector.GetConfig(ctx, s.proposal.ChainMetadata[chain].MCMAddress)

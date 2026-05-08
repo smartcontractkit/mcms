@@ -89,7 +89,7 @@ func TestActionFromAptosRole(t *testing.T) {
 		{
 			name:    "unknown role returns error",
 			role:    TimelockRole(99),
-			want:    "unknown",
+			want:    aptosTimelockRoleStringUnknown,
 			wantErr: "unknown timelock role",
 		},
 	}

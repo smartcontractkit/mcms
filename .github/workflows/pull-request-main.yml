@@ -18,7 +18,7 @@ jobs:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
         with:
-          golangci-lint-version: v2.6.2
+          golangci-lint-version: v2.12.2
           use-go-cache: true
           only-new-issues: false
           golangci-lint-config: .golangci.yml
@@ -34,7 +34,7 @@ jobs:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
         with:
-          golangci-lint-version: v2.6.2
+          golangci-lint-version: v2.12.2
           golangci-lint-args: --build-tags="e2e"
           use-go-cache: true
           only-new-issues: false
@@ -87,7 +87,7 @@ jobs:
       - name: Install Sui CLI
         shell: bash
         run: |
-          SUI_VERSION="1.68.1"
+          SUI_VERSION="1.70.2"
           curl -L "https://github.com/MystenLabs/sui/releases/download/mainnet-v${SUI_VERSION}/sui-mainnet-v${SUI_VERSION}-ubuntu-x86_64.tgz" -o sui.tgz
           tar -xzf sui.tgz
           sudo mv sui /usr/local/bin/

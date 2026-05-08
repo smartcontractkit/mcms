@@ -10,8 +10,6 @@ The **MCM Proposal** is a structured document that defines a set of operations t
 
 The MCM Proposal can be serialized into a JSON document with the following structure:
 
-<!-- panels:start -->
-<!-- div:left-panel -->
 ```json
 {
   "version": "v1",
@@ -70,8 +68,6 @@ The MCM Proposal can be serialized into a JSON document with the following struc
 }
 ```
 
-<!-- div:right-panel -->
-
 ### Proposal Field Descriptions
 
 **version** string<br/>
@@ -110,4 +106,3 @@ For more details about the chain metadata, see [Chain Metadata](/key-concepts/ch
 A list of operations to be executed across chains.
 
 For more details about the operations, see [Operations](/key-concepts/operations.md#mcm-proposal-operations).
-<!-- panels:end -->

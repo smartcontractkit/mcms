@@ -8,10 +8,6 @@ There are two types of operations which are used in proposals depending on the p
 
 Operations in an MCM proposal are used to execute a single transaction per operation. The transaction data is encoded in the `transaction` field.
 
-<!-- panels:start -->
-
-<!-- div:left-panel -->
-
 ```json
 {
     "chainSelector": "16015286601757825753",
@@ -29,8 +25,6 @@ Operations in an MCM proposal are used to execute a single transaction per opera
 }
 ```
 
-<!-- div:right-panel -->
-
 **chainSelector** uint64<br/>
 The chain selector id for the chain that the operation will be executed on.
 
@@ -39,15 +33,9 @@ The chain selector id for the chain that the operation will be executed on.
 **transaction** object<br/>
 The [transaction](#transactions) to be executed.
 
-<!-- panels:end -->
-
 ### Timelock Proposal Operations
 
 Operations in an Timelock Proposal can be used to a batch of transaction per operation. The transaction data to be encoded is in the `transactions` field.
-
-<!-- panels:start -->
-
-<!-- div:left-panel -->
 
 ```json
 {
@@ -68,8 +56,6 @@ Operations in an Timelock Proposal can be used to a batch of transaction per ope
 }
 ```
 
-<!-- div:right-panel -->
-
 **chainSelector** uint64<br/>
 The chain selector id for the chain that the operation will be executed on.
 
@@ -78,17 +64,9 @@ The chain selector id for the chain that the operation will be executed on.
 **transactions** object<br/>
 The [transactions](#transactions) to be executed.
 
-
-
-<!-- panels:end -->
-
 ### Transactions
 
 Transactions represent the atomic operations that can be executed on a chain. They are composed of the following fields:
-
-<!-- panels:start -->
-
-<!-- div:left-panel -->
 
 ```json
 {
@@ -103,8 +81,6 @@ Transactions represent the atomic operations that can be executed on a chain. Th
     ]
 }
 ```
-
-<!-- div:right-panel -->
 
 **to** string<br/>
 The target contract address.
@@ -128,5 +104,3 @@ A pointer to the contract's ABI or other relevant metadata. This field is not in
 
 **tags** array _optional_<br/>
 Tags for categorizing or describing transactions. This field is not included in the Merkle tree's hashed transaction data.
-
-<!-- panels:end -->

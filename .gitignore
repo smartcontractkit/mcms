@@ -30,3 +30,6 @@ node_modules/
 /compose/
 /e2e/**-cache.toml
 *.log
+
+# OS
+.DS_Store

@@ -16,7 +16,7 @@ jobs:
       - name: ci-lint
         uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
         with:
-          golangci-lint-version: v2.6.2
+          golangci-lint-version: v2.12.2
           golangci-lint-config: .golangci.yml
 
   ci-lint-e2e:
@@ -30,7 +30,7 @@ jobs:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
         with:
-          golangci-lint-version: v2.6.2
+          golangci-lint-version: v2.12.2
           golangci-lint-args: --build-tags="e2e"
           golangci-lint-config: .golangci.yml
 
