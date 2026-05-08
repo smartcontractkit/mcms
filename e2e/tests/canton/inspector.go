@@ -81,7 +81,7 @@ func (s *MCMSInspectorTestSuite) TestGetConfig() {
 	}
 
 	// Set config using configurer (InstanceAddress is stable across SetConfig)
-	configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.UserID, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err, "creating configurer")
 
 	_, err = configurer.SetConfig(ctx, s.mcmsInstanceAddress, expectedConfig, true)
@@ -112,7 +112,7 @@ func (s *MCMSInspectorTestSuite) TestGetRoot() {
 	root, validUntil, err := s.inspector.GetRoot(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "getting root")
 
-	// Initially no SetRoot has been called: root should be empty
+	// Initially, no SetRoot has been called: root should be empty
 	s.Require().Equal(common.Hash{}, root, "initial root should be empty")
 	_ = validUntil // initial value is from MCMS emptyExpiringRoot (epoch); exact value depends on ledger/bindings
 }

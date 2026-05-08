@@ -103,7 +103,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
-	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.participant.UserID, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err)
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
@@ -122,7 +122,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	}
 
 	// Timelock execution: wait for ready then execute batch
-	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.PartyID)
+	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, s.participant.PartyID)
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 		s.chainSelector: timelockExecutor,
 	}

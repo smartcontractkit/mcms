@@ -18,7 +18,7 @@ import (
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 	"github.com/smartcontractkit/go-daml/pkg/types"
 
-	mcmscore "github.com/smartcontractkit/mcms"
+	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/sdk"
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
@@ -32,11 +32,11 @@ type TestSuite struct {
 
 	env testhelpers.TestEnvironment
 
-	participant canton.Participant
+	participant     canton.Participant
+	submittingParty string
 
 	chainSelector       mcmstypes.ChainSelector
 	chainId             int64
-	packageIDs          []string
 	mcmsInstanceAddress string // InstanceAddress hex (stable across SetRoot/ExecuteOp); use this everywhere instead of contract ID
 	mcmsId              string // MCMS contract instanceId (base); DAML expects metadata.multisigId = makeMcmsId(instanceId, role) e.g. "mcms-test-001-proposer"
 	proposerMcmsId      string // makeMcmsId(mcmsId, Proposer) for chain metadata and Op.multisigId
@@ -47,7 +47,7 @@ func (s *TestSuite) SetupSuite() {
 	s.env = shared.Env
 	s.participant = shared.Env.Chain.Participants[0]
 	s.chainSelector = shared.ChainSelector
-	s.packageIDs = shared.PackageIDs
+	s.submittingParty = shared.SubmittingParty
 }
 
 const NumGroups = 32
@@ -75,7 +75,7 @@ func (s *TestSuite) DeployMCMSWithConfig(config *mcmstypes.Config) {
 		cantonsdk.TimelockRoleBypasser,
 	}
 	for _, role := range roles {
-		configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.UserID, s.participant.PartyID, role)
+		configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.PartyID, role)
 		s.Require().NoError(err)
 
 		_, err = configurer.SetConfig(s.T().Context(), s.mcmsInstanceAddress, config, true)
@@ -216,7 +216,7 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participa
 	})
 	s.Require().NoError(err, "failed to submit MCMS deploy transaction")
 
-	// Retrieve the contract ID and template ID from the create event
+	// Retrieve the contract ID and template ID from the CreateEvent
 	mcmsContractID := ""
 	mcmsTemplateID := ""
 	transaction := submitResp.GetTransaction()
@@ -240,18 +240,18 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participa
 	return instanceAddress.Hex()
 }
 
-func (s *TestSuite) SignProposal(proposal *mcmscore.Proposal, inspector sdk.Inspector, keys []*ecdsa.PrivateKey, quorum int) (*mcmscore.Signable, []mcmstypes.Signature, error) {
+func (s *TestSuite) SignProposal(proposal *mcms.Proposal, inspector sdk.Inspector, keys []*ecdsa.PrivateKey, quorum int) (*mcms.Signable, []mcmstypes.Signature, error) {
 	inspectorsMap := map[mcmstypes.ChainSelector]sdk.Inspector{
 		s.chainSelector: inspector,
 	}
-	signable, err := mcmscore.NewSignable(proposal, inspectorsMap)
+	signable, err := mcms.NewSignable(proposal, inspectorsMap)
 	if err != nil {
 		return nil, nil, err
 	}
 
 	signatures := make([]mcmstypes.Signature, 0, quorum)
 	for i := 0; i < len(keys) && i < quorum; i++ {
-		sig, err := signable.SignAndAppend(mcmscore.NewPrivateKeySigner(keys[i]))
+		sig, err := signable.SignAndAppend(mcms.NewPrivateKeySigner(keys[i]))
 		if err != nil {
 			return nil, nil, err
 		}

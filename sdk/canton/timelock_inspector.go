@@ -25,15 +25,20 @@ var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 type TimelockInspector struct {
 	client      apiv2.CommandServiceClient
 	stateClient apiv2.StateServiceClient
-	party       string
+	// The party that will be used to submit transactions.
+	// Should be different from mcmsParty.
+	submittingParty string
+	// The party that owns the MCMS deployment.
+	mcmsParty string
 }
 
 // NewTimelockInspector creates a TimelockInspector that queries the ledger via the given clients.
-func NewTimelockInspector(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, party string) *TimelockInspector {
+func NewTimelockInspector(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, submittingParty string, mcmsParty string) *TimelockInspector {
 	return &TimelockInspector{
-		client:      client,
-		stateClient: stateClient,
-		party:       party,
+		client:          client,
+		stateClient:     stateClient,
+		submittingParty: submittingParty,
+		mcmsParty:       mcmsParty,
 	}
 }
 
@@ -44,7 +49,7 @@ func (t *TimelockInspector) StateServiceClient() apiv2.StateServiceClient {
 
 // GetProposers returns the signer addresses for the Proposer role.
 func (t *TimelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
-	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.party, address)
+	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.mcmsParty, address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -58,7 +63,7 @@ func (t *TimelockInspector) GetExecutors(_ context.Context, _ string) ([]string,
 
 // GetBypassers returns the signer addresses for the Bypasser role.
 func (t *TimelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
-	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.party, address)
+	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.mcmsParty, address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -67,7 +72,7 @@ func (t *TimelockInspector) GetBypassers(ctx context.Context, address string) ([
 
 // GetCancellers returns the signer addresses for the Canceller role.
 func (t *TimelockInspector) GetCancellers(ctx context.Context, address string) ([]string, error) {
-	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.party, address)
+	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.mcmsParty, address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -100,11 +105,11 @@ func (t *TimelockInspector) IsOperationDone(ctx context.Context, address string,
 }
 
 func (t *TimelockInspector) GetMinDelay(ctx context.Context, address string) (uint64, error) {
-	contractID, err := ResolveMCMSContractID(ctx, t.stateClient, t.party, address)
+	contractID, err := ResolveMCMSContractID(ctx, t.stateClient, t.mcmsParty, address)
 	if err != nil {
 		return 0, fmt.Errorf("resolve MCMS contract ID: %w", err)
 	}
-	args := mcmscore.GetMinDelay{Submitter: cantontypes.PARTY(t.party)}
+	args := mcmscore.GetMinDelay{Submitter: cantontypes.PARTY(t.submittingParty)}
 	req, err := t.exerciseRequest(contractID, "GetMinDelay", ledger.MapToValue(args))
 	if err != nil {
 		return 0, fmt.Errorf("failed to create exercise request: %w", err)
@@ -139,22 +144,21 @@ func (t *TimelockInspector) GetMinDelay(ctx context.Context, address string) (ui
 }
 
 func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address string, choice string, opID [32]byte) (bool, error) {
-	contractID, err := ResolveMCMSContractID(ctx, t.stateClient, t.party, address)
+	contractID, err := ResolveMCMSContractID(ctx, t.stateClient, t.mcmsParty, address)
 	if err != nil {
 		return false, fmt.Errorf("resolve MCMS contract ID: %w", err)
 	}
 	opIDStr := hex.EncodeToString(opID[:])
-	party := cantontypes.PARTY(t.party)
 	var choiceArg *apiv2.Value
 	switch choice {
 	case "IsOperation":
-		choiceArg = ledger.MapToValue(mcmscore.IsOperation{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
+		choiceArg = ledger.MapToValue(mcmscore.IsOperation{Submitter: cantontypes.PARTY(t.submittingParty), OpId: cantontypes.TEXT(opIDStr)})
 	case "IsOperationPending":
-		choiceArg = ledger.MapToValue(mcmscore.IsOperationPending{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
+		choiceArg = ledger.MapToValue(mcmscore.IsOperationPending{Submitter: cantontypes.PARTY(t.submittingParty), OpId: cantontypes.TEXT(opIDStr)})
 	case "IsOperationReady":
-		choiceArg = ledger.MapToValue(mcmscore.IsOperationReady{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
+		choiceArg = ledger.MapToValue(mcmscore.IsOperationReady{Submitter: cantontypes.PARTY(t.submittingParty), OpId: cantontypes.TEXT(opIDStr)})
 	case "IsOperationDone":
-		choiceArg = ledger.MapToValue(mcmscore.IsOperationDone{Submitter: party, OpId: cantontypes.TEXT(opIDStr)})
+		choiceArg = ledger.MapToValue(mcmscore.IsOperationDone{Submitter: cantontypes.PARTY(t.submittingParty), OpId: cantontypes.TEXT(opIDStr)})
 	default:
 		return false, fmt.Errorf("unknown choice %s", choice)
 	}
@@ -188,7 +192,8 @@ func (t *TimelockInspector) exerciseRequest(contractID, choice string, choiceArg
 	return &apiv2.SubmitAndWaitForTransactionRequest{
 		Commands: &apiv2.Commands{
 			CommandId: uuid.Must(uuid.NewUUID()).String(),
-			ActAs:     []string{t.party},
+			ActAs:     []string{t.submittingParty},
+			ReadAs:    []string{t.mcmsParty},
 			Commands: []*apiv2.Command{{
 				Command: &apiv2.Command_Exercise{
 					Exercise: &apiv2.ExerciseCommand{
@@ -207,7 +212,7 @@ func (t *TimelockInspector) exerciseRequest(contractID, choice string, choiceArg
 		TransactionFormat: &apiv2.TransactionFormat{
 			EventFormat: &apiv2.EventFormat{
 				FiltersByParty: map[string]*apiv2.Filters{
-					t.party: {},
+					t.submittingParty: {},
 				},
 			},
 			TransactionShape: apiv2.TransactionShape_TRANSACTION_SHAPE_LEDGER_EFFECTS,

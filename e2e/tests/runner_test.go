@@ -5,10 +5,10 @@ package e2e_test
 import (
 	"testing"
 
+	cantone2e "github.com/smartcontractkit/mcms/e2e/tests/canton"
 	"github.com/stretchr/testify/suite"
 
 	aptose2e "github.com/smartcontractkit/mcms/e2e/tests/aptos"
-	cantone2e "github.com/smartcontractkit/mcms/e2e/tests/canton"
 	evme2e "github.com/smartcontractkit/mcms/e2e/tests/evm"
 	solanae2e "github.com/smartcontractkit/mcms/e2e/tests/solana"
 	suie2e "github.com/smartcontractkit/mcms/e2e/tests/sui"
