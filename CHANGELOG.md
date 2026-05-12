@@ -1,5 +1,15 @@
 # @smartcontractkit/mcms
 
+## 0.43.0
+
+### Minor Changes
+
+- [#735](https://github.com/smartcontractkit/mcms/pull/735) [`3b6fe74`](https://github.com/smartcontractkit/mcms/commit/3b6fe74ad9b88fe196f36d03826f950fef443d9b) Thanks [@ecPablo](https://github.com/ecPablo)! - bump go version to 1.26.2
+
+### Patch Changes
+
+- [#730](https://github.com/smartcontractkit/mcms/pull/730) [`888e436`](https://github.com/smartcontractkit/mcms/commit/888e436483abcefd823086dd31bcc90fe79d5e8d) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - add stellar encoder support
+
 ## 0.42.0
 
 ### Minor Changes
