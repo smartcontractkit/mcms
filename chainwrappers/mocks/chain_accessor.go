@@ -5,21 +5,15 @@ package mocks
 import (
 	aptos "github.com/aptos-labs/aptos-go-sdk"
 	bind "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
-
-	evm "github.com/smartcontractkit/mcms/sdk/evm"
-
-	mock "github.com/stretchr/testify/mock"
-
-	rpc "github.com/gagliardetto/solana-go/rpc"
-
-	sdksui "github.com/smartcontractkit/mcms/sdk/sui"
-
-	solana "github.com/gagliardetto/solana-go"
+	bindings "github.com/smartcontractkit/chainlink-stellar/bindings"
 
 	sui "github.com/block-vision/sui-go-sdk/sui"
-
+	solana "github.com/gagliardetto/solana-go"
+	rpc "github.com/gagliardetto/solana-go/rpc"
+	evm "github.com/smartcontractkit/mcms/sdk/evm"
+	sdksui "github.com/smartcontractkit/mcms/sdk/sui"
+	mock "github.com/stretchr/testify/mock"
 	ton "github.com/xssnick/tonutils-go/ton"
-
 	wallet "github.com/xssnick/tonutils-go/ton/wallet"
 )
 
@@ -427,6 +421,64 @@ func (_c *ChainAccessor_SolanaSigner_Call) Return(_a0 *solana.PrivateKey, _a1 bo
 }
 
 func (_c *ChainAccessor_SolanaSigner_Call) RunAndReturn(run func(uint64) (*solana.PrivateKey, bool)) *ChainAccessor_SolanaSigner_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// StellarInvoker provides a mock function with given fields: selector
+func (_m *ChainAccessor) StellarInvoker(selector uint64) (bindings.Invoker, bool) {
+	ret := _m.Called(selector)
+
+	if len(ret) == 0 {
+		panic("no return value specified for StellarInvoker")
+	}
+
+	var r0 bindings.Invoker
+	var r1 bool
+	if rf, ok := ret.Get(0).(func(uint64) (bindings.Invoker, bool)); ok {
+		return rf(selector)
+	}
+	if rf, ok := ret.Get(0).(func(uint64) bindings.Invoker); ok {
+		r0 = rf(selector)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(bindings.Invoker)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(uint64) bool); ok {
+		r1 = rf(selector)
+	} else {
+		r1 = ret.Get(1).(bool)
+	}
+
+	return r0, r1
+}
+
+// ChainAccessor_StellarInvoker_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StellarInvoker'
+type ChainAccessor_StellarInvoker_Call struct {
+	*mock.Call
+}
+
+// StellarInvoker is a helper method to define mock.On call
+//   - selector uint64
+func (_e *ChainAccessor_Expecter) StellarInvoker(selector interface{}) *ChainAccessor_StellarInvoker_Call {
+	return &ChainAccessor_StellarInvoker_Call{Call: _e.mock.On("StellarInvoker", selector)}
+}
+
+func (_c *ChainAccessor_StellarInvoker_Call) Run(run func(selector uint64)) *ChainAccessor_StellarInvoker_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(uint64))
+	})
+	return _c
+}
+
+func (_c *ChainAccessor_StellarInvoker_Call) Return(_a0 bindings.Invoker, _a1 bool) *ChainAccessor_StellarInvoker_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ChainAccessor_StellarInvoker_Call) RunAndReturn(run func(uint64) (bindings.Invoker, bool)) *ChainAccessor_StellarInvoker_Call {
 	_c.Call.Return(run)
 	return _c
 }

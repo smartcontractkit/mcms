@@ -25,6 +25,9 @@ const (
 	hexPrefixLen = 2 // "0x" / "0X"
 
 	uint32ByteLen = 4
+
+	// Solidity ABI: address is 20 bytes right-aligned in a 32-byte word (same padding as Stellar MCMS signers).
+	evmAddressABIWordLeadingZeroBytes = 12
 )
 
 // Domain separators — must match chainlink-stellar contracts/mcms/src/constants.rs

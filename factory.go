@@ -11,6 +11,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 
@@ -61,6 +62,12 @@ func newEncoder(
 			txCount,
 			overridePreviousRoot,
 		)
+	case chainsel.FamilyStellar:
+		encoder = stellar.NewEncoder(
+			csel,
+			txCount,
+			overridePreviousRoot,
+		)
 	}
 
 	return encoder, nil
@@ -90,6 +97,8 @@ func operationIDFn(_ context.Context, csel types.ChainSelector) (sdk.OperationID
 		return sui.OperationID, nil
 	case chainsel.FamilyTon:
 		return ton.OperationID, nil
+	case chainsel.FamilyStellar:
+		return stellar.OperationID, nil
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}

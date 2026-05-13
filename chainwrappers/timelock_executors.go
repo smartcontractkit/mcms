@@ -10,6 +10,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
@@ -134,6 +135,22 @@ func BuildTimelockExecutor(
 			Wallet: signer,
 			Amount: ton.DefaultSendAmount,
 		})
+
+	case chainsel.FamilyStellar:
+		inv, ok := chains.StellarInvoker(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing stellar invoker for selector %d", chainSelector)
+		}
+
+		af, err := stellar.ParseTimelockProposalAdditionalFields(metadata.AdditionalFields)
+		if err != nil {
+			return nil, fmt.Errorf("stellar timelock metadata for selector %d: %w", chainSelector, err)
+		}
+		if af.TimelockExecutor == "" {
+			return nil, fmt.Errorf("stellar timelock: timelockExecutor is required in metadata.additionalFields for selector %d", chainSelector)
+		}
+
+		return stellar.NewTimelockExecutor(inv, af.TimelockExecutor), nil
 
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)

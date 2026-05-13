@@ -13,6 +13,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 )
@@ -92,6 +93,16 @@ func TestNewEncoder(t *testing.T) {
 			want: &ton.Encoder{
 				TxCount:              giveTxCount,
 				ChainSelector:        chaintest.Chain7Selector,
+				OverridePreviousRoot: false,
+			},
+		},
+		{
+			name:         "success: returns a Stellar encoder",
+			giveSelector: chaintest.Chain9Selector,
+			giveIsSim:    false,
+			want: &stellar.Encoder{
+				TxCount:              giveTxCount,
+				ChainSelector:        chaintest.Chain9Selector,
 				OverridePreviousRoot: false,
 			},
 		},

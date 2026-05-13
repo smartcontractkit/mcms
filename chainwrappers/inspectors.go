@@ -10,6 +10,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
@@ -103,6 +104,15 @@ func BuildInspector(
 		}
 
 		return ton.NewInspector(client), nil
+
+	case chainsel.FamilyStellar:
+		invoker, ok := chains.StellarInvoker(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing stellar invoker for selector %d", rawSelector)
+		}
+
+		return stellar.NewInspector(invoker), nil
+
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}

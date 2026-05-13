@@ -37,12 +37,13 @@ var (
 
 // Config defines the blockchain configuration
 type Config struct {
-	BlockchainA *blockchain.Input `toml:"evm_config_a"`
-	BlockchainB *blockchain.Input `toml:"evm_config_b"`
-	SolanaChain *blockchain.Input `toml:"solana_config"`
-	AptosChain  *blockchain.Input `toml:"aptos_config"`
-	SuiChain    *blockchain.Input `toml:"sui_config"`
-	TonChain    *blockchain.Input `toml:"ton_config"`
+	BlockchainA  *blockchain.Input `toml:"evm_config_a"`
+	BlockchainB  *blockchain.Input `toml:"evm_config_b"`
+	SolanaChain  *blockchain.Input `toml:"solana_config"`
+	AptosChain   *blockchain.Input `toml:"aptos_config"`
+	SuiChain     *blockchain.Input `toml:"sui_config"`
+	TonChain     *blockchain.Input `toml:"ton_config"`
+	StellarChain *blockchain.Input `toml:"stellar_config"`
 
 	Settings struct {
 		PrivateKeys     []string `toml:"private_keys"`
@@ -52,18 +53,20 @@ type Config struct {
 
 // TestSetup holds common setup for E2E test suites
 type TestSetup struct {
-	ClientA          *ethclient.Client
-	ClientB          *ethclient.Client
-	SolanaClient     *rpc.Client
-	SolanaWSClient   *ws.Client
-	AptosRPCClient   *aptos.NodeClient
-	SolanaBlockchain *blockchain.Output
-	AptosBlockchain  *blockchain.Output
-	SuiClient        sui.ISuiAPI
-	SuiBlockchain    *blockchain.Output
-	SuiNodeURL       string
-	TonClient        *ton.APIClient
-	TonBlockchain    *blockchain.Output
+	ClientA           *ethclient.Client
+	ClientB           *ethclient.Client
+	SolanaClient      *rpc.Client
+	SolanaWSClient    *ws.Client
+	AptosRPCClient    *aptos.NodeClient
+	SolanaBlockchain  *blockchain.Output
+	AptosBlockchain   *blockchain.Output
+	SuiClient         sui.ISuiAPI
+	SuiBlockchain     *blockchain.Output
+	SuiNodeURL        string
+	TonClient         *ton.APIClient
+	TonBlockchain     *blockchain.Output
+	StellarRPCURL     string
+	StellarBlockchain *blockchain.Output
 	Config
 }
 
@@ -236,20 +239,45 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			t.Logf("Initialized TON RPC client @ %s", nodeURL)
 		}
 
+		var (
+			stellarBlockchainOutput *blockchain.Output
+			stellarRPCURL           string
+		)
+		if in.StellarChain != nil {
+			ports := freeport.GetN(t, 1)
+			in.StellarChain.Port = strconv.Itoa(ports[0])
+
+			stellarBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.StellarChain)
+			require.NoError(t, err, "Failed to initialize Stellar blockchain")
+
+			stellarRPCURL = stellarBlockchainOutput.Nodes[0].ExternalHTTPUrl
+			t.Logf("Initialized Stellar Soroban RPC @ %s", stellarRPCURL)
+			if stellarBlockchainOutput.NetworkSpecificData != nil &&
+				stellarBlockchainOutput.NetworkSpecificData.StellarNetwork != nil {
+				sn := stellarBlockchainOutput.NetworkSpecificData.StellarNetwork
+				t.Logf("Stellar network passphrase: %s", sn.NetworkPassphrase)
+				if sn.FriendbotURL != "" {
+					t.Logf("Stellar friendbot @ %s", sn.FriendbotURL)
+				}
+			}
+		}
+
 		sharedSetup = &TestSetup{
-			ClientA:          ethClientA,
-			ClientB:          ethClientB,
-			SolanaClient:     solanaClient,
-			SolanaWSClient:   solanaWsClient,
-			AptosRPCClient:   aptosClient,
-			SolanaBlockchain: solanaBlockChainOutput,
-			AptosBlockchain:  aptosBlockchainOutput,
-			SuiClient:        suiClient,
-			SuiBlockchain:    suiBlockchainOutput,
-			SuiNodeURL:       suiNodeURL,
-			TonClient:        tonClient,
-			TonBlockchain:    tonBlockchainOutput,
-			Config:           *in,
+			ClientA:           ethClientA,
+			ClientB:           ethClientB,
+			SolanaClient:      solanaClient,
+			SolanaWSClient:    solanaWsClient,
+			AptosRPCClient:    aptosClient,
+			SolanaBlockchain:  solanaBlockChainOutput,
+			AptosBlockchain:   aptosBlockchainOutput,
+			SuiClient:         suiClient,
+			SuiBlockchain:     suiBlockchainOutput,
+			SuiNodeURL:        suiNodeURL,
+			TonClient:         tonClient,
+			TonBlockchain:     tonBlockchainOutput,
+			StellarRPCURL:     stellarRPCURL,
+			StellarBlockchain: stellarBlockchainOutput,
+			Config:            *in,
 		}
 	})
 

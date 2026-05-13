@@ -48,6 +48,10 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 				mcmsTypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector):            {MCMAddress: "0xsolana", StartingOpCount: 0},
 				mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector):            {MCMAddress: "0xaptos", StartingOpCount: 0},
 				mcmsTypes.ChainSelector(chainsel.TON_TESTNET.Selector):              {MCMAddress: "0xton", StartingOpCount: 0},
+				mcmsTypes.ChainSelector(chainsel.STELLAR_TESTNET.Selector): {
+					MCMAddress:      "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+					StartingOpCount: 0,
+				},
 				mcmsTypes.ChainSelector(chainsel.SUI_TESTNET.Selector): {
 					MCMAddress:      "0xsui",
 					StartingOpCount: 0,
@@ -70,8 +74,9 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 				access.EXPECT().SuiClient(mock.Anything).Return(nil, true)
 				access.EXPECT().SuiSigner(mock.Anything).Return(nil, true)
 				access.EXPECT().TonClient(mock.Anything).Return(nil, true)
+				access.EXPECT().StellarInvoker(mock.Anything).Return(nil, true)
 			},
-			expectedInspectorsCount: 5,
+			expectedInspectorsCount: 6,
 		},
 		{
 			name: "aptos curse mcms from metadata",

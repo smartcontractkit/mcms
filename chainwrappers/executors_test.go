@@ -7,31 +7,37 @@ import (
 	sol "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	tonwallet "github.com/xssnick/tonutils-go/ton/wallet"
 
 	"github.com/smartcontractkit/mcms/chainwrappers/mocks"
+	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	mcmssdk "github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	aptosmocks "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	suibindmocks "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
 	suimocks "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	tonmocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 	mcmstypes "github.com/smartcontractkit/mcms/types"
+
+	stellarbindings "github.com/smartcontractkit/chainlink-stellar/bindings"
 )
 
 var (
-	evmSelector   = mcmstypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
-	solSelector   = mcmstypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
-	aptosSelector = mcmstypes.ChainSelector(chainsel.APTOS_TESTNET.Selector)
-	suiSelector   = mcmstypes.ChainSelector(chainsel.SUI_TESTNET.Selector)
-	tonSelector   = mcmstypes.ChainSelector(chainsel.TON_TESTNET.Selector)
+	evmSelector     = mcmstypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
+	solSelector     = mcmstypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
+	aptosSelector   = mcmstypes.ChainSelector(chainsel.APTOS_TESTNET.Selector)
+	suiSelector     = mcmstypes.ChainSelector(chainsel.SUI_TESTNET.Selector)
+	tonSelector     = mcmstypes.ChainSelector(chainsel.TON_TESTNET.Selector)
+	stellarSelector = chaintest.Chain9Selector
 )
 
 func TestBuildExecutors(t *testing.T) {
@@ -65,6 +71,10 @@ func TestBuildExecutors(t *testing.T) {
 	tonExecOpts := ton.ExecutorOpts{Encoder: tonEncoder, Client: tonClient, Wallet: tonSigner, Amount: ton.DefaultSendAmount}
 	tonExecutor, err := ton.NewExecutor(tonExecOpts)
 	require.NoError(t, err)
+
+	stellarEncoder := stellar.NewEncoder(stellarSelector, 0, false)
+	var stellarInvoker stellarbindings.Invoker
+	stellarExecutor := stellar.NewExecutor(stellarEncoder, stellarInvoker)
 
 	tests := []struct {
 		name          string
@@ -154,6 +164,24 @@ func TestBuildExecutors(t *testing.T) {
 				aptosSelector: aptosCurseExecutor,
 			},
 		},
+		{
+			name: "success with stellar",
+			encoders: map[mcmstypes.ChainSelector]mcmssdk.Encoder{
+				stellarSelector: stellarEncoder,
+			},
+			chainMetadata: map[mcmstypes.ChainSelector]mcmstypes.ChainMetadata{
+				stellarSelector: {
+					MCMAddress:      "0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20",
+					StartingOpCount: 0,
+				},
+			},
+			setup: func(accessor *mocks.ChainAccessor) {
+				accessor.EXPECT().StellarInvoker(mock.Anything).Return(stellarInvoker, true)
+			},
+			want: map[mcmstypes.ChainSelector]mcmssdk.Executor{
+				stellarSelector: stellarExecutor,
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -166,7 +194,7 @@ func TestBuildExecutors(t *testing.T) {
 			got, err := BuildExecutors(chainAccessor, tt.chainMetadata, tt.encoders, mcmstypes.TimelockActionSchedule)
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(tt.want, got))
+				require.Empty(t, cmp.Diff(tt.want, got, cmpopts.IgnoreUnexported(stellar.Executor{}, stellar.Inspector{})))
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}

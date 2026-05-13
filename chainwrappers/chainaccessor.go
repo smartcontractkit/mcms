@@ -8,6 +8,8 @@ import (
 	"github.com/xssnick/tonutils-go/ton"
 	tonwallet "github.com/xssnick/tonutils-go/ton/wallet"
 
+	stellarbindings "github.com/smartcontractkit/chainlink-stellar/bindings"
+
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
 	suisuisdk "github.com/smartcontractkit/mcms/sdk/sui"
 )
@@ -24,4 +26,5 @@ type ChainAccessor interface {
 	SuiSigner(selector uint64) (suisuisdk.SuiSigner, bool)
 	TonClient(selector uint64) (ton.APIClientWrapped, bool)
 	TonSigner(selector uint64) (*tonwallet.Wallet, bool)
+	StellarInvoker(selector uint64) (stellarbindings.Invoker, bool)
 }

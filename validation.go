@@ -11,6 +11,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 )
@@ -36,6 +37,9 @@ func validateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 
 	case chainsel.FamilyTon:
 		return ton.ValidateAdditionalFields(additionalFields)
+
+	case chainsel.FamilyStellar:
+		return stellar.ValidateAdditionalFields(additionalFields)
 	}
 
 	return nil
@@ -61,6 +65,8 @@ func validateChainMetadata(metadata types.ChainMetadata, csel types.ChainSelecto
 		// TODO (ton): do we need special chain metadata for TON?
 		// Yes! We could attach MCMS -> Timelock value here which is now hardcoded default in timelock converter
 		return nil
+	case chainsel.FamilyStellar:
+		return stellar.ValidateChainMetadata(metadata)
 	default:
 		return fmt.Errorf("unsupported chain family: %s", chainFamily)
 	}

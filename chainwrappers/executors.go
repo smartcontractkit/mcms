@@ -10,6 +10,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
@@ -166,6 +167,18 @@ func BuildExecutor(
 			Wallet:  signer,
 			Amount:  ton.DefaultSendAmount,
 		})
+
+	case chainsel.FamilyStellar:
+		stellarEncoder, ok := encoder.(*stellar.Encoder)
+		if !ok {
+			return nil, fmt.Errorf("invalid encoder type for selector %d: %T", chainSelector, encoder)
+		}
+		invoker, ok := chains.StellarInvoker(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing stellar invoker for selector %d", chainSelector)
+		}
+
+		return stellar.NewExecutor(stellarEncoder, invoker), nil
 
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)

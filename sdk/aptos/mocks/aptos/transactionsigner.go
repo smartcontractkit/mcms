@@ -5,7 +5,6 @@ package mock_aptossdk
 import (
 	aptos "github.com/aptos-labs/aptos-go-sdk"
 	crypto "github.com/aptos-labs/aptos-go-sdk/crypto"
-
 	mock "github.com/stretchr/testify/mock"
 )
 

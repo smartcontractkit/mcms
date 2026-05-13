@@ -7,7 +7,6 @@ import (
 	http "net/http"
 
 	jsonrpc "github.com/gagliardetto/solana-go/rpc/jsonrpc"
-
 	mock "github.com/stretchr/testify/mock"
 )
 

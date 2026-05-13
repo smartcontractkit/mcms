@@ -2,6 +2,7 @@ package chainwrappers
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -15,6 +16,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
@@ -22,6 +24,11 @@ import (
 
 func TestBuildTimelockConfigurers(t *testing.T) {
 	t.Parallel()
+
+	stellarAdmin := "GBRPYHIL2CI3FNQ4BXLFMNDLFJUNPU2HY3ZMFSHONUCEOASW7QC7OX2H"
+	stellarSel := mcmsTypes.ChainSelector(chainsel.STELLAR_TESTNET.Selector)
+	stellarAdditional, err := json.Marshal(map[string]string{"timelockAdmin": stellarAdmin})
+	require.NoError(t, err)
 
 	tests := []struct {
 		name          string
@@ -62,6 +69,10 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 						"deployer_state_obj":"0xdeployer"
 					}`),
 				},
+				stellarSel: {
+					MCMAddress:       strings.Repeat("f", 64),
+					AdditionalFields: stellarAdditional,
+				},
 			},
 			setup: func(t *testing.T, access *mocks.ChainAccessor, metadata map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata) {
 				t.Helper()
@@ -77,6 +88,8 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 				access.EXPECT().AptosClient(mock.Anything).Return(nil, true)
 
 				access.EXPECT().TonSigner(mock.Anything).Return(&wallet.Wallet{}, true)
+
+				access.EXPECT().StellarInvoker(mock.Anything).Return(nil, true)
 			},
 			expectTypes: map[mcmsTypes.ChainSelector]any{
 				mcmsTypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): (*evm.TimelockConfigurer)(nil),
@@ -84,6 +97,7 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 				mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector):            (*aptos.TimelockConfigurer)(nil),
 				mcmsTypes.ChainSelector(chainsel.SUI_TESTNET.Selector):              (*sui.TimelockConfigurer)(nil),
 				mcmsTypes.ChainSelector(chainsel.TON_TESTNET.Selector):              (*ton.TimelockConfigurer)(nil),
+				stellarSel: (*stellar.TimelockConfigurer)(nil),
 			},
 		},
 		{
@@ -151,6 +165,36 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 			},
 			expectErr:   true,
 			errContains: "missing TON chain wallet",
+		},
+		{
+			name: "missing stellar invoker",
+			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
+				stellarSel: {
+					MCMAddress:       strings.Repeat("f", 64),
+					AdditionalFields: stellarAdditional,
+				},
+			},
+			setup: func(t *testing.T, access *mocks.ChainAccessor, _ map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata) {
+				t.Helper()
+				access.EXPECT().StellarInvoker(mock.Anything).Return(nil, false)
+			},
+			expectErr:   true,
+			errContains: "missing stellar invoker",
+		},
+		{
+			name: "missing timelockAdmin",
+			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
+				stellarSel: {
+					MCMAddress:       strings.Repeat("f", 64),
+					AdditionalFields: []byte(`{}`),
+				},
+			},
+			setup: func(t *testing.T, access *mocks.ChainAccessor, _ map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata) {
+				t.Helper()
+				access.EXPECT().StellarInvoker(mock.Anything).Return(nil, true)
+			},
+			expectErr:   true,
+			errContains: "timelockAdmin",
 		},
 	}
 
