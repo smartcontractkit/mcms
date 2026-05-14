@@ -698,8 +698,8 @@ github.com/smartcontractkit/chainlink-sui v0.0.0-20260428231901-a394dd724761 h1:
 github.com/smartcontractkit/chainlink-sui v0.0.0-20260428231901-a394dd724761/go.mod h1:xJ1UT4DKu1znbsm4ehkrfr92rgn8Hxgcp3Z9rgfXRjM=
 github.com/smartcontractkit/chainlink-testing-framework/framework v0.15.19 h1:inTH0/PrEaVv4iLdGsdcrP/rX7KMrq/Roosr5nIA8io=
 github.com/smartcontractkit/chainlink-testing-framework/framework v0.15.19/go.mod h1:BALK9cj8sk12e15UF6uDhifHgIApa+6N11TcQfInEro=
-github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514123841-310936551f1c h1:DRdm12/j4eaW8giDwYJdcGTyJSXcL9uZlaRhturIpHY=
-github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514123841-310936551f1c/go.mod h1:8vXLeG//BxDF86GWRytzGIy6jc70htD1r/KtPfjrsK0=
+github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514125214-cf13e2b16bbe h1:RQIIMrdNh3rJQXGr7iRVBb/a706voifTzo9Pt4n8cD4=
+github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514125214-cf13e2b16bbe/go.mod h1:8vXLeG//BxDF86GWRytzGIy6jc70htD1r/KtPfjrsK0=
 github.com/smartcontractkit/freeport v0.1.3-0.20250828155247-add56fa28aad h1:lgHxTHuzJIF3Vj6LSMOnjhqKgRqYW+0MV2SExtCYL1Q=
 github.com/smartcontractkit/freeport v0.1.3-0.20250828155247-add56fa28aad/go.mod h1:T4zH9R8R8lVWKfU7tUvYz2o2jMv1OpGCdpY2j2QZXzU=
 github.com/smartcontractkit/grpc-proxy v0.0.0-20240830132753-a7e17fec5ab7 h1:12ijqMM9tvYVEm+nR826WsrNi6zCKpwBhuApq127wHs=
