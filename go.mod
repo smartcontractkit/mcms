@@ -22,7 +22,7 @@ require (
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20250912190424-fd2e35d7deb5
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260428231901-a394dd724761
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.15.19
-	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514125214-cf13e2b16bbe
+	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514142133-5c5418761c11
 	github.com/smartcontractkit/freeport v0.1.3-0.20250828155247-add56fa28aad
 	github.com/spf13/cast v1.10.0
 	github.com/stretchr/testify v1.11.1
