@@ -484,6 +484,7 @@ func Test_WriteTimelockProposal(t *testing.T) {
 								"additionalFields": {"value": 0},
 								"data": "ZGF0YQ==",
 								"contractType": "",
+								"contractTypeAndVersion": "",
 								"tags": null
 							}
 						]

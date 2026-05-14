@@ -264,7 +264,8 @@ func TestWriteProposal(t *testing.T) {
 							"additionalFields": {"value": 0},
 							"data": "",
 							"tags": null,
-							"contractType": ""
+							"contractType": "",
+							"contractTypeAndVersion": ""
 						}
 					}
 				]
