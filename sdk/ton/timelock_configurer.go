@@ -6,12 +6,14 @@ import (
 	"math"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
+
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings"
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -84,7 +86,7 @@ func (c *TimelockConfigurer) UpdateDelay(
 	}
 
 	if c.skipSend {
-		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), "RBACTimelock", []string{"UpdateDelay"})
+		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), bindings.ShortTimelock, string(bindings.TypeTimelock), []string{"UpdateDelay"})
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("error encoding transaction: %w", err)
 		}

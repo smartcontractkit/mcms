@@ -8,27 +8,29 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/sdk/ton"
+
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
 func TestNewDecodedOperation(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name         string
-		contractType string
-		msgType      string
-		msgOpcode    uint32
-		msgDecoded   map[string]any
-		inputKeys    []string
-		inputArgs    []any
-		wantMethod   string
-		wantErr      string
+		name        string
+		contractFQN tvm.FullyQualifiedName
+		msgType     string
+		msgOpcode   uint32
+		msgDecoded  map[string]any
+		inputKeys   []string
+		inputArgs   []any
+		wantMethod  string
+		wantErr     string
 	}{
 		{
-			name:         "success",
-			contractType: "com.foo.acc",
-			msgType:      "functionName",
-			msgOpcode:    0x1,
+			name:        "success",
+			contractFQN: "com.foo.acc",
+			msgType:     "functionName",
+			msgOpcode:   0x1,
 			msgDecoded: map[string]any{
 				"inputKey1": "inputArg1",
 				"inputKey2": "inputArg2",
@@ -38,20 +40,20 @@ func TestNewDecodedOperation(t *testing.T) {
 			wantMethod: "com.foo.acc::functionName(0x1)",
 		},
 		{
-			name:         "success with empty input keys and args",
-			contractType: "com.foo.acc",
-			msgType:      "functionName",
-			msgOpcode:    0x7362d09c,
-			msgDecoded:   map[string]any{},
-			inputKeys:    []string{},
-			inputArgs:    []any{},
-			wantMethod:   "com.foo.acc::functionName(0x7362d09c)",
+			name:        "success with empty input keys and args",
+			contractFQN: "com.foo.acc",
+			msgType:     "functionName",
+			msgOpcode:   0x7362d09c,
+			msgDecoded:  map[string]any{},
+			inputKeys:   []string{},
+			inputArgs:   []any{},
+			wantMethod:  "com.foo.acc::functionName(0x7362d09c)",
 		},
 		{
-			name:         "error with mismatched input keys and args",
-			contractType: "com.foo.acc",
-			msgType:      "functionName",
-			msgOpcode:    0x1,
+			name:        "error with mismatched input keys and args",
+			contractFQN: "com.foo.acc",
+			msgType:     "functionName",
+			msgOpcode:   0x1,
 			msgDecoded: map[string]any{
 				"inputKey1": "inputArg1",
 				"inputKey2": "inputArg2",
@@ -67,7 +69,7 @@ func TestNewDecodedOperation(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			got, err := ton.NewDecodedOperation(tt.contractType, tt.msgType, tt.msgOpcode, tt.msgDecoded, tt.inputKeys, tt.inputArgs)
+			got, err := ton.NewDecodedOperation(tt.contractFQN, tt.msgType, tt.msgOpcode, tt.msgDecoded, tt.inputKeys, tt.inputArgs)
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)

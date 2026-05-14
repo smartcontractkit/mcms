@@ -43,6 +43,7 @@ func NewTransaction(
 	body *cell.Slice,
 	value *big.Int,
 	contractType string,
+	contractTypeAndVersion string,
 	tags []string,
 ) (types.Transaction, error) {
 	additionalFields, err := json.Marshal(AdditionalFields{Value: value})
@@ -61,8 +62,9 @@ func NewTransaction(
 		Data:             data,
 		AdditionalFields: additionalFields,
 		OperationMetadata: types.OperationMetadata{
-			ContractType: contractType,
-			Tags:         tags,
+			ContractType:           contractType,
+			ContractTypeAndVersion: contractTypeAndVersion,
+			Tags:                   tags,
 		},
 	}, nil
 }

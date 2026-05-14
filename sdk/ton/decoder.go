@@ -14,19 +14,19 @@ import (
 
 type decoder struct {
 	// Map of contract type to TL-B definitions (type -> opcode -> TL-B struct)
-	TypeToTLBMap map[string]tvm.TLBMap
+	TypeToTLBMap tvm.ContractTLBRegistry
 }
 
 var _ sdk.Decoder = &decoder{}
 
-func NewDecoder(tlbs map[string]tvm.TLBMap) sdk.Decoder {
+func NewDecoder(tlbs tvm.ContractTLBRegistry) sdk.Decoder {
 	return &decoder{
 		TypeToTLBMap: tlbs,
 	}
 }
 
 func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.DecodedOperation, error) {
-	contractType := contractInterfaces
+	contractType := tvm.FullyQualifiedName(contractInterfaces)
 	tlbs, ok := d.TypeToTLBMap[contractType]
 	if !ok {
 		return nil, fmt.Errorf("decoding failed - unknown contract interface: %s", contractType)

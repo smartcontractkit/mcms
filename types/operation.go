@@ -6,8 +6,9 @@ import (
 
 // OperationMetadata contains metadata about an operation
 type OperationMetadata struct {
-	ContractType string   `json:"contractType"`
-	Tags         []string `json:"tags"`
+	ContractType           string   `json:"contractType"`
+	ContractTypeAndVersion string   `json:"contractTypeAndVersion"` // .String() representation of TypeAndVersion
+	Tags                   []string `json:"tags"`
 }
 
 // Transaction contains the transaction data to be executed

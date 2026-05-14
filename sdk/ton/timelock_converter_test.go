@@ -9,6 +9,8 @@ import (
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -34,7 +36,8 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 			cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 			new(big.Int).SetUint64(1000),
-			"RBACTimelock",
+			bindings.ShortRBAC,
+			string(bindings.TypeRBAC)+" 0.0.0",
 			[]string{"tag1", "tag2"},
 		))},
 		ChainSelector: types.ChainSelector(chainsel.TON_TESTNET.Selector),
@@ -58,7 +61,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:      types.TimelockActionSchedule,
 			predecessor:    zeroHash,
 			salt:           zeroHash,
-			expectedOpType: "RBACTimelock",
+			expectedOpType: string(bindings.TypeRBAC),
 		},
 		{
 			name:           "Cancel operation",
@@ -67,7 +70,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:      types.TimelockActionCancel,
 			predecessor:    zeroHash,
 			salt:           zeroHash,
-			expectedOpType: "RBACTimelock",
+			expectedOpType: string(bindings.TypeRBAC),
 		},
 		{
 			name:           "Bypass operation",
@@ -76,7 +79,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:      types.TimelockActionBypass,
 			predecessor:    zeroHash,
 			salt:           zeroHash,
-			expectedOpType: "RBACTimelock",
+			expectedOpType: string(bindings.TypeRBAC),
 		},
 		{
 			name:           "Invalid operation",
@@ -92,7 +95,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Invalid additional fields",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{{
-					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock"},
+					OperationMetadata: types.OperationMetadata{ContractType: bindings.ShortRBAC, ContractTypeAndVersion: string(bindings.TypeRBAC) + " 0.0.0"},
 					To:                timelockAddress,
 					Data:              []byte("0x1234"),
 					AdditionalFields:  []byte("invalid"),
@@ -109,7 +112,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Invalid address in transaction",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{{
-					OperationMetadata: types.OperationMetadata{ContractType: "RBACTimelock"},
+					OperationMetadata: types.OperationMetadata{ContractType: bindings.ShortRBAC, ContractTypeAndVersion: string(bindings.TypeRBAC) + " 0.0.0"},
 					To:                "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-", // invalid address
 					Data:              []byte("0x1234"),
 					AdditionalFields:  []byte("{\"value\":1000}"),
@@ -163,7 +166,8 @@ func TestOperationID(t *testing.T) {
 			address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 			cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 			new(big.Int).SetUint64(1000),
-			"RBACTimelock",
+			bindings.ShortRBAC,
+			string(bindings.TypeRBAC)+" 0.0.0",
 			[]string{},
 		))
 	}
