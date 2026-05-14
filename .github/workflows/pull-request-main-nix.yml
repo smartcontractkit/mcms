@@ -9,6 +9,9 @@ on:
     branches:
       - main
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   ci-test-e2e:
     name: Tests E2E - Nix setup
@@ -19,12 +22,12 @@ jobs:
       actions: read
     steps:
       - name: Install Nix
-        uses: cachix/install-nix-action@02a151ada4993995686f9ed4f1be7cfbb229e56f # v31
+        uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
         with:
           nix_path: nixpkgs=channel:nixos-unstable
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Build TON contracts
         id: ton-contracts-build
@@ -35,7 +38,7 @@ jobs:
           echo "path=$PATH_CONTRACTS_TON" >> "$GITHUB_OUTPUT"
 
       - name: Run e2e tests
-        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/1.0.0
+        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/v1
         with:
           checkout-repo: false
           use-go-cache: true
