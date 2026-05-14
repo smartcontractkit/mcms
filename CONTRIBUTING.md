@@ -11,7 +11,7 @@
 
 ## Team Overview
 
-The Operations Platform Tooling ([@smartcontractkit/op-tooling](https://github.com/orgs/smartcontractkit/teams/op-tooling)) team is responsible for the development and maintenance of this repo, and are the primary code owners and reviewers.
+The Operations Platform ([@smartcontractkit/operations-platform](https://github.com/orgs/smartcontractkit/teams/operations-platform)) team is responsible for the development and maintenance of this repo, and are the primary code owners and reviewers.
 
 ## How to Contribute
 
