@@ -12,7 +12,7 @@
 
 ## Release Please
 
-This repo uses [Release Please](https://github.com/googleapis/release-please) to manage releases. Do not run `pnpm changeset` or add changeset files for releases.
+This repo uses [Release Please](https://github.com/googleapis/release-please) to manage releases.
 
 Release Please determines the next release from Conventional Commit messages on `main`. Because PR titles are linted, use a Conventional Commit title that describes the user-visible impact of the change:
 
