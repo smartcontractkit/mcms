@@ -1,5 +1,27 @@
 # @smartcontractkit/mcms
 
+## 0.43.0
+
+### Minor Changes
+
+- [#735](https://github.com/smartcontractkit/mcms/pull/735) [`3b6fe74`](https://github.com/smartcontractkit/mcms/commit/3b6fe74ad9b88fe196f36d03826f950fef443d9b) Thanks [@ecPablo](https://github.com/ecPablo)! - bump go version to 1.26.2
+
+### Patch Changes
+
+- [#730](https://github.com/smartcontractkit/mcms/pull/730) [`888e436`](https://github.com/smartcontractkit/mcms/commit/888e436483abcefd823086dd31bcc90fe79d5e8d) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - add stellar encoder support
+
+## 0.42.0
+
+### Minor Changes
+
+- [#715](https://github.com/smartcontractkit/mcms/pull/715) [`2c44f42`](https://github.com/smartcontractkit/mcms/commit/2c44f42971443722f7ad9085da65645fa883fc88) Thanks [@ChrisAmora](https://github.com/ChrisAmora)! - Add chainwrappers timelock configurer helpers across supported chain families and add Aptos, Sui, and TON E2E coverage for timelock delay updates.
+
+### Patch Changes
+
+- [#721](https://github.com/smartcontractkit/mcms/pull/721) [`172601a`](https://github.com/smartcontractkit/mcms/commit/172601a035251e63eadc31509629296c17e56080) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - update chainlink-sui and ctf framework
+
+- [#719](https://github.com/smartcontractkit/mcms/pull/719) [`c45535a`](https://github.com/smartcontractkit/mcms/commit/c45535ae1e8ab6ed536b12ec62605d9e23b6a8a8) Thanks [@jkongie](https://github.com/jkongie)! - Add signature recovery helpers, `QuorumMet`, and clearer config docs
+
 ## 0.41.1
 
 ### Patch Changes

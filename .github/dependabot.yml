@@ -16,11 +16,14 @@ updates:
     allow:
       - dependency-name: "github.com/smartcontractkit/chain-selectors"
       - dependency-name: "github.com/smartcontractkit/chainlink-aptos"
+      - dependency-name: "github.com/smartcontractkit/chainlink-sui"
       - dependency-name: "github.com/smartcontractkit/chainlink-ccip/chains/solana"
       - dependency-name: "github.com/smartcontractkit/chainlink-testing-framework/framework"
       - dependency-name: "github.com/aptos-labs/aptos-go-sdk"
+      - dependency-name: "github.com/block-vision/sui-go-sdk"
       - dependency-name: "github.com/ethereum/go-ethereum"
       - dependency-name: "github.com/gagliardetto/solana-go"
+      - dependency-name: "github.com/stellar/go-stellar-sdk"
   - package-ecosystem: npm
     directory: "/"
     schedule:

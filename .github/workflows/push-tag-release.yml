@@ -5,6 +5,9 @@ on:
     tags:
       - v*
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   ci-lint:
     runs-on: ubuntu-latest
@@ -14,9 +17,9 @@ jobs:
       actions: read
     steps:
       - name: ci-lint
-        uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@ci-lint-go/v4
         with:
-          golangci-lint-version: v2.6.2
+          golangci-lint-version: v2.12.2
           golangci-lint-config: .golangci.yml
 
   ci-lint-e2e:
@@ -28,9 +31,9 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@ci-lint-go/v4
         with:
-          golangci-lint-version: v2.6.2
+          golangci-lint-version: v2.12.2
           golangci-lint-args: --build-tags="e2e"
           golangci-lint-config: .golangci.yml
 
@@ -42,49 +45,4 @@ jobs:
       actions: read
     steps:
       - name: ci-test
-        uses: smartcontractkit/.github/actions/ci-test-go@2b1d964024bb001ae9fba4f840019ac86ad1d824 # ci-test-go@1.1.0
-
-  cicd-publish-release:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: write
-      actions: read
-    steps:
-      - name: cicd-publish-release
-        uses: smartcontractkit/.github/actions/cicd-build-publish-artifacts-go@b4737861584f88fa9569d6978f70fedf8b1ae67c # cicd-build-publish-artifacts-go@0.4.0
-        with:
-          # general inputs
-          app-name: mcms-lib
-          publish: "false" # do not publish docker image to ECR
-          update-git-tag: "true"
-          # goreleaser inputs
-          goreleaser-args: "--config .goreleaser.yml"
-          goreleaser-version: "~> v2"
-          goreleaser-dist: goreleaser-pro
-          goreleaser-key: ${{ secrets.GORELEASER_KEY }}
-
-  notify-slack:
-    if: ${{ success() }}
-    needs:
-      - cicd-publish-release
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    environment: build-publish
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
-
-      - name: Set tag for Slack notification
-        run: echo "TAG=${{ github.ref_name }}" >> "$GITHUB_ENV"
-        shell: bash
-
-      - name: Notify Slack
-        uses: smartcontractkit/.github/actions/slack-notify-git-ref@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # slack-notify-git-ref@0.1.4
-        with:
-          slack-channel-id: ${{ secrets.SLACK_CHANNEL_MCMS }}
-          slack-bot-token: ${{ secrets.SLACK_BOT_TOKEN_RELENG }} # Releng Bot
-          git-ref: ${{ env.TAG }}
-          git-ref-type: tag
-          changelog-url: "https://github.com/${{ github.repository }}/releases/tag/${{ env.TAG }}"
+        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/v1

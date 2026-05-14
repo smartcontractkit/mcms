@@ -81,7 +81,6 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 	sz := uint(tvm.SizeUINT8)
 	gqDict := cell.NewDict(keySz)
 	for i, g := range groupQuorum {
-		//nolint:gosec // G115 conversion safe, max 32 groups
 		if uint8(i) <= groupMax { // don't set unnecessary groups
 			v := cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell()
 			err = gqDict.SetIntKey(big.NewInt(int64(i)), v)
@@ -93,7 +92,6 @@ func (e *configTransformer) ToChainConfig(cfg types.Config, _ any) (mcms.Config,
 
 	gpDict := cell.NewDict(keySz)
 	for i, g := range groupParents {
-		//nolint:gosec // G115 conversion safe, max 32 groups
 		if uint8(i) <= groupMax { // don't set unnecessary groups
 			v := cell.BeginCell().MustStoreUInt(uint64(g), sz).EndCell()
 			err = gpDict.SetIntKey(big.NewInt(int64(i)), v)

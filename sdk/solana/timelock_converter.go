@@ -354,7 +354,7 @@ func scheduleBatchInstructions(
 			appendIx, appendErr := bindings.NewAppendInstructionDataInstruction(
 				pdaSeed,
 				operationID,
-				//nolint:gosec
+
 				uint32(i), // which instruction index we are chunking
 				chunk,     // partial data
 				operationPDA,
@@ -455,7 +455,7 @@ func bypassInstructions(
 			appendIx, appendErr := bindings.NewAppendBypasserInstructionDataInstruction(
 				pdaSeed,
 				operationID,
-				//nolint:gosec
+
 				uint32(i), // which instruction index we are chunking
 				chunk,     // partial data
 				operationPDA,
