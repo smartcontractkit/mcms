@@ -106,7 +106,7 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 		grantRoleData.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
 		"RBACTimelock",
-		"RBACTimelock 0.0.0",
+		string(bindings.TypeTimelock)+" 0.0.0",
 		[]string{"RBACTimelock", "GrantRole"},
 	)
 	s.Require().NoError(err)
@@ -247,7 +247,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		grantRoleData.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
 		"RBACTimelock",
-		"RBACTimelock 0.0.0",
+		string(bindings.TypeTimelock)+" 0.0.0",
 		[]string{"RBACTimelock", "GrantRole"},
 	)
 	s.Require().NoError(err)
@@ -382,7 +382,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		grantRoleData2.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
 		"RBACTimelock",
-		"RBACTimelock 0.0.0",
+		string(bindings.TypeTimelock)+" 0.0.0",
 		[]string{"RBACTimelock", "GrantRole"},
 	)
 	s.Require().NoError(err)
@@ -503,7 +503,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 		cell.BeginCell().ToSlice(), // empty message (top up)
 		tlb.MustFromTON("0.1").Nano(),
 		"RBACTimelock",
-		"RBACTimelock 0.0.0",
+		string(bindings.TypeTimelock)+" 0.0.0",
 		[]string{"RBACTimelock", "TopUp"},
 	)
 	s.Require().NoError(err)
@@ -730,7 +730,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 		grantRoleData.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
 		"RBACTimelock",
-		"RBACTimelock 0.0.0",
+		string(bindings.TypeTimelock)+" 0.0.0",
 		[]string{"RBACTimelock", "GrantRole"},
 	)
 	s.Require().NoError(err)
@@ -748,7 +748,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 		grantRoleData2.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
 		"RBACTimelock",
-		"RBACTimelock 0.0.0",
+		string(bindings.TypeTimelock)+" 0.0.0",
 		[]string{"RBACTimelock", "GrantRole"},
 	)
 	s.Require().NoError(err)
