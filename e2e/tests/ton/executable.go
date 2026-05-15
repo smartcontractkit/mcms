@@ -105,9 +105,9 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 		address.MustParseAddr(s.timelockAddr),
 		grantRoleData.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
-		"RBACTimelock",
+		bindings.ShortTimelock,
 		string(bindings.TypeTimelock)+" 0.0.0",
-		[]string{"RBACTimelock", "GrantRole"},
+		[]string{bindings.ShortTimelock, "GrantRole"},
 	)
 	s.Require().NoError(err)
 
@@ -246,9 +246,9 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		address.MustParseAddr(s.timelockAddr),
 		grantRoleData.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
-		"RBACTimelock",
+		bindings.ShortTimelock,
 		string(bindings.TypeTimelock)+" 0.0.0",
-		[]string{"RBACTimelock", "GrantRole"},
+		[]string{bindings.ShortTimelock, "GrantRole"},
 	)
 	s.Require().NoError(err)
 
@@ -381,9 +381,9 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		address.MustParseAddr(s.timelockAddr),
 		grantRoleData2.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
-		"RBACTimelock",
+		bindings.ShortTimelock,
 		string(bindings.TypeTimelock)+" 0.0.0",
-		[]string{"RBACTimelock", "GrantRole"},
+		[]string{bindings.ShortTimelock, "GrantRole"},
 	)
 	s.Require().NoError(err)
 
@@ -502,9 +502,9 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 		address.MustParseAddr(s.mcmsAddr),
 		cell.BeginCell().ToSlice(), // empty message (top up)
 		tlb.MustFromTON("0.1").Nano(),
-		"RBACTimelock",
+		bindings.ShortTimelock,
 		string(bindings.TypeTimelock)+" 0.0.0",
-		[]string{"RBACTimelock", "TopUp"},
+		[]string{bindings.ShortTimelock, "TopUp"},
 	)
 	s.Require().NoError(err)
 
@@ -729,9 +729,9 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 		address.MustParseAddr(s.timelockAddr),
 		grantRoleData.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
-		"RBACTimelock",
+		bindings.ShortTimelock,
 		string(bindings.TypeTimelock)+" 0.0.0",
-		[]string{"RBACTimelock", "GrantRole"},
+		[]string{bindings.ShortTimelock, "GrantRole"},
 	)
 	s.Require().NoError(err)
 
@@ -747,9 +747,9 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 		address.MustParseAddr(s.timelockAddr),
 		grantRoleData2.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
-		"RBACTimelock",
+		bindings.ShortTimelock,
 		string(bindings.TypeTimelock)+" 0.0.0",
-		[]string{"RBACTimelock", "GrantRole"},
+		[]string{bindings.ShortTimelock, "GrantRole"},
 	)
 	s.Require().NoError(err)
 
