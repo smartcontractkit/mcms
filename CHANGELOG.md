@@ -1,5 +1,13 @@
 # @smartcontractkit/mcms
 
+## [0.44.0](https://github.com/smartcontractkit/mcms/compare/v0.43.0...v0.44.0) (2026-05-15)
+
+
+### Features
+
+* [NONEVM-4520] ContractTypeAndVersion in OperationMetadata ([#751](https://github.com/smartcontractkit/mcms/issues/751)) ([16b18da](https://github.com/smartcontractkit/mcms/commit/16b18dab10da43769636361a32525db3b57ffe99))
+* support latest chain selectors in v1.0.100 ([#753](https://github.com/smartcontractkit/mcms/issues/753)) ([f5df18e](https://github.com/smartcontractkit/mcms/commit/f5df18eb1d2bcec295c8041fe69be75b0f05ab6a))
+
 ## 0.43.0
 
 ### Minor Changes
