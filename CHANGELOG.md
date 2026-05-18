@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.45.0](https://github.com/smartcontractkit/mcms/compare/v0.44.0...v0.45.0) (2026-05-18)
+
+
+### Features
+
+* [NONEVM-4520] ContractVersion in OperationMetadata ([#751](https://github.com/smartcontractkit/mcms/issues/751)) ([f2eaf56](https://github.com/smartcontractkit/mcms/commit/f2eaf568d95024acca057b26528779f246e389e1))
+
 ## [0.44.0](https://github.com/smartcontractkit/mcms/compare/v0.43.0...v0.44.0) (2026-05-15)
 
 
