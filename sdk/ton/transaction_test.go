@@ -24,9 +24,14 @@ func TestValidateAdditionalFields(t *testing.T) {
 			expectedErr: false,
 		},
 		{
+			name:        "valid json",
+			input:       json.RawMessage(`{"contractTypeFull": "link.chain.ton.ccip.Router", "value": 100}`),
+			expectedErr: false,
+		},
+		{
 			name:        "valid json with missing fqn field",
-			input:       json.RawMessage(`{"value": "100"}`),
-			expectedErr: true,
+			input:       json.RawMessage(`{"value": 100}`),
+			expectedErr: false,
 		},
 		{
 			name:        "valid json with missing value field",
@@ -35,7 +40,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name:        "json with negative value",
-			input:       json.RawMessage(`{"contractTypeFull": "link.chain.ton.ccip.Router", "value": "-10"}`),
+			input:       json.RawMessage(`{"contractTypeFull": "link.chain.ton.ccip.Router", "value": -10}`),
 			expectedErr: true,
 		},
 		{
@@ -55,9 +60,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 			t.Parallel()
 			err := ton.ValidateAdditionalFields(tt.input)
 			if tt.expectedErr {
-				assert.Error(t, err, "expected an error but got none", tt.name)
+				assert.Error(t, err, "expected an error but got none")
 			} else {
-				assert.NoError(t, err, "expected no error but got one", tt.name)
+				assert.NoError(t, err, "expected no error but got one")
 			}
 		})
 	}

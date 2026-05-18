@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/Masterminds/semver/v3"
 	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
@@ -87,7 +86,7 @@ func (c *TimelockConfigurer) UpdateDelay(
 	}
 
 	if c.skipSend {
-		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), bindings.ShortTimelock, semver.MustParse("0.0.0"), bindings.TypeTimelock, []string{"UpdateDelay"})
+		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), bindings.ShortTimelock, nil, bindings.TypeTimelock, []string{"UpdateDelay"})
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("error encoding transaction: %w", err)
 		}

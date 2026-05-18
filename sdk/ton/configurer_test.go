@@ -7,14 +7,15 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/tvm/cell"
+
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
@@ -205,6 +206,9 @@ func TestConfigurer_SetConfig(t *testing.T) {
 					require.NoError(t, tlb.LoadFromCell(&preparedMsg2, preparedBody2.BeginParse()))
 
 					assert.Equal(t, preparedTx.Data, preparedTx2.Data)
+					assert.Equal(t, preparedTx.ContractType, preparedTx2.ContractType)
+					assert.Equal(t, preparedTx.ContractVersion, preparedTx2.ContractVersion)
+					assert.Equal(t, preparedTx.AdditionalFields, preparedTx2.AdditionalFields)
 					assert.Equal(t, preparedMsg.QueryID, preparedMsg2.QueryID)
 					assert.NotZero(t, preparedMsg.QueryID)
 				}
