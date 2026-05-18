@@ -86,7 +86,7 @@ func (c *TimelockConfigurer) UpdateDelay(
 	}
 
 	if c.skipSend {
-		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), bindings.ShortTimelock, string(bindings.TypeTimelock)+" 0.0.0", []string{"UpdateDelay"})
+		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), bindings.ShortTimelock, nil, bindings.TypeTimelock, []string{"UpdateDelay"})
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("error encoding transaction: %w", err)
 		}

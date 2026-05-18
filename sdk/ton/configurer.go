@@ -122,7 +122,7 @@ func (c configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	// check if we should plan this as an MCMS op instead of executing now
 	if c.skipSend {
 		var tx types.Transaction
-		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), bindings.ShortMCMS, string(bindings.TypeMCMS)+" 0.0.0", []string{"SetConfig"})
+		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), bindings.ShortMCMS, nil, bindings.TypeMCMS, []string{"SetConfig"})
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("error encoding transaction: %w", err)
 		}
