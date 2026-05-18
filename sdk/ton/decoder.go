@@ -27,10 +27,6 @@ func NewDecoder(tlbs tvm.ContractTLBRegistry) sdk.Decoder {
 
 func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.DecodedOperation, error) {
 	contractType := tvm.FullyQualifiedName(contractInterfaces)
-	tlbs, ok := d.TypeToTLBMap[contractType]
-	if !ok {
-		return nil, fmt.Errorf("decoding failed - unknown contract interface: %s", contractType)
-	}
 
 	datac, err := cell.FromBOC(tx.Data)
 	if err != nil {
@@ -41,6 +37,11 @@ func (d *decoder) Decode(tx types.Transaction, contractInterfaces string) (sdk.D
 	isEmpty := datac.RefsNum() == 0 && datac.BitsSize() == 0
 	if isEmpty {
 		return NewDecodedOperation(contractType, "", 0, map[string]any{}, []string{}, []any{})
+	}
+
+	tlbs, ok := d.TypeToTLBMap[contractType]
+	if !ok {
+		return nil, fmt.Errorf("decoding failed - unknown contract interface: %s", contractType)
 	}
 
 	msgType, msgDecoded, err := codec.DecodeTLBValToJSON(datac, tlbs)
