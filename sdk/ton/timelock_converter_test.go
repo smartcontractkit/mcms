@@ -5,7 +5,6 @@ import (
 	"math/big"
 	"testing"
 
-	"github.com/Masterminds/semver/v3"
 	"github.com/ethereum/go-ethereum/common"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
@@ -38,7 +37,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 			new(big.Int).SetUint64(1000),
 			bindings.ShortTimelock,
-			semver.MustParse("0.0.0"),
+			nil,
 			bindings.TypeTimelock,
 			[]string{"tag1", "tag2"},
 		))},
@@ -170,7 +169,7 @@ func TestOperationID(t *testing.T) {
 			cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 			new(big.Int).SetUint64(1000),
 			bindings.ShortTimelock,
-			semver.MustParse("0.0.0"),
+			nil,
 			bindings.TypeTimelock,
 			[]string{},
 		))

@@ -98,7 +98,7 @@ func TestOperationFieldsValidate(t *testing.T) {
 			t.Parallel()
 
 			op := ton.AdditionalFields{
-				Value:                      tt.value,
+				Value:            tt.value,
 				ContractTypeFull: "link.chain.ton.ccip.Router",
 			}
 
