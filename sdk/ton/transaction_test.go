@@ -30,17 +30,17 @@ func TestValidateAdditionalFields(t *testing.T) {
 		},
 		{
 			name:        "valid json with missing value field",
-			input:       json.RawMessage(`{"contractFullyQualifiedName": "link.chain.ton.ccip.Router"}`),
+			input:       json.RawMessage(`{"contractTypeFull": "link.chain.ton.ccip.Router"}`),
 			expectedErr: false,
 		},
 		{
 			name:        "json with negative value",
-			input:       json.RawMessage(`{"contractFullyQualifiedName": "link.chain.ton.ccip.Router", "value": "-10"}`),
+			input:       json.RawMessage(`{"contractTypeFull": "link.chain.ton.ccip.Router", "value": "-10"}`),
 			expectedErr: true,
 		},
 		{
 			name:        "json with null value",
-			input:       json.RawMessage(`{"contractFullyQualifiedName": "link.chain.ton.ccip.Router", "value": null}`),
+			input:       json.RawMessage(`{"contractTypeFull": "link.chain.ton.ccip.Router", "value": null}`),
 			expectedErr: true,
 		},
 		{
@@ -99,7 +99,7 @@ func TestOperationFieldsValidate(t *testing.T) {
 
 			op := ton.AdditionalFields{
 				Value:                      tt.value,
-				ContractFullyQualifiedName: "link.chain.ton.ccip.Router",
+				ContractTypeFull: "link.chain.ton.ccip.Router",
 			}
 
 			err := op.Validate()

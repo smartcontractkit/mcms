@@ -28,8 +28,8 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 }
 
 type AdditionalFields struct {
-	ContractFullyQualifiedName tvm.FullyQualifiedName `json:"contractFullyQualifiedName,omitempty"`
-	Value                      *big.Int               `json:"value"`
+	ContractTypeFull tvm.FullyQualifiedName `json:"contractTypeFull,omitempty"`
+	Value            *big.Int               `json:"value"`
 }
 
 // Validate ensures the TON-specific fields are correct
@@ -51,7 +51,7 @@ func NewTransaction(
 	contractFQN tvm.FullyQualifiedName,
 	tags []string,
 ) (types.Transaction, error) {
-	additionalFields, err := json.Marshal(AdditionalFields{Value: value, ContractFullyQualifiedName: contractFQN})
+	additionalFields, err := json.Marshal(AdditionalFields{Value: value, ContractTypeFull: contractFQN})
 	if err != nil {
 		return types.Transaction{}, fmt.Errorf("failed to marshal additional fields: %w", err)
 	}
