@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
 func ValidateAdditionalFields(additionalFields json.RawMessage) error {
@@ -25,13 +28,17 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 }
 
 type AdditionalFields struct {
-	Value *big.Int `json:"value"`
+	ContractFullyQualifiedName tvm.FullyQualifiedName `json:"contractFullyQualifiedName,omitempty"`
+	Value                      *big.Int               `json:"value"`
 }
 
 // Validate ensures the TON-specific fields are correct
 func (f AdditionalFields) Validate() error {
 	if f.Value == nil || f.Value.Sign() < 0 {
 		return fmt.Errorf("invalid TON value: %v", f.Value)
+	}
+	if f.ContractFullyQualifiedName == "" {
+		return fmt.Errorf("empty TON contract fully qualified name")
 	}
 
 	return nil
@@ -43,10 +50,11 @@ func NewTransaction(
 	body *cell.Slice,
 	value *big.Int,
 	contractType string,
-	contractTypeAndVersion string,
+	contractVersion *semver.Version,
+	contractFQN tvm.FullyQualifiedName,
 	tags []string,
 ) (types.Transaction, error) {
-	additionalFields, err := json.Marshal(AdditionalFields{Value: value})
+	additionalFields, err := json.Marshal(AdditionalFields{Value: value, ContractFullyQualifiedName: contractFQN})
 	if err != nil {
 		return types.Transaction{}, fmt.Errorf("failed to marshal additional fields: %w", err)
 	}
@@ -62,9 +70,9 @@ func NewTransaction(
 		Data:             data,
 		AdditionalFields: additionalFields,
 		OperationMetadata: types.OperationMetadata{
-			ContractType:           contractType,
-			ContractTypeAndVersion: contractTypeAndVersion,
-			Tags:                   tags,
+			ContractType:    contractType,
+			ContractVersion: contractVersion,
+			Tags:            tags,
 		},
 	}, nil
 }

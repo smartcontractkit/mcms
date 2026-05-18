@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
@@ -47,6 +48,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 					cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 					new(big.Int).SetUint64(1000000000000000000),
 					"",
+					semver.MustParse("0.0.0"),
 					"",
 					[]string{},
 				)),
@@ -159,6 +161,7 @@ func TestEncoder_ToOperation(t *testing.T) {
 					cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 					new(big.Int).SetUint64(1000000000000000000),
 					"",
+					semver.MustParse("0.0.0"),
 					"",
 					[]string{},
 				)),

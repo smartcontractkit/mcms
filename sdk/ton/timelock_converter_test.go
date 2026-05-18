@@ -5,6 +5,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/ethereum/go-ethereum/common"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
@@ -36,8 +37,9 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 			cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 			new(big.Int).SetUint64(1000),
-			bindings.ShortRBAC,
-			string(bindings.TypeRBAC)+" 0.0.0",
+			bindings.ShortTimelock,
+			semver.MustParse("0.0.0"),
+			bindings.TypeTimelock,
 			[]string{"tag1", "tag2"},
 		))},
 		ChainSelector: types.ChainSelector(chainsel.TON_TESTNET.Selector),
@@ -61,7 +63,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:      types.TimelockActionSchedule,
 			predecessor:    zeroHash,
 			salt:           zeroHash,
-			expectedOpType: string(bindings.TypeRBAC),
+			expectedOpType: bindings.ShortTimelock,
 		},
 		{
 			name:           "Cancel operation",
@@ -70,7 +72,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:      types.TimelockActionCancel,
 			predecessor:    zeroHash,
 			salt:           zeroHash,
-			expectedOpType: string(bindings.TypeRBAC),
+			expectedOpType: bindings.ShortTimelock,
 		},
 		{
 			name:           "Bypass operation",
@@ -79,7 +81,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			operation:      types.TimelockActionBypass,
 			predecessor:    zeroHash,
 			salt:           zeroHash,
-			expectedOpType: string(bindings.TypeRBAC),
+			expectedOpType: bindings.ShortTimelock,
 		},
 		{
 			name:           "Invalid operation",
@@ -95,7 +97,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Invalid additional fields",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{{
-					OperationMetadata: types.OperationMetadata{ContractType: bindings.ShortRBAC, ContractTypeAndVersion: string(bindings.TypeRBAC) + " 0.0.0"},
+					OperationMetadata: types.OperationMetadata{ContractType: bindings.ShortTimelock},
 					To:                timelockAddress,
 					Data:              []byte("0x1234"),
 					AdditionalFields:  []byte("invalid"),
@@ -112,7 +114,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 			name: "Invalid address in transaction",
 			op: types.BatchOperation{
 				Transactions: []types.Transaction{{
-					OperationMetadata: types.OperationMetadata{ContractType: bindings.ShortRBAC, ContractTypeAndVersion: string(bindings.TypeRBAC) + " 0.0.0"},
+					OperationMetadata: types.OperationMetadata{ContractType: bindings.ShortTimelock},
 					To:                "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-", // invalid address
 					Data:              []byte("0x1234"),
 					AdditionalFields:  []byte("{\"value\":1000}"),
@@ -153,6 +155,7 @@ func TestTimelockConverter_ConvertBatchToChainOperation(t *testing.T) {
 				assert.Len(t, chainOperations, 1)
 				assert.Equal(t, timelockAddress, chainOperations[0].Transaction.To)
 				assert.Equal(t, tc.op.ChainSelector, chainOperations[0].ChainSelector)
+				assert.Equal(t, tc.expectedOpType, chainOperations[0].Transaction.ContractType)
 			}
 		})
 	}
@@ -166,8 +169,9 @@ func TestOperationID(t *testing.T) {
 			address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 			cell.BeginCell().MustStoreBinarySnake([]byte("data")).ToSlice(),
 			new(big.Int).SetUint64(1000),
-			bindings.ShortRBAC,
-			string(bindings.TypeRBAC)+" 0.0.0",
+			bindings.ShortTimelock,
+			semver.MustParse("0.0.0"),
+			bindings.TypeTimelock,
 			[]string{},
 		))
 	}

@@ -2,13 +2,15 @@ package types //nolint:revive,nolintlint // allow pkg name 'types'
 
 import (
 	"encoding/json"
+
+	"github.com/Masterminds/semver/v3"
 )
 
 // OperationMetadata contains metadata about an operation
 type OperationMetadata struct {
-	ContractType           string   `json:"contractType"`           // ContractType is the short type used in data store e.g. "Router". It represents the crosschain interface/expected behaviour of the destination contract.
-	ContractTypeAndVersion string   `json:"contractTypeAndVersion"` // ContractTypeAndVersion is the .String() representation of the TypeAndVersion of our contract. It is used for decoding the message data (cell) according to the correct TL-B schema. For example, in TON we use a FullyQualifiedName as the contract type. The resulting string looks like "link.chain.ton.mcms.Timelock 1.0.0".
-	Tags                   []string `json:"tags"`
+	ContractType    string          `json:"contractType"`              // ContractType is the short type used in data store e.g. "Router".
+	ContractVersion *semver.Version `json:"contractVersion,omitempty"` // ContractVersion is the version of the deployed contract e.g. "1.0.0".
+	Tags            []string        `json:"tags"`
 }
 
 // Transaction contains the transaction data to be executed

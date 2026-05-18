@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/smartcontractkit/mcms/sdk"
 	sdkerrors "github.com/smartcontractkit/mcms/sdk/errors"
 	"github.com/smartcontractkit/mcms/types"
@@ -111,7 +112,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	// TODO (ton): amount can be taken from metadata.AdditionalFields
 	// Notice: EVM just sets 0 here, but on TON we need to set some value to cover gas fees
 	var tx types.Transaction
-	tx, err = NewTransaction(dstAddr, data.BeginParse(), t.amount.Nano(), bindings.ShortTimelock, string(bindings.TypeTimelock)+" 0.0.0", tags)
+	tx, err = NewTransaction(dstAddr, data.BeginParse(), t.amount.Nano(), bindings.ShortTimelock, semver.MustParse("0.0.0"), bindings.TypeTimelock, tags)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)
 	}

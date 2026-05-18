@@ -9,6 +9,7 @@ import (
 	"math/big"
 	"strconv"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/stretchr/testify/suite"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
@@ -106,7 +107,8 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 		grantRoleData.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
 		bindings.ShortTimelock,
-		string(bindings.TypeTimelock)+" 0.0.0",
+		semver.MustParse("0.0.0"),
+		bindings.TypeTimelock,
 		[]string{bindings.ShortTimelock, "GrantRole"},
 	)
 	s.Require().NoError(err)
@@ -247,7 +249,8 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		grantRoleData.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
 		bindings.ShortTimelock,
-		string(bindings.TypeTimelock)+" 0.0.0",
+		semver.MustParse("0.0.0"),
+		bindings.TypeTimelock,
 		[]string{bindings.ShortTimelock, "GrantRole"},
 	)
 	s.Require().NoError(err)
@@ -382,7 +385,8 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 		grantRoleData2.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
 		bindings.ShortTimelock,
-		string(bindings.TypeTimelock)+" 0.0.0",
+		semver.MustParse("0.0.0"),
+		bindings.TypeTimelock,
 		[]string{bindings.ShortTimelock, "GrantRole"},
 	)
 	s.Require().NoError(err)
@@ -503,7 +507,8 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleChains() {
 		cell.BeginCell().ToSlice(), // empty message (top up)
 		tlb.MustFromTON("0.1").Nano(),
 		bindings.ShortTimelock,
-		string(bindings.TypeTimelock)+" 0.0.0",
+		semver.MustParse("0.0.0"),
+		bindings.TypeTimelock,
 		[]string{bindings.ShortTimelock, "TopUp"},
 	)
 	s.Require().NoError(err)
@@ -730,7 +735,8 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 		grantRoleData.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
 		bindings.ShortTimelock,
-		string(bindings.TypeTimelock)+" 0.0.0",
+		semver.MustParse("0.0.0"),
+		bindings.TypeTimelock,
 		[]string{bindings.ShortTimelock, "GrantRole"},
 	)
 	s.Require().NoError(err)
@@ -748,7 +754,8 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultipleOps() {
 		grantRoleData2.ToBuilder().ToSlice(),
 		tlb.MustFromTON("0.1").Nano(),
 		bindings.ShortTimelock,
-		string(bindings.TypeTimelock)+" 0.0.0",
+		semver.MustParse("0.0.0"),
+		bindings.TypeTimelock,
 		[]string{bindings.ShortTimelock, "GrantRole"},
 	)
 	s.Require().NoError(err)

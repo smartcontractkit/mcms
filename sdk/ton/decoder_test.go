@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -51,7 +52,8 @@ func TestDecoder(t *testing.T) {
 					cell.BeginCell().ToSlice(),
 					big.NewInt(0),
 					bindings.ShortTimelock,
-					string(bindings.TypeTimelock)+" 0.0.0",
+					semver.MustParse("0.0.0"),
+					bindings.TypeTimelock,
 					[]string{"topUp"},
 				)),
 			},
@@ -74,7 +76,8 @@ func TestDecoder(t *testing.T) {
 					grantRoleData.ToBuilder().ToSlice(),
 					big.NewInt(0),
 					bindings.ShortTimelock,
-					string(bindings.TypeTimelock)+" 0.0.0",
+					semver.MustParse("0.0.0"),
+					bindings.TypeTimelock,
 					[]string{"grantRole"},
 				)),
 			},

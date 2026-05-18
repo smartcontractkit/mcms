@@ -19,23 +19,28 @@ func TestValidateAdditionalFields(t *testing.T) {
 		expectedErr bool
 	}{
 		{
-			name:        "empty json defaults to value 0",
+			name:        "empty json errors",
 			input:       json.RawMessage(""),
-			expectedErr: false,
+			expectedErr: true,
+		},
+		{
+			name:        "valid json with missing fqn field",
+			input:       json.RawMessage(`{"value": "100"}`),
+			expectedErr: true,
 		},
 		{
 			name:        "valid json with missing value field",
-			input:       json.RawMessage(`{}`),
+			input:       json.RawMessage(`{"contractFullyQualifiedName": "link.chain.ton.ccip.Router"}`),
 			expectedErr: false,
 		},
 		{
 			name:        "json with negative value",
-			input:       json.RawMessage(`{"value": "-10"}`),
+			input:       json.RawMessage(`{"contractFullyQualifiedName": "link.chain.ton.ccip.Router", "value": "-10"}`),
 			expectedErr: true,
 		},
 		{
 			name:        "json with null value",
-			input:       json.RawMessage(`{"value": null}`),
+			input:       json.RawMessage(`{"contractFullyQualifiedName": "link.chain.ton.ccip.Router", "value": null}`),
 			expectedErr: true,
 		},
 		{
@@ -50,13 +55,14 @@ func TestValidateAdditionalFields(t *testing.T) {
 			t.Parallel()
 			err := ton.ValidateAdditionalFields(tt.input)
 			if tt.expectedErr {
-				assert.Error(t, err, "expected an error but got none")
+				assert.Error(t, err, "expected an error but got none", tt.name)
 			} else {
-				assert.NoError(t, err, "expected no error but got one")
+				assert.NoError(t, err, "expected no error but got one", tt.name)
 			}
 		})
 	}
 }
+
 func TestOperationFieldsValidate(t *testing.T) {
 	t.Parallel()
 
@@ -92,15 +98,16 @@ func TestOperationFieldsValidate(t *testing.T) {
 			t.Parallel()
 
 			op := ton.AdditionalFields{
-				Value: tt.value,
+				Value:                      tt.value,
+				ContractFullyQualifiedName: "link.chain.ton.ccip.Router",
 			}
 
 			err := op.Validate()
 
 			if tt.expectedErr {
-				assert.Error(t, err, "expected an error but got none")
+				assert.Error(t, err, "expected an error but got none", tt.name)
 			} else {
-				assert.NoError(t, err, "expected no error but got one")
+				assert.NoError(t, err, "expected no error but got one", tt.name)
 			}
 		})
 	}
