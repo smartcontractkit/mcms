@@ -37,9 +37,6 @@ func (f AdditionalFields) Validate() error {
 	if f.Value == nil || f.Value.Sign() < 0 {
 		return fmt.Errorf("invalid TON value: %v", f.Value)
 	}
-	if f.ContractFullyQualifiedName == "" {
-		return fmt.Errorf("empty TON contract fully qualified name")
-	}
 
 	return nil
 }

@@ -19,9 +19,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 		expectedErr bool
 	}{
 		{
-			name:        "empty json errors",
+			name:        "empty json",
 			input:       json.RawMessage(""),
-			expectedErr: true,
+			expectedErr: false,
 		},
 		{
 			name:        "valid json with missing fqn field",
