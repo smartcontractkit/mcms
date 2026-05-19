@@ -45,7 +45,7 @@ func main() {
 }
 ```
 
-For the JSON structure of the proposal please check the [MCMS Proposal Format Doc.](/key-concepts/mcm-proposal.md)
+For the JSON structure of the proposal please check the [MCMS Proposal Format Doc.](../key-concepts/mcm-proposal.md)
 
 ### Build Proposal Given Staged but Non-Executed Predecessor Proposals
 
@@ -298,7 +298,7 @@ func main() {
 }
 ```
 
-# Adding Chain Specific Operations to Proposal
+## Adding Chain Specific Operations to Proposal
 
 The mcms lib provides helper functionality to easily build chain
 specific operations and add them to a proposal. Here are some examples:

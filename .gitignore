@@ -22,6 +22,9 @@ go.work.sum
 e2e/custom_configs/.env
 e2e/artifacts/
 
+# PNPM store
+.pnpm-store/
+
 # Editor config directories
 .idea/
 .vscode/
