@@ -95,7 +95,7 @@ jobs:
           sui --version
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Compute Solana programs cache key
         id: solana-programs-cache-key
@@ -105,7 +105,7 @@ jobs:
           echo "key=${key}" >> "$GITHUB_OUTPUT"
 
       - name: Cache Solana programs
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: cache-solana-programs
         with:
           path: ./e2e/artifacts/solana
