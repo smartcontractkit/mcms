@@ -1,10 +1,13 @@
-# Ensures that the PR follows the conventional commits specification
+# Ensures that the PR title follows the conventional commits specification.
 name: pull-request-conventional
 
 on:
   pull_request:
     branches: [ main ]
     types: [ opened, synchronize, reopened, edited ]
+  merge_group:
+    types: [ checks_requested ]
+    branches: [ main ]
 
 permissions:
   contents: read
@@ -18,6 +21,14 @@ jobs:
     name: Lint PR title (Conventional Commits)
     runs-on: ubuntu-latest
     steps:
-      - uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
+      # Semantic PR action expects pull_request context; titles are enforced on PR events prior to merge queue.
+      - name: Semantic PR Linter
+        if: github.event_name != 'merge_group'
+        uses: amannn/action-semantic-pull-request@48f256284bd46cdaab1048c3721360e808335d50 # v6.1.1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Auto-pass the step if it's running inside the Merge Queue
+      - name: Bypass for Merge Queue
+        if: github.event_name == 'merge_group'
+        run: echo "PR title already verified prior to entering the merge queue. Bypassing."

@@ -1,4 +1,9 @@
-name: release-please
+# Automated versioning and GitHub releases (Release Please).
+#
+# Runs on every push to main. Release Please reads conventional commits on main,
+# opens or updates a release PR (version bump + changelog), and when that PR is
+# merged—creates a GitHub release and a v* git tag.
+name: release
 
 on:
   push:
@@ -22,9 +27,9 @@ jobs:
         id: issue-github-token
         uses: smartcontractkit/.github/actions/setup-github-token@setup-github-token/v1
         with:
-          aws-role-arn: ${{ secrets.AWS_OIDC_MCMS_CI_CHANGESET_TOKEN_ISSUER_ROLE_ARN }}
-          aws-lambda-url: ${{ secrets.GATI_LAMBDA_DEPLOYMENT_AUTOMATION_URL }}
-          aws-region: ${{ secrets.AWS_REGION }}
+          aws-role-arn: ${{ secrets.GATI_AWS_ROLE_MCMS }}
+          aws-lambda-url: ${{ secrets.GATI_LAMBDA_OPERATIONS_PLATFORM_URL }}
+          aws-region: ${{ secrets.GATI_AWS_REGION }}
 
       - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
         with:
