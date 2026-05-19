@@ -32,7 +32,7 @@ func (s *TimelockBypassTestSuite) TestTimelockBypass() {
 	ctx := s.T().Context()
 
 	// Use bypasser role
-	bypasserInspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleBypasser)
+	bypasserInspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleBypasser)
 	currentOpCount, err := bypasserInspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "get current op count")
 
@@ -111,7 +111,7 @@ func (s *TimelockBypassTestSuite) TestTimelockBypass() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
-	executor, err := cantonsdk.NewExecutor(encoder, bypasserInspector, s.participant.LedgerServices.Command, s.submittingParty, s.participant.PartyID, cantonsdk.TimelockRoleBypasser)
+	executor, err := cantonsdk.NewExecutor(encoder, bypasserInspector, s.participant.LedgerServices.Command, s.submittingParty, []string{s.participant.PartyID}, cantonsdk.TimelockRoleBypasser)
 	s.Require().NoError(err)
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
@@ -135,7 +135,7 @@ func (s *TimelockBypassTestSuite) TestTimelockBypass() {
 	s.Require().Equal(currentOpCount+1, postOpCount, "op count should increment after bypass execute")
 
 	// Verify: minDelay was updated to 5 seconds (5_000_000 microseconds)
-	timelockInspector := cantonsdk.NewTimelockInspector(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, s.participant.PartyID)
+	timelockInspector := cantonsdk.NewTimelockInspector(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, []string{s.participant.PartyID})
 	minDelay, err := timelockInspector.GetMinDelay(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err)
 	s.Require().Equal(uint64(5), minDelay, "minDelay should be 5 seconds after UpdateMinDelay bypass")

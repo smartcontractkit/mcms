@@ -26,19 +26,19 @@ type TimelockInspector struct {
 	client      apiv2.CommandServiceClient
 	stateClient apiv2.StateServiceClient
 	// The party that will be used to submit transactions.
-	// Should be different from mcmsParty.
+	// Should be different from mcmsParties.
 	submittingParty string
-	// The party that owns the MCMS deployment.
-	mcmsParty string
+	// The parties that own the MCMS deployment.
+	mcmsParties []string
 }
 
 // NewTimelockInspector creates a TimelockInspector that queries the ledger via the given clients.
-func NewTimelockInspector(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, submittingParty string, mcmsParty string) *TimelockInspector {
+func NewTimelockInspector(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, submittingParty string, mcmsParties []string) *TimelockInspector {
 	return &TimelockInspector{
 		client:          client,
 		stateClient:     stateClient,
 		submittingParty: submittingParty,
-		mcmsParty:       mcmsParty,
+		mcmsParties:     mcmsParties,
 	}
 }
 
@@ -49,7 +49,7 @@ func (t *TimelockInspector) StateServiceClient() apiv2.StateServiceClient {
 
 // GetProposers returns the signer addresses for the Proposer role.
 func (t *TimelockInspector) GetProposers(ctx context.Context, address string) ([]string, error) {
-	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.mcmsParty, address)
+	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.mcmsParties, address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -63,7 +63,7 @@ func (t *TimelockInspector) GetExecutors(_ context.Context, _ string) ([]string,
 
 // GetBypassers returns the signer addresses for the Bypasser role.
 func (t *TimelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
-	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.mcmsParty, address)
+	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.mcmsParties, address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -72,7 +72,7 @@ func (t *TimelockInspector) GetBypassers(ctx context.Context, address string) ([
 
 // GetCancellers returns the signer addresses for the Canceller role.
 func (t *TimelockInspector) GetCancellers(ctx context.Context, address string) ([]string, error) {
-	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.mcmsParty, address)
+	mcmsContract, err := GetMCMSContract(ctx, t.stateClient, t.mcmsParties, address)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -105,7 +105,7 @@ func (t *TimelockInspector) IsOperationDone(ctx context.Context, address string,
 }
 
 func (t *TimelockInspector) GetMinDelay(ctx context.Context, address string) (uint64, error) {
-	contractID, err := ResolveMCMSContractID(ctx, t.stateClient, t.mcmsParty, address)
+	contractID, err := ResolveMCMSContractID(ctx, t.stateClient, t.mcmsParties, address)
 	if err != nil {
 		return 0, fmt.Errorf("resolve MCMS contract ID: %w", err)
 	}
@@ -144,7 +144,7 @@ func (t *TimelockInspector) GetMinDelay(ctx context.Context, address string) (ui
 }
 
 func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address string, choice string, opID [32]byte) (bool, error) {
-	contractID, err := ResolveMCMSContractID(ctx, t.stateClient, t.mcmsParty, address)
+	contractID, err := ResolveMCMSContractID(ctx, t.stateClient, t.mcmsParties, address)
 	if err != nil {
 		return false, fmt.Errorf("resolve MCMS contract ID: %w", err)
 	}
@@ -193,7 +193,7 @@ func (t *TimelockInspector) exerciseRequest(contractID, choice string, choiceArg
 		Commands: &apiv2.Commands{
 			CommandId: uuid.Must(uuid.NewUUID()).String(),
 			ActAs:     []string{t.submittingParty},
-			ReadAs:    []string{t.mcmsParty},
+			ReadAs:    t.mcmsParties,
 			Commands: []*apiv2.Command{{
 				Command: &apiv2.Command_Exercise{
 					Exercise: &apiv2.ExerciseCommand{

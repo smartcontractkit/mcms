@@ -23,7 +23,7 @@ func (s *MCMSInspectorTestSuite) SetupSuite() {
 	s.DeployMCMSContract()
 
 	// Create inspector instance using participant's State service client
-	s.inspector = cantonsdk.NewInspector(s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	s.inspector = cantonsdk.NewInspector(s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 }
 
 func (s *MCMSInspectorTestSuite) TestGetConfig() {
@@ -81,7 +81,7 @@ func (s *MCMSInspectorTestSuite) TestGetConfig() {
 	}
 
 	// Set config using configurer (InstanceAddress is stable across SetConfig)
-	configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err, "creating configurer")
 
 	_, err = configurer.SetConfig(ctx, s.mcmsInstanceAddress, expectedConfig, true)

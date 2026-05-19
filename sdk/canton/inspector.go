@@ -21,15 +21,15 @@ var _ sdk.Inspector = &Inspector{}
 
 type Inspector struct {
 	stateClient apiv2.StateServiceClient
-	// The party that owns the MCMS deployment.
-	mcmsParty string
-	role      TimelockRole
+	// The parties that own the MCMS deployment.
+	mcmsParties []string
+	role        TimelockRole
 }
 
-func NewInspector(stateClient apiv2.StateServiceClient, mcmsParty string, role TimelockRole) *Inspector {
+func NewInspector(stateClient apiv2.StateServiceClient, mcmsParties []string, role TimelockRole) *Inspector {
 	return &Inspector{
 		stateClient: stateClient,
-		mcmsParty:   mcmsParty,
+		mcmsParties: mcmsParties,
 		role:        role,
 	}
 }
@@ -40,7 +40,7 @@ func (i *Inspector) StateServiceClient() apiv2.StateServiceClient {
 }
 
 func (i *Inspector) GetConfig(ctx context.Context, mcmsAddr string) (*types.Config, error) {
-	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.mcmsParty, mcmsAddr)
+	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.mcmsParties, mcmsAddr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -58,7 +58,7 @@ func (i *Inspector) GetConfig(ctx context.Context, mcmsAddr string) (*types.Conf
 }
 
 func (i *Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, error) {
-	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.mcmsParty, mcmsAddr)
+	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.mcmsParties, mcmsAddr)
 	if err != nil {
 		return 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -76,7 +76,7 @@ func (i *Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, er
 }
 
 func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, uint32, error) {
-	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.mcmsParty, mcmsAddr)
+	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.mcmsParties, mcmsAddr)
 	if err != nil {
 		return common.Hash{}, 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
@@ -112,7 +112,7 @@ func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, 
 }
 
 func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types.ChainMetadata, error) {
-	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.mcmsParty, mcmsAddr)
+	mcmsContract, err := GetMCMSContract(ctx, i.stateClient, i.mcmsParties, mcmsAddr)
 	if err != nil {
 		return types.ChainMetadata{}, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}

@@ -19,18 +19,18 @@ import (
 
 // ResolveMCMSContractID resolves an MCMS InstanceAddress (hex string) to the current active contract ID.
 // instanceAddressHex is the hex-encoded InstanceAddress (keccak256 of "instanceId@party"); it may be prefixed with "0x".
-func ResolveMCMSContractID(ctx context.Context, stateService apiv2.StateServiceClient, mcmsParty, instanceAddressHex string) (string, error) {
+func ResolveMCMSContractID(ctx context.Context, stateService apiv2.StateServiceClient, mcmsParties []string, instanceAddressHex string) (string, error) {
 	if instanceAddressHex == "" {
 		return "", fmt.Errorf("instance address hex is required")
 	}
 	addr := contracts.HexToInstanceAddress(instanceAddressHex)
 	templateID := mcmscore.MCMS{}.GetTemplateID()
-	return findActiveContractIDByInstanceAddress(ctx, stateService, mcmsParty, templateID, addr)
+	return findActiveContractIDByInstanceAddress(ctx, stateService, mcmsParties, templateID, addr)
 }
 
 // findActiveContractIDByInstanceAddress returns the active contract ID for the given instance address.
-func findActiveContractIDByInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, party, templateID string, instanceAddress contracts.InstanceAddress) (string, error) {
-	activeContract, err := findActiveContractByInstanceAddress(ctx, stateService, party, templateID, instanceAddress)
+func findActiveContractIDByInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, parties []string, templateID string, instanceAddress contracts.InstanceAddress) (string, error) {
+	activeContract, err := findActiveContractByInstanceAddress(ctx, stateService, parties, templateID, instanceAddress)
 	if err != nil {
 		return "", err
 	}
@@ -41,7 +41,7 @@ func findActiveContractIDByInstanceAddress(ctx context.Context, stateService api
 // It returns an error if there are multiple or zero active contracts matching the instance address.
 // TODO: copied from chainlink-canton deployment/utils/operations/contract/exercise.go to avoid importing
 // unwanted dependencies. We should move the helper function to the bindings package and use it here.
-func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, party, templateID string, instanceAddress contracts.InstanceAddress) (*apiv2.ActiveContract, error) {
+func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, parties []string, templateID string, instanceAddress contracts.InstanceAddress) (*apiv2.ActiveContract, error) {
 	ledgerEndResp, err := stateService.GetLedgerEnd(ctx, &apiv2.GetLedgerEndRequest{})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get ledger end: %w", err)
@@ -52,28 +52,32 @@ func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 		return nil, fmt.Errorf("failed to parse template ID: %w", err)
 	}
 
-	activeContractsResp, err := stateService.GetActiveContracts(ctx, &apiv2.GetActiveContractsRequest{
-		ActiveAtOffset: ledgerEndResp.GetOffset(),
-		EventFormat: &apiv2.EventFormat{
-			FiltersByParty: map[string]*apiv2.Filters{
-				party: {
-					Cumulative: []*apiv2.CumulativeFilter{
-						{
-							IdentifierFilter: &apiv2.CumulativeFilter_TemplateFilter{
-								TemplateFilter: &apiv2.TemplateFilter{
-									TemplateId: &apiv2.Identifier{
-										PackageId:  packageID,
-										ModuleName: moduleName,
-										EntityName: entityName,
-									},
-									IncludeCreatedEventBlob: true,
-								},
+	// Build filters for all parties
+	filtersByParty := make(map[string]*apiv2.Filters)
+	for _, party := range parties {
+		filtersByParty[party] = &apiv2.Filters{
+			Cumulative: []*apiv2.CumulativeFilter{
+				{
+					IdentifierFilter: &apiv2.CumulativeFilter_TemplateFilter{
+						TemplateFilter: &apiv2.TemplateFilter{
+							TemplateId: &apiv2.Identifier{
+								PackageId:  packageID,
+								ModuleName: moduleName,
+								EntityName: entityName,
 							},
+							IncludeCreatedEventBlob: true,
 						},
 					},
 				},
 			},
-			Verbose: true,
+		}
+	}
+
+	activeContractsResp, err := stateService.GetActiveContracts(ctx, &apiv2.GetActiveContractsRequest{
+		ActiveAtOffset: ledgerEndResp.GetOffset(),
+		EventFormat: &apiv2.EventFormat{
+			FiltersByParty: filtersByParty,
+			Verbose:        true,
 		},
 	})
 	if err != nil {
@@ -135,14 +139,14 @@ func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 
 // GetMCMSContract queries the active MCMS contract by InstanceAddress (hex).
 // mcmsAddr is the InstanceAddress hex string (may be prefixed with "0x").
-func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient, mcmsParty, mcmsAddr string) (*mcmscore.MCMS, error) {
+func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient, mcmsParties []string, mcmsAddr string) (*mcmscore.MCMS, error) {
 	mcmsAddr = strings.TrimPrefix(mcmsAddr, "0x")
 	if mcmsAddr == "" {
 		return nil, fmt.Errorf("MCMS instance address is required")
 	}
 	addr := contracts.HexToInstanceAddress(mcmsAddr)
 	templateID := mcmscore.MCMS{}.GetTemplateID()
-	activeContract, err := findActiveContractByInstanceAddress(ctx, stateService, mcmsParty, templateID, addr)
+	activeContract, err := findActiveContractByInstanceAddress(ctx, stateService, mcmsParties, templateID, addr)
 	if err != nil {
 		return nil, fmt.Errorf("MCMS contract for InstanceAddress %s: %w", mcmsAddr, err)
 	}
@@ -182,7 +186,7 @@ func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient,
 // ResolveTargetContractID resolves a target contract's active contract ID from a raw instance address
 // ("instanceId@partyId" format) and a Daml template ID (e.g. "#pkg:Module:Entity").
 // This enables dynamic resolution at execution time when TargetCid is not pre-populated in AdditionalFields.
-func ResolveTargetContractID(ctx context.Context, stateService apiv2.StateServiceClient, party, rawInstanceAddress, templateID string) (string, error) {
+func ResolveTargetContractID(ctx context.Context, stateService apiv2.StateServiceClient, parties []string, rawInstanceAddress, templateID string) (string, error) {
 	if rawInstanceAddress == "" {
 		return "", fmt.Errorf("raw instance address is required")
 	}
@@ -194,7 +198,7 @@ func ResolveTargetContractID(ctx context.Context, stateService apiv2.StateServic
 		return "", fmt.Errorf("parse raw instance address %q: %w", rawInstanceAddress, err)
 	}
 	addr := raw.InstanceAddress()
-	return findActiveContractIDByInstanceAddress(ctx, stateService, party, templateID, addr)
+	return findActiveContractIDByInstanceAddress(ctx, stateService, parties, templateID, addr)
 }
 
 // IsInstanceAddressHex returns true if s looks like an InstanceAddress hex string (64 hex chars, optional 0x prefix).
@@ -215,9 +219,9 @@ func IsInstanceAddressHex(s string) bool {
 
 // ResolveContractIDIfInstanceAddress returns the current MCMS contract ID if cid is InstanceAddress hex;
 // otherwise returns cid unchanged. Use when building TargetCids so Canton receives real contract IDs.
-func ResolveContractIDIfInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, party, cid string) (string, error) {
+func ResolveContractIDIfInstanceAddress(ctx context.Context, stateService apiv2.StateServiceClient, parties []string, cid string) (string, error) {
 	if !IsInstanceAddressHex(cid) {
 		return cid, nil
 	}
-	return ResolveMCMSContractID(ctx, stateService, party, cid)
+	return ResolveMCMSContractID(ctx, stateService, parties, cid)
 }

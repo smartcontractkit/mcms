@@ -26,20 +26,20 @@ type TimelockExecutor struct {
 	*TimelockInspector
 	client apiv2.CommandServiceClient
 	// The party that will be used to submit transactions.
-	// Should be different from mcmsParty.
+	// Should be different from mcmsParties.
 	submittingParty string
-	// The party that owns the MCMS deployment.
-	mcmsParty string
+	// The parties that own the MCMS deployment.
+	mcmsParties []string
 }
 
 // NewTimelockExecutor creates a TimelockExecutor that submits ExecuteScheduledBatch via the given clients and party.
 // timelockAddress (in Execute) is InstanceAddress hex; it is resolved to contract ID when submitting.
-func NewTimelockExecutor(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, submittingParty string, mcmsParty string) *TimelockExecutor {
+func NewTimelockExecutor(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, submittingParty string, mcmsParties []string) *TimelockExecutor {
 	return &TimelockExecutor{
-		TimelockInspector: NewTimelockInspector(client, stateClient, submittingParty, mcmsParty),
+		TimelockInspector: NewTimelockInspector(client, stateClient, submittingParty, mcmsParties),
 		client:            client,
 		submittingParty:   submittingParty,
-		mcmsParty:         mcmsParty,
+		mcmsParties:       mcmsParties,
 	}
 }
 
@@ -52,7 +52,7 @@ func (t *TimelockExecutor) Execute(
 	predecessor common.Hash,
 	salt common.Hash,
 ) (types.TransactionResult, error) {
-	contractID, err := ResolveMCMSContractID(ctx, t.TimelockInspector.StateServiceClient(), t.mcmsParty, timelockAddress)
+	contractID, err := ResolveMCMSContractID(ctx, t.TimelockInspector.StateServiceClient(), t.mcmsParties, timelockAddress)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("resolve MCMS contract ID: %w", err)
 	}
@@ -85,7 +85,7 @@ func (t *TimelockExecutor) Execute(
 			if af.TargetCid != "" {
 				instanceToContractID[af.TargetInstanceAddress] = af.TargetCid
 			} else if af.TargetTemplateID != "" {
-				resolved, resolveErr := ResolveTargetContractID(ctx, stateClient, t.mcmsParty, af.TargetInstanceAddress, af.TargetTemplateID)
+				resolved, resolveErr := ResolveTargetContractID(ctx, stateClient, t.mcmsParties, af.TargetInstanceAddress, af.TargetTemplateID)
 				if resolveErr != nil {
 					return types.TransactionResult{}, fmt.Errorf("resolve target contract ID for %s: %w", af.TargetInstanceAddress, resolveErr)
 				}
@@ -101,7 +101,7 @@ func (t *TimelockExecutor) Execute(
 	// Build targetCidsMap: instanceAddress -> CONTRACT_ID.
 	targetCidsMap := make(map[cantontypes.TEXT]cantontypes.CONTRACT_ID)
 	for instanceAddr, cid := range instanceToContractID {
-		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, t.mcmsParty, cid)
+		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, t.mcmsParties, cid)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, err)
 		}
@@ -129,7 +129,7 @@ func (t *TimelockExecutor) Execute(
 		Commands: &apiv2.Commands{
 			CommandId: commandID,
 			ActAs:     []string{t.submittingParty},
-			ReadAs:    []string{t.mcmsParty},
+			ReadAs:    t.mcmsParties,
 			Commands: []*apiv2.Command{{
 				Command: &apiv2.Command_Exercise{
 					Exercise: &apiv2.ExerciseCommand{

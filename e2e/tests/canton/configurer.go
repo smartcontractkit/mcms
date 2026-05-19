@@ -79,10 +79,10 @@ func (s *MCMSConfigurerTestSuite) TestSetConfig() {
 	// Set config (use InstanceAddress); resolve once to get current contract ID for event assertions
 	{
 		ctx := s.T().Context()
-		oldContractID, err := cantonsdk.ResolveMCMSContractID(ctx, s.participant.LedgerServices.State, s.participant.PartyID, s.mcmsInstanceAddress)
+		oldContractID, err := cantonsdk.ResolveMCMSContractID(ctx, s.participant.LedgerServices.State, []string{s.participant.PartyID}, s.mcmsInstanceAddress)
 		s.Require().NoError(err, "resolve MCMS contract ID before SetConfig")
 
-		configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+		configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 		s.Require().NoError(err, "creating configurer for Canton mcms contract")
 		tx, err := configurer.SetConfig(ctx, s.mcmsInstanceAddress, proposerConfig, true)
 		s.Require().NoError(err, "setting config on Canton mcms contract")

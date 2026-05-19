@@ -75,7 +75,7 @@ func (s *TestSuite) DeployMCMSWithConfig(config *mcmstypes.Config) {
 		cantonsdk.TimelockRoleBypasser,
 	}
 	for _, role := range roles {
-		configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.participant.PartyID, role)
+		configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, []string{s.participant.PartyID}, role)
 		s.Require().NoError(err)
 
 		_, err = configurer.SetConfig(s.T().Context(), s.mcmsInstanceAddress, config, true)

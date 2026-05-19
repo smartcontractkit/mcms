@@ -33,20 +33,20 @@ type Executor struct {
 	*Inspector
 	client apiv2.CommandServiceClient
 	// The party that will be used to submit transactions.
-	// Should be different from mcmsParty.
+	// Should be different from mcmsParties.
 	submittingParty string
-	// The party that owns the MCMS deployment.
-	mcmsParty string
-	role      TimelockRole
+	// The parties that own the MCMS deployment.
+	mcmsParties []string
+	role        TimelockRole
 }
 
-func NewExecutor(encoder *Encoder, inspector *Inspector, client apiv2.CommandServiceClient, submittingParty string, mcmsParty string, role TimelockRole) (*Executor, error) {
+func NewExecutor(encoder *Encoder, inspector *Inspector, client apiv2.CommandServiceClient, submittingParty string, mcmsParties []string, role TimelockRole) (*Executor, error) {
 	return &Executor{
 		Encoder:         encoder,
 		Inspector:       inspector,
 		client:          client,
 		submittingParty: submittingParty,
-		mcmsParty:       mcmsParty,
+		mcmsParties:     mcmsParties,
 		role:            role,
 	}, nil
 }
@@ -67,7 +67,7 @@ func (e Executor) ExecuteOperation(
 	}
 
 	// Resolve MCMAddress (InstanceAddress hex) to current contract ID before submitting
-	mcmsContractID, err := ResolveMCMSContractID(ctx, e.Inspector.StateServiceClient(), e.mcmsParty, metadata.MCMAddress)
+	mcmsContractID, err := ResolveMCMSContractID(ctx, e.Inspector.StateServiceClient(), e.mcmsParties, metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to resolve MCMS contract ID: %w", err)
 	}
@@ -81,7 +81,7 @@ func (e Executor) ExecuteOperation(
 	}
 	if cantonOpFields.TargetCid == "" {
 		if cantonOpFields.TargetTemplateID != "" {
-			resolved, resolveErr := ResolveTargetContractID(ctx, e.Inspector.StateServiceClient(), e.mcmsParty, cantonOpFields.TargetInstanceAddress, cantonOpFields.TargetTemplateID)
+			resolved, resolveErr := ResolveTargetContractID(ctx, e.Inspector.StateServiceClient(), e.mcmsParties, cantonOpFields.TargetInstanceAddress, cantonOpFields.TargetTemplateID)
 			if resolveErr != nil {
 				return types.TransactionResult{}, fmt.Errorf("resolve target contract ID: %w", resolveErr)
 			}
@@ -125,7 +125,7 @@ func (e Executor) ExecuteOperation(
 	stateClient := e.Inspector.StateServiceClient()
 	targetCids := make(map[cantontypes.TEXT]cantontypes.CONTRACT_ID)
 	for _, cid := range cantonOpFields.ContractIds {
-		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, e.mcmsParty, cid)
+		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, e.mcmsParties, cid)
 		if err != nil {
 			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, err)
 		}
@@ -161,7 +161,7 @@ func (e Executor) ExecuteOperation(
 			WorkflowId: "mcms-execute-op",
 			CommandId:  commandID,
 			ActAs:      []string{e.submittingParty},
-			ReadAs:     []string{e.mcmsParty},
+			ReadAs:     e.mcmsParties,
 			Commands: []*apiv2.Command{{
 				Command: &apiv2.Command_Exercise{
 					Exercise: &apiv2.ExerciseCommand{
@@ -222,7 +222,7 @@ func (e Executor) SetRoot(
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
 	// Resolve MCMAddress (InstanceAddress hex) to current contract ID before submitting
-	mcmsContractID, err := ResolveMCMSContractID(ctx, e.Inspector.StateServiceClient(), e.mcmsParty, metadata.MCMAddress)
+	mcmsContractID, err := ResolveMCMSContractID(ctx, e.Inspector.StateServiceClient(), e.mcmsParties, metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to resolve MCMS contract ID: %w", err)
 	}
@@ -320,7 +320,7 @@ func (e Executor) SetRoot(
 			WorkflowId: "mcms-set-root",
 			CommandId:  commandID,
 			ActAs:      []string{e.submittingParty},
-			ReadAs:     []string{e.mcmsParty},
+			ReadAs:     e.mcmsParties,
 			Commands: []*apiv2.Command{{
 				Command: &apiv2.Command_Exercise{
 					Exercise: &apiv2.ExerciseCommand{

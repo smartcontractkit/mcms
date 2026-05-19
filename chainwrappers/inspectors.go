@@ -57,7 +57,11 @@ func BuildInspector(
 			return nil, fmt.Errorf("missing Canton chain participant for selector %d", rawSelector)
 		}
 		participant := ch.Participants[0]
-		return cantonsdk.NewInspector(participant.LedgerServices.State, participant.PartyID, cantonRole(action)), nil
+		mcmsParties := make([]string, len(ch.Participants))
+		for i, p := range ch.Participants {
+			mcmsParties[i] = p.PartyID
+		}
+		return cantonsdk.NewInspector(participant.LedgerServices.State, mcmsParties, cantonRole(action)), nil
 	case chainsel.FamilyEVM:
 		client, ok := chains.EVMClient(rawSelector)
 		if !ok {

@@ -25,7 +25,7 @@ type TimelockProposalTestSuite struct {
 func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	ctx := s.T().Context()
 
-	inspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	inspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 	currentOpCount, err := inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "get current op count")
 
@@ -103,7 +103,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
-	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err)
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
@@ -122,7 +122,7 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	}
 
 	// Timelock execution: wait for ready then execute batch
-	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, s.participant.PartyID)
+	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, []string{s.participant.PartyID})
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 		s.chainSelector: timelockExecutor,
 	}

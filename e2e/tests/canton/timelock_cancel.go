@@ -27,7 +27,7 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 
 	// --- Phase 1: Schedule a batch (same as TestTimelockProposal) ---
 
-	proposerInspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	proposerInspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 	currentOpCount, err := proposerInspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "get current op count")
 
@@ -100,7 +100,7 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
-	proposerExecutor, err := cantonsdk.NewExecutor(encoder, proposerInspector, s.participant.LedgerServices.Command, s.submittingParty, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	proposerExecutor, err := cantonsdk.NewExecutor(encoder, proposerInspector, s.participant.LedgerServices.Command, s.submittingParty, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err)
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: proposerExecutor,
@@ -122,7 +122,7 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 	// --- Phase 2: Cancel the batch ---
 
 	// Get canceller op count
-	cancellerInspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleCanceller)
+	cancellerInspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleCanceller)
 	cancellerOpCount, err := cancellerInspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err)
 
@@ -173,7 +173,7 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 	cancelEncoders, err := cancelMcmsProposal.GetEncoders()
 	s.Require().NoError(err)
 	cancelEncoder := cancelEncoders[s.chainSelector].(*cantonsdk.Encoder)
-	cancellerExecutor, err := cantonsdk.NewExecutor(cancelEncoder, cancellerInspector, s.participant.LedgerServices.Command, s.submittingParty, s.participant.PartyID, cantonsdk.TimelockRoleCanceller)
+	cancellerExecutor, err := cantonsdk.NewExecutor(cancelEncoder, cancellerInspector, s.participant.LedgerServices.Command, s.submittingParty, []string{s.participant.PartyID}, cantonsdk.TimelockRoleCanceller)
 	s.Require().NoError(err)
 	cancelExecutors := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: cancellerExecutor,
@@ -195,7 +195,7 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 	time.Sleep(scheduleProposal.Delay.Duration + time.Second)
 
 	// Attempt to execute via timelock should fail because operation was cancelled
-	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, s.participant.PartyID)
+	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, []string{s.participant.PartyID})
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 		s.chainSelector: timelockExecutor,
 	}

@@ -22,23 +22,23 @@ var _ sdk.Configurer = &Configurer{}
 type Configurer struct {
 	client      apiv2.CommandServiceClient
 	stateClient apiv2.StateServiceClient
-	// The party that owns the MCMS deployment.
-	mcmsParty string
-	role      TimelockRole
+	// The parties that own the MCMS deployment.
+	mcmsParties []string
+	role        TimelockRole
 }
 
-func NewConfigurer(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, mcmsParty string, role TimelockRole) (*Configurer, error) {
+func NewConfigurer(client apiv2.CommandServiceClient, stateClient apiv2.StateServiceClient, mcmsParties []string, role TimelockRole) (*Configurer, error) {
 	return &Configurer{
 		client:      client,
 		stateClient: stateClient,
-		mcmsParty:   mcmsParty,
+		mcmsParties: mcmsParties,
 		role:        role,
 	}, nil
 }
 
 func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.Config, clearRoot bool) (types.TransactionResult, error) {
 	// mcmsAddr is InstanceAddress hex for Canton; resolve to current contract ID
-	mcmsContractID, err := ResolveMCMSContractID(ctx, c.stateClient, c.mcmsParty, mcmsAddr)
+	mcmsContractID, err := ResolveMCMSContractID(ctx, c.stateClient, c.mcmsParties, mcmsAddr)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to resolve MCMS contract ID: %w", err)
 	}
@@ -94,7 +94,8 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 		Commands: &apiv2.Commands{
 			WorkflowId: "mcms-set-config",
 			CommandId:  commandID,
-			ActAs:      []string{c.mcmsParty},
+			ActAs:      []string{c.mcmsParties[0]},
+			ReadAs:     c.mcmsParties,
 			Commands: []*apiv2.Command{{
 				Command: &apiv2.Command_Exercise{
 					Exercise: &apiv2.ExerciseCommand{

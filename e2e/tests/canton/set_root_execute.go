@@ -25,7 +25,7 @@ type SetRootExecuteTestSuite struct {
 func (s *SetRootExecuteTestSuite) TestSetRootAndExecute() {
 	ctx := s.T().Context()
 
-	inspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	inspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 	currentOpCount, err := inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "get current op count")
 
@@ -97,7 +97,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecute() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
-	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err)
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,
@@ -114,7 +114,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecute() {
 		s.Require().NoError(execErr, "execute scheduled operation %d", i)
 	}
 
-	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, s.participant.PartyID)
+	timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, []string{s.participant.PartyID})
 	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 		s.chainSelector: timelockExecutor,
 	}
@@ -140,7 +140,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecute() {
 func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 	ctx := s.T().Context()
 
-	inspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	inspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 	startOpCount, err := inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err, "get starting op count")
 
@@ -214,7 +214,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 		encoders, err := proposal.GetEncoders()
 		s.Require().NoError(err)
 		encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
-		executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+		executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 		s.Require().NoError(err)
 		executors := map[types.ChainSelector]sdk.Executor{
 			s.chainSelector: executor,
@@ -230,7 +230,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 			s.Require().NoError(execErr, "execute scheduled operation %d of proposal %d", j, i+1)
 		}
 
-		timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, s.participant.PartyID)
+		timelockExecutor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, []string{s.participant.PartyID})
 		timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 			s.chainSelector: timelockExecutor,
 		}
@@ -260,7 +260,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 func (s *SetRootExecuteTestSuite) TestSetRootInvalidSignature() {
 	ctx := s.T().Context()
 
-	inspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	inspector := cantonsdk.NewInspector(s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 	currentOpCount, err := inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err)
 
@@ -330,7 +330,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootInvalidSignature() {
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
 	encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
-	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, s.participant.PartyID, cantonsdk.TimelockRoleProposer)
+	executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
 	s.Require().NoError(err)
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.chainSelector: executor,

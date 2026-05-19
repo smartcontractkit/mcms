@@ -21,7 +21,7 @@ type TimelockInspectionTestSuite struct {
 func (s *TimelockInspectionTestSuite) SetupSuite() {
 	s.TestSuite.SetupSuite()
 	s.DeployMCMSContract()
-	s.inspector = cantonsdk.NewTimelockInspector(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, s.participant.PartyID)
+	s.inspector = cantonsdk.NewTimelockInspector(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, []string{s.participant.PartyID})
 }
 
 // TestGetProposers tests that GetProposers returns proposer signers from the MCMS contract.
@@ -152,7 +152,7 @@ func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 // TestTimelockExecutorExecuteEmptyBatch tests that Execute returns an error for empty batch.
 func (s *TimelockInspectionTestSuite) TestTimelockExecutorExecuteEmptyBatch() {
 	ctx := s.T().Context()
-	executor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, s.participant.PartyID)
+	executor := cantonsdk.NewTimelockExecutor(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, s.submittingParty, []string{s.participant.PartyID})
 	bop := mcmstypes.BatchOperation{
 		ChainSelector: s.chainSelector,
 		Transactions:  []mcmstypes.Transaction{},
