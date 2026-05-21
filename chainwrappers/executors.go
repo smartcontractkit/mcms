@@ -8,6 +8,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -164,6 +165,32 @@ func BuildExecutor(
 			Wallet:  signer,
 			Amount:  ton.DefaultSendAmount,
 		})
+
+	case chainsel.FamilyCanton:
+		ch, ok := chains.CantonChain(rawSelector)
+		if !ok || len(ch.Participants) == 0 {
+			return nil, fmt.Errorf("missing Canton chain participant for selector %d", rawSelector)
+		}
+		participant := ch.Participants[0]
+		mcmsParties := make([]string, len(ch.Participants))
+		for i, p := range ch.Participants {
+			mcmsParties[i] = p.PartyID
+		}
+		cantonEncoder, ok := encoder.(*cantonsdk.Encoder)
+		if !ok {
+			return nil, fmt.Errorf("invalid encoder type for selector %d: %T", chainSelector, encoder)
+		}
+		role := cantonRole(action)
+		inspector := cantonsdk.NewInspector(participant.LedgerServices.State, mcmsParties, role)
+
+		return cantonsdk.NewExecutor(
+			cantonEncoder,
+			inspector,
+			participant.LedgerServices.Command,
+			participant.PartyID,
+			mcmsParties,
+			role,
+		)
 
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)

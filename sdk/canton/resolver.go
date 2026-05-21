@@ -124,7 +124,11 @@ func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 			}
 
 			if activeContract != nil {
-				return nil, fmt.Errorf("multiple active contracts found for InstanceAddress %s", instanceAddress.String())
+				existingOffset := activeContract.GetCreatedEvent().GetOffset()
+				newOffset := c.ActiveContract.GetCreatedEvent().GetOffset()
+				if newOffset <= existingOffset {
+					continue
+				}
 			}
 			activeContract = c.ActiveContract
 		}

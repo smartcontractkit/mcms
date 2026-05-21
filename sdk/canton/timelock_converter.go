@@ -37,9 +37,15 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	predecessor common.Hash,
 	salt common.Hash,
 ) ([]types.Operation, common.Hash, error) {
-	var metadataFields AdditionalFieldsMetadata
-	if err := json.Unmarshal(metadata.AdditionalFields, &metadataFields); err != nil {
-		return nil, common.Hash{}, fmt.Errorf("unmarshal metadata additional fields: %w", err)
+	metadataFields, err := resolveAdditionalFieldsMetadata(
+		metadata,
+		bop,
+		uint64(len(bop.Transactions)),
+		action,
+		false,
+	)
+	if err != nil {
+		return nil, common.Hash{}, err
 	}
 
 	calls, callsForHash, allContractIds, err := buildCallsFromBatch(bop)

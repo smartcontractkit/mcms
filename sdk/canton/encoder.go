@@ -57,10 +57,15 @@ func NewEncoder(
 // HashOperation hashes an operation to get its Merkle leaf
 // Matches Canton's hashOpLeafNative from Crypto.daml with domain separator and length prefixes
 func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
-	// Unmarshal Canton-specific metadata
-	var metadataFields AdditionalFieldsMetadata
-	if err := json.Unmarshal(metadata.AdditionalFields, &metadataFields); err != nil {
-		return common.Hash{}, fmt.Errorf("failed to unmarshal metadata additional fields: %w", err)
+	metadataFields, err := resolveAdditionalFieldsMetadata(
+		metadata,
+		types.BatchOperation{ChainSelector: e.ChainSelector, Transactions: []types.Transaction{op.Transaction}},
+		e.TxCount,
+		types.TimelockActionSchedule,
+		e.OverridePreviousRoot,
+	)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to resolve metadata additional fields: %w", err)
 	}
 
 	// Unmarshal Canton-specific operation fields
@@ -99,10 +104,15 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 // HashMetadata hashes metadata to get its Merkle leaf
 // Matches Canton's hashMetadataLeafNative from Crypto.daml with domain separator and length prefixes
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
-	// Unmarshal Canton-specific metadata
-	var metadataFields AdditionalFieldsMetadata
-	if err := json.Unmarshal(metadata.AdditionalFields, &metadataFields); err != nil {
-		return common.Hash{}, fmt.Errorf("failed to unmarshal metadata additional fields: %w", err)
+	metadataFields, err := resolveAdditionalFieldsMetadata(
+		metadata,
+		types.BatchOperation{ChainSelector: e.ChainSelector},
+		e.TxCount,
+		types.TimelockActionSchedule,
+		e.OverridePreviousRoot,
+	)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("failed to resolve metadata additional fields: %w", err)
 	}
 
 	// Build override flag
