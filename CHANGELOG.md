@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.45.1](https://github.com/smartcontractkit/mcms/compare/v0.45.0...v0.45.1) (2026-05-27)
+
+
+### Miscellaneous
+
+* release 0.45.1 ([#768](https://github.com/smartcontractkit/mcms/issues/768)) ([018741c](https://github.com/smartcontractkit/mcms/commit/018741c5af04f2a7198c7fdb908e8d11f82c8fd6))
+
 ## [0.45.0](https://github.com/smartcontractkit/mcms/compare/v0.44.0...v0.45.0) (2026-05-18)
 
 
