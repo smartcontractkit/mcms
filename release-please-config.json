@@ -9,7 +9,7 @@
   },
   "changelog-sections": [
     { "type": "build", "section": "Builds", "hidden": true },
-    { "type": "chore", "section": "Miscellaneous", "hidden": true },
+    { "type": "chore", "section": "Miscellaneous" },
     { "type": "ci", "section": "Continuous Integrations", "hidden": true },
     { "type": "docs", "section": "Documentation", "hidden": true },
     { "type": "deps", "section": "Dependencies" },
