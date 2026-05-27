@@ -9,8 +9,9 @@
   },
   "changelog-sections": [
     { "type": "build", "section": "Builds", "hidden": true },
-    { "type": "chore", "section": "Miscellaneous", "hidden": true },
+    { "type": "chore", "section": "Miscellaneous", "bump": "patch" },
     { "type": "ci", "section": "Continuous Integrations", "hidden": true },
+    { "type": "deps", "section": "Dependencies", "bump": "patch" },
     { "type": "docs", "section": "Documentation", "hidden": true },
     { "type": "feat", "section": "Features" },
     { "type": "fix", "section": "Bug Fixes" },
