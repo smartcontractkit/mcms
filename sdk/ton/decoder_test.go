@@ -14,6 +14,7 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
@@ -37,7 +38,7 @@ func TestDecoder(t *testing.T) {
 	tests := []struct {
 		name               string
 		give               types.Operation
-		contractInterfaces string
+		contractInterfaces tvm.FullyQualifiedName
 		want               *ton.DecodedOperation
 		wantErr            string
 	}{
@@ -49,13 +50,15 @@ func TestDecoder(t *testing.T) {
 					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 					cell.BeginCell().ToSlice(),
 					big.NewInt(0),
-					"RBACTimelock",
+					bindings.ShortTimelock,
+					nil,
+					"",
 					[]string{"topUp"},
 				)),
 			},
-			contractInterfaces: bindings.TypeRBAC,
+			contractInterfaces: "",
 			want: &ton.DecodedOperation{
-				ContractType: bindings.TypeRBAC,
+				ContractType: "",
 				MsgType:      "",
 				MsgDecoded:   map[string]any{},
 				InputKeys:    []string{},
@@ -71,7 +74,9 @@ func TestDecoder(t *testing.T) {
 					address.MustParseAddr("EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-WeDpcrtWzA2jM8"),
 					grantRoleData.ToBuilder().ToSlice(),
 					big.NewInt(0),
-					"RBACTimelock",
+					bindings.ShortTimelock,
+					nil,
+					bindings.TypeTimelock,
 					[]string{"grantRole"},
 				)),
 			},
@@ -97,7 +102,7 @@ func TestDecoder(t *testing.T) {
 			t.Parallel()
 
 			d := ton.NewDecoder(bindings.Registry)
-			got, err := d.Decode(tt.give.Transaction, tt.contractInterfaces)
+			got, err := d.Decode(tt.give.Transaction, string(tt.contractInterfaces))
 			if tt.wantErr != "" {
 				require.Error(t, err)
 				assert.EqualError(t, err, tt.wantErr)

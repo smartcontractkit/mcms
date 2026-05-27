@@ -1,5 +1,30 @@
 # @smartcontractkit/mcms
 
+## [0.45.0](https://github.com/smartcontractkit/mcms/compare/v0.44.0...v0.45.0) (2026-05-18)
+
+
+### Features
+
+* [NONEVM-4520] ContractVersion in OperationMetadata ([#751](https://github.com/smartcontractkit/mcms/issues/751)) ([f2eaf56](https://github.com/smartcontractkit/mcms/commit/f2eaf568d95024acca057b26528779f246e389e1))
+
+## [0.44.0](https://github.com/smartcontractkit/mcms/compare/v0.43.0...v0.44.0) (2026-05-15)
+
+
+### Features
+
+* [NONEVM-4520] ContractTypeAndVersion in OperationMetadata ([#751](https://github.com/smartcontractkit/mcms/issues/751)) ([16b18da](https://github.com/smartcontractkit/mcms/commit/16b18dab10da43769636361a32525db3b57ffe99))
+* support latest chain selectors in v1.0.100 ([#753](https://github.com/smartcontractkit/mcms/issues/753)) ([f5df18e](https://github.com/smartcontractkit/mcms/commit/f5df18eb1d2bcec295c8041fe69be75b0f05ab6a))
+
+## 0.43.0
+
+### Minor Changes
+
+- [#735](https://github.com/smartcontractkit/mcms/pull/735) [`3b6fe74`](https://github.com/smartcontractkit/mcms/commit/3b6fe74ad9b88fe196f36d03826f950fef443d9b) Thanks [@ecPablo](https://github.com/ecPablo)! - bump go version to 1.26.2
+
+### Patch Changes
+
+- [#730](https://github.com/smartcontractkit/mcms/pull/730) [`888e436`](https://github.com/smartcontractkit/mcms/commit/888e436483abcefd823086dd31bcc90fe79d5e8d) Thanks [@FelixFan1992](https://github.com/FelixFan1992)! - add stellar encoder support
+
 ## 0.42.0
 
 ### Minor Changes
