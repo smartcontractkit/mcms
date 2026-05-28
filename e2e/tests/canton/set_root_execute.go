@@ -146,10 +146,10 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 
 	mcmsTargetInstanceAddr := fmt.Sprintf("%s@%s", s.mcmsId, s.participant.PartyID)
 
-	for i := uint64(0); i < 2; i++ {
+	for i := range uint64(2) {
 		currentOpCount := startOpCount + i
 
-		metadata, err := cantonsdk.NewChainMetadata(
+		metadata, metaErr := cantonsdk.NewChainMetadata(
 			currentOpCount,
 			currentOpCount+1,
 			s.chainId,
@@ -158,7 +158,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 			i > 0,
 			s.mcmsId,
 		)
-		s.Require().NoError(err)
+		s.Require().NoError(metaErr)
 
 		validUntil := uint32(time.Now().Add(24 * time.Hour).Unix())
 		delay := types.NewDuration(1 * time.Second)
@@ -170,8 +170,8 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 			TargetCid:             "",
 			ContractIds:           []string{},
 		}
-		opAdditionalFieldsBytes, err := json.Marshal(opAdditionalFields)
-		s.Require().NoError(err)
+		opAdditionalFieldsBytes, marshalErr := json.Marshal(opAdditionalFields)
+		s.Require().NoError(marshalErr)
 
 		bop := types.BatchOperation{
 			ChainSelector: s.chainSelector,
@@ -182,7 +182,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 			}},
 		}
 
-		timelockProposal, err := mcms.NewTimelockProposalBuilder().
+		timelockProposal, buildErr := mcms.NewTimelockProposalBuilder().
 			SetVersion("v1").
 			SetValidUntil(validUntil).
 			SetDescription(fmt.Sprintf("Canton multi-op proposal %d - UpdateMinDelay", i+1)).
@@ -192,35 +192,35 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 			SetDelay(delay).
 			AddOperation(bop).
 			Build()
-		s.Require().NoError(err)
+		s.Require().NoError(buildErr)
 
 		converter := cantonsdk.NewTimelockConverter()
 		convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
 			s.chainSelector: converter,
 		}
-		proposal, _, err := timelockProposal.Convert(ctx, convertersMap)
-		s.Require().NoError(err)
+		proposal, _, convertErr := timelockProposal.Convert(ctx, convertersMap)
+		s.Require().NoError(convertErr)
 
 		inspectorsMap := map[types.ChainSelector]sdk.Inspector{
 			s.chainSelector: inspector,
 		}
-		signable, err := mcms.NewSignable(&proposal, inspectorsMap)
-		s.Require().NoError(err)
-		_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(s.sortedSigners[0]))
-		s.Require().NoError(err)
-		_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(s.sortedSigners[1]))
-		s.Require().NoError(err)
+		signable, signableErr := mcms.NewSignable(&proposal, inspectorsMap)
+		s.Require().NoError(signableErr)
+		_, signErr := signable.SignAndAppend(mcms.NewPrivateKeySigner(s.sortedSigners[0]))
+		s.Require().NoError(signErr)
+		_, signErr = signable.SignAndAppend(mcms.NewPrivateKeySigner(s.sortedSigners[1]))
+		s.Require().NoError(signErr)
 
-		encoders, err := proposal.GetEncoders()
-		s.Require().NoError(err)
+		encoders, encErr := proposal.GetEncoders()
+		s.Require().NoError(encErr)
 		encoder := encoders[s.chainSelector].(*cantonsdk.Encoder)
-		executor, err := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
-		s.Require().NoError(err)
+		executor, execErr := cantonsdk.NewExecutor(encoder, inspector, s.participant.LedgerServices.Command, s.submittingParty, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
+		s.Require().NoError(execErr)
 		executors := map[types.ChainSelector]sdk.Executor{
 			s.chainSelector: executor,
 		}
-		executable, err := mcms.NewExecutable(&proposal, executors)
-		s.Require().NoError(err)
+		executable, exeErr := mcms.NewExecutable(&proposal, executors)
+		s.Require().NoError(exeErr)
 
 		_, err = executable.SetRoot(ctx, s.chainSelector)
 		s.Require().NoError(err)
@@ -234,8 +234,8 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 		timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
 			s.chainSelector: timelockExecutor,
 		}
-		timelockExecutable, err := mcms.NewTimelockExecutable(ctx, timelockProposal, timelockExecutors)
-		s.Require().NoError(err)
+		timelockExecutable, tlExeErr := mcms.NewTimelockExecutable(ctx, timelockProposal, timelockExecutors)
+		s.Require().NoError(tlExeErr)
 
 		time.Sleep(timelockProposal.Delay.Duration + time.Second)
 		s.Require().NoError(timelockExecutable.IsReady(ctx), "timelock operation %d should become ready", i+1)
@@ -245,8 +245,8 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 			s.Require().NoError(terr, "timelock execute operation %d of proposal %d", j, i+1)
 		}
 
-		postOpCount, err := inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
-		s.Require().NoError(err)
+		postOpCount, postCountErr := inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
+		s.Require().NoError(postCountErr)
 		s.Require().Equal(currentOpCount+1, postOpCount, "op count should be %d after proposal %d", currentOpCount+1, i+1)
 	}
 

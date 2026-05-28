@@ -35,7 +35,7 @@ func (s *mcmsExecutorSetup) SetupSuite() {
 
 	// Create 3 signers for 2-of-3 multisig
 	s.signers = make([]*ecdsa.PrivateKey, 3)
-	for i := 0; i < 3; i++ {
+	for i := range 3 {
 		key, err := crypto.GenerateKey()
 		s.Require().NoError(err)
 		s.signers[i] = key
@@ -47,6 +47,7 @@ func (s *mcmsExecutorSetup) SetupSuite() {
 	slices.SortFunc(signersCopy, func(a, b *ecdsa.PrivateKey) int {
 		addrA := crypto.PubkeyToAddress(a.PublicKey)
 		addrB := crypto.PubkeyToAddress(b.PublicKey)
+
 		return addrA.Cmp(addrB)
 	})
 	s.sortedSigners = signersCopy

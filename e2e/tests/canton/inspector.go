@@ -131,7 +131,7 @@ func (s *MCMSInspectorTestSuite) TestGetRootMetadata() {
 // Helper to verify config matches
 func (s *MCMSInspectorTestSuite) verifyConfigMatch(expected, actual *mcmstypes.Config) {
 	s.Require().Equal(expected.Quorum, actual.Quorum, "quorum should match")
-	s.Require().Equal(len(expected.Signers), len(actual.Signers), "number of signers should match")
+	s.Require().Len(actual.Signers, len(expected.Signers), "number of signers should match")
 
 	// Verify signers
 	for i, expectedSigner := range expected.Signers {
@@ -139,7 +139,7 @@ func (s *MCMSInspectorTestSuite) verifyConfigMatch(expected, actual *mcmstypes.C
 	}
 
 	// Verify group signers recursively
-	s.Require().Equal(len(expected.GroupSigners), len(actual.GroupSigners), "number of group signers should match")
+	s.Require().Len(actual.GroupSigners, len(expected.GroupSigners), "number of group signers should match")
 	for i, expectedGroup := range expected.GroupSigners {
 		s.verifyConfigMatch(&expectedGroup, &actual.GroupSigners[i])
 	}

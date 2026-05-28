@@ -105,7 +105,7 @@ func (s *TimelockInspectionTestSuite) TestGetMinDelay() {
 	ctx := s.T().Context()
 	delay, err := s.inspector.GetMinDelay(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err)
-	s.Require().GreaterOrEqual(delay, uint64(0))
+	s.Require().NotZero(delay)
 }
 
 // TestTimelockConverter tests that ConvertBatchToChainOperations returns one ScheduleBatch operation and a non-zero op ID.

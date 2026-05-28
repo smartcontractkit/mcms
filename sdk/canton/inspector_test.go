@@ -8,11 +8,14 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	"github.com/smartcontractkit/go-daml/pkg/types"
-	mcmstypes "github.com/smartcontractkit/mcms/types"
 	"github.com/stretchr/testify/require"
+
+	mcmstypes "github.com/smartcontractkit/mcms/types"
 )
 
 func TestToConfig(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name        string
 		description string
@@ -157,13 +160,15 @@ func TestToConfig(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			result, err := toConfig(tt.input)
 			require.NoError(t, err, tt.description)
 			require.NotNil(t, result)
 
 			// Compare the result with expected
 			require.Equal(t, tt.expected.Quorum, result.Quorum, "quorum mismatch")
-			require.Equal(t, len(tt.expected.Signers), len(result.Signers), "signers count mismatch")
+			require.Len(t, result.Signers, len(tt.expected.Signers), "signers count mismatch")
 
 			// Compare signers
 			for i, expectedSigner := range tt.expected.Signers {
@@ -177,11 +182,13 @@ func TestToConfig(t *testing.T) {
 }
 
 func compareGroupSigners(t *testing.T, expected, actual []mcmstypes.Config) {
-	require.Equal(t, len(expected), len(actual), "group signers count mismatch")
+	t.Helper()
+
+	require.Len(t, actual, len(expected), "group signers count mismatch")
 
 	for i := range expected {
 		require.Equal(t, expected[i].Quorum, actual[i].Quorum, "group %d quorum mismatch", i)
-		require.Equal(t, len(expected[i].Signers), len(actual[i].Signers), "group %d signers count mismatch", i)
+		require.Len(t, actual[i].Signers, len(expected[i].Signers), "group %d signers count mismatch", i)
 
 		for j, expectedSigner := range expected[i].Signers {
 			require.Equal(t, expectedSigner, actual[i].Signers[j], "group %d signer mismatch at index %d", i, j)

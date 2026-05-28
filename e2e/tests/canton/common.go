@@ -17,13 +17,13 @@ import (
 	"github.com/smartcontractkit/chainlink-deployments-framework/chain/canton"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 	"github.com/smartcontractkit/go-daml/pkg/types"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/sdk"
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	mcmstypes "github.com/smartcontractkit/mcms/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type TestSuite struct {
@@ -57,7 +57,7 @@ func (s *TestSuite) DeployMCMSContract() {
 	chainId := int64(1)
 	mcmsId := "mcms-" + uuid.New().String()[:8]
 
-	mcmsInstanceAddr := s.createMCMS(s.T().Context(), s.participant, mcmsOwner, chainId, mcmsId, mcmsapi.RoleProposer)
+	mcmsInstanceAddr := s.createMCMS(s.T().Context(), s.participant, mcmsOwner, chainId, mcmsId)
 	s.mcmsInstanceAddress = mcmsInstanceAddr
 	s.mcmsId = mcmsId
 	// multisigId format: instanceId@partyId-role (see MCMS.Main.daml makeMcmsId)
@@ -139,7 +139,7 @@ func (s *mcmsExecutorSetup) DeployCounterContract() {
 }
 
 // createMCMS creates an MCMS contract and returns its InstanceAddress hex (stable reference for Canton).
-func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participant, owner string, chainId int64, mcmsId string, role mcmsapi.Role) string {
+func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participant, owner string, chainId int64, mcmsId string) string {
 	// Create empty config
 	emptyConfig := mcmsapi.MultisigConfig{
 		Signers:      []mcmsapi.SignerInfo{},
@@ -227,6 +227,7 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participa
 			if normalizedTemplateID == cantonsdk.MCMSTemplateKey {
 				mcmsContractID = createdEv.GetContractId()
 				mcmsTemplateID = templateID
+
 				break
 			}
 		}
@@ -237,6 +238,7 @@ func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participa
 
 	// Return InstanceAddress hex so callers use a stable reference (contract ID changes after SetRoot/ExecuteOp)
 	instanceAddress := contracts.InstanceID(mcmsId).RawInstanceAddress(types.PARTY(owner)).InstanceAddress()
+
 	return instanceAddress.Hex()
 }
 
