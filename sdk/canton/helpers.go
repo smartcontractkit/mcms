@@ -9,12 +9,31 @@ import (
 
 const (
 	MCMSTemplateKey = "MCMS.Main:MCMS"
+
+	rawDataKeyNewMCMSContractID = "NewMCMSContractID"
+	rawDataKeyNewMCMSTemplateID = "NewMCMSTemplateID"
+	rawDataKeyRawTx             = "RawTx"
+
+	instanceAddressHexLen = 64
+	hexWordLen            = 64
+	templateIDPartCount   = 3
+	hexEncodedByteLen     = 2
+	maxMCMSGroups         = 32
+	microsecondsPerSecond = 1_000_000
 )
+
+func rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID string, rawTx any) map[string]any {
+	return map[string]any{
+		rawDataKeyNewMCMSContractID: newMCMSContractID,
+		rawDataKeyNewMCMSTemplateID: newMCMSTemplateID,
+		rawDataKeyRawTx:             rawTx,
+	}
+}
 
 func NormalizeTemplateKey(tid string) string {
 	tid = strings.TrimPrefix(tid, "#")
 	parts := strings.Split(tid, ":")
-	if len(parts) < 3 {
+	if len(parts) < templateIDPartCount {
 		return tid
 	}
 
@@ -27,7 +46,7 @@ func parseTemplateIDFromString(templateID string) (packageID, moduleName, entity
 		return "", "", "", fmt.Errorf("template ID must start with #")
 	}
 	parts := strings.Split(templateID, ":")
-	if len(parts) != 3 {
+	if len(parts) != templateIDPartCount {
 		return "", "", "", fmt.Errorf("template ID must have format #package:module:entity, got: %s", templateID)
 	}
 
@@ -44,6 +63,7 @@ func formatTemplateID(id *apiv2.Identifier) string {
 	if id == nil {
 		return ""
 	}
+
 	return id.GetPackageId() + ":" + id.GetModuleName() + ":" + id.GetEntityName()
 }
 

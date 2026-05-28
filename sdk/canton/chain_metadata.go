@@ -91,7 +91,7 @@ func NewChainMetadata(
 		return types.ChainMetadata{}, errors.New("MCMS InstanceAddress is required")
 	}
 	hexStr := strings.TrimPrefix(mcmsInstanceAddress, "0x")
-	if len(hexStr) != 64 {
+	if len(hexStr) != instanceAddressHexLen {
 		return types.ChainMetadata{}, fmt.Errorf("MCMS InstanceAddress hex must be 64 characters (with or without 0x prefix), got %d", len(hexStr))
 	}
 

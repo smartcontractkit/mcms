@@ -8,11 +8,12 @@ import (
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/google/uuid"
-	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 
 	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
+	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
+
 	"github.com/smartcontractkit/mcms/sdk"
 )
 
@@ -53,6 +54,7 @@ func (t *TimelockInspector) GetProposers(ctx context.Context, address string) ([
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
+
 	return extractSignerAddresses(mcmsContract.Proposer.Config.Signers), nil
 }
 
@@ -67,6 +69,7 @@ func (t *TimelockInspector) GetBypassers(ctx context.Context, address string) ([
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
+
 	return extractSignerAddresses(mcmsContract.Bypasser.Config.Signers), nil
 }
 
@@ -76,6 +79,7 @@ func (t *TimelockInspector) GetCancellers(ctx context.Context, address string) (
 	if err != nil {
 		return nil, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
+
 	return extractSignerAddresses(mcmsContract.Canceller.Config.Signers), nil
 }
 
@@ -85,6 +89,7 @@ func extractSignerAddresses(signers []mcmsapi.SignerInfo) []string {
 	for i, s := range signers {
 		result[i] = string(s.SignerAddress)
 	}
+
 	return result
 }
 
@@ -140,7 +145,8 @@ func (t *TimelockInspector) GetMinDelay(ctx context.Context, address string) (ui
 	if us < 0 {
 		return 0, fmt.Errorf("GetMinDelay: invalid microseconds %d", us)
 	}
-	return uint64(us / 1_000_000), nil
+
+	return uint64(us / microsecondsPerSecond), nil
 }
 
 func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address string, choice string, opID [32]byte) (bool, error) {
@@ -178,6 +184,7 @@ func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address stri
 	if ex == nil {
 		return false, fmt.Errorf("%s: first event is not exercise", choice)
 	}
+
 	return valueToBool(ex.GetExerciseResult())
 }
 
@@ -239,5 +246,6 @@ func valueToBool(v *apiv2.Value) (bool, error) {
 			}
 		}
 	}
+
 	return false, fmt.Errorf("value is not Bool or Bool variant: %T", v.Sum)
 }

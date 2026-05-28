@@ -14,11 +14,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
-
 	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
+	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
+
 	"github.com/smartcontractkit/mcms/internal/utils/abi"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -67,7 +67,7 @@ func (e Executor) ExecuteOperation(
 	}
 
 	// Resolve MCMAddress (InstanceAddress hex) to current contract ID before submitting
-	mcmsContractID, err := ResolveMCMSContractID(ctx, e.Inspector.StateServiceClient(), e.mcmsParties, metadata.MCMAddress)
+	mcmsContractID, err := ResolveMCMSContractID(ctx, e.StateServiceClient(), e.mcmsParties, metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to resolve MCMS contract ID: %w", err)
 	}
@@ -80,17 +80,16 @@ func (e Executor) ExecuteOperation(
 		return types.TransactionResult{}, errors.New("functionName is required in operation additional fields")
 	}
 	if cantonOpFields.TargetCid == "" {
-		if cantonOpFields.TargetTemplateID != "" {
-			resolved, resolveErr := ResolveTargetContractID(ctx, e.Inspector.StateServiceClient(), e.mcmsParties, cantonOpFields.TargetInstanceAddress, cantonOpFields.TargetTemplateID)
-			if resolveErr != nil {
-				return types.TransactionResult{}, fmt.Errorf("resolve target contract ID: %w", resolveErr)
-			}
-			cantonOpFields.TargetCid = resolved
-			if len(cantonOpFields.ContractIds) == 0 {
-				cantonOpFields.ContractIds = []string{resolved}
-			}
-		} else {
+		if cantonOpFields.TargetTemplateID == "" {
 			return types.TransactionResult{}, errors.New("targetCid or targetTemplateId+targetInstanceAddress is required in operation additional fields")
+		}
+		resolved, resolveErr := ResolveTargetContractID(ctx, e.StateServiceClient(), e.mcmsParties, cantonOpFields.TargetInstanceAddress, cantonOpFields.TargetTemplateID)
+		if resolveErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("resolve target contract ID: %w", resolveErr)
+		}
+		cantonOpFields.TargetCid = resolved
+		if len(cantonOpFields.ContractIds) == 0 {
+			cantonOpFields.ContractIds = []string{resolved}
 		}
 	}
 
@@ -100,8 +99,8 @@ func (e Executor) ExecuteOperation(
 		MultisigId string `json:"multisigId"`
 	}
 	if len(metadata.AdditionalFields) > 0 {
-		if err := json.Unmarshal(metadata.AdditionalFields, &metadataFields); err != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal metadata additional fields: %w", err)
+		if unmarshalErr := json.Unmarshal(metadata.AdditionalFields, &metadataFields); unmarshalErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal metadata additional fields: %w", unmarshalErr)
 		}
 	}
 
@@ -122,12 +121,12 @@ func (e Executor) ExecuteOperation(
 	}
 
 	// Resolve InstanceAddress hex values to current contract IDs before submitting.
-	stateClient := e.Inspector.StateServiceClient()
+	stateClient := e.StateServiceClient()
 	targetCids := make(map[cantontypes.TEXT]cantontypes.CONTRACT_ID)
 	for _, cid := range cantonOpFields.ContractIds {
-		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, e.mcmsParties, cid)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, err)
+		resolved, resolveErr := ResolveContractIDIfInstanceAddress(ctx, stateClient, e.mcmsParties, cid)
+		if resolveErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, resolveErr)
 		}
 		// Use the original instance address as key, resolved contract ID as value
 		targetCids[cantontypes.TEXT(cid)] = cantontypes.CONTRACT_ID(resolved)
@@ -193,6 +192,7 @@ func (e Executor) ExecuteOperation(
 			if normalized == MCMSTemplateKey {
 				newMCMSContractID = createdEv.GetContractId()
 				newMCMSTemplateID = templateID
+
 				break
 			}
 		}
@@ -205,11 +205,7 @@ func (e Executor) ExecuteOperation(
 	return types.TransactionResult{
 		Hash:        commandID,
 		ChainFamily: cselectors.FamilyCanton,
-		RawData: map[string]any{
-			"NewMCMSContractID": newMCMSContractID,
-			"NewMCMSTemplateID": newMCMSTemplateID,
-			"RawTx":             submitResp,
-		},
+		RawData:     rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID, submitResp),
 	}, nil
 }
 
@@ -222,7 +218,7 @@ func (e Executor) SetRoot(
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
 	// Resolve MCMAddress (InstanceAddress hex) to current contract ID before submitting
-	mcmsContractID, err := ResolveMCMSContractID(ctx, e.Inspector.StateServiceClient(), e.mcmsParties, metadata.MCMAddress)
+	mcmsContractID, err := ResolveMCMSContractID(ctx, e.StateServiceClient(), e.mcmsParties, metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to resolve MCMS contract ID: %w", err)
 	}
@@ -243,9 +239,9 @@ func (e Executor) SetRoot(
 	// Convert signatures to Canton RawSignature array
 	signatures := make([]mcmsapi.RawSignature, len(sortedSignatures))
 	for i, sig := range sortedSignatures {
-		pubKey, err := sig.RecoverPublicKey(cantonSignedHash)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to recover public key for signature %d: %w", i, err)
+		pubKey, recoverErr := sig.RecoverPublicKey(cantonSignedHash)
+		if recoverErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to recover public key for signature %d: %w", i, recoverErr)
 		}
 
 		// Convert public key to hex string
@@ -260,9 +256,9 @@ func (e Executor) SetRoot(
 	// Extract root metadata from ChainMetadata.AdditionalFields
 	var rootMetadata mcmsapi.RootMetadata
 	if len(metadata.AdditionalFields) > 0 {
-		var additionalFields map[string]interface{}
-		if err := json.Unmarshal(metadata.AdditionalFields, &additionalFields); err != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", err)
+		var additionalFields map[string]any
+		if unmarshalErr := json.Unmarshal(metadata.AdditionalFields, &additionalFields); unmarshalErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", unmarshalErr)
 		}
 
 		// Extract fields with type assertions
@@ -352,6 +348,7 @@ func (e Executor) SetRoot(
 			if normalized == MCMSTemplateKey {
 				newMCMSContractID = createdEv.GetContractId()
 				newMCMSTemplateID = templateID
+
 				break
 			}
 		}
@@ -364,18 +361,14 @@ func (e Executor) SetRoot(
 	return types.TransactionResult{
 		Hash:        commandID,
 		ChainFamily: cselectors.FamilyCanton,
-		RawData: map[string]any{
-			"NewMCMSContractID": newMCMSContractID,
-			"NewMCMSTemplateID": newMCMSTemplateID,
-			"RawTx":             submitResp,
-		},
+		RawData:     rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID, submitResp),
 	}, nil
 }
 
 func PadLeft32(hexStr string) string {
-	if len(hexStr) >= 64 {
-		return hexStr[:64]
+	if len(hexStr) >= hexWordLen {
+		return hexStr[:hexWordLen]
 	}
 
-	return strings.Repeat("0", 64-len(hexStr)) + hexStr
+	return strings.Repeat("0", hexWordLen-len(hexStr)) + hexStr
 }

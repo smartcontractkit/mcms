@@ -9,14 +9,14 @@ import (
 	"io"
 	"time"
 
-	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/chainwrappers"
-	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -220,7 +220,7 @@ func (m *TimelockProposal) Convert(
 			return Proposal{}, nil, fmt.Errorf("missing chain metadata for chainSelector %d", chainSelector)
 		}
 
-		family, err := types.GetChainSelectorFamily(chainSelector)
+		family, err := types.GetChainSelectorFamily(chainSelector) //nolint:contextcheck //OPT-400
 		if err != nil {
 			return Proposal{}, nil, fmt.Errorf("chain %d: %w", chainSelector, err)
 		}

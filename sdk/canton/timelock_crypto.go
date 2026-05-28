@@ -34,16 +34,16 @@ func HashTimelockOpId(calls []TimelockCallForHash, predecessor, salt string) str
 		sb.WriteString(asciiToHex(call.FunctionName))
 		// Length prefix for operationData (byte count = hex length / 2)
 		opData := encodeOperationDataForHash(call.OperationData)
-		sb.WriteString(padLeft32(intToHex(len(opData) / 2)))
+		sb.WriteString(padLeft32(intToHex(len(opData) / hexEncodedByteLen)))
 		sb.WriteString(opData)
 	}
 
 	// Length prefix for predecessor (byte count = hex length / 2)
-	sb.WriteString(padLeft32(intToHex(len(predecessor) / 2)))
+	sb.WriteString(padLeft32(intToHex(len(predecessor) / hexEncodedByteLen)))
 	sb.WriteString(predecessor)
 
 	// Length prefix for salt (byte count = hex length / 2)
-	sb.WriteString(padLeft32(intToHex(len(salt) / 2)))
+	sb.WriteString(padLeft32(intToHex(len(salt) / hexEncodedByteLen)))
 	sb.WriteString(salt)
 
 	data, err := hex.DecodeString(sb.String())
@@ -61,11 +61,12 @@ func encodeOperationDataForHash(operationData string) string {
 	if isValidHex(operationData) {
 		return operationData
 	}
+
 	return asciiToHex(operationData)
 }
 
 func isValidHex(s string) bool {
-	if len(s)%2 != 0 {
+	if len(s)%hexEncodedByteLen != 0 {
 		return false
 	}
 	for _, c := range s {
@@ -77,5 +78,6 @@ func isValidHex(s string) bool {
 			return false
 		}
 	}
+
 	return true
 }

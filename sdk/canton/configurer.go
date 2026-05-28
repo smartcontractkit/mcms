@@ -8,11 +8,11 @@ import (
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/google/uuid"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
-
 	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
+	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -127,6 +127,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 			if normalized == MCMSTemplateKey {
 				newMCMSContractID = createdEv.GetContractId()
 				newMCMSTemplateID = templateID
+
 				break
 			}
 		}
@@ -139,11 +140,6 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	return types.TransactionResult{
 		Hash:        "tx.Digest",
 		ChainFamily: cselectors.FamilyCanton,
-		RawData: map[string]any{
-			"NewMCMSContractID": newMCMSContractID,
-			"NewMCMSTemplateID": newMCMSTemplateID,
-			"RawTx":             submitResp,
-		},
+		RawData:     rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID, submitResp),
 	}, nil
-
 }

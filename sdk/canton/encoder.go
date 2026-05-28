@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -70,8 +71,8 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 
 	// Unmarshal Canton-specific operation fields
 	var opFields AdditionalFields
-	if err := json.Unmarshal(op.Transaction.AdditionalFields, &opFields); err != nil {
-		return common.Hash{}, fmt.Errorf("failed to unmarshal operation additional fields: %w", err)
+	if unmarshalErr := json.Unmarshal(op.Transaction.AdditionalFields, &opFields); unmarshalErr != nil {
+		return common.Hash{}, fmt.Errorf("failed to unmarshal operation additional fields: %w", unmarshalErr)
 	}
 
 	// Convert variable-length fields to hex
@@ -89,7 +90,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		targetAddressHex +
 		padLeft32(intToHex(len(opFields.FunctionName))) + // Length prefix for functionName
 		functionNameHex +
-		padLeft32(intToHex(len(opFields.OperationData)/2)) + // Length prefix for operationData (byte count)
+		padLeft32(intToHex(len(opFields.OperationData)/hexEncodedByteLen)) + // Length prefix for operationData (byte count)
 		opFields.OperationData
 
 	// Decode hex string and hash
@@ -129,8 +130,8 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		padLeft32(intToHex(int(metadataFields.ChainId))) +
 		padLeft32(intToHex(len(metadataFields.MultisigId))) + // Length prefix for multisigId
 		multisigIdHex +
-		padLeft32(intToHex(int(metadataFields.PreOpCount))) +
-		padLeft32(intToHex(int(metadataFields.PostOpCount))) +
+		padLeft32(uint64ToHex(metadataFields.PreOpCount)) +
+		padLeft32(uint64ToHex(metadataFields.PostOpCount)) +
 		overrideFlag
 
 	// Decode hex string and hash
@@ -147,13 +148,14 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 // padLeft32 pads hex string to 64 chars (32 bytes). Panics if input exceeds 32 bytes,
 // matching Canton's Crypto.daml behavior.
 func padLeft32(hexStr string) string {
-	if len(hexStr) > 64 {
+	if len(hexStr) > hexWordLen {
 		panic(fmt.Sprintf("padLeft32: input exceeds 32 bytes: %d hex chars", len(hexStr)))
 	}
-	if len(hexStr) == 64 {
+	if len(hexStr) == hexWordLen {
 		return hexStr
 	}
-	return strings.Repeat("0", 64-len(hexStr)) + hexStr
+
+	return strings.Repeat("0", hexWordLen-len(hexStr)) + hexStr
 }
 
 // intToHex converts a non-negative int to hex string (without padding). Panics on negative input,
@@ -165,7 +167,16 @@ func intToHex(n int) string {
 	if n == 0 {
 		return "0"
 	}
+
 	return fmt.Sprintf("%x", n)
+}
+
+func uint64ToHex(n uint64) string {
+	if n == 0 {
+		return "0"
+	}
+
+	return strconv.FormatUint(n, 16)
 }
 
 // asciiToHex converts ASCII string to hex

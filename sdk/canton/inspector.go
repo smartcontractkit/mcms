@@ -9,10 +9,10 @@ import (
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
-
 	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
-	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
+
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -65,11 +65,11 @@ func (i *Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, er
 
 	switch i.role {
 	case TimelockRoleProposer:
-		return uint64(mcmsContract.Proposer.ExpiringRoot.OpCount), nil
+		return safecast.Int64ToUint64(int64(mcmsContract.Proposer.ExpiringRoot.OpCount))
 	case TimelockRoleBypasser:
-		return uint64(mcmsContract.Bypasser.ExpiringRoot.OpCount), nil
+		return safecast.Int64ToUint64(int64(mcmsContract.Bypasser.ExpiringRoot.OpCount))
 	case TimelockRoleCanceller:
-		return uint64(mcmsContract.Canceller.ExpiringRoot.OpCount), nil
+		return safecast.Int64ToUint64(int64(mcmsContract.Canceller.ExpiringRoot.OpCount))
 	default:
 		return 0, fmt.Errorf("unknown timelock role: %s", i.role)
 	}
@@ -106,7 +106,10 @@ func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, 
 	// validUntil is a TIMESTAMP (which wraps time.Time)
 	// Convert to Unix timestamp (uint32)
 	timeVal := time.Time(expiringRoot.ValidUntil)
-	validUntil := uint32(timeVal.Unix())
+	validUntil, err := safecast.Int64ToUint32(timeVal.Unix())
+	if err != nil {
+		return common.Hash{}, 0, fmt.Errorf("valid until out of range: %w", err)
+	}
 
 	return root, validUntil, nil
 }
@@ -130,9 +133,14 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types
 	}
 
 	// For Canton, MCMAddress is the InstanceAddress hex (stable across SetRoot/ExecuteOp)
-	mcmAddress := contracts.InstanceID(string(mcmsContract.InstanceId)).RawInstanceAddress(cantontypes.PARTY(mcmsContract.Owner)).InstanceAddress().Hex()
+	mcmAddress := contracts.InstanceID(string(mcmsContract.InstanceId)).RawInstanceAddress(mcmsContract.Owner).InstanceAddress().Hex()
+	startingOpCount, castErr := safecast.Int64ToUint64(int64(rootMetadata.PreOpCount))
+	if castErr != nil {
+		return types.ChainMetadata{}, fmt.Errorf("pre op count out of range: %w", castErr)
+	}
+
 	return types.ChainMetadata{
-		StartingOpCount: uint64(rootMetadata.PreOpCount),
+		StartingOpCount: startingOpCount,
 		MCMAddress:      mcmAddress,
 	}, nil
 }
@@ -140,12 +148,12 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types
 // toConfig converts a Canton MultisigConfig to the chain-agnostic types.Config
 func toConfig(bindConfig mcmsapi.MultisigConfig) (*types.Config, error) {
 	// Group signers by group index
-	signersByGroup := make([][]common.Address, 32) // MCMS supports up to 32 groups
+	signersByGroup := make([][]common.Address, maxMCMSGroups)
 
 	for _, signer := range bindConfig.Signers {
 		groupIdx := int(signer.SignerGroup)
-		if groupIdx >= 32 {
-			return nil, fmt.Errorf("signer group index %d exceeds maximum of 31", groupIdx)
+		if groupIdx < 0 || groupIdx >= maxMCMSGroups {
+			return nil, fmt.Errorf("signer group index %d out of range [0, %d)", groupIdx, maxMCMSGroups)
 		}
 
 		// Parse signer address
@@ -154,8 +162,8 @@ func toConfig(bindConfig mcmsapi.MultisigConfig) (*types.Config, error) {
 	}
 
 	// Build the group configs
-	groups := make([]types.Config, 32)
-	for i := 0; i < 32; i++ {
+	groups := make([]types.Config, maxMCMSGroups)
+	for i := range maxMCMSGroups {
 		signers := signersByGroup[i]
 		if signers == nil {
 			signers = []common.Address{}
@@ -163,7 +171,11 @@ func toConfig(bindConfig mcmsapi.MultisigConfig) (*types.Config, error) {
 
 		quorum := uint8(0)
 		if i < len(bindConfig.GroupQuorums) {
-			quorum = uint8(bindConfig.GroupQuorums[i])
+			q, convErr := safecast.IntToUint8(int(bindConfig.GroupQuorums[i]))
+			if convErr != nil {
+				return nil, fmt.Errorf("group quorum for group %d: %w", i, convErr)
+			}
+			quorum = q
 		}
 
 		groups[i] = types.Config{
@@ -175,15 +187,22 @@ func toConfig(bindConfig mcmsapi.MultisigConfig) (*types.Config, error) {
 
 	// Link the group signers; this assumes a group's parent always has a lower index
 	// Process in reverse order to build the tree from leaves to root
-	for i := 31; i >= 0; i-- {
+	for i := maxMCMSGroups - 1; i >= 0; i-- {
 		parent := uint8(0)
 		if i < len(bindConfig.GroupParents) {
-			parent = uint8(bindConfig.GroupParents[i])
+			p, convErr := safecast.IntToUint8(int(bindConfig.GroupParents[i]))
+			if convErr != nil {
+				return nil, fmt.Errorf("group parent for group %d: %w", i, convErr)
+			}
+			parent = p
 		}
 
 		// Add non-empty child groups to their parent
 		// Skip the root group (i == 0) and empty groups (quorum == 0)
 		if i > 0 && groups[i].Quorum > 0 {
+			if int(parent) >= len(groups) {
+				return nil, fmt.Errorf("group parent index %d out of range", parent)
+			}
 			groups[parent].GroupSigners = append([]types.Config{groups[i]}, groups[parent].GroupSigners...)
 		}
 	}

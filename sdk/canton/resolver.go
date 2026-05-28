@@ -8,7 +8,6 @@ import (
 	"strings"
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
-	"github.com/smartcontractkit/go-daml/pkg/types"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-canton/bindings"
@@ -25,6 +24,7 @@ func ResolveMCMSContractID(ctx context.Context, stateService apiv2.StateServiceC
 	}
 	addr := contracts.HexToInstanceAddress(instanceAddressHex)
 	templateID := mcmscore.MCMS{}.GetTemplateID()
+
 	return findActiveContractIDByInstanceAddress(ctx, stateService, mcmsParties, templateID, addr)
 }
 
@@ -34,6 +34,7 @@ func findActiveContractIDByInstanceAddress(ctx context.Context, stateService api
 	if err != nil {
 		return "", err
 	}
+
 	return activeContract.GetCreatedEvent().GetContractId(), nil
 }
 
@@ -83,7 +84,7 @@ func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 	if err != nil {
 		return nil, fmt.Errorf("failed to get active contracts: %w", err)
 	}
-	defer activeContractsResp.CloseSend()
+	defer func() { _ = activeContractsResp.CloseSend() }()
 
 	var activeContract *apiv2.ActiveContract
 	for {
@@ -92,6 +93,7 @@ func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 			if errors.Is(err, io.EOF) {
 				break
 			}
+
 			return nil, fmt.Errorf("failed to receive active contracts: %w", err)
 		}
 
@@ -117,7 +119,7 @@ func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 			if len(signatories) != 1 {
 				continue
 			}
-			gotAddress := instanceID.RawInstanceAddress(types.PARTY(signatories[0])).InstanceAddress()
+			gotAddress := instanceID.RawInstanceAddress(cantontypes.PARTY(signatories[0])).InstanceAddress()
 
 			if instanceAddress != gotAddress {
 				continue
@@ -202,6 +204,7 @@ func ResolveTargetContractID(ctx context.Context, stateService apiv2.StateServic
 		return "", fmt.Errorf("parse raw instance address %q: %w", rawInstanceAddress, err)
 	}
 	addr := raw.InstanceAddress()
+
 	return findActiveContractIDByInstanceAddress(ctx, stateService, parties, templateID, addr)
 }
 
@@ -209,15 +212,17 @@ func ResolveTargetContractID(ctx context.Context, stateService apiv2.StateServic
 // Canton contract IDs use a different format; when we have 0x-prefixed 64-char hex we treat it as InstanceAddress.
 func IsInstanceAddressHex(s string) bool {
 	s = strings.TrimPrefix(s, "0x")
-	if len(s) != 64 {
+	if len(s) != instanceAddressHexLen {
 		return false
 	}
 	for _, c := range s {
 		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') {
 			continue
 		}
+
 		return false
 	}
+
 	return true
 }
 
@@ -227,5 +232,6 @@ func ResolveContractIDIfInstanceAddress(ctx context.Context, stateService apiv2.
 	if !IsInstanceAddressHex(cid) {
 		return cid, nil
 	}
+
 	return ResolveMCMSContractID(ctx, stateService, parties, cid)
 }

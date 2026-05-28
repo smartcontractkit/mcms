@@ -10,11 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/google/uuid"
 	cselectors "github.com/smartcontractkit/chain-selectors"
-	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
-
 	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
+	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -52,7 +52,7 @@ func (t *TimelockExecutor) Execute(
 	predecessor common.Hash,
 	salt common.Hash,
 ) (types.TransactionResult, error) {
-	contractID, err := ResolveMCMSContractID(ctx, t.TimelockInspector.StateServiceClient(), t.mcmsParties, timelockAddress)
+	contractID, err := ResolveMCMSContractID(ctx, t.StateServiceClient(), t.mcmsParties, timelockAddress)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("resolve MCMS contract ID: %w", err)
 	}
@@ -64,12 +64,12 @@ func (t *TimelockExecutor) Execute(
 	calls := make([]mcmsapi.TimelockCall, 0, len(bop.Transactions))
 	callsForHash := make([]TimelockCallForHash, 0, len(bop.Transactions))
 	// Map from instance address -> contract ID for targetCids
-	stateClient := t.TimelockInspector.StateServiceClient()
+	stateClient := t.StateServiceClient()
 	instanceToContractID := make(map[string]string)
 	for _, tx := range bop.Transactions {
 		var af AdditionalFields
-		if err := json.Unmarshal(tx.AdditionalFields, &af); err != nil {
-			return types.TransactionResult{}, fmt.Errorf("unmarshal transaction additional fields: %w", err)
+		if unmarshalErr := json.Unmarshal(tx.AdditionalFields, &af); unmarshalErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("unmarshal transaction additional fields: %w", unmarshalErr)
 		}
 		calls = append(calls, mcmsapi.TimelockCall{
 			TargetInstanceAddress: cantontypes.TEXT(af.TargetInstanceAddress),
@@ -101,9 +101,9 @@ func (t *TimelockExecutor) Execute(
 	// Build targetCidsMap: instanceAddress -> CONTRACT_ID.
 	targetCidsMap := make(map[cantontypes.TEXT]cantontypes.CONTRACT_ID)
 	for instanceAddr, cid := range instanceToContractID {
-		resolved, err := ResolveContractIDIfInstanceAddress(ctx, stateClient, t.mcmsParties, cid)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, err)
+		resolved, resolveErr := ResolveContractIDIfInstanceAddress(ctx, stateClient, t.mcmsParties, cid)
+		if resolveErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, resolveErr)
 		}
 		// Key is instance address, value is resolved contract ID
 		targetCidsMap[cantontypes.TEXT(instanceAddr)] = cantontypes.CONTRACT_ID(resolved)
@@ -162,6 +162,7 @@ func (t *TimelockExecutor) Execute(
 			if NormalizeTemplateKey(templateID) == MCMSTemplateKey {
 				newMCMSContractID = createdEv.GetContractId()
 				newMCMSTemplateID = templateID
+
 				break
 			}
 		}
@@ -173,10 +174,6 @@ func (t *TimelockExecutor) Execute(
 	return types.TransactionResult{
 		Hash:        commandID,
 		ChainFamily: cselectors.FamilyCanton,
-		RawData: map[string]any{
-			"NewMCMSContractID": newMCMSContractID,
-			"NewMCMSTemplateID": newMCMSTemplateID,
-			"RawTx":             resp,
-		},
+		RawData:     rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID, resp),
 	}, nil
 }

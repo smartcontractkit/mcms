@@ -8,9 +8,9 @@ import (
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
-
 	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -88,6 +88,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
+
 	return []types.Operation{op}, operationID, nil
 }
 
@@ -113,6 +114,7 @@ func OperationID(
 
 	var operationID common.Hash
 	copy(operationID[:], operationIDBytes)
+
 	return operationID, nil
 }
 
@@ -149,12 +151,13 @@ func buildCallsFromBatch(bop types.BatchOperation) ([]mcmsapi.TimelockCall, []Ti
 		})
 		allContractIds = append(allContractIds, af.ContractIds...)
 	}
+
 	return calls, callsForHash, allContractIds, nil
 }
 
 // scheduleActionData returns function name and hex-encoded params for ScheduleBatch.
 func scheduleActionData(calls []mcmsapi.TimelockCall, predecessorHex, saltHex string, delay types.Duration) (functionName, opDataHex string, err error) {
-	delaySecs := int64(delay.Duration.Seconds())
+	delaySecs := int64(delay.Seconds())
 	if delaySecs < 0 {
 		delaySecs = 0
 	}
@@ -168,6 +171,7 @@ func scheduleActionData(calls []mcmsapi.TimelockCall, predecessorHex, saltHex st
 	if err != nil {
 		return "", "", fmt.Errorf("marshal ScheduleBatchParams: %w", err)
 	}
+
 	return "ScheduleBatch", opDataHex, nil
 }
 
@@ -178,6 +182,7 @@ func bypassActionData(calls []mcmsapi.TimelockCall) (functionName, opDataHex str
 	if err != nil {
 		return "", "", fmt.Errorf("marshal BypasserExecuteBatchParams: %w", err)
 	}
+
 	return "BypasserExecuteBatch", opDataHex, nil
 }
 
@@ -188,6 +193,7 @@ func cancelActionData(operationIDStr string) (functionName, opDataHex string, er
 	if err != nil {
 		return "", "", fmt.Errorf("marshal CancelBatchParams: %w", err)
 	}
+
 	return "CancelBatch", opDataHex, nil
 }
 
@@ -200,6 +206,7 @@ func extractInstanceAddressFromMultisigId(multisigId string) string {
 	if lastDash == -1 {
 		return multisigId
 	}
+
 	return multisigId[:lastDash]
 }
 
@@ -217,6 +224,7 @@ func buildTimelockOperation(bop types.BatchOperation, mcmAddress, targetInstance
 	if err != nil {
 		return types.Operation{}, fmt.Errorf("marshal operation additional fields: %w", err)
 	}
+
 	return types.Operation{
 		ChainSelector: bop.ChainSelector,
 		Transaction: types.Transaction{

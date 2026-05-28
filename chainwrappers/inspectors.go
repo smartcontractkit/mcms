@@ -61,6 +61,7 @@ func BuildInspector(
 		for i, p := range ch.Participants {
 			mcmsParties[i] = p.PartyID
 		}
+
 		return cantonsdk.NewInspector(participant.LedgerServices.State, mcmsParties, cantonRole(action)), nil
 	case chainsel.FamilyEVM:
 		client, ok := chains.EVMClient(rawSelector)
@@ -126,6 +127,8 @@ func cantonRole(action types.TimelockAction) cantonsdk.TimelockRole {
 		return cantonsdk.TimelockRoleBypasser
 	case types.TimelockActionCancel:
 		return cantonsdk.TimelockRoleCanceller
+	case types.TimelockActionSchedule:
+		return cantonsdk.TimelockRoleProposer
 	default:
 		return cantonsdk.TimelockRoleProposer
 	}
