@@ -6,8 +6,7 @@ import (
 	aptos "github.com/aptos-labs/aptos-go-sdk"
 	bind "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 
-	cldfcanton "github.com/smartcontractkit/chainlink-deployments-framework/chain/canton"
-
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	evm "github.com/smartcontractkit/mcms/sdk/evm"
 
 	mock "github.com/stretchr/testify/mock"
@@ -666,22 +665,22 @@ func (_c *ChainAccessor_TonSigner_Call) RunAndReturn(run func(uint64) (*wallet.W
 }
 
 // CantonChain provides a mock function with given fields: selector
-func (_m *ChainAccessor) CantonChain(selector uint64) (cldfcanton.Chain, bool) {
+func (_m *ChainAccessor) CantonChain(selector uint64) (cantonsdk.Chain, bool) {
 	ret := _m.Called(selector)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CantonChain")
 	}
 
-	var r0 cldfcanton.Chain
+	var r0 cantonsdk.Chain
 	var r1 bool
-	if rf, ok := ret.Get(0).(func(uint64) (cldfcanton.Chain, bool)); ok {
+	if rf, ok := ret.Get(0).(func(uint64) (cantonsdk.Chain, bool)); ok {
 		return rf(selector)
 	}
-	if rf, ok := ret.Get(0).(func(uint64) cldfcanton.Chain); ok {
+	if rf, ok := ret.Get(0).(func(uint64) cantonsdk.Chain); ok {
 		r0 = rf(selector)
 	} else {
-		r0 = ret.Get(0).(cldfcanton.Chain)
+		r0 = ret.Get(0).(cantonsdk.Chain)
 	}
 
 	if rf, ok := ret.Get(1).(func(uint64) bool); ok {
@@ -711,12 +710,12 @@ func (_c *ChainAccessor_CantonChain_Call) Run(run func(selector uint64)) *ChainA
 	return _c
 }
 
-func (_c *ChainAccessor_CantonChain_Call) Return(_a0 cldfcanton.Chain, _a1 bool) *ChainAccessor_CantonChain_Call {
+func (_c *ChainAccessor_CantonChain_Call) Return(_a0 cantonsdk.Chain, _a1 bool) *ChainAccessor_CantonChain_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ChainAccessor_CantonChain_Call) RunAndReturn(run func(uint64) (cldfcanton.Chain, bool)) *ChainAccessor_CantonChain_Call {
+func (_c *ChainAccessor_CantonChain_Call) RunAndReturn(run func(uint64) (cantonsdk.Chain, bool)) *ChainAccessor_CantonChain_Call {
 	_c.Call.Return(run)
 	return _c
 }

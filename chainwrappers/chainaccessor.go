@@ -5,10 +5,10 @@ import (
 	"github.com/block-vision/sui-go-sdk/sui"
 	sol "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
-	cldfcanton "github.com/smartcontractkit/chainlink-deployments-framework/chain/canton"
 	"github.com/xssnick/tonutils-go/ton"
 	tonwallet "github.com/xssnick/tonutils-go/ton/wallet"
 
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
 	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 )
@@ -25,5 +25,5 @@ type ChainAccessor interface {
 	SuiSigner(selector uint64) (suisdk.SuiSigner, bool)
 	TonClient(selector uint64) (ton.APIClientWrapped, bool)
 	TonSigner(selector uint64) (*tonwallet.Wallet, bool)
-	CantonChain(selector uint64) (cldfcanton.Chain, bool)
+	CantonChain(selector uint64) (cantonsdk.Chain, bool)
 }

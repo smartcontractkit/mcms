@@ -5,7 +5,6 @@ go 1.26.2
 //nolint:gomoddirectives // allow replace directive
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-// Coming from chainlink-deployments-framework
 replace github.com/fbsobreira/gotron-sdk => github.com/smartcontractkit/chainlink-tron/relayer/gotron-sdk v0.0.4
 
 replace (
@@ -32,7 +31,6 @@ require (
 	github.com/smartcontractkit/chainlink-canton v0.0.0-20260508133828-2173e42a127a
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
-	github.com/smartcontractkit/chainlink-deployments-framework v0.98.0
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260527160341-aa3adc0abf67
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.16.3
 	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514223130-48bc90aca745
@@ -239,6 +237,7 @@ require (
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/smartcontractkit/chainlink-common v0.11.2-0.20260506120607-7f10be016c89 // indirect
 	github.com/smartcontractkit/chainlink-common/pkg/chipingress v0.0.10 // indirect
+	github.com/smartcontractkit/chainlink-deployments-framework v0.98.0 // indirect
 	github.com/smartcontractkit/chainlink-protos/cre/go v0.0.0-20260505131349-78e491b80735 // indirect
 	github.com/smartcontractkit/chainlink-protos/job-distributor v0.18.0 // indirect
 	github.com/smartcontractkit/chainlink-protos/linking-service/go v0.0.0-20251002192024-d2ad9222409b // indirect

@@ -14,7 +14,6 @@ import (
 	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/mcmstest"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 	"github.com/smartcontractkit/chainlink-canton/testhelpers"
-	"github.com/smartcontractkit/chainlink-deployments-framework/chain/canton"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
 	"github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/stretchr/testify/suite"
@@ -32,7 +31,7 @@ type TestSuite struct {
 
 	env testhelpers.TestEnvironment
 
-	participant     canton.Participant
+	participant     cantonsdk.Participant
 	submittingParty string
 
 	chainSelector       mcmstypes.ChainSelector
@@ -45,7 +44,14 @@ type TestSuite struct {
 func (s *TestSuite) SetupSuite() {
 	shared := GetSharedEnvironment(s.T())
 	s.env = shared.Env
-	s.participant = shared.Env.Chain.Participants[0]
+	cldfParticipant := shared.Env.Chain.Participants[0]
+	s.participant = cantonsdk.Participant{
+		PartyID: cldfParticipant.PartyID,
+		LedgerServices: cantonsdk.LedgerServices{
+			State:   cldfParticipant.LedgerServices.State,
+			Command: cldfParticipant.LedgerServices.Command,
+		},
+	}
 	s.chainSelector = shared.ChainSelector
 	s.submittingParty = shared.SubmittingParty
 }
@@ -139,7 +145,7 @@ func (s *mcmsExecutorSetup) DeployCounterContract() {
 }
 
 // createMCMS creates an MCMS contract and returns its InstanceAddress hex (stable reference for Canton).
-func (s *TestSuite) createMCMS(ctx context.Context, participant canton.Participant, owner string, chainId int64, mcmsId string) string {
+func (s *TestSuite) createMCMS(ctx context.Context, participant cantonsdk.Participant, owner string, chainId int64, mcmsId string) string {
 	// Create empty config
 	emptyConfig := mcmsapi.MultisigConfig{
 		Signers:      []mcmsapi.SignerInfo{},
