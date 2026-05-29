@@ -75,7 +75,10 @@ func resolveAdditionalFieldsMetadata(
 		return AdditionalFieldsMetadata{}, err
 	}
 
-	role := timelockRoleForAction(action)
+	role, err := CantonRoleFromAction(action)
+	if err != nil {
+		return AdditionalFieldsMetadata{}, fmt.Errorf("canton role from action: %w", err)
+	}
 	multisigID := fmt.Sprintf("%s@%s-%s", instanceID, party, strings.ToLower(role.String()))
 
 	fields := AdditionalFieldsMetadata{
@@ -94,19 +97,6 @@ func resolveAdditionalFieldsMetadata(
 }
 
 const defaultCantonChainID int64 = 1
-
-func timelockRoleForAction(action types.TimelockAction) TimelockRole {
-	switch action {
-	case types.TimelockActionBypass:
-		return TimelockRoleBypasser
-	case types.TimelockActionCancel:
-		return TimelockRoleCanceller
-	case types.TimelockActionSchedule:
-		fallthrough
-	default:
-		return TimelockRoleProposer
-	}
-}
 
 func partyFromBatchOperation(bop types.BatchOperation) (string, error) {
 	for _, tx := range bop.Transactions {

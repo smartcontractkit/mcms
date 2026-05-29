@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/samber/lo"
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -57,12 +58,13 @@ func BuildInspector(
 			return nil, fmt.Errorf("missing Canton chain participant for selector %d", rawSelector)
 		}
 		participant := ch.Participants[0]
-		mcmsParties := make([]string, len(ch.Participants))
-		for i, p := range ch.Participants {
-			mcmsParties[i] = p.PartyID
+		mcmsParties := lo.Map(ch.Participants, func(p cantonsdk.Participant, _ int) string { return p.PartyID })
+		role, err := cantonsdk.CantonRoleFromAction(action)
+		if err != nil {
+			return nil, fmt.Errorf("error getting canton role from proposal: %w", err)
 		}
 
-		return cantonsdk.NewInspector(participant.LedgerServices.State, mcmsParties, cantonRole(action)), nil
+		return cantonsdk.NewInspector(participant.LedgerServices.State, mcmsParties, role), nil
 	case chainsel.FamilyEVM:
 		client, ok := chains.EVMClient(rawSelector)
 		if !ok {
@@ -118,18 +120,5 @@ func BuildInspector(
 		return ton.NewInspector(client), nil
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
-	}
-}
-
-func cantonRole(action types.TimelockAction) cantonsdk.TimelockRole {
-	switch action {
-	case types.TimelockActionBypass:
-		return cantonsdk.TimelockRoleBypasser
-	case types.TimelockActionCancel:
-		return cantonsdk.TimelockRoleCanceller
-	case types.TimelockActionSchedule:
-		return cantonsdk.TimelockRoleProposer
-	default:
-		return cantonsdk.TimelockRoleProposer
 	}
 }

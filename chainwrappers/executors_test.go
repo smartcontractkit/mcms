@@ -16,6 +16,7 @@ import (
 	mcmssdk "github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	aptosmocks "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -27,11 +28,12 @@ import (
 )
 
 var (
-	evmSelector   = mcmstypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
-	solSelector   = mcmstypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
-	aptosSelector = mcmstypes.ChainSelector(chainsel.APTOS_TESTNET.Selector)
-	suiSelector   = mcmstypes.ChainSelector(chainsel.SUI_TESTNET.Selector)
-	tonSelector   = mcmstypes.ChainSelector(chainsel.TON_TESTNET.Selector)
+	evmSelector    = mcmstypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
+	solSelector    = mcmstypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
+	aptosSelector  = mcmstypes.ChainSelector(chainsel.APTOS_TESTNET.Selector)
+	suiSelector    = mcmstypes.ChainSelector(chainsel.SUI_TESTNET.Selector)
+	tonSelector    = mcmstypes.ChainSelector(chainsel.TON_TESTNET.Selector)
+	cantonSelector = mcmstypes.ChainSelector(chainsel.CANTON_TESTNET.Selector)
 )
 
 func TestBuildExecutors(t *testing.T) {
@@ -66,12 +68,20 @@ func TestBuildExecutors(t *testing.T) {
 	tonExecutor, err := ton.NewExecutor(tonExecOpts)
 	require.NoError(t, err)
 
+	cantonEncoder := cantonsdk.NewEncoder(cantonSelector, 0, false)
+	cantonChain := cantonsdk.Chain{
+		Participants: []cantonsdk.Participant{{
+			PartyID: "party::test",
+		}},
+	}
+
 	tests := []struct {
 		name          string
 		encoders      map[mcmstypes.ChainSelector]mcmssdk.Encoder
 		chainMetadata map[mcmstypes.ChainSelector]mcmstypes.ChainMetadata
 		setup         func(accessor *mocks.ChainAccessor)
 		want          map[mcmstypes.ChainSelector]mcmssdk.Executor
+		validate      func(t *testing.T, got map[mcmstypes.ChainSelector]mcmssdk.Executor)
 		wantErr       string
 	}{
 		{
@@ -154,6 +164,26 @@ func TestBuildExecutors(t *testing.T) {
 				aptosSelector: aptosCurseExecutor,
 			},
 		},
+		{
+			name: "success with canton",
+			encoders: map[mcmstypes.ChainSelector]mcmssdk.Encoder{
+				cantonSelector: cantonEncoder,
+			},
+			chainMetadata: map[mcmstypes.ChainSelector]mcmstypes.ChainMetadata{
+				cantonSelector: {
+					MCMAddress:      "0xcanton",
+					StartingOpCount: 0,
+				},
+			},
+			setup: func(accessor *mocks.ChainAccessor) {
+				accessor.EXPECT().CantonChain(mock.Anything).Return(cantonChain, true)
+			},
+			validate: func(t *testing.T, got map[mcmstypes.ChainSelector]mcmssdk.Executor) {
+				t.Helper()
+				_, ok := got[cantonSelector].(*cantonsdk.Executor)
+				require.True(t, ok)
+			},
+		},
 	}
 
 	for _, tt := range tests {
@@ -166,7 +196,11 @@ func TestBuildExecutors(t *testing.T) {
 			got, err := BuildExecutors(chainAccessor, tt.chainMetadata, tt.encoders, mcmstypes.TimelockActionSchedule)
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(tt.want, got))
+				if tt.validate != nil {
+					tt.validate(t, got)
+				} else {
+					require.Empty(t, cmp.Diff(tt.want, got))
+				}
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}

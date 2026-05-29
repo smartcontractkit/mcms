@@ -11,12 +11,10 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/go-playground/validator/v10"
-	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -195,11 +193,6 @@ func (m *TimelockProposal) Convert(
 	}
 	baseProposal.ChainMetadata = chainMetadataMap
 
-	txCountByChain := make(map[types.ChainSelector]uint64, len(m.Operations))
-	for _, op := range m.Operations {
-		txCountByChain[op.ChainSelector] += uint64(len(op.Transactions))
-	}
-
 	// 5) We’ll build the final MCMS-only proposal
 	result := Proposal{
 		BaseProposal: baseProposal,
@@ -218,24 +211,6 @@ func (m *TimelockProposal) Convert(
 		chainMetadata, ok := m.ChainMetadata[chainSelector]
 		if !ok {
 			return Proposal{}, nil, fmt.Errorf("missing chain metadata for chainSelector %d", chainSelector)
-		}
-
-		family, err := types.GetChainSelectorFamily(chainSelector) //nolint:contextcheck //OPT-400
-		if err != nil {
-			return Proposal{}, nil, fmt.Errorf("chain %d: %w", chainSelector, err)
-		}
-		if family == chainsel.FamilyCanton {
-			chainMetadata, err = canton.EnsureChainMetadata(
-				chainMetadata,
-				bop,
-				txCountByChain[chainSelector],
-				m.Action,
-				m.OverridePreviousRoot,
-			)
-			if err != nil {
-				return Proposal{}, nil, fmt.Errorf("canton chain %d: %w", chainSelector, err)
-			}
-			chainMetadataMap[chainSelector] = chainMetadata
 		}
 
 		// The predecessor for this op is the lastOpID for its chain

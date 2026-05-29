@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/samber/lo"
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -172,15 +173,15 @@ func BuildExecutor(
 			return nil, fmt.Errorf("missing Canton chain participant for selector %d", rawSelector)
 		}
 		participant := ch.Participants[0]
-		mcmsParties := make([]string, len(ch.Participants))
-		for i, p := range ch.Participants {
-			mcmsParties[i] = p.PartyID
-		}
+		mcmsParties := lo.Map(ch.Participants, func(p cantonsdk.Participant, _ int) string { return p.PartyID })
 		cantonEncoder, ok := encoder.(*cantonsdk.Encoder)
 		if !ok {
 			return nil, fmt.Errorf("invalid encoder type for selector %d: %T", chainSelector, encoder)
 		}
-		role := cantonRole(action)
+		role, err := cantonsdk.CantonRoleFromAction(action)
+		if err != nil {
+			return nil, fmt.Errorf("error getting canton role from proposal: %w", err)
+		}
 		inspector := cantonsdk.NewInspector(participant.LedgerServices.State, mcmsParties, role)
 
 		return cantonsdk.NewExecutor(
