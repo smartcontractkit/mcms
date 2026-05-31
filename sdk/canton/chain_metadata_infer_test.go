@@ -9,6 +9,30 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+func TestEnsureChainMetadataRefreshesStaleOpCounts(t *testing.T) {
+	t.Parallel()
+
+	staleFields := mustJSON(t, AdditionalFieldsMetadata{
+		ChainId:     1,
+		MultisigId:  "mcms-ccip@party-proposer",
+		InstanceId:  "mcms-ccip",
+		PreOpCount:  3,
+		PostOpCount: 9,
+	})
+
+	metadata := types.ChainMetadata{
+		StartingOpCount:  4,
+		MCMAddress:       "0xabc",
+		AdditionalFields: staleFields,
+	}
+
+	fields, err := resolveAdditionalFieldsMetadata(metadata, types.BatchOperation{}, 1, types.TimelockActionSchedule, true)
+	require.NoError(t, err)
+	require.Equal(t, uint64(4), fields.PreOpCount)
+	require.Equal(t, uint64(9), fields.PostOpCount)
+	require.True(t, fields.OverridePreviousRoot)
+}
+
 func TestEnsureChainMetadataInfersMissingAdditionalFields(t *testing.T) {
 	t.Parallel()
 

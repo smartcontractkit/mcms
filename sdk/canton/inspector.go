@@ -3,6 +3,7 @@ package canton
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -10,6 +11,7 @@ import (
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
 	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
@@ -63,7 +65,11 @@ func (i *Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, er
 		return 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
 
-	switch i.role {
+	return expiringRootOpCount(mcmsContract, i.role)
+}
+
+func expiringRootOpCount(mcmsContract *mcmscore.MCMS, role TimelockRole) (uint64, error) {
+	switch role {
 	case TimelockRoleProposer:
 		return safecast.Int64ToUint64(int64(mcmsContract.Proposer.ExpiringRoot.OpCount))
 	case TimelockRoleBypasser:
@@ -71,7 +77,7 @@ func (i *Inspector) GetOpCount(ctx context.Context, mcmsAddr string) (uint64, er
 	case TimelockRoleCanceller:
 		return safecast.Int64ToUint64(int64(mcmsContract.Canceller.ExpiringRoot.OpCount))
 	default:
-		return 0, fmt.Errorf("unknown timelock role: %s", i.role)
+		return 0, fmt.Errorf("unknown timelock role: %s", role)
 	}
 }
 
@@ -134,14 +140,34 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types
 
 	// For Canton, MCMAddress is the InstanceAddress hex (stable across SetRoot/ExecuteOp)
 	mcmAddress := contracts.InstanceID(string(mcmsContract.InstanceId)).RawInstanceAddress(mcmsContract.Owner).InstanceAddress().Hex()
-	startingOpCount, castErr := safecast.Int64ToUint64(int64(rootMetadata.PreOpCount))
-	if castErr != nil {
-		return types.ChainMetadata{}, fmt.Errorf("pre op count out of range: %w", castErr)
+	// ExpiringRoot.OpCount is the live op count for the next proposal (matches GetOpCount / e2e).
+	// RootMetadata.PreOpCount is from the last committed root and can lag after execute.
+	startingOpCount, err := expiringRootOpCount(mcmsContract, i.role)
+	if err != nil {
+		return types.ChainMetadata{}, err
+	}
+
+	additionalFields := AdditionalFieldsMetadata{
+		ChainId:              int64(rootMetadata.ChainId),
+		MultisigId:           string(rootMetadata.MultisigId),
+		InstanceId:           string(mcmsContract.InstanceId),
+		PreOpCount:           startingOpCount,
+		PostOpCount:          startingOpCount, // placeholder; encoder derives final postOpCount at sign time
+		OverridePreviousRoot: bool(rootMetadata.OverridePreviousRoot),
+	}
+	if err := additionalFields.Validate(); err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("invalid root metadata from ledger: %w", err)
+	}
+
+	additionalFieldsBytes, err := json.Marshal(additionalFields)
+	if err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("marshal canton additional fields: %w", err)
 	}
 
 	return types.ChainMetadata{
-		StartingOpCount: startingOpCount,
-		MCMAddress:      mcmAddress,
+		StartingOpCount:  startingOpCount,
+		MCMAddress:       mcmAddress,
+		AdditionalFields: additionalFieldsBytes,
 	}, nil
 }
 

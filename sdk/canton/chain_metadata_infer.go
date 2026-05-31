@@ -54,6 +54,13 @@ func resolveAdditionalFieldsMetadata(
 			return AdditionalFieldsMetadata{}, fmt.Errorf("unmarshal metadata additional fields: %w", err)
 		}
 		if err := fields.Validate(); err == nil {
+			fields.PreOpCount = metadata.StartingOpCount
+			if fields.PostOpCount < fields.PreOpCount {
+				fields.PostOpCount = fields.PreOpCount
+			}
+			if overridePreviousRoot {
+				fields.OverridePreviousRoot = true
+			}
 			return fields, nil
 		}
 		if fields.OverridePreviousRoot {

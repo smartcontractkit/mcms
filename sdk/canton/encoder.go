@@ -55,16 +55,43 @@ func NewEncoder(
 	}
 }
 
+// ToRootMetadata resolves Canton root metadata for SetRoot and merkle hashing.
+// Like EVM ToGethRootMetadata, postOpCount is derived from StartingOpCount + TxCount at sign time.
+// multisigId and related fields must be present in chainMetadata.additionalFields (typically from GetRootMetadata).
+func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (AdditionalFieldsMetadata, error) {
+	fields, err := parseAdditionalFieldsMetadata(metadata.AdditionalFields)
+	if err != nil {
+		return AdditionalFieldsMetadata{}, err
+	}
+
+	fields.PreOpCount = metadata.StartingOpCount
+	fields.PostOpCount = metadata.StartingOpCount + e.TxCount
+	fields.OverridePreviousRoot = e.OverridePreviousRoot
+
+	if err := fields.Validate(); err != nil {
+		return AdditionalFieldsMetadata{}, fmt.Errorf("canton chain metadata additionalFields required or incomplete: %w", err)
+	}
+
+	return fields, nil
+}
+
+func parseAdditionalFieldsMetadata(raw json.RawMessage) (AdditionalFieldsMetadata, error) {
+	if len(raw) == 0 {
+		return AdditionalFieldsMetadata{}, fmt.Errorf("canton chain metadata additionalFields are required")
+	}
+
+	var fields AdditionalFieldsMetadata
+	if err := json.Unmarshal(raw, &fields); err != nil {
+		return AdditionalFieldsMetadata{}, fmt.Errorf("unmarshal metadata additional fields: %w", err)
+	}
+
+	return fields, nil
+}
+
 // HashOperation hashes an operation to get its Merkle leaf
 // Matches Canton's hashOpLeafNative from Crypto.daml with domain separator and length prefixes
 func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op types.Operation) (common.Hash, error) {
-	metadataFields, err := resolveAdditionalFieldsMetadata(
-		metadata,
-		types.BatchOperation{ChainSelector: e.ChainSelector, Transactions: []types.Transaction{op.Transaction}},
-		e.TxCount,
-		types.TimelockActionSchedule,
-		e.OverridePreviousRoot,
-	)
+	metadataFields, err := e.ToRootMetadata(metadata)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to resolve metadata additional fields: %w", err)
 	}
@@ -105,13 +132,7 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 // HashMetadata hashes metadata to get its Merkle leaf
 // Matches Canton's hashMetadataLeafNative from Crypto.daml with domain separator and length prefixes
 func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error) {
-	metadataFields, err := resolveAdditionalFieldsMetadata(
-		metadata,
-		types.BatchOperation{ChainSelector: e.ChainSelector},
-		e.TxCount,
-		types.TimelockActionSchedule,
-		e.OverridePreviousRoot,
-	)
+	metadataFields, err := e.ToRootMetadata(metadata)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("failed to resolve metadata additional fields: %w", err)
 	}

@@ -253,30 +253,18 @@ func (e Executor) SetRoot(
 		}
 	}
 
-	// Extract root metadata from ChainMetadata.AdditionalFields
-	var rootMetadata mcmsapi.RootMetadata
-	if len(metadata.AdditionalFields) > 0 {
-		var additionalFields map[string]any
-		if unmarshalErr := json.Unmarshal(metadata.AdditionalFields, &additionalFields); unmarshalErr != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal additional fields: %w", unmarshalErr)
-		}
+	// Resolve root metadata (EVM-style: enrich minimal proposal metadata at SetRoot time).
+	fields, err := e.ToRootMetadata(metadata)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("resolve canton root metadata: %w", err)
+	}
 
-		// Extract fields with type assertions
-		if chainId, ok := additionalFields["chainId"].(float64); ok {
-			rootMetadata.ChainId = cantontypes.INT64(int64(chainId))
-		}
-		if multisigId, ok := additionalFields["multisigId"].(string); ok {
-			rootMetadata.MultisigId = cantontypes.TEXT(multisigId)
-		}
-		if preOpCount, ok := additionalFields["preOpCount"].(float64); ok {
-			rootMetadata.PreOpCount = cantontypes.INT64(int64(preOpCount))
-		}
-		if postOpCount, ok := additionalFields["postOpCount"].(float64); ok {
-			rootMetadata.PostOpCount = cantontypes.INT64(int64(postOpCount))
-		}
-		if overridePreviousRoot, ok := additionalFields["overridePreviousRoot"].(bool); ok {
-			rootMetadata.OverridePreviousRoot = cantontypes.BOOL(overridePreviousRoot)
-		}
+	rootMetadata := mcmsapi.RootMetadata{
+		ChainId:              cantontypes.INT64(fields.ChainId),
+		MultisigId:           cantontypes.TEXT(fields.MultisigId),
+		PreOpCount:           cantontypes.INT64(int64(fields.PreOpCount)),
+		PostOpCount:          cantontypes.INT64(int64(fields.PostOpCount)),
+		OverridePreviousRoot: cantontypes.BOOL(fields.OverridePreviousRoot),
 	}
 
 	// Convert proof to Canton TEXT array
