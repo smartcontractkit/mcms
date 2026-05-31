@@ -11,7 +11,6 @@ import (
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-canton/bindings"
-	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
 	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 )
@@ -160,33 +159,12 @@ func GetMCMSContract(ctx context.Context, stateService apiv2.StateServiceClient,
 	// Wrap for bindings unmarshal
 	wrapped := &apiv2.GetActiveContractsResponse_ActiveContract{ActiveContract: activeContract}
 
-	// TODO: MinDelay type from binding doesnt correspond to actual type from contract
-	type NoMinDelayMCMS struct {
-		Owner              cantontypes.PARTY                          `json:"owner"`
-		InstanceId         cantontypes.TEXT                           `json:"instanceId"`
-		ChainId            cantontypes.INT64                          `json:"chainId"`
-		Proposer           mcmsapi.RoleState                          `json:"proposer"`
-		Canceller          mcmsapi.RoleState                          `json:"canceller"`
-		Bypasser           mcmsapi.RoleState                          `json:"bypasser"`
-		BlockedFunctions   []mcmsapi.BlockedFunction                  `json:"blockedFunctions"`
-		TimelockTimestamps map[cantontypes.TEXT]cantontypes.TIMESTAMP `json:"timelockTimestamps"`
-	}
-	mcmsContractNoMinDelay, err := bindings.UnmarshalActiveContract[NoMinDelayMCMS](wrapped)
+	mcmsContract, err := bindings.UnmarshalActiveContract[mcmscore.MCMS](wrapped)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal MCMS contract: %w", err)
 	}
 
-	return &mcmscore.MCMS{
-		Owner:              mcmsContractNoMinDelay.Owner,
-		InstanceId:         mcmsContractNoMinDelay.InstanceId,
-		ChainId:            mcmsContractNoMinDelay.ChainId,
-		Proposer:           mcmsContractNoMinDelay.Proposer,
-		Canceller:          mcmsContractNoMinDelay.Canceller,
-		Bypasser:           mcmsContractNoMinDelay.Bypasser,
-		BlockedFunctions:   mcmsContractNoMinDelay.BlockedFunctions,
-		TimelockTimestamps: mcmsContractNoMinDelay.TimelockTimestamps,
-		MinDelay:           0, // TODO: Fix bindings type
-	}, nil
+	return mcmsContract, nil
 }
 
 // ResolveTargetContractID resolves a target contract's active contract ID from a raw instance address
