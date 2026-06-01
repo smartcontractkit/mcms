@@ -20,6 +20,7 @@ import (
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 
 	"github.com/smartcontractkit/mcms/internal/utils/abi"
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -259,11 +260,20 @@ func (e Executor) SetRoot(
 		return types.TransactionResult{}, fmt.Errorf("resolve canton root metadata: %w", err)
 	}
 
+	preOpCount, err := safecast.Uint64ToInt64(fields.PreOpCount)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("preOpCount out of range: %w", err)
+	}
+	postOpCount, convErr := safecast.Uint64ToInt64(fields.PostOpCount)
+	if convErr != nil {
+		return types.TransactionResult{}, fmt.Errorf("postOpCount out of range: %w", convErr)
+	}
+
 	rootMetadata := mcmsapi.RootMetadata{
 		ChainId:              cantontypes.INT64(fields.ChainId),
 		MultisigId:           cantontypes.TEXT(fields.MultisigId),
-		PreOpCount:           cantontypes.INT64(int64(fields.PreOpCount)),
-		PostOpCount:          cantontypes.INT64(int64(fields.PostOpCount)),
+		PreOpCount:           cantontypes.INT64(preOpCount),
+		PostOpCount:          cantontypes.INT64(postOpCount),
 		OverridePreviousRoot: cantontypes.BOOL(fields.OverridePreviousRoot),
 	}
 

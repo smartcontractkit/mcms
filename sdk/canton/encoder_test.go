@@ -14,8 +14,8 @@ func TestEncoder_ToRootMetadataDerivesPostOpCount(t *testing.T) {
 
 	additionalFields, err := json.Marshal(AdditionalFieldsMetadata{
 		ChainId:    1,
-		MultisigId: "mcms-ccip@party-proposer",
-		InstanceId: "mcms-ccip",
+		MultisigId: mcmsInstanceIDCCIP + "@party-proposer",
+		InstanceId: mcmsInstanceIDCCIP,
 	})
 	require.NoError(t, err)
 

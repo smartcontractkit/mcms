@@ -14,8 +14,8 @@ func TestEnsureChainMetadataRefreshesStaleOpCounts(t *testing.T) {
 
 	staleFields := mustJSON(t, AdditionalFieldsMetadata{
 		ChainId:     1,
-		MultisigId:  "mcms-ccip@party-proposer",
-		InstanceId:  "mcms-ccip",
+		MultisigId:  mcmsInstanceIDCCIP + "@party-proposer",
+		InstanceId:  mcmsInstanceIDCCIP,
 		PreOpCount:  3,
 		PostOpCount: 9,
 	})
@@ -57,8 +57,8 @@ func TestEnsureChainMetadataInfersMissingAdditionalFields(t *testing.T) {
 	var fields AdditionalFieldsMetadata
 	require.NoError(t, json.Unmarshal(enriched.AdditionalFields, &fields))
 	require.Equal(t, int64(1), fields.ChainId)
-	require.Equal(t, "mcms-ccip", fields.InstanceId)
-	require.Equal(t, "mcms-ccip@participant1-localparty-1::1220acd0401d95915bef2f498a45cc8f3c43119dde50cf370864e9aa4eb03d817cfb-proposer", fields.MultisigId)
+	require.Equal(t, mcmsInstanceIDCCIP, fields.InstanceId)
+	require.Equal(t, mcmsInstanceIDCCIP+"@participant1-localparty-1::1220acd0401d95915bef2f498a45cc8f3c43119dde50cf370864e9aa4eb03d817cfb-proposer", fields.MultisigId)
 	require.Equal(t, uint64(1), fields.PreOpCount)
 	require.Equal(t, uint64(7), fields.PostOpCount)
 	require.True(t, fields.OverridePreviousRoot)

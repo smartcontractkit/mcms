@@ -32,7 +32,7 @@ require (
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.16.3
 	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514223130-48bc90aca745
 	github.com/smartcontractkit/freeport v0.1.3-0.20250828155247-add56fa28aad
-	github.com/smartcontractkit/go-daml v0.0.0-20260531155703-b89fa4d6c783
+	github.com/smartcontractkit/go-daml v0.0.0-20260601190909-414e6d9dc2bd
 	github.com/spf13/cast v1.10.0
 	github.com/stellar/go-stellar-sdk v0.5.0
 	github.com/stretchr/testify v1.11.1

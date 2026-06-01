@@ -13,7 +13,7 @@ import (
 
 // defaultMCMSInstanceIDCandidates are common Canton MCMS instance IDs tried when inferring
 // chain metadata from mcmAddress + party (e.g. proposals generated without additionalFields).
-var defaultMCMSInstanceIDCandidates = []string{"mcms-ccip", "mcms-ccv", "mcms"}
+var defaultMCMSInstanceIDCandidates = []string{mcmsInstanceIDCCIP, mcmsInstanceIDCCV, mcmsInstanceIDDefault}
 
 // EnsureChainMetadata fills Canton-specific additionalFields when they are missing or incomplete.
 // txCount is the total number of timelock batch transactions for this chain in the proposal.
@@ -61,6 +61,7 @@ func resolveAdditionalFieldsMetadata(
 			if overridePreviousRoot {
 				fields.OverridePreviousRoot = true
 			}
+
 			return fields, nil
 		}
 		if fields.OverridePreviousRoot {
@@ -103,7 +104,13 @@ func resolveAdditionalFieldsMetadata(
 	return fields, nil
 }
 
-const defaultCantonChainID int64 = 1
+const (
+	defaultCantonChainID int64 = 1
+
+	mcmsInstanceIDCCIP    = "mcms-ccip"
+	mcmsInstanceIDCCV     = "mcms-ccv"
+	mcmsInstanceIDDefault = "mcms"
+)
 
 func partyFromBatchOperation(bop types.BatchOperation) (string, error) {
 	for _, tx := range bop.Transactions {

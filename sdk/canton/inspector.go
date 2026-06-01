@@ -155,8 +155,8 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types
 		PostOpCount:          startingOpCount, // placeholder; encoder derives final postOpCount at sign time
 		OverridePreviousRoot: bool(rootMetadata.OverridePreviousRoot),
 	}
-	if err := additionalFields.Validate(); err != nil {
-		return types.ChainMetadata{}, fmt.Errorf("invalid root metadata from ledger: %w", err)
+	if validateErr := additionalFields.Validate(); validateErr != nil {
+		return types.ChainMetadata{}, fmt.Errorf("invalid root metadata from ledger: %w", validateErr)
 	}
 
 	additionalFieldsBytes, err := json.Marshal(additionalFields)
