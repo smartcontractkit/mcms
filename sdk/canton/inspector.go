@@ -10,8 +10,8 @@ import (
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/ethereum/go-ethereum/common"
-	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
-	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"

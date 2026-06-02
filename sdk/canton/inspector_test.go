@@ -6,7 +6,7 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
-	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/api"
 	"github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/stretchr/testify/require"
 

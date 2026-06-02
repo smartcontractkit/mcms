@@ -11,7 +11,7 @@ import (
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 
 	"github.com/smartcontractkit/chainlink-canton/bindings"
-	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 )
 

@@ -9,9 +9,9 @@ import (
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	"github.com/google/uuid"
-	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/api"
-	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/core"
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/mcms/mcmstest"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
+	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/mcmstest"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
 	"github.com/smartcontractkit/chainlink-canton/testhelpers"
 	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
