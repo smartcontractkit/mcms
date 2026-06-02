@@ -37,6 +37,9 @@ func validateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 
 	case chainsel.FamilyTon:
 		return ton.ValidateAdditionalFields(additionalFields)
+
+	case chainsel.FamilyCanton:
+		return canton.ValidateAdditionalFields(additionalFields)
 	}
 
 	return nil
