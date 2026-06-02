@@ -155,6 +155,12 @@ func buildCallsFromBatch(bop types.BatchOperation) ([]mcmsapi.TimelockCall, []Ti
 	return calls, callsForHash, allContractIds, nil
 }
 
+// wireToHex encodes raw MCMS wire bytes (HexCodec.Marshal / MarshalHex output) as hex ASCII
+// for Canton additionalFields, Merkle hashing, and ledger transport.
+func wireToHex(wire string) string {
+	return hex.EncodeToString([]byte(wire))
+}
+
 // scheduleActionData returns function name and hex-encoded params for ScheduleBatch.
 func scheduleActionData(calls []mcmsapi.TimelockCall, predecessorHex, saltHex string, delay types.Duration) (functionName, opDataHex string, err error) {
 	delaySecs := int64(delay.Seconds())
@@ -167,34 +173,34 @@ func scheduleActionData(calls []mcmsapi.TimelockCall, predecessorHex, saltHex st
 		Salt:        cantontypes.TEXT(saltHex),
 		DelaySecs:   cantontypes.INT64(delaySecs),
 	}
-	opDataHex, err = params.MarshalHex()
+	wire, err := params.MarshalHex()
 	if err != nil {
 		return "", "", fmt.Errorf("marshal ScheduleBatchParams: %w", err)
 	}
 
-	return "ScheduleBatch", opDataHex, nil
+	return "ScheduleBatch", wireToHex(wire), nil
 }
 
 // bypassActionData returns function name and hex-encoded params for BypasserExecuteBatch.
 func bypassActionData(calls []mcmsapi.TimelockCall) (functionName, opDataHex string, err error) {
 	params := mcmsapi.BypasserExecuteBatchParams{Calls: calls}
-	opDataHex, err = params.MarshalHex()
+	wire, err := params.MarshalHex()
 	if err != nil {
 		return "", "", fmt.Errorf("marshal BypasserExecuteBatchParams: %w", err)
 	}
 
-	return "BypasserExecuteBatch", opDataHex, nil
+	return "BypasserExecuteBatch", wireToHex(wire), nil
 }
 
 // cancelActionData returns function name and hex-encoded params for CancelBatch.
 func cancelActionData(operationIDStr string) (functionName, opDataHex string, err error) {
 	params := mcmsapi.CancelBatchParams{OpId: cantontypes.TEXT(operationIDStr)}
-	opDataHex, err = params.MarshalHex()
+	wire, err := params.MarshalHex()
 	if err != nil {
 		return "", "", fmt.Errorf("marshal CancelBatchParams: %w", err)
 	}
 
-	return "CancelBatch", opDataHex, nil
+	return "CancelBatch", wireToHex(wire), nil
 }
 
 // extractInstanceAddressFromMultisigId extracts "baseId@partyId" from "baseId@partyId-role".
