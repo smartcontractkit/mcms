@@ -41,9 +41,9 @@ type AdditionalFieldsMetadata struct {
 	ChainId              int64  `json:"chainId"`
 	MultisigId           string `json:"multisigId"`
 	InstanceId           string `json:"instanceId,omitempty"` // base instanceId; converter uses for TargetInstanceId in ScheduleBatch etc.
-	PreOpCount           uint64 `json:"preOpCount"`
-	PostOpCount          uint64 `json:"postOpCount"`
-	OverridePreviousRoot bool   `json:"overridePreviousRoot"`
+	// PreOpCount           uint64 `json:"preOpCount"`
+	// PostOpCount          uint64 `json:"postOpCount"`
+	// OverridePreviousRoot bool   `json:"overridePreviousRoot"`
 }
 
 func (f AdditionalFieldsMetadata) Validate() error {
@@ -53,9 +53,9 @@ func (f AdditionalFieldsMetadata) Validate() error {
 	if f.MultisigId == "" {
 		return errors.New("multisigId is required")
 	}
-	if f.PostOpCount < f.PreOpCount {
-		return errors.New("postOpCount must be >= preOpCount")
-	}
+	// if f.PostOpCount < f.PreOpCount {
+	// 	return errors.New("postOpCount must be >= preOpCount")
+	// }
 
 	return nil
 }
@@ -80,11 +80,11 @@ func ValidateChainMetadata(metadata types.ChainMetadata) error {
 // mcmsInstanceAddress is the MCMS InstanceAddress hex (32-byte Keccak256 of "instanceId@party"); may be prefixed with "0x".
 func NewChainMetadata(
 	preOpCount uint64,
-	postOpCount uint64,
+	// postOpCount uint64,
 	chainId int64,
 	multisigId string,
 	mcmsInstanceAddress string,
-	overridePreviousRoot bool,
+	// overridePreviousRoot bool,
 	baseInstanceId string,
 ) (types.ChainMetadata, error) {
 	if mcmsInstanceAddress == "" {
@@ -96,12 +96,12 @@ func NewChainMetadata(
 	}
 
 	additionalFields := AdditionalFieldsMetadata{
-		ChainId:              chainId,
-		MultisigId:           multisigId,
-		InstanceId:           baseInstanceId,
-		PreOpCount:           preOpCount,
-		PostOpCount:          postOpCount,
-		OverridePreviousRoot: overridePreviousRoot,
+		ChainId:    chainId,
+		MultisigId: multisigId,
+		InstanceId: baseInstanceId,
+		// PreOpCount:           preOpCount,
+		// PostOpCount:          postOpCount,
+		// OverridePreviousRoot: overridePreviousRoot,
 	}
 
 	if err := additionalFields.Validate(); err != nil {

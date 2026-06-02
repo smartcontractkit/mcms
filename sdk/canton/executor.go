@@ -260,11 +260,11 @@ func (e Executor) SetRoot(
 		return types.TransactionResult{}, fmt.Errorf("resolve canton root metadata: %w", err)
 	}
 
-	preOpCount, err := safecast.Uint64ToInt64(fields.PreOpCount)
+	preOpCount, err := safecast.Uint64ToInt64(metadata.StartingOpCount)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("preOpCount out of range: %w", err)
 	}
-	postOpCount, convErr := safecast.Uint64ToInt64(fields.PostOpCount)
+	postOpCount, convErr := safecast.Uint64ToInt64(metadata.StartingOpCount + e.TxCount)
 	if convErr != nil {
 		return types.TransactionResult{}, fmt.Errorf("postOpCount out of range: %w", convErr)
 	}
@@ -274,7 +274,7 @@ func (e Executor) SetRoot(
 		MultisigId:           cantontypes.TEXT(fields.MultisigId),
 		PreOpCount:           cantontypes.INT64(preOpCount),
 		PostOpCount:          cantontypes.INT64(postOpCount),
-		OverridePreviousRoot: cantontypes.BOOL(fields.OverridePreviousRoot),
+		OverridePreviousRoot: cantontypes.BOOL(e.OverridePreviousRoot),
 	}
 
 	// Convert proof to Canton TEXT array

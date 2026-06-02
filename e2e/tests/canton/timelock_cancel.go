@@ -34,11 +34,11 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 	// Proposer metadata for schedule
 	proposerMetadata, err := cantonsdk.NewChainMetadata(
 		currentOpCount,
-		currentOpCount+1,
+		// currentOpCount+1,
 		s.chainId,
 		s.proposerMcmsId,
 		s.mcmsInstanceAddress,
-		false,
+		// false,
 		s.mcmsId,
 	)
 	s.Require().NoError(err)
@@ -130,11 +130,11 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 	cancellerMcmsId := fmt.Sprintf("%s@%s-canceller", s.mcmsId, s.participant.PartyID)
 	cancellerMetadata, err := cantonsdk.NewChainMetadata(
 		cancellerOpCount,
-		cancellerOpCount+1,
+		// cancellerOpCount+1,
 		s.chainId,
 		cancellerMcmsId,
 		s.mcmsInstanceAddress,
-		false,
+		// false,
 		s.mcmsId,
 	)
 	s.Require().NoError(err)

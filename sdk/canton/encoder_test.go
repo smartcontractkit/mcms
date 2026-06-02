@@ -1,7 +1,7 @@
 package canton
 
 import (
-	"encoding/json"
+	// "encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -9,27 +9,27 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
-func TestEncoder_ToRootMetadataDerivesPostOpCount(t *testing.T) {
-	t.Parallel()
-
-	additionalFields, err := json.Marshal(AdditionalFieldsMetadata{
-		ChainId:    1,
-		MultisigId: mcmsInstanceIDCCIP + "@party-proposer",
-		InstanceId: mcmsInstanceIDCCIP,
-	})
-	require.NoError(t, err)
-
-	encoder := NewEncoder(8706591216959472610, 3, true)
-	fields, err := encoder.ToRootMetadata(types.ChainMetadata{
-		StartingOpCount:  10,
-		MCMAddress:       "0xabc",
-		AdditionalFields: additionalFields,
-	})
-	require.NoError(t, err)
-	require.Equal(t, uint64(10), fields.PreOpCount)
-	require.Equal(t, uint64(13), fields.PostOpCount)
-	require.True(t, fields.OverridePreviousRoot)
-}
+// func TestEncoder_ToRootMetadataDerivesPostOpCount(t *testing.T) {
+// 	t.Parallel()
+//
+// 	additionalFields, err := json.Marshal(AdditionalFieldsMetadata{
+// 		ChainId:    1,
+// 		MultisigId: mcmsInstanceIDCCIP + "@party-proposer",
+// 		InstanceId: mcmsInstanceIDCCIP,
+// 	})
+// 	require.NoError(t, err)
+//
+// 	encoder := NewEncoder(8706591216959472610, 3, true)
+// 	fields, err := encoder.ToRootMetadata(types.ChainMetadata{
+// 		StartingOpCount:  10,
+// 		MCMAddress:       "0xabc",
+// 		AdditionalFields: additionalFields,
+// 	})
+// 	require.NoError(t, err)
+// 	require.Equal(t, uint64(10), fields.PreOpCount)
+// 	require.Equal(t, uint64(13), fields.PostOpCount)
+// 	require.True(t, fields.OverridePreviousRoot)
+// }
 
 func TestEncoder_ToRootMetadataRequiresAdditionalFields(t *testing.T) {
 	t.Parallel()

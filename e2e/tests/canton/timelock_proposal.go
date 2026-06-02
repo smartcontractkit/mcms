@@ -32,11 +32,11 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	// Canton chain metadata: multisigId = makeMcmsId(instanceId, Proposer); baseInstanceId for converter TargetInstanceId
 	metadata, err := cantonsdk.NewChainMetadata(
 		currentOpCount,
-		currentOpCount+1,
+		// currentOpCount+1,
 		s.chainId,
 		s.proposerMcmsId,
 		s.mcmsInstanceAddress,
-		false,
+		// false,
 		s.mcmsId,
 	)
 	s.Require().NoError(err)

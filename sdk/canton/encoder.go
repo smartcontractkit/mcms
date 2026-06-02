@@ -64,9 +64,9 @@ func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (AdditionalFields
 		return AdditionalFieldsMetadata{}, err
 	}
 
-	fields.PreOpCount = metadata.StartingOpCount
-	fields.PostOpCount = metadata.StartingOpCount + e.TxCount
-	fields.OverridePreviousRoot = e.OverridePreviousRoot
+	// fields.PreOpCount = metadata.StartingOpCount
+	// fields.PostOpCount = metadata.StartingOpCount + e.TxCount
+	// fields.OverridePreviousRoot = e.OverridePreviousRoot
 
 	if err := fields.Validate(); err != nil {
 		return AdditionalFieldsMetadata{}, fmt.Errorf("canton chain metadata additionalFields required or incomplete: %w", err)
@@ -139,7 +139,7 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 
 	// Build override flag
 	overrideFlag := "00"
-	if metadataFields.OverridePreviousRoot {
+	if e.OverridePreviousRoot {
 		overrideFlag = "01"
 	}
 
@@ -151,8 +151,8 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		padLeft32(intToHex(int(metadataFields.ChainId))) +
 		padLeft32(intToHex(len(metadataFields.MultisigId))) + // Length prefix for multisigId
 		multisigIdHex +
-		padLeft32(uint64ToHex(metadataFields.PreOpCount)) +
-		padLeft32(uint64ToHex(metadataFields.PostOpCount)) +
+		padLeft32(uint64ToHex(metadata.StartingOpCount)) +
+		padLeft32(uint64ToHex(metadata.StartingOpCount + e.TxCount)) +
 		overrideFlag
 
 	// Decode hex string and hash

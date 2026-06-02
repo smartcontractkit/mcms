@@ -37,6 +37,9 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	predecessor common.Hash,
 	salt common.Hash,
 ) ([]types.Operation, common.Hash, error) {
+	// REVIEW: probably should be simplified to:
+	//   var metadataFields AdditionalFieldsMetadata
+	//   err := json.Unmarshal(metadata.AdditionalFields, &metadataFields)
 	metadataFields, err := resolveAdditionalFieldsMetadata(
 		metadata,
 		bop,

@@ -151,9 +151,9 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types
 		ChainId:              int64(rootMetadata.ChainId),
 		MultisigId:           string(rootMetadata.MultisigId),
 		InstanceId:           string(mcmsContract.InstanceId),
-		PreOpCount:           startingOpCount,
-		PostOpCount:          startingOpCount, // placeholder; encoder derives final postOpCount at sign time
-		OverridePreviousRoot: bool(rootMetadata.OverridePreviousRoot),
+		// PreOpCount:           startingOpCount,
+		// PostOpCount:          startingOpCount, // placeholder; encoder derives final postOpCount at sign time
+		// OverridePreviousRoot: bool(rootMetadata.OverridePreviousRoot),
 	}
 	if validateErr := additionalFields.Validate(); validateErr != nil {
 		return types.ChainMetadata{}, fmt.Errorf("invalid root metadata from ledger: %w", validateErr)
