@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
@@ -155,9 +156,25 @@ func chainMetadataFromMCMSContract(mcmsContract *mcmscore.MCMS, role TimelockRol
 		return types.ChainMetadata{}, err
 	}
 
+	// Before the first SetRoot, role RootMetadata may still be zeroed while the MCMS
+	// template field ChainId (and multisig id) are authoritative.
+	chainID := int64(rootMetadata.ChainId)
+	if chainID <= 0 {
+		chainID = int64(mcmsContract.ChainId)
+	}
+	multisigID := string(rootMetadata.MultisigId)
+	if multisigID == "" {
+		multisigID = fmt.Sprintf(
+			"%s@%s-%s",
+			string(mcmsContract.InstanceId),
+			string(mcmsContract.Owner),
+			strings.ToLower(role.String()),
+		)
+	}
+
 	additionalFields := AdditionalFieldsMetadata{
-		ChainId:    int64(rootMetadata.ChainId),
-		MultisigId: string(rootMetadata.MultisigId),
+		ChainId:    chainID,
+		MultisigId: multisigID,
 		InstanceId: string(mcmsContract.InstanceId),
 	}
 	if validateErr := additionalFields.Validate(); validateErr != nil {

@@ -41,6 +41,7 @@ func testMCMSContract(instanceID string, roleState func(mcmsapi.RoleState) mcmsa
 	return mcmscore.MCMS{
 		Owner:      damltypes.PARTY(testParty),
 		InstanceId: damltypes.TEXT(instanceID),
+		ChainId:    damltypes.INT64(1),
 		Proposer:   proposer,
 		Bypasser: mcmsapi.RoleState{
 			ExpiringRoot: mcmsapi.ExpiringRoot{OpCount: damltypes.INT64(3)},
@@ -130,11 +131,19 @@ func TestChainMetadataFromMCMSContract(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, uint64(3), meta.StartingOpCount)
 
-	invalid := testMCMSContract(mcmsInstanceIDCCIP, func(rs mcmsapi.RoleState) mcmsapi.RoleState {
-		rs.RootMetadata = mcmsapi.RootMetadata{ChainId: damltypes.INT64(0)}
+	freshRoot := testMCMSContract(mcmsInstanceIDCCIP, func(rs mcmsapi.RoleState) mcmsapi.RoleState {
+		rs.RootMetadata = mcmsapi.RootMetadata{}
 		return rs
 	})
-	_, err = chainMetadataFromMCMSContract(&invalid, TimelockRoleProposer)
+	meta, err = chainMetadataFromMCMSContract(&freshRoot, TimelockRoleProposer)
+	require.NoError(t, err)
+	require.NoError(t, json.Unmarshal(meta.AdditionalFields, &fields))
+	require.Equal(t, int64(1), fields.ChainId)
+	require.Equal(t, mcmsInstanceIDCCIP+"@"+testParty+"-proposer", fields.MultisigId)
+
+	noChainID := freshRoot
+	noChainID.ChainId = damltypes.INT64(0)
+	_, err = chainMetadataFromMCMSContract(&noChainID, TimelockRoleProposer)
 	require.ErrorContains(t, err, "invalid root metadata from ledger")
 }
 
