@@ -26,7 +26,6 @@ var (
 type AdditionalFields struct {
 	TargetInstanceAddress string   `json:"targetInstanceAddress"` // Format: "instanceId@partyId"
 	FunctionName          string   `json:"functionName"`
-	OperationData         string   `json:"operationData"`
 	TargetCid             string   `json:"targetCid"`
 	ContractIds           []string `json:"contractIds"`
 	// TargetTemplateID is the Daml template ID of the target contract (e.g. "#pkg:Module:Entity").
@@ -101,6 +100,8 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		return common.Hash{}, fmt.Errorf("invalid operation additional fields: %w", validateErr)
 	}
 
+	operationData := operationDataHex(op.Transaction.Data)
+
 	// Convert variable-length fields to hex
 	multisigIdHex := asciiToHex(metadataFields.MultisigId)
 	targetAddressHex := asciiToHex(opFields.TargetInstanceAddress)
@@ -116,8 +117,8 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 		targetAddressHex +
 		padLeft32(intToHex(len(opFields.FunctionName))) + // Length prefix for functionName
 		functionNameHex +
-		padLeft32(intToHex(len(opFields.OperationData)/hexEncodedByteLen)) + // Length prefix for operationData (byte count)
-		opFields.OperationData
+		padLeft32(intToHex(len(operationData)/hexEncodedByteLen)) + // Length prefix for operationData (byte count)
+		operationData
 
 	// Decode hex string and hash
 	data, err := hex.DecodeString(encoded)

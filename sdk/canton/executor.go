@@ -106,7 +106,7 @@ func (e Executor) ExecuteOperation(
 		Nonce:                 cantontypes.INT64(nonce),
 		TargetInstanceAddress: cantontypes.TEXT(cantonOpFields.TargetInstanceAddress),
 		FunctionName:          cantontypes.TEXT(cantonOpFields.FunctionName),
-		OperationData:         cantontypes.TEXT(cantonOpFields.OperationData),
+		OperationData:         cantontypes.TEXT(operationDataHex(op.Transaction.Data)),
 	}
 
 	// Convert proof to Canton TEXT array

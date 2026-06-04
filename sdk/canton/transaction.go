@@ -34,23 +34,10 @@ func (f AdditionalFields) Validate() error {
 		return errors.New("targetInstanceAddress is required when functionName is set")
 	}
 
-	if f.OperationData != "" {
-		if strings.HasPrefix(f.OperationData, "0x") || strings.HasPrefix(f.OperationData, "0X") {
-			return errors.New("operationData must be hex-encoded without 0x prefix")
-		}
-		if len(f.OperationData)%2 != 0 {
-			return errors.New("operationData must be hex-encoded with an even number of digits")
-		}
-		if _, err := hex.DecodeString(f.OperationData); err != nil {
-			return fmt.Errorf("operationData must be hex-encoded: %w", err)
-		}
-		if f.TargetInstanceAddress == "" {
-			return errors.New("targetInstanceAddress is required when operationData is set")
-		}
-		if f.FunctionName == "" {
-			return errors.New("functionName is required when operationData is set")
-		}
-	}
-
 	return nil
+}
+
+// operationDataHex returns hex-encoded wire bytes from tx.Data for Canton hashing and ledger transport.
+func operationDataHex(data []byte) string {
+	return hex.EncodeToString(data)
 }

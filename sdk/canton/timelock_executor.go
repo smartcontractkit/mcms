@@ -71,15 +71,16 @@ func (t *TimelockExecutor) Execute(
 		if unmarshalErr := json.Unmarshal(tx.AdditionalFields, &af); unmarshalErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("unmarshal transaction additional fields: %w", unmarshalErr)
 		}
+		operationData := operationDataHex(tx.Data)
 		calls = append(calls, mcmsapi.TimelockCall{
 			TargetInstanceAddress: cantontypes.TEXT(af.TargetInstanceAddress),
 			FunctionName:          cantontypes.TEXT(af.FunctionName),
-			OperationData:         cantontypes.TEXT(af.OperationData),
+			OperationData:         cantontypes.TEXT(operationData),
 		})
 		callsForHash = append(callsForHash, timelockCallForHash{
 			TargetInstanceAddress: af.TargetInstanceAddress,
 			FunctionName:          af.FunctionName,
-			OperationData:         af.OperationData,
+			OperationData:         operationData,
 		})
 		if af.TargetInstanceAddress != "" {
 			if af.TargetCid != "" {

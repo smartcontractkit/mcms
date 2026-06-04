@@ -135,10 +135,7 @@ func buildCallsFromBatch(bop types.BatchOperation) ([]mcmsapi.TimelockCall, []ti
 		if targetInstanceAddress == "" {
 			targetInstanceAddress = tx.To
 		}
-		operationData := af.OperationData
-		if operationData == "" && len(tx.Data) > 0 {
-			operationData = hex.EncodeToString(tx.Data)
-		}
+		operationData := operationDataHex(tx.Data)
 		calls = append(calls, mcmsapi.TimelockCall{
 			TargetInstanceAddress: cantontypes.TEXT(targetInstanceAddress),
 			FunctionName:          cantontypes.TEXT(af.FunctionName),
@@ -216,12 +213,14 @@ func extractInstanceAddressFromMultisigId(multisigId string) string {
 // buildTimelockOperation builds a single types.Operation for the given timelock action.
 // allContractIds are target contract IDs from the batch (ExecuteOp TargetCids); mcmAddress populates tx.To.
 func buildTimelockOperation(bop types.BatchOperation, mcmAddress, targetInstanceAddress, functionName, opDataHex string, allContractIds []string) (types.Operation, error) {
-	// Canton payload lives in additionalFields.operationData only; the executor does not read tx.Data.
-	// Data is a non-empty placeholder so shared MCMS validation (validate:"required" on data) passes.
+	opData, err := hex.DecodeString(opDataHex)
+	if err != nil {
+		return types.Operation{}, fmt.Errorf("decode timelock operation data: %w", err)
+	}
+
 	opAdditionalFields := AdditionalFields{
 		TargetInstanceAddress: targetInstanceAddress,
 		FunctionName:          functionName,
-		OperationData:         opDataHex,
 		TargetCid:             mcmAddress,
 		ContractIds:           allContractIds,
 	}
@@ -234,7 +233,7 @@ func buildTimelockOperation(bop types.BatchOperation, mcmAddress, targetInstance
 		ChainSelector: bop.ChainSelector,
 		Transaction: types.Transaction{
 			To:               mcmAddress,
-			Data:             []byte{0x00},
+			Data:             opData,
 			AdditionalFields: opAdditionalFieldsBytes,
 		},
 	}, nil

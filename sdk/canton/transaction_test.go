@@ -1,6 +1,7 @@
 package canton
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"testing"
 
@@ -13,7 +14,6 @@ func TestValidateAdditionalFields(t *testing.T) {
 	validFields, err := json.Marshal(AdditionalFields{
 		TargetInstanceAddress: "counter@party::abc",
 		FunctionName:          "Increment",
-		OperationData:         "deadbeef",
 	})
 	require.NoError(t, err)
 
@@ -23,27 +23,8 @@ func TestValidateAdditionalFields(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	invalidOpDataFields, err := json.Marshal(AdditionalFields{
-		TargetInstanceAddress: "counter@party::abc",
-		FunctionName:          "Increment",
-		OperationData:         "not-hex",
-	})
-	require.NoError(t, err)
-
 	onlyFunctionNameFields, err := json.Marshal(AdditionalFields{
 		FunctionName: "Increment",
-	})
-	require.NoError(t, err)
-
-	opDataWith0xPrefix, err := json.Marshal(AdditionalFields{
-		TargetInstanceAddress: "counter@party::abc",
-		FunctionName:          "Increment",
-		OperationData:         "0xdeadbeef",
-	})
-	require.NoError(t, err)
-
-	onlyOpDataFields, err := json.Marshal(AdditionalFields{
-		OperationData: "deadbeef",
 	})
 	require.NoError(t, err)
 
@@ -67,24 +48,9 @@ func TestValidateAdditionalFields(t *testing.T) {
 			wantErr: "targetInstanceAddress must be in instanceId@partyId format",
 		},
 		{
-			name:    "invalid operation data",
-			input:   invalidOpDataFields,
-			wantErr: "operationData must be hex-encoded",
-		},
-		{
 			name:    "function name without target instance address",
 			input:   onlyFunctionNameFields,
 			wantErr: "targetInstanceAddress is required when functionName is set",
-		},
-		{
-			name:    "operation data with 0x prefix",
-			input:   opDataWith0xPrefix,
-			wantErr: "operationData must be hex-encoded without 0x prefix",
-		},
-		{
-			name:    "operation data without target and function",
-			input:   onlyOpDataFields,
-			wantErr: "targetInstanceAddress is required when operationData is set",
 		},
 		{
 			name:    "invalid JSON",
@@ -106,4 +72,25 @@ func TestValidateAdditionalFields(t *testing.T) {
 			require.ErrorContains(t, err, tt.wantErr)
 		})
 	}
+}
+
+func TestOperationDataHex(t *testing.T) {
+	t.Parallel()
+
+	t.Run("encodes bytes to hex", func(t *testing.T) {
+		t.Parallel()
+		require.Equal(t, "deadbeef", operationDataHex([]byte{0xde, 0xad, 0xbe, 0xef}))
+	})
+
+	t.Run("empty data returns empty string", func(t *testing.T) {
+		t.Parallel()
+		require.Empty(t, operationDataHex(nil))
+	})
+
+	t.Run("round trip", func(t *testing.T) {
+		t.Parallel()
+		raw, err := hex.DecodeString("0000000000000005")
+		require.NoError(t, err)
+		require.Equal(t, "0000000000000005", operationDataHex(raw))
+	})
 }
