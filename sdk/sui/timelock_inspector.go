@@ -5,11 +5,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/block-vision/sui-go-sdk/sui"
-
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	"github.com/smartcontractkit/mcms/sdk"
 )
@@ -18,14 +17,14 @@ var _ sdk.TimelockInspector = (*TimelockInspector)(nil)
 
 // TimelockInspector is an Inspector implementation for Sui, for accessing the MCMS-Timelock contract
 type TimelockInspector struct {
-	client        sui.ISuiAPI
+	client        cslclient.BindingsClient
 	signer        bindutils.SuiSigner
 	mcmsPackageID string
 	mcms          modulemcms.IMcms
 }
 
 // NewTimelockInspector creates a new TimelockInspector
-func NewTimelockInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageID string) (*TimelockInspector, error) {
+func NewTimelockInspector(client cslclient.BindingsClient, signer bindutils.SuiSigner, mcmsPackageID string) (*TimelockInspector, error) {
 	mcms, err := modulemcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err

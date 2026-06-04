@@ -53,7 +53,7 @@ func TestBuildExecutors(t *testing.T) {
 	aptosCurseSigner := aptosmocks.NewTransactionSigner(t)
 	aptosCurseEncoder := aptos.NewEncoder(aptosSelector, 0, false)
 	aptosCurseExecutor := aptos.NewExecutorWithMCMSType(aptosCurseClient, aptosCurseSigner, aptosCurseEncoder, aptos.TimelockRoleProposer, aptos.MCMSTypeCurse)
-	suiClient := suimocks.NewISuiAPI(t)
+	suiClient := suimocks.NewBindingsClient(t)
 	suiSigner := suibindmocks.NewSuiSigner(t)
 	suiEncoder := sui.NewEncoder(suiSelector, 0, false)
 	suiExecutor, err := sui.NewExecutor(suiClient, suiSigner, suiEncoder, nil, "mcms-pkg-id",

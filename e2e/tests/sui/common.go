@@ -6,11 +6,12 @@ import (
 	"fmt"
 
 	"github.com/block-vision/sui-go-sdk/signer"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/stretchr/testify/suite"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
+
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
@@ -29,7 +30,7 @@ type TestSuite struct {
 	suite.Suite
 	e2e.TestSetup
 
-	client sui.ISuiAPI
+	client cslclient.BindingsClient
 	signer bindutils.SuiSigner
 
 	chainSelector types.ChainSelector
@@ -181,7 +182,7 @@ func (s *TestSuite) extractByteArgsFromEncodedCall(encodedCall bind.EncodedCall)
 
 type TestEntrypointArgEncoder struct {
 	registryObj string
-	client      sui.ISuiAPI
+	client      cslclient.BindingsClient
 }
 
 func (e *TestEntrypointArgEncoder) EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte, typeArgs []string) (*bind.EncodedCall, error) {

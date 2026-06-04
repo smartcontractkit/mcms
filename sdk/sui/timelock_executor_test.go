@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/block-vision/sui-go-sdk/models"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +14,7 @@ import (
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
 	mockmcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
@@ -24,7 +24,7 @@ import (
 
 // testExecutingCallbackParams is a test implementation that mocks the AppendPTB method
 type testExecutingCallbackParams struct {
-	client        sui.ISuiAPI
+	client        cslclient.BindingsClient
 	mcms          *mockmcms.IMcms
 	mcmsPackageID string
 	registryObj   string
@@ -42,7 +42,7 @@ var _ ExecutingCallbackAppender = (*testExecutingCallbackParams)(nil)
 func TestNewTimelockExecutor(t *testing.T) {
 	t.Parallel()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	mcmsPackageID := "0x123456789abcdef"
@@ -63,7 +63,7 @@ func TestNewTimelockExecutor(t *testing.T) {
 func TestTimelockExecutor_Properties(t *testing.T) {
 	t.Parallel()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	mcmsPackageID := "0x123456789abcdef"
@@ -94,7 +94,7 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 	mockEncoder := mockmcms.NewMcmsEncoder(t)
@@ -123,7 +123,7 @@ func TestTimelockExecutor_Execute_Success(t *testing.T) {
 		registryObj:   registryObj,
 		accountObj:    accountObj,
 		// Mock ExecutePTB function
-		ExecutePTB: func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
+		ExecutePTB: func(ctx context.Context, opts *bind.CallOpts, client cslclient.BindingsClient, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
 			return &models.SuiTransactionBlockResponse{
 				Digest: "9WzSXdwbky8tNbH7juvyaui4QzMUYEjdCEKMrMgLhXHT",
 				Transaction: models.SuiTransactionBlock{
@@ -205,7 +205,7 @@ func TestTimelockExecutor_Execute_InvalidAdditionalFields(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 
@@ -249,7 +249,7 @@ func TestTimelockExecutor_Execute_InvalidTargetAddress(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 
@@ -305,7 +305,7 @@ func TestTimelockExecutor_Execute_TimelockExecuteBatchFailure(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 	mockEncoder := mockmcms.NewMcmsEncoder(t)
@@ -386,7 +386,7 @@ func TestTimelockExecutor_Execute_AppendPTBFailure(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 	mockEncoder := mockmcms.NewMcmsEncoder(t)

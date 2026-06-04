@@ -6,12 +6,12 @@ import (
 	"fmt"
 
 	"github.com/block-vision/sui-go-sdk/models"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
@@ -24,20 +24,20 @@ var _ sdk.TimelockExecutor = (*TimelockExecutor)(nil)
 // TimelockExecutor is an Executor implementation for Sui, for accessing the MCMS-Timelock
 type TimelockExecutor struct {
 	TimelockInspector
-	client        sui.ISuiAPI
+	client        cslclient.BindingsClient
 	signer        bindutils.SuiSigner
 	mcmsPackageID string
 	registryObj   string
 	accountObj    string
 
 	// ExecutePTB function for dependency injection and testing
-	ExecutePTB func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error)
+	ExecutePTB func(ctx context.Context, opts *bind.CallOpts, client cslclient.BindingsClient, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error)
 
 	executingCallbackParams ExecutingCallbackAppender
 }
 
 // NewTimelockExecutor creates a new TimelockExecutor
-func NewTimelockExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, entrypointEncoder EntrypointArgEncoder, mcmsPackageID string, registryObj string, accountObj string) (*TimelockExecutor, error) {
+func NewTimelockExecutor(client cslclient.BindingsClient, signer bindutils.SuiSigner, entrypointEncoder EntrypointArgEncoder, mcmsPackageID string, registryObj string, accountObj string) (*TimelockExecutor, error) {
 	timelockInspector, err := NewTimelockInspector(client, signer, mcmsPackageID)
 	if err != nil {
 		return nil, err

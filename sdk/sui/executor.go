@@ -8,7 +8,6 @@ import (
 	"math/big"
 
 	"github.com/block-vision/sui-go-sdk/models"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
 
@@ -17,6 +16,7 @@ import (
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -34,7 +34,7 @@ var _ sdk.Executor = &Executor{}
 type Executor struct {
 	*Encoder
 	*Inspector
-	client        sui.ISuiAPI
+	client        cslclient.BindingsClient
 	signer        bindutils.SuiSigner
 	mcmsPackageID string
 	mcms          modulemcms.IMcms
@@ -45,12 +45,12 @@ type Executor struct {
 	timelockObj string
 
 	// ExecutePTB function for dependency injection and testing
-	ExecutePTB func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error)
+	ExecutePTB func(ctx context.Context, opts *bind.CallOpts, client cslclient.BindingsClient, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error)
 
 	executingCallbackParams ExecutingCallbackAppender
 }
 
-func NewExecutor(client sui.ISuiAPI, signer bindutils.SuiSigner, encoder *Encoder, entrypointEncoder EntrypointArgEncoder, mcmsPackageID string, role TimelockRole, mcmsObj string, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
+func NewExecutor(client cslclient.BindingsClient, signer bindutils.SuiSigner, encoder *Encoder, entrypointEncoder EntrypointArgEncoder, mcmsPackageID string, role TimelockRole, mcmsObj string, accountObj string, registryObj string, timelockObj string) (*Executor, error) {
 	mcms, err := modulemcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err

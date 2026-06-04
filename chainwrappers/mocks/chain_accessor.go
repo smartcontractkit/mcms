@@ -16,7 +16,7 @@ import (
 
 	solana "github.com/gagliardetto/solana-go"
 
-	sui "github.com/block-vision/sui-go-sdk/sui"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	ton "github.com/xssnick/tonutils-go/ton"
 
@@ -432,23 +432,23 @@ func (_c *ChainAccessor_SolanaSigner_Call) RunAndReturn(run func(uint64) (*solan
 }
 
 // SuiClient provides a mock function with given fields: selector
-func (_m *ChainAccessor) SuiClient(selector uint64) (sui.ISuiAPI, bool) {
+func (_m *ChainAccessor) SuiClient(selector uint64) (cslclient.BindingsClient, bool) {
 	ret := _m.Called(selector)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SuiClient")
 	}
 
-	var r0 sui.ISuiAPI
+	var r0 cslclient.BindingsClient
 	var r1 bool
-	if rf, ok := ret.Get(0).(func(uint64) (sui.ISuiAPI, bool)); ok {
+	if rf, ok := ret.Get(0).(func(uint64) (cslclient.BindingsClient, bool)); ok {
 		return rf(selector)
 	}
-	if rf, ok := ret.Get(0).(func(uint64) sui.ISuiAPI); ok {
+	if rf, ok := ret.Get(0).(func(uint64) cslclient.BindingsClient); ok {
 		r0 = rf(selector)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sui.ISuiAPI)
+			r0 = ret.Get(0).(cslclient.BindingsClient)
 		}
 	}
 
@@ -479,12 +479,12 @@ func (_c *ChainAccessor_SuiClient_Call) Run(run func(selector uint64)) *ChainAcc
 	return _c
 }
 
-func (_c *ChainAccessor_SuiClient_Call) Return(_a0 sui.ISuiAPI, _a1 bool) *ChainAccessor_SuiClient_Call {
+func (_c *ChainAccessor_SuiClient_Call) Return(_a0 cslclient.BindingsClient, _a1 bool) *ChainAccessor_SuiClient_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ChainAccessor_SuiClient_Call) RunAndReturn(run func(uint64) (sui.ISuiAPI, bool)) *ChainAccessor_SuiClient_Call {
+func (_c *ChainAccessor_SuiClient_Call) RunAndReturn(run func(uint64) (cslclient.BindingsClient, bool)) *ChainAccessor_SuiClient_Call {
 	_c.Call.Return(run)
 	return _c
 }

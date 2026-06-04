@@ -41,7 +41,7 @@ func MustMarshalJSON(t *testing.T, v any) []byte {
 }
 func TestNewConfigurer(t *testing.T) {
 	t.Parallel()
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Test successful creation
@@ -225,7 +225,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mocksui.NewISuiAPI(t)
+			mockClient := mocksui.NewBindingsClient(t)
 			mockSigner := mockbindutils.NewSuiSigner(t)
 			Modulemockmcms := mockmodulemcms.NewIMcms(t)
 
