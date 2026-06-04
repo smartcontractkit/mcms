@@ -40,11 +40,9 @@ func (s *TimelockBypassTestSuite) TestTimelockBypass() {
 	bypasserMcmsId := fmt.Sprintf("%s@%s-bypasser", s.mcmsId, s.participant.PartyID)
 	metadata, err := cantonsdk.NewChainMetadata(
 		currentOpCount,
-		currentOpCount+1,
 		s.chainId,
 		bypasserMcmsId,
 		s.mcmsInstanceAddress,
-		false,
 		s.mcmsId,
 	)
 	s.Require().NoError(err)

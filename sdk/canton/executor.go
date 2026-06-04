@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
 	"time"
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
@@ -94,21 +93,16 @@ func (e Executor) ExecuteOperation(
 		}
 	}
 
-	// Extract metadata fields for chainId and multisigId
-	var metadataFields struct {
-		ChainId    int64  `json:"chainId"`
-		MultisigId string `json:"multisigId"`
-	}
-	if len(metadata.AdditionalFields) > 0 {
-		if unmarshalErr := json.Unmarshal(metadata.AdditionalFields, &metadataFields); unmarshalErr != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal metadata additional fields: %w", unmarshalErr)
-		}
+	// Resolve chain metadata (chainId, multisigId) for the Canton Op payload.
+	fields, err := e.ToRootMetadata(metadata)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("resolve canton root metadata: %w", err)
 	}
 
 	// Build Canton Op struct
 	cantonOp := mcmsapi.Op{
-		ChainId:               cantontypes.INT64(metadataFields.ChainId),
-		MultisigId:            cantontypes.TEXT(metadataFields.MultisigId),
+		ChainId:               cantontypes.INT64(fields.ChainId),
+		MultisigId:            cantontypes.TEXT(fields.MultisigId),
 		Nonce:                 cantontypes.INT64(nonce),
 		TargetInstanceAddress: cantontypes.TEXT(cantonOpFields.TargetInstanceAddress),
 		FunctionName:          cantontypes.TEXT(cantonOpFields.FunctionName),
@@ -150,12 +144,12 @@ func (e Executor) ExecuteOperation(
 	choiceArgument = ledger.MapToValue(input)
 
 	// Parse template ID
-	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
+	packageID, moduleName, entityName, err := ParseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
 	}
 
-	commandID := uuid.Must(uuid.NewUUID()).String()
+	commandID := uuid.NewString()
 	submitResp, err := e.client.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
 		Commands: &apiv2.Commands{
 			WorkflowId: "mcms-execute-op",
@@ -188,7 +182,7 @@ func (e Executor) ExecuteOperation(
 	transaction := submitResp.GetTransaction()
 	for _, ev := range transaction.GetEvents() {
 		if createdEv := ev.GetCreated(); createdEv != nil {
-			templateID := formatTemplateID(createdEv.GetTemplateId())
+			templateID := FormatTemplateID(createdEv.GetTemplateId())
 			normalized := NormalizeTemplateKey(templateID)
 			if normalized == MCMSTemplateKey {
 				newMCMSContractID = createdEv.GetContractId()
@@ -204,7 +198,7 @@ func (e Executor) ExecuteOperation(
 	}
 
 	return types.TransactionResult{
-		Hash:        commandID,
+		Hash:        transactionResultHash(transaction, commandID),
 		ChainFamily: cselectors.FamilyCanton,
 		RawData:     rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID, submitResp),
 	}, nil
@@ -260,11 +254,11 @@ func (e Executor) SetRoot(
 		return types.TransactionResult{}, fmt.Errorf("resolve canton root metadata: %w", err)
 	}
 
-	preOpCount, err := safecast.Uint64ToInt64(fields.PreOpCount)
+	preOpCount, err := safecast.Uint64ToInt64(metadata.StartingOpCount)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("preOpCount out of range: %w", err)
 	}
-	postOpCount, convErr := safecast.Uint64ToInt64(fields.PostOpCount)
+	postOpCount, convErr := safecast.Uint64ToInt64(metadata.StartingOpCount + e.TxCount)
 	if convErr != nil {
 		return types.TransactionResult{}, fmt.Errorf("postOpCount out of range: %w", convErr)
 	}
@@ -274,7 +268,7 @@ func (e Executor) SetRoot(
 		MultisigId:           cantontypes.TEXT(fields.MultisigId),
 		PreOpCount:           cantontypes.INT64(preOpCount),
 		PostOpCount:          cantontypes.INT64(postOpCount),
-		OverridePreviousRoot: cantontypes.BOOL(fields.OverridePreviousRoot),
+		OverridePreviousRoot: cantontypes.BOOL(e.OverridePreviousRoot),
 	}
 
 	// Convert proof to Canton TEXT array
@@ -300,7 +294,7 @@ func (e Executor) SetRoot(
 	exerciseCmd := mcmsContract.SetRoot(mcmsContractID, input)
 
 	// Parse template ID
-	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
+	packageID, moduleName, entityName, err := ParseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
 	}
@@ -308,7 +302,7 @@ func (e Executor) SetRoot(
 	// Convert input to choice argument
 	choiceArgument := ledger.MapToValue(input)
 
-	commandID := uuid.Must(uuid.NewUUID()).String()
+	commandID := uuid.NewString()
 	submitResp, err := e.client.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
 		Commands: &apiv2.Commands{
 			WorkflowId: "mcms-set-root",
@@ -341,7 +335,7 @@ func (e Executor) SetRoot(
 	transaction := submitResp.GetTransaction()
 	for _, ev := range transaction.GetEvents() {
 		if createdEv := ev.GetCreated(); createdEv != nil {
-			templateID := formatTemplateID(createdEv.GetTemplateId())
+			templateID := FormatTemplateID(createdEv.GetTemplateId())
 			normalized := NormalizeTemplateKey(templateID)
 			if normalized == MCMSTemplateKey {
 				newMCMSContractID = createdEv.GetContractId()
@@ -357,16 +351,8 @@ func (e Executor) SetRoot(
 	}
 
 	return types.TransactionResult{
-		Hash:        commandID,
+		Hash:        transactionResultHash(transaction, commandID),
 		ChainFamily: cselectors.FamilyCanton,
 		RawData:     rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID, submitResp),
 	}, nil
-}
-
-func PadLeft32(hexStr string) string {
-	if len(hexStr) >= hexWordLen {
-		return hexStr[:hexWordLen]
-	}
-
-	return strings.Repeat("0", hexWordLen-len(hexStr)) + hexStr
 }

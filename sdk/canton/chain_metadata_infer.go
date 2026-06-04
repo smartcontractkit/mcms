@@ -16,15 +16,12 @@ import (
 var defaultMCMSInstanceIDCandidates = []string{mcmsInstanceIDCCIP, mcmsInstanceIDCCV, mcmsInstanceIDDefault}
 
 // EnsureChainMetadata fills Canton-specific additionalFields when they are missing or incomplete.
-// txCount is the total number of timelock batch transactions for this chain in the proposal.
 func EnsureChainMetadata(
 	metadata types.ChainMetadata,
 	bop types.BatchOperation,
-	txCount uint64,
 	action types.TimelockAction,
-	overridePreviousRoot bool,
 ) (types.ChainMetadata, error) {
-	fields, err := resolveAdditionalFieldsMetadata(metadata, bop, txCount, action, overridePreviousRoot)
+	fields, err := resolveAdditionalFieldsMetadata(metadata, bop, action)
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}
@@ -44,9 +41,7 @@ func EnsureChainMetadata(
 func resolveAdditionalFieldsMetadata(
 	metadata types.ChainMetadata,
 	bop types.BatchOperation,
-	txCount uint64,
 	action types.TimelockAction,
-	overridePreviousRoot bool,
 ) (AdditionalFieldsMetadata, error) {
 	if len(metadata.AdditionalFields) > 0 {
 		var fields AdditionalFieldsMetadata
@@ -54,23 +49,8 @@ func resolveAdditionalFieldsMetadata(
 			return AdditionalFieldsMetadata{}, fmt.Errorf("unmarshal metadata additional fields: %w", err)
 		}
 		if err := fields.Validate(); err == nil {
-			fields.PreOpCount = metadata.StartingOpCount
-			if fields.PostOpCount < fields.PreOpCount {
-				fields.PostOpCount = fields.PreOpCount
-			}
-			if overridePreviousRoot {
-				fields.OverridePreviousRoot = true
-			}
-
 			return fields, nil
 		}
-		if fields.OverridePreviousRoot {
-			overridePreviousRoot = true
-		}
-	}
-
-	if txCount == 0 {
-		txCount = uint64(len(bop.Transactions))
 	}
 
 	party, err := partyFromBatchOperation(bop)
@@ -90,12 +70,9 @@ func resolveAdditionalFieldsMetadata(
 	multisigID := fmt.Sprintf("%s@%s-%s", instanceID, party, strings.ToLower(role.String()))
 
 	fields := AdditionalFieldsMetadata{
-		ChainId:              defaultCantonChainID,
-		MultisigId:           multisigID,
-		InstanceId:           instanceID,
-		PreOpCount:           metadata.StartingOpCount,
-		PostOpCount:          metadata.StartingOpCount + txCount,
-		OverridePreviousRoot: overridePreviousRoot,
+		ChainId:    defaultCantonChainID,
+		MultisigId: multisigID,
+		InstanceId: instanceID,
 	}
 	if err := fields.Validate(); err != nil {
 		return AdditionalFieldsMetadata{}, fmt.Errorf("inferred canton additional fields invalid: %w", err)
@@ -103,14 +80,6 @@ func resolveAdditionalFieldsMetadata(
 
 	return fields, nil
 }
-
-const (
-	defaultCantonChainID int64 = 1
-
-	mcmsInstanceIDCCIP    = "mcms-ccip"
-	mcmsInstanceIDCCV     = "mcms-ccv"
-	mcmsInstanceIDDefault = "mcms"
-)
 
 func partyFromBatchOperation(bop types.BatchOperation) (string, error) {
 	for _, tx := range bop.Transactions {

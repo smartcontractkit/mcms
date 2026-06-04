@@ -37,13 +37,7 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	predecessor common.Hash,
 	salt common.Hash,
 ) ([]types.Operation, common.Hash, error) {
-	metadataFields, err := resolveAdditionalFieldsMetadata(
-		metadata,
-		bop,
-		uint64(len(bop.Transactions)),
-		action,
-		false,
-	)
+	metadataFields, err := resolveAdditionalFieldsMetadata(metadata, bop, action)
 	if err != nil {
 		return nil, common.Hash{}, err
 	}
@@ -56,7 +50,10 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 	predecessorHex := hex.EncodeToString(predecessor[:])
 	saltHex := hex.EncodeToString(salt[:])
 
-	operationIDStr := HashTimelockOpId(callsForHash, predecessorHex, saltHex)
+	operationIDStr, err := hashTimelockOpID(callsForHash, predecessorHex, saltHex)
+	if err != nil {
+		return nil, common.Hash{}, err
+	}
 	operationIDBytes, err := hex.DecodeString(operationIDStr)
 	if err != nil || len(operationIDBytes) != 32 {
 		return nil, common.Hash{}, fmt.Errorf("invalid operation ID hash: %w", err)
@@ -105,7 +102,10 @@ func OperationID(
 
 	predecessorHex := hex.EncodeToString(predecessor[:])
 	saltHex := hex.EncodeToString(salt[:])
-	operationIDStr := HashTimelockOpId(callsForHash, predecessorHex, saltHex)
+	operationIDStr, err := hashTimelockOpID(callsForHash, predecessorHex, saltHex)
+	if err != nil {
+		return common.Hash{}, err
+	}
 
 	operationIDBytes, err := hex.DecodeString(operationIDStr)
 	if err != nil || len(operationIDBytes) != 32 {
@@ -118,12 +118,12 @@ func OperationID(
 	return operationID, nil
 }
 
-// buildCallsFromBatch extracts mcmsapi.TimelockCall, TimelockCallForHash, and all ContractIds from bop.
+// buildCallsFromBatch extracts mcmsapi.TimelockCall, timelockCallForHash, and all ContractIds from bop.
 // Uses tx.To and tx.Data as fallbacks when AdditionalFields are missing or empty.
-func buildCallsFromBatch(bop types.BatchOperation) ([]mcmsapi.TimelockCall, []TimelockCallForHash, []string, error) {
+func buildCallsFromBatch(bop types.BatchOperation) ([]mcmsapi.TimelockCall, []timelockCallForHash, []string, error) {
 	calls := make([]mcmsapi.TimelockCall, 0, len(bop.Transactions))
-	callsForHash := make([]TimelockCallForHash, 0, len(bop.Transactions))
-	var allContractIds []string
+	callsForHash := make([]timelockCallForHash, 0, len(bop.Transactions))
+	allContractIds := make([]string, 0, len(bop.Transactions))
 	for _, tx := range bop.Transactions {
 		var af AdditionalFields
 		if len(tx.AdditionalFields) > 0 {
@@ -144,7 +144,7 @@ func buildCallsFromBatch(bop types.BatchOperation) ([]mcmsapi.TimelockCall, []Ti
 			FunctionName:          cantontypes.TEXT(af.FunctionName),
 			OperationData:         cantontypes.TEXT(operationData),
 		})
-		callsForHash = append(callsForHash, TimelockCallForHash{
+		callsForHash = append(callsForHash, timelockCallForHash{
 			TargetInstanceAddress: targetInstanceAddress,
 			FunctionName:          af.FunctionName,
 			OperationData:         operationData,
@@ -163,10 +163,7 @@ func wireToHex(wire string) string {
 
 // scheduleActionData returns function name and hex-encoded params for ScheduleBatch.
 func scheduleActionData(calls []mcmsapi.TimelockCall, predecessorHex, saltHex string, delay types.Duration) (functionName, opDataHex string, err error) {
-	delaySecs := int64(delay.Seconds())
-	if delaySecs < 0 {
-		delaySecs = 0
-	}
+	delaySecs := max(int64(0), int64(delay.Seconds()))
 	params := mcmsapi.ScheduleBatchParams{
 		Calls:       calls,
 		Predecessor: cantontypes.TEXT(predecessorHex),
@@ -217,8 +214,10 @@ func extractInstanceAddressFromMultisigId(multisigId string) string {
 }
 
 // buildTimelockOperation builds a single types.Operation for the given timelock action.
-// allContractIds are the target contract IDs from the batch (for ExecuteOp TargetCids); mcmAddress is included as TargetCid.
+// allContractIds are target contract IDs from the batch (ExecuteOp TargetCids); mcmAddress populates tx.To.
 func buildTimelockOperation(bop types.BatchOperation, mcmAddress, targetInstanceAddress, functionName, opDataHex string, allContractIds []string) (types.Operation, error) {
+	// Canton payloads live in AdditionalFields (OperationData), not tx.Data — MCMS validators expect non-empty Data.
+	// TargetCid is set so ExecuteOperation skips target-template resolution; timelock self-calls use ContractIds for TargetCids.
 	opAdditionalFields := AdditionalFields{
 		TargetInstanceAddress: targetInstanceAddress,
 		FunctionName:          functionName,

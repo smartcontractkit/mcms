@@ -1,25 +1,11 @@
 package canton
 
 import (
+	"encoding/hex"
 	"fmt"
 	"strings"
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
-)
-
-const (
-	MCMSTemplateKey = "MCMS.Main:MCMS"
-
-	rawDataKeyNewMCMSContractID = "NewMCMSContractID"
-	rawDataKeyNewMCMSTemplateID = "NewMCMSTemplateID"
-	rawDataKeyRawTx             = "RawTx"
-
-	instanceAddressHexLen = 64
-	hexWordLen            = 64
-	templateIDPartCount   = 3
-	hexEncodedByteLen     = 2
-	maxMCMSGroups         = 32
-	microsecondsPerSecond = 1_000_000
 )
 
 func rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID string, rawTx any) map[string]any {
@@ -28,6 +14,18 @@ func rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID string, rawTx any) m
 		rawDataKeyNewMCMSTemplateID: newMCMSTemplateID,
 		rawDataKeyRawTx:             rawTx,
 	}
+}
+
+// transactionResultHash returns an identifier for a Canton ledger submission.
+// Prefer the ledger external transaction hash when present; otherwise use commandID.
+func transactionResultHash(transaction *apiv2.Transaction, commandID string) string {
+	if transaction != nil {
+		if ext := transaction.GetExternalTransactionHash(); len(ext) > 0 {
+			return "0x" + hex.EncodeToString(ext)
+		}
+	}
+
+	return commandID
 }
 
 func NormalizeTemplateKey(tid string) string {
@@ -40,8 +38,8 @@ func NormalizeTemplateKey(tid string) string {
 	return parts[len(parts)-2] + ":" + parts[len(parts)-1]
 }
 
-// parseTemplateIDFromString parses a template ID string like "#package:Module:Entity" into its components
-func parseTemplateIDFromString(templateID string) (packageID, moduleName, entityName string, err error) {
+// ParseTemplateIDFromString parses a template ID string like "#package:Module:Entity" into its components.
+func ParseTemplateIDFromString(templateID string) (packageID, moduleName, entityName string, err error) {
 	if !strings.HasPrefix(templateID, "#") {
 		return "", "", "", fmt.Errorf("template ID must start with #")
 	}
@@ -53,21 +51,11 @@ func parseTemplateIDFromString(templateID string) (packageID, moduleName, entity
 	return parts[0], parts[1], parts[2], nil
 }
 
-// ParseTemplateIDFromString is the exported version of parseTemplateIDFromString
-func ParseTemplateIDFromString(templateID string) (packageID, moduleName, entityName string, err error) {
-	return parseTemplateIDFromString(templateID)
-}
-
-// formatTemplateID converts an apiv2.Identifier to a string template ID format
-func formatTemplateID(id *apiv2.Identifier) string {
+// FormatTemplateID converts an apiv2.Identifier to a string template ID format.
+func FormatTemplateID(id *apiv2.Identifier) string {
 	if id == nil {
 		return ""
 	}
 
 	return id.GetPackageId() + ":" + id.GetModuleName() + ":" + id.GetEntityName()
-}
-
-// FormatTemplateID is the exported version of formatTemplateID
-func FormatTemplateID(id *apiv2.Identifier) string {
-	return formatTemplateID(id)
 }

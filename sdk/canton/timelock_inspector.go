@@ -191,14 +191,14 @@ func (t *TimelockInspector) exerciseBoolChoice(ctx context.Context, address stri
 func (t *TimelockInspector) exerciseRequest(contractID, choice string, choiceArg *apiv2.Value) (*apiv2.SubmitAndWaitForTransactionRequest, error) {
 	// Parse template ID
 	mcmsContract := mcmscore.MCMS{}
-	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
+	packageID, moduleName, entityName, err := ParseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse template ID: %w", err)
 	}
 
 	return &apiv2.SubmitAndWaitForTransactionRequest{
 		Commands: &apiv2.Commands{
-			CommandId: uuid.Must(uuid.NewUUID()).String(),
+			CommandId: uuid.NewString(),
 			ActAs:     []string{t.submittingParty},
 			ReadAs:    t.mcmsParties,
 			Commands: []*apiv2.Command{{

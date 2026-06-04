@@ -31,11 +31,9 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecute() {
 
 	metadata, err := cantonsdk.NewChainMetadata(
 		currentOpCount,
-		currentOpCount+1,
 		s.chainId,
 		s.proposerMcmsId,
 		s.mcmsInstanceAddress,
-		false,
 		s.mcmsId,
 	)
 	s.Require().NoError(err)
@@ -151,11 +149,9 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 
 		metadata, metaErr := cantonsdk.NewChainMetadata(
 			currentOpCount,
-			currentOpCount+1,
 			s.chainId,
 			s.proposerMcmsId,
 			s.mcmsInstanceAddress,
-			i > 0,
 			s.mcmsId,
 		)
 		s.Require().NoError(metaErr)
@@ -190,6 +186,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 			AddChainMetadata(s.chainSelector, metadata).
 			SetAction(types.TimelockActionSchedule).
 			SetDelay(delay).
+			SetOverridePreviousRoot(i > 0).
 			AddOperation(bop).
 			Build()
 		s.Require().NoError(buildErr)
@@ -266,11 +263,9 @@ func (s *SetRootExecuteTestSuite) TestSetRootInvalidSignature() {
 
 	metadata, err := cantonsdk.NewChainMetadata(
 		currentOpCount,
-		currentOpCount+1,
 		s.chainId,
 		s.proposerMcmsId,
 		s.mcmsInstanceAddress,
-		true,
 		s.mcmsId,
 	)
 	s.Require().NoError(err)

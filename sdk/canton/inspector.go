@@ -2,10 +2,8 @@ package canton
 
 import (
 	"context"
-	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"strings"
 	"time"
 
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
@@ -13,6 +11,7 @@ import (
 	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/api"
 	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
 	"github.com/smartcontractkit/chainlink-canton/contracts"
+	damltypes "github.com/smartcontractkit/go-daml/pkg/types"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
 	"github.com/smartcontractkit/mcms/sdk"
@@ -87,30 +86,30 @@ func (i *Inspector) GetRoot(ctx context.Context, mcmsAddr string) (common.Hash, 
 		return common.Hash{}, 0, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
 
-	var expiringRoot mcmsapi.ExpiringRoot
-	switch i.role {
-	case TimelockRoleProposer:
-		expiringRoot = mcmsContract.Proposer.ExpiringRoot
-	case TimelockRoleBypasser:
-		expiringRoot = mcmsContract.Bypasser.ExpiringRoot
-	case TimelockRoleCanceller:
-		expiringRoot = mcmsContract.Canceller.ExpiringRoot
-	default:
-		return common.Hash{}, 0, fmt.Errorf("unknown timelock role: %s", i.role)
-	}
-
-	// Parse the root from hex string
-	rootStr := string(expiringRoot.Root)
-	rootStr = strings.TrimPrefix(rootStr, "0x")
-	rootBytes, err := hex.DecodeString(rootStr)
+	expiringRoot, err := expiringRootForRole(mcmsContract, i.role)
 	if err != nil {
-		return common.Hash{}, 0, fmt.Errorf("failed to decode root hash: %w", err)
+		return common.Hash{}, 0, err
 	}
 
-	root := common.BytesToHash(rootBytes)
+	return rootFromExpiringRoot(expiringRoot)
+}
 
-	// validUntil is a TIMESTAMP (which wraps time.Time)
-	// Convert to Unix timestamp (uint32)
+func expiringRootForRole(mcmsContract *mcmscore.MCMS, role TimelockRole) (mcmsapi.ExpiringRoot, error) {
+	switch role {
+	case TimelockRoleProposer:
+		return mcmsContract.Proposer.ExpiringRoot, nil
+	case TimelockRoleBypasser:
+		return mcmsContract.Bypasser.ExpiringRoot, nil
+	case TimelockRoleCanceller:
+		return mcmsContract.Canceller.ExpiringRoot, nil
+	default:
+		return mcmsapi.ExpiringRoot{}, fmt.Errorf("unknown timelock role: %s", role)
+	}
+}
+
+func rootFromExpiringRoot(expiringRoot mcmsapi.ExpiringRoot) (common.Hash, uint32, error) {
+	root := common.HexToHash(string(expiringRoot.Root))
+
 	timeVal := time.Time(expiringRoot.ValidUntil)
 	validUntil, err := safecast.Int64ToUint32(timeVal.Unix())
 	if err != nil {
@@ -126,34 +125,40 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types
 		return types.ChainMetadata{}, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
 
-	var rootMetadata mcmsapi.RootMetadata
-	switch i.role {
+	return chainMetadataFromMCMSContract(mcmsContract, i.role)
+}
+
+func rootMetadataForRole(mcmsContract *mcmscore.MCMS, role TimelockRole) (mcmsapi.RootMetadata, error) {
+	switch role {
 	case TimelockRoleProposer:
-		rootMetadata = mcmsContract.Proposer.RootMetadata
+		return mcmsContract.Proposer.RootMetadata, nil
 	case TimelockRoleBypasser:
-		rootMetadata = mcmsContract.Bypasser.RootMetadata
+		return mcmsContract.Bypasser.RootMetadata, nil
 	case TimelockRoleCanceller:
-		rootMetadata = mcmsContract.Canceller.RootMetadata
+		return mcmsContract.Canceller.RootMetadata, nil
 	default:
-		return types.ChainMetadata{}, fmt.Errorf("unknown timelock role: %s", i.role)
+		return mcmsapi.RootMetadata{}, fmt.Errorf("unknown timelock role: %s", role)
+	}
+}
+
+// chainMetadataFromMCMSContract builds chain metadata from on-chain MCMS state.
+// MCMAddress is the canonical InstanceAddress hex (from InstanceId + Owner), not the lookup key.
+func chainMetadataFromMCMSContract(mcmsContract *mcmscore.MCMS, role TimelockRole) (types.ChainMetadata, error) {
+	rootMetadata, err := rootMetadataForRole(mcmsContract, role)
+	if err != nil {
+		return types.ChainMetadata{}, err
 	}
 
-	// For Canton, MCMAddress is the InstanceAddress hex (stable across SetRoot/ExecuteOp)
 	mcmAddress := contracts.InstanceID(string(mcmsContract.InstanceId)).RawInstanceAddress(mcmsContract.Owner).InstanceAddress().Hex()
-	// ExpiringRoot.OpCount is the live op count for the next proposal (matches GetOpCount / e2e).
-	// RootMetadata.PreOpCount is from the last committed root and can lag after execute.
-	startingOpCount, err := expiringRootOpCount(mcmsContract, i.role)
+	startingOpCount, err := expiringRootOpCount(mcmsContract, role)
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}
 
 	additionalFields := AdditionalFieldsMetadata{
-		ChainId:              int64(rootMetadata.ChainId),
-		MultisigId:           string(rootMetadata.MultisigId),
-		InstanceId:           string(mcmsContract.InstanceId),
-		PreOpCount:           startingOpCount,
-		PostOpCount:          startingOpCount, // placeholder; encoder derives final postOpCount at sign time
-		OverridePreviousRoot: bool(rootMetadata.OverridePreviousRoot),
+		ChainId:    int64(rootMetadata.ChainId),
+		MultisigId: string(rootMetadata.MultisigId),
+		InstanceId: string(mcmsContract.InstanceId),
 	}
 	if validateErr := additionalFields.Validate(); validateErr != nil {
 		return types.ChainMetadata{}, fmt.Errorf("invalid root metadata from ledger: %w", validateErr)
@@ -187,6 +192,17 @@ func toConfig(bindConfig mcmsapi.MultisigConfig) (*types.Config, error) {
 		signersByGroup[groupIdx] = append(signersByGroup[groupIdx], addr)
 	}
 
+	if len(bindConfig.GroupQuorums) > maxMCMSGroups {
+		return nil, fmt.Errorf("group quorums length %d exceeds maximum %d", len(bindConfig.GroupQuorums), maxMCMSGroups)
+	}
+	if len(bindConfig.GroupParents) > maxMCMSGroups {
+		return nil, fmt.Errorf("group parents length %d exceeds maximum %d", len(bindConfig.GroupParents), maxMCMSGroups)
+	}
+	groupQuorums := make([]damltypes.INT64, maxMCMSGroups)
+	copy(groupQuorums, bindConfig.GroupQuorums)
+	groupParents := make([]damltypes.INT64, maxMCMSGroups)
+	copy(groupParents, bindConfig.GroupParents)
+
 	// Build the group configs
 	groups := make([]types.Config, maxMCMSGroups)
 	for i := range maxMCMSGroups {
@@ -195,32 +211,24 @@ func toConfig(bindConfig mcmsapi.MultisigConfig) (*types.Config, error) {
 			signers = []common.Address{}
 		}
 
-		quorum := uint8(0)
-		if i < len(bindConfig.GroupQuorums) {
-			q, convErr := safecast.IntToUint8(int(bindConfig.GroupQuorums[i]))
-			if convErr != nil {
-				return nil, fmt.Errorf("group quorum for group %d: %w", i, convErr)
-			}
-			quorum = q
+		q, convErr := safecast.IntToUint8(int(groupQuorums[i]))
+		if convErr != nil {
+			return nil, fmt.Errorf("group quorum for group %d: %w", i, convErr)
 		}
 
 		groups[i] = types.Config{
 			Signers:      signers,
 			GroupSigners: []types.Config{},
-			Quorum:       quorum,
+			Quorum:       q,
 		}
 	}
 
 	// Link the group signers; this assumes a group's parent always has a lower index
 	// Process in reverse order to build the tree from leaves to root
 	for i := maxMCMSGroups - 1; i >= 0; i-- {
-		parent := uint8(0)
-		if i < len(bindConfig.GroupParents) {
-			p, convErr := safecast.IntToUint8(int(bindConfig.GroupParents[i]))
-			if convErr != nil {
-				return nil, fmt.Errorf("group parent for group %d: %w", i, convErr)
-			}
-			parent = p
+		parent, convErr := safecast.IntToUint8(int(groupParents[i]))
+		if convErr != nil {
+			return nil, fmt.Errorf("group parent for group %d: %w", i, convErr)
 		}
 
 		// Add non-empty child groups to their parent

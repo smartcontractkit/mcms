@@ -47,7 +47,7 @@ func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 		return nil, fmt.Errorf("failed to get ledger end: %w", err)
 	}
 
-	packageID, moduleName, entityName, err := parseTemplateIDFromString(templateID)
+	packageID, moduleName, entityName, err := ParseTemplateIDFromString(templateID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse template ID: %w", err)
 	}
@@ -77,7 +77,8 @@ func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 		ActiveAtOffset: ledgerEndResp.GetOffset(),
 		EventFormat: &apiv2.EventFormat{
 			FiltersByParty: filtersByParty,
-			Verbose:        true,
+			// Verbose enriches gRPC event payloads (e.g. full template IDs); it does not log to stdout/stderr.
+			Verbose: true,
 		},
 	})
 	if err != nil {
@@ -190,18 +191,8 @@ func ResolveTargetContractID(ctx context.Context, stateService apiv2.StateServic
 // Canton contract IDs use a different format; when we have 0x-prefixed 64-char hex we treat it as InstanceAddress.
 func IsInstanceAddressHex(s string) bool {
 	s = strings.TrimPrefix(s, "0x")
-	if len(s) != instanceAddressHexLen {
-		return false
-	}
-	for _, c := range s {
-		if (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') {
-			continue
-		}
 
-		return false
-	}
-
-	return true
+	return len(s) == instanceAddressHexLen && isValidHex(s)
 }
 
 // ResolveContractIDIfInstanceAddress returns the current MCMS contract ID if cid is InstanceAddress hex;

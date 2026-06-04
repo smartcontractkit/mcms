@@ -34,27 +34,34 @@ const (
 	TimelockRoleProposer
 )
 
-// AdditionalFieldsMetadata represents the Canton-specific metadata fields.
-// MultisigId must be makeMcmsId(instanceId, role) e.g. "mcms-001-proposer" (DAML SetRoot/ExecuteOp).
-// InstanceId is the base MCMS instanceId for self-dispatch TargetInstanceId (DAML E_NOT_SELF_DISPATCH).
+func CantonRoleFromAction(action types.TimelockAction) (TimelockRole, error) {
+	switch action {
+	case types.TimelockActionBypass:
+		return TimelockRoleBypasser, nil
+	case types.TimelockActionSchedule:
+		return TimelockRoleProposer, nil
+	case types.TimelockActionCancel:
+		return TimelockRoleCanceller, nil
+	default:
+		return 0, errors.New("unknown timelock action")
+	}
+}
+
+// AdditionalFieldsMetadata holds Canton fields that must be supplied in chain metadata additionalFields.
+// PreOpCount, PostOpCount, and OverridePreviousRoot come from StartingOpCount, proposal tx count / encoder,
+// and the proposal's OverridePreviousRoot flag respectively — not from additionalFields.
 type AdditionalFieldsMetadata struct {
-	ChainId              int64  `json:"chainId"`
-	MultisigId           string `json:"multisigId"`
-	InstanceId           string `json:"instanceId,omitempty"` // base instanceId; converter uses for TargetInstanceId in ScheduleBatch etc.
-	PreOpCount           uint64 `json:"preOpCount"`
-	PostOpCount          uint64 `json:"postOpCount"`
-	OverridePreviousRoot bool   `json:"overridePreviousRoot"`
+	ChainId    int64  `json:"chainId"`
+	MultisigId string `json:"multisigId"`
+	InstanceId string `json:"instanceId,omitempty"` // base instanceId; converter uses for TargetInstanceId in ScheduleBatch etc.
 }
 
 func (f AdditionalFieldsMetadata) Validate() error {
-	if f.ChainId == 0 {
-		return errors.New("chainId is required")
+	if f.ChainId <= 0 {
+		return errors.New("chainId must be positive")
 	}
 	if f.MultisigId == "" {
 		return errors.New("multisigId is required")
-	}
-	if f.PostOpCount < f.PreOpCount {
-		return errors.New("postOpCount must be >= preOpCount")
 	}
 
 	return nil
@@ -79,12 +86,10 @@ func ValidateChainMetadata(metadata types.ChainMetadata) error {
 // baseInstanceId is the MCMS contract instanceId; if non-empty, converter uses it for TargetInstanceId in self-dispatch ops.
 // mcmsInstanceAddress is the MCMS InstanceAddress hex (32-byte Keccak256 of "instanceId@party"); may be prefixed with "0x".
 func NewChainMetadata(
-	preOpCount uint64,
-	postOpCount uint64,
+	startingOpCount uint64,
 	chainId int64,
 	multisigId string,
 	mcmsInstanceAddress string,
-	overridePreviousRoot bool,
 	baseInstanceId string,
 ) (types.ChainMetadata, error) {
 	if mcmsInstanceAddress == "" {
@@ -96,12 +101,9 @@ func NewChainMetadata(
 	}
 
 	additionalFields := AdditionalFieldsMetadata{
-		ChainId:              chainId,
-		MultisigId:           multisigId,
-		InstanceId:           baseInstanceId,
-		PreOpCount:           preOpCount,
-		PostOpCount:          postOpCount,
-		OverridePreviousRoot: overridePreviousRoot,
+		ChainId:    chainId,
+		MultisigId: multisigId,
+		InstanceId: baseInstanceId,
 	}
 
 	if err := additionalFields.Validate(); err != nil {
@@ -114,7 +116,7 @@ func NewChainMetadata(
 	}
 
 	return types.ChainMetadata{
-		StartingOpCount:  preOpCount,
+		StartingOpCount:  startingOpCount,
 		AdditionalFields: additionalFieldsBytes,
 		MCMAddress:       mcmsInstanceAddress,
 	}, nil

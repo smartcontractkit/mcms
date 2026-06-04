@@ -2,23 +2,24 @@ package canton
 
 import (
 	"encoding/hex"
+	"fmt"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
-// TimelockCallForHash is used for computing the operation ID hash.
+// timelockCallForHash is used for computing the operation ID hash.
 // Field semantics match mcms.TimelockCall (TargetInstanceAddress, FunctionName, OperationData).
-type TimelockCallForHash struct {
+type timelockCallForHash struct {
 	TargetInstanceAddress string // Format: "instanceId@partyId"
 	FunctionName          string
 	OperationData         string
 }
 
-// HashTimelockOpId computes the operation ID for timelock operations.
+// hashTimelockOpID computes the operation ID for timelock operations.
 // Matches Canton's hashTimelockOpId: keccak256(encodedCalls || predecessor || salt).
-// predecessor and salt should be hex-encoded (e.g. 64-char hex for 32-byte hashes).
-func HashTimelockOpId(calls []TimelockCallForHash, predecessor, salt string) string {
+// predecessor and salt must be hex-encoded (e.g. 64-char hex for 32-byte hashes).
+func hashTimelockOpID(calls []timelockCallForHash, predecessor, salt string) (string, error) {
 	var sb strings.Builder
 
 	// Length prefix for calls array (32-byte padded)
@@ -48,10 +49,10 @@ func HashTimelockOpId(calls []TimelockCallForHash, predecessor, salt string) str
 
 	data, err := hex.DecodeString(sb.String())
 	if err != nil {
-		panic("HashTimelockOpId: invalid hex encoding: " + err.Error())
+		return "", fmt.Errorf("hash timelock op id: invalid hex encoding: %w", err)
 	}
 
-	return hex.EncodeToString(crypto.Keccak256(data))
+	return hex.EncodeToString(crypto.Keccak256(data)), nil
 }
 
 // encodeOperationDataForHash normalizes operationData for hashing:

@@ -81,7 +81,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	exerciseCmd := mcmsContract.SetConfig(mcmsContractID, input)
 
 	// Parse template ID
-	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
+	packageID, moduleName, entityName, err := ParseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
 	}
@@ -89,7 +89,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	// Convert input to choice argument
 	choiceArgument := ledger.MapToValue(input)
 
-	commandID := uuid.Must(uuid.NewUUID()).String()
+	commandID := uuid.NewString()
 	submitResp, err := c.client.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
 		Commands: &apiv2.Commands{
 			WorkflowId: "mcms-set-config",
@@ -122,7 +122,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	transaction := submitResp.GetTransaction()
 	for _, ev := range transaction.GetEvents() {
 		if createdEv := ev.GetCreated(); createdEv != nil {
-			templateID := formatTemplateID(createdEv.GetTemplateId())
+			templateID := FormatTemplateID(createdEv.GetTemplateId())
 			normalized := NormalizeTemplateKey(templateID)
 			if normalized == MCMSTemplateKey {
 				newMCMSContractID = createdEv.GetContractId()
@@ -138,7 +138,7 @@ func (c Configurer) SetConfig(ctx context.Context, mcmsAddr string, cfg *types.C
 	}
 
 	return types.TransactionResult{
-		Hash:        "tx.Digest",
+		Hash:        transactionResultHash(transaction, commandID),
 		ChainFamily: cselectors.FamilyCanton,
 		RawData:     rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID, submitResp),
 	}, nil

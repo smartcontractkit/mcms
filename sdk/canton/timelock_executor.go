@@ -62,7 +62,7 @@ func (t *TimelockExecutor) Execute(
 	}
 
 	calls := make([]mcmsapi.TimelockCall, 0, len(bop.Transactions))
-	callsForHash := make([]TimelockCallForHash, 0, len(bop.Transactions))
+	callsForHash := make([]timelockCallForHash, 0, len(bop.Transactions))
 	// Map from instance address -> contract ID for targetCids
 	stateClient := t.StateServiceClient()
 	instanceToContractID := make(map[string]string)
@@ -76,7 +76,7 @@ func (t *TimelockExecutor) Execute(
 			FunctionName:          cantontypes.TEXT(af.FunctionName),
 			OperationData:         cantontypes.TEXT(af.OperationData),
 		})
-		callsForHash = append(callsForHash, TimelockCallForHash{
+		callsForHash = append(callsForHash, timelockCallForHash{
 			TargetInstanceAddress: af.TargetInstanceAddress,
 			FunctionName:          af.FunctionName,
 			OperationData:         af.OperationData,
@@ -96,7 +96,10 @@ func (t *TimelockExecutor) Execute(
 
 	predecessorHex := hex.EncodeToString(predecessor[:])
 	saltHex := hex.EncodeToString(salt[:])
-	opIDStr := HashTimelockOpId(callsForHash, predecessorHex, saltHex)
+	opIDStr, err := hashTimelockOpID(callsForHash, predecessorHex, saltHex)
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
 
 	// Build targetCidsMap: instanceAddress -> CONTRACT_ID.
 	targetCidsMap := make(map[cantontypes.TEXT]cantontypes.CONTRACT_ID)
@@ -119,12 +122,12 @@ func (t *TimelockExecutor) Execute(
 	}
 
 	mcmsContract := mcmscore.MCMS{}
-	packageID, moduleName, entityName, err := parseTemplateIDFromString(mcmsContract.GetTemplateID())
+	packageID, moduleName, entityName, err := ParseTemplateIDFromString(mcmsContract.GetTemplateID())
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
 	}
 
-	commandID := uuid.Must(uuid.NewUUID()).String()
+	commandID := uuid.NewString()
 	req := &apiv2.SubmitAndWaitForTransactionRequest{
 		Commands: &apiv2.Commands{
 			CommandId: commandID,
@@ -158,7 +161,7 @@ func (t *TimelockExecutor) Execute(
 	transaction := resp.GetTransaction()
 	for _, ev := range transaction.GetEvents() {
 		if createdEv := ev.GetCreated(); createdEv != nil {
-			templateID := formatTemplateID(createdEv.GetTemplateId())
+			templateID := FormatTemplateID(createdEv.GetTemplateId())
 			if NormalizeTemplateKey(templateID) == MCMSTemplateKey {
 				newMCMSContractID = createdEv.GetContractId()
 				newMCMSTemplateID = templateID
@@ -172,7 +175,7 @@ func (t *TimelockExecutor) Execute(
 	}
 
 	return types.TransactionResult{
-		Hash:        commandID,
+		Hash:        transactionResultHash(transaction, commandID),
 		ChainFamily: cselectors.FamilyCanton,
 		RawData:     rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID, resp),
 	}, nil
