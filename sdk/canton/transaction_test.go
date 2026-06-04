@@ -30,14 +30,32 @@ func TestValidateAdditionalFields(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	onlyFunctionNameFields, err := json.Marshal(AdditionalFields{
+		FunctionName: "Increment",
+	})
+	require.NoError(t, err)
+
+	opDataWith0xPrefix, err := json.Marshal(AdditionalFields{
+		TargetInstanceAddress: "counter@party::abc",
+		FunctionName:          "Increment",
+		OperationData:         "0xdeadbeef",
+	})
+	require.NoError(t, err)
+
+	onlyOpDataFields, err := json.Marshal(AdditionalFields{
+		OperationData: "deadbeef",
+	})
+	require.NoError(t, err)
+
 	tests := []struct {
 		name    string
 		input   json.RawMessage
 		wantErr string
 	}{
 		{
-			name:  "empty additional fields",
-			input: nil,
+			name:    "empty additional fields",
+			input:   nil,
+			wantErr: "Canton additional fields are required",
 		},
 		{
 			name:  "valid additional fields",
@@ -52,6 +70,21 @@ func TestValidateAdditionalFields(t *testing.T) {
 			name:    "invalid operation data",
 			input:   invalidOpDataFields,
 			wantErr: "operationData must be hex-encoded",
+		},
+		{
+			name:    "function name without target instance address",
+			input:   onlyFunctionNameFields,
+			wantErr: "targetInstanceAddress is required when functionName is set",
+		},
+		{
+			name:    "operation data with 0x prefix",
+			input:   opDataWith0xPrefix,
+			wantErr: "operationData must be hex-encoded without 0x prefix",
+		},
+		{
+			name:    "operation data without target and function",
+			input:   onlyOpDataFields,
+			wantErr: "targetInstanceAddress is required when operationData is set",
 		},
 		{
 			name:    "invalid JSON",

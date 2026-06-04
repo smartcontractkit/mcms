@@ -296,6 +296,16 @@ func TestValidateAdditionalFields(t *testing.T) {
 			expectedErr: errors.New("targetInstanceAddress must be in instanceId@partyId format"),
 		},
 		{
+			name: "empty Canton additional fields",
+			operation: types.Operation{
+				ChainSelector: types.ChainSelector(chainsel.CANTON_TESTNET.Selector),
+				Transaction: types.Transaction{
+					AdditionalFields: nil,
+				},
+			},
+			expectedErr: errors.New("Canton additional fields are required"),
+		},
+		{
 			name: "unknown chain family",
 			operation: types.Operation{
 				ChainSelector: 999,

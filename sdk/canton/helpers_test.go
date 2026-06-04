@@ -12,11 +12,11 @@ func TestParseTemplateIDFromString(t *testing.T) {
 
 	pkg, mod, ent, err := ParseTemplateIDFromString("#pkg:Module:Entity")
 	require.NoError(t, err)
-	require.Equal(t, "#pkg", pkg)
+	require.Equal(t, "pkg", pkg)
 	require.Equal(t, "Module", mod)
 	require.Equal(t, "Entity", ent)
 
-	_, _, _, err = ParseTemplateIDFromString("pkg:Module:Entity")
+	_, err = ParseTemplateIDFromString("pkg:Module:Entity")
 	require.Error(t, err)
 }
 

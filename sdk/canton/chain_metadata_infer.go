@@ -15,29 +15,6 @@ import (
 // chain metadata from mcmAddress + party (e.g. proposals generated without additionalFields).
 var defaultMCMSInstanceIDCandidates = []string{mcmsInstanceIDCCIP, mcmsInstanceIDCCV, mcmsInstanceIDDefault}
 
-// EnsureChainMetadata fills Canton-specific additionalFields when they are missing or incomplete.
-func EnsureChainMetadata(
-	metadata types.ChainMetadata,
-	bop types.BatchOperation,
-	action types.TimelockAction,
-) (types.ChainMetadata, error) {
-	fields, err := resolveAdditionalFieldsMetadata(metadata, bop, action)
-	if err != nil {
-		return types.ChainMetadata{}, err
-	}
-
-	additionalFieldsBytes, err := json.Marshal(fields)
-	if err != nil {
-		return types.ChainMetadata{}, fmt.Errorf("marshal canton additional fields: %w", err)
-	}
-
-	return types.ChainMetadata{
-		StartingOpCount:  metadata.StartingOpCount,
-		MCMAddress:       metadata.MCMAddress,
-		AdditionalFields: additionalFieldsBytes,
-	}, nil
-}
-
 func resolveAdditionalFieldsMetadata(
 	metadata types.ChainMetadata,
 	bop types.BatchOperation,

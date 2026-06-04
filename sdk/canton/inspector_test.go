@@ -2,6 +2,7 @@ package canton
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,8 +26,8 @@ func testMCMSContract(instanceID string, roleState func(mcmsapi.RoleState) mcmsa
 			GroupParents: []damltypes.INT64{damltypes.INT64(0)},
 		},
 		ExpiringRoot: mcmsapi.ExpiringRoot{
-			Root:      damltypes.TEXT("0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"),
-			OpCount:   damltypes.INT64(7),
+			Root:       damltypes.TEXT("0x0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20"),
+			OpCount:    damltypes.INT64(7),
 			ValidUntil: damltypes.TIMESTAMP(time.Unix(1_700_000_000, 0)),
 		},
 		RootMetadata: mcmsapi.RootMetadata{
@@ -116,10 +117,15 @@ func TestChainMetadataFromMCMSContract(t *testing.T) {
 	contract := testMCMSContract(mcmsInstanceIDCCIP, nil)
 	wantAddress := contracts.InstanceID(mcmsInstanceIDCCIP).RawInstanceAddress(damltypes.PARTY(testParty)).InstanceAddress().Hex()
 
-	meta, err := chainMetadataFromMCMSContract(&contract, TimelockRoleProposer)
+	meta, err := chainMetadataFromMCMSContract(&contract, TimelockRoleProposer, "")
 	require.NoError(t, err)
 	require.Equal(t, uint64(7), meta.StartingOpCount)
 	require.Equal(t, wantAddress, meta.MCMAddress)
+
+	lookupWithPrefix := "0x" + strings.TrimPrefix(wantAddress, "0x")
+	meta, err = chainMetadataFromMCMSContract(&contract, TimelockRoleProposer, lookupWithPrefix)
+	require.NoError(t, err)
+	require.Equal(t, lookupWithPrefix, meta.MCMAddress)
 
 	var fields AdditionalFieldsMetadata
 	require.NoError(t, json.Unmarshal(meta.AdditionalFields, &fields))
@@ -127,7 +133,7 @@ func TestChainMetadataFromMCMSContract(t *testing.T) {
 	require.Equal(t, mcmsInstanceIDCCIP+"@"+testParty+"-proposer", fields.MultisigId)
 	require.Equal(t, mcmsInstanceIDCCIP, fields.InstanceId)
 
-	meta, err = chainMetadataFromMCMSContract(&contract, TimelockRoleBypasser)
+	meta, err = chainMetadataFromMCMSContract(&contract, TimelockRoleBypasser, "")
 	require.NoError(t, err)
 	require.Equal(t, uint64(3), meta.StartingOpCount)
 
@@ -135,7 +141,7 @@ func TestChainMetadataFromMCMSContract(t *testing.T) {
 		rs.RootMetadata = mcmsapi.RootMetadata{}
 		return rs
 	})
-	meta, err = chainMetadataFromMCMSContract(&freshRoot, TimelockRoleProposer)
+	meta, err = chainMetadataFromMCMSContract(&freshRoot, TimelockRoleProposer, "")
 	require.NoError(t, err)
 	require.NoError(t, json.Unmarshal(meta.AdditionalFields, &fields))
 	require.Equal(t, int64(1), fields.ChainId)
@@ -143,7 +149,7 @@ func TestChainMetadataFromMCMSContract(t *testing.T) {
 
 	noChainID := freshRoot
 	noChainID.ChainId = damltypes.INT64(0)
-	_, err = chainMetadataFromMCMSContract(&noChainID, TimelockRoleProposer)
+	_, err = chainMetadataFromMCMSContract(&noChainID, TimelockRoleProposer, "")
 	require.ErrorContains(t, err, "invalid root metadata from ledger")
 }
 

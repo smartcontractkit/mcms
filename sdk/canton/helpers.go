@@ -48,7 +48,13 @@ func ParseTemplateIDFromString(templateID string) (packageID, moduleName, entity
 		return "", "", "", fmt.Errorf("template ID must have format #package:module:entity, got: %s", templateID)
 	}
 
-	return parts[0], parts[1], parts[2], nil
+	// apiv2.Identifier.PackageId is the raw package id (no leading #).
+	return strings.TrimPrefix(parts[0], "#"), parts[1], parts[2], nil
+}
+
+// instanceAddressHexEqual reports whether two InstanceAddress hex strings refer to the same address.
+func instanceAddressHexEqual(a, b string) bool {
+	return strings.EqualFold(strings.TrimPrefix(strings.TrimSpace(a), "0x"), strings.TrimPrefix(strings.TrimSpace(b), "0x"))
 }
 
 // FormatTemplateID converts an apiv2.Identifier to a string template ID format.

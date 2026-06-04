@@ -216,8 +216,8 @@ func extractInstanceAddressFromMultisigId(multisigId string) string {
 // buildTimelockOperation builds a single types.Operation for the given timelock action.
 // allContractIds are target contract IDs from the batch (ExecuteOp TargetCids); mcmAddress populates tx.To.
 func buildTimelockOperation(bop types.BatchOperation, mcmAddress, targetInstanceAddress, functionName, opDataHex string, allContractIds []string) (types.Operation, error) {
-	// Canton payloads live in AdditionalFields (OperationData), not tx.Data — MCMS validators expect non-empty Data.
-	// TargetCid is set so ExecuteOperation skips target-template resolution; timelock self-calls use ContractIds for TargetCids.
+	// Canton payload lives in additionalFields.operationData only; the executor does not read tx.Data.
+	// Data is a non-empty placeholder so shared MCMS validation (validate:"required" on data) passes.
 	opAdditionalFields := AdditionalFields{
 		TargetInstanceAddress: targetInstanceAddress,
 		FunctionName:          functionName,
@@ -234,7 +234,7 @@ func buildTimelockOperation(bop types.BatchOperation, mcmAddress, targetInstance
 		ChainSelector: bop.ChainSelector,
 		Transaction: types.Transaction{
 			To:               mcmAddress,
-			Data:             []byte{0x00}, // placeholder for validators; Canton uses AdditionalFields.OperationData
+			Data:             []byte{0x00},
 			AdditionalFields: opAdditionalFieldsBytes,
 		},
 	}, nil

@@ -30,7 +30,7 @@ func TestResolveAdditionalFieldsMetadataUsesStoredFields(t *testing.T) {
 	require.Equal(t, mcmsInstanceIDCCIP, fields.InstanceId)
 }
 
-func TestEnsureChainMetadataInfersMissingAdditionalFields(t *testing.T) {
+func TestResolveAdditionalFieldsMetadataInfersMissingFields(t *testing.T) {
 	t.Parallel()
 
 	bop := types.BatchOperation{
@@ -48,15 +48,11 @@ func TestEnsureChainMetadataInfersMissingAdditionalFields(t *testing.T) {
 		MCMAddress:      "0xd4dcbc33d025740c32b65cb60d208a7eb8f99b3d90903ffe52616e14f9096995",
 	}
 
-	enriched, err := EnsureChainMetadata(metadata, bop, types.TimelockActionSchedule)
+	fields, err := resolveAdditionalFieldsMetadata(metadata, bop, types.TimelockActionSchedule)
 	require.NoError(t, err)
-
-	var fields AdditionalFieldsMetadata
-	require.NoError(t, json.Unmarshal(enriched.AdditionalFields, &fields))
 	require.Equal(t, int64(1), fields.ChainId)
 	require.Equal(t, mcmsInstanceIDCCIP, fields.InstanceId)
 	require.Equal(t, mcmsInstanceIDCCIP+"@participant1-localparty-1::1220acd0401d95915bef2f498a45cc8f3c43119dde50cf370864e9aa4eb03d817cfb-proposer", fields.MultisigId)
-	require.Equal(t, uint64(1), enriched.StartingOpCount)
 }
 
 func TestResolveAdditionalFieldsMetadataErrors(t *testing.T) {
@@ -82,7 +78,7 @@ func TestResolveAdditionalFieldsMetadataErrors(t *testing.T) {
 	require.ErrorContains(t, err, "unmarshal metadata additional fields")
 }
 
-func TestEnsureChainMetadataBypasserRole(t *testing.T) {
+func TestResolveAdditionalFieldsMetadataBypasserRole(t *testing.T) {
 	t.Parallel()
 
 	bop := types.BatchOperation{
@@ -94,11 +90,8 @@ func TestEnsureChainMetadataBypasserRole(t *testing.T) {
 		MCMAddress: "0xd4dcbc33d025740c32b65cb60d208a7eb8f99b3d90903ffe52616e14f9096995",
 	}
 
-	enriched, err := EnsureChainMetadata(metadata, bop, types.TimelockActionBypass)
+	fields, err := resolveAdditionalFieldsMetadata(metadata, bop, types.TimelockActionBypass)
 	require.NoError(t, err)
-
-	var fields AdditionalFieldsMetadata
-	require.NoError(t, json.Unmarshal(enriched.AdditionalFields, &fields))
 	require.Contains(t, fields.MultisigId, "-bypasser")
 }
 
@@ -110,7 +103,7 @@ func TestPartyFromRawInstanceAddress(t *testing.T) {
 	require.Empty(t, partyFromRawInstanceAddress("@onlyparty"))
 }
 
-func mustJSON(t *testing.T, v any) json.RawMessage {
+func mustJSON(t *testing.T, v any) []byte {
 	t.Helper()
 	b, err := json.Marshal(v)
 	require.NoError(t, err)

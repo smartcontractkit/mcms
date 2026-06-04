@@ -222,7 +222,7 @@ func (e Executor) SetRoot(
 	// Recalculate msg hash to recover signers
 	inner, err := abi.Encode(SignMsgABI, root, validUntil)
 	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("failed to decode hex for signing: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("failed to ABI-encode signing payload: %w", err)
 	}
 	innerHash := crypto.Keccak256(inner)
 

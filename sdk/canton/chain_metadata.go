@@ -82,7 +82,7 @@ func ValidateChainMetadata(metadata types.ChainMetadata) error {
 }
 
 // NewChainMetadata creates new Canton chain metadata.
-// multisigId must be makeMcmsId(instanceId, role) e.g. "mcms-001-proposer" (DAML expects this in SetRoot/Op).
+// multisigId is "<instanceId>@<party>-<role>" (DAML SetRoot/Op); must match the role used at execution time.
 // baseInstanceId is the MCMS contract instanceId; if non-empty, converter uses it for TargetInstanceId in self-dispatch ops.
 // mcmsInstanceAddress is the MCMS InstanceAddress hex (32-byte Keccak256 of "instanceId@party"); may be prefixed with "0x".
 func NewChainMetadata(

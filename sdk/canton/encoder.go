@@ -97,6 +97,9 @@ func (e *Encoder) HashOperation(opCount uint32, metadata types.ChainMetadata, op
 	if unmarshalErr := json.Unmarshal(op.Transaction.AdditionalFields, &opFields); unmarshalErr != nil {
 		return common.Hash{}, fmt.Errorf("failed to unmarshal operation additional fields: %w", unmarshalErr)
 	}
+	if validateErr := opFields.Validate(); validateErr != nil {
+		return common.Hash{}, fmt.Errorf("invalid operation additional fields: %w", validateErr)
+	}
 
 	// Convert variable-length fields to hex
 	multisigIdHex := asciiToHex(metadataFields.MultisigId)

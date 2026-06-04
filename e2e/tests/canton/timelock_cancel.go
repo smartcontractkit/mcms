@@ -137,6 +137,7 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 
 	// Build cancel proposal - reuse the same batch operation (the converter extracts operationId)
 	// Use the same salt as the schedule proposal to derive the same operation ID
+	salt := scheduleProposal.Salt()
 	cancelProposal, err := mcms.NewTimelockProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(validUntil).
@@ -145,7 +146,7 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 		AddChainMetadata(s.chainSelector, cancellerMetadata).
 		SetAction(types.TimelockActionCancel).
 		SetDelay(delay).
-		SetSalt((*common.Hash)(new(scheduleProposal.Salt()))).
+		SetSalt(&salt).
 		AddOperation(bop).
 		Build()
 	s.Require().NoError(err)

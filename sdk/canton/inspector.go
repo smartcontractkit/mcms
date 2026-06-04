@@ -126,7 +126,7 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmsAddr string) (types
 		return types.ChainMetadata{}, fmt.Errorf("failed to get MCMS contract: %w", err)
 	}
 
-	return chainMetadataFromMCMSContract(mcmsContract, i.role)
+	return chainMetadataFromMCMSContract(mcmsContract, i.role, mcmsAddr)
 }
 
 func rootMetadataForRole(mcmsContract *mcmscore.MCMS, role TimelockRole) (mcmsapi.RootMetadata, error) {
@@ -143,14 +143,26 @@ func rootMetadataForRole(mcmsContract *mcmscore.MCMS, role TimelockRole) (mcmsap
 }
 
 // chainMetadataFromMCMSContract builds chain metadata from on-chain MCMS state.
-// MCMAddress is the canonical InstanceAddress hex (from InstanceId + Owner), not the lookup key.
-func chainMetadataFromMCMSContract(mcmsContract *mcmscore.MCMS, role TimelockRole) (types.ChainMetadata, error) {
+// When lookupAddr is non-empty, MCMAddress is set to lookupAddr (after verifying it matches the ledger
+// InstanceAddress) so clients can round-trip proposal ChainMetadata.MCMAddress through GetRootMetadata.
+func chainMetadataFromMCMSContract(mcmsContract *mcmscore.MCMS, role TimelockRole, lookupAddr string) (types.ChainMetadata, error) {
 	rootMetadata, err := rootMetadataForRole(mcmsContract, role)
 	if err != nil {
 		return types.ChainMetadata{}, err
 	}
 
-	mcmAddress := contracts.InstanceID(string(mcmsContract.InstanceId)).RawInstanceAddress(mcmsContract.Owner).InstanceAddress().Hex()
+	canonicalAddress := contracts.InstanceID(string(mcmsContract.InstanceId)).RawInstanceAddress(mcmsContract.Owner).InstanceAddress().Hex()
+	mcmAddress := canonicalAddress
+	if lookupAddr != "" {
+		if !instanceAddressHexEqual(lookupAddr, canonicalAddress) {
+			return types.ChainMetadata{}, fmt.Errorf(
+				"MCMS instance address mismatch: lookup %q vs ledger %q",
+				lookupAddr,
+				canonicalAddress,
+			)
+		}
+		mcmAddress = lookupAddr
+	}
 	startingOpCount, err := expiringRootOpCount(mcmsContract, role)
 	if err != nil {
 		return types.ChainMetadata{}, err
