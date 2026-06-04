@@ -103,6 +103,10 @@ packages:
         config:
           dir: "./sdk/sui/mocks/sui"
           filename: "bindingsclient.go"
+      SuiPTBClient:
+        config:
+          dir: "./sdk/sui/mocks/sui"
+          filename: "suiptbclient.go"
   github.com/smartcontractkit/chainlink-sui/bindings/utils:
     config:
       all: false

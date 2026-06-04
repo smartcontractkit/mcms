@@ -18,6 +18,7 @@ require (
 	github.com/google/go-cmp v0.7.0
 	github.com/joho/godotenv v1.5.1
 	github.com/karalabe/hid v1.0.1-0.20260315100226-f5d04adeffeb
+	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/samber/lo v1.53.0
 	github.com/smartcontractkit/chain-selectors v1.0.100
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20260428085939-5c70de12dbfc
@@ -190,7 +191,6 @@ require (
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.1.1 // indirect
-	github.com/patrickmn/go-cache v2.1.0+incompatible // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.3.0 // indirect
 	github.com/pion/dtls/v2 v2.2.12 // indirect
