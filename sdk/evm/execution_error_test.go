@@ -1654,7 +1654,7 @@ func callProxyRuntimeFromBinding(t *testing.T) []byte {
 	bin := common.FromHex(bindings.CallProxyBin)
 	marker := []byte{0xf3, 0xfe}
 	idx := bytes.Index(bin, marker)
-	require.Greater(t, idx, 0, "call proxy init/runtime separator not found in CallProxyBin")
+	require.Positive(t, idx, "call proxy init/runtime separator not found in CallProxyBin")
 
 	return bin[idx+len(marker):]
 }
