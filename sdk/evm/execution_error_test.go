@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -8,9 +9,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	gethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -1418,6 +1421,242 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 			assert.Equal(t, tt.expectedDecoded, decodedReason, "Decoded reason mismatch for test: %s", tt.name)
 		})
 	}
+}
+
+const (
+	onlyCallableByOwnerSelector = "0x2b5c74de"
+	realUnderlyingErrorSelector = "0x4b5786e7"
+)
+
+func TestCallProxyBytecodeFingerprintMatchesBinding(t *testing.T) {
+	t.Parallel()
+
+	runtime := callProxyRuntimeFromBinding(t)
+	require.GreaterOrEqual(t, len(runtime), len(callProxyRuntimePrefix)+len(callProxyRuntimeSuffix))
+	assert.Equal(t, callProxyRuntimePrefix, runtime[:len(callProxyRuntimePrefix)])
+	suffixStart := len(callProxyRuntimePrefix) + common.HashLength
+	assert.Equal(t, callProxyRuntimeSuffix, runtime[suffixStart:suffixStart+len(callProxyRuntimeSuffix)])
+
+	target := common.HexToAddress("0x1111111111111111111111111111111111111111")
+	patched := callProxyRuntime(target)
+	got, ok := callProxyTargetFromRuntime(patched)
+	require.True(t, ok)
+	assert.Equal(t, target, got)
+}
+
+func TestCallProxyTargetFromRuntime(t *testing.T) {
+	t.Parallel()
+
+	target := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+
+	tests := []struct {
+		name     string
+		code     []byte
+		wantAddr common.Address
+		wantOK   bool
+	}{
+		{
+			name:     "valid call proxy runtime",
+			code:     callProxyRuntime(target),
+			wantAddr: target,
+			wantOK:   true,
+		},
+		{
+			name:     "too short",
+			code:     []byte{0x60},
+			wantAddr: common.Address{},
+			wantOK:   false,
+		},
+		{
+			name:     "wrong prefix",
+			code:     append([]byte{0xff}, callProxyRuntime(target)[1:]...),
+			wantAddr: common.Address{},
+			wantOK:   false,
+		},
+		{
+			name:     "wrong suffix",
+			code:     append(callProxyRuntime(target)[:len(callProxyRuntime(target))-1], 0xff),
+			wantAddr: common.Address{},
+			wantOK:   false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			got, ok := callProxyTargetFromRuntime(tt.code)
+			assert.Equal(t, tt.wantOK, ok)
+			assert.Equal(t, tt.wantAddr, got)
+		})
+	}
+}
+
+func TestResolveUnderlyingCallSender(t *testing.T) {
+	t.Parallel()
+
+	executionAddr := common.HexToAddress("0x0B665A6d3ec78BF99e17Ca81c071bb9Dfdf081Fc")
+	realTimelock := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+
+	tests := []struct {
+		name          string
+		executionAddr common.Address
+		setupMock     func(*mocks.ContractDeployBackend)
+		wantSender    common.Address
+	}{
+		{
+			name:          "call proxy resolves to embedded timelock",
+			executionAddr: executionAddr,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("CodeAt", mock.Anything, executionAddr, mock.Anything).
+					Return(callProxyRuntime(realTimelock), nil).Once()
+			},
+			wantSender: realTimelock,
+		},
+		{
+			name:          "non-proxy bytecode falls back to execution address",
+			executionAddr: executionAddr,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("CodeAt", mock.Anything, executionAddr, mock.Anything).
+					Return([]byte("not a call proxy"), nil).Once()
+			},
+			wantSender: executionAddr,
+		},
+		{
+			name:          "code lookup error falls back to execution address",
+			executionAddr: executionAddr,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("CodeAt", mock.Anything, executionAddr, mock.Anything).
+					Return(nil, errors.New("rpc error")).Once()
+			},
+			wantSender: executionAddr,
+		},
+		{
+			name:          "nil client falls back to execution address",
+			executionAddr: executionAddr,
+			setupMock:     nil,
+			wantSender:    executionAddr,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var client ContractDeployBackend
+			if tt.setupMock != nil {
+				mockClient := mocks.NewContractDeployBackend(t)
+				tt.setupMock(mockClient)
+				client = mockClient
+			}
+
+			got := resolveUnderlyingCallSender(context.Background(), tt.executionAddr, client)
+			assert.Equal(t, tt.wantSender, got)
+		})
+	}
+}
+
+func TestBuildExecutionError_callProxyUnderlyingReplay(t *testing.T) {
+	t.Parallel()
+
+	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err, errMsgFailedTimelockABI)
+
+	testCall := bindings.RBACTimelockCall{
+		Target: common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		Value:  big.NewInt(0),
+		Data:   []byte{1, 2, 3},
+	}
+	callData := packBypasserExecuteBatch(t, timelockABI, []bindings.RBACTimelockCall{testCall})
+
+	callProxyAddr := common.HexToAddress("0x0B665A6d3ec78BF99e17Ca81c071bb9Dfdf081Fc")
+	realTimelock := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+	opts := &bind.TransactOpts{GasLimit: 1_000_000}
+
+	mockClient := mocks.NewContractDeployBackend(t)
+	mockClient.On("CodeAt", mock.Anything, callProxyAddr, mock.Anything).
+		Return(callProxyRuntime(realTimelock), nil).Once()
+	mockClient.On("CallContract", mock.Anything, mock.MatchedBy(func(msg ethereum.CallMsg) bool {
+		return msg.From == realTimelock &&
+			msg.To != nil &&
+			*msg.To == testCall.Target
+	}), mock.Anything).
+		Return(nil, errors.New("execution reverted: "+realUnderlyingErrorSelector)).Once()
+
+	execErr := BuildExecutionError(
+		context.Background(),
+		errors.New("execution reverted: CallReverted"),
+		gethtypes.NewTx(&gethtypes.LegacyTx{}),
+		opts,
+		callProxyAddr,
+		mockClient,
+		callProxyAddr,
+		callData,
+	)
+
+	require.NotNil(t, execErr)
+	assert.Equal(t, realUnderlyingErrorSelector, execErr.UnderlyingReasonRaw)
+	assert.NotEqual(t, onlyCallableByOwnerSelector, execErr.UnderlyingReasonRaw)
+}
+
+func TestBuildExecutionError_callProxyPreservesRealOwnershipFailure(t *testing.T) {
+	t.Parallel()
+
+	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err, errMsgFailedTimelockABI)
+
+	testCall := bindings.RBACTimelockCall{
+		Target: common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		Value:  big.NewInt(0),
+		Data:   []byte{1, 2, 3},
+	}
+	callData := packBypasserExecuteBatch(t, timelockABI, []bindings.RBACTimelockCall{testCall})
+
+	callProxyAddr := common.HexToAddress("0x0B665A6d3ec78BF99e17Ca81c071bb9Dfdf081Fc")
+	realTimelock := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+	opts := &bind.TransactOpts{GasLimit: 1_000_000}
+
+	mockClient := mocks.NewContractDeployBackend(t)
+	mockClient.On("CodeAt", mock.Anything, callProxyAddr, mock.Anything).
+		Return(callProxyRuntime(realTimelock), nil).Once()
+	mockClient.On("CallContract", mock.Anything, mock.MatchedBy(func(msg ethereum.CallMsg) bool {
+		return msg.From == realTimelock
+	}), mock.Anything).
+		Return(nil, errors.New("execution reverted: "+onlyCallableByOwnerSelector)).Once()
+
+	execErr := BuildExecutionError(
+		context.Background(),
+		errors.New("execution reverted: CallReverted"),
+		gethtypes.NewTx(&gethtypes.LegacyTx{}),
+		opts,
+		callProxyAddr,
+		mockClient,
+		callProxyAddr,
+		callData,
+	)
+
+	require.NotNil(t, execErr)
+	assert.Equal(t, onlyCallableByOwnerSelector, execErr.UnderlyingReasonRaw)
+}
+
+func callProxyRuntime(target common.Address) []byte {
+	code := make([]byte, 0, len(callProxyRuntimePrefix)+common.HashLength+len(callProxyRuntimeSuffix))
+	code = append(code, callProxyRuntimePrefix...)
+	code = append(code, common.LeftPadBytes(target.Bytes(), common.HashLength)...)
+	code = append(code, callProxyRuntimeSuffix...)
+
+	return code
+}
+
+func callProxyRuntimeFromBinding(t *testing.T) []byte {
+	t.Helper()
+
+	bin := common.FromHex(bindings.CallProxyBin)
+	marker := []byte{0xf3, 0xfe}
+	idx := bytes.Index(bin, marker)
+	require.Greater(t, idx, 0, "call proxy init/runtime separator not found in CallProxyBin")
+
+	return bin[idx+len(marker):]
 }
 
 // Helper functions for packing timelock method calls

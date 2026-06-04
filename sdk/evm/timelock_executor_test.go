@@ -7,6 +7,7 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	evmTypes "github.com/ethereum/go-ethereum/core/types"
@@ -74,6 +75,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 		mockSetup       func(m *evm_mocks.ContractDeployBackend)
 		wantTxHash      string
 		wantErr         error
+		wantErrContains []string
 	}{
 		{
 			name:            "success",
@@ -96,6 +98,40 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			},
 			wantTxHash: "0xc381f411283719726be93f957b9e3ca7d8041725c22fefab8dcf132770adf7a9",
 			wantErr:    nil,
+		},
+		{
+			name:            "failure through call proxy replays underlying call from timelock",
+			auth:            mockAuth,
+			timelockAddress: "0x0B665A6d3ec78BF99e17Ca81c071bb9Dfdf081Fc",
+			bop: types.BatchOperation{
+				ChainSelector: chaintest.Chain1Selector,
+				Transactions: []types.Transaction{
+					{
+						To:               "0x1234567890123456789012345678901234567890",
+						Data:             []byte{1, 2, 3},
+						AdditionalFields: json.RawMessage(`{"value": 0}`)},
+				},
+			},
+			mockSetup: func(m *evm_mocks.ContractDeployBackend) {
+				m.EXPECT().SendTransaction(mock.Anything, mock.Anything).
+					Return(errors.New("execution reverted: CallReverted"))
+				m.EXPECT().CodeAt(
+					mock.Anything,
+					common.HexToAddress("0x0B665A6d3ec78BF99e17Ca81c071bb9Dfdf081Fc"),
+					mock.Anything,
+				).Return(callProxyRuntime(common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")), nil)
+				m.EXPECT().CallContract(mock.Anything, mock.MatchedBy(func(msg ethereum.CallMsg) bool {
+					return msg.From == common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0") &&
+						msg.To != nil &&
+						*msg.To == common.HexToAddress("0x1234567890123456789012345678901234567890")
+				}), mock.Anything).Return(nil, errors.New("execution reverted: 0x12345678"))
+				sharedMockSetup(m)
+			},
+			wantTxHash: "",
+			wantErrContains: []string{
+				"execution reverted: CallReverted",
+				"underlying reason: 0x12345678",
+			},
 		},
 		{
 			name:            "failure in tx execution",
@@ -136,6 +172,10 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 			assert.Equal(t, test.wantTxHash, tx.Hash)
 			if test.wantErr != nil {
 				assert.EqualError(t, err, test.wantErr.Error())
+			} else if len(test.wantErrContains) > 0 {
+				for _, want := range test.wantErrContains {
+					assert.ErrorContains(t, err, want)
+				}
 			} else {
 				assert.NoError(t, err)
 			}

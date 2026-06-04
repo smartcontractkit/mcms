@@ -1,6 +1,7 @@
 package evm
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -31,6 +32,12 @@ var (
 	// customErrorPattern matches "custom error 0x<8-hex-chars>: <hex-data>"
 	// Captures: group 1 = selector (8 hex chars), group 2 = data (hex chars with optional spaces)
 	customErrorPattern = regexp.MustCompile(`custom error 0x([0-9a-fA-F]{8}):\s*([0-9a-fA-F\s]+)`)
+
+	// callProxyRuntimePrefix and callProxyRuntimeSuffix fingerprint the deployed
+	// runtime of bindings.CallProxy (immutable target embedded between them).
+	// If CallProxy is recompiled, update these and TestCallProxyBytecodeFingerprintMatchesBinding.
+	callProxyRuntimePrefix = common.FromHex("0x60806040527f")
+	callProxyRuntimeSuffix = common.FromHex("0x366000803760008036600034855af13d6000803e80156043573d6000f35b503d6000fd")
 )
 
 const (
@@ -295,12 +302,51 @@ func BuildExecutionError(
 	if strings.Contains(errStr, "RBACTimelock: underlying transaction reverted") ||
 		strings.Contains(execErr.RevertReasonDecoded, "RBACTimelock: underlying transaction reverted") ||
 		(isCallReverted && timelockAddr != (common.Address{}) && len(timelockCallData) > 0) {
-		rawUnderlyingReason, decodedUnderlyingReason := getUnderlyingRevertReason(ctx, timelockAddr, timelockCallData, opts, client)
+		underlyingCallSender := resolveUnderlyingCallSender(ctx, timelockAddr, client)
+		rawUnderlyingReason, decodedUnderlyingReason := getUnderlyingRevertReason(ctx, underlyingCallSender, timelockCallData, opts, client)
 		execErr.UnderlyingReasonRaw = rawUnderlyingReason
 		execErr.UnderlyingReasonDecoded = decodedUnderlyingReason
 	}
 
 	return execErr
+}
+
+func resolveUnderlyingCallSender(ctx context.Context, executionAddr common.Address, client ContractDeployBackend) common.Address {
+	target, ok := callProxyTargetFromChain(ctx, executionAddr, client)
+	if ok {
+		return target
+	}
+
+	return executionAddr
+}
+
+func callProxyTargetFromChain(ctx context.Context, address common.Address, client ContractDeployBackend) (common.Address, bool) {
+	if address == (common.Address{}) || client == nil {
+		return common.Address{}, false
+	}
+
+	code, err := client.CodeAt(ctx, address, nil)
+	if err != nil {
+		return common.Address{}, false
+	}
+
+	return callProxyTargetFromRuntime(code)
+}
+
+func callProxyTargetFromRuntime(code []byte) (common.Address, bool) {
+	targetOffset := len(callProxyRuntimePrefix)
+	suffixOffset := targetOffset + common.HashLength
+	if len(code) < suffixOffset+len(callProxyRuntimeSuffix) {
+		return common.Address{}, false
+	}
+	if !bytes.Equal(code[:targetOffset], callProxyRuntimePrefix) {
+		return common.Address{}, false
+	}
+	if !bytes.Equal(code[suffixOffset:suffixOffset+len(callProxyRuntimeSuffix)], callProxyRuntimeSuffix) {
+		return common.Address{}, false
+	}
+
+	return common.BytesToAddress(code[targetOffset:suffixOffset]), true
 }
 
 // extractHexEncodedRevertData extracts hex-encoded revert data (0x...) from an error string.
@@ -626,8 +672,8 @@ func getUnderlyingRevertReason(
 		return "", ""
 	}
 
-	// Simulate the underlying transaction using CallContract (best-effort)
-	// Use timelock address as From since that's what msg.sender will be when RBACTimelock executes
+	// Simulate the underlying transaction using CallContract (best-effort).
+	// timelockAddr is the underlying-call sender (RBACTimelock), including after CallProxy resolution.
 	_, err := client.CallContract(ctx, ethereum.CallMsg{
 		From:  timelockAddr,
 		To:    &underlyingCall.Target,
