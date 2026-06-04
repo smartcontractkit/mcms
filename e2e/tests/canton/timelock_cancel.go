@@ -48,7 +48,6 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 	opAdditionalFields := cantonsdk.AdditionalFields{
 		TargetInstanceAddress: fmt.Sprintf("%s@%s", s.counterInstanceID, s.participant.PartyID),
 		FunctionName:          "Increment",
-		OperationData:         "",
 		TargetCid:             s.counterCID,
 		ContractIds:           []string{s.counterCID},
 	}
@@ -137,7 +136,7 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 
 	// Build cancel proposal - reuse the same batch operation (the converter extracts operationId)
 	// Use the same salt as the schedule proposal to derive the same operation ID
-	salt := scheduleProposal.Salt()
+	salt := common.Hash(scheduleProposal.Salt())
 	cancelProposal, err := mcms.NewTimelockProposalBuilder().
 		SetVersion("v1").
 		SetValidUntil(validUntil).

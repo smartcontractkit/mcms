@@ -3,6 +3,7 @@
 package canton
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -44,7 +45,6 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecute() {
 	opAdditionalFields := cantonsdk.AdditionalFields{
 		TargetInstanceAddress: fmt.Sprintf("%s@%s", s.counterInstanceID, s.participant.PartyID),
 		FunctionName:          "Increment",
-		OperationData:         "",
 		TargetCid:             s.counterCID,
 		ContractIds:           []string{s.counterCID},
 	}
@@ -159,10 +159,12 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 		validUntil := uint32(time.Now().Add(24 * time.Hour).Unix())
 		delay := types.NewDuration(1 * time.Second)
 
+		delayData, decodeErr := hex.DecodeString(encodeMinDelay(1))
+		s.Require().NoError(decodeErr)
+
 		opAdditionalFields := cantonsdk.AdditionalFields{
 			TargetInstanceAddress: mcmsTargetInstanceAddr,
 			FunctionName:          "UpdateMinDelay",
-			OperationData:         encodeMinDelay(1),
 			TargetCid:             "",
 			ContractIds:           []string{},
 		}
@@ -173,7 +175,7 @@ func (s *SetRootExecuteTestSuite) TestSetRootAndExecuteMultipleOps() {
 			ChainSelector: s.chainSelector,
 			Transactions: []types.Transaction{{
 				To:               mcmsTargetInstanceAddr,
-				Data:             []byte{},
+				Data:             delayData,
 				AdditionalFields: opAdditionalFieldsBytes,
 			}},
 		}
@@ -273,7 +275,6 @@ func (s *SetRootExecuteTestSuite) TestSetRootInvalidSignature() {
 	opAdditionalFields := cantonsdk.AdditionalFields{
 		TargetInstanceAddress: fmt.Sprintf("%s@%s", s.counterInstanceID, s.participant.PartyID),
 		FunctionName:          "Increment",
-		OperationData:         "",
 		TargetCid:             s.counterCID,
 		ContractIds:           []string{s.counterCID},
 	}

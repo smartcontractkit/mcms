@@ -3,6 +3,7 @@
 package canton
 
 import (
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"time"
@@ -20,7 +21,7 @@ type TimelockBypassTestSuite struct {
 	mcmsExecutorSetup
 }
 
-// encodeMinDelay encodes a delay in seconds as a 16-char hex string for UpdateMinDelay operationData.
+// encodeMinDelay encodes a delay in seconds as a 16-char hex string for UpdateMinDelay transaction data.
 // The Canton MCMS contract decodes this via decodeInt64At and converts to RelTime via `seconds`.
 func encodeMinDelay(seconds int64) string {
 	return fmt.Sprintf("%016x", seconds)
@@ -52,12 +53,14 @@ func (s *TimelockBypassTestSuite) TestTimelockBypass() {
 	// Batch operation: UpdateMinDelay on MCMS itself (self-dispatch, no external contracts needed)
 	// Use mcmsId@partyId format for self-dispatch target
 	mcmsTargetInstanceAddr := fmt.Sprintf("%s@%s", s.mcmsId, s.participant.PartyID)
+	delayData, err := hex.DecodeString(encodeMinDelay(5))
+	s.Require().NoError(err)
+
 	opAdditionalFields := cantonsdk.AdditionalFields{
 		TargetInstanceAddress: mcmsTargetInstanceAddr,
 		FunctionName:          "UpdateMinDelay",
-		OperationData:         encodeMinDelay(5), // Set minDelay to 5 seconds
-		TargetCid:             "",                // Self-dispatch, no external target CID
-		ContractIds:           []string{},        // No external contracts needed
+		TargetCid:             "",         // Self-dispatch, no external target CID
+		ContractIds:           []string{}, // No external contracts needed
 	}
 	opAdditionalFieldsBytes, err := json.Marshal(opAdditionalFields)
 	s.Require().NoError(err)
@@ -66,7 +69,7 @@ func (s *TimelockBypassTestSuite) TestTimelockBypass() {
 		ChainSelector: s.chainSelector,
 		Transactions: []types.Transaction{{
 			To:               mcmsTargetInstanceAddr,
-			Data:             []byte{},
+			Data:             delayData,
 			AdditionalFields: opAdditionalFieldsBytes,
 		}},
 	}

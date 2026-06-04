@@ -36,7 +36,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 		{
 			name:    "empty additional fields",
 			input:   nil,
-			wantErr: "Canton additional fields are required",
+			wantErr: "canton additional fields are required",
 		},
 		{
 			name:  "valid additional fields",

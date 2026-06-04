@@ -46,7 +46,6 @@ func (s *TimelockProposalTestSuite) TestTimelockProposal() {
 	opAdditionalFields := cantonsdk.AdditionalFields{
 		TargetInstanceAddress: fmt.Sprintf("%s@%s", s.counterInstanceID, s.participant.PartyID),
 		FunctionName:          "Increment",
-		OperationData:         "",
 		TargetCid:             s.counterCID,
 		ContractIds:           []string{s.counterCID},
 	}

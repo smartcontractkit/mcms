@@ -117,7 +117,6 @@ func (s *TimelockInspectionTestSuite) TestTimelockConverter() {
 	af := cantonsdk.AdditionalFields{
 		TargetInstanceAddress: "instance@party",
 		FunctionName:          "noop",
-		OperationData:         "",
 		TargetCid:             s.mcmsInstanceAddress,
 		ContractIds:           []string{s.mcmsInstanceAddress},
 	}

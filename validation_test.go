@@ -303,7 +303,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 					AdditionalFields: nil,
 				},
 			},
-			expectedErr: errors.New("Canton additional fields are required"),
+			expectedErr: errors.New("canton additional fields are required"),
 		},
 		{
 			name: "unknown chain family",

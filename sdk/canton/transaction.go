@@ -10,7 +10,7 @@ import (
 
 func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 	if len(additionalFields) == 0 {
-		return errors.New("Canton additional fields are required")
+		return errors.New("canton additional fields are required")
 	}
 
 	var fields AdditionalFields
