@@ -1432,7 +1432,7 @@ func TestCallProxyBytecodeFingerprintMatchesBinding(t *testing.T) {
 	t.Parallel()
 
 	runtime := callProxyRuntimeFromBinding(t)
-	require.GreaterOrEqual(t, len(runtime), len(callProxyRuntimePrefix)+len(callProxyRuntimeSuffix))
+	require.GreaterOrEqual(t, len(runtime), len(callProxyRuntimePrefix)+common.HashLength+len(callProxyRuntimeSuffix))
 	assert.Equal(t, callProxyRuntimePrefix, runtime[:len(callProxyRuntimePrefix)])
 	suffixStart := len(callProxyRuntimePrefix) + common.HashLength
 	assert.Equal(t, callProxyRuntimeSuffix, runtime[suffixStart:suffixStart+len(callProxyRuntimeSuffix)])

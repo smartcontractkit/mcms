@@ -312,27 +312,19 @@ func BuildExecutionError(
 }
 
 func resolveUnderlyingCallSender(ctx context.Context, executionAddr common.Address, client ContractDeployBackend) common.Address {
-	target, ok := callProxyTargetFromChain(ctx, executionAddr, client)
-	if ok {
-		return target
+	if executionAddr != (common.Address{}) && client != nil {
+		if code, err := client.CodeAt(ctx, executionAddr, nil); err == nil {
+			if targetAddress, ok := callProxyTargetFromRuntime(code); ok {
+				return targetAddress
+			}
+		}
 	}
 
 	return executionAddr
 }
 
-func callProxyTargetFromChain(ctx context.Context, address common.Address, client ContractDeployBackend) (common.Address, bool) {
-	if address == (common.Address{}) || client == nil {
-		return common.Address{}, false
-	}
-
-	code, err := client.CodeAt(ctx, address, nil)
-	if err != nil {
-		return common.Address{}, false
-	}
-
-	return callProxyTargetFromRuntime(code)
-}
-
+// callProxyTargetFromRuntime checks whether code matches bindings.CallProxy runtime
+// (fixed prefix + suffix with a 32-byte immutable target between them) and returns that target.
 func callProxyTargetFromRuntime(code []byte) (common.Address, bool) {
 	targetOffset := len(callProxyRuntimePrefix)
 	suffixOffset := targetOffset + common.HashLength
