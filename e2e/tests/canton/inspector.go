@@ -1,0 +1,146 @@
+//go:build e2e
+
+package canton
+
+import (
+	"slices"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
+	mcmstypes "github.com/smartcontractkit/mcms/types"
+)
+
+type MCMSInspectorTestSuite struct {
+	TestSuite
+	inspector *cantonsdk.Inspector
+}
+
+// SetupSuite runs before the test suite
+func (s *MCMSInspectorTestSuite) SetupSuite() {
+	s.TestSuite.SetupSuite()
+	s.DeployMCMSContract()
+
+	// Create inspector instance using participant's State service client
+	s.inspector = cantonsdk.NewInspector(s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
+}
+
+func (s *MCMSInspectorTestSuite) TestGetConfig() {
+	ctx := s.T().Context()
+
+	// Signers in each group need to be sorted alphabetically
+	signers := [30]common.Address{}
+	for i := range signers {
+		key, _ := crypto.GenerateKey()
+		signers[i] = crypto.PubkeyToAddress(key.PublicKey)
+	}
+	slices.SortFunc(signers[:], func(a, b common.Address) int {
+		return a.Cmp(b)
+	})
+
+	expectedConfig := &mcmstypes.Config{
+		Quorum: 2,
+		Signers: []common.Address{
+			signers[0],
+			signers[1],
+			signers[2],
+		},
+		GroupSigners: []mcmstypes.Config{
+			{
+				Quorum: 4,
+				Signers: []common.Address{
+					signers[3],
+					signers[4],
+					signers[5],
+					signers[6],
+					signers[7],
+				},
+				GroupSigners: []mcmstypes.Config{
+					{
+						Quorum: 1,
+						Signers: []common.Address{
+							signers[8],
+							signers[9],
+						},
+						GroupSigners: []mcmstypes.Config{},
+					},
+				},
+			},
+			{
+				Quorum: 3,
+				Signers: []common.Address{
+					signers[10],
+					signers[11],
+					signers[12],
+					signers[13],
+				},
+				GroupSigners: []mcmstypes.Config{},
+			},
+		},
+	}
+
+	// Set config using configurer (InstanceAddress is stable across SetConfig)
+	configurer, err := cantonsdk.NewConfigurer(s.participant.LedgerServices.Command, s.participant.LedgerServices.State, []string{s.participant.PartyID}, cantonsdk.TimelockRoleProposer)
+	s.Require().NoError(err, "creating configurer")
+
+	_, err = configurer.SetConfig(ctx, s.mcmsInstanceAddress, expectedConfig, true)
+	s.Require().NoError(err, "setting config")
+
+	// Inspector resolves InstanceAddress when querying
+	actualConfig, err := s.inspector.GetConfig(ctx, s.mcmsInstanceAddress)
+	s.Require().NoError(err, "getting config from inspector")
+	s.Require().NotNil(actualConfig, "config should not be nil")
+
+	// Verify the config matches what we set
+	s.verifyConfigMatch(expectedConfig, actualConfig)
+}
+
+func (s *MCMSInspectorTestSuite) TestGetOpCount() {
+	ctx := s.T().Context()
+
+	opCount, err := s.inspector.GetOpCount(ctx, s.mcmsInstanceAddress)
+	s.Require().NoError(err, "getting op count")
+
+	// Initially should be 0
+	s.Require().Equal(uint64(0), opCount, "initial op count should be 0")
+}
+
+func (s *MCMSInspectorTestSuite) TestGetRoot() {
+	ctx := s.T().Context()
+
+	root, validUntil, err := s.inspector.GetRoot(ctx, s.mcmsInstanceAddress)
+	s.Require().NoError(err, "getting root")
+
+	// Initially, no SetRoot has been called: root should be empty
+	s.Require().Equal(common.Hash{}, root, "initial root should be empty")
+	_ = validUntil // initial value is from MCMS emptyExpiringRoot (epoch); exact value depends on ledger/bindings
+}
+
+func (s *MCMSInspectorTestSuite) TestGetRootMetadata() {
+	ctx := s.T().Context()
+
+	metadata, err := s.inspector.GetRootMetadata(ctx, s.mcmsInstanceAddress)
+	s.Require().NoError(err, "getting root metadata")
+
+	// Verify metadata structure
+	s.Require().Equal(uint64(0), metadata.StartingOpCount, "initial starting op count should be 0")
+	s.Require().NotEmpty(metadata.MCMAddress, "MCM address should not be empty")
+}
+
+// Helper to verify config matches
+func (s *MCMSInspectorTestSuite) verifyConfigMatch(expected, actual *mcmstypes.Config) {
+	s.Require().Equal(expected.Quorum, actual.Quorum, "quorum should match")
+	s.Require().Len(actual.Signers, len(expected.Signers), "number of signers should match")
+
+	// Verify signers
+	for i, expectedSigner := range expected.Signers {
+		s.Require().Equal(expectedSigner, actual.Signers[i], "signer %d should match", i)
+	}
+
+	// Verify group signers recursively
+	s.Require().Len(actual.GroupSigners, len(expected.GroupSigners), "number of group signers should match")
+	for i, expectedGroup := range expected.GroupSigners {
+		s.verifyConfigMatch(&expectedGroup, &actual.GroupSigners[i])
+	}
+}
