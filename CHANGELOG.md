@@ -1,5 +1,17 @@
 # @smartcontractkit/mcms
 
+## [0.46.0](https://github.com/smartcontractkit/mcms/compare/v0.45.1...v0.46.0) (2026-06-05)
+
+
+### Features
+
+* **canton:** integrate Canton support ([#613](https://github.com/smartcontractkit/mcms/issues/613)) ([d1e8d62](https://github.com/smartcontractkit/mcms/commit/d1e8d620ac8aca4a48ab1083d68220ee37b8acca))
+
+
+### Bug Fixes
+
+* replace sender to timelock address during error decoding ([#775](https://github.com/smartcontractkit/mcms/issues/775)) ([7da8a8e](https://github.com/smartcontractkit/mcms/commit/7da8a8eec3726c1ec2654c8a2fc533d209b98dd7))
+
 ## [0.45.1](https://github.com/smartcontractkit/mcms/compare/v0.45.0...v0.45.1) (2026-05-27)
 
 
