@@ -486,14 +486,14 @@ func parseBytesFromString(s string) []byte {
 	if len(parts) == 0 {
 		return nil
 	}
-	bytes := make([]byte, 0, len(parts))
+	parsed := make([]byte, 0, len(parts))
 	for _, part := range parts {
 		if val, err := strconv.ParseUint(part, 10, 8); err == nil {
-			bytes = append(bytes, byte(val))
+			parsed = append(parsed, byte(val))
 		}
 	}
 
-	return bytes
+	return parsed
 }
 
 // decodeRevertReasonFromCustomError decodes the revert reason using the error selector to find
