@@ -193,7 +193,7 @@ func HashOperationBatch(targets [][]byte, moduleNames, functionNames []string, d
 		return common.Hash{}, fmt.Errorf("failed to BCS serialize calls: %w", err)
 	}
 
-	var packed []byte
+	packed := make([]byte, 0, len(callsBytes)+len(predecessor)+len(salt))
 	packed = append(packed, callsBytes...)
 	packed = append(packed, predecessor...)
 	packed = append(packed, salt...)

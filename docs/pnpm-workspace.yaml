@@ -1,0 +1,6 @@
+allowBuilds:
+  '@swc/core': true
+  core-js: true
+
+overrides:
+  "serialize-javascript": "^7.0.5"

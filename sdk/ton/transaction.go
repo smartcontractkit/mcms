@@ -5,10 +5,13 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/mcms/types"
+
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
 func ValidateAdditionalFields(additionalFields json.RawMessage) error {
@@ -25,7 +28,8 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 }
 
 type AdditionalFields struct {
-	Value *big.Int `json:"value"`
+	ContractTypeFull tvm.FullyQualifiedName `json:"contractTypeFull,omitempty"`
+	Value            *big.Int               `json:"value"`
 }
 
 // Validate ensures the TON-specific fields are correct
@@ -43,9 +47,11 @@ func NewTransaction(
 	body *cell.Slice,
 	value *big.Int,
 	contractType string,
+	contractVersion *semver.Version,
+	contractFQN tvm.FullyQualifiedName,
 	tags []string,
 ) (types.Transaction, error) {
-	additionalFields, err := json.Marshal(AdditionalFields{Value: value})
+	additionalFields, err := json.Marshal(AdditionalFields{Value: value, ContractTypeFull: contractFQN})
 	if err != nil {
 		return types.Transaction{}, fmt.Errorf("failed to marshal additional fields: %w", err)
 	}
@@ -61,8 +67,9 @@ func NewTransaction(
 		Data:             data,
 		AdditionalFields: additionalFields,
 		OperationMetadata: types.OperationMetadata{
-			ContractType: contractType,
-			Tags:         tags,
+			ContractType:    contractType,
+			ContractVersion: contractVersion,
+			Tags:            tags,
 		},
 	}, nil
 }

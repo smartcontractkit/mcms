@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/samber/lo"
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -22,7 +24,6 @@ func BuildTimelockExecutors(
 	action types.TimelockAction,
 ) (map[types.ChainSelector]sdk.TimelockExecutor, error) {
 	executors := map[types.ChainSelector]sdk.TimelockExecutor{}
-
 	for chainSelector, metadata := range chainMetadata {
 		executor, err := BuildTimelockExecutor(chains, chainSelector, action, metadata)
 		if err != nil {
@@ -134,6 +135,21 @@ func BuildTimelockExecutor(
 			Wallet: signer,
 			Amount: ton.DefaultSendAmount,
 		})
+
+	case chainsel.FamilyCanton:
+		ch, ok := chains.CantonChain(rawSelector)
+		if !ok || len(ch.Participants) == 0 {
+			return nil, fmt.Errorf("missing Canton chain participant for selector %d", rawSelector)
+		}
+		participant := ch.Participants[0]
+		mcmsParties := lo.Map(ch.Participants, func(p cantonsdk.Participant, _ int) string { return p.PartyID })
+
+		return cantonsdk.NewTimelockExecutor(
+			participant.LedgerServices.Command,
+			participant.LedgerServices.State,
+			participant.PartyID,
+			mcmsParties,
+		), nil
 
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)

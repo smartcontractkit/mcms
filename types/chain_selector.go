@@ -31,6 +31,8 @@ var supportedFamilies = []string{
 	chainsel.FamilyAptos,
 	chainsel.FamilySui,
 	chainsel.FamilyTon,
+	chainsel.FamilyStellar,
+	chainsel.FamilyCanton,
 }
 
 // GetChainSelectorFamily returns the family of the chain selector.

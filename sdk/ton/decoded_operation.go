@@ -6,10 +6,12 @@ import (
 	"fmt"
 
 	"github.com/smartcontractkit/mcms/sdk"
+
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 )
 
 type DecodedOperation struct {
-	ContractType string
+	ContractType tvm.FullyQualifiedName
 	MsgType      string
 	MsgOpcode    uint32
 
@@ -21,7 +23,7 @@ type DecodedOperation struct {
 
 var _ sdk.DecodedOperation = &DecodedOperation{}
 
-func NewDecodedOperation(contractType string, msgType string, msgOpcode uint32, msgDecoded any, inputKeys []string, inputArgs []any) (sdk.DecodedOperation, error) {
+func NewDecodedOperation(contractType tvm.FullyQualifiedName, msgType string, msgOpcode uint32, msgDecoded any, inputKeys []string, inputArgs []any) (sdk.DecodedOperation, error) {
 	if len(inputKeys) != len(inputArgs) {
 		return nil, errors.New("input keys and input args must have the same length")
 	}

@@ -1,0 +1,62 @@
+# Tests the documentation build is successful
+name: docs-test
+on:
+  pull_request:
+    branches:
+      - main
+  merge_group:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+jobs:
+  # Detect if docs files changed (merge_group doesn't support paths filter, and we want
+  # this workflow to always report a status so it can be a required check).
+  changes:
+    name: Detect Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      docs: ${{ steps.filter.outputs.docs }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Check for docs changes
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        id: filter
+        with:
+          filters: |
+            docs:
+              - 'docs/**'
+
+  # Tests the documentation build is successful
+  build:
+    name: Build Documentation
+    needs: changes
+    if: needs.changes.outputs.docs == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Install node and pnpm
+        uses: smartcontractkit/.github/actions/setup-nodejs@setup-nodejs/v1
+        with:
+          pnpm-version: 11.1.1
+          package-json-directory: ./docs
+
+      - name: Build docs
+        run: pnpm -C ./docs build

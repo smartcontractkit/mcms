@@ -5,6 +5,9 @@ on:
     branches:
       - main
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 jobs:
   ci-lint:
     name: Lint
@@ -15,9 +18,9 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@ci-lint-go/v4
         with:
-          golangci-lint-version: v2.6.2
+          golangci-lint-version: v2.12.2
           use-go-cache: true
           only-new-issues: false
           golangci-lint-config: .golangci.yml
@@ -31,9 +34,9 @@ jobs:
       actions: read
     steps:
       - name: Linting Go
-        uses: smartcontractkit/.github/actions/ci-lint-go@85085f8c650468409773440bc867a7b3642ccc9b # ci-lint-go@4.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-go@ci-lint-go/v4
         with:
-          golangci-lint-version: v2.6.2
+          golangci-lint-version: v2.12.2
           golangci-lint-args: --build-tags="e2e"
           use-go-cache: true
           only-new-issues: false
@@ -46,7 +49,7 @@ jobs:
       contents: read
     steps:
       - name: Linting Misc (yaml + sh files)
-        uses: smartcontractkit/.github/actions/ci-lint-misc@9fc306ac63d8997c9ca0da283e56caaf71589f83 # ci-lint-misc@1.0.0
+        uses: smartcontractkit/.github/actions/ci-lint-misc@ci-lint-misc/v1
 
   ci-test:
     runs-on: ubuntu-latest
@@ -56,7 +59,7 @@ jobs:
       actions: read
     steps:
       - name: ci-test
-        uses: smartcontractkit/.github/actions/ci-test-go@2b1d964024bb001ae9fba4f840019ac86ad1d824 # ci-test-go@1.1.0
+        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/v1
         with:
           go-test-cmd: go test -coverprofile=coverage.txt $(go list ./...)
           use-go-cache: true
@@ -70,7 +73,7 @@ jobs:
       actions: read
     steps:
       - name: Install Rust
-        uses: moonrepo/setup-rust@ede6de059f8046a5e236c94046823e2af11ca670 # v1.2.2
+        uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
 
       - name: Install Solana
         uses: metaplex-foundation/actions/install-solana@2389940047edc63a5781911f6a53fbdf784748d8 # v1.0.4
@@ -78,21 +81,21 @@ jobs:
           version: 1.18.26
 
       - name: Install Aptos CLI
-        uses: aptos-labs/actions/install-aptos-cli@ce57287eb852b9819c1d74fecc3be187677559fd # v0.1
+        uses: aptos-labs/actions/install-aptos-cli@528ef7ad9427a8c0720ea3eea790a9190d6e377d # v0.1
         with:
           CLI_VERSION: 7.10.0
 
       - name: Install Sui CLI
         shell: bash
         run: |
-          SUI_VERSION="1.70.2"
+          SUI_VERSION="1.72.2"
           curl -L "https://github.com/MystenLabs/sui/releases/download/mainnet-v${SUI_VERSION}/sui-mainnet-v${SUI_VERSION}-ubuntu-x86_64.tgz" -o sui.tgz
           tar -xzf sui.tgz
           sudo mv sui /usr/local/bin/
           sui --version
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Compute Solana programs cache key
         id: solana-programs-cache-key
@@ -102,11 +105,11 @@ jobs:
           echo "key=${key}" >> "$GITHUB_OUTPUT"
 
       - name: Cache Solana programs
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         id: cache-solana-programs
         with:
           path: ./e2e/artifacts/solana
-          key: "${{ runner.os }}-mcms-contracts-${{ steps.solana-programs-cache-key.outputs.key }}"
+          key: "${{runner.os}}-mcms-contracts-${{steps.solana-programs-cache-key.outputs.key}}"
 
       - name: Build Solana programs
         if: steps.cache-solana-programs.outputs.cache-hit != 'true'
@@ -115,7 +118,7 @@ jobs:
           ./e2e/tests/solana/compile-mcm-contracts.sh
 
       - name: Run e2e tests
-        uses: smartcontractkit/.github/actions/ci-test-go@2b1d964024bb001ae9fba4f840019ac86ad1d824 # ci-test-go@1.1.0
+        uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/v1
         with:
           checkout-repo: false
           use-go-cache: true
@@ -149,27 +152,10 @@ jobs:
               exit 0
             }
 
-  cd-release:
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-    steps:
-      - name: cd-release
-        uses: smartcontractkit/.github/actions/cicd-changesets@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # cicd-changesets@0.3.6
-        with:
-          # general inputs
-          git-user: app-token-issuer-infra-releng[bot]
-          git-email: app-token-issuer-infra-releng[bot]@users.noreply.github.com
-          # aws inputs
-          aws-region: ${{ secrets.AWS_REGION }}
-          aws-role-arn: ${{ secrets.AWS_OIDC_MCMS_CI_CHANGESET_TOKEN_ISSUER_ROLE_ARN }}
-          aws-lambda-url: ${{ secrets.GATI_LAMBDA_DEPLOYMENT_AUTOMATION_URL }}
-
   ci-sonarqube:
     name: Sonarqube Scan
     runs-on: ubuntu-latest
-    needs: [ci-lint, ci-lint-misc, ci-test]
+    needs: [ ci-lint, ci-lint-misc, ci-test ]
     permissions:
       contents: read
       actions: read
@@ -177,7 +163,7 @@ jobs:
     if: github.actor != 'dependabot[bot]'
     steps:
       - name: Scanning with Sonarqube
-        uses: smartcontractkit/.github/actions/ci-sonarqube-go@01d931b0455a754d12e7143cc54a5a3521a8f6f6 # ci-sonarqube-go@0.3.1
+        uses: smartcontractkit/.github/actions/ci-sonarqube-go@82f9a1703246639b70da5fd5a3e489363b04a0d6 # v0.6.0
         with:
           # sonarqube inputs
           sonar-token: ${{ secrets.SONAR_TOKEN }}

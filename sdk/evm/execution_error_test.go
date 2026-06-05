@@ -3,8 +3,11 @@ package evm
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"math"
 	"math/big"
 	"strings"
 	"testing"
@@ -367,7 +370,7 @@ func TestExecutionErrorJSON(t *testing.T) {
 				Selector: CallRevertedSelector,
 				Data:     []byte{0x01, 0x02},
 			},
-			RevertReasonDecoded:     "CallReverted(truncated)",
+			RevertReasonDecoded:     errCallRevertedTruncated,
 			UnderlyingReasonRaw:     "0xdeadbeef",
 			UnderlyingReasonDecoded: "OutOfBoundsGroup()",
 			OriginalError:           errors.New("execution reverted: custom error"),
@@ -380,27 +383,27 @@ func TestExecutionErrorJSON(t *testing.T) {
 		require.NoError(t, json.Unmarshal(bytes, &parsed))
 
 		require.Equal(t, "execution reverted: custom error", parsed["OriginalError"])
-		require.Equal(t, "CallReverted(truncated)", parsed["RevertReasonDecoded"])
+		require.Equal(t, errCallRevertedTruncated, parsed["RevertReasonDecoded"])
 		require.Equal(t, "OutOfBoundsGroup()", parsed["UnderlyingReasonDecoded"])
 	})
 
 	t.Run("unmarshal_restores_original_error", func(t *testing.T) {
 		t.Parallel()
 
-		payload := `{
+		payload := fmt.Sprintf(`{
 			"Transaction": null,
 			"RevertReasonRaw": {"selector": "0x70de1b4b", "data": "0x"},
-			"RevertReasonDecoded": "CallReverted(truncated)",
+			"RevertReasonDecoded": %q,
 			"UnderlyingReasonRaw": "0xdeadbeef",
 			"UnderlyingReasonDecoded": "OutOfBoundsGroup()",
 			"OriginalError": "execution reverted: custom error"
-		}`
+		}`, errCallRevertedTruncated)
 
 		var execErr ExecutionError
 		require.NoError(t, json.Unmarshal([]byte(payload), &execErr))
 
 		require.EqualError(t, execErr.OriginalError, "execution reverted: custom error")
-		require.Equal(t, "CallReverted(truncated)", execErr.RevertReasonDecoded)
+		require.Equal(t, errCallRevertedTruncated, execErr.RevertReasonDecoded)
 		require.Equal(t, "OutOfBoundsGroup()", execErr.UnderlyingReasonDecoded)
 		require.NotNil(t, execErr.RevertReasonRaw)
 		assert.Equal(t, CallRevertedSelector, execErr.RevertReasonRaw.Selector)
@@ -824,7 +827,7 @@ func TestDecodeRevertReasonFromCustomError(t *testing.T) {
 				Selector: CallRevertedSelector,
 				Data:     []byte{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00},
 			},
-			expectedResult: "CallReverted(truncated)",
+			expectedResult: errCallRevertedTruncated,
 			shouldDecode:   true,
 			description:    "CallReverted with insufficient data returns truncated marker",
 		},
@@ -1368,7 +1371,7 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 					Return(nil, errors.New(errMsgCustomError)).Maybe()
 			},
 			expectedRaw:     "0x70de1b4b",
-			expectedDecoded: "CallReverted(truncated)", // CallReverted with insufficient data returns truncated marker
+			expectedDecoded: errCallRevertedTruncated, // CallReverted with insufficient data returns truncated marker
 		},
 		{
 			name:         "call reverts with plain string",
@@ -1694,13 +1697,14 @@ func encodeErrorStringManual(s string) []byte {
 	encoded = append(encoded, make([]byte, 28)...)
 	encoded = append(encoded, 0x20)
 
-	// Length (32 bytes) - big-endian uint256
+	// Length (32 bytes) - big-endian uint256 (low 4 bytes as little-endian chunk in padded field)
 	encoded = append(encoded, make([]byte, 28)...)
 	lengthBytes := make([]byte, 4)
-	lengthBytes[3] = byte(length)
-	lengthBytes[2] = byte(length >> 8)
-	lengthBytes[1] = byte(length >> 16)
-	lengthBytes[0] = byte(length >> 24)
+	l := uint64(length)
+	if l > math.MaxUint32 {
+		panic("encodeErrorStringManual: length overflows uint32")
+	}
+	binary.LittleEndian.PutUint32(lengthBytes, uint32(l))
 	encoded = append(encoded, lengthBytes...)
 
 	// String data with padding

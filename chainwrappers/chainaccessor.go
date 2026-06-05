@@ -8,8 +8,9 @@ import (
 	"github.com/xssnick/tonutils-go/ton"
 	tonwallet "github.com/xssnick/tonutils-go/ton/wallet"
 
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
-	suisuisdk "github.com/smartcontractkit/mcms/sdk/sui"
+	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 )
 
 type ChainAccessor interface {
@@ -21,7 +22,8 @@ type ChainAccessor interface {
 	AptosClient(selector uint64) (aptoslib.AptosRpcClient, bool)
 	AptosSigner(selector uint64) (aptoslib.TransactionSigner, bool)
 	SuiClient(selector uint64) (sui.ISuiAPI, bool)
-	SuiSigner(selector uint64) (suisuisdk.SuiSigner, bool)
+	SuiSigner(selector uint64) (suisdk.SuiSigner, bool)
 	TonClient(selector uint64) (ton.APIClientWrapped, bool)
 	TonSigner(selector uint64) (*tonwallet.Wallet, bool)
+	CantonChain(selector uint64) (cantonsdk.Chain, bool)
 }

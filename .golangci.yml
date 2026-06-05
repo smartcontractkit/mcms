@@ -7,6 +7,7 @@ linters:
     - contextcheck
     - copyloopvar
     - decorder
+    - depguard
     - dogsled
     - dupword
     - durationcheck
@@ -40,6 +41,15 @@ linters:
     - wastedassign
     - whitespace
   settings:
+    depguard:
+      rules:
+        no-chainlink-deployments-framework:
+          list-mode: lax
+          files:
+            - $all
+          deny:
+            - pkg: github.com/smartcontractkit/chainlink-deployments-framework
+              desc: must not import chainlink-deployments-framework; it would introduce a circular dependency with mcms
     goconst:
       min-len: 5
     gomoddirectives:
@@ -97,9 +107,14 @@ linters:
           - unparam
         path: _test\.go
       - linters:
+          - goconst
+        path: _test\.go
+      - linters:
           - gosec
+          - goconst
           - mnd
           - paralleltest
+          - prealloc
         path: ^e2e/
     paths:
       - sdk/evm/bindings

@@ -98,11 +98,11 @@ A list of cryptographic proposal signatures of the signers, where each element r
 **chainMetadata** object<br/>
 Maps the chain-specific configuration for each blockchain involved in the proposal. The key of the object is the chain selector ID, and the value is the metadata object. An entry is required for every chain referenced in the proposal's operations.
 
-For more details about the chain metadata, see [Chain Metadata](/key-concepts/chain-metadata.md).
+For more details about the chain metadata, see [Chain Metadata](./chain-metadata.md).
 
 ---
 
 **operations** array of objects<br/>
 A list of operations to be executed across chains.
 
-For more details about the operations, see [Operations](/key-concepts/operations.md#mcm-proposal-operations).
+For more details about the operations, see [Operations](./operations.md#mcm-proposal-operations).

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Masterminds/semver/v3"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/go-playground/validator/v10"
@@ -238,11 +239,20 @@ func TestWriteProposal(t *testing.T) {
 	tests := []struct {
 		name       string
 		giveWriter func() io.Writer // Use this to overwrite the default writer
+		op         types.Operation
 		want       string
 		wantErr    string
 	}{
 		{
-			name: "success: writes a proposal to an io.Writer",
+			name: "success: minimal proposal",
+			op: types.Operation{
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: types.Transaction{
+					To:               "0x123",
+					AdditionalFields: json.RawMessage(`{"value": 0}`),
+					Data:             common.Hex2Bytes("0x1"),
+				},
+			},
 			want: `{
 				"version": "v1",
 				"kind": "Proposal",
@@ -271,7 +281,58 @@ func TestWriteProposal(t *testing.T) {
 			}`,
 		},
 		{
+			name: "success: maximal proposal",
+			op: types.Operation{
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: types.Transaction{
+					To:               "0x123",
+					AdditionalFields: json.RawMessage(`{"value": 0}`),
+					Data:             common.Hex2Bytes("0x1"),
+					OperationMetadata: types.OperationMetadata{
+						ContractType:    "RBACTimelock",
+						ContractVersion: semver.MustParse("1.2.3"),
+						Tags:            []string{"tag1", "tag2"},
+					},
+				},
+			},
+			want: `{
+				"version": "v1",
+				"kind": "Proposal",
+				"description": "",
+				"validUntil": 2004259681,
+				"overridePreviousRoot": false,
+				"signatures": null,
+				"chainMetadata": {
+					"3379446385462418246": {
+						"mcmAddress": "",
+						"startingOpCount": 0
+					}
+				},
+				"operations": [
+					{
+						"chainSelector": 3379446385462418246,
+						"transaction": {
+							"to": "0x123",
+							"additionalFields": {"value": 0},
+							"data": "",
+							"contractType": "RBACTimelock",
+							"contractVersion": "1.2.3",
+							"tags": ["tag1", "tag2"]
+						}
+					}
+				]
+			}`,
+		},
+		{
 			name: "failure: writer returns error",
+			op: types.Operation{
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: types.Transaction{
+					To:               "0x123",
+					AdditionalFields: json.RawMessage(`{"value": 0}`),
+					Data:             common.Hex2Bytes("0x1"),
+				},
+			},
 			giveWriter: func() io.Writer {
 				return newFakeWriter(0, errors.New("write error"))
 			},
@@ -287,14 +348,7 @@ func TestWriteProposal(t *testing.T) {
 			builder.SetVersion("v1").
 				SetValidUntil(2004259681).
 				AddChainMetadata(chaintest.Chain1Selector, types.ChainMetadata{}).
-				AddOperation(types.Operation{
-					ChainSelector: chaintest.Chain1Selector,
-					Transaction: types.Transaction{
-						To:               "0x123",
-						AdditionalFields: json.RawMessage(`{"value": 0}`),
-						Data:             common.Hex2Bytes("0x1"),
-					},
-				})
+				AddOperation(tt.op)
 
 			give, err := builder.Build()
 			require.NoError(t, err)
@@ -616,7 +670,7 @@ func TestProposalValidate(t *testing.T) {
 				if errors.As(err, &errs) {
 					assert.Len(t, errs, len(tt.wantErrs))
 
-					got := []string{}
+					got := make([]string, 0, len(errs))
 					for _, e := range errs {
 						got = append(got, e.Error())
 					}

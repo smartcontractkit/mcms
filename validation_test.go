@@ -15,6 +15,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -186,6 +187,18 @@ func TestValidateAdditionalFields(t *testing.T) {
 	invalidSuiFieldsJSON, err := json.Marshal(invalidSuiFields)
 	require.NoError(t, err)
 
+	validCantonFields, err := json.Marshal(canton.AdditionalFields{
+		TargetInstanceAddress: "counter@party::abc",
+		FunctionName:          "Increment",
+	})
+	require.NoError(t, err)
+
+	invalidCantonFields, err := json.Marshal(canton.AdditionalFields{
+		TargetInstanceAddress: "invalid-address",
+		FunctionName:          "Increment",
+	})
+	require.NoError(t, err)
+
 	tests := []struct {
 		name        string
 		operation   types.Operation
@@ -263,6 +276,36 @@ func TestValidateAdditionalFields(t *testing.T) {
 			expectedErr: errors.New("module name length must be between 1 and 64 characters"),
 		},
 		{
+			name: "valid Canton fields",
+			operation: types.Operation{
+				ChainSelector: types.ChainSelector(chainsel.CANTON_TESTNET.Selector),
+				Transaction: types.Transaction{
+					AdditionalFields: validCantonFields,
+				},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "invalid Canton fields",
+			operation: types.Operation{
+				ChainSelector: types.ChainSelector(chainsel.CANTON_TESTNET.Selector),
+				Transaction: types.Transaction{
+					AdditionalFields: invalidCantonFields,
+				},
+			},
+			expectedErr: errors.New("targetInstanceAddress must be in instanceId@partyId format"),
+		},
+		{
+			name: "empty Canton additional fields",
+			operation: types.Operation{
+				ChainSelector: types.ChainSelector(chainsel.CANTON_TESTNET.Selector),
+				Transaction: types.Transaction{
+					AdditionalFields: nil,
+				},
+			},
+			expectedErr: errors.New("canton additional fields are required"),
+		},
+		{
 			name: "unknown chain family",
 			operation: types.Operation{
 				ChainSelector: 999,
@@ -301,6 +344,16 @@ func TestValidateAdditionalFields(t *testing.T) {
 				},
 			},
 			expectedErr: errors.New("failed to unmarshal Sui additional fields"),
+		},
+		{
+			name: "invalid JSON for Canton fields",
+			operation: types.Operation{
+				ChainSelector: types.ChainSelector(chainsel.CANTON_TESTNET.Selector),
+				Transaction: types.Transaction{
+					AdditionalFields: []byte("invalid JSON"),
+				},
+			},
+			expectedErr: errors.New("failed to unmarshal Canton additional fields"),
 		},
 	}
 
