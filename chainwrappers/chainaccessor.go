@@ -23,7 +23,7 @@ type ChainAccessor interface {
 	AptosClient(selector uint64) (aptoslib.AptosRpcClient, bool)
 	AptosSigner(selector uint64) (aptoslib.TransactionSigner, bool)
 	SuiClient(selector uint64) (cslclient.BindingsClient, bool)
-	SuiSigner(selector uint64) (suisuisdk.SuiSigner, bool)
+	SuiSigner(selector uint64) (suisdk.SuiSigner, bool)
 	TonClient(selector uint64) (ton.APIClientWrapped, bool)
 	TonSigner(selector uint64) (*tonwallet.Wallet, bool)
 	CantonChain(selector uint64) (cantonsdk.Chain, bool)
