@@ -15,8 +15,8 @@ import (
 	"github.com/block-vision/sui-go-sdk/transaction"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
-	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 	module_mcms_deployer "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_deployer"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
 	mockfeequoter "github.com/smartcontractkit/mcms/sdk/sui/mocks/feequoter"

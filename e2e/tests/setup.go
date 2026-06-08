@@ -19,8 +19,9 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/ton"
 
-	tonchain "github.com/smartcontractkit/chainlink-ton/pkg/ton/chain"
 	"github.com/smartcontractkit/chainlink-common/pkg/logger"
+	tonchain "github.com/smartcontractkit/chainlink-ton/pkg/ton/chain"
+
 	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	suisdk "github.com/smartcontractkit/mcms/sdk/sui"

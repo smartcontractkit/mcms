@@ -12,6 +12,8 @@ import (
 )
 
 const defaultSuiGrpcToken = "test"
+const defaultSuiGrpcTimeout = 30 * time.Second
+const defaultSuiGrpcMaxConcurrentRequests = 50
 
 // NewBindingsClientFromNodeURL creates a gRPC-backed bindings client from an HTTP RPC URL.
 // Local Sui nodes expose gRPC on the same host:port as JSON-RPC.
@@ -27,8 +29,8 @@ func NewBindingsClientFromNodeURL(log logger.Logger, nodeURL string, grpcToken s
 	return cslclient.NewPTBClient(log, cslclient.PTBClientConfig{
 		GrpcTarget:            grpcTarget,
 		GrpcToken:             grpcToken,
-		TransactionTimeout:    30 * time.Second,
-		MaxConcurrentRequests: 50,
+		TransactionTimeout:    defaultSuiGrpcTimeout,
+		MaxConcurrentRequests: defaultSuiGrpcMaxConcurrentRequests,
 		DefaultRequestType:    cslclient.WaitForEffectsCert,
 	})
 }
@@ -54,5 +56,6 @@ func grpcTargetFromNodeURL(nodeURL string) (string, error) {
 	if strings.Contains(host, ":") && !strings.HasPrefix(host, "[") {
 		return fmt.Sprintf("[%s]:%s", host, port), nil
 	}
+
 	return fmt.Sprintf("%s:%s", host, port), nil
 }
