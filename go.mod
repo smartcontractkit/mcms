@@ -29,7 +29,8 @@ require (
 	github.com/smartcontractkit/chainlink-canton v0.0.0-20260602133237-99f834640c9d
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
-  github.com/smartcontractkit/chainlink-sui v0.0.0-20260605165559-eb9893a9718c
+	github.com/smartcontractkit/chainlink-common v0.11.2-0.20260506120607-7f10be016c89
+	github.com/smartcontractkit/chainlink-sui v0.0.0-20260605165559-eb9893a9718c
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.16.4
 	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514223130-48bc90aca745
 	github.com/smartcontractkit/freeport v0.1.3-0.20250828155247-add56fa28aad
