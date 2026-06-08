@@ -9,8 +9,9 @@ import (
 
 	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
-	suisuisdk "github.com/smartcontractkit/mcms/sdk/sui"
+	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 )
 
 type ChainAccessor interface {
@@ -25,4 +26,5 @@ type ChainAccessor interface {
 	SuiSigner(selector uint64) (suisuisdk.SuiSigner, bool)
 	TonClient(selector uint64) (ton.APIClientWrapped, bool)
 	TonSigner(selector uint64) (*tonwallet.Wallet, bool)
+	CantonChain(selector uint64) (cantonsdk.Chain, bool)
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/smartcontractkit/mcms/chainwrappers"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -61,6 +62,12 @@ func newEncoder(
 			txCount,
 			overridePreviousRoot,
 		)
+	case chainsel.FamilyCanton:
+		encoder = canton.NewEncoder(
+			csel,
+			txCount,
+			overridePreviousRoot,
+		)
 	}
 
 	return encoder, nil
@@ -90,6 +97,8 @@ func operationIDFn(_ context.Context, csel types.ChainSelector) (sdk.OperationID
 		return sui.OperationID, nil
 	case chainsel.FamilyTon:
 		return ton.OperationID, nil
+	case chainsel.FamilyCanton:
+		return canton.OperationID, nil
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}

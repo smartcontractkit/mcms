@@ -9,6 +9,7 @@ import (
 	solana "github.com/gagliardetto/solana-go"
 	rpc "github.com/gagliardetto/solana-go/rpc"
 	client "github.com/smartcontractkit/chainlink-sui/relayer/client"
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	evm "github.com/smartcontractkit/mcms/sdk/evm"
 	sui "github.com/smartcontractkit/mcms/sdk/sui"
 	mock "github.com/stretchr/testify/mock"
@@ -652,6 +653,62 @@ func (_c *ChainAccessor_TonSigner_Call) Return(_a0 *wallet.Wallet, _a1 bool) *Ch
 }
 
 func (_c *ChainAccessor_TonSigner_Call) RunAndReturn(run func(uint64) (*wallet.Wallet, bool)) *ChainAccessor_TonSigner_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CantonChain provides a mock function with given fields: selector
+func (_m *ChainAccessor) CantonChain(selector uint64) (cantonsdk.Chain, bool) {
+	ret := _m.Called(selector)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CantonChain")
+	}
+
+	var r0 cantonsdk.Chain
+	var r1 bool
+	if rf, ok := ret.Get(0).(func(uint64) (cantonsdk.Chain, bool)); ok {
+		return rf(selector)
+	}
+	if rf, ok := ret.Get(0).(func(uint64) cantonsdk.Chain); ok {
+		r0 = rf(selector)
+	} else {
+		r0 = ret.Get(0).(cantonsdk.Chain)
+	}
+
+	if rf, ok := ret.Get(1).(func(uint64) bool); ok {
+		r1 = rf(selector)
+	} else {
+		r1 = ret.Get(1).(bool)
+	}
+
+	return r0, r1
+}
+
+// ChainAccessor_CantonChain_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CantonChain'
+type ChainAccessor_CantonChain_Call struct {
+	*mock.Call
+}
+
+// CantonChain is a helper method to define mock.On call
+//   - selector uint64
+func (_e *ChainAccessor_Expecter) CantonChain(selector interface{}) *ChainAccessor_CantonChain_Call {
+	return &ChainAccessor_CantonChain_Call{Call: _e.mock.On("CantonChain", selector)}
+}
+
+func (_c *ChainAccessor_CantonChain_Call) Run(run func(selector uint64)) *ChainAccessor_CantonChain_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(uint64))
+	})
+	return _c
+}
+
+func (_c *ChainAccessor_CantonChain_Call) Return(_a0 cantonsdk.Chain, _a1 bool) *ChainAccessor_CantonChain_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *ChainAccessor_CantonChain_Call) RunAndReturn(run func(uint64) (cantonsdk.Chain, bool)) *ChainAccessor_CantonChain_Call {
 	_c.Call.Return(run)
 	return _c
 }

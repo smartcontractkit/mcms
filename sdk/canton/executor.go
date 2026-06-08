@@ -1,0 +1,358 @@
+package canton
+
+import (
+	"context"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"time"
+
+	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/google/uuid"
+	cselectors "github.com/smartcontractkit/chain-selectors"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
+	"github.com/smartcontractkit/go-daml/pkg/service/ledger"
+	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
+
+	"github.com/smartcontractkit/mcms/internal/utils/abi"
+	"github.com/smartcontractkit/mcms/internal/utils/safecast"
+	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/types"
+)
+
+const SignMsgABI = `[{"type":"bytes32"},{"type":"uint32"}]`
+
+var _ sdk.Executor = &Executor{}
+
+type Executor struct {
+	*Encoder
+	*Inspector
+	client apiv2.CommandServiceClient
+	// The party that will be used to submit transactions.
+	// Should be different from mcmsParties.
+	submittingParty string
+	// The parties that own the MCMS deployment.
+	mcmsParties []string
+	role        TimelockRole
+}
+
+func NewExecutor(encoder *Encoder, inspector *Inspector, client apiv2.CommandServiceClient, submittingParty string, mcmsParties []string, role TimelockRole) (*Executor, error) {
+	return &Executor{
+		Encoder:         encoder,
+		Inspector:       inspector,
+		client:          client,
+		submittingParty: submittingParty,
+		mcmsParties:     mcmsParties,
+		role:            role,
+	}, nil
+}
+
+func (e Executor) ExecuteOperation(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	nonce uint32,
+	proof []common.Hash,
+	op types.Operation,
+) (types.TransactionResult, error) {
+	// Extract Canton-specific operation fields from AdditionalFields
+	var cantonOpFields AdditionalFields
+	if len(op.Transaction.AdditionalFields) > 0 {
+		if err := json.Unmarshal(op.Transaction.AdditionalFields, &cantonOpFields); err != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to unmarshal operation additional fields: %w", err)
+		}
+	}
+
+	// Resolve MCMAddress (InstanceAddress hex) to current contract ID before submitting
+	mcmsContractID, err := ResolveMCMSContractID(ctx, e.StateServiceClient(), e.mcmsParties, metadata.MCMAddress)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to resolve MCMS contract ID: %w", err)
+	}
+
+	// Validate required Canton fields
+	if cantonOpFields.TargetInstanceAddress == "" {
+		return types.TransactionResult{}, errors.New("targetInstanceAddress is required in operation additional fields")
+	}
+	if cantonOpFields.FunctionName == "" {
+		return types.TransactionResult{}, errors.New("functionName is required in operation additional fields")
+	}
+	if cantonOpFields.TargetCid == "" {
+		if cantonOpFields.TargetTemplateID == "" {
+			return types.TransactionResult{}, errors.New("targetCid or targetTemplateId+targetInstanceAddress is required in operation additional fields")
+		}
+		resolved, resolveErr := ResolveTargetContractID(ctx, e.StateServiceClient(), e.mcmsParties, cantonOpFields.TargetInstanceAddress, cantonOpFields.TargetTemplateID)
+		if resolveErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("resolve target contract ID: %w", resolveErr)
+		}
+		cantonOpFields.TargetCid = resolved
+		if len(cantonOpFields.ContractIds) == 0 {
+			cantonOpFields.ContractIds = []string{resolved}
+		}
+	}
+
+	// Resolve chain metadata (chainId, multisigId) for the Canton Op payload.
+	fields, err := e.ToRootMetadata(metadata)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("resolve canton root metadata: %w", err)
+	}
+
+	// Build Canton Op struct
+	cantonOp := mcmsapi.Op{
+		ChainId:               cantontypes.INT64(fields.ChainId),
+		MultisigId:            cantontypes.TEXT(fields.MultisigId),
+		Nonce:                 cantontypes.INT64(nonce),
+		TargetInstanceAddress: cantontypes.TEXT(cantonOpFields.TargetInstanceAddress),
+		FunctionName:          cantontypes.TEXT(cantonOpFields.FunctionName),
+		OperationData:         cantontypes.TEXT(operationDataHex(op.Transaction.Data)),
+	}
+
+	// Convert proof to Canton TEXT array
+	opProof := make([]cantontypes.TEXT, len(proof))
+	for i, p := range proof {
+		opProof[i] = cantontypes.TEXT(hex.EncodeToString(p[:]))
+	}
+
+	// Resolve InstanceAddress hex values to current contract IDs before submitting.
+	stateClient := e.StateServiceClient()
+	targetCids := make(map[cantontypes.TEXT]cantontypes.CONTRACT_ID)
+	for _, cid := range cantonOpFields.ContractIds {
+		resolved, resolveErr := ResolveContractIDIfInstanceAddress(ctx, stateClient, e.mcmsParties, cid)
+		if resolveErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("resolve contract ID %q: %w", cid, resolveErr)
+		}
+		// Use the original instance address as key, resolved contract ID as value
+		targetCids[cantontypes.TEXT(cid)] = cantontypes.CONTRACT_ID(resolved)
+	}
+
+	// Build exercise command using generated bindings
+	mcmsContract := mcmscore.MCMS{}
+	var choice string
+	var choiceArgument *apiv2.Value
+
+	input := mcmscore.ExecuteOp{
+		TargetRole: mcmsapi.Role(e.role.String()),
+		Submitter:  cantontypes.PARTY(e.submittingParty),
+		Op:         cantonOp,
+		OpProof:    opProof,
+		TargetCids: targetCids,
+	}
+	exerciseCmd := mcmsContract.ExecuteOp(mcmsContractID, input)
+	choice = exerciseCmd.Choice
+	choiceArgument = ledger.MapToValue(input)
+
+	// Parse template ID
+	packageID, moduleName, entityName, err := ParseTemplateIDFromString(mcmsContract.GetTemplateID())
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
+	}
+
+	commandID := uuid.NewString()
+	submitResp, err := e.client.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
+		Commands: &apiv2.Commands{
+			WorkflowId: "mcms-execute-op",
+			CommandId:  commandID,
+			ActAs:      []string{e.submittingParty},
+			ReadAs:     e.mcmsParties,
+			Commands: []*apiv2.Command{{
+				Command: &apiv2.Command_Exercise{
+					Exercise: &apiv2.ExerciseCommand{
+						TemplateId: &apiv2.Identifier{
+							PackageId:  packageID,
+							ModuleName: moduleName,
+							EntityName: entityName,
+						},
+						ContractId:     mcmsContractID,
+						Choice:         choice,
+						ChoiceArgument: choiceArgument,
+					},
+				},
+			}},
+		},
+	})
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to execute operation: %w", err)
+	}
+
+	// Extract NEW MCMS CID from Created event (for RawData only; proposal keeps InstanceAddress)
+	newMCMSContractID := ""
+	newMCMSTemplateID := ""
+	transaction := submitResp.GetTransaction()
+	for _, ev := range transaction.GetEvents() {
+		if createdEv := ev.GetCreated(); createdEv != nil {
+			templateID := FormatTemplateID(createdEv.GetTemplateId())
+			normalized := NormalizeTemplateKey(templateID)
+			if normalized == MCMSTemplateKey {
+				newMCMSContractID = createdEv.GetContractId()
+				newMCMSTemplateID = templateID
+
+				break
+			}
+		}
+	}
+
+	if newMCMSContractID == "" {
+		return types.TransactionResult{}, fmt.Errorf("execute-op tx had no Created MCMS event; refusing to continue with old CID=%s", mcmsContractID)
+	}
+
+	return types.TransactionResult{
+		Hash:        transactionResultHash(transaction, commandID),
+		ChainFamily: cselectors.FamilyCanton,
+		RawData:     rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID, submitResp),
+	}, nil
+}
+
+func (e Executor) SetRoot(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
+	// Resolve MCMAddress (InstanceAddress hex) to current contract ID before submitting
+	mcmsContractID, err := ResolveMCMSContractID(ctx, e.StateServiceClient(), e.mcmsParties, metadata.MCMAddress)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to resolve MCMS contract ID: %w", err)
+	}
+
+	rootHex := hex.EncodeToString(root[:])
+	// Recalculate msg hash to recover signers
+	inner, err := abi.Encode(SignMsgABI, root, validUntil)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to ABI-encode signing payload: %w", err)
+	}
+	innerHash := crypto.Keccak256(inner)
+
+	// Apply EIP-191 prefix
+	prefix := []byte("\x19Ethereum Signed Message:\n32")
+	prefixedData := append(prefix, innerHash...)
+	cantonSignedHash := crypto.Keccak256Hash(prefixedData)
+
+	// Convert signatures to Canton RawSignature array
+	signatures := make([]mcmsapi.RawSignature, len(sortedSignatures))
+	for i, sig := range sortedSignatures {
+		pubKey, recoverErr := sig.RecoverPublicKey(cantonSignedHash)
+		if recoverErr != nil {
+			return types.TransactionResult{}, fmt.Errorf("failed to recover public key for signature %d: %w", i, recoverErr)
+		}
+
+		// Convert public key to hex string
+		pubkeyHex := hex.EncodeToString(crypto.FromECDSAPub(pubKey))
+		signatures[i] = mcmsapi.RawSignature{
+			PublicKey: cantontypes.TEXT(pubkeyHex),
+			R:         cantontypes.TEXT(hex.EncodeToString(sig.R[:])),
+			S:         cantontypes.TEXT(hex.EncodeToString(sig.S[:])),
+		}
+	}
+
+	// Resolve root metadata (EVM-style: enrich minimal proposal metadata at SetRoot time).
+	fields, err := e.ToRootMetadata(metadata)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("resolve canton root metadata: %w", err)
+	}
+
+	preOpCount, err := safecast.Uint64ToInt64(metadata.StartingOpCount)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("preOpCount out of range: %w", err)
+	}
+	postOpCount, convErr := safecast.Uint64ToInt64(metadata.StartingOpCount + e.TxCount)
+	if convErr != nil {
+		return types.TransactionResult{}, fmt.Errorf("postOpCount out of range: %w", convErr)
+	}
+
+	rootMetadata := mcmsapi.RootMetadata{
+		ChainId:              cantontypes.INT64(fields.ChainId),
+		MultisigId:           cantontypes.TEXT(fields.MultisigId),
+		PreOpCount:           cantontypes.INT64(preOpCount),
+		PostOpCount:          cantontypes.INT64(postOpCount),
+		OverridePreviousRoot: cantontypes.BOOL(e.OverridePreviousRoot),
+	}
+
+	// Convert proof to Canton TEXT array
+	metadataProof := make([]cantontypes.TEXT, len(proof))
+	for i, p := range proof {
+		metadataProof[i] = cantontypes.TEXT(hex.EncodeToString(p[:]))
+	}
+
+	// validUntil is Unix seconds; Canton/Daml Timestamp expects time in seconds (binding serializes correctly)
+	validUntilTime := time.Unix(int64(validUntil), 0)
+	input := mcmscore.SetRoot{
+		TargetRole:    mcmsapi.Role(e.role.String()),
+		Submitter:     cantontypes.PARTY(e.submittingParty),
+		NewRoot:       cantontypes.TEXT(rootHex),
+		ValidUntil:    cantontypes.TIMESTAMP(validUntilTime),
+		Metadata:      rootMetadata,
+		MetadataProof: metadataProof,
+		Signatures:    signatures,
+	}
+
+	// Build exercise command using generated bindings
+	mcmsContract := mcmscore.MCMS{}
+	exerciseCmd := mcmsContract.SetRoot(mcmsContractID, input)
+
+	// Parse template ID
+	packageID, moduleName, entityName, err := ParseTemplateIDFromString(mcmsContract.GetTemplateID())
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to parse template ID: %w", err)
+	}
+
+	// Convert input to choice argument
+	choiceArgument := ledger.MapToValue(input)
+
+	commandID := uuid.NewString()
+	submitResp, err := e.client.SubmitAndWaitForTransaction(ctx, &apiv2.SubmitAndWaitForTransactionRequest{
+		Commands: &apiv2.Commands{
+			WorkflowId: "mcms-set-root",
+			CommandId:  commandID,
+			ActAs:      []string{e.submittingParty},
+			ReadAs:     e.mcmsParties,
+			Commands: []*apiv2.Command{{
+				Command: &apiv2.Command_Exercise{
+					Exercise: &apiv2.ExerciseCommand{
+						TemplateId: &apiv2.Identifier{
+							PackageId:  packageID,
+							ModuleName: moduleName,
+							EntityName: entityName,
+						},
+						ContractId:     mcmsContractID,
+						Choice:         exerciseCmd.Choice,
+						ChoiceArgument: choiceArgument,
+					},
+				},
+			}},
+		},
+	})
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to set root: %w", err)
+	}
+
+	// Extract NEW MCMS CID from Created event
+	newMCMSContractID := ""
+	newMCMSTemplateID := ""
+	transaction := submitResp.GetTransaction()
+	for _, ev := range transaction.GetEvents() {
+		if createdEv := ev.GetCreated(); createdEv != nil {
+			templateID := FormatTemplateID(createdEv.GetTemplateId())
+			normalized := NormalizeTemplateKey(templateID)
+			if normalized == MCMSTemplateKey {
+				newMCMSContractID = createdEv.GetContractId()
+				newMCMSTemplateID = templateID
+
+				break
+			}
+		}
+	}
+
+	if newMCMSContractID == "" {
+		return types.TransactionResult{}, fmt.Errorf("set-root tx had no Created MCMS event; refusing to continue with old CID=%s", mcmsContractID)
+	}
+
+	return types.TransactionResult{
+		Hash:        transactionResultHash(transaction, commandID),
+		ChainFamily: cselectors.FamilyCanton,
+		RawData:     rawDataFromMCMSTx(newMCMSContractID, newMCMSTemplateID, submitResp),
+	}, nil
+}

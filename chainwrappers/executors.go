@@ -4,10 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/samber/lo"
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -23,13 +25,11 @@ func BuildExecutors(
 	action types.TimelockAction,
 ) (map[types.ChainSelector]sdk.Executor, error) {
 	executors := map[types.ChainSelector]sdk.Executor{}
-
 	for chainSelector, metadata := range chainMetadata {
 		encoder, ok := encoders[chainSelector]
 		if !ok {
 			return nil, fmt.Errorf("missing encoder for chain selector %d", chainSelector)
 		}
-
 		executor, err := BuildExecutor(chains, chainSelector, encoder, action, metadata)
 		if err != nil {
 			return nil, err
@@ -166,6 +166,32 @@ func BuildExecutor(
 			Wallet:  signer,
 			Amount:  ton.DefaultSendAmount,
 		})
+
+	case chainsel.FamilyCanton:
+		ch, ok := chains.CantonChain(rawSelector)
+		if !ok || len(ch.Participants) == 0 {
+			return nil, fmt.Errorf("missing Canton chain participant for selector %d", rawSelector)
+		}
+		participant := ch.Participants[0]
+		mcmsParties := lo.Map(ch.Participants, func(p cantonsdk.Participant, _ int) string { return p.PartyID })
+		cantonEncoder, ok := encoder.(*cantonsdk.Encoder)
+		if !ok {
+			return nil, fmt.Errorf("invalid encoder type for selector %d: %T", chainSelector, encoder)
+		}
+		role, err := cantonsdk.CantonRoleFromAction(action)
+		if err != nil {
+			return nil, fmt.Errorf("error getting canton role from proposal: %w", err)
+		}
+		inspector := cantonsdk.NewInspector(participant.LedgerServices.State, mcmsParties, role)
+
+		return cantonsdk.NewExecutor(
+			cantonEncoder,
+			inspector,
+			participant.LedgerServices.Command,
+			participant.PartyID,
+			mcmsParties,
+			role,
+		)
 
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)

@@ -7,6 +7,7 @@ import (
 	sol "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -16,6 +17,7 @@ import (
 	mcmssdk "github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	aptosmocks "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
+	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
@@ -27,11 +29,12 @@ import (
 )
 
 var (
-	evmSelector   = mcmstypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
-	solSelector   = mcmstypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
-	aptosSelector = mcmstypes.ChainSelector(chainsel.APTOS_TESTNET.Selector)
-	suiSelector   = mcmstypes.ChainSelector(chainsel.SUI_TESTNET.Selector)
-	tonSelector   = mcmstypes.ChainSelector(chainsel.TON_TESTNET.Selector)
+	evmSelector    = mcmstypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
+	solSelector    = mcmstypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
+	aptosSelector  = mcmstypes.ChainSelector(chainsel.APTOS_TESTNET.Selector)
+	suiSelector    = mcmstypes.ChainSelector(chainsel.SUI_TESTNET.Selector)
+	tonSelector    = mcmstypes.ChainSelector(chainsel.TON_TESTNET.Selector)
+	cantonSelector = mcmstypes.ChainSelector(chainsel.CANTON_TESTNET.Selector)
 )
 
 func TestBuildExecutors(t *testing.T) {
@@ -65,6 +68,12 @@ func TestBuildExecutors(t *testing.T) {
 	tonExecOpts := ton.ExecutorOpts{Encoder: tonEncoder, Client: tonClient, Wallet: tonSigner, Amount: ton.DefaultSendAmount}
 	tonExecutor, err := ton.NewExecutor(tonExecOpts)
 	require.NoError(t, err)
+	cantonEncoder := cantonsdk.NewEncoder(cantonSelector, 0, false)
+	cantonChain := cantonsdk.Chain{Participants: []cantonsdk.Participant{{PartyID: "party::test"}}}
+	cantonInspector := cantonsdk.NewInspector(cantonChain.Participants[0].LedgerServices.State, []string{"party::test"}, cantonsdk.TimelockRoleProposer)
+	cantonExecutor, err := cantonsdk.NewExecutor(cantonEncoder, cantonInspector,
+		cantonChain.Participants[0].LedgerServices.Command, "party::test", []string{"party::test"}, cantonsdk.TimelockRoleProposer)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name          string
@@ -77,11 +86,12 @@ func TestBuildExecutors(t *testing.T) {
 		{
 			name: "success",
 			encoders: map[mcmstypes.ChainSelector]mcmssdk.Encoder{
-				evmSelector:   evmEncoder,
-				solSelector:   solEncoder,
-				aptosSelector: aptosEncoder,
-				suiSelector:   suiEncoder,
-				tonSelector:   tonEncoder,
+				evmSelector:    evmEncoder,
+				solSelector:    solEncoder,
+				aptosSelector:  aptosEncoder,
+				suiSelector:    suiEncoder,
+				tonSelector:    tonEncoder,
+				cantonSelector: cantonEncoder,
 			},
 			chainMetadata: map[mcmstypes.ChainSelector]mcmstypes.ChainMetadata{
 				mcmstypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): {
@@ -113,6 +123,10 @@ func TestBuildExecutors(t *testing.T) {
 					MCMAddress:      "0xton",
 					StartingOpCount: 0,
 				},
+				mcmstypes.ChainSelector(chainsel.CANTON_TESTNET.Selector): {
+					MCMAddress:      "0xcanton",
+					StartingOpCount: 0,
+				},
 			},
 			setup: func(accessor *mocks.ChainAccessor) {
 				accessor.EXPECT().EVMClient(mock.Anything).Return(nil, true)
@@ -125,13 +139,15 @@ func TestBuildExecutors(t *testing.T) {
 				accessor.EXPECT().SuiSigner(mock.Anything).Return(nil, true)
 				accessor.EXPECT().TonClient(mock.Anything).Return(tonClient, true)
 				accessor.EXPECT().TonSigner(mock.Anything).Return(tonSigner, true)
+				accessor.EXPECT().CantonChain(mock.Anything).Return(cantonChain, true)
 			},
 			want: map[mcmstypes.ChainSelector]mcmssdk.Executor{
-				evmSelector:   evmExecutor,
-				solSelector:   solExecutor,
-				aptosSelector: aptosExecutor,
-				suiSelector:   suiExecutor,
-				tonSelector:   tonExecutor,
+				evmSelector:    evmExecutor,
+				solSelector:    solExecutor,
+				aptosSelector:  aptosExecutor,
+				suiSelector:    suiExecutor,
+				tonSelector:    tonExecutor,
+				cantonSelector: cantonExecutor,
 			},
 		},
 		{
@@ -166,7 +182,8 @@ func TestBuildExecutors(t *testing.T) {
 			got, err := BuildExecutors(chainAccessor, tt.chainMetadata, tt.encoders, mcmstypes.TimelockActionSchedule)
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(tt.want, got))
+				require.Empty(t, cmp.Diff(tt.want, got,
+					cmpopts.IgnoreUnexported(cantonsdk.Inspector{}, cantonsdk.Executor{})))
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}
