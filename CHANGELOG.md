@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.47.1](https://github.com/smartcontractkit/mcms/compare/v0.47.0...v0.47.1) (2026-06-09)
+
+
+### Bug Fixes
+
+* **canton:** register split MCMS api/core encoders in proposal decoder ([#782](https://github.com/smartcontractkit/mcms/issues/782)) ([31bac06](https://github.com/smartcontractkit/mcms/commit/31bac0663283b4dd790f3665ea9d7ec3b8d445ce))
+
 ## [0.47.0](https://github.com/smartcontractkit/mcms/compare/v0.46.0...v0.47.0) (2026-06-08)
 
 
