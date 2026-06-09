@@ -1,5 +1,13 @@
 # @smartcontractkit/mcms
 
+## [0.47.0](https://github.com/smartcontractkit/mcms/compare/v0.46.0...v0.47.0) (2026-06-08)
+
+
+### Features
+
+* Canton MCMS Proposal Decoder ([f04dab0](https://github.com/smartcontractkit/mcms/commit/f04dab03e98eac79861b25e2361c2f67c4bc1023))
+* **canton:** add proposal decoder ([#778](https://github.com/smartcontractkit/mcms/issues/778)) ([f04dab0](https://github.com/smartcontractkit/mcms/commit/f04dab03e98eac79861b25e2361c2f67c4bc1023))
+
 ## [0.46.0](https://github.com/smartcontractkit/mcms/compare/v0.45.1...v0.46.0) (2026-06-05)
 
 
