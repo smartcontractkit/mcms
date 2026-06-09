@@ -4,12 +4,15 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/ccip/core"
 	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/ccip/factory"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 
 	"github.com/smartcontractkit/mcms/types"
@@ -188,4 +191,66 @@ func TestRegistry_NoDrift(t *testing.T) {
 	for name, enc := range encoderByContract {
 		require.True(t, registered[enc], "encoderByContract[%q] is not in mcmsEncoders", name)
 	}
+}
+
+// TestRegistry_SplitMCMSEncoders guards the chainlink-canton bindings split where MCMS core
+// choices (SetRoot, ExecuteOp) and api choices (ScheduleBatch, …) live on separate encoders.
+func TestRegistry_SplitMCMSEncoders(t *testing.T) {
+	t.Parallel()
+
+	apiEncoder := reflect.TypeFor[mcmsapi.MCMSEncoder]()
+	coreEncoder := reflect.TypeFor[mcmscore.MCMSEncoder]()
+
+	require.Equal(t, apiEncoder, encoderByContract["MCMS"])
+	require.Contains(t, mcmsEncoders, coreEncoder)
+	require.Contains(t, mcmsEncoders, apiEncoder)
+
+	tests := []struct {
+		name       string
+		choice     string
+		wantPkgSeg string
+	}{
+		{
+			name:       "timelock schedule batch",
+			choice:     "ScheduleBatch",
+			wantPkgSeg: "/mcms/api",
+		},
+		{
+			name:       "set root",
+			choice:     "SetRoot",
+			wantPkgSeg: "/mcms/core",
+		},
+		{
+			name:       "execute op",
+			choice:     "ExecuteOp",
+			wantPkgSeg: "/mcms/core",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			candidates := candidateArgTypes("MCMS", tt.choice)
+			require.NotEmpty(t, candidates, "expected candidates for MCMS::%s", tt.choice)
+
+			found := false
+			for _, c := range candidates {
+				if strings.Contains(c.PkgPath(), tt.wantPkgSeg) {
+					found = true
+					break
+				}
+			}
+			require.True(t, found, "expected a %s candidate from package %s, got %v",
+				tt.choice, tt.wantPkgSeg, candidateTypeNames(candidates))
+		})
+	}
+}
+
+func candidateTypeNames(types []reflect.Type) []string {
+	names := make([]string, len(types))
+	for i, t := range types {
+		names[i] = t.String()
+	}
+	return names
 }
