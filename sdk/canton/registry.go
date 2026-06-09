@@ -16,7 +16,8 @@ import (
 	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/ccip/sender"
 	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/coin"
 	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/link"
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
 )
 
 // hexUnmarshaler / hexMarshaler are implemented by every generated Canton choice-argument struct.
@@ -42,7 +43,8 @@ var mcmsEncoders = []reflect.Type{
 	reflect.TypeFor[factory.MCMSEncoder](),              // CCIPFactory (deploys)
 	reflect.TypeFor[coin.MCMSEncoder](),                 // CoinRegistry (CantonCoinRegistry)
 	reflect.TypeFor[link.MCMSEncoder](),                 // LinkRegistry
-	reflect.TypeFor[mcms.MCMSEncoder](),                 // MCMS (CantonMCMS)
+	reflect.TypeFor[mcmscore.MCMSEncoder](),             // MCMS core choices (SetRoot, ExecuteOp, …)
+	reflect.TypeFor[mcmsapi.MCMSEncoder](),              // MCMS api choices (ScheduleBatch, …)
 }
 
 // encoderByContract maps a Daml template entity name to the MCMSEncoder that declares its choices.
@@ -66,7 +68,7 @@ var encoderByContract = map[string]reflect.Type{
 	"TokenAdminRegistry":    reflect.TypeFor[core.MCMSEncoder](),
 	"CoinRegistry":          reflect.TypeFor[coin.MCMSEncoder](),
 	"LinkRegistry":          reflect.TypeFor[link.MCMSEncoder](),
-	"MCMS":                  reflect.TypeFor[mcms.MCMSEncoder](),
+	"MCMS":                  reflect.TypeFor[mcmsapi.MCMSEncoder](),
 }
 
 // candidateArgTypes returns candidate argument struct types for the given choice, gathered from
