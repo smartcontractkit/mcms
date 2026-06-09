@@ -247,10 +247,11 @@ func TestRegistry_SplitMCMSEncoders(t *testing.T) {
 	}
 }
 
-func candidateTypeNames(types []reflect.Type) []string {
-	names := make([]string, len(types))
-	for i, t := range types {
+func candidateTypeNames(candidateTypes []reflect.Type) []string {
+	names := make([]string, len(candidateTypes))
+	for i, t := range candidateTypes {
 		names[i] = t.String()
 	}
+
 	return names
 }
