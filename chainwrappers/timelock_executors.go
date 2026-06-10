@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/samber/lo"
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -142,7 +141,7 @@ func BuildTimelockExecutor(
 			return nil, fmt.Errorf("missing Canton chain participant for selector %d", rawSelector)
 		}
 		participant := ch.Participants[0]
-		mcmsParties := lo.Map(ch.Participants, func(p cantonsdk.Participant, _ int) string { return p.PartyID })
+		mcmsParties := cantonsdk.MCMSPartiesForChain(ch)
 
 		return cantonsdk.NewTimelockExecutor(
 			participant.LedgerServices.Command,
