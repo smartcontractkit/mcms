@@ -710,8 +710,8 @@ github.com/smartcontractkit/chainlink-protos/node-platform v0.0.0-20260211172625
 github.com/smartcontractkit/chainlink-protos/node-platform v0.0.0-20260211172625-dff40e83b3c9/go.mod h1:dkR2uYg9XYJuT1JASkPzWE51jjFkVb86P7a/yXe5/GM=
 github.com/smartcontractkit/chainlink-protos/op-catalog v0.1.0 h1:hGEJFD2X3oNIPXQbtIPxCJyg5CcKglRCYBmESS+gmeQ=
 github.com/smartcontractkit/chainlink-protos/op-catalog v0.1.0/go.mod h1:PjZD54vr6rIKEKQj6HNA4hllvYI/QpT+Zefj3tqkFAs=
-github.com/smartcontractkit/chainlink-sui v0.0.0-20260609161114-b771e8901720 h1:eiyOUn7If5QDoO3JnkEd3Do7WarB83iFj0h2ZEnYdlU=
-github.com/smartcontractkit/chainlink-sui v0.0.0-20260609161114-b771e8901720/go.mod h1:Y2kTVIsAUjqqSNGiEQomsaVH5XsBJzxov4j07MaDJOw=
+github.com/smartcontractkit/chainlink-sui v0.0.0-20260610194843-349ea43d69ce h1:Xglr7eM24+Y9eMOhgK//QjXLDjPuT1oUAtdvsGqY8P0=
+github.com/smartcontractkit/chainlink-sui v0.0.0-20260610194843-349ea43d69ce/go.mod h1:Y2kTVIsAUjqqSNGiEQomsaVH5XsBJzxov4j07MaDJOw=
 github.com/smartcontractkit/chainlink-testing-framework/framework v0.16.4 h1:8M+2pA0qx9rXaxmpKouUHj983vQCGzztHkG0XjE5Eew=
 github.com/smartcontractkit/chainlink-testing-framework/framework v0.16.4/go.mod h1:nyOjn4ADJGqRMe3+4ZXSV+J/7nWb1H2Vx8Qk57eLRYA=
 github.com/smartcontractkit/chainlink-testing-framework/seth v1.51.5 h1:RwZXxdIAOyjp6cwc9Quxgr38k8r7ACz+Lxh9o/A6oH0=
