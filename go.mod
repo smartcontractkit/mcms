@@ -25,14 +25,14 @@ require (
 	github.com/samber/lo v1.53.0
 	github.com/smartcontractkit/chain-selectors v1.0.101
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20260428085939-5c70de12dbfc
-	github.com/smartcontractkit/chainlink-canton v0.0.0-20260609155219-dcbe77d4a320
+	github.com/smartcontractkit/chainlink-canton v0.0.0-20260610231852-15f1d20f2728
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260527160341-aa3adc0abf67
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.16.5
 	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514223130-48bc90aca745
 	github.com/smartcontractkit/freeport v0.1.3-0.20250828155247-add56fa28aad
-	github.com/smartcontractkit/go-daml v0.0.0-20260604143752-c6f6567940ba
+	github.com/smartcontractkit/go-daml v0.0.0-20260610225315-f38fea9a45b0
 	github.com/spf13/cast v1.10.0
 	github.com/stellar/go-stellar-sdk v0.5.0
 	github.com/stretchr/testify v1.11.1

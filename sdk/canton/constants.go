@@ -19,4 +19,6 @@ const (
 	mcmsInstanceIDCCIP    = "mcms-ccip"
 	mcmsInstanceIDCCV     = "mcms-ccv"
 	mcmsInstanceIDDefault = "mcms"
+
+	instanceIDFieldLabel = "instanceId"
 )

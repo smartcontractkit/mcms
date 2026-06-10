@@ -88,7 +88,7 @@ func TestDecoder_Deploy(t *testing.T) {
 	dec, err := NewDecoder().Decode(tx, "")
 	require.NoError(t, err)
 	require.Equal(t, "CCIPFactory::DeployRMNRemote", dec.MethodName())
-	require.Equal(t, []string{"instanceId", "rmnOwner", "ccipOwner", "customObservers", "cursedSubjects"}, dec.Keys())
+	require.Equal(t, []string{instanceIDFieldLabel, "rmnOwner", "ccipOwner", "customObservers", "cursedSubjects"}, dec.Keys())
 	// toDisplayArg strips Daml type aliases to plain Go primitives for the renderer.
 	require.Equal(t, "rmn-remote-1", dec.Args()[0])
 	require.Equal(t, "alice::abc123", dec.Args()[1])
@@ -254,4 +254,51 @@ func candidateTypeNames(candidateTypes []reflect.Type) []string {
 	}
 
 	return names
+}
+
+// TestDecoder_DeployExecutor_FinalityVariant decodes DeployExecutorParams
+// which has a core.FinalityConfig Daml variant (uint8 tag + payload)
+func TestDecoder_DeployExecutor_FinalityVariant(t *testing.T) {
+	t.Parallel()
+
+	const proposalHex = "0e6578656375746f722d77776268714f636369704f776e65723a3a3132323065333832663465353762303831356536626537333730303665333831653662376465343438653036626430333365636536646634393830313738373966353531000000000000000a0000"
+	raw, err := hex.DecodeString(proposalHex)
+	require.NoError(t, err)
+
+	tx := types.Transaction{
+		To:   "0x2e318f4339676a2fb01d8761982ba5dbe9b6b7578e83f34fdddf20f8c5a17509",
+		Data: raw,
+		AdditionalFields: additionalFields(t, AdditionalFields{
+			TargetInstanceAddress: "factory@ccipOwner::1220e382f4e57b0815e6be737006e381e6b7de448e06bd033ece6df498017879f551",
+			FunctionName:          "DeployExecutor",
+			TargetTemplateID:      "#pkg:CCIP.Factory:CCIPFactory",
+		}),
+	}
+
+	dec, err := NewDecoder().Decode(tx, "")
+	require.NoError(t, err)
+	require.Equal(t, "CCIPFactory::DeployExecutor", dec.MethodName())
+	require.Equal(t, []string{instanceIDFieldLabel, "owner", "maxCCVsPerMsg", "allowedFinalityConfig", "ccvAllowlistEnabled"}, dec.Keys())
+	require.Equal(t, "executor-wwbhq", dec.Args()[0])
+	require.Equal(t, "ccipOwner::1220e382f4e57b0815e6be737006e381e6b7de448e06bd033ece6df498017879f551", dec.Args()[1])
+	require.Equal(t, int64(10), dec.Args()[2])
+
+	finality, ok := dec.Args()[3].(map[string]any)
+	require.True(t, ok, "allowedFinalityConfig should render as a map, got %T", dec.Args()[3])
+
+	// Proposal has `allowedFinalityConfig: { BlockDepth: null, WaitForFinality: {}, WaitForSafe: null }`
+	require.NotNil(t, finality["WaitForFinality"])
+	require.Nil(t, finality["WaitForSafe"])
+	require.Nil(t, finality["BlockDepth"])
+	require.Equal(t, false, dec.Args()[4])
+
+	// The variant must round-trip (decode → re-encode reproduces the proposal bytes), so the
+	// decoder selects DeployExecutorParams via the strict path rather than the single-decode fallback.
+	decoded, err := decodeOperationData("CCIPFactory", "DeployExecutor", raw)
+	require.NoError(t, err)
+	params, ok := decoded.(*factory.DeployExecutorParams)
+	require.True(t, ok, "expected *factory.DeployExecutorParams, got %T", decoded)
+	reEncoded, err := params.MarshalHex()
+	require.NoError(t, err)
+	require.Equal(t, string(raw), reEncoded)
 }
