@@ -12,7 +12,10 @@ type LedgerServices struct {
 
 // Participant is a Canton ledger participant used by MCMS.
 type Participant struct {
-	PartyID        string
+	PartyID string
+	// ReadAsPartyIDs lists parties this user may read as (CanReadAs). MCMS contracts are often
+	// visible only under owner parties (for example ccipOwner), not the operator ActAs party alone.
+	ReadAsPartyIDs []string
 	LedgerServices LedgerServices
 }
 
