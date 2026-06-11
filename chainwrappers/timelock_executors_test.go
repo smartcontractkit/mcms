@@ -38,7 +38,7 @@ func TestBuildTimelockExecutors(t *testing.T) {
 	aptosClient := aptosmocks.NewAptosRpcClient(t)
 	aptosSigner := aptosmocks.NewTransactionSigner(t)
 	aptosExecutor := aptos.NewTimelockExecutor(aptosClient, aptosSigner)
-	suiClient := suimocks.NewISuiAPI(t)
+	suiClient := suimocks.NewBindingsClient(t)
 	suiSigner := suibindmocks.NewSuiSigner(t)
 	suiExecutor, err := sui.NewTimelockExecutor(suiClient, suiSigner, nil, "mcms-pkg-id", "0xregistry456", "0xaccount123")
 	require.NoError(t, err)

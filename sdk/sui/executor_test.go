@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"github.com/block-vision/sui-go-sdk/models"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +14,7 @@ import (
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	mockbindutils "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
 	mockmcms "github.com/smartcontractkit/mcms/sdk/sui/mocks/mcms"
@@ -24,7 +24,7 @@ import (
 
 // executorTestExecutingCallbackParams is a mock implementation of ExecutingCallbackAppender for testing
 type executorTestExecutingCallbackParams struct {
-	client        sui.ISuiAPI
+	client        cslclient.BindingsClient
 	mcms          *mockmcms.IMcms
 	mcmsPackageID string
 	registryObj   string
@@ -54,7 +54,7 @@ var timelockObj = "0xtimelock"
 func TestNewExecutor(t *testing.T) {
 	t.Parallel()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	encoder := &Encoder{
@@ -295,7 +295,7 @@ func TestExecutor_ExecuteOperation_InvalidAdditionalFields(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 
@@ -337,7 +337,7 @@ func TestExecutor_ExecuteOperation_Success_ScheduleBatch(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 	mockEncoder := mockmcms.NewMcmsEncoder(t)
@@ -357,7 +357,7 @@ func TestExecutor_ExecuteOperation_Success_ScheduleBatch(t *testing.T) {
 			TxCount:       5,
 		},
 		// Mock ExecutePTB function directly in the struct
-		ExecutePTB: func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
+		ExecutePTB: func(ctx context.Context, opts *bind.CallOpts, client cslclient.BindingsClient, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
 			return &models.SuiTransactionBlockResponse{
 				Digest: "9WzSXdwbky8tNbH7juvyaui4QzMUYEjdCEKMrMgLhXHT",
 				Transaction: models.SuiTransactionBlock{
@@ -422,7 +422,7 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 	mockEncoder := mockmcms.NewMcmsEncoder(t)
@@ -451,7 +451,7 @@ func TestExecutor_ExecuteOperation_Success_Bypass(t *testing.T) {
 			TxCount:       5,
 		},
 		// Mock ExecutePTB function directly in the struct
-		ExecutePTB: func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
+		ExecutePTB: func(ctx context.Context, opts *bind.CallOpts, client cslclient.BindingsClient, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
 			return &models.SuiTransactionBlockResponse{
 				Digest: "0xbypass_success_digest",
 				Transaction: models.SuiTransactionBlock{
@@ -537,7 +537,7 @@ func TestExecutor_ExecuteOperation_Success_Cancel(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 	mockEncoder := mockmcms.NewMcmsEncoder(t)
@@ -557,7 +557,7 @@ func TestExecutor_ExecuteOperation_Success_Cancel(t *testing.T) {
 			TxCount:       5,
 		},
 		// Mock ExecutePTB function directly in the struct
-		ExecutePTB: func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
+		ExecutePTB: func(ctx context.Context, opts *bind.CallOpts, client cslclient.BindingsClient, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
 			return &models.SuiTransactionBlockResponse{
 				Digest: "0xcancel_success_digest",
 				Transaction: models.SuiTransactionBlock{
@@ -634,7 +634,7 @@ func TestExecutor_ExecuteOperation_Cancel_InvalidOperationID(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mockmcmsContract := mockmcms.NewIMcms(t)
 
@@ -679,7 +679,7 @@ func TestExecutor_ExecuteOperation_Cancel_InvalidOperationID(t *testing.T) {
 	mockEncoder := mockmcms.NewMcmsEncoder(t)
 	mockBound := mockbindutils.NewIBoundContract(t)
 
-	executor.ExecutePTB = func(ctx context.Context, opts *bind.CallOpts, client sui.ISuiAPI, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
+	executor.ExecutePTB = func(ctx context.Context, opts *bind.CallOpts, client cslclient.BindingsClient, ptb *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
 		return &models.SuiTransactionBlockResponse{
 			Digest: "0xcancel_invalid_op_digest",
 		}, nil
@@ -725,7 +725,7 @@ func newBypassExecutor(
 ) *Executor {
 	t.Helper()
 	mockSigner := mockbindutils.NewSuiSigner(t)
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 
 	return &Executor{
 		signer:        mockSigner,
@@ -740,7 +740,7 @@ func newBypassExecutor(
 			ChainSelector: types.ChainSelector(chainsel.SUI_TESTNET.Selector),
 			TxCount:       5,
 		},
-		ExecutePTB: func(_ context.Context, _ *bind.CallOpts, _ sui.ISuiAPI, _ *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
+		ExecutePTB: func(_ context.Context, _ *bind.CallOpts, _ cslclient.BindingsClient, _ *transaction.Transaction) (*models.SuiTransactionBlockResponse, error) {
 			return &models.SuiTransactionBlockResponse{Digest: responseDigest}, nil
 		},
 		executingCallbackParams: capturer,
@@ -819,7 +819,7 @@ func TestExecutor_Bypass_PerCallLatestPackageID(t *testing.T) {
 		"internal_latest_package_ids": ["` + latest1 + `", "` + latest2 + `"]
 	}`
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockBound := mockbindutils.NewIBoundContract(t)
 	mockEnc := mockmcms.NewMcmsEncoder(t)
 	mockedMcms := mockmcms.NewIMcms(t)
@@ -861,7 +861,7 @@ func TestExecutor_Bypass_BatchLevelLatestPackageID(t *testing.T) {
 		"latest_package_id": "` + latestBatch + `"
 	}`
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockBound := mockbindutils.NewIBoundContract(t)
 	mockEnc := mockmcms.NewMcmsEncoder(t)
 	mockedMcms := mockmcms.NewIMcms(t)
@@ -899,7 +899,7 @@ func TestExecutor_Bypass_NoLatestPackageID(t *testing.T) {
 		"internal_type_args": [[], []]
 	}`
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockBound := mockbindutils.NewIBoundContract(t)
 	mockEnc := mockmcms.NewMcmsEncoder(t)
 	mockedMcms := mockmcms.NewIMcms(t)
@@ -934,7 +934,7 @@ func TestExecutor_Bypass_InvalidInternalLatestPackageID(t *testing.T) {
 		"internal_latest_package_ids": ["not-a-hex-address", ""]
 	}`
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockBound := mockbindutils.NewIBoundContract(t)
 	mockEnc := mockmcms.NewMcmsEncoder(t)
 	mockedMcms := mockmcms.NewIMcms(t)

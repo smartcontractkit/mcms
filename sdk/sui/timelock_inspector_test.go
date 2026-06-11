@@ -14,7 +14,7 @@ import (
 
 func TestNewTimelockInspector(t *testing.T) {
 	t.Parallel()
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mcmsPackageID := "0x123456789abcdef"
 
@@ -31,7 +31,7 @@ func TestTimelockInspector_GetProposers(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
@@ -47,7 +47,7 @@ func TestTimelockInspector_GetExecutors(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
@@ -63,7 +63,7 @@ func TestTimelockInspector_GetBypassers(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
@@ -79,7 +79,7 @@ func TestTimelockInspector_GetCancellers(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	inspector, err := NewTimelockInspector(mockClient, mockSigner, "0x123456789abcdef")
@@ -95,7 +95,7 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Create a mock MCMS contract
@@ -129,7 +129,7 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Create a mock MCMS contract
@@ -165,7 +165,7 @@ func TestTimelockInspector_IsOperationPending(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Create a mock MCMS contract
@@ -201,7 +201,7 @@ func TestTimelockInspector_IsOperationReady(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Create a mock MCMS contract
@@ -238,7 +238,7 @@ func TestTimelockInspector_IsOperationDone(t *testing.T) {
 	t.Parallel()
 	ctx := t.Context()
 
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 
 	// Create a mock MCMS contract

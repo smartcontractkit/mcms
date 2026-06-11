@@ -22,7 +22,7 @@ import (
 
 func TestNewInspector(t *testing.T) {
 	t.Parallel()
-	mockClient := mocksui.NewISuiAPI(t)
+	mockClient := mocksui.NewBindingsClient(t)
 	mockSigner := mockbindutils.NewSuiSigner(t)
 	mcmsPackageID := "0x123456789abcdef"
 	role := TimelockRoleProposer
@@ -174,7 +174,7 @@ func TestInspector_GetConfig(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mocksui.NewISuiAPI(t)
+			mockClient := mocksui.NewBindingsClient(t)
 			mockSigner := mockbindutils.NewSuiSigner(t)
 			mockmcms := mockmodulemcms.NewIMcms(t)
 
@@ -258,7 +258,7 @@ func TestInspector_GetOpCount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mocksui.NewISuiAPI(t)
+			mockClient := mocksui.NewBindingsClient(t)
 			mockSigner := mockbindutils.NewSuiSigner(t)
 			mockmcms := mockmodulemcms.NewIMcms(t)
 
@@ -405,7 +405,7 @@ func TestInspector_GetRoot(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mocksui.NewISuiAPI(t)
+			mockClient := mocksui.NewBindingsClient(t)
 			mockSigner := mockbindutils.NewSuiSigner(t)
 			mockmcms := mockmodulemcms.NewIMcms(t)
 
@@ -497,7 +497,7 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			mockClient := mocksui.NewISuiAPI(t)
+			mockClient := mocksui.NewBindingsClient(t)
 			mockSigner := mockbindutils.NewSuiSigner(t)
 			mockmcms := mockmodulemcms.NewIMcms(t)
 
