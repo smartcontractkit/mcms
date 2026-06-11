@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.48.0](https://github.com/smartcontractkit/mcms/compare/v0.47.1...v0.48.0) (2026-06-11)
+
+
+### Features
+
+* Additional readAs fields  ([#784](https://github.com/smartcontractkit/mcms/issues/784)) ([856384f](https://github.com/smartcontractkit/mcms/commit/856384f2ce7062a0069e4153a33875dd39050532))
+
 ## [0.47.1](https://github.com/smartcontractkit/mcms/compare/v0.47.0...v0.47.1) (2026-06-09)
 
 
