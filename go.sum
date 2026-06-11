@@ -735,10 +735,10 @@ github.com/spf13/cast v1.10.0/go.mod h1:jNfB8QC9IA6ZuY2ZjDp0KtFO2LZZlg4S/7bzP6qq
 github.com/spf13/pflag v1.0.10 h1:4EBh2KAYBwaONj6b2Ye1GiHfwjqyROoF4RwYO+vPwFk=
 github.com/spf13/pflag v1.0.10/go.mod h1:McXfInJRrz4CZXVZOBLb0bTZqETkiAhM9Iw0y3An2Bg=
 github.com/spkg/bom v0.0.0-20160624110644-59b7046e48ad/go.mod h1:qLr4V1qq6nMqFKkMo8ZTx3f+BZEkzsRUY10Xsm2mwU0=
-github.com/stellar/go-stellar-sdk v0.5.0 h1:xpOO+ZTyvGz54wTm7pwl2Gf1e6lZl0ExrJ/tKb+Roj4=
-github.com/stellar/go-stellar-sdk v0.5.0/go.mod h1:tLKAQPxa2I5UvGMabBbUXcY3fmgYnfDudrMeK7CDX4w=
-github.com/stellar/go-xdr v0.0.0-20260312225820-cc2b0611aabf h1:GY1RVbX3Hg7poPXEf6yojjP0hyypvgUgZmCqQU9D0xg=
-github.com/stellar/go-xdr v0.0.0-20260312225820-cc2b0611aabf/go.mod h1:If+U9Z1W5xU97VrOgJandQT+2dN7/iOpkCrxBJEyF80=
+github.com/stellar/go-stellar-sdk v0.6.0 h1:NM2oqZJQup0QxnJMq6C8s4iIIhU6rHFX0rlsF3wh/Ho=
+github.com/stellar/go-stellar-sdk v0.6.0/go.mod h1:IkcqcrE9UQi7n/1y+MxKB+7qzdjG1T2kGOD7Ss8dqjw=
+github.com/stellar/go-xdr v0.0.0-20260529210834-0bf8f4956364 h1:gOKrfuWdZ92LFlv0TAwgZ7OsWKeBsOMDlGLyFgduI1w=
+github.com/stellar/go-xdr v0.0.0-20260529210834-0bf8f4956364/go.mod h1:If+U9Z1W5xU97VrOgJandQT+2dN7/iOpkCrxBJEyF80=
 github.com/stephenlacy/go-ethereum-hdwallet v0.0.0-20230913225845-a4fa94429863 h1:ba4VRWSkRzgdP5hB5OxexIzBXZbSwgcw8bEu06ivGQI=
 github.com/stephenlacy/go-ethereum-hdwallet v0.0.0-20230913225845-a4fa94429863/go.mod h1:oPTjPNrRucLv9mU27iNPj6n0CWWcNFhoXFOLVGJwHCA=
 github.com/streamingfast/logging v0.0.0-20230608130331-f22c91403091 h1:RN5mrigyirb8anBEtdjtHFIufXdacyTi6i4KBfeNXeo=
