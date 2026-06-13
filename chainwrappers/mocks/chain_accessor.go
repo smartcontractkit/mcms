@@ -6,21 +6,14 @@ import (
 	aptos "github.com/aptos-labs/aptos-go-sdk"
 	bind "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
 
+	solana "github.com/gagliardetto/solana-go"
+	rpc "github.com/gagliardetto/solana-go/rpc"
+	client "github.com/smartcontractkit/chainlink-sui/relayer/client"
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	evm "github.com/smartcontractkit/mcms/sdk/evm"
-
+	sui "github.com/smartcontractkit/mcms/sdk/sui"
 	mock "github.com/stretchr/testify/mock"
-
-	rpc "github.com/gagliardetto/solana-go/rpc"
-
-	sdksui "github.com/smartcontractkit/mcms/sdk/sui"
-
-	solana "github.com/gagliardetto/solana-go"
-
-	sui "github.com/block-vision/sui-go-sdk/sui"
-
 	ton "github.com/xssnick/tonutils-go/ton"
-
 	wallet "github.com/xssnick/tonutils-go/ton/wallet"
 )
 
@@ -433,23 +426,23 @@ func (_c *ChainAccessor_SolanaSigner_Call) RunAndReturn(run func(uint64) (*solan
 }
 
 // SuiClient provides a mock function with given fields: selector
-func (_m *ChainAccessor) SuiClient(selector uint64) (sui.ISuiAPI, bool) {
+func (_m *ChainAccessor) SuiClient(selector uint64) (client.BindingsClient, bool) {
 	ret := _m.Called(selector)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SuiClient")
 	}
 
-	var r0 sui.ISuiAPI
+	var r0 client.BindingsClient
 	var r1 bool
-	if rf, ok := ret.Get(0).(func(uint64) (sui.ISuiAPI, bool)); ok {
+	if rf, ok := ret.Get(0).(func(uint64) (client.BindingsClient, bool)); ok {
 		return rf(selector)
 	}
-	if rf, ok := ret.Get(0).(func(uint64) sui.ISuiAPI); ok {
+	if rf, ok := ret.Get(0).(func(uint64) client.BindingsClient); ok {
 		r0 = rf(selector)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sui.ISuiAPI)
+			r0 = ret.Get(0).(client.BindingsClient)
 		}
 	}
 
@@ -480,34 +473,34 @@ func (_c *ChainAccessor_SuiClient_Call) Run(run func(selector uint64)) *ChainAcc
 	return _c
 }
 
-func (_c *ChainAccessor_SuiClient_Call) Return(_a0 sui.ISuiAPI, _a1 bool) *ChainAccessor_SuiClient_Call {
+func (_c *ChainAccessor_SuiClient_Call) Return(_a0 client.BindingsClient, _a1 bool) *ChainAccessor_SuiClient_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ChainAccessor_SuiClient_Call) RunAndReturn(run func(uint64) (sui.ISuiAPI, bool)) *ChainAccessor_SuiClient_Call {
+func (_c *ChainAccessor_SuiClient_Call) RunAndReturn(run func(uint64) (client.BindingsClient, bool)) *ChainAccessor_SuiClient_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // SuiSigner provides a mock function with given fields: selector
-func (_m *ChainAccessor) SuiSigner(selector uint64) (sdksui.SuiSigner, bool) {
+func (_m *ChainAccessor) SuiSigner(selector uint64) (sui.SuiSigner, bool) {
 	ret := _m.Called(selector)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SuiSigner")
 	}
 
-	var r0 sdksui.SuiSigner
+	var r0 sui.SuiSigner
 	var r1 bool
-	if rf, ok := ret.Get(0).(func(uint64) (sdksui.SuiSigner, bool)); ok {
+	if rf, ok := ret.Get(0).(func(uint64) (sui.SuiSigner, bool)); ok {
 		return rf(selector)
 	}
-	if rf, ok := ret.Get(0).(func(uint64) sdksui.SuiSigner); ok {
+	if rf, ok := ret.Get(0).(func(uint64) sui.SuiSigner); ok {
 		r0 = rf(selector)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(sdksui.SuiSigner)
+			r0 = ret.Get(0).(sui.SuiSigner)
 		}
 	}
 
@@ -538,12 +531,12 @@ func (_c *ChainAccessor_SuiSigner_Call) Run(run func(selector uint64)) *ChainAcc
 	return _c
 }
 
-func (_c *ChainAccessor_SuiSigner_Call) Return(_a0 sdksui.SuiSigner, _a1 bool) *ChainAccessor_SuiSigner_Call {
+func (_c *ChainAccessor_SuiSigner_Call) Return(_a0 sui.SuiSigner, _a1 bool) *ChainAccessor_SuiSigner_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ChainAccessor_SuiSigner_Call) RunAndReturn(run func(uint64) (sdksui.SuiSigner, bool)) *ChainAccessor_SuiSigner_Call {
+func (_c *ChainAccessor_SuiSigner_Call) RunAndReturn(run func(uint64) (sui.SuiSigner, bool)) *ChainAccessor_SuiSigner_Call {
 	_c.Call.Return(run)
 	return _c
 }

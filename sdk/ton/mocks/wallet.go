@@ -5,12 +5,9 @@ package mock_ton
 import (
 	context "context"
 
-	address "github.com/xssnick/tonutils-go/address"
-
 	mock "github.com/stretchr/testify/mock"
-
+	address "github.com/xssnick/tonutils-go/address"
 	tlb "github.com/xssnick/tonutils-go/tlb"
-
 	ton "github.com/xssnick/tonutils-go/ton"
 )
 

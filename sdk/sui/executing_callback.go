@@ -7,13 +7,13 @@ import (
 	"strings"
 
 	"github.com/block-vision/sui-go-sdk/models"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/block-vision/sui-go-sdk/transaction"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	module_mcms_deployer "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms_deployer"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 )
 
 const (
@@ -29,7 +29,7 @@ type ExecutingCallbackAppender interface {
 }
 
 type ExecutingCallbackParams struct {
-	client                         sui.ISuiAPI
+	client                         cslclient.BindingsClient
 	mcms                           modulemcms.IMcms
 	mcmsPackageID                  string
 	entryPointEncoder              EntrypointArgEncoder // Encoder for the entrypoint function. Users can provide their own implementation
@@ -37,10 +37,10 @@ type ExecutingCallbackParams struct {
 	accountObj                     string
 	extractExecutingCallbackParams func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) (*transaction.Argument, error)
 	closeExecutingCallbackParams   func(mcmsPackageID string, ptb *transaction.Transaction, vectorExecutingCallback *transaction.Argument) error
-	createDeployerFunc             func(mcmsPackageID string, client sui.ISuiAPI) (module_mcms_deployer.IMcmsDeployer, error)
+	createDeployerFunc             func(mcmsPackageID string, client cslclient.BindingsClient) (module_mcms_deployer.IMcmsDeployer, error)
 }
 
-func NewExecutingCallbackParams(client sui.ISuiAPI, mcms modulemcms.IMcms, mcmsPackageID string, entryPointEncoder EntrypointArgEncoder, registryObj string, accountObj string) *ExecutingCallbackParams {
+func NewExecutingCallbackParams(client cslclient.BindingsClient, mcms modulemcms.IMcms, mcmsPackageID string, entryPointEncoder EntrypointArgEncoder, registryObj string, accountObj string) *ExecutingCallbackParams {
 	return &ExecutingCallbackParams{
 		client:                         client,
 		mcms:                           mcms,

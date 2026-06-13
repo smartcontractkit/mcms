@@ -5,12 +5,12 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -29,7 +29,7 @@ var _ sdk.Inspector = &Inspector{}
 
 type Inspector struct {
 	ConfigTransformer
-	client        sui.ISuiAPI
+	client        cslclient.BindingsClient
 	signer        bindutils.SuiSigner
 	mcmsPackageID string
 	mcms          modulemcms.IMcms
@@ -75,7 +75,7 @@ func (c *ConfigTransformer) ToConfig(config modulemcms.Config) (*types.Config, e
 	return c.evmTransformer.ToConfig(evmConfig)
 }
 
-func NewInspector(client sui.ISuiAPI, signer bindutils.SuiSigner, mcmsPackageID string, role TimelockRole) (*Inspector, error) {
+func NewInspector(client cslclient.BindingsClient, signer bindutils.SuiSigner, mcmsPackageID string, role TimelockRole) (*Inspector, error) {
 	mcms, err := modulemcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err

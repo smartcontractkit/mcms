@@ -7,11 +7,10 @@ import (
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
-	"github.com/block-vision/sui-go-sdk/sui"
-
 	"github.com/smartcontractkit/chainlink-sui/bindings/bind"
 	modulemcms "github.com/smartcontractkit/chainlink-sui/bindings/generated/mcms/mcms"
 	bindutils "github.com/smartcontractkit/chainlink-sui/bindings/utils"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
@@ -20,7 +19,7 @@ import (
 var _ sdk.Configurer = &Configurer{}
 
 type Configurer struct {
-	client        sui.ISuiAPI
+	client        cslclient.BindingsClient
 	signer        bindutils.SuiSigner
 	role          TimelockRole
 	mcms          modulemcms.IMcms
@@ -28,7 +27,7 @@ type Configurer struct {
 	chainSelector uint64
 }
 
-func NewConfigurer(client sui.ISuiAPI, signer bindutils.SuiSigner, role TimelockRole, mcmsPackageID string, ownerCap string, chainSelector uint64) (*Configurer, error) {
+func NewConfigurer(client cslclient.BindingsClient, signer bindutils.SuiSigner, role TimelockRole, mcmsPackageID string, ownerCap string, chainSelector uint64) (*Configurer, error) {
 	mcms, err := modulemcms.NewMcms(mcmsPackageID, client)
 	if err != nil {
 		return nil, err

@@ -12,7 +12,6 @@ import (
 	"testing"
 
 	"github.com/aptos-labs/aptos-go-sdk"
-	"github.com/block-vision/sui-go-sdk/sui"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/ws"
@@ -20,7 +19,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/ton"
 
+	"github.com/smartcontractkit/chainlink-common/pkg/logger"
 	tonchain "github.com/smartcontractkit/chainlink-ton/pkg/ton/chain"
+
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
+
+	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/blockchain"
@@ -60,7 +64,7 @@ type TestSetup struct {
 	AptosRPCClient   *aptos.NodeClient
 	SolanaBlockchain *blockchain.Output
 	AptosBlockchain  *blockchain.Output
-	SuiClient        sui.ISuiAPI
+	SuiClient        cslclient.BindingsClient
 	SuiBlockchain    *blockchain.Output
 	SuiNodeURL       string
 	TonClient        *ton.APIClient
@@ -187,14 +191,17 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 		}
 
 		var (
-			suiClient           sui.ISuiAPI
+			suiClient           cslclient.BindingsClient
 			suiBlockchainOutput *blockchain.Output
 			suiNodeURL          string
 		)
+		suiLog := logger.Test(t)
 		if in.Settings.LocalSuiNodeURL != "" {
 			// Connect to local Sui node (highest priority)
 			suiNodeURL = in.Settings.LocalSuiNodeURL
-			suiClient = sui.NewSuiClient(suiNodeURL)
+			var clientErr error
+			suiClient, clientErr = suisdk.NewBindingsClientFromNodeURL(suiLog, suiNodeURL, "")
+			require.NoError(t, clientErr, "Failed to create Sui gRPC client")
 			t.Logf("Connected to local Sui node @ %s", suiNodeURL)
 		} else if in.SuiChain != nil {
 			// Use blockchain network setup (fallback)
@@ -208,10 +215,12 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			require.NoError(t, err, "Failed to initialize Sui blockchain")
 
 			suiNodeURL = suiBlockchainOutput.Nodes[0].ExternalHTTPUrl
-			suiClient = sui.NewSuiClient(suiNodeURL)
+			var clientErr error
+			suiClient, clientErr = suisdk.NewBindingsClientFromNodeURL(suiLog, suiNodeURL, "")
+			require.NoError(t, clientErr, "Failed to create Sui gRPC client")
 
 			// Test liveness, will also fetch ChainID
-			t.Logf("Initialized Sui RPC client @ %s", suiNodeURL)
+			t.Logf("Initialized Sui gRPC client @ %s", suiNodeURL)
 		}
 
 		var (
