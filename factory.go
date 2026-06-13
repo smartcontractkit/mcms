@@ -81,7 +81,7 @@ func newTimelockConverter(csel types.ChainSelector, metadata types.ChainMetadata
 }
 
 func operationIDFn(_ context.Context, csel types.ChainSelector) (sdk.OperationID, error) {
-	family, err := types.GetChainSelectorFamily(csel) //nolint:contextcheck //OPT-400
+	family, err := types.GetChainSelectorFamily(csel) //nolint:contextcheck,nolintlint //OPT-400
 	if err != nil {
 		return nil, err
 	}

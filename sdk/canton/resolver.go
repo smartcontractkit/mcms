@@ -105,7 +105,7 @@ func findActiveContractByInstanceAddress(ctx context.Context, stateService apiv2
 
 			var contractInstanceID string
 			for _, field := range createArguments.GetFields() {
-				if field.GetLabel() == "instanceId" {
+				if field.GetLabel() == instanceIDFieldLabel {
 					contractInstanceID = field.GetValue().GetText()
 					break
 				}
