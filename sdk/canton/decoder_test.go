@@ -302,3 +302,60 @@ func TestDecoder_DeployExecutor_FinalityVariant(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, string(raw), reEncoded)
 }
+
+// TestDecoder_DeployRateLimiter_EnumFields verifies that RateLimitDirection and RateLimitMode
+// are encoded and decoded as single ordinal bytes (matching the Daml MCMS codec wire format),
+// not as length-prefixed constructor-name strings. Before the fix, the encoder emitted e.g.
+// "\x1b" + "RateLimitDirection_Outbound" (28 bytes) where the ledger reads 1 byte → rejects.
+func TestDecoder_DeployRateLimiter_EnumFields(t *testing.T) {
+	t.Parallel()
+
+	params := factory.DeployRateLimiterParams{
+		InstanceId:          "rl-outbound",
+		PoolInstanceId:      "pool-1",
+		PoolOwner:           cantontypes.PARTY("owner::abc123"),
+		RemoteChainSelector: cantontypes.NUMERIC("16015286601757825753"),
+		Direction:           core.RateLimitDirectionRateLimitDirection_Outbound,
+		Mode:                core.RateLimitModeRateLimitMode_DefaultFinality,
+		IsEnabled:           true,
+		Capacity:            cantontypes.NUMERIC("1000"),
+		Rate:                cantontypes.NUMERIC("10"),
+	}
+
+	raw := operationDataBytes(t, params)
+
+	// Direction must be a single byte (0x00 = Outbound), not 28 bytes for the constructor name.
+	// Byte layout: 1+11 instanceId | 1+6 poolInstanceId | 1+13 poolOwner | 1+20 chainSelector | dir | mode
+	// Direction at offset 54, Mode at offset 55.
+	require.Greater(t, len(raw), 56, "encoded too short; enum is likely still a string")
+	require.Equal(t, byte(0x00), raw[54], "Direction Outbound must be single byte 0x00")
+	require.Equal(t, byte(0x00), raw[55], "Mode DefaultFinality must be single byte 0x00")
+
+	tx := types.Transaction{
+		To:   "0x0000000000000000000000000000000000000000000000000000000000000003",
+		Data: raw,
+		AdditionalFields: additionalFields(t, AdditionalFields{
+			TargetInstanceAddress: "factory@owner::abc123",
+			FunctionName:          "DeployRateLimiter",
+			TargetTemplateID:      "#pkg:CCIP.Factory:CCIPFactory",
+		}),
+	}
+
+	dec, err := NewDecoder().Decode(tx, "")
+	require.NoError(t, err)
+	require.Equal(t, "CCIPFactory::DeployRateLimiter", dec.MethodName())
+	require.Equal(t, []string{"instanceId", "poolInstanceId", "poolOwner", "remoteChainSelector", "direction", "mode", "isEnabled", "capacity", "rate"}, dec.Keys())
+	require.Equal(t, "rl-outbound", dec.Args()[0])
+	// direction and mode decode back to their constructor-name strings via reflection
+	require.Equal(t, "RateLimitDirection_Outbound", dec.Args()[4])
+	require.Equal(t, "RateLimitMode_DefaultFinality", dec.Args()[5])
+
+	// Round-trip: decoded params must re-encode to the same bytes (strict path, not fallback)
+	decoded, err := decodeOperationData("CCIPFactory", "DeployRateLimiter", raw)
+	require.NoError(t, err)
+	rlp, ok := decoded.(*factory.DeployRateLimiterParams)
+	require.True(t, ok, "expected *factory.DeployRateLimiterParams, got %T", decoded)
+	reEncoded, err := rlp.MarshalHex()
+	require.NoError(t, err)
+	require.Equal(t, string(raw), reEncoded, "round-trip must reproduce original bytes")
+}
