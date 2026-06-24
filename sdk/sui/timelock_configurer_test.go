@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -21,16 +20,6 @@ func TestNewTimelockConfigurer(t *testing.T) {
 	configurer := NewTimelockConfigurer(mcmsPackageID)
 	require.NotNil(t, configurer)
 	assert.Equal(t, mcmsPackageID, configurer.mcmsPackageID)
-}
-
-func TestTimelockConfigurer_GrantRolesPanics(t *testing.T) {
-	t.Parallel()
-
-	configurer := NewTimelockConfigurer("0x1")
-
-	require.PanicsWithValue(t, "not implemented", func() {
-		_, _ = configurer.GrantRoles(t.Context(), "timelock", sdk.TimelockRoleProposer, []string{"address"})
-	})
 }
 
 func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
