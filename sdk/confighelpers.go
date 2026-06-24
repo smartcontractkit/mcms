@@ -8,7 +8,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/smartcontractkit/mcms/internal/utils/safecast"
-	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -36,19 +35,24 @@ func ExtractSetConfigInputs(
 		groupParents = append(groupParents, 0)
 	}
 
-	// Combine SignerAddresses and SignerGroups into a slice of Signer structs
-	bindSigners := make([]bindings.ManyChainMultiSigSigner, len(signerAddrs))
+	type signerWithGroup struct {
+		addr  common.Address
+		group uint8
+	}
+
+	// Combine signer addresses and groups so they can be sorted together.
+	signers := make([]signerWithGroup, len(signerAddrs))
 	for i := range signerAddrs {
-		bindSigners[i] = bindings.ManyChainMultiSigSigner{
-			Addr:  signerAddrs[i],
-			Group: signerGroups[i],
+		signers[i] = signerWithGroup{
+			addr:  signerAddrs[i],
+			group: signerGroups[i],
 		}
 	}
 
 	// Sort signers by their addresses in ascending order
-	slices.SortFunc(bindSigners, func(i, j bindings.ManyChainMultiSigSigner) int {
-		addressA := new(big.Int).SetBytes(i.Addr.Bytes())
-		addressB := new(big.Int).SetBytes(j.Addr.Bytes())
+	slices.SortFunc(signers, func(i, j signerWithGroup) int {
+		addressA := new(big.Int).SetBytes(i.addr.Bytes())
+		addressB := new(big.Int).SetBytes(j.addr.Bytes())
 
 		return addressA.Cmp(addressB)
 	})
@@ -56,9 +60,9 @@ func ExtractSetConfigInputs(
 	// Extract the ordered addresses and groups after sorting
 	orderedSignerAddresses := make([]common.Address, len(signerAddrs))
 	orderedSignerGroups := make([]uint8, len(signerAddrs))
-	for i, signer := range bindSigners {
-		orderedSignerAddresses[i] = signer.Addr
-		orderedSignerGroups[i] = signer.Group
+	for i, signer := range signers {
+		orderedSignerAddresses[i] = signer.addr
+		orderedSignerGroups[i] = signer.group
 	}
 
 	return [32]uint8(groupQuorums), [32]uint8(groupParents), orderedSignerAddresses, orderedSignerGroups, nil

@@ -33,9 +33,16 @@ func TestTimelockRole_Hash(t *testing.T) {
 	}
 }
 
-func TestTimelockRole_HashRejectsUnknown(t *testing.T) {
+func TestTimelockRole_Valid(t *testing.T) {
 	t.Parallel()
 
-	_, err := TimelockRoleUnknown.Hash()
+	require.True(t, TimelockRoleAdmin.Valid())
+	require.False(t, TimelockRole(99).Valid())
+}
+
+func TestTimelockRole_HashRejectsInvalid(t *testing.T) {
+	t.Parallel()
+
+	_, err := TimelockRole(99).Hash()
 	require.ErrorContains(t, err, "invalid timelock role")
 }

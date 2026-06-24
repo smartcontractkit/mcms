@@ -11,16 +11,29 @@ import (
 type TimelockRole uint8
 
 const (
-	TimelockRoleUnknown TimelockRole = iota
-	TimelockRoleAdmin
+	TimelockRoleAdmin TimelockRole = iota
 	TimelockRoleBypasser
 	TimelockRoleCanceller
 	TimelockRoleExecutor
 	TimelockRoleProposer
 )
 
+// Valid reports whether r is one of the supported timelock roles.
+func (r TimelockRole) Valid() bool {
+	switch r {
+	case TimelockRoleAdmin, TimelockRoleBypasser, TimelockRoleCanceller, TimelockRoleExecutor, TimelockRoleProposer:
+		return true
+	default:
+		return false
+	}
+}
+
 // Hash returns the EVM bytes32 representation of the timelock role.
 func (r TimelockRole) Hash() (common.Hash, error) {
+	if !r.Valid() {
+		return common.Hash{}, fmt.Errorf("invalid timelock role: %d", r)
+	}
+
 	switch r {
 	case TimelockRoleAdmin:
 		return crypto.Keccak256Hash([]byte("ADMIN_ROLE")), nil
@@ -33,7 +46,7 @@ func (r TimelockRole) Hash() (common.Hash, error) {
 	case TimelockRoleProposer:
 		return crypto.Keccak256Hash([]byte("PROPOSER_ROLE")), nil
 	default:
-		return common.Hash{}, fmt.Errorf("invalid timelock role: %d", r)
+		panic("timelock role passed Valid() but has no hash mapping")
 	}
 }
 
