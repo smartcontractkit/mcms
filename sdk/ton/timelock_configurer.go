@@ -105,3 +105,13 @@ func (c *TimelockConfigurer) UpdateDelay(
 		Body:    body,
 	})
 }
+
+// GrantRoles grants a timelock role to addresses.
+func (c *TimelockConfigurer) GrantRoles(
+	ctx context.Context,
+	timelockAddress string,
+	role sdk.TimelockRole,
+	addresses []string,
+) (types.TransactionResult, error) {
+	panic("not implemented")
+}

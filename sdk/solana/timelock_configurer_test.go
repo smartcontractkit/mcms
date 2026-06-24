@@ -11,6 +11,7 @@ import (
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
 )
 
@@ -25,6 +26,16 @@ func TestNewTimelockConfigurer(t *testing.T) {
 
 	require.NotNil(t, configurer)
 	require.Equal(t, auth, configurer.auth)
+}
+
+func TestTimelockConfigurer_GrantRolesPanics(t *testing.T) {
+	t.Parallel()
+
+	configurer := NewTimelockConfigurer(nil, solana.PrivateKey{})
+
+	require.PanicsWithValue(t, "not implemented", func() {
+		_, _ = configurer.GrantRoles(t.Context(), "timelock", sdk.TimelockRoleProposer, []string{"address"})
+	})
 }
 
 func TestTimelockConfigurer_UpdateDelay(t *testing.T) { //nolint:paralleltest

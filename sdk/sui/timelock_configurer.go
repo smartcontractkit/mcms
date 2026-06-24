@@ -74,3 +74,13 @@ func serializeTimelockUpdateMinDelay(timelockAddress string, newMinDelay uint64)
 		ser.U64(newMinDelay)
 	})
 }
+
+// GrantRoles grants a timelock role to addresses.
+func (c *TimelockConfigurer) GrantRoles(
+	ctx context.Context,
+	timelockAddress string,
+	role sdk.TimelockRole,
+	addresses []string,
+) (types.TransactionResult, error) {
+	panic("not implemented")
+}

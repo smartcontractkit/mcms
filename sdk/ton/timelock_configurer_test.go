@@ -16,10 +16,21 @@ import (
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
+	"github.com/smartcontractkit/mcms/sdk"
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 	ton_mocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+func TestTimelockConfigurer_GrantRolesPanics(t *testing.T) {
+	t.Parallel()
+
+	configurer := mcmston.NewTimelockConfigurer(nil, tlb.MustFromTON("0.1"))
+
+	require.PanicsWithValue(t, "not implemented", func() {
+		_, _ = configurer.GrantRoles(t.Context(), "timelock", sdk.TimelockRoleProposer, []string{"address"})
+	})
+}
 
 func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 	t.Parallel()
