@@ -106,12 +106,12 @@ func (c *TimelockConfigurer) UpdateDelay(
 	})
 }
 
-// GrantRoles grants a timelock role to addresses.
-func (c *TimelockConfigurer) GrantRoles(
+// GrantRole grants a timelock role to an address.
+func (c *TimelockConfigurer) GrantRole(
 	ctx context.Context,
 	timelockAddress string,
 	role sdk.TimelockRole,
-	addresses []string,
+	address string,
 ) (types.TransactionResult, error) {
 	panic("not implemented")
 }

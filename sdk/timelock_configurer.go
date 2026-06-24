@@ -9,10 +9,10 @@ import (
 // TimelockConfigurer is an interface for configuring timelock contract parameters.
 type TimelockConfigurer interface {
 	UpdateDelay(ctx context.Context, timelockAddress string, newDelay uint64) (types.TransactionResult, error)
-	GrantRoles(
+	GrantRole(
 		ctx context.Context,
 		timelockAddress string,
 		role TimelockRole,
-		addresses []string,
+		address string,
 	) (types.TransactionResult, error)
 }

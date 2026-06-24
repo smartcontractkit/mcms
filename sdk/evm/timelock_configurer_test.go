@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	chainsel "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/internal/testutils/evmsim"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	evm_mocks "github.com/smartcontractkit/mcms/sdk/evm/mocks"
@@ -120,30 +122,27 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 	}
 }
 
-func TestTimelockConfigurer_GrantRolesRejectsInvalidInputs(t *testing.T) {
+func TestTimelockConfigurer_GrantRoleRejectsInvalidInputs(t *testing.T) {
 	t.Parallel()
 
 	configurer := NewTimelockConfigurer(evm_mocks.NewContractDeployBackend(t), &bind.TransactOpts{})
 	validTimelock := common.HexToAddress("0x1000000000000000000000000000000000000001").Hex()
 	validAddress := common.HexToAddress("0x2000000000000000000000000000000000000002").Hex()
 
-	_, err := configurer.GrantRoles(context.Background(), "not-an-address", timelockRoleProposer, []string{validAddress})
+	_, err := configurer.GrantRole(context.Background(), "not-an-address", timelockRoleProposer, validAddress)
 	require.ErrorContains(t, err, "invalid timelock address")
 
-	_, err = configurer.GrantRoles(context.Background(), validTimelock, timelockRoleUnknown, []string{validAddress})
+	_, err = configurer.GrantRole(context.Background(), validTimelock, timelockRoleUnknown, validAddress)
 	require.ErrorContains(t, err, "invalid timelock role")
 
-	_, err = configurer.GrantRoles(context.Background(), validTimelock, timelockRoleProposer, nil)
-	require.ErrorContains(t, err, "addresses must be non-empty")
-
-	_, err = configurer.GrantRoles(context.Background(), validTimelock, timelockRoleProposer, []string{"not-an-address"})
+	_, err = configurer.GrantRole(context.Background(), validTimelock, timelockRoleProposer, "not-an-address")
 	require.ErrorContains(t, err, "invalid target address")
 
-	_, err = configurer.GrantRoles(context.Background(), validTimelock, timelockRoleProposer, []string{common.Address{}.Hex()})
+	_, err = configurer.GrantRole(context.Background(), validTimelock, timelockRoleProposer, common.Address{}.Hex())
 	require.ErrorContains(t, err, "invalid target address")
 }
 
-func TestTimelockConfigurer_GrantRolesNoSend(t *testing.T) {
+func TestTimelockConfigurer_GrantRoleNoSend(t *testing.T) {
 	t.Parallel()
 
 	sim := evmsim.NewSimulatedChain(t, 3)
@@ -162,42 +161,36 @@ func TestTimelockConfigurer_GrantRolesNoSend(t *testing.T) {
 	configurer := NewTimelockConfigurer(sim.Backend.Client(), auth)
 
 	roleHash := crypto.Keccak256Hash([]byte("PROPOSER_ROLE"))
-	targets := []common.Address{
-		sim.Signers[1].Address(t),
-		sim.Signers[2].Address(t),
-	}
-	targetStrings := []string{targets[0].Hex(), targets[1].Hex()}
+	target := sim.Signers[1].Address(t)
 
-	result, err := configurer.GrantRoles(t.Context(), timelock.Address().Hex(), timelockRoleProposer, targetStrings)
+	result, err := configurer.GrantRole(t.Context(), timelock.Address().Hex(), timelockRoleProposer, target.Hex())
 	require.NoError(t, err)
-
-	txs, ok := result.RawData.([]*evmTypes.Transaction)
-	require.True(t, ok)
-	require.Len(t, txs, len(targets))
+	require.NotEmpty(t, result.Hash)
+	require.Equal(t, chainsel.FamilyEVM, result.ChainFamily)
 
 	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
 	require.NoError(t, err)
 	grantRole := timelockABI.Methods["grantRole"]
 
-	for i, tx := range txs {
-		require.Equal(t, timelock.Address(), *tx.To())
-		require.NotEmpty(t, tx.Data())
-		require.GreaterOrEqual(t, len(tx.Data()), 4)
-		require.Equal(t, grantRole.ID, tx.Data()[:4])
+	tx, ok := result.RawData.(*evmTypes.Transaction)
+	require.True(t, ok)
+	require.Equal(t, timelock.Address(), *tx.To())
+	require.NotEmpty(t, tx.Data())
+	require.GreaterOrEqual(t, len(tx.Data()), 4)
+	require.Equal(t, grantRole.ID, tx.Data()[:4])
 
-		decoded, err := grantRole.Inputs.Unpack(tx.Data()[4:])
-		require.NoError(t, err)
-		require.Len(t, decoded, 2)
-		require.Equal(t, [32]byte(roleHash), decoded[0])
-		require.Equal(t, targets[i], decoded[1])
+	decoded, err := grantRole.Inputs.Unpack(tx.Data()[4:])
+	require.NoError(t, err)
+	require.Len(t, decoded, 2)
+	require.Equal(t, [32]byte(roleHash), decoded[0])
+	require.Equal(t, target, decoded[1])
 
-		hasRole, err := timelock.HasRole(&bind.CallOpts{Context: t.Context()}, [32]byte(roleHash), targets[i])
-		require.NoError(t, err)
-		require.False(t, hasRole)
-	}
+	hasRole, err := timelock.HasRole(&bind.CallOpts{Context: t.Context()}, [32]byte(roleHash), target)
+	require.NoError(t, err)
+	require.False(t, hasRole)
 }
 
-func TestTimelockConfigurer_GrantRolesDirectSend(t *testing.T) {
+func TestTimelockConfigurer_GrantRoleDirectSend(t *testing.T) {
 	t.Parallel()
 
 	sim := evmsim.NewSimulatedChain(t, 2)
@@ -215,12 +208,13 @@ func TestTimelockConfigurer_GrantRolesDirectSend(t *testing.T) {
 	roleHash := crypto.Keccak256Hash([]byte("EXECUTOR_ROLE"))
 	target := sim.Signers[1].Address(t)
 
-	result, err := configurer.GrantRoles(t.Context(), timelock.Address().Hex(), timelockRoleExecutor, []string{target.Hex()})
+	result, err := configurer.GrantRole(t.Context(), timelock.Address().Hex(), timelockRoleExecutor, target.Hex())
 	require.NoError(t, err)
 	require.NotEmpty(t, result.Hash)
-	txs, ok := result.RawData.([]*evmTypes.Transaction)
+	require.Equal(t, chainsel.FamilyEVM, result.ChainFamily)
+	tx, ok := result.RawData.(*evmTypes.Transaction)
 	require.True(t, ok)
-	require.Len(t, txs, 1)
+	require.NotNil(t, tx)
 
 	sim.Backend.Commit()
 

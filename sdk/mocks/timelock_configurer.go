@@ -23,27 +23,27 @@ func (_m *TimelockConfigurer) EXPECT() *TimelockConfigurer_Expecter {
 	return &TimelockConfigurer_Expecter{mock: &_m.Mock}
 }
 
-// GrantRoles provides a mock function with given fields: ctx, timelockAddress, role, addresses
-func (_m *TimelockConfigurer) GrantRoles(ctx context.Context, timelockAddress string, role sdk.TimelockRole, addresses []string) (types.TransactionResult, error) {
-	ret := _m.Called(ctx, timelockAddress, role, addresses)
+// GrantRole provides a mock function with given fields: ctx, timelockAddress, role, address
+func (_m *TimelockConfigurer) GrantRole(ctx context.Context, timelockAddress string, role sdk.TimelockRole, address string) (types.TransactionResult, error) {
+	ret := _m.Called(ctx, timelockAddress, role, address)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GrantRoles")
+		panic("no return value specified for GrantRole")
 	}
 
 	var r0 types.TransactionResult
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, sdk.TimelockRole, []string) (types.TransactionResult, error)); ok {
-		return rf(ctx, timelockAddress, role, addresses)
+	if rf, ok := ret.Get(0).(func(context.Context, string, sdk.TimelockRole, string) (types.TransactionResult, error)); ok {
+		return rf(ctx, timelockAddress, role, address)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, sdk.TimelockRole, []string) types.TransactionResult); ok {
-		r0 = rf(ctx, timelockAddress, role, addresses)
+	if rf, ok := ret.Get(0).(func(context.Context, string, sdk.TimelockRole, string) types.TransactionResult); ok {
+		r0 = rf(ctx, timelockAddress, role, address)
 	} else {
 		r0 = ret.Get(0).(types.TransactionResult)
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, string, sdk.TimelockRole, []string) error); ok {
-		r1 = rf(ctx, timelockAddress, role, addresses)
+	if rf, ok := ret.Get(1).(func(context.Context, string, sdk.TimelockRole, string) error); ok {
+		r1 = rf(ctx, timelockAddress, role, address)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -51,33 +51,33 @@ func (_m *TimelockConfigurer) GrantRoles(ctx context.Context, timelockAddress st
 	return r0, r1
 }
 
-// TimelockConfigurer_GrantRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GrantRoles'
-type TimelockConfigurer_GrantRoles_Call struct {
+// TimelockConfigurer_GrantRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GrantRole'
+type TimelockConfigurer_GrantRole_Call struct {
 	*mock.Call
 }
 
-// GrantRoles is a helper method to define mock.On call
+// GrantRole is a helper method to define mock.On call
 //   - ctx context.Context
 //   - timelockAddress string
 //   - role sdk.TimelockRole
-//   - addresses []string
-func (_e *TimelockConfigurer_Expecter) GrantRoles(ctx interface{}, timelockAddress interface{}, role interface{}, addresses interface{}) *TimelockConfigurer_GrantRoles_Call {
-	return &TimelockConfigurer_GrantRoles_Call{Call: _e.mock.On("GrantRoles", ctx, timelockAddress, role, addresses)}
+//   - address string
+func (_e *TimelockConfigurer_Expecter) GrantRole(ctx interface{}, timelockAddress interface{}, role interface{}, address interface{}) *TimelockConfigurer_GrantRole_Call {
+	return &TimelockConfigurer_GrantRole_Call{Call: _e.mock.On("GrantRole", ctx, timelockAddress, role, address)}
 }
 
-func (_c *TimelockConfigurer_GrantRoles_Call) Run(run func(ctx context.Context, timelockAddress string, role sdk.TimelockRole, addresses []string)) *TimelockConfigurer_GrantRoles_Call {
+func (_c *TimelockConfigurer_GrantRole_Call) Run(run func(ctx context.Context, timelockAddress string, role sdk.TimelockRole, address string)) *TimelockConfigurer_GrantRole_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context), args[1].(string), args[2].(sdk.TimelockRole), args[3].([]string))
+		run(args[0].(context.Context), args[1].(string), args[2].(sdk.TimelockRole), args[3].(string))
 	})
 	return _c
 }
 
-func (_c *TimelockConfigurer_GrantRoles_Call) Return(_a0 types.TransactionResult, _a1 error) *TimelockConfigurer_GrantRoles_Call {
+func (_c *TimelockConfigurer_GrantRole_Call) Return(_a0 types.TransactionResult, _a1 error) *TimelockConfigurer_GrantRole_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *TimelockConfigurer_GrantRoles_Call) RunAndReturn(run func(context.Context, string, sdk.TimelockRole, []string) (types.TransactionResult, error)) *TimelockConfigurer_GrantRoles_Call {
+func (_c *TimelockConfigurer_GrantRole_Call) RunAndReturn(run func(context.Context, string, sdk.TimelockRole, string) (types.TransactionResult, error)) *TimelockConfigurer_GrantRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
