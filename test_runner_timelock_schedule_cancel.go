@@ -37,25 +37,13 @@ type ScheduleAndCancelTestHooks struct {
 	// finality using its own mechanism.
 	WaitForTransaction func(ctx context.Context, t *testing.T, tx types.TransactionResult)
 
-	AssertAfterSchedule func(
-		ctx context.Context,
-		t *testing.T,
-		env *ScheduleAndCancelTestEnv,
-		schedule *TimelockProposal,
-		scheduleMCMS *Proposal,
-		timelockExecutable *TimelockExecutable,
-		inspectors map[types.ChainSelector]sdk.Inspector,
-	)
-	AssertAfterCancel func(
-		ctx context.Context,
-		t *testing.T,
-		env *ScheduleAndCancelTestEnv,
-		schedule *TimelockProposal,
-		cancel *TimelockProposal,
-		cancelMCMS *Proposal,
-		timelockExecutable *TimelockExecutable,
-		inspectors map[types.ChainSelector]sdk.Inspector,
-	)
+	// AssertExtraAfterCancel is reserved for chain-specific semantic assertions that go beyond the
+	// generic schedule/cancel lifecycle state checks performed by this runner.
+	//
+	// Examples:
+	// - EVM: verify a role grant target still does not have the role after cancellation.
+	// - TON: verify a grantee address is absent from the role-members list after cancellation.
+	AssertExtraAfterCancel func(ctx context.Context, t *testing.T, env *ScheduleAndCancelTestEnv)
 }
 
 // RunScheduleAndCancelTest executes the shared timelock schedule/cancel lifecycle using
@@ -70,7 +58,7 @@ func RunScheduleAndCancelTest(t *testing.T, hooks ScheduleAndCancelTestHooks) {
 	env, err := hooks.Setup(ctx, t)
 	require.NoError(t, err)
 
-	scheduleInspectors, scheduleMCMS := runTimelockLifecycleProposal(
+	scheduleInspectors, _ := runTimelockLifecycleProposal(
 		ctx,
 		t,
 		&env.Proposal,
@@ -91,14 +79,10 @@ func RunScheduleAndCancelTest(t *testing.T, hooks ScheduleAndCancelTestHooks) {
 		assertOperationNotDoneState(t, tExecutable, &env.Proposal, opIdx)
 	}
 
-	if hooks.AssertAfterSchedule != nil {
-		hooks.AssertAfterSchedule(ctx, t, &env, &env.Proposal, scheduleMCMS, tExecutable, scheduleInspectors)
-	}
-
 	cancelProposal, err := deriveCancellationProposal(ctx, &env.Proposal, scheduleInspectors)
 	require.NoError(t, err)
 
-	cancelInspectors, cancelMCMS := runTimelockLifecycleProposal(
+	runTimelockLifecycleProposal(
 		ctx,
 		t,
 		&cancelProposal,
@@ -113,8 +97,8 @@ func RunScheduleAndCancelTest(t *testing.T, hooks ScheduleAndCancelTestHooks) {
 		assertOperationNotDoneState(t, tExecutable, &env.Proposal, opIdx)
 	}
 
-	if hooks.AssertAfterCancel != nil {
-		hooks.AssertAfterCancel(ctx, t, &env, &env.Proposal, &cancelProposal, cancelMCMS, tExecutable, cancelInspectors)
+	if hooks.AssertExtraAfterCancel != nil {
+		hooks.AssertExtraAfterCancel(ctx, t, &env)
 	}
 }
 
@@ -163,7 +147,9 @@ func runTimelockLifecycleProposal(
 	tree, err := mcmsProposal.MerkleTree()
 	require.NoError(t, err)
 
-	for _, selector := range uniqueOperationSelectors(proposal.Operations) {
+	// SetRoot is per participating chain, not per operation. A proposal may contain multiple
+	// operations on the same chain, but its root only needs to be written once for that chain.
+	for _, selector := range proposalChainSelectors(proposal.Operations) {
 		tx, setRootErr := executable.SetRoot(ctx, selector)
 		require.NoError(t, setRootErr)
 		require.NotEmpty(t, tx.Hash)
@@ -238,7 +224,7 @@ func waitForTransaction(
 	}
 }
 
-func uniqueOperationSelectors(ops []types.BatchOperation) []types.ChainSelector {
+func proposalChainSelectors(ops []types.BatchOperation) []types.ChainSelector {
 	selectors := make([]types.ChainSelector, 0, len(ops))
 	seen := make(map[types.ChainSelector]struct{}, len(ops))
 	for _, op := range ops {

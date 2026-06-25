@@ -334,16 +334,7 @@ func (s *ExecutionTestSuite) TestScheduleAndCancelProposal() {
 					require.NotNil(t, rawTx)
 					require.NoError(t, tracetracking.WaitForTrace(ctx, s.TonClient, rawTx))
 				},
-				AssertAfterCancel: func(
-					ctx context.Context,
-					t *testing.T,
-					env *mcmslib.ScheduleAndCancelTestEnv,
-					schedule *mcmslib.TimelockProposal,
-					cancel *mcmslib.TimelockProposal,
-					cancelMCMS *mcmslib.Proposal,
-					tExecutable *mcmslib.TimelockExecutable,
-					inspectors map[types.ChainSelector]sdk.Inspector,
-				) {
+				AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *mcmslib.ScheduleAndCancelTestEnv) {
 					inspectorT := mcmston.NewTimelockInspector(s.TonClient)
 					for _, role := range tt.targetRoles {
 						members, membersErr := tonRoleMembersFor(ctx, inspectorT, s.timelockAddr, role)

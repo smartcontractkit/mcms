@@ -667,16 +667,7 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, targetRoles []common.Hash
 			require.NotNil(t, receipt)
 			require.Equal(t, geth_types.ReceiptStatusSuccessful, receipt.Status)
 		},
-		AssertAfterCancel: func(
-			ctx context.Context,
-			t *testing.T,
-			env *ScheduleAndCancelTestEnv,
-			schedule *TimelockProposal,
-			cancel *TimelockProposal,
-			cancelMCMS *Proposal,
-			tExecutable *TimelockExecutable,
-			inspectors map[types.ChainSelector]sdk.Inspector,
-		) {
+		AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *ScheduleAndCancelTestEnv) {
 			for _, role := range targetRoles {
 				hasRole, err := timelockC.HasRole(&bind.CallOpts{}, role, sim.Signers[0].Address(t))
 				require.NoError(t, err)
