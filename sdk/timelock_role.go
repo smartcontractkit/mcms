@@ -51,5 +51,6 @@ func (r TimelockRole) String() string {
 	if info, ok := timelockRoles[r]; ok {
 		return info.name
 	}
+
 	return "Unknown"
 }
