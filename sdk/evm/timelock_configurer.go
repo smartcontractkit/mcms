@@ -68,7 +68,7 @@ func (c *TimelockConfigurer) GrantRole(
 		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %s", timelockAddress)
 	}
 
-	roleHash, err := role.Hash()
+	roleHash, err := TimelockRoleHash(role)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}

@@ -49,7 +49,7 @@ func (s *TimelockInspectionTestSuite) TestGrantRole() {
 	addr := timelockContract.Address().Hex()
 	target := s.signerAddresses[0]
 	role := sdk.TimelockRoleExecutor
-	roleHash, err := role.Hash()
+	roleHash, err := evm.TimelockRoleHash(role)
 	s.Require().NoError(err)
 
 	hasRole, err := timelockContract.HasRole(&bind.CallOpts{Context: ctx}, [32]byte(roleHash), target)
@@ -81,7 +81,7 @@ func (s *TimelockInspectionTestSuite) TestGrantRoleNoSend() {
 	timelockContract := testutils.DeployTimelockContract(&s.Suite, s.ClientA, s.auth, s.publicKey.String())
 	addr := timelockContract.Address().Hex()
 	role := sdk.TimelockRoleProposer
-	roleHash, err := role.Hash()
+	roleHash, err := evm.TimelockRoleHash(role)
 	s.Require().NoError(err)
 	target := s.signerAddresses[0]
 

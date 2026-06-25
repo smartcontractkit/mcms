@@ -236,7 +236,7 @@ func TestTimelockConfigurer_GrantRoleNoSend(t *testing.T) {
 	configurer := NewTimelockConfigurer(sim.backend.Client(), auth)
 
 	role := sdk.TimelockRoleProposer
-	roleHash, err := role.Hash()
+	roleHash, err := TimelockRoleHash(role)
 	require.NoError(t, err)
 	target := sim.signers[1].address(t)
 
@@ -275,7 +275,7 @@ func TestTimelockConfigurer_GrantRoleDirectSend(t *testing.T) {
 
 	configurer := NewTimelockConfigurer(sim.backend.Client(), sim.signers[0].newTransactOpts(t))
 	role := sdk.TimelockRoleExecutor
-	roleHash, err := role.Hash()
+	roleHash, err := TimelockRoleHash(role)
 	require.NoError(t, err)
 	target := sim.signers[1].address(t)
 
