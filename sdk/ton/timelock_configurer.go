@@ -111,7 +111,7 @@ func (c *TimelockConfigurer) GrantRole(
 	ctx context.Context,
 	timelockAddress string,
 	role sdk.TimelockRole,
-	account string,
+	targetAddress string,
 ) (types.TransactionResult, error) {
 	panic("not implemented")
 }

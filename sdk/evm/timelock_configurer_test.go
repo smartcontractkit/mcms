@@ -1,7 +1,6 @@
 package evm
 
 import (
-	"context"
 	"crypto/ecdsa"
 	"errors"
 	"math/big"
@@ -210,16 +209,19 @@ func TestTimelockConfigurer_GrantRoleRejectsInvalidInputs(t *testing.T) {
 	validTimelock := common.HexToAddress("0x1000000000000000000000000000000000000001").Hex()
 	validAddress := common.HexToAddress("0x2000000000000000000000000000000000000002").Hex()
 
-	_, err := configurer.GrantRole(context.Background(), "not-an-address", sdk.TimelockRoleProposer, validAddress)
+	_, err := configurer.GrantRole(t.Context(), "not-an-address", sdk.TimelockRoleProposer, validAddress)
 	require.ErrorContains(t, err, "invalid timelock address")
 
-	_, err = configurer.GrantRole(context.Background(), validTimelock, sdk.TimelockRole(99), validAddress)
+	_, err = configurer.GrantRole(t.Context(), common.Address{}.Hex(), sdk.TimelockRoleProposer, validAddress)
+	require.ErrorContains(t, err, "invalid timelock address")
+
+	_, err = configurer.GrantRole(t.Context(), validTimelock, sdk.TimelockRole(99), validAddress)
 	require.ErrorContains(t, err, "invalid timelock role")
 
-	_, err = configurer.GrantRole(context.Background(), validTimelock, sdk.TimelockRoleProposer, "not-an-address")
+	_, err = configurer.GrantRole(t.Context(), validTimelock, sdk.TimelockRoleProposer, "not-an-address")
 	require.ErrorContains(t, err, "invalid target address")
 
-	_, err = configurer.GrantRole(context.Background(), validTimelock, sdk.TimelockRoleProposer, common.Address{}.Hex())
+	_, err = configurer.GrantRole(t.Context(), validTimelock, sdk.TimelockRoleProposer, common.Address{}.Hex())
 	require.ErrorContains(t, err, "invalid target address")
 }
 

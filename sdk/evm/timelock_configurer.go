@@ -62,7 +62,7 @@ func (c *TimelockConfigurer) GrantRole(
 	ctx context.Context,
 	timelockAddress string,
 	role sdk.TimelockRole,
-	address string,
+	targetAddress string,
 ) (types.TransactionResult, error) {
 	if !common.IsHexAddress(timelockAddress) {
 		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %s", timelockAddress)
@@ -73,14 +73,18 @@ func (c *TimelockConfigurer) GrantRole(
 		return types.TransactionResult{}, err
 	}
 
-	if !common.IsHexAddress(address) {
-		return types.TransactionResult{}, fmt.Errorf("invalid target address: %s", address)
+	if !common.IsHexAddress(targetAddress) {
+		return types.TransactionResult{}, fmt.Errorf("invalid target address: %s", targetAddress)
 	}
 
 	timelock := common.HexToAddress(timelockAddress)
-	account := common.HexToAddress(address)
+	if timelock == (common.Address{}) {
+		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %s", timelockAddress)
+	}
+
+	account := common.HexToAddress(targetAddress)
 	if account == (common.Address{}) {
-		return types.TransactionResult{}, fmt.Errorf("invalid target address: %s", address)
+		return types.TransactionResult{}, fmt.Errorf("invalid target address: %s", targetAddress)
 	}
 
 	opts := *c.auth

@@ -13,6 +13,6 @@ type TimelockConfigurer interface {
 		ctx context.Context,
 		timelockAddress string,
 		role TimelockRole,
-		address string,
+		targetAddress string,
 	) (types.TransactionResult, error)
 }
