@@ -235,10 +235,12 @@ func TestTimelockConfigurer_GrantRoleNoSend(t *testing.T) {
 	auth.NoSend = true
 	configurer := NewTimelockConfigurer(sim.backend.Client(), auth)
 
-	roleHash := crypto.Keccak256Hash([]byte("PROPOSER_ROLE"))
+	role := sdk.TimelockRoleProposer
+	roleHash, err := role.Hash()
+	require.NoError(t, err)
 	target := sim.signers[1].address(t)
 
-	result, err := configurer.GrantRole(t.Context(), timelock.Address().Hex(), sdk.TimelockRoleProposer, target.Hex())
+	result, err := configurer.GrantRole(t.Context(), timelock.Address().Hex(), role, target.Hex())
 	require.NoError(t, err)
 	require.NotEmpty(t, result.Hash)
 	require.Equal(t, chainsel.FamilyEVM, result.ChainFamily)
@@ -272,10 +274,12 @@ func TestTimelockConfigurer_GrantRoleDirectSend(t *testing.T) {
 	timelock := sim.deployRBACTimelock(t, sim.signers[0], sim.signers[0].address(t))
 
 	configurer := NewTimelockConfigurer(sim.backend.Client(), sim.signers[0].newTransactOpts(t))
-	roleHash := crypto.Keccak256Hash([]byte("EXECUTOR_ROLE"))
+	role := sdk.TimelockRoleExecutor
+	roleHash, err := role.Hash()
+	require.NoError(t, err)
 	target := sim.signers[1].address(t)
 
-	result, err := configurer.GrantRole(t.Context(), timelock.Address().Hex(), sdk.TimelockRoleExecutor, target.Hex())
+	result, err := configurer.GrantRole(t.Context(), timelock.Address().Hex(), role, target.Hex())
 	require.NoError(t, err)
 	require.NotEmpty(t, result.Hash)
 	require.Equal(t, chainsel.FamilyEVM, result.ChainFamily)
