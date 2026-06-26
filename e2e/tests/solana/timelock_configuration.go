@@ -105,8 +105,8 @@ func (s *TestSuite) TestGrantRoleNoSend() {
 	tx, ok := result.RawData.(types.Transaction)
 	s.Require().True(ok, "RawData should contain a Solana MCMS transaction")
 	s.Require().Equal(s.TimelockProgramID.String(), tx.To)
-	s.Require().Equal("RBACTimelock", tx.OperationMetadata.ContractType)
-	s.Require().Equal([]string{"RBACTimelock", "GrantRole"}, tx.OperationMetadata.Tags)
+	s.Require().Equal("RBACTimelock", tx.ContractType)
+	s.Require().Equal([]string{"RBACTimelock", "GrantRole"}, tx.Tags)
 
 	hasAccess, err := accesscontroller.HasAccess(ctx, s.SolanaClient, accessController, target.PublicKey(), rpc.CommitmentConfirmed)
 	s.Require().NoError(err, "Failed to inspect role access")
