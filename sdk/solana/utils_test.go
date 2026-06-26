@@ -45,6 +45,25 @@ func mockGetAccountInfo(
 	}).Once()
 }
 
+func mockGetAccountOwner(
+	t *testing.T, mockJSONRPCClient *mocks.JSONRPCClient, account solana.PublicKey, owner solana.PublicKey,
+	mockError error,
+) {
+	t.Helper()
+
+	mockJSONRPCClient.EXPECT().CallForInto(anyContext, mock.Anything, "getAccountInfo", []any{
+		account, rpc.M{"commitment": rpc.CommitmentConfirmed, "encoding": solana.EncodingBase64},
+	},
+	).RunAndReturn(func(_ context.Context, output any, _ string, _ []any) error {
+		result, ok := output.(**rpc.GetAccountInfoResult)
+		require.True(t, ok)
+
+		*result = &rpc.GetAccountInfoResult{Value: &rpc.Account{Owner: owner}}
+
+		return mockError
+	}).Once()
+}
+
 func mockGetBlockTime(
 	t *testing.T, client *mocks.JSONRPCClient, slot uint64,
 	blockTime *solana.UnixTimeSeconds, mockBlockHeightError error,
