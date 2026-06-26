@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.49.0](https://github.com/smartcontractkit/mcms/compare/v0.48.0...v0.49.0) (2026-06-26)
+
+
+### Features
+
+* add timelock grant role functionality ([#794](https://github.com/smartcontractkit/mcms/issues/794)) ([50f7fce](https://github.com/smartcontractkit/mcms/commit/50f7fce7e0174370c643e5ec73b8c6e9a30175e2))
+
 ## [0.48.0](https://github.com/smartcontractkit/mcms/compare/v0.47.1...v0.48.0) (2026-06-11)
 
 
