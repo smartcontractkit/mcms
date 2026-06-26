@@ -89,3 +89,13 @@ func (c *TimelockConfigurer) UpdateDelay(
 		RawData:     tx,
 	}, nil
 }
+
+// GrantRole grants a timelock role to an address.
+func (c *TimelockConfigurer) GrantRole(
+	ctx context.Context,
+	timelockAddress string,
+	role sdk.TimelockRole,
+	targetAddress string,
+) (types.TransactionResult, error) {
+	panic("not implemented")
+}
