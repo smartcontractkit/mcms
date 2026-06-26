@@ -115,7 +115,9 @@ func (c *TimelockConfigurer) GrantRole(
 	}
 
 	if c.skipSend {
-		tx, txErr := NewTransactionFromInstruction(instruction, "RBACTimelock", []string{"RBACTimelock", "GrantRole"})
+		tx, txErr := NewTransactionFromInstruction(
+			instruction, rbacTimelockContractType, []string{rbacTimelockContractType, "GrantRole"},
+		)
 		if txErr != nil {
 			return types.TransactionResult{}, fmt.Errorf("unable to build grant role transaction: %w", txErr)
 		}

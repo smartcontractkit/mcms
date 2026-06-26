@@ -226,8 +226,8 @@ func TestTimelockConfigurer_GrantRole(t *testing.T) { //nolint:paralleltest
 				tx, ok := got.RawData.(types.Transaction)
 				require.True(t, ok)
 				require.Equal(t, testTimelockProgramID.String(), tx.To)
-				require.Equal(t, "RBACTimelock", tx.OperationMetadata.ContractType)
-				require.Equal(t, []string{"RBACTimelock", "GrantRole"}, tx.OperationMetadata.Tags)
+				require.Equal(t, rbacTimelockContractType, tx.ContractType)
+				require.Equal(t, []string{rbacTimelockContractType, "GrantRole"}, tx.Tags)
 
 				var additionalFields AdditionalFields
 				require.NoError(t, json.Unmarshal(tx.AdditionalFields, &additionalFields))
