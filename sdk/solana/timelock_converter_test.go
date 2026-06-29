@@ -119,7 +119,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -138,7 +138,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -157,7 +157,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -176,7 +176,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -195,7 +195,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -213,7 +213,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -231,7 +231,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -263,7 +263,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -296,7 +296,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -315,7 +315,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -334,7 +334,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -353,7 +353,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -372,7 +372,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("11111111111111111111111111111111")},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -390,7 +390,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("62gDM6BRLf2w1yXfmpePUTsuvbeBbu4QqdjV32wcc4UG"), IsWritable: true},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
@@ -413,7 +413,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 							{PublicKey: solana.MPK("t3ChqFTKHUFdjNPDf8CuhFGwkwzqR47LL7sDbeU99XD"), IsWritable: false, IsSigner: false},
 						}}),
 						OperationMetadata: types.OperationMetadata{
-							ContractType: "RBACTimelock",
+							ContractType: rbacTimelockContractType,
 							Tags:         []string{"tag1.1", "tag1.2", "tag2.1", "tag2.2"},
 						},
 					},
