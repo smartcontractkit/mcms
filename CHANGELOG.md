@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.49.1](https://github.com/smartcontractkit/mcms/compare/v0.49.0...v0.49.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* increase sui upgrade gas budget ([#798](https://github.com/smartcontractkit/mcms/issues/798)) ([e287f7a](https://github.com/smartcontractkit/mcms/commit/e287f7a76884151b68a75cf02393519b70e0f563))
+
 ## [0.49.0](https://github.com/smartcontractkit/mcms/compare/v0.48.0...v0.49.0) (2026-06-26)
 
 
