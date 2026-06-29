@@ -128,9 +128,11 @@ func (t *TimelockExecutor) Execute(
 		return types.TransactionResult{}, fmt.Errorf("failed to execute batch: %w", err)
 	}
 
+	gasBudget := DefaultExecuteGasBudget
 	opts := &bind.CallOpts{
 		Signer:           t.signer,
 		WaitForExecution: true,
+		GasBudget:        &gasBudget,
 	}
 
 	ptb := transaction.NewTransaction()
