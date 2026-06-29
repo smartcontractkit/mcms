@@ -24,7 +24,7 @@ import (
 
 const (
 	DefaultGasBudget = uint64(300_000_000)
-	UpgradeGasBudget = DefaultExecuteGasBudget
+	UpgradeGasBudget = suisdk.DefaultExecuteGasBudget
 )
 
 type MCMSUserUpgradeTestSuite struct {
