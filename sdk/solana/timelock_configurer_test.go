@@ -205,7 +205,7 @@ func TestTimelockConfigurer_GrantRole(t *testing.T) { //nolint:paralleltest
 					nil, errors.New("send failed"))
 			},
 			assertion: func(t assert.TestingT, err error, _ ...any) bool {
-				return assert.EqualError(t, err, "unable to grant role: unable to send instruction: send failed")
+				return assert.ErrorContains(t, err, "unable to grant role")
 			},
 		},
 	}

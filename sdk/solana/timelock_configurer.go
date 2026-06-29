@@ -20,6 +20,7 @@ var _ sdk.TimelockConfigurer = (*TimelockConfigurer)(nil)
 // TimelockConfigurer configures timelock parameters on Solana chains.
 type TimelockConfigurer struct {
 	*TimelockInspector
+	instructionCollection
 	client           *rpc.Client
 	auth             solana.PrivateKey
 	skipSend         bool
@@ -109,46 +110,57 @@ func (c *TimelockConfigurer) GrantRole(
 		return types.TransactionResult{}, fmt.Errorf("invalid target address: %s", targetAddress)
 	}
 
-	instruction, err := buildGrantRoleInstruction(ctx, c.client, timelockAddress, role, target, c.authorityAccount)
+	instructionBuilder, err := newGrantRoleInstructionBuilder(
+		ctx, c.client, timelockAddress, role, target, c.authorityAccount,
+	)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
 
-	if c.skipSend {
-		tx, txErr := NewTransactionFromInstruction(
-			instruction, rbacTimelockContractType, []string{rbacTimelockContractType, "GrantRole"},
-		)
-		if txErr != nil {
-			return types.TransactionResult{}, fmt.Errorf("unable to build grant role transaction: %w", txErr)
-		}
+	defer func() { c.instructions = []labeledInstruction{} }()
 
-		return types.TransactionResult{
-			Hash:        "",
-			ChainFamily: chainsel.FamilySolana,
-			RawData:     tx,
-		}, nil
+	err = c.addInstruction("GrantRole", instructionBuilder)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("unable to build grant role instruction: %w", err)
 	}
 
-	signature, tx, err := sendAndConfirmInstructions(ctx, c.client, c.auth, []solana.Instruction{instruction}, rpc.CommitmentConfirmed)
-	if err != nil {
-		return types.TransactionResult{}, fmt.Errorf("unable to grant role: %w", err)
+	var signature string
+	if !c.skipSend {
+		signature, err = c.sendInstructions(ctx, c.client, c.auth)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("unable to grant role: %w", err)
+		}
+	}
+
+	var rawData any
+	if c.skipSend {
+		rawData, err = NewTransactionFromInstruction(
+			c.instructions[0].Instruction,
+			rbacTimelockContractType,
+			[]string{rbacTimelockContractType, "GrantRole"},
+		)
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("unable to build grant role transaction: %w", err)
+		}
+	} else {
+		rawData = c.solanaInstructions()
 	}
 
 	return types.TransactionResult{
 		Hash:        signature,
 		ChainFamily: chainsel.FamilySolana,
-		RawData:     tx,
+		RawData:     rawData,
 	}, nil
 }
 
-func buildGrantRoleInstruction(
+func newGrantRoleInstructionBuilder(
 	ctx context.Context,
 	client *rpc.Client,
 	timelockAddress string,
 	role sdk.TimelockRole,
 	target solana.PublicKey,
 	authority solana.PublicKey,
-) (solana.Instruction, error) {
+) (timelockInstructionBuilder, error) {
 	programID, timelockID, err := ParseContractAddress(timelockAddress)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse contract address: %w", err)
@@ -191,12 +203,7 @@ func buildGrantRoleInstruction(
 	)
 	instructionBuilder.Append(solana.Meta(target))
 
-	instruction, err := instructionBuilder.ValidateAndBuild()
-	if err != nil {
-		return nil, fmt.Errorf("unable to build BatchAddAccess instruction: %w", err)
-	}
-
-	return instruction, nil
+	return instructionBuilder, nil
 }
 
 func getAccountOwner(ctx context.Context, client *rpc.Client, account solana.PublicKey) (solana.PublicKey, error) {
