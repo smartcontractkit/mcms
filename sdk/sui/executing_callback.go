@@ -16,10 +16,6 @@ import (
 	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 )
 
-const (
-	UpgradeGasBudget = 500_000_000
-)
-
 type EntrypointArgEncoder interface {
 	EncodeEntryPointArg(executingCallbackParams *transaction.Argument, target, module, function, stateObjID string, data []byte, typeArgs []string) (*bind.EncodedCall, error)
 }
@@ -138,8 +134,6 @@ func (e *ExecutingCallbackParams) executeDispatchToDeployer(ctx context.Context,
 }
 
 func (e *ExecutingCallbackParams) performPackageUpgrade(ptb *transaction.Transaction, call Call, upgradeTicketArg *transaction.Argument) *transaction.Argument {
-	ptb.SetGasBudget(UpgradeGasBudget)
-
 	upgradeReceiptArg := ptb.Upgrade(
 		call.CompiledModules,
 		call.Dependencies,

@@ -113,9 +113,11 @@ func (e Executor) ExecuteOperation(
 	stateObj := bind.Object{Id: e.mcmsObj}
 	clockObj := bind.Object{Id: "0x6"} // Clock object ID in Sui
 
+	gasBudget := DefaultExecuteGasBudget
 	opts := &bind.CallOpts{
 		Signer:           e.signer,
 		WaitForExecution: true,
+		GasBudget:        &gasBudget,
 	}
 
 	toAddress, err := AddressFromHex(op.Transaction.To)
@@ -264,9 +266,11 @@ func (e Executor) SetRoot(
 	}
 	signatures := encodeSignatures(sortedSignatures)
 
+	gasBudget := DefaultExecuteGasBudget
 	opts := &bind.CallOpts{
 		Signer:           e.signer,
 		WaitForExecution: true,
+		GasBudget:        &gasBudget,
 	}
 
 	stateObj := bind.Object{Id: e.mcmsObj} // Use stored MultisigState object ID

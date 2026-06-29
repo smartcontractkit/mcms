@@ -24,7 +24,7 @@ import (
 
 const (
 	DefaultGasBudget = uint64(300_000_000)
-	UpgradeGasBudget = uint64(500_000_000)
+	UpgradeGasBudget = DefaultExecuteGasBudget
 )
 
 type MCMSUserUpgradeTestSuite struct {
