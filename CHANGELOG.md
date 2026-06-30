@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.50.1](https://github.com/smartcontractkit/mcms/compare/v0.50.0...v0.50.1) (2026-06-30)
+
+
+### Bug Fixes
+
+* **deps:** bump chainlink-sui ([#802](https://github.com/smartcontractkit/mcms/issues/802)) ([4fdd6c3](https://github.com/smartcontractkit/mcms/commit/4fdd6c33efafc1eafb30374773879d51d0dea310))
+
 ## [0.50.0](https://github.com/smartcontractkit/mcms/compare/v0.49.1...v0.50.0) (2026-06-29)
 
 
