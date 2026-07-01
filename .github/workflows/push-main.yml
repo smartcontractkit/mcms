@@ -81,7 +81,7 @@ jobs:
           version: 1.18.26
 
       - name: Install Aptos CLI
-        uses: aptos-labs/actions/install-aptos-cli@528ef7ad9427a8c0720ea3eea790a9190d6e377d # v0.1
+        uses: aptos-labs/actions/install-aptos-cli@fdd3a3a628c840d5c35086a87e9cc3141b635505 # v0.1
         with:
           CLI_VERSION: 7.10.0
 
