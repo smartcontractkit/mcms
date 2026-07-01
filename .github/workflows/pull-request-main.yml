@@ -97,7 +97,7 @@ jobs:
           sui --version
 
       - name: Checkout code
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Compute Solana programs cache key
         id: solana-programs-cache-key
