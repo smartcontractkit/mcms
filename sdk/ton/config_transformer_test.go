@@ -13,7 +13,7 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
+	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/tlbe"
 
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
 )
