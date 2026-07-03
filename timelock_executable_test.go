@@ -648,6 +648,7 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, targetRoles []common.Hash
 
 	RunScheduleAndCancelTest(t, ScheduleAndCancelTestHooks{
 		Setup: func(ctx context.Context, t *testing.T) (ScheduleAndCancelTestEnv, error) {
+			t.Helper()
 			return ScheduleAndCancelTestEnv{
 				Proposal: proposal,
 				Chains:   accessor,
@@ -671,6 +672,7 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, targetRoles []common.Hash
 			require.Equal(t, geth_types.ReceiptStatusSuccessful, receipt.Status)
 		},
 		AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *ScheduleAndCancelTestEnv) {
+			t.Helper()
 			for _, role := range targetRoles {
 				hasRole, err := timelockC.HasRole(&bind.CallOpts{}, role, sim.Signers[0].Address(t))
 				require.NoError(t, err)

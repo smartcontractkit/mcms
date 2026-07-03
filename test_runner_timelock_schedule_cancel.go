@@ -187,6 +187,7 @@ func deriveCancellationProposal(
 	inspectors map[types.ChainSelector]sdk.Inspector,
 	hooks ScheduleAndCancelTestHooks,
 ) (TimelockProposal, error) {
+	t.Helper()
 	cancellerMetadata := make(map[types.ChainSelector]types.ChainMetadata, len(schedule.ChainMetadata))
 	for selector, metadata := range schedule.ChainMetadata {
 		opCount, err := inspectors[selector].GetOpCount(ctx, metadata.MCMAddress)

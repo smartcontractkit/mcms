@@ -108,6 +108,14 @@ func (a *TestSuite) TestTimelock_Cancel() {
 			require.NoError(t, err)
 			require.True(t, data.Success, data.VmStatus)
 		},
+		AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *mcmslib.ScheduleAndCancelTestEnv) {
+			// After the cancel proposal is executed, verify that the ownership transfer
+			// was not accepted — the owner should still be the deployer (from TransferOwnershipToSelf).
+			owner, err := a.MCMSContract.MCMSAccount().Owner(nil)
+			require.NoError(t, err)
+			require.Equal(t, a.deployerAccount.AccountAddress(), owner,
+				"Owner should remain the deployer after cancellation (accept_ownership was not executed)")
+		},
 	})
 }
 
