@@ -60,6 +60,9 @@ type ScheduleAndCancelTestHooks struct {
 func RunScheduleAndCancelTest(t *testing.T, hooks ScheduleAndCancelTestHooks) {
 	t.Helper()
 
+	require.NotNil(t, hooks.Setup, "ScheduleAndCancelTestHooks.Setup must not be nil")
+	require.NotNil(t, hooks.Sign, "ScheduleAndCancelTestHooks.Sign must not be nil")
+
 	ctx := t.Context()
 
 	env, err := hooks.Setup(ctx, t)
@@ -311,10 +314,12 @@ func assertOperationNotPendingState(t *testing.T, tExecutable *TimelockExecutabl
 	t.Helper()
 
 	ctx := t.Context()
-	want := fmt.Sprintf("operation %d is not pending", opIdx)
-	require.ErrorContains(t, tExecutable.IsOperationPending(ctx, opIdx), want)
+	err := tExecutable.IsOperationPending(ctx, opIdx)
+	var opErr *OperationNotPendingError
+	require.ErrorAs(t, err, &opErr)
+	require.Equal(t, opIdx, opErr.OpIndex)
 	for selector := range proposal.ChainMetadata {
-		require.ErrorContains(t, tExecutable.IsChainPending(ctx, selector), want)
+		require.ErrorAs(t, tExecutable.IsChainPending(ctx, selector), &opErr)
 	}
 }
 
@@ -322,10 +327,12 @@ func assertOperationNotReadyState(t *testing.T, tExecutable *TimelockExecutable,
 	t.Helper()
 
 	ctx := t.Context()
-	want := fmt.Sprintf("operation %d is not ready", opIdx)
-	require.ErrorContains(t, tExecutable.IsOperationReady(ctx, opIdx), want)
+	err := tExecutable.IsOperationReady(ctx, opIdx)
+	var opErr *OperationNotReadyError
+	require.ErrorAs(t, err, &opErr)
+	require.Equal(t, opIdx, opErr.OpIndex)
 	for selector := range proposal.ChainMetadata {
-		require.ErrorContains(t, tExecutable.IsChainReady(ctx, selector), want)
+		require.ErrorAs(t, tExecutable.IsChainReady(ctx, selector), &opErr)
 	}
 }
 
@@ -333,9 +340,11 @@ func assertOperationNotDoneState(t *testing.T, tExecutable *TimelockExecutable, 
 	t.Helper()
 
 	ctx := t.Context()
-	want := fmt.Sprintf("operation %d is not done", opIdx)
-	require.ErrorContains(t, tExecutable.IsOperationDone(ctx, opIdx), want)
+	err := tExecutable.IsOperationDone(ctx, opIdx)
+	var opErr *OperationNotDoneError
+	require.ErrorAs(t, err, &opErr)
+	require.Equal(t, opIdx, opErr.OpIndex)
 	for selector := range proposal.ChainMetadata {
-		require.ErrorContains(t, tExecutable.IsChainDone(ctx, selector), want)
+		require.ErrorAs(t, tExecutable.IsChainDone(ctx, selector), &opErr)
 	}
 }

@@ -107,11 +107,13 @@ func (a *TestSuite) TestTimelock_Cancel() {
 			return next, nil
 		},
 		WaitForTransaction: func(ctx context.Context, t *testing.T, tx types.TransactionResult) {
+			t.Helper()
 			data, err := a.AptosRPCClient.WaitForTransaction(tx.Hash)
 			require.NoError(t, err)
 			require.True(t, data.Success, data.VmStatus)
 		},
 		AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *mcmslib.ScheduleAndCancelTestEnv) {
+			t.Helper()
 			// After the cancel proposal is executed, verify that the ownership transfer
 			// was not accepted — the owner should still be the deployer (from TransferOwnershipToSelf).
 			owner, err := a.MCMSContract.MCMSAccount().Owner(nil)

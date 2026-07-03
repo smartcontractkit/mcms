@@ -259,6 +259,7 @@ func (s *ExecutionTestSuite) TestScheduleAndCancelProposal() {
 
 			mcmslib.RunScheduleAndCancelTest(s.T(), mcmslib.ScheduleAndCancelTestHooks{
 				Setup: func(ctx context.Context, t *testing.T) (mcmslib.ScheduleAndCancelTestEnv, error) {
+					t.Helper()
 					transactions := make([]types.Transaction, 0, len(tt.targetRoles))
 					for i, role := range tt.targetRoles {
 						grantRoleData, grantErr := tlb.ToCell(rbac.GrantRole{
@@ -319,16 +320,19 @@ func (s *ExecutionTestSuite) TestScheduleAndCancelProposal() {
 					}, nil
 				},
 				Sign: func(t *testing.T, signable *mcmslib.Signable) {
+					t.Helper()
 					_, err := signable.SignAndAppend(mcmslib.NewPrivateKeySigner(s.signers[1].Key))
 					require.NoError(t, err)
 				},
 				WaitForTransaction: func(ctx context.Context, t *testing.T, tx types.TransactionResult) {
+					t.Helper()
 					rawTx, ok := tx.RawData.(*tlb.Transaction)
 					require.True(t, ok)
 					require.NotNil(t, rawTx)
 					require.NoError(t, tracetracking.WaitForTrace(ctx, s.TonClient, rawTx))
 				},
 				AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *mcmslib.ScheduleAndCancelTestEnv) {
+					t.Helper()
 					inspectorT := mcmston.NewTimelockInspector(s.TonClient)
 					for _, role := range tt.targetRoles {
 						members, membersErr := tonRoleMembersFor(ctx, inspectorT, s.timelockAddr, role)
