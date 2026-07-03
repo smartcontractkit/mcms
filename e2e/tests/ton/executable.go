@@ -8,16 +8,10 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"testing"
 
-	"github.com/stretchr/testify/suite"
-
+	"github.com/ethereum/go-ethereum/common"
 	chainsel "github.com/smartcontractkit/chain-selectors"
-
-	"github.com/xssnick/tonutils-go/address"
-	"github.com/xssnick/tonutils-go/tlb"
-	"github.com/xssnick/tonutils-go/ton/wallet"
-	"github.com/xssnick/tonutils-go/tvm/cell"
-
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
@@ -27,18 +21,21 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
-
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	"github.com/xssnick/tonutils-go/address"
+	"github.com/xssnick/tonutils-go/tlb"
+	"github.com/xssnick/tonutils-go/ton/wallet"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	mcmslib "github.com/smartcontractkit/mcms"
-	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
-	"github.com/smartcontractkit/mcms/types"
-
+	chainwrappermocks "github.com/smartcontractkit/mcms/chainwrappers/mocks"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/internal/testutils"
-
+	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type ExecutionTestSuite struct {
@@ -227,6 +224,125 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.Require().NoError(err)
 	s.Require().Len(proposers, 2)
 	s.Require().Contains(proposers, s.mcmsAddr)
+}
+
+func (s *ExecutionTestSuite) TestScheduleAndCancelProposal() {
+	tests := []struct {
+		name        string
+		targetRoles []*big.Int
+	}{
+		{
+			name:        "valid schedule and cancel proposal with one tx and one op",
+			targetRoles: []*big.Int{timelock.RoleProposer},
+		},
+		{
+			name:        "valid schedule and cancel proposal with one tx and three ops",
+			targetRoles: []*big.Int{timelock.RoleProposer, timelock.RoleBypasser, timelock.RoleCanceller},
+		},
+	}
+
+	for _, tt := range tests {
+		s.Run(tt.name, func() {
+			ctx := s.T().Context()
+
+			inspector := mcmston.NewInspector(s.TonClient)
+			opCount, err := inspector.GetOpCount(ctx, s.mcmsAddr)
+			s.Require().NoError(err)
+
+			chainID, err := strconv.ParseInt(s.TonBlockchain.ChainID, 10, 32)
+			s.Require().NoError(err)
+
+			grantee := must(tvm.NewRandomV5R1TestWallet(s.TonClient, int32(chainID))).Address()
+			accessor := chainwrappermocks.NewChainAccessor(s.T())
+			accessor.EXPECT().TonClient(uint64(s.ChainA)).Return(s.TonClient, true).Maybe()
+			accessor.EXPECT().TonSigner(uint64(s.ChainA)).Return(s.wallet, true).Maybe()
+
+			mcmslib.RunScheduleAndCancelTest(s.T(), mcmslib.ScheduleAndCancelTestHooks{
+				Setup: func(ctx context.Context, t *testing.T) (mcmslib.ScheduleAndCancelTestEnv, error) {
+					t.Helper()
+					transactions := make([]types.Transaction, 0, len(tt.targetRoles))
+					for i, role := range tt.targetRoles {
+						grantRoleData, grantErr := tlb.ToCell(rbac.GrantRole{
+							QueryID: uint64(i + 1),
+							Role:    tlbe.NewUint256(role),
+							Account: grantee,
+						})
+						if grantErr != nil {
+							return mcmslib.ScheduleAndCancelTestEnv{}, grantErr
+						}
+
+						tx, txErr := mcmston.NewTransaction(
+							address.MustParseAddr(s.timelockAddr),
+							grantRoleData.ToBuilder().ToSlice(),
+							tlb.MustFromTON("0.1").Nano(),
+							bindings.ShortTimelock,
+							nil,
+							bindings.TypeTimelock,
+							[]string{bindings.ShortTimelock, "GrantRole"},
+						)
+						if txErr != nil {
+							return mcmslib.ScheduleAndCancelTestEnv{}, txErr
+						}
+
+						transactions = append(transactions, tx)
+					}
+
+					return mcmslib.ScheduleAndCancelTestEnv{
+						Proposal: mcmslib.TimelockProposal{
+							BaseProposal: mcmslib.BaseProposal{
+								Version:              "v1",
+								Kind:                 types.KindTimelockProposal,
+								Description:          "Cancels scheduled TON timelock role grants",
+								ValidUntil:           2004259681,
+								OverridePreviousRoot: false,
+								Signatures:           []types.Signature{},
+								ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+									s.ChainA: {
+										StartingOpCount:  opCount,
+										MCMAddress:       s.mcmsAddr,
+										AdditionalFields: testOpAdditionalFields,
+									},
+								},
+							},
+							Action: types.TimelockActionSchedule,
+							Delay:  types.MustParseDuration("5m"),
+							TimelockAddresses: map[types.ChainSelector]string{
+								s.ChainA: s.timelockAddr,
+							},
+							Operations: []types.BatchOperation{
+								{
+									ChainSelector: s.ChainA,
+									Transactions:  transactions,
+								},
+							},
+						},
+						Chains: accessor,
+					}, nil
+				},
+				Sign: func(t *testing.T, signable *mcmslib.Signable) {
+					t.Helper()
+					_, err := signable.SignAndAppend(mcmslib.NewPrivateKeySigner(s.signers[1].Key))
+					require.NoError(t, err)
+				},
+				WaitForTransaction: func(ctx context.Context, t *testing.T, tx types.TransactionResult) {
+					t.Helper()
+					rawTx, ok := tx.RawData.(*tlb.Transaction)
+					require.True(t, ok)
+					require.NotNil(t, rawTx)
+					require.NoError(t, tracetracking.WaitForTrace(ctx, s.TonClient, rawTx))
+				},
+				AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *mcmslib.ScheduleAndCancelTestEnv) {
+					t.Helper()
+					inspectorT := mcmston.NewTimelockInspector(s.TonClient)
+					for _, role := range tt.targetRoles {
+						members, membersErr := tonRoleMembersFor(ctx, inspectorT, s.timelockAddr, role)
+						require.NoError(t, membersErr)
+						require.NotContains(t, members, grantee.String())
+					}
+				},
+			})
+		})
+	}
 }
 
 // TestExecuteProposalMultiple executes 2 proposals to check nonce calculation mechanisms are working
@@ -1004,4 +1120,22 @@ func (i mockEVMInspector) GetRoot(ctx context.Context, mcmAddr string) (common.H
 
 func (i mockEVMInspector) GetRootMetadata(ctx context.Context, mcmAddr string) (types.ChainMetadata, error) {
 	return i.rootMetadata, nil
+}
+
+func tonRoleMembersFor(
+	ctx context.Context,
+	inspector sdk.TimelockInspector,
+	timelockAddr string,
+	role *big.Int,
+) ([]string, error) {
+	switch {
+	case role.Cmp(timelock.RoleProposer) == 0:
+		return inspector.GetProposers(ctx, timelockAddr)
+	case role.Cmp(timelock.RoleBypasser) == 0:
+		return inspector.GetBypassers(ctx, timelockAddr)
+	case role.Cmp(timelock.RoleCanceller) == 0:
+		return inspector.GetCancellers(ctx, timelockAddr)
+	default:
+		return nil, fmt.Errorf("unsupported timelock role: %s", role.String())
+	}
 }

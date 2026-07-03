@@ -3,117 +3,157 @@
 package aptos
 
 import (
-	"crypto/ecdsa"
+	"context"
 	"encoding/json"
-	"slices"
+	"testing"
 	"time"
 
-	"github.com/smartcontractkit/mcms"
-	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/types"
-
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-aptos/bindings/bind"
 
 	aptossdk "github.com/smartcontractkit/mcms/sdk/aptos"
+
+	mcmslib "github.com/smartcontractkit/mcms"
+	chainwrappermocks "github.com/smartcontractkit/mcms/chainwrappers/mocks"
+	"github.com/smartcontractkit/mcms/internal/testutils"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 func (a *TestSuite) TestTimelock_Cancel() {
-	/*
-		This tests that a timelock proposal scheduled by the Proposer MCM can be cancelled by the
-		Canceller MCM.
-
-		1. Configure the Canceller signers
-		2. Configure the Proposer signers
-		3. Initiate the ownership transfer from the deployer EOA (transfer_ownership)
-		4. Create and schedule a proposal using the Proposer MCM to accept ownership
-		5. Check that the operation has actually been scheduled with the timelock (is_operation)
-		6. Derive a cancellation-proposal form the timelock proposal and execute it
-		7. Check that the operation has actually been cancelled -> is_operation should return false
-	*/
 	a.deployMCMSContract()
 	mcmsAddress := a.MCMSContract.Address()
+	a.initTransferOwnership()
+
+	// Generate signers for both Proposer and Canceller roles
+	proposerSigners := testutils.MakeNewECDSASigners(2)
+	cancellerSigners := testutils.MakeNewECDSASigners(2)
+
+	a.configureRole(aptossdk.TimelockRoleProposer, keysToAddresses(proposerSigners), 2)
+	a.configureRole(aptossdk.TimelockRoleCanceller, keysToAddresses(cancellerSigners), 2)
+
+	accessor := chainwrappermocks.NewChainAccessor(a.T())
+	accessor.EXPECT().AptosClient(uint64(a.ChainSelector)).Return(a.AptosRPCClient, true).Maybe()
+	accessor.EXPECT().AptosSigner(uint64(a.ChainSelector)).Return(a.deployerAccount, true).Maybe()
+
+	phase := 0
+	mcmslib.RunScheduleAndCancelTest(a.T(), mcmslib.ScheduleAndCancelTestHooks{
+		Setup: func(ctx context.Context, t *testing.T) (mcmslib.ScheduleAndCancelTestEnv, error) {
+			t.Helper()
+			transaction, txErr := a.buildAcceptOwnershipTransaction()
+			if txErr != nil {
+				return mcmslib.ScheduleAndCancelTestEnv{}, txErr
+			}
+
+			return mcmslib.ScheduleAndCancelTestEnv{
+				Proposal: mcmslib.TimelockProposal{
+					BaseProposal: mcmslib.BaseProposal{
+						Version:     "v1",
+						Kind:        types.KindTimelockProposal,
+						Description: "Accept ownership via timelock",
+						ValidUntil:  uint32(time.Now().Add(time.Hour * 24).Unix()),
+						ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+							a.ChainSelector: {
+								StartingOpCount:  0,
+								MCMAddress:       mcmsAddress.StringLong(),
+								AdditionalFields: Must(json.Marshal(aptossdk.AdditionalFieldsMetadata{Role: aptossdk.TimelockRoleProposer})),
+							},
+						},
+					},
+					Action: types.TimelockActionSchedule,
+					Delay:  types.MustParseDuration("1s"),
+					TimelockAddresses: map[types.ChainSelector]string{
+						a.ChainSelector: mcmsAddress.StringLong(),
+					},
+					Operations: []types.BatchOperation{
+						{
+							ChainSelector: a.ChainSelector,
+							Transactions:  []types.Transaction{transaction},
+						},
+					},
+				},
+				Chains: accessor,
+			}, nil
+		},
+		Sign: func(t *testing.T, signable *mcmslib.Signable) {
+			t.Helper()
+			// Phase 0 = schedule (proposer), Phase 1 = cancel (canceller)
+			signers := proposerSigners
+			if phase > 0 {
+				signers = cancellerSigners
+			}
+			phase++
+			for _, signer := range signers {
+				_, err := signable.SignAndAppend(mcmslib.NewPrivateKeySigner(signer.Key))
+				require.NoError(t, err)
+			}
+		},
+		DeriveCancellationMetadata: func(t *testing.T, selector types.ChainSelector, scheduleMetadata types.ChainMetadata) (types.ChainMetadata, error) {
+			t.Helper()
+			// For the cancellation proposal, the MCMS role in AdditionalFields must be switched
+			// from the schedule role (Proposer) to the Canceller role. The Aptos SetRoot call
+			// reads the role from this metadata field and passes it to the on-chain contract.
+			next := scheduleMetadata
+			next.AdditionalFields = Must(json.Marshal(aptossdk.AdditionalFieldsMetadata{Role: aptossdk.TimelockRoleCanceller}))
+
+			cancellerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleCanceller)
+			cancellerOpCount, err := cancellerInspector.GetOpCount(t.Context(), next.MCMAddress)
+			if err != nil {
+				return types.ChainMetadata{}, err
+			}
+			next.StartingOpCount = cancellerOpCount
+
+			return next, nil
+		},
+		WaitForTransaction: func(ctx context.Context, t *testing.T, tx types.TransactionResult) {
+			t.Helper()
+			data, err := a.AptosRPCClient.WaitForTransaction(tx.Hash)
+			require.NoError(t, err)
+			require.True(t, data.Success, data.VmStatus)
+		},
+		AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *mcmslib.ScheduleAndCancelTestEnv) {
+			t.Helper()
+			// After the cancel proposal is executed, verify that the ownership transfer
+			// was not accepted — the owner should still be the deployer (from TransferOwnershipToSelf).
+			owner, err := a.MCMSContract.MCMSAccount().Owner(nil)
+			require.NoError(t, err)
+			require.Equal(t, a.deployerAccount.AccountAddress(), owner,
+				"Owner should remain the deployer after cancellation (accept_ownership was not executed)")
+		},
+	})
+}
+
+func (a *TestSuite) initTransferOwnership() {
 	opts := &bind.TransactOpts{Signer: a.deployerAccount}
-
-	// Configure Cancellers
-	cancellers := [2]common.Address{}
-	cancellerKeys := [2]*ecdsa.PrivateKey{}
-	for i := range cancellers {
-		cancellerKeys[i], _ = crypto.GenerateKey()
-		cancellers[i] = crypto.PubkeyToAddress(cancellerKeys[i].PublicKey)
-	}
-	slices.SortFunc(cancellers[:], func(a, b common.Address) int {
-		return a.Cmp(b)
-	})
-	{
-		cancellerConfig := &types.Config{
-			Quorum:  2,
-			Signers: cancellers[:],
-		}
-		cancelerConfigurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount, aptossdk.TimelockRoleCanceller)
-		result, err := cancelerConfigurer.SetConfig(a.T().Context(), mcmsAddress.StringLong(), cancellerConfig, false)
-		a.Require().NoError(err)
-		data, err := a.AptosRPCClient.WaitForTransaction(result.Hash)
-		a.Require().NoError(err)
-		a.Require().True(data.Success, data.VmStatus)
-	}
-
-	// Configure Proposers
-	proposers := [3]common.Address{}
-	proposerKeys := [3]*ecdsa.PrivateKey{}
-	for i := range proposers {
-		proposerKeys[i], _ = crypto.GenerateKey()
-		proposers[i] = crypto.PubkeyToAddress(proposerKeys[i].PublicKey)
-	}
-	slices.SortFunc(proposers[:], func(a, b common.Address) int {
-		return a.Cmp(b)
-	})
-	{
-		proposerConfig := &types.Config{
-			Quorum:  3,
-			Signers: proposers[:],
-		}
-		proposeConfigurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount, aptossdk.TimelockRoleProposer)
-		result, err := proposeConfigurer.SetConfig(a.T().Context(), mcmsAddress.StringLong(), proposerConfig, false)
-		a.Require().NoError(err)
-		data, err := a.AptosRPCClient.WaitForTransaction(result.Hash)
-		a.Require().NoError(err)
-		a.Require().True(data.Success, data.VmStatus)
-	}
-
-	// Initiate ownership transfer
-	{
-		tx, err := a.MCMSContract.MCMSAccount().TransferOwnershipToSelf(opts)
-		a.Require().NoError(err)
-		data, err := a.AptosRPCClient.WaitForTransaction(tx.Hash)
-		a.Require().NoError(err)
-		a.Require().True(data.Success, data.VmStatus)
-		a.T().Logf("🚀 TransferOwnershipToSelf in tx: %s", tx.Hash)
-	}
-
-	// =======================================================
-	// | Proposal - schedule accept ownership with proposers |
-	// =======================================================
-
-	validUntil := uint32(time.Now().Add(time.Hour * 24).Unix())
-	acceptOwnershipProposalBuilder := mcms.NewTimelockProposalBuilder().
-		SetVersion("v1").
-		SetValidUntil(validUntil).
-		SetDescription("Accept ownership via timelock").
-		AddTimelockAddress(a.ChainSelector, mcmsAddress.StringLong()).
-		AddChainMetadata(a.ChainSelector, types.ChainMetadata{
-			StartingOpCount:  0,
-			MCMAddress:       mcmsAddress.StringLong(),
-			AdditionalFields: Must(json.Marshal(aptossdk.AdditionalFieldsMetadata{Role: aptossdk.TimelockRoleProposer})),
-		}).
-		SetAction(types.TimelockActionSchedule).
-		SetDelay(types.NewDuration(time.Second))
-
-	module, function, _, args, err := a.MCMSContract.MCMSAccount().Encoder().AcceptOwnership()
+	tx, err := a.MCMSContract.MCMSAccount().TransferOwnershipToSelf(opts)
 	a.Require().NoError(err)
-	transaction, err := aptossdk.NewTransaction(
+	data, err := a.AptosRPCClient.WaitForTransaction(tx.Hash)
+	a.Require().NoError(err)
+	a.Require().True(data.Success, data.VmStatus)
+}
+
+func (a *TestSuite) configureRole(role aptossdk.TimelockRole, signers []common.Address, quorum uint8) {
+	config := &types.Config{
+		Quorum:  quorum,
+		Signers: signers,
+	}
+	configurer := aptossdk.NewConfigurer(a.AptosRPCClient, a.deployerAccount, role)
+	addr := a.MCMSContract.Address()
+	result, err := configurer.SetConfig(a.T().Context(), addr.StringLong(), config, false)
+	a.Require().NoError(err)
+	data, err := a.AptosRPCClient.WaitForTransaction(result.Hash)
+	a.Require().NoError(err)
+	a.Require().True(data.Success, data.VmStatus)
+}
+
+func (a *TestSuite) buildAcceptOwnershipTransaction() (types.Transaction, error) {
+	module, function, _, args, err := a.MCMSContract.MCMSAccount().Encoder().AcceptOwnership()
+	if err != nil {
+		return types.Transaction{}, err
+	}
+
+	return aptossdk.NewTransaction(
 		module.PackageName,
 		module.ModuleName,
 		function,
@@ -122,151 +162,13 @@ func (a *TestSuite) TestTimelock_Cancel() {
 		"MCMS",
 		nil,
 	)
-	a.Require().NoError(err)
-	acceptOwnershipProposalBuilder.AddOperation(types.BatchOperation{
-		ChainSelector: a.ChainSelector,
-		Transactions:  []types.Transaction{transaction},
-	})
-	acceptOwnershipTimelockProposal, err := acceptOwnershipProposalBuilder.Build()
-	a.Require().NoError(err)
+}
 
-	convertersMap := map[types.ChainSelector]sdk.TimelockConverter{
-		a.ChainSelector: aptossdk.NewTimelockConverter(),
+func keysToAddresses(signers []testutils.ECDSASigner) []common.Address {
+	addrs := make([]common.Address, len(signers))
+	for i, s := range signers {
+		addrs[i] = s.Address()
 	}
-	acceptOwnershipProposal, _, err := acceptOwnershipTimelockProposal.Convert(a.T().Context(), convertersMap)
-	a.Require().NoError(err)
 
-	proposerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleProposer)
-	proposerInspectorsMap := map[types.ChainSelector]sdk.Inspector{
-		a.ChainSelector: proposerInspector,
-	}
-	proposerSignable, err := mcms.NewSignable(&acceptOwnershipProposal, proposerInspectorsMap)
-	a.Require().NoError(err)
-
-	_, err = proposerSignable.SignAndAppend(mcms.NewPrivateKeySigner(proposerKeys[0]))
-	a.Require().NoError(err)
-	_, err = proposerSignable.SignAndAppend(mcms.NewPrivateKeySigner(proposerKeys[1]))
-	a.Require().NoError(err)
-	_, err = proposerSignable.SignAndAppend(mcms.NewPrivateKeySigner(proposerKeys[2]))
-	a.Require().NoError(err)
-
-	quorumMet, err := proposerSignable.ValidateSignatures(a.T().Context())
-	a.Require().NoError(err, "Error validating signatures")
-	a.Require().True(quorumMet, "Quorum not met")
-
-	// Set Root
-	encoders, err := acceptOwnershipProposal.GetEncoders()
-	a.Require().NoError(err)
-	aptosEncoder := encoders[a.ChainSelector].(*aptossdk.Encoder)
-	proposerExecutors := map[types.ChainSelector]sdk.Executor{
-		a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleProposer),
-	}
-	proposerExecutable, err := mcms.NewExecutable(&acceptOwnershipProposal, proposerExecutors)
-	a.Require().NoError(err, "Error creating executable")
-
-	result, err := proposerExecutable.SetRoot(a.T().Context(), a.ChainSelector)
-	a.Require().NoError(err)
-
-	data, err := a.AptosRPCClient.WaitForTransaction(result.Hash)
-	a.Require().NoError(err)
-	a.Require().True(data.Success, data.VmStatus)
-	a.T().Logf("✅ SetRoot in tx: %s", result.Hash)
-
-	// Assert
-	tree, _ := acceptOwnershipProposal.MerkleTree()
-	gotHash, gotValidUntil, err := proposerInspector.GetRoot(a.T().Context(), mcmsAddress.StringLong())
-	a.Require().NoError(err)
-	a.Require().Equal(validUntil, gotValidUntil)
-	a.Require().Equal(tree.Root, gotHash)
-
-	// Execute
-	a.T().Logf("Executing operation: %v", 0)
-	txOutput, err := proposerExecutable.Execute(a.T().Context(), 0)
-	a.Require().NoError(err)
-	data, err = a.AptosRPCClient.WaitForTransaction(txOutput.Hash)
-	a.Require().NoError(err)
-	a.Require().True(data.Success, data.VmStatus)
-	a.T().Logf("✅ Executed Operation in tx: %s", txOutput.Hash)
-
-	// Assert
-
-	// Check that op count has increased on the mcms contract
-	var opCount uint64
-	opCount, err = proposerInspector.GetOpCount(a.T().Context(), mcmsAddress.StringLong())
-	a.Require().NoError(err)
-	a.Require().EqualValues(1, opCount)
-
-	timelockExecutor := aptossdk.NewTimelockExecutor(a.AptosRPCClient, a.deployerAccount)
-	timelockExecutors := map[types.ChainSelector]sdk.TimelockExecutor{
-		a.ChainSelector: timelockExecutor,
-	}
-	timelockExecutable, err := mcms.NewTimelockExecutable(a.T().Context(), acceptOwnershipTimelockProposal, timelockExecutors)
-	a.Require().NoError(err)
-
-	operationID, err := timelockExecutable.GetOpID(a.T().Context(), 0, acceptOwnershipTimelockProposal.Operations[0], a.ChainSelector)
-	a.Require().NoError(err)
-	timelockInspector := aptossdk.NewTimelockInspector(a.AptosRPCClient)
-	ok, err := timelockInspector.IsOperation(a.T().Context(), mcmsAddress.StringLong(), operationID)
-	a.Require().NoError(err)
-	a.Require().True(ok, "Operation not found in timelock")
-
-	// ======================================================
-	// | Proposal - cancel accept ownership with cancellers |
-	// ======================================================
-
-	cancelTimelockProposal, err := acceptOwnershipTimelockProposal.DeriveCancellationProposal(map[types.ChainSelector]types.ChainMetadata{
-		a.ChainSelector: {
-			StartingOpCount:  0,
-			MCMAddress:       mcmsAddress.StringLong(),
-			AdditionalFields: Must(json.Marshal(aptossdk.AdditionalFieldsMetadata{Role: aptossdk.TimelockRoleCanceller})),
-		},
-	})
-	a.Require().NoError(err)
-
-	cancelProposal, _, err := cancelTimelockProposal.Convert(a.T().Context(), convertersMap)
-	a.Require().NoError(err)
-
-	cancellerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleCanceller)
-	cancellerInspectorMap := map[types.ChainSelector]sdk.Inspector{
-		a.ChainSelector: cancellerInspector,
-	}
-	cancellerSignable, err := mcms.NewSignable(&cancelProposal, cancellerInspectorMap)
-	a.Require().NoError(err)
-
-	_, err = cancellerSignable.SignAndAppend(mcms.NewPrivateKeySigner(cancellerKeys[0]))
-	a.Require().NoError(err)
-	_, err = cancellerSignable.SignAndAppend(mcms.NewPrivateKeySigner(cancellerKeys[1]))
-	a.Require().NoError(err)
-
-	quorumMet, err = cancellerSignable.ValidateSignatures(a.T().Context())
-	a.Require().NoError(err)
-	a.Require().True(quorumMet, "Quorum not met")
-
-	// Set Root
-	cancellerExecutors := map[types.ChainSelector]sdk.Executor{
-		a.ChainSelector: aptossdk.NewExecutor(a.AptosRPCClient, a.deployerAccount, aptosEncoder, aptossdk.TimelockRoleCanceller),
-	}
-	cancelExecutable, err := mcms.NewExecutable(&cancelProposal, cancellerExecutors)
-	a.Require().NoError(err)
-
-	result, err = cancelExecutable.SetRoot(a.T().Context(), a.ChainSelector)
-	a.Require().NoError(err)
-	data, err = a.AptosRPCClient.WaitForTransaction(result.Hash)
-	a.Require().NoError(err)
-	a.Require().True(data.Success, data.VmStatus)
-	a.T().Logf("SetRoot of cancel proposal: %s", result.Hash)
-
-	txOutput, err = cancelExecutable.Execute(a.T().Context(), 0)
-	a.Require().NoError(err)
-	data, err = a.AptosRPCClient.WaitForTransaction(txOutput.Hash)
-	a.Require().NoError(err)
-	a.Require().True(data.Success, data.VmStatus)
-	a.T().Logf("Canceled operation")
-
-	// Assert
-	ok, err = timelockInspector.IsOperation(a.T().Context(), mcmsAddress.StringLong(), operationID)
-	a.Require().NoError(err)
-	a.Require().False(ok, "Operation was cancelled but is still found in timelock")
-
-	a.T().Logf("🔓 Timelock operation %v canceled successfully", operationID)
+	return addrs
 }
