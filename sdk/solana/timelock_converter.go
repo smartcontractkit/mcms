@@ -296,7 +296,7 @@ func solanaInstructionToMcmsOperation(
 		}
 
 		transaction, err := NewTransaction(instruction.ProgramID().String(), data, (*big.Int)(nil),
-			accounts, "RBACTimelock", tags)
+			accounts, rbacTimelockContractType, tags)
 		if err != nil {
 			return []types.Operation{}, fmt.Errorf("unable to create new transaction: %w", err)
 		}

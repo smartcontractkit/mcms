@@ -1,5 +1,33 @@
 # @smartcontractkit/mcms
 
+## [0.50.1](https://github.com/smartcontractkit/mcms/compare/v0.50.0...v0.50.1) (2026-06-30)
+
+
+### Bug Fixes
+
+* **deps:** bump chainlink-sui ([#802](https://github.com/smartcontractkit/mcms/issues/802)) ([4fdd6c3](https://github.com/smartcontractkit/mcms/commit/4fdd6c33efafc1eafb30374773879d51d0dea310))
+
+## [0.50.0](https://github.com/smartcontractkit/mcms/compare/v0.49.1...v0.50.0) (2026-06-29)
+
+
+### Features
+
+* add solana grant role implementation ([#797](https://github.com/smartcontractkit/mcms/issues/797)) ([16a17e1](https://github.com/smartcontractkit/mcms/commit/16a17e1121e4aeb858f082ffdf53e202f25405da))
+
+## [0.49.1](https://github.com/smartcontractkit/mcms/compare/v0.49.0...v0.49.1) (2026-06-29)
+
+
+### Bug Fixes
+
+* increase sui upgrade gas budget ([#798](https://github.com/smartcontractkit/mcms/issues/798)) ([e287f7a](https://github.com/smartcontractkit/mcms/commit/e287f7a76884151b68a75cf02393519b70e0f563))
+
+## [0.49.0](https://github.com/smartcontractkit/mcms/compare/v0.48.0...v0.49.0) (2026-06-26)
+
+
+### Features
+
+* add timelock grant role functionality ([#794](https://github.com/smartcontractkit/mcms/issues/794)) ([50f7fce](https://github.com/smartcontractkit/mcms/commit/50f7fce7e0174370c643e5ec73b8c6e9a30175e2))
+
 ## [0.48.0](https://github.com/smartcontractkit/mcms/compare/v0.47.1...v0.48.0) (2026-06-11)
 
 

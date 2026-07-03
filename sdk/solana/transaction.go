@@ -11,6 +11,8 @@ import (
 	"github.com/smartcontractkit/mcms/types"
 )
 
+const rbacTimelockContractType = "RBACTimelock"
+
 func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 	fields := AdditionalFields{
 		Value: big.NewInt(0),

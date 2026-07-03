@@ -56,3 +56,53 @@ func (c *TimelockConfigurer) UpdateDelay(
 		RawData:     tx,
 	}, nil
 }
+
+// GrantRole calls grantRole on the RBACTimelock contract for a target address.
+func (c *TimelockConfigurer) GrantRole(
+	ctx context.Context,
+	timelockAddress string,
+	role sdk.TimelockRole,
+	targetAddress string,
+) (types.TransactionResult, error) {
+	if !common.IsHexAddress(timelockAddress) {
+		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %s", timelockAddress)
+	}
+
+	roleHash, err := TimelockRoleHash(role)
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
+
+	if !common.IsHexAddress(targetAddress) {
+		return types.TransactionResult{}, fmt.Errorf("invalid target address: %s", targetAddress)
+	}
+
+	timelock := common.HexToAddress(timelockAddress)
+	if timelock == (common.Address{}) {
+		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %s", timelockAddress)
+	}
+
+	account := common.HexToAddress(targetAddress)
+	if account == (common.Address{}) {
+		return types.TransactionResult{}, fmt.Errorf("invalid target address: %s", targetAddress)
+	}
+
+	opts := *c.auth
+	opts.Context = ctx
+
+	tl, err := bindings.NewRBACTimelock(timelock, c.client)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to bind RBACTimelock at %s: %w", timelockAddress, err)
+	}
+
+	tx, err := tl.GrantRole(&opts, [32]byte(roleHash), account)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to grant role %s to %s on %s: %w", role, account.Hex(), timelockAddress, err)
+	}
+
+	return types.TransactionResult{
+		Hash:        tx.Hash().Hex(),
+		ChainFamily: chainsel.FamilyEVM,
+		RawData:     tx,
+	}, nil
+}
