@@ -31,6 +31,7 @@ import (
 	mcmslib "github.com/smartcontractkit/mcms"
 	chainwrappermocks "github.com/smartcontractkit/mcms/chainwrappers/mocks"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
+	e2ecommon "github.com/smartcontractkit/mcms/e2e/tests/common"
 	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -257,8 +258,8 @@ func (s *ExecutionTestSuite) TestScheduleAndCancelProposal() {
 			accessor.EXPECT().TonClient(uint64(s.ChainA)).Return(s.TonClient, true).Maybe()
 			accessor.EXPECT().TonSigner(uint64(s.ChainA)).Return(s.wallet, true).Maybe()
 
-			mcmslib.RunScheduleAndCancelTest(s.T(), mcmslib.ScheduleAndCancelTestHooks{
-				Setup: func(ctx context.Context, t *testing.T) (mcmslib.ScheduleAndCancelTestEnv, error) {
+			e2ecommon.RunScheduleAndCancelTest(s.T(), e2ecommon.ScheduleAndCancelTestHooks{
+				Setup: func(ctx context.Context, t *testing.T) (e2ecommon.ScheduleAndCancelTestEnv, error) {
 					t.Helper()
 					transactions := make([]types.Transaction, 0, len(tt.targetRoles))
 					for i, role := range tt.targetRoles {
@@ -268,7 +269,7 @@ func (s *ExecutionTestSuite) TestScheduleAndCancelProposal() {
 							Account: grantee,
 						})
 						if grantErr != nil {
-							return mcmslib.ScheduleAndCancelTestEnv{}, grantErr
+							return e2ecommon.ScheduleAndCancelTestEnv{}, grantErr
 						}
 
 						tx, txErr := mcmston.NewTransaction(
@@ -281,13 +282,13 @@ func (s *ExecutionTestSuite) TestScheduleAndCancelProposal() {
 							[]string{bindings.ShortTimelock, "GrantRole"},
 						)
 						if txErr != nil {
-							return mcmslib.ScheduleAndCancelTestEnv{}, txErr
+							return e2ecommon.ScheduleAndCancelTestEnv{}, txErr
 						}
 
 						transactions = append(transactions, tx)
 					}
 
-					return mcmslib.ScheduleAndCancelTestEnv{
+					return e2ecommon.ScheduleAndCancelTestEnv{
 						Proposal: mcmslib.TimelockProposal{
 							BaseProposal: mcmslib.BaseProposal{
 								Version:              "v1",
@@ -331,7 +332,7 @@ func (s *ExecutionTestSuite) TestScheduleAndCancelProposal() {
 					require.NotNil(t, rawTx)
 					require.NoError(t, tracetracking.WaitForTrace(ctx, s.TonClient, rawTx))
 				},
-				AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *mcmslib.ScheduleAndCancelTestEnv) {
+				AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *e2ecommon.ScheduleAndCancelTestEnv) {
 					t.Helper()
 					inspectorT := mcmston.NewTimelockInspector(s.TonClient)
 					for _, role := range tt.targetRoles {
