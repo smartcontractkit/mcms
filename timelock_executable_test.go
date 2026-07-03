@@ -654,13 +654,16 @@ func scheduleAndCancelGrantRolesProposal(t *testing.T, targetRoles []common.Hash
 			}, nil
 		},
 		Sign: func(t *testing.T, signable *Signable) {
+			t.Helper()
 			_, err := signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[0].PrivateKey))
 			require.NoError(t, err)
 		},
 		PrepareConvertedProposal: func(t *testing.T, proposal *Proposal) {
+			t.Helper()
 			proposal.UseSimulatedBackend(true)
 		},
 		WaitForTransaction: func(ctx context.Context, t *testing.T, tx types.TransactionResult) {
+			t.Helper()
 			sim.Backend.Commit()
 			receipt, err := testutils.WaitMinedWithTxHash(ctx, sim.Backend.Client(), common.HexToHash(tx.Hash))
 			require.NoError(t, err)

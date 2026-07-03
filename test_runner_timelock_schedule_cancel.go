@@ -33,6 +33,13 @@ type ScheduleAndCancelTestHooks struct {
 	// execution are built. EVM simulated backend tests use this to enable simulated-backend mode.
 	PrepareConvertedProposal func(t *testing.T, proposal *Proposal)
 
+	// DeriveCancellationMetadata allows tests to override the cancellation metadata for a chain.
+	// The default runner copies the schedule metadata (only updating StartingOpCount), but some
+	// chains need to change fields like AdditionalFields. For example, Aptos stores the MCMS role
+	// in AdditionalFields and switches it from Proposer → Canceller for the cancel proposal.
+	// If nil, the runner falls back to copying the schedule metadata as-is.
+	DeriveCancellationMetadata func(t *testing.T, selector types.ChainSelector, scheduleMetadata types.ChainMetadata) (types.ChainMetadata, error)
+
 	// WaitForTransaction is called after every SetRoot / Execute result so each chain can confirm
 	// finality using its own mechanism.
 	WaitForTransaction func(ctx context.Context, t *testing.T, tx types.TransactionResult)
@@ -58,7 +65,7 @@ func RunScheduleAndCancelTest(t *testing.T, hooks ScheduleAndCancelTestHooks) {
 	env, err := hooks.Setup(ctx, t)
 	require.NoError(t, err)
 
-	scheduleInspectors, _ := runTimelockLifecycleProposal(
+	scheduleInspectors := runTimelockLifecycleProposal(
 		ctx,
 		t,
 		&env.Proposal,
@@ -79,7 +86,7 @@ func RunScheduleAndCancelTest(t *testing.T, hooks ScheduleAndCancelTestHooks) {
 		assertOperationNotDoneState(t, tExecutable, &env.Proposal, opIdx)
 	}
 
-	cancelProposal, err := deriveCancellationProposal(ctx, &env.Proposal, scheduleInspectors)
+	cancelProposal, err := deriveCancellationProposal(ctx, t, &env.Proposal, scheduleInspectors, hooks)
 	require.NoError(t, err)
 
 	runTimelockLifecycleProposal(
@@ -108,7 +115,7 @@ func runTimelockLifecycleProposal(
 	proposal *TimelockProposal,
 	chains chainwrappers.ChainAccessor,
 	hooks ScheduleAndCancelTestHooks,
-) (map[types.ChainSelector]sdk.Inspector, *Proposal) {
+) map[types.ChainSelector]sdk.Inspector {
 	t.Helper()
 
 	converters, err := chainwrappers.BuildConverters(proposal.ChainMetadata)
@@ -124,7 +131,7 @@ func runTimelockLifecycleProposal(
 	inspectors, err := chainwrappers.BuildInspectors(chains, mcmsProposal.ChainMetadata, proposal.Action)
 	require.NoError(t, err)
 
-	signable, err := NewSignable(&mcmsProposal, inspectors)
+	signable, err := NewSignable(&mcmsProposal, inspectors) //nolint:contextcheck //OPT-400
 	require.NoError(t, err)
 
 	require.NoError(t, signable.ValidateConfigs(ctx))
@@ -135,16 +142,16 @@ func runTimelockLifecycleProposal(
 	require.NoError(t, err)
 	require.True(t, quorumMet)
 
-	encoders, err := mcmsProposal.GetEncoders()
+	encoders, err := mcmsProposal.GetEncoders() //nolint:contextcheck //OPT-400
 	require.NoError(t, err)
 
 	executors, err := chainwrappers.BuildExecutors(chains, mcmsProposal.ChainMetadata, encoders, proposal.Action)
 	require.NoError(t, err)
 
-	executable, err := NewExecutable(&mcmsProposal, executors)
+	executable, err := NewExecutable(&mcmsProposal, executors) //nolint:contextcheck //OPT-400
 	require.NoError(t, err)
 
-	tree, err := mcmsProposal.MerkleTree()
+	tree, err := mcmsProposal.MerkleTree() //nolint:contextcheck //OPT-400
 	require.NoError(t, err)
 
 	// SetRoot is per participating chain, not per operation. A proposal may contain multiple
@@ -170,13 +177,15 @@ func runTimelockLifecycleProposal(
 
 	assertOpCounts(t, ctx, proposal, inspectors)
 
-	return inspectors, &mcmsProposal
+	return inspectors
 }
 
 func deriveCancellationProposal(
 	ctx context.Context,
+	t *testing.T,
 	schedule *TimelockProposal,
 	inspectors map[types.ChainSelector]sdk.Inspector,
+	hooks ScheduleAndCancelTestHooks,
 ) (TimelockProposal, error) {
 	cancellerMetadata := make(map[types.ChainSelector]types.ChainMetadata, len(schedule.ChainMetadata))
 	for selector, metadata := range schedule.ChainMetadata {
@@ -187,6 +196,17 @@ func deriveCancellationProposal(
 
 		next := metadata
 		next.StartingOpCount = opCount
+
+		// Allow chain-specific overrides (e.g., Aptos needs to swap the role in AdditionalFields
+		// and use the Canceller's per-role op count instead of the Proposer's).
+		if hooks.DeriveCancellationMetadata != nil {
+			var err error
+			next, err = hooks.DeriveCancellationMetadata(t, selector, next)
+			if err != nil {
+				return TimelockProposal{}, fmt.Errorf("deriving cancellation metadata for selector %d: %w", selector, err)
+			}
+		}
+
 		cancellerMetadata[selector] = next
 	}
 
