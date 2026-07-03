@@ -40,6 +40,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 	phase := 0
 	mcmslib.RunScheduleAndCancelTest(a.T(), mcmslib.ScheduleAndCancelTestHooks{
 		Setup: func(ctx context.Context, t *testing.T) (mcmslib.ScheduleAndCancelTestEnv, error) {
+			t.Helper()
 			transaction, txErr := a.buildAcceptOwnershipTransaction()
 			if txErr != nil {
 				return mcmslib.ScheduleAndCancelTestEnv{}, txErr
@@ -76,6 +77,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 			}, nil
 		},
 		Sign: func(t *testing.T, signable *mcmslib.Signable) {
+			t.Helper()
 			// Phase 0 = schedule (proposer), Phase 1 = cancel (canceller)
 			signers := proposerSigners
 			if phase > 0 {
@@ -88,6 +90,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 			}
 		},
 		DeriveCancellationMetadata: func(t *testing.T, selector types.ChainSelector, scheduleMetadata types.ChainMetadata) (types.ChainMetadata, error) {
+			t.Helper()
 			// For the cancellation proposal, the MCMS role in AdditionalFields must be switched
 			// from the schedule role (Proposer) to the Canceller role. The Aptos SetRoot call
 			// reads the role from this metadata field and passes it to the on-chain contract.
@@ -147,6 +150,7 @@ func (a *TestSuite) buildAcceptOwnershipTransaction() (types.Transaction, error)
 	if err != nil {
 		return types.Transaction{}, err
 	}
+
 	return aptossdk.NewTransaction(
 		module.PackageName,
 		module.ModuleName,
@@ -163,5 +167,6 @@ func keysToAddresses(signers []testutils.ECDSASigner) []common.Address {
 	for i, s := range signers {
 		addrs[i] = s.Address()
 	}
+
 	return addrs
 }

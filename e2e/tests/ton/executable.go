@@ -10,17 +10,8 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/stretchr/testify/suite"
-	"github.com/stretchr/testify/require"
-
+	"github.com/ethereum/go-ethereum/common"
 	chainsel "github.com/smartcontractkit/chain-selectors"
-
-	chainwrappermocks "github.com/smartcontractkit/mcms/chainwrappers/mocks"
-	"github.com/xssnick/tonutils-go/address"
-	"github.com/xssnick/tonutils-go/tlb"
-	"github.com/xssnick/tonutils-go/ton/wallet"
-	"github.com/xssnick/tonutils-go/tvm/cell"
-
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
@@ -30,18 +21,21 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
-
-	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	"github.com/xssnick/tonutils-go/address"
+	"github.com/xssnick/tonutils-go/tlb"
+	"github.com/xssnick/tonutils-go/ton/wallet"
+	"github.com/xssnick/tonutils-go/tvm/cell"
 
 	mcmslib "github.com/smartcontractkit/mcms"
-	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/sdk/evm"
-	"github.com/smartcontractkit/mcms/types"
-
+	chainwrappermocks "github.com/smartcontractkit/mcms/chainwrappers/mocks"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	"github.com/smartcontractkit/mcms/internal/testutils"
-
+	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	mcmston "github.com/smartcontractkit/mcms/sdk/ton"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 type ExecutionTestSuite struct {
