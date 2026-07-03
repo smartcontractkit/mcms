@@ -267,9 +267,8 @@ func assertOperationPendingState(t *testing.T, tExecutable *TimelockExecutable, 
 
 	ctx := t.Context()
 	require.NoError(t, tExecutable.IsOperationPending(ctx, opIdx))
-	for selector := range proposal.ChainMetadata {
-		require.NoError(t, tExecutable.IsChainPending(ctx, selector))
-	}
+	selector := proposal.Operations[opIdx].ChainSelector
+	require.NoError(t, tExecutable.IsChainPending(ctx, selector))
 }
 
 func assertTimelockOperationState(
@@ -277,7 +276,7 @@ func assertTimelockOperationState(
 	ctx context.Context,
 	proposal *TimelockProposal,
 	tExecutable *TimelockExecutable,
-	inspectors map[types.ChainSelector]sdk.TimelockExecutor,
+	executors map[types.ChainSelector]sdk.TimelockExecutor,
 	opIdx int,
 	wantIsOperation bool,
 	wantPending bool,
@@ -293,19 +292,19 @@ func assertTimelockOperationState(
 	opID, err := tExecutable.GetOpID(ctx, opIdx, op, selector)
 	require.NoError(t, err)
 
-	gotIsOperation, err := inspectors[selector].IsOperation(ctx, timelockAddress, opID)
+	gotIsOperation, err := executors[selector].IsOperation(ctx, timelockAddress, opID)
 	require.NoError(t, err)
 	require.Equal(t, wantIsOperation, gotIsOperation)
 
-	gotPending, err := inspectors[selector].IsOperationPending(ctx, timelockAddress, opID)
+	gotPending, err := executors[selector].IsOperationPending(ctx, timelockAddress, opID)
 	require.NoError(t, err)
 	require.Equal(t, wantPending, gotPending)
 
-	gotReady, err := inspectors[selector].IsOperationReady(ctx, timelockAddress, opID)
+	gotReady, err := executors[selector].IsOperationReady(ctx, timelockAddress, opID)
 	require.NoError(t, err)
 	require.Equal(t, wantReady, gotReady)
 
-	gotDone, err := inspectors[selector].IsOperationDone(ctx, timelockAddress, opID)
+	gotDone, err := executors[selector].IsOperationDone(ctx, timelockAddress, opID)
 	require.NoError(t, err)
 	require.Equal(t, wantDone, gotDone)
 }
@@ -318,9 +317,8 @@ func assertOperationNotPendingState(t *testing.T, tExecutable *TimelockExecutabl
 	var opErr *OperationNotPendingError
 	require.ErrorAs(t, err, &opErr)
 	require.Equal(t, opIdx, opErr.OpIndex)
-	for selector := range proposal.ChainMetadata {
-		require.ErrorAs(t, tExecutable.IsChainPending(ctx, selector), &opErr)
-	}
+	selector := proposal.Operations[opIdx].ChainSelector
+	require.ErrorAs(t, tExecutable.IsChainPending(ctx, selector), &opErr)
 }
 
 func assertOperationNotReadyState(t *testing.T, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int) {
@@ -331,9 +329,8 @@ func assertOperationNotReadyState(t *testing.T, tExecutable *TimelockExecutable,
 	var opErr *OperationNotReadyError
 	require.ErrorAs(t, err, &opErr)
 	require.Equal(t, opIdx, opErr.OpIndex)
-	for selector := range proposal.ChainMetadata {
-		require.ErrorAs(t, tExecutable.IsChainReady(ctx, selector), &opErr)
-	}
+	selector := proposal.Operations[opIdx].ChainSelector
+	require.ErrorAs(t, tExecutable.IsChainReady(ctx, selector), &opErr)
 }
 
 func assertOperationNotDoneState(t *testing.T, tExecutable *TimelockExecutable, proposal *TimelockProposal, opIdx int) {
@@ -344,7 +341,6 @@ func assertOperationNotDoneState(t *testing.T, tExecutable *TimelockExecutable, 
 	var opErr *OperationNotDoneError
 	require.ErrorAs(t, err, &opErr)
 	require.Equal(t, opIdx, opErr.OpIndex)
-	for selector := range proposal.ChainMetadata {
-		require.ErrorAs(t, tExecutable.IsChainDone(ctx, selector), &opErr)
-	}
+	selector := proposal.Operations[opIdx].ChainSelector
+	require.ErrorAs(t, tExecutable.IsChainDone(ctx, selector), &opErr)
 }
