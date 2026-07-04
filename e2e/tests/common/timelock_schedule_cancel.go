@@ -50,7 +50,7 @@ func (r RoleConfig) Sign(t *testing.T, signable *mcms.Signable) {
 	t.Helper()
 
 	require.LessOrEqual(t, int(r.Config.Quorum), len(r.Keys))
-	for i := 0; i < int(r.Config.Quorum); i++ {
+	for i := range int(r.Config.Quorum) {
 		_, err := signable.SignAndAppend(mcms.NewPrivateKeySigner(r.Keys[i]))
 		require.NoError(t, err)
 	}
