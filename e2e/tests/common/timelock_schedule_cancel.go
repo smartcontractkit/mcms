@@ -174,7 +174,7 @@ func runTimelockLifecycleProposal(
 		require.Equal(t, proposal.ValidUntil, validUntil)
 	}
 
-	for opIdx := range proposal.Operations {
+	for opIdx := range mcmsProposal.Operations {
 		tx, execErr := executable.Execute(ctx, opIdx)
 		require.NoError(t, execErr)
 		require.NotEmpty(t, tx.Hash)

@@ -33,7 +33,6 @@ func (s *TestSuite) TestScheduleAndCancelProposal() {
 
 	s.SetupMCM(testPDASeedTimelockScheduleCancel)
 	s.SetupTimelock(testPDASeedTimelockScheduleCancel, 5*time.Minute)
-	s.SetupCPIStub(testPDASeedTimelockScheduleCancel)
 
 	mcmAddress := solanasdk.ContractAddress(s.MCMProgramID, testPDASeedTimelockScheduleCancel)
 	timelockAddress := solanasdk.ContractAddress(s.TimelockProgramID, testPDASeedTimelockScheduleCancel)
