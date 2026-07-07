@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.51.0](https://github.com/smartcontractkit/mcms/compare/v0.50.1...v0.51.0) (2026-07-07)
+
+
+### Features
+
+* add `BuildTimelockInspectors` helper to chainwrappers package ([#809](https://github.com/smartcontractkit/mcms/issues/809)) ([26d7de3](https://github.com/smartcontractkit/mcms/commit/26d7de3785df3ef150638bb9fbd39c5a167bb5d5))
+
 ## [0.50.1](https://github.com/smartcontractkit/mcms/compare/v0.50.0...v0.50.1) (2026-06-30)
 
 
