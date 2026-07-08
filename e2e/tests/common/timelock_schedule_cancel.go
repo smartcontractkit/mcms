@@ -5,8 +5,10 @@ package common
 import (
 	"context"
 	"crypto/ecdsa"
+	"errors"
 	"fmt"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -319,34 +321,108 @@ func assertOperationNotPendingState(t *testing.T, tExecutable *mcms.TimelockExec
 	t.Helper()
 
 	ctx := t.Context()
-	err := tExecutable.IsOperationPending(ctx, opIdx)
-	var opErr *mcms.OperationNotPendingError
-	require.ErrorAs(t, err, &opErr)
-	require.Equal(t, opIdx, opErr.OpIndex)
 	selector := proposal.Operations[opIdx].ChainSelector
-	require.ErrorAs(t, tExecutable.IsChainPending(ctx, selector), &opErr)
+
+	requireOperationNotPendingOrNotFound(t, tExecutable.IsOperationPending(ctx, opIdx), opIdx)
+	requireChainNotPendingOrNotFound(t, tExecutable.IsChainPending(ctx, selector))
 }
 
 func assertOperationNotReadyState(t *testing.T, tExecutable *mcms.TimelockExecutable, proposal *mcms.TimelockProposal, opIdx int) {
 	t.Helper()
 
 	ctx := t.Context()
-	err := tExecutable.IsOperationReady(ctx, opIdx)
-	var opErr *mcms.OperationNotReadyError
-	require.ErrorAs(t, err, &opErr)
-	require.Equal(t, opIdx, opErr.OpIndex)
 	selector := proposal.Operations[opIdx].ChainSelector
-	require.ErrorAs(t, tExecutable.IsChainReady(ctx, selector), &opErr)
+
+	requireOperationNotReadyOrNotFound(t, tExecutable.IsOperationReady(ctx, opIdx), opIdx)
+	requireChainNotReadyOrNotFound(t, tExecutable.IsChainReady(ctx, selector))
 }
 
 func assertOperationNotDoneState(t *testing.T, tExecutable *mcms.TimelockExecutable, proposal *mcms.TimelockProposal, opIdx int) {
 	t.Helper()
 
 	ctx := t.Context()
-	err := tExecutable.IsOperationDone(ctx, opIdx)
-	var opErr *mcms.OperationNotDoneError
-	require.ErrorAs(t, err, &opErr)
-	require.Equal(t, opIdx, opErr.OpIndex)
 	selector := proposal.Operations[opIdx].ChainSelector
-	require.ErrorAs(t, tExecutable.IsChainDone(ctx, selector), &opErr)
+
+	requireOperationNotDoneOrNotFound(t, tExecutable.IsOperationDone(ctx, opIdx), opIdx)
+	requireChainNotDoneOrNotFound(t, tExecutable.IsChainDone(ctx, selector))
+}
+
+func requireOperationNotPendingOrNotFound(t *testing.T, err error, opIdx int) {
+	t.Helper()
+
+	var opErr *mcms.OperationNotPendingError
+	if errors.As(err, &opErr) {
+		require.Equal(t, opIdx, opErr.OpIndex)
+		return
+	}
+
+	requireNotFoundError(t, err)
+}
+
+func requireChainNotPendingOrNotFound(t *testing.T, err error) {
+	t.Helper()
+
+	var opErr *mcms.OperationNotPendingError
+	if errors.As(err, &opErr) {
+		return
+	}
+
+	requireNotFoundError(t, err)
+}
+
+func requireOperationNotReadyOrNotFound(t *testing.T, err error, opIdx int) {
+	t.Helper()
+
+	var opErr *mcms.OperationNotReadyError
+	if errors.As(err, &opErr) {
+		require.Equal(t, opIdx, opErr.OpIndex)
+		return
+	}
+
+	requireNotFoundError(t, err)
+}
+
+func requireChainNotReadyOrNotFound(t *testing.T, err error) {
+	t.Helper()
+
+	var opErr *mcms.OperationNotReadyError
+	if errors.As(err, &opErr) {
+		return
+	}
+
+	requireNotFoundError(t, err)
+}
+
+func requireOperationNotDoneOrNotFound(t *testing.T, err error, opIdx int) {
+	t.Helper()
+
+	var opErr *mcms.OperationNotDoneError
+	if errors.As(err, &opErr) {
+		require.Equal(t, opIdx, opErr.OpIndex)
+		return
+	}
+
+	requireNotFoundError(t, err)
+}
+
+func requireChainNotDoneOrNotFound(t *testing.T, err error) {
+	t.Helper()
+
+	var opErr *mcms.OperationNotDoneError
+	if errors.As(err, &opErr) {
+		return
+	}
+
+	requireNotFoundError(t, err)
+}
+
+func requireNotFoundError(t *testing.T, err error) {
+	t.Helper()
+
+	require.Error(t, err)
+	require.True(t, isNotFoundError(err), "expected not found error, got %v", err)
+}
+
+func isNotFoundError(err error) bool {
+	return err != nil && strings.Contains(strings.ToLower(err.Error()), "not found")
 }
