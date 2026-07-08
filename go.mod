@@ -24,7 +24,7 @@ require (
 	github.com/karalabe/hid v1.0.1-0.20260315100226-f5d04adeffeb
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/samber/lo v1.53.0
-	github.com/smartcontractkit/chain-selectors v1.0.103
+	github.com/smartcontractkit/chain-selectors v1.0.104
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20260428085939-5c70de12dbfc
 	github.com/smartcontractkit/chainlink-canton v0.0.0-20260615233851-4e78e7c23a58
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
