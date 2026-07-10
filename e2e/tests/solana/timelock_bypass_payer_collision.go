@@ -169,13 +169,13 @@ func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bo
 	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey))
 	s.Require().NoError(err)
 
-	encoders, err := mcmsProposal.GetEncoders() //nolint:contextcheck //OPT-400
+	encoders, err := mcmsProposal.GetEncoders() //nolint:contextcheck,nolintlint //OPT-400
 	s.Require().NoError(err)
 	encoder := encoders[s.ChainSelector].(*solanasdk.Encoder)
 	executors := map[types.ChainSelector]sdk.Executor{
 		s.ChainSelector: solanasdk.NewExecutor(encoder, s.SolanaClient, wallet),
 	}
-	executable, err := mcms.NewExecutable(&mcmsProposal, executors) //nolint:contextcheck //OPT-400
+	executable, err := mcms.NewExecutable(&mcmsProposal, executors) //nolint:contextcheck,nolintlint //OPT-400
 	s.Require().NoError(err)
 
 	_, err = executable.SetRoot(ctx, s.ChainSelector)
