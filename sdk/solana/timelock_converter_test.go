@@ -501,6 +501,123 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 	}
 }
 
+func TestTimelockConverter_ExecutePayerSignerOverride(t *testing.T) {
+	t.Parallel()
+
+	timelockAddress := ContractAddress(testTimelockProgramID, testPDASeed)
+	mcmAddress := ContractAddress(testMCMProgramID, testPDASeed)
+
+	proposerAC, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+	cancellerAC, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+	bypasserAC, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	metaBytes, err := json.Marshal(AdditionalFieldsMetadata{
+		ProposerRoleAccessController:  proposerAC.PublicKey(),
+		CancellerRoleAccessController: cancellerAC.PublicKey(),
+		BypasserRoleAccessController:  bypasserAC.PublicKey(),
+	})
+	require.NoError(t, err)
+	metadata := types.ChainMetadata{MCMAddress: mcmAddress, AdditionalFields: metaBytes}
+
+	payer, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	// A batch op whose remaining accounts include the payer as a writable,
+	// non-signer account (mirroring a BPF spill / transfer recipient).
+	batchOp := func() types.BatchOperation {
+		return types.BatchOperation{
+			ChainSelector: chaintest.Chain4Selector,
+			Transactions: []types.Transaction{{
+				To:   "11111111111111111111111111111111",
+				Data: []byte{1, 2, 3, 4},
+				AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+					{PublicKey: payer.PublicKey(), IsWritable: true},
+				}}),
+				OperationMetadata: types.OperationMetadata{ContractType: "System", Tags: []string{"t"}},
+			}},
+		}
+	}
+
+	convert := func(t *testing.T, ctx context.Context, action types.TimelockAction) []types.Operation {
+		t.Helper()
+		ops, _, cerr := TimelockConverter{}.ConvertBatchToChainOperations(ctx, metadata, batchOp(),
+			timelockAddress, mcmAddress, types.NewDuration(time.Second), action, common.Hash{},
+			common.HexToHash("0x01"))
+		require.NoError(t, cerr)
+		require.NotEmpty(t, ops)
+
+		return ops
+	}
+
+	// payerIsSigner reports the IsSigner flag of the payer account in the last
+	// converted op (BypasserExecuteBatch for a bypass), and whether it was found.
+	payerIsSigner := func(t *testing.T, ops []types.Operation) (isSigner, found bool) {
+		t.Helper()
+		last := ops[len(ops)-1]
+		var fields AdditionalFields
+		require.NoError(t, json.Unmarshal(last.Transaction.AdditionalFields, &fields))
+		for _, acc := range fields.Accounts {
+			if acc.PublicKey.Equals(payer.PublicKey()) {
+				return acc.IsSigner, true
+			}
+		}
+
+		return false, false
+	}
+
+	t.Run("bypass, no ctx: payer stays non-signer", func(t *testing.T) {
+		t.Parallel()
+		isSigner, found := payerIsSigner(t, convert(t, context.Background(), types.TimelockActionBypass))
+		require.True(t, found, "payer must appear in bypass remaining accounts")
+		require.False(t, isSigner)
+	})
+
+	t.Run("bypass, ctx with payer: payer becomes signer", func(t *testing.T) {
+		t.Parallel()
+		ctx := WithExecutePayers(context.Background(), ExecutePayers{chaintest.Chain4Selector: payer.PublicKey()})
+		isSigner, found := payerIsSigner(t, convert(t, ctx, types.TimelockActionBypass))
+		require.True(t, found)
+		require.True(t, isSigner)
+	})
+
+	t.Run("bypass, ctx payer not in accounts: no-op", func(t *testing.T) {
+		t.Parallel()
+		other, oerr := solana.NewRandomPrivateKey()
+		require.NoError(t, oerr)
+		ctx := WithExecutePayers(context.Background(), ExecutePayers{chaintest.Chain4Selector: other.PublicKey()})
+		isSigner, found := payerIsSigner(t, convert(t, ctx, types.TimelockActionBypass))
+		require.True(t, found)
+		require.False(t, isSigner, "override must not touch accounts other than the configured payer")
+	})
+
+	t.Run("schedule, ctx with payer: unchanged", func(t *testing.T) {
+		t.Parallel()
+		ctx := WithExecutePayers(context.Background(), ExecutePayers{chaintest.Chain4Selector: payer.PublicKey()})
+		withCtx := convert(t, ctx, types.TimelockActionSchedule)
+		noCtx := convert(t, context.Background(), types.TimelockActionSchedule)
+		require.Empty(t, cmp.Diff(noCtx, withCtx), "schedule conversion must ignore execute payers")
+	})
+}
+
+func TestApplyExecutePayerSignerOverride(t *testing.T) {
+	t.Parallel()
+
+	a := solana.NewWallet().PublicKey()
+	b := solana.NewWallet().PublicKey()
+	accounts := []*solana.AccountMeta{
+		{PublicKey: a, IsWritable: true},
+		{PublicKey: b, IsWritable: true},
+	}
+
+	applyExecutePayerSignerOverride(accounts, b)
+
+	require.False(t, accounts[0].IsSigner, "non-payer account must be untouched")
+	require.True(t, accounts[1].IsSigner, "payer account must be marked signer")
+}
+
 func TestAppendIxDataChunkSize(t *testing.T) {
 	tests := []struct {
 		name      string

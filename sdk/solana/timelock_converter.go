@@ -103,7 +103,18 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	case types.TimelockActionBypass:
 		accounts, rerr := getAccountsFromBatchOperation(batchOp)
 		if rerr != nil {
-			return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", err)
+			return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", rerr)
+		}
+		// If an expected execute payer is supplied via context, mark that account
+		// as a signer in the bypass remaining accounts. At execution time the payer
+		// is the outer transaction fee payer, which the Solana runtime always
+		// presents as a signer; without this override the off-chain Merkle leaf
+		// would hash it as IsSigner=false and on-chain proof verification would
+		// fail with ProofCannotBeVerified.
+		if payers, ok := ExecutePayersFrom(ctx); ok {
+			if payer, ok := payers[batchOp.ChainSelector]; ok && !payer.IsZero() {
+				applyExecutePayerSignerOverride(accounts, payer)
+			}
 		}
 		instructions, err = bypassInstructions(timelockPDASeed, operationID, additionalFields.BypasserRoleAccessController,
 			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData, //nolint:gosec
@@ -251,6 +262,19 @@ func getAccountsFromBatchOperation(batchOp types.BatchOperation) ([]*solana.Acco
 	}
 
 	return uniqueAccounts, nil
+}
+
+// applyExecutePayerSignerOverride marks the payer account as a signer in the
+// given account metas (in place). Used for Solana bypass operations where the
+// execute payer also appears in the instruction's remaining accounts: the
+// Solana runtime always presents the fee payer as a signer, so the off-chain
+// Merkle leaf must hash it the same way for proof verification to succeed.
+func applyExecutePayerSignerOverride(accounts []*solana.AccountMeta, payer solana.PublicKey) {
+	for _, acc := range accounts {
+		if acc.PublicKey.Equals(payer) {
+			acc.IsSigner = true
+		}
+	}
 }
 
 func syncWritableAttribute(accounts []*solana.AccountMeta) []*solana.AccountMeta {
