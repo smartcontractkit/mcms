@@ -124,7 +124,7 @@ func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bo
 	// --- bypass proposal ---
 	timelockProposal, err := mcms.NewTimelockProposalBuilder().
 		SetVersion("v1").
-		SetValidUntil(2051222400). // 2035-01-01T12:00:00 UTC
+		SetValidUntil(2051222400). // 2035-01-01T00:00:00 UTC
 		SetDescription("bypass proposal: executor payer appears in remaining_accounts").
 		SetOverridePreviousRoot(true).
 		SetDelay(types.NewDuration(1*time.Second)).
