@@ -192,7 +192,7 @@ func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bo
 
 	// Execute setup ops (init/append/finalize); they don't carry the executor key
 	// in their accounts so their proofs verify regardless of injectExecutePayer.
-	for i := range lastOp {
+	for i := 0; i < lastOp; i++ {
 		_, err = executable.Execute(ctx, i)
 		s.Require().NoError(err, "unexpected failure on setup op %d", i)
 	}
