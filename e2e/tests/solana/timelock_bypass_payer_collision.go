@@ -132,7 +132,7 @@ func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bo
 		AddTimelockAddress(s.ChainSelector, timelockAddress).
 		AddChainMetadata(s.ChainSelector, metadata).
 		AddOperation(batchOp).
-		Build() //nolint:contextcheck //OPT-400
+		Build()
 	s.Require().NoError(err)
 
 	converters := map[types.ChainSelector]sdk.TimelockConverter{
@@ -164,9 +164,9 @@ func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bo
 	s.Require().NoError(err)
 
 	inspectors := map[types.ChainSelector]sdk.Inspector{s.ChainSelector: solanasdk.NewInspector(s.SolanaClient)}
-	signable, err := mcms.NewSignable(&mcmsProposal, inspectors) //nolint:contextcheck //OPT-400
+	signable, err := mcms.NewSignable(&mcmsProposal, inspectors)
 	s.Require().NoError(err)
-	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey)) //nolint:contextcheck //OPT-400
+	_, err = signable.SignAndAppend(mcms.NewPrivateKeySigner(signerEVMAccount.PrivateKey))
 	s.Require().NoError(err)
 
 	encoders, err := mcmsProposal.GetEncoders() //nolint:contextcheck //OPT-400
