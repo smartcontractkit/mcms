@@ -273,6 +273,7 @@ func applyExecutePayerSignerOverride(accounts []*solana.AccountMeta, payer solan
 	for _, acc := range accounts {
 		if acc.PublicKey.Equals(payer) {
 			acc.IsSigner = true
+			return
 		}
 	}
 }

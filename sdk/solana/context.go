@@ -22,7 +22,12 @@ type ExecutePayers map[types.ChainSelector]solana.PublicKey
 // on-chain proof verification (which always sees the fee payer as a signer)
 // succeeds. See ConvertBatchToChainOperations.
 func WithExecutePayers(ctx context.Context, payers ExecutePayers) context.Context {
-	return context.WithValue(ctx, executePayersKey{}, payers)
+	copied := make(ExecutePayers, len(payers))
+	for chain, payer := range payers {
+		copied[chain] = payer
+	}
+
+	return context.WithValue(ctx, executePayersKey{}, copied)
 }
 
 // ExecutePayersFrom returns the ExecutePayers stored in ctx, if any.
