@@ -190,17 +190,21 @@ func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bo
 
 	balanceBefore := s.lamports(ctx, timelockSignerPDA)
 
-	for i := range mcmsProposal.Operations {
-		_, execErr := executable.Execute(ctx, i)
-		switch {
-		case i < lastOp:
-			s.Require().NoError(execErr, "unexpected failure on op %d before BypasserExecuteBatch", i)
-		case injectExecutePayer:
-			s.Require().NoError(execErr, "BypasserExecuteBatch should succeed once the execute payer is a signer")
-		default:
-			s.Require().Error(execErr, "expected BypasserExecuteBatch to fail due to execute-payer signer collision")
-			s.Require().ErrorContains(execErr, "ProofCannotBeVerified")
-		}
+	// Execute setup ops (init/append/finalize); they don't carry the executor key
+	// in their accounts so their proofs verify regardless of injectExecutePayer.
+	for i := range lastOp {
+		_, err = executable.Execute(ctx, i)
+		s.Require().NoError(err, "unexpected failure on setup op %d", i)
+	}
+
+	// Execute the final BypasserExecuteBatch op — the one whose remaining_accounts
+	// include the executor wallet, causing the signer-bit collision.
+	_, execErr := executable.Execute(ctx, lastOp)
+	if injectExecutePayer {
+		s.Require().NoError(execErr, "BypasserExecuteBatch should succeed once the execute payer is a signer")
+	} else {
+		s.Require().Error(execErr, "expected BypasserExecuteBatch to fail due to execute-payer signer collision")
+		s.Require().ErrorContains(execErr, "ProofCannotBeVerified")
 	}
 
 	if injectExecutePayer {
