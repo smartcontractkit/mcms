@@ -105,16 +105,14 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		if rerr != nil {
 			return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", rerr)
 		}
-		// If an expected execute payer is supplied via context, mark that account
-		// as a signer in the bypass remaining accounts. At execution time the payer
-		// is the outer transaction fee payer, which the Solana runtime always
-		// presents as a signer; without this override the off-chain Merkle leaf
-		// would hash it as IsSigner=false and on-chain proof verification would
-		// fail with ProofCannotBeVerified.
-		if payers, ok := ExecutePayersFrom(ctx); ok {
-			if payer, ok := payers[batchOp.ChainSelector]; ok && !payer.IsZero() {
-				applyExecutePayerSignerOverride(accounts, payer)
-			}
+		// If the expected execute payer is recorded in chain metadata, mark that
+		// account as a signer in the bypass remaining accounts. At execution time
+		// the payer is the outer transaction fee payer, which the Solana runtime
+		// always presents as a signer; without this override the off-chain Merkle
+		// leaf would hash it as IsSigner=false and on-chain proof verification
+		// would fail with ProofCannotBeVerified.
+		if additionalFields.ExecutePayer != nil && !additionalFields.ExecutePayer.IsZero() {
+			applyExecutePayerSignerOverride(accounts, *additionalFields.ExecutePayer)
 		}
 		instructions, err = bypassInstructions(timelockPDASeed, operationID, additionalFields.BypasserRoleAccessController,
 			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData, //nolint:gosec

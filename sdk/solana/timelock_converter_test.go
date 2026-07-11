@@ -514,16 +514,22 @@ func TestTimelockConverter_ExecutePayerSignerOverride(t *testing.T) {
 	bypasserAC, err := solana.NewRandomPrivateKey()
 	require.NoError(t, err)
 
-	metaBytes, err := json.Marshal(AdditionalFieldsMetadata{
+	payer, err := solana.NewRandomPrivateKey()
+	require.NoError(t, err)
+
+	baseMetadata := AdditionalFieldsMetadata{
 		ProposerRoleAccessController:  proposerAC.PublicKey(),
 		CancellerRoleAccessController: cancellerAC.PublicKey(),
 		BypasserRoleAccessController:  bypasserAC.PublicKey(),
-	})
+	}
+	metadataWithoutPayer := types.ChainMetadata{MCMAddress: mcmAddress}
+	metadataWithPayer := types.ChainMetadata{MCMAddress: mcmAddress}
+	metaBytes, err := json.Marshal(baseMetadata)
 	require.NoError(t, err)
-	metadata := types.ChainMetadata{MCMAddress: mcmAddress, AdditionalFields: metaBytes}
-
-	payer, err := solana.NewRandomPrivateKey()
+	metadataWithoutPayer.AdditionalFields = metaBytes
+	metaBytesWithPayer, err := json.Marshal(baseMetadata.WithExecutePayer(payer.PublicKey()))
 	require.NoError(t, err)
+	metadataWithPayer.AdditionalFields = metaBytesWithPayer
 
 	// A batch op whose remaining accounts include the payer as a writable,
 	// non-signer account (mirroring a BPF spill / transfer recipient).
@@ -541,9 +547,9 @@ func TestTimelockConverter_ExecutePayerSignerOverride(t *testing.T) {
 		}
 	}
 
-	convert := func(t *testing.T, ctx context.Context, action types.TimelockAction) []types.Operation {
+	convert := func(t *testing.T, metadata types.ChainMetadata, action types.TimelockAction) []types.Operation {
 		t.Helper()
-		ops, _, cerr := TimelockConverter{}.ConvertBatchToChainOperations(ctx, metadata, batchOp(),
+		ops, _, cerr := TimelockConverter{}.ConvertBatchToChainOperations(context.Background(), metadata, batchOp(),
 			timelockAddress, mcmAddress, types.NewDuration(time.Second), action, common.Hash{},
 			common.HexToHash("0x01"))
 		require.NoError(t, cerr)
@@ -568,37 +574,37 @@ func TestTimelockConverter_ExecutePayerSignerOverride(t *testing.T) {
 		return false, false
 	}
 
-	t.Run("bypass, no ctx: payer stays non-signer", func(t *testing.T) {
+	t.Run("bypass, no execute payer in metadata: payer stays non-signer", func(t *testing.T) {
 		t.Parallel()
-		isSigner, found := payerIsSigner(t, convert(t, context.Background(), types.TimelockActionBypass))
+		isSigner, found := payerIsSigner(t, convert(t, metadataWithoutPayer, types.TimelockActionBypass))
 		require.True(t, found, "payer must appear in bypass remaining accounts")
 		require.False(t, isSigner)
 	})
 
-	t.Run("bypass, ctx with payer: payer becomes signer", func(t *testing.T) {
+	t.Run("bypass, metadata with execute payer: payer becomes signer", func(t *testing.T) {
 		t.Parallel()
-		ctx := WithExecutePayers(context.Background(), ExecutePayers{chaintest.Chain4Selector: payer.PublicKey()})
-		isSigner, found := payerIsSigner(t, convert(t, ctx, types.TimelockActionBypass))
+		isSigner, found := payerIsSigner(t, convert(t, metadataWithPayer, types.TimelockActionBypass))
 		require.True(t, found)
 		require.True(t, isSigner)
 	})
 
-	t.Run("bypass, ctx payer not in accounts: no-op", func(t *testing.T) {
+	t.Run("bypass, metadata payer not in accounts: no-op", func(t *testing.T) {
 		t.Parallel()
 		other, oerr := solana.NewRandomPrivateKey()
 		require.NoError(t, oerr)
-		ctx := WithExecutePayers(context.Background(), ExecutePayers{chaintest.Chain4Selector: other.PublicKey()})
-		isSigner, found := payerIsSigner(t, convert(t, ctx, types.TimelockActionBypass))
+		metaBytesOtherPayer, merr := json.Marshal(baseMetadata.WithExecutePayer(other.PublicKey()))
+		require.NoError(t, merr)
+		metadataOtherPayer := types.ChainMetadata{MCMAddress: mcmAddress, AdditionalFields: metaBytesOtherPayer}
+		isSigner, found := payerIsSigner(t, convert(t, metadataOtherPayer, types.TimelockActionBypass))
 		require.True(t, found)
 		require.False(t, isSigner, "override must not touch accounts other than the configured payer")
 	})
 
-	t.Run("schedule, ctx with payer: unchanged", func(t *testing.T) {
+	t.Run("schedule, metadata with execute payer: unchanged", func(t *testing.T) {
 		t.Parallel()
-		ctx := WithExecutePayers(context.Background(), ExecutePayers{chaintest.Chain4Selector: payer.PublicKey()})
-		withCtx := convert(t, ctx, types.TimelockActionSchedule)
-		noCtx := convert(t, context.Background(), types.TimelockActionSchedule)
-		require.Empty(t, cmp.Diff(noCtx, withCtx), "schedule conversion must ignore execute payers")
+		withPayer := convert(t, metadataWithPayer, types.TimelockActionSchedule)
+		withoutPayer := convert(t, metadataWithoutPayer, types.TimelockActionSchedule)
+		require.Empty(t, cmp.Diff(withoutPayer, withPayer), "schedule conversion must ignore execute payers")
 	})
 }
 

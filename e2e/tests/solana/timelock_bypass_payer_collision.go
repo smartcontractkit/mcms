@@ -46,28 +46,28 @@ const bypassPayerTransferLamports = 1_000_000 // 0.001 SOL
 // wallet to reproduce the identical one-bit collision without deploying an
 // upgradeable program + buffer.
 //
-//   - "with execute payers": the proposal is converted with
-//     solanasdk.WithExecutePayers, so the converter marks the executor account
-//     IsSigner=true before the root is computed and the bypass executes cleanly.
-//   - "without execute payers": the same proposal converted without the context
-//     override still fails with ProofCannotBeVerified, documenting the bug and
-//     guarding against the fix silently becoming a no-op.
+//   - "with execute payer in metadata": the proposal's Solana chain metadata records
+//     the executor as executePayer, so the converter marks that account IsSigner=true
+//     before the root is computed and the bypass executes cleanly.
+//   - "without execute payer in metadata": the same proposal converted without the
+//     field still fails with ProofCannotBeVerified, documenting the bug and guarding
+//     against the fix silently becoming a no-op.
 func (s *TestSuite) TestBypassExecutePayerInRemainingAccounts() {
-	s.Run("with execute payers in context: bypass succeeds", func() {
+	s.Run("with execute payer in metadata: bypass succeeds", func() {
 		s.runBypassPayerCollision(testPDASeedBypassPayerWith, true)
 	})
-	s.Run("without execute payers in context: proof fails", func() {
+	s.Run("without execute payer in metadata: proof fails", func() {
 		s.runBypassPayerCollision(testPDASeedBypassPayerWithout, false)
 	})
 }
 
 // runBypassPayerCollision drives the full bypass flow (convert -> set config ->
 // sign -> set root -> execute) for a batch whose inner instruction sends
-// lamports to the executor wallet. When injectExecutePayer is true, the executor
-// is threaded through context so the converter marks it as a signer and the
-// bypass execute succeeds; otherwise the final op fails with
-// ProofCannotBeVerified.
-func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bool) {
+// lamports to the executor wallet. When setExecutePayerInMetadata is true, the
+// executor is recorded in the proposal's Solana chain metadata so the converter
+// marks it as a signer and the bypass execute succeeds; otherwise the final op
+// fails with ProofCannotBeVerified.
+func (s *TestSuite) runBypassPayerCollision(seed [32]byte, setExecutePayerInMetadata bool) {
 	// --- arrange ---
 	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	s.T().Cleanup(cancel)
@@ -120,6 +120,13 @@ func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bo
 		s.Roles[timelock.Canceller_Role].AccessController.PublicKey(),
 		s.Roles[timelock.Bypasser_Role].AccessController.PublicKey())
 	s.Require().NoError(err)
+	if setExecutePayerInMetadata {
+		var additionalFields solanasdk.AdditionalFieldsMetadata
+		s.Require().NoError(json.Unmarshal(metadata.AdditionalFields, &additionalFields))
+		additionalFields = additionalFields.WithExecutePayer(wallet.PublicKey())
+		metadata.AdditionalFields, err = json.Marshal(additionalFields)
+		s.Require().NoError(err)
+	}
 
 	// --- bypass proposal ---
 	timelockProposal, err := mcms.NewTimelockProposalBuilder().
@@ -139,22 +146,13 @@ func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bo
 		s.ChainSelector: solanasdk.TimelockConverter{},
 	}
 
-	// The fix: when the expected execute payer is threaded through context, the
-	// converter marks that account IsSigner=true so the off-chain Merkle root
-	// matches what the runtime presents at execution time.
-	if injectExecutePayer {
-		ctx = solanasdk.WithExecutePayers(ctx, solanasdk.ExecutePayers{
-			s.ChainSelector: wallet.PublicKey(),
-		})
-	}
-
 	mcmsProposal, _, err := timelockProposal.Convert(ctx, converters)
 	s.Require().NoError(err)
 
 	// The executor wallet lands in the final BypasserExecuteBatch op as a
 	// writable remaining account. Its IsSigner flag must reflect whether the
-	// execute-payer override was applied.
-	s.assertExecutorSignerBit(mcmsProposal, wallet.PublicKey(), injectExecutePayer)
+	// execute payer was recorded in chain metadata.
+	s.assertExecutorSignerBit(mcmsProposal, wallet.PublicKey(), setExecutePayerInMetadata)
 
 	// --- set config + sign + set root ---
 	signerEVMAccount := NewEVMTestAccount(s.T())
@@ -191,7 +189,7 @@ func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bo
 	balanceBefore := s.lamports(ctx, timelockSignerPDA)
 
 	// Execute setup ops (init/append/finalize); they don't carry the executor key
-	// in their accounts so their proofs verify regardless of injectExecutePayer.
+	// in their accounts so their proofs verify regardless of execute payer metadata.
 	for i := range lastOp {
 		_, err = executable.Execute(ctx, i)
 		s.Require().NoError(err, "unexpected failure on setup op %d", i)
@@ -200,14 +198,14 @@ func (s *TestSuite) runBypassPayerCollision(seed [32]byte, injectExecutePayer bo
 	// Execute the final BypasserExecuteBatch op — the one whose remaining_accounts
 	// include the executor wallet, causing the signer-bit collision.
 	_, execErr := executable.Execute(ctx, lastOp)
-	if injectExecutePayer {
+	if setExecutePayerInMetadata {
 		s.Require().NoError(execErr, "BypasserExecuteBatch should succeed once the execute payer is a signer")
 	} else {
 		s.Require().Error(execErr, "expected BypasserExecuteBatch to fail due to execute-payer signer collision")
 		s.Require().ErrorContains(execErr, "ProofCannotBeVerified")
 	}
 
-	if injectExecutePayer {
+	if setExecutePayerInMetadata {
 		// The inner transfer actually moved lamports out of the timelock signer PDA.
 		balanceAfter := s.lamports(ctx, timelockSignerPDA)
 		s.Require().Equal(balanceBefore-bypassPayerTransferLamports, balanceAfter,
