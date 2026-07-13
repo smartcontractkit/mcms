@@ -622,6 +622,55 @@ func TestTimelockConverter_ExecutePayerSignerOverride(t *testing.T) {
 		require.True(t, found)
 		require.False(t, isSigner, "zero ExecutePayer must not trigger the signer override")
 	})
+
+	t.Run("bypass, nil remaining account: ConvertBatch returns wrapped error", func(t *testing.T) {
+		t.Parallel()
+		badBatch := types.BatchOperation{
+			ChainSelector: chaintest.Chain4Selector,
+			Transactions: []types.Transaction{{
+				To:               "11111111111111111111111111111111",
+				Data:             []byte{1},
+				AdditionalFields: []byte(`{"accounts":[null]}`),
+			}},
+		}
+		_, _, cerr := TimelockConverter{}.ConvertBatchToChainOperations(context.Background(), metadataWithPayer, badBatch,
+			timelockAddress, mcmAddress, types.NewDuration(time.Second), types.TimelockActionBypass, common.Hash{},
+			common.HexToHash("0x01"))
+		require.Error(t, cerr)
+		require.ErrorContains(t, cerr, "unable to get accounts from batch operation")
+		require.ErrorContains(t, cerr, "nil account in batch operation additional fields")
+	})
+
+	t.Run("schedule, nil remaining account: ConvertBatch returns error", func(t *testing.T) {
+		t.Parallel()
+		badBatch := types.BatchOperation{
+			ChainSelector: chaintest.Chain4Selector,
+			Transactions: []types.Transaction{{
+				To:               "11111111111111111111111111111111",
+				Data:             []byte{1},
+				AdditionalFields: []byte(`{"accounts":[null]}`),
+			}},
+		}
+		_, _, cerr := TimelockConverter{}.ConvertBatchToChainOperations(context.Background(), metadataWithPayer, badBatch,
+			timelockAddress, mcmAddress, types.NewDuration(time.Second), types.TimelockActionSchedule, common.Hash{},
+			common.HexToHash("0x01"))
+		require.Error(t, cerr)
+		require.ErrorContains(t, cerr, "unable to convert batch operation to solana instructions")
+		require.ErrorContains(t, cerr, "nil account in batch operation additional fields")
+	})
+
+	t.Run("invalid chain metadata additional fields", func(t *testing.T) {
+		t.Parallel()
+		badMetadata := types.ChainMetadata{
+			MCMAddress:       mcmAddress,
+			AdditionalFields: []byte(`not-json`),
+		}
+		_, _, cerr := TimelockConverter{}.ConvertBatchToChainOperations(context.Background(), badMetadata, batchOp(),
+			timelockAddress, mcmAddress, types.NewDuration(time.Second), types.TimelockActionBypass, common.Hash{},
+			common.HexToHash("0x01"))
+		require.Error(t, cerr)
+		require.ErrorContains(t, cerr, "unable to unmarshal solana-specific additional fields from chain metada")
+	})
 }
 
 func TestApplyExecutePayerSignerOverride(t *testing.T) {
@@ -653,6 +702,71 @@ func TestApplyExecutePayerSignerOverride(t *testing.T) {
 			applyExecutePayerSignerOverride(nil, a)
 			applyExecutePayerSignerOverride([]*solana.AccountMeta{}, a)
 		})
+	})
+
+	t.Run("skips nil entries without panicking", func(t *testing.T) {
+		t.Parallel()
+		accts := []*solana.AccountMeta{nil, {PublicKey: b, IsWritable: true}}
+		require.NotPanics(t, func() {
+			applyExecutePayerSignerOverride(accts, b)
+		})
+		require.True(t, accts[1].IsSigner)
+	})
+}
+
+func TestGetAccountsFromBatchOperation(t *testing.T) {
+	t.Parallel()
+
+	pk := solana.NewWallet().PublicKey()
+	programID := "11111111111111111111111111111111"
+
+	t.Run("merges duplicate accounts as writable", func(t *testing.T) {
+		t.Parallel()
+		batch := types.BatchOperation{
+			ChainSelector: chaintest.Chain4Selector,
+			Transactions: []types.Transaction{
+				{
+					To:   programID,
+					Data: []byte{1},
+					AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+						{PublicKey: pk, IsWritable: false},
+					}}),
+				},
+				{
+					To:   programID,
+					Data: []byte{2},
+					AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+						{PublicKey: pk, IsWritable: true},
+					}}),
+				},
+			},
+		}
+		accounts, err := getAccountsFromBatchOperation(batch)
+		require.NoError(t, err)
+		var found bool
+		for _, acc := range accounts {
+			if acc.PublicKey.Equals(pk) {
+				found = true
+				require.True(t, acc.IsWritable, "duplicate pubkey must OR IsWritable")
+				require.False(t, acc.IsSigner)
+			}
+		}
+		require.True(t, found)
+	})
+
+	t.Run("returns error for invalid additional fields json", func(t *testing.T) {
+		t.Parallel()
+		batch := types.BatchOperation{
+			ChainSelector: chaintest.Chain4Selector,
+			Transactions: []types.Transaction{{
+				To:               programID,
+				Data:             []byte{1},
+				AdditionalFields: []byte(`{not-json`),
+			}},
+		}
+		_, err := getAccountsFromBatchOperation(batch)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "unable to unmarshal additional fields")
 	})
 }
 
