@@ -238,6 +238,9 @@ func getAccountsFromBatchOperation(batchOp types.BatchOperation) ([]*solana.Acco
 	accountsMap := map[solana.PublicKey]*solana.AccountMeta{}
 	uniqueAccounts := make([]*solana.AccountMeta, 0)
 	for _, account := range accounts {
+		if account == nil {
+			return nil, fmt.Errorf("nil account in batch operation additional fields")
+		}
 		existingAccount, found := accountsMap[account.PublicKey]
 		if found {
 			// existingAccount.IsSigner = existingAccount.IsSigner || account.IsSigner
@@ -272,7 +275,7 @@ func bypassRemainingAccounts(
 // applyExecutePayerSignerOverride marks payer as IsSigner=true in accounts (in place).
 func applyExecutePayerSignerOverride(accounts []*solana.AccountMeta, payer solana.PublicKey) {
 	for _, acc := range accounts {
-		if acc.PublicKey.Equals(payer) {
+		if acc != nil && acc.PublicKey.Equals(payer) {
 			acc.IsSigner = true
 			return
 		}

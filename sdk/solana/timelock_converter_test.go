@@ -717,6 +717,21 @@ func TestBypassRemainingAccounts(t *testing.T) {
 		require.Error(t, err)
 		require.ErrorContains(t, err, "unable to parse program id")
 	})
+
+	t.Run("returns error for nil account in additional fields", func(t *testing.T) {
+		t.Parallel()
+		badBatch := types.BatchOperation{
+			ChainSelector: chaintest.Chain4Selector,
+			Transactions: []types.Transaction{{
+				To:               "11111111111111111111111111111111",
+				Data:             []byte{1},
+				AdditionalFields: []byte(`{"accounts":[null]}`),
+			}},
+		}
+		_, err := bypassRemainingAccounts(badBatch, baseMeta)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "nil account in batch operation additional fields")
+	})
 }
 
 func TestAppendIxDataChunkSize(t *testing.T) {
