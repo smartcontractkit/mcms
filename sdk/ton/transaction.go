@@ -11,7 +11,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/types"
 
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/tvm"
 )
 
 func ValidateAdditionalFields(additionalFields json.RawMessage) error {

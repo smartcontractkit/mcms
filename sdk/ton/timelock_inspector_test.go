@@ -14,7 +14,7 @@ import (
 	"github.com/xssnick/tonutils-go/ton/wallet"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 
@@ -41,6 +41,8 @@ func (tt roleFetchTest) mockRoleContractCalls(t *testing.T, client *ton_mocks.AP
 	// Mock CurrentMasterchainInfo
 	client.EXPECT().CurrentMasterchainInfo(mock.Anything).
 		Return(&ton.BlockIDExt{}, nil)
+	client.EXPECT().WaitForBlock(mock.Anything).
+		Return(client)
 
 	// Mock response for role member count
 	encodedRoleMemberCount := tt.roleMemberCount
@@ -217,6 +219,8 @@ func TestTimelockInspector_GetRolesTests(t *testing.T) {
 				// Mock CurrentMasterchainInfo
 				client.EXPECT().CurrentMasterchainInfo(mock.Anything).
 					Return(&ton.BlockIDExt{}, nil)
+				client.EXPECT().WaitForBlock(mock.Anything).
+					Return(client)
 
 				// If there's an error, mock it on the first CallContract call
 				client.EXPECT().RunGetMethod(mock.Anything, mock.Anything, mock.Anything, mock.Anything, mock.Anything).
@@ -294,6 +298,8 @@ func TestTimelockInspector_IsOperation(t *testing.T) {
 			// Mock CurrentMasterchainInfo
 			client.EXPECT().CurrentMasterchainInfo(mock.Anything).
 				Return(&ton.BlockIDExt{}, nil)
+			client.EXPECT().WaitForBlock(mock.Anything).
+				Return(client)
 
 			if tt.mockError == nil {
 				// Encode the expected `IsOperation` return value for a successful call
@@ -350,6 +356,8 @@ func testIsOperationState(
 	// Mock CurrentMasterchainInfo
 	client.EXPECT().CurrentMasterchainInfo(mock.Anything).
 		Return(&ton.BlockIDExt{}, nil)
+	client.EXPECT().WaitForBlock(mock.Anything).
+		Return(client)
 
 	if mockError == nil {
 		// Encode the expected `IsOperation` return value for a successful call
@@ -538,6 +546,8 @@ func TestTimelockInspector_GetMinDelay(t *testing.T) {
 			// Mock CurrentMasterchainInfo
 			client.EXPECT().CurrentMasterchainInfo(mock.Anything).
 				Return(&ton.BlockIDExt{}, nil)
+			client.EXPECT().WaitForBlock(mock.Anything).
+				Return(client)
 
 			if tt.mockError == nil {
 				// Encode the expected `getMinDelay` return value for a successful call

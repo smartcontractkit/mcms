@@ -32,7 +32,8 @@ require (
 	github.com/smartcontractkit/chainlink-common v0.11.2-0.20260506120607-7f10be016c89
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260630144638-b69f16bdddd8
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.16.6
-	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260514223130-48bc90aca745
+	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260713162202-124316cd10ff
+	github.com/smartcontractkit/chainlink-ton/cciplib v0.1.0
 	github.com/smartcontractkit/freeport v0.1.3-0.20250828155247-add56fa28aad
 	github.com/smartcontractkit/go-daml v0.0.0-20260615231356-88c6ee9b5774
 	github.com/spf13/cast v1.10.0
@@ -41,8 +42,8 @@ require (
 	github.com/xssnick/tonutils-go v1.14.1
 	github.com/zksync-sdk/zksync2-go v1.1.1-0.20250620124214-2c742ee399c6
 	go.uber.org/zap v1.28.0
-	golang.org/x/crypto v0.53.0
-	golang.org/x/tools v0.45.0
+	golang.org/x/crypto v0.54.0
+	golang.org/x/tools v0.47.0
 	gotest.tools/v3 v3.5.2
 )
 
@@ -293,12 +294,12 @@ require (
 	go.uber.org/ratelimit v0.3.1 // indirect
 	golang.org/x/arch v0.22.0 // indirect
 	golang.org/x/exp v0.0.0-20260218203240-3dfff04db8fa // indirect
-	golang.org/x/net v0.55.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.21.0 // indirect
-	golang.org/x/sys v0.46.0 // indirect
-	golang.org/x/term v0.44.0 // indirect
-	golang.org/x/text v0.38.0 // indirect
+	golang.org/x/sync v0.22.0 // indirect
+	golang.org/x/sys v0.47.0 // indirect
+	golang.org/x/term v0.45.0 // indirect
+	golang.org/x/text v0.40.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
