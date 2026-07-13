@@ -15,7 +15,7 @@ import (
 	"github.com/xssnick/tonutils-go/ton"
 	"github.com/xssnick/tonutils-go/tvm/cell"
 
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/tvm"
 
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/types"
@@ -99,6 +99,8 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 		// Mock OpPendingInfo getter call
 		client.EXPECT().CurrentMasterchainInfo(mock.Anything).
 			Return(&ton.BlockIDExt{}, nil)
+		client.EXPECT().WaitForBlock(mock.Anything).
+			Return(client)
 
 		client.EXPECT().GetBlockData(mock.Anything, mock.Anything).
 			Return(&tlb.Block{BlockInfo: tlb.BlockHeader{}}, nil)

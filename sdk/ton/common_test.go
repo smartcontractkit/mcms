@@ -3,7 +3,7 @@ package ton_test
 import (
 	"github.com/smartcontractkit/mcms/internal/testutils"
 
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
+	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/tlbe"
 )
 
 func must[E any](out E, err error) E {
