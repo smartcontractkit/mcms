@@ -101,9 +101,10 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		instructions, err = cancelInstructions(timelockPDASeed, operationID, additionalFields.CancellerRoleAccessController,
 			operationPDA, configPDA, mcmSignerPDA)
 	case types.TimelockActionBypass:
-		// Transaction fields were already validated by getInstructionDataFromBatchOperation,
-		// so account extraction uses the same inputs and should not fail here.
-		accounts, _ := bypassRemainingAccounts(batchOp, additionalFields)
+accounts, rerr := bypassRemainingAccounts(batchOp, additionalFields)
+if rerr != nil {
+	return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", rerr)
+}
 		instructions, err = bypassInstructions(timelockPDASeed, operationID, additionalFields.BypasserRoleAccessController,
 			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData, //nolint:gosec
 			accounts)
