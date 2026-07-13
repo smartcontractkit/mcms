@@ -1,5 +1,11 @@
 # @smartcontractkit/mcms
 
+## Unreleased
+
+### Features
+
+* **solana:** optional `executePayer` on Timelock chain metadata so bypass Merkle leaves match Solana fee-payer signer bits
+
 ## [0.51.0](https://github.com/smartcontractkit/mcms/compare/v0.50.1...v0.51.0) (2026-07-07)
 
 

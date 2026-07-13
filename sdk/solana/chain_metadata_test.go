@@ -109,6 +109,54 @@ func TestNewChainMetadataFromTimelock(t *testing.T) {
 	}
 }
 
+func TestAdditionalFieldsMetadata_ExecutePayerJSON(t *testing.T) {
+	t.Parallel()
+
+	proposer := solana.NewWallet().PublicKey()
+	canceller := solana.NewWallet().PublicKey()
+	bypasser := solana.NewWallet().PublicKey()
+	payer := solana.NewWallet().PublicKey()
+
+	t.Run("omits executePayer when nil", func(t *testing.T) {
+		t.Parallel()
+
+		fields := AdditionalFieldsMetadata{
+			ProposerRoleAccessController:  proposer,
+			CancellerRoleAccessController: canceller,
+			BypasserRoleAccessController:  bypasser,
+		}
+		raw, err := json.Marshal(fields)
+		require.NoError(t, err)
+		require.NotContains(t, string(raw), "executePayer")
+
+		var roundTrip AdditionalFieldsMetadata
+		require.NoError(t, json.Unmarshal(raw, &roundTrip))
+		require.Nil(t, roundTrip.ExecutePayer)
+		require.True(t, roundTrip.ProposerRoleAccessController.Equals(proposer))
+	})
+
+	t.Run("serializes executePayer as base58 when set", func(t *testing.T) {
+		t.Parallel()
+
+		fields := AdditionalFieldsMetadata{
+			ProposerRoleAccessController:  proposer,
+			CancellerRoleAccessController: canceller,
+			BypasserRoleAccessController:  bypasser,
+		}.WithExecutePayer(payer)
+		raw, err := json.Marshal(fields)
+		require.NoError(t, err)
+
+		var asMap map[string]any
+		require.NoError(t, json.Unmarshal(raw, &asMap))
+		require.Equal(t, payer.String(), asMap["executePayer"])
+
+		var roundTrip AdditionalFieldsMetadata
+		require.NoError(t, json.Unmarshal(raw, &roundTrip))
+		require.NotNil(t, roundTrip.ExecutePayer)
+		require.True(t, roundTrip.ExecutePayer.Equals(payer))
+	})
+}
+
 func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
 	t.Parallel()
 
@@ -133,6 +181,15 @@ func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
 				CancellerRoleAccessController: validPK2.PublicKey(),
 				BypasserRoleAccessController:  validPK3.PublicKey(),
 			},
+			expectedErr: nil,
+		},
+		{
+			name: "valid keys with optional execute payer",
+			fields: AdditionalFieldsMetadata{
+				ProposerRoleAccessController:  validPK1.PublicKey(),
+				CancellerRoleAccessController: validPK2.PublicKey(),
+				BypasserRoleAccessController:  validPK3.PublicKey(),
+			}.WithExecutePayer(validPK1.PublicKey()),
 			expectedErr: nil,
 		},
 		{
