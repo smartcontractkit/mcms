@@ -101,19 +101,9 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		instructions, err = cancelInstructions(timelockPDASeed, operationID, additionalFields.CancellerRoleAccessController,
 			operationPDA, configPDA, mcmSignerPDA)
 	case types.TimelockActionBypass:
-		accounts, rerr := getAccountsFromBatchOperation(batchOp)
-		if rerr != nil {
-			return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", rerr)
-		}
-		// If the expected execute payer is recorded in chain metadata, mark that
-		// account as a signer in the bypass remaining accounts. At execution time
-		// the payer is the outer transaction fee payer, which the Solana runtime
-		// always presents as a signer; without this override the off-chain Merkle
-		// leaf would hash it as IsSigner=false and on-chain proof verification
-		// would fail with ProofCannotBeVerified.
-		if additionalFields.ExecutePayer != nil && !additionalFields.ExecutePayer.IsZero() {
-			applyExecutePayerSignerOverride(accounts, *additionalFields.ExecutePayer)
-		}
+		// Transaction fields were already validated by getInstructionDataFromBatchOperation,
+		// so account extraction uses the same inputs and should not fail here.
+		accounts, _ := bypassRemainingAccounts(batchOp, additionalFields)
 		instructions, err = bypassInstructions(timelockPDASeed, operationID, additionalFields.BypasserRoleAccessController,
 			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData, //nolint:gosec
 			accounts)
@@ -262,11 +252,23 @@ func getAccountsFromBatchOperation(batchOp types.BatchOperation) ([]*solana.Acco
 	return uniqueAccounts, nil
 }
 
-// applyExecutePayerSignerOverride marks the payer account as a signer in the
-// given account metas (in place). Used for Solana bypass operations where the
-// execute payer also appears in the instruction's remaining accounts: the
-// Solana runtime always presents the fee payer as a signer, so the off-chain
-// Merkle leaf must hash it the same way for proof verification to succeed.
+// bypassRemainingAccounts collects remaining accounts for a bypass op and applies
+// the execute-payer signer override when ExecutePayer is set in chain metadata.
+func bypassRemainingAccounts(
+	batchOp types.BatchOperation, additionalFields AdditionalFieldsMetadata,
+) ([]*solana.AccountMeta, error) {
+	accounts, err := getAccountsFromBatchOperation(batchOp)
+	if err != nil {
+		return nil, err
+	}
+	if additionalFields.HasExecutePayer() {
+		applyExecutePayerSignerOverride(accounts, *additionalFields.ExecutePayer)
+	}
+
+	return accounts, nil
+}
+
+// applyExecutePayerSignerOverride marks payer as IsSigner=true in accounts (in place).
 func applyExecutePayerSignerOverride(accounts []*solana.AccountMeta, payer solana.PublicKey) {
 	for _, acc := range accounts {
 		if acc.PublicKey.Equals(payer) {

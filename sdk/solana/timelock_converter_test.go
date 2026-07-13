@@ -606,6 +606,22 @@ func TestTimelockConverter_ExecutePayerSignerOverride(t *testing.T) {
 		withoutPayer := convert(t, metadataWithoutPayer, types.TimelockActionSchedule)
 		require.Empty(t, cmp.Diff(withoutPayer, withPayer), "schedule conversion must ignore execute payers")
 	})
+
+	t.Run("bypass, zero execute payer pointer: treated as unset", func(t *testing.T) {
+		t.Parallel()
+		zero := solana.PublicKey{}
+		metaBytesZero, zerr := json.Marshal(AdditionalFieldsMetadata{
+			ProposerRoleAccessController:  proposerAC.PublicKey(),
+			CancellerRoleAccessController: cancellerAC.PublicKey(),
+			BypasserRoleAccessController:  bypasserAC.PublicKey(),
+			ExecutePayer:                  &zero,
+		})
+		require.NoError(t, zerr)
+		metadataZeroPayer := types.ChainMetadata{MCMAddress: mcmAddress, AdditionalFields: metaBytesZero}
+		isSigner, found := payerIsSigner(t, convert(t, metadataZeroPayer, types.TimelockActionBypass))
+		require.True(t, found)
+		require.False(t, isSigner, "zero ExecutePayer must not trigger the signer override")
+	})
 }
 
 func TestApplyExecutePayerSignerOverride(t *testing.T) {
@@ -622,6 +638,85 @@ func TestApplyExecutePayerSignerOverride(t *testing.T) {
 
 	require.False(t, accounts[0].IsSigner, "non-payer account must be untouched")
 	require.True(t, accounts[1].IsSigner, "payer account must be marked signer")
+
+	t.Run("no match leaves accounts unchanged", func(t *testing.T) {
+		t.Parallel()
+		other := solana.NewWallet().PublicKey()
+		accts := []*solana.AccountMeta{{PublicKey: a, IsWritable: true}}
+		applyExecutePayerSignerOverride(accts, other)
+		require.False(t, accts[0].IsSigner)
+	})
+
+	t.Run("empty accounts is a no-op", func(t *testing.T) {
+		t.Parallel()
+		require.NotPanics(t, func() {
+			applyExecutePayerSignerOverride(nil, a)
+			applyExecutePayerSignerOverride([]*solana.AccountMeta{}, a)
+		})
+	})
+}
+
+func TestBypassRemainingAccounts(t *testing.T) {
+	t.Parallel()
+
+	payer := solana.NewWallet().PublicKey()
+	baseMeta := AdditionalFieldsMetadata{
+		ProposerRoleAccessController:  solana.NewWallet().PublicKey(),
+		CancellerRoleAccessController: solana.NewWallet().PublicKey(),
+		BypasserRoleAccessController:  solana.NewWallet().PublicKey(),
+	}
+
+	validBatch := types.BatchOperation{
+		ChainSelector: chaintest.Chain4Selector,
+		Transactions: []types.Transaction{{
+			To:   "11111111111111111111111111111111",
+			Data: []byte{1},
+			AdditionalFields: toJSON(t, AdditionalFields{Accounts: []*solana.AccountMeta{
+				{PublicKey: payer, IsWritable: true},
+			}}),
+		}},
+	}
+
+	t.Run("marks execute payer as signer", func(t *testing.T) {
+		t.Parallel()
+		accounts, err := bypassRemainingAccounts(validBatch, baseMeta.WithExecutePayer(payer))
+		require.NoError(t, err)
+		require.Len(t, accounts, 2) // program id + payer
+		found := false
+		for _, acc := range accounts {
+			if acc.PublicKey.Equals(payer) {
+				found = true
+				require.True(t, acc.IsSigner)
+			}
+		}
+		require.True(t, found)
+	})
+
+	t.Run("without execute payer keeps non-signer", func(t *testing.T) {
+		t.Parallel()
+		accounts, err := bypassRemainingAccounts(validBatch, baseMeta)
+		require.NoError(t, err)
+		for _, acc := range accounts {
+			if acc.PublicKey.Equals(payer) {
+				require.False(t, acc.IsSigner)
+			}
+		}
+	})
+
+	t.Run("returns error for invalid program id", func(t *testing.T) {
+		t.Parallel()
+		badBatch := types.BatchOperation{
+			ChainSelector: chaintest.Chain4Selector,
+			Transactions: []types.Transaction{{
+				To:               "not-a-valid-solana-program-id",
+				Data:             []byte{1},
+				AdditionalFields: toJSON(t, AdditionalFields{}),
+			}},
+		}
+		_, err := bypassRemainingAccounts(badBatch, baseMeta)
+		require.Error(t, err)
+		require.ErrorContains(t, err, "unable to parse program id")
+	})
 }
 
 func TestAppendIxDataChunkSize(t *testing.T) {

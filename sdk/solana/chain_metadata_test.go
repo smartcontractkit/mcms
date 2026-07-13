@@ -157,6 +157,38 @@ func TestAdditionalFieldsMetadata_ExecutePayerJSON(t *testing.T) {
 	})
 }
 
+func TestAdditionalFieldsMetadata_WithExecutePayer(t *testing.T) {
+	t.Parallel()
+
+	base := AdditionalFieldsMetadata{
+		ProposerRoleAccessController:  solana.NewWallet().PublicKey(),
+		CancellerRoleAccessController: solana.NewWallet().PublicKey(),
+		BypasserRoleAccessController:  solana.NewWallet().PublicKey(),
+	}
+	payer := solana.NewWallet().PublicKey()
+
+	require.False(t, base.HasExecutePayer())
+
+	updated := base.WithExecutePayer(payer)
+	require.Nil(t, base.ExecutePayer, "original must remain unchanged")
+	require.False(t, base.HasExecutePayer())
+	require.NotNil(t, updated.ExecutePayer)
+	require.True(t, updated.HasExecutePayer())
+	require.True(t, updated.ExecutePayer.Equals(payer))
+	require.True(t, updated.ProposerRoleAccessController.Equals(base.ProposerRoleAccessController))
+
+	require.NoError(t, updated.Validate())
+
+	raw, err := json.Marshal(updated)
+	require.NoError(t, err)
+	require.NoError(t, ValidateChainMetadata(types.ChainMetadata{AdditionalFields: raw}))
+
+	zero := solana.PublicKey{}
+	withZero := base
+	withZero.ExecutePayer = &zero
+	require.False(t, withZero.HasExecutePayer(), "zero public key must not count as set")
+}
+
 func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
 	t.Parallel()
 

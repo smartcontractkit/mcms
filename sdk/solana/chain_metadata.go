@@ -17,11 +17,7 @@ type AdditionalFieldsMetadata struct {
 	ProposerRoleAccessController  solana.PublicKey `json:"proposerRoleAccessController" validate:"required"`
 	CancellerRoleAccessController solana.PublicKey `json:"cancellerRoleAccessController" validate:"required"`
 	BypasserRoleAccessController  solana.PublicKey `json:"bypasserRoleAccessController" validate:"required"`
-	// ExecutePayer, when set, is the account that will pay for (and therefore sign)
-	// the MCM execute transaction on this chain. If it also appears in a bypass op's
-	// remaining accounts, the converter marks it as a signer so the off-chain Merkle
-	// leaf matches on-chain proof verification (runtime always presents the fee payer
-	// as a signer). Optional; ignored for schedule/cancel.
+	// ExecutePayer is the optional outer MCM execute fee payer (bypass only).
 	ExecutePayer *solana.PublicKey `json:"executePayer,omitempty"`
 }
 
@@ -29,6 +25,11 @@ type AdditionalFieldsMetadata struct {
 func (f AdditionalFieldsMetadata) WithExecutePayer(pk solana.PublicKey) AdditionalFieldsMetadata {
 	f.ExecutePayer = &pk
 	return f
+}
+
+// HasExecutePayer reports whether ExecutePayer is set to a non-zero public key.
+func (f AdditionalFieldsMetadata) HasExecutePayer() bool {
+	return f.ExecutePayer != nil && !f.ExecutePayer.IsZero()
 }
 
 func (f AdditionalFieldsMetadata) Validate() error {
