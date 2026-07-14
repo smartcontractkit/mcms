@@ -11,10 +11,10 @@ import (
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
+	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/hash"
+	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/tvm"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/hash"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
 
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"

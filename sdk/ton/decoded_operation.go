@@ -7,7 +7,7 @@ import (
 
 	"github.com/smartcontractkit/mcms/sdk"
 
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tvm"
+	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/tvm"
 )
 
 type DecodedOperation struct {
