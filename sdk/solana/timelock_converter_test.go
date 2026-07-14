@@ -766,7 +766,7 @@ func TestGetAccountsFromBatchOperation(t *testing.T) {
 		}
 		_, err := getAccountsFromBatchOperation(batch)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "unable to unmarshal solana additional fields")
+		require.ErrorContains(t, err, "unable to unmarshal additional fields")
 	})
 }
 
@@ -959,7 +959,7 @@ func TestOperationID(t *testing.T) {
 			action:      types.TimelockActionSchedule,
 			predecessor: common.HexToHash("0x0123"),
 			salt:        common.HexToHash("0xabcd"),
-			wantErr:     "unable to convert batch operation to solana instructions: unable to unmarshal solana additional fields: invalid character",
+			wantErr:     "unable to convert batch operation to solana instructions: unable to unmarshal additional fields: invalid character",
 		},
 	}
 	for _, tt := range tests {

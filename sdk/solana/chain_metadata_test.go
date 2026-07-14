@@ -39,6 +39,7 @@ func TestNewChainMetadataFromTimelock(t *testing.T) {
 		t.Helper()
 		jsonRPC := mocks.NewJSONRPCClient(t)
 		mockGetAccountInfo(t, jsonRPC, configPDA, &timelock.Config{}, rpcErr)
+
 		return rpc.NewWithCustomRPCClient(jsonRPC)
 	}
 

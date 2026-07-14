@@ -21,6 +21,7 @@ func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 	if err != nil {
 		return err
 	}
+
 	return fields.Validate()
 }
 
@@ -43,6 +44,7 @@ func ParseAdditionalFields(raw json.RawMessage) (AdditionalFields, error) {
 			return AdditionalFields{}, errNilAccountInAdditionalFields
 		}
 	}
+
 	return fields, nil
 }
 
