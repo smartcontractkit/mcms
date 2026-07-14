@@ -637,7 +637,7 @@ func TestTimelockConverter_ExecutePayerSignerOverride(t *testing.T) {
 			timelockAddress, mcmAddress, types.NewDuration(time.Second), types.TimelockActionBypass, common.Hash{},
 			common.HexToHash("0x01"))
 		require.Error(t, cerr)
-		require.ErrorContains(t, cerr, "unable to get accounts from batch operation")
+		require.ErrorContains(t, cerr, "unable to convert batch operation to solana instructions")
 		require.ErrorContains(t, cerr, "nil account in batch operation additional fields")
 	})
 
@@ -766,7 +766,7 @@ func TestGetAccountsFromBatchOperation(t *testing.T) {
 		}
 		_, err := getAccountsFromBatchOperation(batch)
 		require.Error(t, err)
-		require.ErrorContains(t, err, "unable to unmarshal additional fields")
+		require.ErrorContains(t, err, "unable to unmarshal solana additional fields")
 	})
 }
 
@@ -959,7 +959,7 @@ func TestOperationID(t *testing.T) {
 			action:      types.TimelockActionSchedule,
 			predecessor: common.HexToHash("0x0123"),
 			salt:        common.HexToHash("0xabcd"),
-			wantErr:     "unable to convert batch operation to solana instructions: unable to unmarshal Solana additional fields: invalid character",
+			wantErr:     "unable to convert batch operation to solana instructions: unable to unmarshal solana additional fields: invalid character",
 		},
 	}
 	for _, tt := range tests {

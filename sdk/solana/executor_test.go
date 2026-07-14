@@ -158,7 +158,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) { //nolint:paralleltest
 			want:    "",
 			wantErr: errors.New("invalid contract ID provided"),
 			assertion: func(t assert.TestingT, err error, i ...any) bool {
-				return assert.EqualError(t, err, "unable to unmarshal additional fields: invalid character 'b' looking for beginning of value")
+				return assert.EqualError(t, err, "unable to unmarshal solana additional fields: invalid character 'b' looking for beginning of value")
 			},
 		},
 	}

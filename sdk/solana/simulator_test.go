@@ -159,7 +159,7 @@ func TestSimulator_SimulateOperation(t *testing.T) {
 			setupMocks: func(t *testing.T, m *mocks.JSONRPCClient) {
 				t.Helper()
 			},
-			expectedError: "unable to unmarshal additional fields: invalid character 'i' looking for beginning of value",
+			expectedError: "unable to unmarshal solana additional fields: invalid character 'i' looking for beginning of value",
 		},
 		{
 			name: "error: block hash fetch failed",

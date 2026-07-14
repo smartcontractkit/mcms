@@ -21,10 +21,7 @@ import (
 	bindings "github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 )
 
-var (
-	_                               sdk.TimelockConverter = (*TimelockConverter)(nil)
-	errNilAccountInAdditionalFields                       = fmt.Errorf("nil account in batch operation additional fields")
-)
+var _ sdk.TimelockConverter = (*TimelockConverter)(nil)
 
 type TimelockConverter struct{}
 
@@ -60,16 +57,6 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	var additionalFields AdditionalFieldsMetadata
 	if err = json.Unmarshal(metadata.AdditionalFields, &additionalFields); err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to unmarshal solana-specific additional fields from chain metadata: %w", err)
-	}
-
-	// Resolve bypass remaining accounts before hashing so malformed account
-	// metadata fails early (including the ConvertBatch error path under test).
-	var bypassAccounts []*solana.AccountMeta
-	if action == types.TimelockActionBypass {
-		bypassAccounts, err = bypassRemainingAccounts(batchOp, additionalFields)
-		if err != nil {
-			return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", err)
-		}
 	}
 
 	instructionsData, err := getInstructionDataFromBatchOperation(batchOp)
@@ -117,6 +104,10 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		instructions, err = cancelInstructions(timelockPDASeed, operationID, additionalFields.CancellerRoleAccessController,
 			operationPDA, configPDA, mcmSignerPDA)
 	case types.TimelockActionBypass:
+		bypassAccounts, bypassErr := bypassRemainingAccounts(batchOp, additionalFields)
+		if bypassErr != nil {
+			return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", bypassErr)
+		}
 		instructions, err = bypassInstructions(timelockPDASeed, operationID, additionalFields.BypasserRoleAccessController,
 			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData, //nolint:gosec
 			bypassAccounts)
@@ -210,17 +201,9 @@ func getInstructionDataFromBatchOperation(batchOp types.BatchOperation) ([]bindi
 			return nil, fmt.Errorf("unable to parse program id from To field: %w", err)
 		}
 
-		var additionalFields AdditionalFields
-		if len(tx.AdditionalFields) > 0 {
-			err = json.Unmarshal(tx.AdditionalFields, &additionalFields)
-			if err != nil {
-				return nil, fmt.Errorf("unable to unmarshal Solana additional fields: %w\n%v", err, string(tx.AdditionalFields))
-			}
-		}
-		for _, account := range additionalFields.Accounts {
-			if account == nil {
-				return nil, errNilAccountInAdditionalFields
-			}
+		additionalFields, err := ParseAdditionalFields(tx.AdditionalFields)
+		if err != nil {
+			return nil, err
 		}
 
 		instructionsData = append(instructionsData, bindings.InstructionData{
@@ -242,12 +225,9 @@ func getAccountsFromBatchOperation(batchOp types.BatchOperation) ([]*solana.Acco
 		}
 		accounts = append(accounts, &solana.AccountMeta{PublicKey: toProgramID})
 
-		var additionalFields AdditionalFields
-		if len(tx.AdditionalFields) > 0 {
-			err = json.Unmarshal(tx.AdditionalFields, &additionalFields)
-			if err != nil {
-				return nil, fmt.Errorf("unable to unmarshal additional fields: %w\n%v", err, string(tx.AdditionalFields))
-			}
+		additionalFields, err := ParseAdditionalFields(tx.AdditionalFields)
+		if err != nil {
+			return nil, err
 		}
 		accounts = append(accounts, additionalFields.Accounts...)
 	}
@@ -255,9 +235,6 @@ func getAccountsFromBatchOperation(batchOp types.BatchOperation) ([]*solana.Acco
 	accountsMap := map[solana.PublicKey]*solana.AccountMeta{}
 	uniqueAccounts := make([]*solana.AccountMeta, 0)
 	for _, account := range accounts {
-		if account == nil {
-			return nil, errNilAccountInAdditionalFields
-		}
 		existingAccount, found := accountsMap[account.PublicKey]
 		if found {
 			// existingAccount.IsSigner = existingAccount.IsSigner || account.IsSigner
