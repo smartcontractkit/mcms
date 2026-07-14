@@ -15,8 +15,8 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tlbe"
 
 	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/types"
@@ -117,6 +117,8 @@ func TestInspector_GetConfig(t *testing.T) {
 			// Mock CurrentMasterchainInfo
 			client.EXPECT().CurrentMasterchainInfo(mock.Anything).
 				Return(&ton.BlockIDExt{}, nil)
+			client.EXPECT().WaitForBlock(mock.Anything).
+				Return(client)
 
 			if tt.mockError == nil {
 				// Encode the expected return value for a successful call
@@ -192,6 +194,8 @@ func TestInspector_GetOpCount(t *testing.T) {
 			// Mock CurrentMasterchainInfo
 			client.EXPECT().CurrentMasterchainInfo(mock.Anything).
 				Return(&ton.BlockIDExt{}, nil)
+			client.EXPECT().WaitForBlock(mock.Anything).
+				Return(client)
 
 			if tt.mockError == nil {
 				// Encode the expected return value for a successful call
@@ -267,6 +271,8 @@ func TestInspector_GetRoot(t *testing.T) {
 			// Mock CurrentMasterchainInfo
 			client.EXPECT().CurrentMasterchainInfo(mock.Anything).
 				Return(&ton.BlockIDExt{}, nil)
+			client.EXPECT().WaitForBlock(mock.Anything).
+				Return(client)
 
 			if tt.mockError == nil {
 				// Encode the expected return value for a successful call
@@ -347,6 +353,8 @@ func TestInspector_GetRootMetadata(t *testing.T) {
 			// Mock CurrentMasterchainInfo
 			client.EXPECT().CurrentMasterchainInfo(mock.Anything).
 				Return(&ton.BlockIDExt{}, nil)
+			client.EXPECT().WaitForBlock(mock.Anything).
+				Return(client)
 
 			if tt.mockError == nil {
 				r := ton.NewExecutionResult([]any{
