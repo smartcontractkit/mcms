@@ -669,7 +669,7 @@ func TestTimelockConverter_ExecutePayerSignerOverride(t *testing.T) {
 			timelockAddress, mcmAddress, types.NewDuration(time.Second), types.TimelockActionBypass, common.Hash{},
 			common.HexToHash("0x01"))
 		require.Error(t, cerr)
-		require.ErrorContains(t, cerr, "unable to unmarshal solana-specific additional fields from chain metada")
+		require.ErrorContains(t, cerr, "unable to unmarshal solana-specific additional fields from chain metadata")
 	})
 }
 
