@@ -59,7 +59,7 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 
 	var additionalFields AdditionalFieldsMetadata
 	if err = json.Unmarshal(metadata.AdditionalFields, &additionalFields); err != nil {
-		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to unmarshal solana-specific additional fields from chain metada: %w", err)
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to unmarshal solana-specific additional fields from chain metadata: %w", err)
 	}
 
 	// Resolve bypass remaining accounts before hashing so malformed account
