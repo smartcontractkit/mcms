@@ -14,7 +14,7 @@ import (
 
 const rbacTimelockContractType = "RBACTimelock"
 
-var errNilAccountInAdditionalFields = errors.New("nil account in batch operation additional fields")
+var errNilAccountInAdditionalFields = errors.New("nil account in solana additional fields")
 
 func ValidateAdditionalFields(additionalFields json.RawMessage) error {
 	fields, err := ParseAdditionalFields(additionalFields)
