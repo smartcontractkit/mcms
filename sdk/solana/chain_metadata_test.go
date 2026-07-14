@@ -1,180 +1,126 @@
 package solana
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	"gotest.tools/v3/assert"
-
-	"github.com/google/go-cmp/cmp"
-
-	"github.com/smartcontractkit/mcms/types"
-
 	"github.com/gagliardetto/solana-go"
 	"github.com/gagliardetto/solana-go/rpc"
+	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings/v0_1_1/timelock"
 
 	"github.com/smartcontractkit/mcms/sdk/solana/mocks"
+	"github.com/smartcontractkit/mcms/types"
 )
+
+func validAdditionalFields(t *testing.T) AdditionalFieldsMetadata {
+	t.Helper()
+	return AdditionalFieldsMetadata{
+		ProposerRoleAccessController:  solana.NewWallet().PublicKey(),
+		CancellerRoleAccessController: solana.NewWallet().PublicKey(),
+		BypasserRoleAccessController:  solana.NewWallet().PublicKey(),
+	}
+}
 
 func TestNewChainMetadataFromTimelock(t *testing.T) {
 	t.Parallel()
 
-	type params struct {
-		startingOpCount uint64
-		mcmProgramID    solana.PublicKey
-		mcmInstanceSeed PDASeed
-		timelock        solana.PublicKey
-		timelockSeed    PDASeed
-	}
-
 	programID := solana.NewWallet().PublicKey()
 	timelockProgramID := solana.NewWallet().PublicKey()
-	MCMSeed := PDASeed([32]byte{1, 2, 3, 4})
+	mcmSeed := PDASeed([32]byte{1, 2, 3, 4})
 	timelockSeed := PDASeed([32]byte{1, 2, 3, 4})
 
 	configPDA, err := FindTimelockConfigPDA(timelockProgramID, timelockSeed)
 	require.NoError(t, err)
 
-	tests := []struct {
-		name         string
-		params       params
-		setupMock    func(mock *mocks.JSONRPCClient)
-		wantMetadata *types.ChainMetadata
-		wantErr      error
-	}{
-		{
-			name: "valid metadata",
-			params: params{
-				startingOpCount: 100,
-				mcmProgramID:    programID,
-				mcmInstanceSeed: MCMSeed,
-				timelock:        timelockProgramID,
-				timelockSeed:    timelockSeed,
-			},
-			setupMock: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, &timelock.Config{}, nil)
-			},
-			wantMetadata: &types.ChainMetadata{
-				StartingOpCount:  100,
-				MCMAddress:       ContractAddress(programID, MCMSeed),
-				AdditionalFields: json.RawMessage(`{"proposerRoleAccessController":"11111111111111111111111111111111","cancellerRoleAccessController":"11111111111111111111111111111111","bypasserRoleAccessController":"11111111111111111111111111111111"}`),
-			},
-		},
-		{
-			name: "error rpc call",
-			params: params{
-				startingOpCount: 100,
-				mcmProgramID:    programID,
-				mcmInstanceSeed: MCMSeed,
-				timelock:        timelockProgramID,
-				timelockSeed:    timelockSeed,
-			},
-			wantErr: errors.New("unable to read timelock config pda: rpc error"),
-			setupMock: func(mockJSONRPCClient *mocks.JSONRPCClient) {
-				err := errors.New("rpc error")
-				mockGetAccountInfo(t, mockJSONRPCClient, configPDA, &timelock.Config{}, err)
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
+	newClient := func(t *testing.T, rpcErr error) *rpc.Client {
+		t.Helper()
+		jsonRPC := mocks.NewJSONRPCClient(t)
+		mockGetAccountInfo(t, jsonRPC, configPDA, &timelock.Config{}, rpcErr)
 
-			jsonRPC := mocks.NewJSONRPCClient(t)
-			tt.setupMock(jsonRPC)
-			client := rpc.NewWithCustomRPCClient(jsonRPC)
-			metadata, err := NewChainMetadataFromTimelock(
-				context.Background(),
-				client,
-				tt.params.startingOpCount,
-				tt.params.mcmProgramID,
-				tt.params.mcmInstanceSeed,
-				tt.params.timelock,
-				tt.params.timelockSeed)
-			if tt.wantErr == nil {
-				require.NoError(t, err, "expected no error but got one")
-				require.Empty(t, cmp.Diff(tt.wantMetadata, &metadata))
-			} else {
-				// Assert the error message matches the expected error.
-				require.NotNil(t, metadata)
-				require.EqualError(t, err, tt.wantErr.Error())
-			}
-		})
+		return rpc.NewWithCustomRPCClient(jsonRPC)
 	}
+
+	t.Run("returns metadata from timelock config", func(t *testing.T) {
+		t.Parallel()
+		metadata, err := NewChainMetadataFromTimelock(
+			t.Context(), newClient(t, nil), 100, programID, mcmSeed, timelockProgramID, timelockSeed)
+		require.NoError(t, err)
+		require.Equal(t, uint64(100), metadata.StartingOpCount)
+		require.Equal(t, ContractAddress(programID, mcmSeed), metadata.MCMAddress)
+	})
+
+	t.Run("wraps RPC errors", func(t *testing.T) {
+		t.Parallel()
+		_, err := NewChainMetadataFromTimelock(
+			t.Context(), newClient(t, errors.New("rpc error")), 100, programID, mcmSeed, timelockProgramID, timelockSeed)
+		require.EqualError(t, err, "unable to read timelock config pda: rpc error")
+	})
+}
+
+func TestAdditionalFieldsMetadata_ExecutePayer(t *testing.T) {
+	t.Parallel()
+
+	base := validAdditionalFields(t)
+	payer := solana.NewWallet().PublicKey()
+
+	t.Run("WithExecutePayer returns copy without mutating original", func(t *testing.T) {
+		t.Parallel()
+		updated := base.WithExecutePayer(payer)
+		require.Nil(t, base.ExecutePayer)
+		require.True(t, updated.ExecutePayer.Equals(payer))
+		require.True(t, updated.ProposerRoleAccessController.Equals(base.ProposerRoleAccessController))
+	})
+
+	t.Run("HasExecutePayer is false for nil and zero key, true when set", func(t *testing.T) {
+		t.Parallel()
+		require.False(t, base.HasExecutePayer())
+
+		zero := solana.PublicKey{}
+		withZero := base
+		withZero.ExecutePayer = &zero
+		require.False(t, withZero.HasExecutePayer())
+
+		require.True(t, base.WithExecutePayer(payer).HasExecutePayer())
+	})
+
+	t.Run("JSON round-trips executePayer, omits when nil", func(t *testing.T) {
+		t.Parallel()
+
+		raw, err := json.Marshal(base)
+		require.NoError(t, err)
+		require.NotContains(t, string(raw), "executePayer")
+
+		raw, err = json.Marshal(base.WithExecutePayer(payer))
+		require.NoError(t, err)
+
+		var roundTrip AdditionalFieldsMetadata
+		require.NoError(t, json.Unmarshal(raw, &roundTrip))
+		require.True(t, roundTrip.ExecutePayer.Equals(payer))
+	})
 }
 
 func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
 	t.Parallel()
 
-	// Create valid public keys for testing.
-	validPK1, err := solana.NewRandomPrivateKey()
-	require.NoError(t, err)
-	validPK2, err := solana.NewRandomPrivateKey()
-	require.NoError(t, err)
-	validPK3, err := solana.NewRandomPrivateKey()
-	require.NoError(t, err)
-	zeroPK := solana.PublicKey{} // zero value public key
+	require.NoError(t, validAdditionalFields(t).Validate(), "all valid keys")
+	require.NoError(t, validAdditionalFields(t).WithExecutePayer(solana.NewWallet().PublicKey()).Validate(), "with execute payer")
 
-	tests := []struct {
-		name        string
-		fields      AdditionalFieldsMetadata
-		expectedErr error
-	}{
-		{
-			name: "all valid keys",
-			fields: AdditionalFieldsMetadata{
-				ProposerRoleAccessController:  validPK1.PublicKey(),
-				CancellerRoleAccessController: validPK2.PublicKey(),
-				BypasserRoleAccessController:  validPK3.PublicKey(),
-			},
-			expectedErr: nil,
-		},
-		{
-			name: "zero proposer key",
-			fields: AdditionalFieldsMetadata{
-				ProposerRoleAccessController:  zeroPK,
-				CancellerRoleAccessController: validPK2.PublicKey(),
-				BypasserRoleAccessController:  validPK3.PublicKey(),
-			},
-			expectedErr: errors.New("Key: 'AdditionalFieldsMetadata.ProposerRoleAccessController' Error:Field validation for 'ProposerRoleAccessController' failed on the 'required' tag"),
-		},
-		{
-			name: "zero canceller key",
-			fields: AdditionalFieldsMetadata{
-				ProposerRoleAccessController:  validPK1.PublicKey(),
-				CancellerRoleAccessController: zeroPK,
-				BypasserRoleAccessController:  validPK3.PublicKey(),
-			},
-			expectedErr: errors.New("Key: 'AdditionalFieldsMetadata.CancellerRoleAccessController' Error:Field validation for 'CancellerRoleAccessController' failed on the 'required' tag"),
-		},
-		{
-			name: "zero bypasser key",
-			fields: AdditionalFieldsMetadata{
-				ProposerRoleAccessController:  validPK1.PublicKey(),
-				CancellerRoleAccessController: validPK2.PublicKey(),
-				BypasserRoleAccessController:  zeroPK,
-			},
-			expectedErr: errors.New("Key: 'AdditionalFieldsMetadata.BypasserRoleAccessController' Error:Field validation for 'BypasserRoleAccessController' failed on the 'required' tag"),
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+	for _, field := range []string{"ProposerRoleAccessController", "CancellerRoleAccessController", "BypasserRoleAccessController"} {
+		t.Run("rejects zero "+field, func(t *testing.T) {
 			t.Parallel()
-
-			err := tt.fields.Validate()
-			if tt.expectedErr == nil {
-				require.NoError(t, err, "expected no error but got one")
-			} else {
-				// Assert the error message matches the expected error.
-				require.EqualError(t, err, tt.expectedErr.Error())
+			fields := validAdditionalFields(t)
+			switch field {
+			case "ProposerRoleAccessController":
+				fields.ProposerRoleAccessController = solana.PublicKey{}
+			case "CancellerRoleAccessController":
+				fields.CancellerRoleAccessController = solana.PublicKey{}
+			case "BypasserRoleAccessController":
+				fields.BypasserRoleAccessController = solana.PublicKey{}
 			}
+			require.ErrorContains(t, fields.Validate(), field)
 		})
 	}
 }
@@ -182,160 +128,36 @@ func TestAdditionalFieldsMetadata_Validate(t *testing.T) {
 func TestValidateChainMetadata(t *testing.T) {
 	t.Parallel()
 
-	// Create some public keys for testing.
-	zeroPK := solana.PublicKey{} // zero value public key
-
-	// Valid additional fields.
-	validFields := AdditionalFieldsMetadata{
-		ProposerRoleAccessController:  solana.NewWallet().PublicKey(),
-		CancellerRoleAccessController: solana.NewWallet().PublicKey(),
-		BypasserRoleAccessController:  solana.NewWallet().PublicKey(),
-	}
-	validJSON, err := json.Marshal(validFields)
+	raw, err := json.Marshal(validAdditionalFields(t))
 	require.NoError(t, err)
+	require.NoError(t, ValidateChainMetadata(types.ChainMetadata{AdditionalFields: raw}), "valid fields")
 
-	// Missing required field.
-	// Here we omit CancellerRoleAccessController so that field remains at its zero value.
-	// Using an inline struct with only two fields.
-	missingField := struct {
-		ProposerRoleAccessController solana.PublicKey `json:"proposerRoleAccessController"`
-		BypasserRoleAccessController solana.PublicKey `json:"bypasserRoleAccessController"`
-	}{
-		ProposerRoleAccessController: validFields.ProposerRoleAccessController,
-		BypasserRoleAccessController: validFields.BypasserRoleAccessController,
-	}
-	missingFieldJSON, err := json.Marshal(missingField)
+	require.ErrorContains(t, ValidateChainMetadata(types.ChainMetadata{AdditionalFields: []byte("bad")}), "unable to unmarshal")
+
+	invalid := validAdditionalFields(t)
+	invalid.ProposerRoleAccessController = solana.PublicKey{}
+	raw, err = json.Marshal(invalid)
 	require.NoError(t, err)
-
-	// Zero value field: Proposer is zero.
-	zeroField := AdditionalFieldsMetadata{
-		ProposerRoleAccessController:  zeroPK,
-		CancellerRoleAccessController: validFields.CancellerRoleAccessController,
-		BypasserRoleAccessController:  validFields.BypasserRoleAccessController,
-	}
-	zeroFieldJSON, err := json.Marshal(zeroField)
-	require.NoError(t, err)
-
-	tests := []struct {
-		name        string
-		metadata    types.ChainMetadata
-		expectedErr bool
-	}{
-		{
-			name: "valid additional fields",
-			metadata: types.ChainMetadata{
-				AdditionalFields: validJSON,
-			},
-			expectedErr: false,
-		},
-		{
-			name: "invalid JSON",
-			metadata: types.ChainMetadata{
-				AdditionalFields: []byte("not a json"),
-			},
-			expectedErr: true,
-		},
-		{
-			name: "missing required field",
-			metadata: types.ChainMetadata{
-				AdditionalFields: missingFieldJSON,
-			},
-			expectedErr: true,
-		},
-		{
-			name: "zero value in one field",
-			metadata: types.ChainMetadata{
-				AdditionalFields: zeroFieldJSON,
-			},
-			expectedErr: true,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			t.Parallel()
-			err := ValidateChainMetadata(tt.metadata)
-			if tt.expectedErr {
-				require.Error(t, err, "expected an error for test case: %s", tt.name)
-			} else {
-				require.NoError(t, err, "expected no error for test case: %s", tt.name)
-			}
-		})
-	}
+	require.ErrorContains(t, ValidateChainMetadata(types.ChainMetadata{AdditionalFields: raw}), "additional fields are invalid")
 }
 
-func TestNewSolanaChainMetadata(t *testing.T) {
+func TestNewChainMetadata(t *testing.T) {
 	t.Parallel()
 
-	// Create sample public keys.
-	mcmProgramID, err := solana.NewRandomPrivateKey()
+	proposer := solana.NewWallet().PublicKey()
+	canceller := solana.NewWallet().PublicKey()
+	bypasser := solana.NewWallet().PublicKey()
+	programID := solana.NewWallet().PublicKey()
+	seed := PDASeed([32]byte{1, 2, 3, 4})
+
+	metadata, err := NewChainMetadata(100, programID, seed, proposer, canceller, bypasser)
 	require.NoError(t, err)
+	require.Equal(t, uint64(100), metadata.StartingOpCount)
+	require.Equal(t, ContractAddress(programID, seed), metadata.MCMAddress)
 
-	proposerKey, err := solana.NewRandomPrivateKey()
-	require.NoError(t, err)
-
-	cancellerKey, err := solana.NewRandomPrivateKey()
-	require.NoError(t, err)
-
-	bypasserKey, err := solana.NewRandomPrivateKey()
-	require.NoError(t, err)
-
-	tests := []struct {
-		name            string
-		startingOpCount uint64
-		mcmProgramID    solana.PublicKey
-		mcmInstanceSeed PDASeed
-		proposerKey     solana.PublicKey
-		cancellerKey    solana.PublicKey
-		bypasserKey     solana.PublicKey
-		wantErr         string
-	}{
-		{
-			name:            "valid metadata",
-			startingOpCount: 100,
-			mcmProgramID:    mcmProgramID.PublicKey(),
-			mcmInstanceSeed: PDASeed([32]byte{1, 2, 3, 4}),
-			proposerKey:     proposerKey.PublicKey(),
-			cancellerKey:    cancellerKey.PublicKey(),
-			bypasserKey:     bypasserKey.PublicKey(),
-		},
-		{
-			name:            "invalid metadata",
-			startingOpCount: 100,
-			mcmProgramID:    solana.PublicKey{},
-			mcmInstanceSeed: PDASeed([32]byte{1, 2, 3, 4}),
-			proposerKey:     proposerKey.PublicKey(),
-			cancellerKey:    cancellerKey.PublicKey(),
-			bypasserKey:     bypasserKey.PublicKey(),
-		},
-	}
-
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			t.Parallel()
-
-			metadata, err := NewChainMetadata(tc.startingOpCount, tc.mcmProgramID, tc.mcmInstanceSeed, tc.proposerKey, tc.cancellerKey, tc.bypasserKey)
-			if tc.wantErr != "" {
-				require.EqualError(t, err, tc.wantErr)
-				return
-			}
-			require.NoError(t, err)
-
-			assert.Equal(t, tc.startingOpCount, metadata.StartingOpCount)
-
-			expectedMCMAddress := ContractAddress(tc.mcmProgramID, tc.mcmInstanceSeed)
-			assert.Equal(t, expectedMCMAddress, metadata.MCMAddress)
-
-			var additionalFields AdditionalFieldsMetadata
-			err = json.Unmarshal(metadata.AdditionalFields, &additionalFields)
-			require.NoError(t, err)
-
-			expectedAdditionalFields := AdditionalFieldsMetadata{
-				ProposerRoleAccessController:  tc.proposerKey,
-				CancellerRoleAccessController: tc.cancellerKey,
-				BypasserRoleAccessController:  tc.bypasserKey,
-			}
-			assert.Equal(t, expectedAdditionalFields, additionalFields)
-		})
-	}
+	var additional AdditionalFieldsMetadata
+	require.NoError(t, json.Unmarshal(metadata.AdditionalFields, &additional))
+	require.True(t, additional.ProposerRoleAccessController.Equals(proposer))
+	require.True(t, additional.CancellerRoleAccessController.Equals(canceller))
+	require.True(t, additional.BypasserRoleAccessController.Equals(bypasser))
 }

@@ -349,6 +349,9 @@ builder.AddOperation(types.Operation{ChainSelector: selector, Transaction: tx})
 
 ```
 
+When building Solana **timelock bypass** proposals programmatically, if the execute fee payer appears in remaining accounts, set `executePayer` on that chain's metadata (for example via `AdditionalFieldsMetadata.WithExecutePayer`) so conversion hashes the Merkle leaf with `IsSigner=true`. See [Chain Metadata — Solana Additional Fields](../key-concepts/chain-metadata.md#solana-additional-fields).
+
+
 ### Aptos Operations
 
 Use the `aptos.NewTransaction` helper to build an Aptos specific transaction.

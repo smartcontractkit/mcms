@@ -17,6 +17,19 @@ type AdditionalFieldsMetadata struct {
 	ProposerRoleAccessController  solana.PublicKey `json:"proposerRoleAccessController" validate:"required"`
 	CancellerRoleAccessController solana.PublicKey `json:"cancellerRoleAccessController" validate:"required"`
 	BypasserRoleAccessController  solana.PublicKey `json:"bypasserRoleAccessController" validate:"required"`
+	// ExecutePayer is the optional outer MCM execute fee payer (bypass only).
+	ExecutePayer *solana.PublicKey `json:"executePayer,omitempty"`
+}
+
+// WithExecutePayer returns a copy of f with ExecutePayer set to pk.
+func (f AdditionalFieldsMetadata) WithExecutePayer(pk solana.PublicKey) AdditionalFieldsMetadata {
+	f.ExecutePayer = &pk
+	return f
+}
+
+// HasExecutePayer reports whether ExecutePayer is set to a non-zero public key.
+func (f AdditionalFieldsMetadata) HasExecutePayer() bool {
+	return f.ExecutePayer != nil && !f.ExecutePayer.IsZero()
 }
 
 func (f AdditionalFieldsMetadata) Validate() error {

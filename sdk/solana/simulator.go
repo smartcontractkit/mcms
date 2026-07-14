@@ -2,7 +2,6 @@ package solana
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
@@ -48,9 +47,9 @@ func (s *Simulator) SimulateSetRoot(
 func (s *Simulator) SimulateOperation(
 	ctx context.Context, metadata types.ChainMetadata, operation types.Operation,
 ) error {
-	var additionalFields AdditionalFields
-	if err := json.Unmarshal(operation.Transaction.AdditionalFields, &additionalFields); err != nil {
-		return fmt.Errorf("unable to unmarshal additional fields: %w", err)
+	additionalFields, err := ParseAdditionalFields(operation.Transaction.AdditionalFields)
+	if err != nil {
+		return err
 	}
 
 	toProgramID, err := ParseProgramID(operation.Transaction.To)
