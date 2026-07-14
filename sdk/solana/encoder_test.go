@@ -140,7 +140,7 @@ func TestEncoder_HashOperation(t *testing.T) {
 					AdditionalFields: []byte(`invalid`),
 				},
 			},
-			wantErr: "unable to unmarshal solana additional fields: invalid character 'i' looking for beginning of value",
+			wantErr: "unable to unmarshal additional fields: invalid character 'i' looking for beginning of value",
 		},
 		{
 			name:     "failure: invalid 'to' address",

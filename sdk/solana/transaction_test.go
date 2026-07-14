@@ -105,7 +105,7 @@ func TestValidateAdditionalFields(t *testing.T) {
 			name:        "malformed json",
 			input:       []byte(`invalid json`),
 			wantErr:     true,
-			errContains: "unable to unmarshal solana additional fields",
+			errContains: "failed to unmarshal",
 		},
 		{
 			name:  "empty input",
