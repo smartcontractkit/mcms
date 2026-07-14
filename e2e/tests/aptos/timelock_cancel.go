@@ -17,6 +17,7 @@ import (
 
 	mcmslib "github.com/smartcontractkit/mcms"
 	chainwrappermocks "github.com/smartcontractkit/mcms/chainwrappers/mocks"
+	e2ecommon "github.com/smartcontractkit/mcms/e2e/tests/common"
 	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -38,15 +39,15 @@ func (a *TestSuite) TestTimelock_Cancel() {
 	accessor.EXPECT().AptosSigner(uint64(a.ChainSelector)).Return(a.deployerAccount, true).Maybe()
 
 	phase := 0
-	mcmslib.RunScheduleAndCancelTest(a.T(), mcmslib.ScheduleAndCancelTestHooks{
-		Setup: func(ctx context.Context, t *testing.T) (mcmslib.ScheduleAndCancelTestEnv, error) {
+	e2ecommon.RunScheduleAndCancelTest(a.T(), e2ecommon.ScheduleAndCancelTestHooks{
+		Setup: func(ctx context.Context, t *testing.T) (e2ecommon.ScheduleAndCancelTestEnv, error) {
 			t.Helper()
 			transaction, txErr := a.buildAcceptOwnershipTransaction()
 			if txErr != nil {
-				return mcmslib.ScheduleAndCancelTestEnv{}, txErr
+				return e2ecommon.ScheduleAndCancelTestEnv{}, txErr
 			}
 
-			return mcmslib.ScheduleAndCancelTestEnv{
+			return e2ecommon.ScheduleAndCancelTestEnv{
 				Proposal: mcmslib.TimelockProposal{
 					BaseProposal: mcmslib.BaseProposal{
 						Version:     "v1",
@@ -112,7 +113,7 @@ func (a *TestSuite) TestTimelock_Cancel() {
 			require.NoError(t, err)
 			require.True(t, data.Success, data.VmStatus)
 		},
-		AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *mcmslib.ScheduleAndCancelTestEnv) {
+		AssertExtraAfterCancel: func(ctx context.Context, t *testing.T, env *e2ecommon.ScheduleAndCancelTestEnv) {
 			t.Helper()
 			// After the cancel proposal is executed, verify that the ownership transfer
 			// was not accepted — the owner should still be the deployer (from TransferOwnershipToSelf).
