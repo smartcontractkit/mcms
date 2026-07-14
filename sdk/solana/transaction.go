@@ -35,7 +35,7 @@ func ParseAdditionalFields(raw json.RawMessage) (AdditionalFields, error) {
 	var fields AdditionalFields
 	if len(raw) > 0 {
 		if err := json.Unmarshal(raw, &fields); err != nil {
-			return AdditionalFields{}, fmt.Errorf("unable to unmarshal solana additional fields: %w", err)
+			return AdditionalFields{}, fmt.Errorf("unable to unmarshal additional fields: %w", err)
 		}
 	}
 	for _, account := range fields.Accounts {
