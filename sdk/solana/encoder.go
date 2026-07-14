@@ -3,7 +3,6 @@ package solana
 import (
 	"bytes"
 	"encoding/binary"
-	"encoding/json"
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -61,12 +60,9 @@ func (e *Encoder) HashOperation(
 		return common.Hash{}, fmt.Errorf("unable to prase program id from To field: %w", err)
 	}
 
-	// Parse Additional fields to get the ix accounts
-	var additionalFields AdditionalFields
-	if op.Transaction.AdditionalFields != nil {
-		if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
-			return common.Hash{}, fmt.Errorf("unable to unmarshal additional fields: %w", err)
-		}
+	additionalFields, err := ParseAdditionalFields(op.Transaction.AdditionalFields)
+	if err != nil {
+		return common.Hash{}, err
 	}
 
 	buffers := [][]byte{

@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.52.0](https://github.com/smartcontractkit/mcms/compare/v0.51.0...v0.52.0) (2026-07-14)
+
+
+### Features
+
+* add ExecutePayer field in chain metadata for setting solana execute accounts [CLD-3046] ([#814](https://github.com/smartcontractkit/mcms/issues/814)) ([4e1ae4b](https://github.com/smartcontractkit/mcms/commit/4e1ae4b3e7d2a2941d33f6db1280c66ab555539f))
+
 ## [0.51.0](https://github.com/smartcontractkit/mcms/compare/v0.50.1...v0.51.0) (2026-07-07)
 
 
