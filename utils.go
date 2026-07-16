@@ -85,6 +85,7 @@ func newProposal[T ProposalInterface](r io.Reader, predecessors []io.Reader) (T,
 	return p, nil
 }
 
+//go:fix inline
 func pointerTo[T any](v T) *T {
-	return &v
+	return new(v)
 }

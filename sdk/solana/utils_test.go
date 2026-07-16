@@ -159,7 +159,7 @@ func mockSolanaTransaction(
 		*result = &rpc.GetSignatureStatusesResult{
 			Value: []*rpc.SignatureStatusesResult{{
 				Slot:               slot,
-				Confirmations:      ptrTo(uint64(2)),
+				Confirmations:      new(uint64(2)),
 				ConfirmationStatus: rpc.ConfirmationStatusConfirmed,
 			}},
 		}
@@ -181,7 +181,7 @@ func mockSolanaTransaction(
 		require.NoError(t, err)
 
 		if blockTime == nil {
-			blockTime = ptrTo(solana.UnixTimeSeconds(time.Now().Unix()))
+			blockTime = new(solana.UnixTimeSeconds(time.Now().Unix()))
 		}
 
 		*result = &rpc.GetTransactionResult{
@@ -284,7 +284,7 @@ func generateSignatures(t *testing.T, numSignatures int) []types.Signature {
 
 	signatures := make([]types.Signature, numSignatures)
 	for i := range signatures {
-		payload := []byte(fmt.Sprintf("\x19Ethereum Signed Message:\n320x%d", i))
+		payload := fmt.Appendf(nil, "\x19Ethereum Signed Message:\n320x%d", i)
 		hash := crypto.Keccak256Hash(payload)
 
 		sigBytes, err := crypto.Sign(hash[:], privateKey)
@@ -299,4 +299,5 @@ func generateSignatures(t *testing.T, numSignatures int) []types.Signature {
 	return signatures
 }
 
-func ptrTo[T any](value T) *T { return &value }
+//go:fix inline
+func ptrTo[T any](value T) *T { return new(value) }

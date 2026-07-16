@@ -427,10 +427,10 @@ func extractRevertReasonFromError(err error) revertReasonData {
 	if strings.Contains(errStr, revertPrefix) {
 		// Try to extract the plain string revert reason
 		// Format: "execution reverted: revert: <reason>" or "revert: <reason>"
-		revertIdx := strings.Index(errStr, revertPrefix)
-		if revertIdx != -1 {
+		_, after, ok := strings.Cut(errStr, revertPrefix)
+		if ok {
 			// Extract everything after "revert: "
-			reason := strings.TrimSpace(errStr[revertIdx+len(revertPrefix):])
+			reason := strings.TrimSpace(after)
 			if reason != "" {
 				return revertReasonData{
 					Decoded: reason,
@@ -710,8 +710,8 @@ func getUnderlyingRevertReason(
 		rawReason = revertData.Decoded
 	}
 	if rawReason == "" {
-		if idx := strings.Index(errStr, revertPrefix); idx != -1 {
-			rawReason = strings.TrimSpace(errStr[idx+len(revertPrefix):])
+		if _, after, ok := strings.Cut(errStr, revertPrefix); ok {
+			rawReason = strings.TrimSpace(after)
 		}
 	}
 	if rawReason == "" {

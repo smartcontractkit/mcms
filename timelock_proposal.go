@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -188,9 +189,7 @@ func (m *TimelockProposal) Convert(
 
 	// 4) Rebuild chainMetadata in baseProposal
 	chainMetadataMap := make(map[types.ChainSelector]types.ChainMetadata)
-	for chain, metadata := range m.ChainMetadata {
-		chainMetadataMap[chain] = metadata
-	}
+	maps.Copy(chainMetadataMap, m.ChainMetadata)
 	baseProposal.ChainMetadata = chainMetadataMap
 
 	// 5) We’ll build the final MCMS-only proposal
