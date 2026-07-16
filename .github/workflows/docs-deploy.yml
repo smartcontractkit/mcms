@@ -25,7 +25,7 @@ jobs:
       - name: Install node and pnpm
         uses: smartcontractkit/.github/actions/setup-nodejs@setup-nodejs/v1
         with:
-          pnpm-version: 11.1.1
+          pnpm-version: 11.13.0
           package-json-directory: ./docs
 
       - name: Build docs
