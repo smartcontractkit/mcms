@@ -348,7 +348,7 @@ func (w *wallet) selfDerive() {
 
 			context = context.Background() // TODO fix once CLD change with core.CtxProvider is in.
 		)
-		for i := 0; i < len(nextAddrs); i++ {
+		for i := range nextAddrs {
 			for empty := false; !empty; {
 				// Retrieve the next derived Ethereum account
 				if nextAddrs[i] == (common.Address{}) {

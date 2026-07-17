@@ -365,15 +365,15 @@ func replaceAnonymousStructs(contractName string, fileNode *ast.File) *ast.File 
 func writeAdditionalMethods(contractName string, logNames []string, abi abi.ABI, bs []byte) []byte {
 	// Write the ParseLog method
 	if len(logNames) > 0 {
-		var logSwitchBody string
+		var logSwitchBody strings.Builder
 		for _, logName := range logNames {
 			//nolint:perfsprint // allow fmt.Sprintf in loop
-			logSwitchBody += fmt.Sprintf(`case _%v.abi.Events["%v"].ID:
+			logSwitchBody.WriteString(fmt.Sprintf(`case _%v.abi.Events["%v"].ID:
         return _%v.Parse%v(log)
-`, contractName, logName, contractName, logName)
+`, contractName, logName, contractName, logName))
 		}
 
-		bs = append(bs, []byte(fmt.Sprintf(`
+		bs = append(bs, fmt.Appendf(nil, `
 func (_%v *%v) ParseLog(log types.Log) (AbigenLog, error) {
     switch log.Topics[0] {
     %v
@@ -381,24 +381,24 @@ func (_%v *%v) ParseLog(log types.Log) (AbigenLog, error) {
         return nil, fmt.Errorf("abigen wrapper received unknown log topic: %%v", log.Topics[0])
     }
 }
-`, contractName, contractName, logSwitchBody))...)
+`, contractName, contractName, logSwitchBody.String())...)
 	}
 
 	// Write the Topic method
 	for _, logName := range logNames {
-		bs = append(bs, []byte(fmt.Sprintf(`
+		bs = append(bs, fmt.Appendf(nil, `
 func (%v%v) Topic() common.Hash {
     return common.HexToHash("%v")
 }
-`, contractName, logName, abi.Events[logName].ID.Hex()))...)
+`, contractName, logName, abi.Events[logName].ID.Hex())...)
 	}
 
 	// Write the Address method to the bottom of the file
-	bs = append(bs, []byte(fmt.Sprintf(`
+	bs = append(bs, fmt.Appendf(nil, `
 func (_%v *%v) Address() common.Address {
     return _%v.address
 }
-`, contractName, contractName, contractName))...)
+`, contractName, contractName, contractName)...)
 
 	return bs
 }

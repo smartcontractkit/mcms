@@ -206,10 +206,7 @@ func chunkIndexes(numItems int, chunkSize int) [][2]int {
 	indexes := make([][2]int, 0)
 
 	for i := 0; i < numItems; i += chunkSize {
-		end := i + chunkSize
-		if end > numItems {
-			end = numItems
-		}
+		end := min(i+chunkSize, numItems)
 		indexes = append(indexes, [2]int{i, end})
 	}
 
