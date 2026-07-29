@@ -72,8 +72,15 @@ func BuildExecutor(
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse EVM chain metadata for selector %d: %w", rawSelector, err)
 		}
-		auth.GasPrice = evmChainMetadata.GasPrice
-		auth.GasLimit = evmChainMetadata.GasLimit
+		// Only override when the proposal specifies a value; a zero GasLimit forces
+		// go-ethereum to estimate gas, which calls eth_getCode against the "pending"
+		// block and fails on chains (e.g. Avalanche Fuji) that no longer support it.
+		if evmChainMetadata.GasPrice != nil {
+			auth.GasPrice = evmChainMetadata.GasPrice
+		}
+		if evmChainMetadata.GasLimit != 0 {
+			auth.GasLimit = evmChainMetadata.GasLimit
+		}
 
 		return evm.NewExecutor(evmEncoder, client, auth), nil
 
