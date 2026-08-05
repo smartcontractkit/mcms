@@ -144,6 +144,36 @@ func (e *executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, nil, proof, root, validUntil, sortedSignatures)
+}
+
+// SetRootForInstance implements sdk.InstanceExecutor: it sets the root on a specific MCM
+// instance, deriving postOpCount from the instance's own operation count so the on-chain
+// root metadata matches the per-instance metadata leaf in the Merkle proof.
+func (e *executor) SetRootForInstance(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	instanceOpCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, &instanceOpCount, proof, root, validUntil, sortedSignatures)
+}
+
+// setRoot is the shared SetRoot implementation. A nil txCount defers to the encoder's
+// chain-wide transaction count (single-instance behavior); a non-nil count is used
+// explicitly (per-instance roots).
+func (e *executor) setRoot(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	txCount *uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
 	var z types.TransactionResult // zero value
 
 	// Map to Ton Address type
@@ -153,12 +183,20 @@ func (e *executor) SetRoot(
 	}
 
 	// Encode root metadata
-	rme, ok := e.Encoder.(RootMetadataEncoder[mcms.RootMetadata])
-	if !ok {
-		return z, errors.New("failed to assert RootMetadataEncoder")
+	var rm mcms.RootMetadata
+	if txCount == nil {
+		rme, ok := e.Encoder.(RootMetadataEncoder[mcms.RootMetadata])
+		if !ok {
+			return z, errors.New("failed to assert RootMetadataEncoder")
+		}
+		rm, err = rme.ToRootMetadata(metadata)
+	} else {
+		rme, ok := e.Encoder.(RootMetadataTxCountEncoder[mcms.RootMetadata])
+		if !ok {
+			return z, errors.New("failed to assert RootMetadataTxCountEncoder")
+		}
+		rm, err = rme.ToRootMetadataWithTxCount(metadata, *txCount)
 	}
-
-	rm, err := rme.ToRootMetadata(metadata)
 	if err != nil {
 		return z, fmt.Errorf("failed to convert to root metadata: %w", err)
 	}

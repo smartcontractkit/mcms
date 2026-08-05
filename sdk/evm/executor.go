@@ -95,7 +95,38 @@ func (e *Executor) SetRoot(
 		return types.TransactionResult{}, errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil")
 	}
 
-	bindMeta, err := e.ToGethRootMetadata(ctx, metadata)
+	return e.setRoot(ctx, metadata, e.TxCount, proof, root, validUntil, sortedSignatures)
+}
+
+// SetRootForInstance implements sdk.InstanceExecutor: it sets the root on a specific MCM
+// instance, deriving postOpCount from the instance's own operation count so the on-chain
+// root metadata matches the per-instance metadata leaf in the Merkle proof.
+func (e *Executor) SetRootForInstance(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	instanceOpCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, instanceOpCount, proof, root, validUntil, sortedSignatures)
+}
+
+func (e *Executor) setRoot(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	txCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
+	if e.Encoder == nil {
+		return types.TransactionResult{}, errors.New("failed to create sdk.Executor - encoder (sdk.Encoder) is nil")
+	}
+
+	bindMeta, err := e.ToGethRootMetadataWithTxCount(ctx, metadata, txCount)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}

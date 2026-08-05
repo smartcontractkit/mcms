@@ -86,7 +86,7 @@ func (t *TimelockExecutable) IsOperationReady(ctx context.Context, idx int) erro
 	op := t.proposal.Operations[idx]
 
 	cs := op.ChainSelector
-	timelock := t.proposal.TimelockAddresses[cs]
+	timelock := t.proposal.TimelockAddressForOp(op)
 
 	operationID, err := t.GetOpID(ctx, idx, op, cs)
 	if err != nil {
@@ -123,7 +123,7 @@ func (t *TimelockExecutable) IsOperationPending(ctx context.Context, idx int) er
 	op := t.proposal.Operations[idx]
 
 	cs := op.ChainSelector
-	timelock := t.proposal.TimelockAddresses[cs]
+	timelock := t.proposal.TimelockAddressForOp(op)
 
 	operationID, err := t.GetOpID(ctx, idx, op, cs)
 	if err != nil {
@@ -160,7 +160,7 @@ func (t *TimelockExecutable) IsOperationDone(ctx context.Context, idx int) error
 	op := t.proposal.Operations[idx]
 
 	cs := op.ChainSelector
-	timelock := t.proposal.TimelockAddresses[cs]
+	timelock := t.proposal.TimelockAddressForOp(op)
 
 	operationID, err := t.GetOpID(ctx, idx, op, cs)
 	if err != nil {
@@ -219,7 +219,7 @@ func (t *TimelockExecutable) Execute(ctx context.Context, index int, opts ...Opt
 	// Get target contract
 	execAddress := execOpts.callProxy
 	if len(execAddress) == 0 {
-		execAddress = t.proposal.TimelockAddresses[op.ChainSelector]
+		execAddress = t.proposal.TimelockAddressForOp(op)
 	}
 
 	return t.executors[op.ChainSelector].Execute(

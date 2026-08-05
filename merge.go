@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"maps"
+	"slices"
 	"time"
 
 	"github.com/smartcontractkit/mcms/types"
@@ -45,7 +46,7 @@ func (m *TimelockProposal) Merge(ctx context.Context, other *TimelockProposal) (
 			continue
 		}
 
-		mergedMetadata, err := thisMetadata.Merge(otherMetadata)
+		mergedMetadata, err := mergeChainMetadata(thisMetadata, otherMetadata)
 		if err != nil {
 			return nil, fmt.Errorf("failed to merge metadata for chain %v: %w", chainSelector, err)
 		}
@@ -81,6 +82,75 @@ func (m *TimelockProposal) Merge(ctx context.Context, other *TimelockProposal) (
 	m.Operations = append(m.Operations, other.Operations...)
 
 	return m, nil
+}
+
+// mergeChainMetadata merges two ChainMetadata entries for the same chain selector,
+// supporting disjoint MCM instance sets: if the primary MCM addresses differ, each
+// primary must be present in the other entry's instance set (primary + AdditionalMCMs),
+// and the instances are unioned. The merged primary is chosen deterministically (the
+// lexicographically smallest MCM address).
+func mergeChainMetadata(this, other types.ChainMetadata) (types.ChainMetadata, error) {
+	if this.MCMAddress == other.MCMAddress {
+		return this.Merge(other)
+	}
+
+	// Build instance maps keyed by MCM address.
+	thisInstances := make(map[string]types.ChainMetadata, len(this.AdditionalMCMs)+1)
+	for _, instance := range this.AllMCMs() {
+		thisInstances[instance.MCMAddress] = instance
+	}
+	otherInstances := make(map[string]types.ChainMetadata, len(other.AdditionalMCMs)+1)
+	for _, instance := range other.AllMCMs() {
+		otherInstances[instance.MCMAddress] = instance
+	}
+
+	// Each primary must be known to the other side; otherwise the instance sets are
+	// truly disjoint and we cannot decide on a safe merge.
+	if _, ok := otherInstances[this.MCMAddress]; !ok {
+		return types.ChainMetadata{}, fmt.Errorf(
+			"cannot merge ChainMetadata with different MCMAddress: %s vs %s",
+			this.MCMAddress, other.MCMAddress)
+	}
+	if _, ok := thisInstances[other.MCMAddress]; !ok {
+		return types.ChainMetadata{}, fmt.Errorf(
+			"cannot merge ChainMetadata with different MCMAddress: %s vs %s",
+			this.MCMAddress, other.MCMAddress)
+	}
+
+	// Union instances by address, merging duplicates with per-instance rules.
+	addresses := make([]string, 0, len(thisInstances)+len(otherInstances))
+	merged := make(map[string]types.ChainMetadata, len(thisInstances)+len(otherInstances))
+	for addr, instance := range thisInstances {
+		merged[addr] = instance
+		addresses = append(addresses, addr)
+	}
+	for addr, instance := range otherInstances {
+		if existing, ok := merged[addr]; ok {
+			m, err := existing.Merge(instance)
+			if err != nil {
+				return types.ChainMetadata{}, err
+			}
+			m.AdditionalMCMs = nil // instances never nest
+			merged[addr] = m
+			continue
+		}
+		merged[addr] = instance
+		addresses = append(addresses, addr)
+	}
+
+	slices.Sort(addresses)
+
+	primary := merged[addresses[0]]
+	result := types.ChainMetadata{
+		StartingOpCount:  primary.StartingOpCount,
+		MCMAddress:       primary.MCMAddress,
+		AdditionalFields: primary.AdditionalFields,
+	}
+	for _, addr := range addresses[1:] {
+		result.AdditionalMCMs = append(result.AdditionalMCMs, merged[addr])
+	}
+
+	return result, nil
 }
 
 func mergeMetadata(m1, m2 map[string]any) map[string]any {

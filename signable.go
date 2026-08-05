@@ -112,8 +112,13 @@ func (s *Signable) Simulate(ctx context.Context) error {
 			return fmt.Errorf("simulator not found for chain %d", op.ChainSelector)
 		}
 
+		metadata, err := s.proposal.mcmMetadataForOp(op)
+		if err != nil {
+			return err
+		}
+
 		// TODO: should we fail on the first error or aggregate all simulation errors?
-		err := simulator.SimulateOperation(ctx, s.proposal.ChainMetadata[op.ChainSelector], op)
+		err = simulator.SimulateOperation(ctx, metadata, op)
 		if err != nil {
 			return err
 		}
@@ -148,8 +153,15 @@ func (s *Signable) GetConfigs(ctx context.Context) (map[types.ChainSelector]*typ
 
 // CheckQuorum checks if the quorum for the proposal on the given chain has been reached. This will
 // fetch the current configuration for the chain and check if the recovered signers from the
-// proposal's signatures can set the root.
+// proposal's signatures can set the root. For chains with multiple MCM instances, quorum is
+// checked against the primary MCM; use CheckQuorumForMCM to target a specific instance.
 func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (bool, error) {
+	return s.CheckQuorumForMCM(ctx, chain, "")
+}
+
+// CheckQuorumForMCM checks if the quorum has been reached for the MCM instance identified
+// by mcmAddress on the given chain. An empty mcmAddress targets the primary MCM.
+func (s *Signable) CheckQuorumForMCM(ctx context.Context, chain types.ChainSelector, mcmAddress string) (bool, error) {
 	if s.inspectors == nil {
 		return false, ErrInspectorsNotProvided
 	}
@@ -159,12 +171,19 @@ func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (
 		return false, errors.New("inspector not found for chain " + strconv.FormatUint(uint64(chain), 10))
 	}
 
+	metadata, ok := s.proposal.ChainMetadata[chain].GetMCM(mcmAddress)
+	if !ok {
+		return false, fmt.Errorf(
+			"chain %d: mcmAddress %q does not match the chain's primary MCM or any additional MCM instance",
+			chain, mcmAddress)
+	}
+
 	recoveredSigners, err := s.proposal.RecoverSigningAddressesStrict() //nolint:contextcheck,nolintlint //OPT-400
 	if err != nil {
 		return false, err
 	}
 
-	configuration, err := inspector.GetConfig(ctx, s.proposal.ChainMetadata[chain].MCMAddress)
+	configuration, err := inspector.GetConfig(ctx, metadata.MCMAddress)
 	if err != nil {
 		return false, err
 	}
@@ -192,16 +211,18 @@ func (s *Signable) CheckQuorum(ctx context.Context, chain types.ChainSelector) (
 }
 
 // ValidateSignatures checks if the quorum for the proposal has been reached on the MCM contracts
-// across all chains in the proposal.
+// across all chains (and all MCM instances) in the proposal.
 func (s *Signable) ValidateSignatures(ctx context.Context) (bool, error) {
-	for chain := range s.proposal.ChainMetadata {
-		checkQuorum, err := s.CheckQuorum(ctx, chain)
-		if err != nil {
-			return false, err
-		}
+	for chain, metadata := range s.proposal.ChainMetadata {
+		for _, instance := range metadata.AllMCMs() {
+			checkQuorum, err := s.CheckQuorumForMCM(ctx, chain, instance.MCMAddress)
+			if err != nil {
+				return false, err
+			}
 
-		if !checkQuorum {
-			return false, NewQuorumNotReachedError(chain)
+			if !checkQuorum {
+				return false, NewQuorumNotReachedError(chain)
+			}
 		}
 	}
 

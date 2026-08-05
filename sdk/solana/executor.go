@@ -134,6 +134,33 @@ func (e *Executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, e.TxCount, proof, root, validUntil, sortedSignatures)
+}
+
+// SetRootForInstance implements sdk.InstanceExecutor: it sets the root on a specific MCM
+// instance, deriving postOpCount from the instance's own operation count so the on-chain
+// root metadata matches the per-instance metadata leaf in the Merkle proof.
+func (e *Executor) SetRootForInstance(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	instanceOpCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, instanceOpCount, proof, root, validUntil, sortedSignatures)
+}
+
+func (e *Executor) setRoot(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	txCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
 	sameRoot, err := e.equalCurrentRoot(ctx, metadata.MCMAddress, root)
 	if err != nil {
 		return types.TransactionResult{}, err
@@ -185,7 +212,7 @@ func (e *Executor) SetRoot(
 		pdaSeed,
 		root,
 		validUntil,
-		e.solanaMetadata(metadata, configPDA),
+		e.solanaMetadata(metadata, txCount, configPDA),
 		solanaProof(proof),
 		rootSignaturesPDA,
 		rootMetadataPDA,
@@ -278,12 +305,12 @@ func (e *Executor) retryPreloadSignatures(
 }
 
 // solanaMetadata returns the root metadata input for the MCM program
-func (e *Executor) solanaMetadata(metadata types.ChainMetadata, configPDA [32]byte) mcm.RootMetadataInput {
+func (e *Executor) solanaMetadata(metadata types.ChainMetadata, txCount uint64, configPDA [32]byte) mcm.RootMetadataInput {
 	return mcm.RootMetadataInput{
 		ChainId:              uint64(e.ChainSelector),
 		Multisig:             solana.PublicKey(configPDA),
 		PreOpCount:           metadata.StartingOpCount,
-		PostOpCount:          metadata.StartingOpCount + e.TxCount,
+		PostOpCount:          metadata.StartingOpCount + txCount,
 		OverridePreviousRoot: e.OverridePreviousRoot,
 	}
 }

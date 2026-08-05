@@ -732,3 +732,144 @@ func TestExecutable_TxNonce(t *testing.T) {
 		})
 	}
 }
+
+// TestExecutor_MultiMCM_SetRootForMCM_And_Execute covers a v2 proposal spanning two MCM
+// instances on the same chain: one signing ceremony, one global Merkle root, one
+// SetRootForMCM per instance, and per-instance execution with per-instance nonces.
+func TestExecutor_MultiMCM_SetRootForMCM_And_Execute(t *testing.T) {
+	t.Parallel()
+
+	ctx := context.Background()
+	sim := evmsim.NewSimulatedChain(t, 1)
+
+	// Deploy two MCM instances on the same chain, both configured with the same signers
+	mcmPrimary, _ := sim.DeployMCMContract(t, sim.Signers[0])
+	mcmSecond, _ := sim.DeployMCMContract(t, sim.Signers[0])
+	sim.SetMCMSConfig(t, sim.Signers[0], mcmPrimary)
+	sim.SetMCMSConfig(t, sim.Signers[0], mcmSecond)
+
+	// Each instance administers its own timelock so both grantRole ops can succeed
+	timelockPrimary, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmPrimary.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
+	timelockSecond, _ := sim.DeployRBACTimelock(t, sim.Signers[0], mcmSecond.Address(), []common.Address{}, []common.Address{}, []common.Address{}, []common.Address{})
+
+	role, err := timelockPrimary.PROPOSERROLE(&bind.CallOpts{})
+	require.NoError(t, err)
+	timelockAbi, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err)
+	grantPrimaryData, err := timelockAbi.Pack("grantRole", role, mcmPrimary.Address())
+	require.NoError(t, err)
+	grantSecondData, err := timelockAbi.Pack("grantRole", role, mcmSecond.Address())
+	require.NoError(t, err)
+
+	// One v2 proposal covering both instances: op0 is governed by the primary instance
+	// (no mcmAddress), op1 by the second instance.
+	proposal := Proposal{
+		BaseProposal: BaseProposal{
+			Version:              "v2",
+			Description:          "Grants RBACTimelock 'Proposer' role via two MCM instances",
+			Kind:                 types.KindProposal,
+			ValidUntil:           2004259681,
+			Signatures:           []types.Signature{},
+			OverridePreviousRoot: false,
+			ChainMetadata: map[types.ChainSelector]types.ChainMetadata{
+				chaintest.Chain1Selector: {
+					StartingOpCount: 0,
+					MCMAddress:      mcmPrimary.Address().Hex(),
+					AdditionalMCMs: []types.ChainMetadata{
+						{StartingOpCount: 0, MCMAddress: mcmSecond.Address().Hex()},
+					},
+				},
+			},
+		},
+		Operations: []types.Operation{
+			{
+				ChainSelector: chaintest.Chain1Selector,
+				Transaction: evm.NewTransaction(
+					timelockPrimary.Address(),
+					grantPrimaryData,
+					big.NewInt(0),
+					"RBACTimelock",
+					[]string{"RBACTimelock", "GrantRole"},
+				),
+			},
+			{
+				ChainSelector: chaintest.Chain1Selector,
+				McmAddress:    mcmSecond.Address().Hex(),
+				Transaction: evm.NewTransaction(
+					timelockSecond.Address(),
+					grantSecondData,
+					big.NewInt(0),
+					"RBACTimelock",
+					[]string{"RBACTimelock", "GrantRole"},
+				),
+			},
+		},
+	}
+	proposal.UseSimulatedBackend(true)
+
+	require.NoError(t, proposal.Validate())
+
+	tree, err := proposal.MerkleTree()
+	require.NoError(t, err)
+
+	inspectors := map[types.ChainSelector]sdk.Inspector{
+		chaintest.Chain1Selector: evm.NewInspector(sim.Backend.Client()),
+	}
+	signable, err := NewSignable(&proposal, inspectors)
+	require.NoError(t, err)
+
+	_, err = signable.SignAndAppend(NewPrivateKeySigner(sim.Signers[0].PrivateKey))
+	require.NoError(t, err)
+
+	// Quorum must hold on every instance
+	quorumMet, err := signable.ValidateSignatures(ctx)
+	require.NoError(t, err)
+	require.True(t, quorumMet)
+
+	encoders, err := proposal.GetEncoders()
+	require.NoError(t, err)
+	executors := map[types.ChainSelector]sdk.Executor{
+		chaintest.Chain1Selector: evm.NewExecutor(
+			encoders[chaintest.Chain1Selector].(*evm.Encoder),
+			sim.Backend.Client(),
+			sim.Signers[0].NewTransactOpts(t),
+		),
+	}
+	executable, err := NewExecutable(&proposal, executors)
+	require.NoError(t, err)
+
+	// Set the same global root on both instances; each call carries only that instance's
+	// metadata proof and per-instance postOpCount.
+	for _, mcmAddress := range executable.MCMAddresses(chaintest.Chain1Selector) {
+		tx, err := executable.SetRootForMCM(ctx, chaintest.Chain1Selector, mcmAddress)
+		require.NoError(t, err)
+		require.NotEmpty(t, tx.Hash)
+		sim.Backend.Commit()
+	}
+
+	for _, mcmC := range []*bindings.ManyChainMultiSig{mcmPrimary, mcmSecond} {
+		root, err := mcmC.GetRoot(&bind.CallOpts{})
+		require.NoError(t, err)
+		require.Equal(t, [32]byte(tree.Root.Bytes()), root.Root)
+		require.Equal(t, proposal.ValidUntil, root.ValidUntil)
+	}
+
+	// Execute each instance's op; nonces sequence per instance (both are nonce 0).
+	tx, err := executable.Execute(ctx, 0)
+	require.NoError(t, err)
+	require.NotEmpty(t, tx.Hash)
+	sim.Backend.Commit()
+
+	tx, err = executable.Execute(ctx, 1)
+	require.NoError(t, err)
+	require.NotEmpty(t, tx.Hash)
+	sim.Backend.Commit()
+
+	opCountPrimary, err := mcmPrimary.GetOpCount(&bind.CallOpts{})
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), opCountPrimary.Uint64())
+
+	opCountSecond, err := mcmSecond.GetOpCount(&bind.CallOpts{})
+	require.NoError(t, err)
+	require.Equal(t, uint64(1), opCountSecond.Uint64())
+}

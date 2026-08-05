@@ -212,6 +212,33 @@ func (e Executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, e.TxCount, proof, root, validUntil, sortedSignatures)
+}
+
+// SetRootForInstance implements sdk.InstanceExecutor: it sets the root on a specific MCM
+// instance, deriving postOpCount from the instance's own operation count so the on-ledger
+// root metadata matches the per-instance metadata leaf in the Merkle proof.
+func (e Executor) SetRootForInstance(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	instanceOpCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, instanceOpCount, proof, root, validUntil, sortedSignatures)
+}
+
+func (e Executor) setRoot(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	txCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
 	// Resolve MCMAddress (InstanceAddress hex) to current contract ID before submitting
 	mcmsContractID, err := ResolveMCMSContractID(ctx, e.StateServiceClient(), e.mcmsParties, metadata.MCMAddress)
 	if err != nil {
@@ -258,7 +285,7 @@ func (e Executor) SetRoot(
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("preOpCount out of range: %w", err)
 	}
-	postOpCount, convErr := safecast.Uint64ToInt64(metadata.StartingOpCount + e.TxCount)
+	postOpCount, convErr := safecast.Uint64ToInt64(metadata.StartingOpCount + txCount)
 	if convErr != nil {
 		return types.TransactionResult{}, fmt.Errorf("postOpCount out of range: %w", convErr)
 	}

@@ -25,11 +25,19 @@ type Transaction struct {
 // Operation represents an operation with a single transaction to be executed
 type Operation struct {
 	ChainSelector ChainSelector `json:"chainSelector" validate:"required"`
-	Transaction   Transaction   `json:"transaction" validate:"required"`
+	// McmAddress optionally identifies which MCM instance on the chain governs this
+	// operation. Empty means the chain's primary MCM (the MCMAddress on the chain's
+	// ChainMetadata entry). Non-empty values must match the primary MCM or one of its
+	// AdditionalMCMs entries. Requires proposal version v2.
+	McmAddress  string      `json:"mcmAddress,omitempty"`
+	Transaction Transaction `json:"transaction" validate:"required"`
 }
 
 // BatchOperation represents an operation with a batch of transactions to be executed.
 type BatchOperation struct {
 	ChainSelector ChainSelector `json:"chainSelector" validate:"required"`
-	Transactions  []Transaction `json:"transactions" validate:"required,min=1,dive"`
+	// McmAddress optionally identifies which MCM instance on the chain governs this
+	// batch. See Operation.McmAddress.
+	McmAddress   string        `json:"mcmAddress,omitempty"`
+	Transactions []Transaction `json:"transactions" validate:"required,min=1,dive"`
 }

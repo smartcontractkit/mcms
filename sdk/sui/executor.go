@@ -247,6 +247,33 @@ func (e Executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, e.TxCount, proof, root, validUntil, sortedSignatures)
+}
+
+// SetRootForInstance implements sdk.InstanceExecutor: it sets the root on a specific MCM
+// instance, deriving postOpCount from the instance's own operation count so the on-chain
+// root metadata matches the per-instance metadata leaf in the Merkle proof.
+func (e Executor) SetRootForInstance(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	instanceOpCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, instanceOpCount, proof, root, validUntil, sortedSignatures)
+}
+
+func (e Executor) setRoot(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	txCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
 	var additionalFieldsMetadata AdditionalFieldsMetadata
 	if len(metadata.AdditionalFields) > 0 {
 		if err := json.Unmarshal(metadata.AdditionalFields, &additionalFieldsMetadata); err != nil {
@@ -288,7 +315,7 @@ func (e Executor) SetRoot(
 		// Use the actual MCMS package address
 		e.mcmsPackageID,
 		metadata.StartingOpCount,
-		metadata.StartingOpCount+e.TxCount,
+		metadata.StartingOpCount+txCount,
 		e.OverridePreviousRoot,
 		proofBytes,
 		signatures,

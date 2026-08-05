@@ -237,6 +237,33 @@ func (e Executor) SetRoot(
 	validUntil uint32,
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, e.TxCount, proof, root, validUntil, sortedSignatures)
+}
+
+// SetRootForInstance implements sdk.InstanceExecutor: it sets the root on a specific MCM
+// instance, deriving postOpCount from the instance's own operation count so the on-chain
+// root metadata matches the per-instance metadata leaf in the Merkle proof.
+func (e Executor) SetRootForInstance(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	instanceOpCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
+	return e.setRoot(ctx, metadata, instanceOpCount, proof, root, validUntil, sortedSignatures)
+}
+
+func (e Executor) setRoot(
+	ctx context.Context,
+	metadata types.ChainMetadata,
+	txCount uint64,
+	proof []common.Hash,
+	root [32]byte,
+	validUntil uint32,
+	sortedSignatures []types.Signature,
+) (types.TransactionResult, error) {
 	mcmsAddress, err := hexToAddress(metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to parse MCMS address %q: %w", metadata.MCMAddress, err)
@@ -272,7 +299,7 @@ func (e Executor) SetRoot(
 			chainIDBig,
 			mcmsAddress,
 			metadata.StartingOpCount,
-			metadata.StartingOpCount+e.TxCount,
+			metadata.StartingOpCount+txCount,
 			e.OverridePreviousRoot,
 			proofBytes,
 			signatures,
@@ -287,7 +314,7 @@ func (e Executor) SetRoot(
 			chainIDBig,
 			mcmsAddress,
 			metadata.StartingOpCount,
-			metadata.StartingOpCount+e.TxCount,
+			metadata.StartingOpCount+txCount,
 			e.OverridePreviousRoot,
 			proofBytes,
 			signatures,

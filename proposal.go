@@ -93,7 +93,7 @@ func LoadProposal(proposalType types.ProposalKind, filePath string) (ProposalInt
 
 // BaseProposal is the base struct for all MCMS proposals, contains shared fields for all proposal types.
 type BaseProposal struct {
-	Version              string                                      `json:"version" validate:"required,oneof=v1"`
+	Version              string                                      `json:"version" validate:"required,oneof=v1 v2"`
 	Kind                 types.ProposalKind                          `json:"kind" validate:"required,oneof=Proposal TimelockProposal"`
 	ValidUntil           uint32                                      `json:"validUntil" validate:"required"`
 	Signatures           []types.Signature                           `json:"signatures" validate:"omitempty,dive,required"`
@@ -122,6 +122,49 @@ func (p *BaseProposal) ChainMetadatas() map[types.ChainSelector]types.ChainMetad
 // setChainMetadata sets the chain metadata for a given chain selector.
 func (p *BaseProposal) setChainMetadata(chainSelector types.ChainSelector, metadata types.ChainMetadata) {
 	p.ChainMetadata[chainSelector] = metadata
+}
+
+// validateMultiMCM validates the multi-MCM invariants on the chain metadata and enforces
+// that multi-MCM features are only used with proposal version v2.
+func (p *BaseProposal) validateMultiMCM() error {
+	for chainSelector, metadata := range p.ChainMetadata {
+		if len(metadata.AdditionalMCMs) > 0 && p.Version != "v2" {
+			return fmt.Errorf(
+				"chain %d: additional MCM instances require proposal version v2, got %q",
+				chainSelector, p.Version)
+		}
+		if err := metadata.ValidateMultiMCM(); err != nil {
+			return fmt.Errorf("chain %d: %w", chainSelector, err)
+		}
+	}
+
+	return nil
+}
+
+// instanceKey identifies a single MCM instance on a chain.
+type instanceKey struct {
+	chainSelector types.ChainSelector
+	mcmAddress    string
+}
+
+// mcmMetadataForOp resolves the governing MCM instance metadata for an operation: the
+// operation's McmAddress if set, otherwise the chain's primary MCM. Returns an error if
+// the operation's chain is missing from the chain metadata or the McmAddress does not
+// match any instance.
+func (p *BaseProposal) mcmMetadataForOp(op types.Operation) (types.ChainMetadata, error) {
+	metadata, ok := p.ChainMetadata[op.ChainSelector]
+	if !ok {
+		return types.ChainMetadata{}, NewChainMetadataNotFoundError(op.ChainSelector)
+	}
+
+	mcmMetadata, ok := metadata.GetMCM(op.McmAddress)
+	if !ok {
+		return types.ChainMetadata{}, fmt.Errorf(
+			"chain %d: operation mcmAddress %q does not match the chain's primary MCM or any additional MCM instance",
+			op.ChainSelector, op.McmAddress)
+	}
+
+	return mcmMetadata, nil
 }
 
 // Proposal is a struct where the target contract is an MCMS contract
@@ -189,19 +232,32 @@ func (p *Proposal) Validate() error {
 		return err
 	}
 
-	// Validate chain metadata for each chain selector
+	// Validate chain metadata for each chain selector (and each MCM instance on it)
 	// Should only be needed for timelock proposals (specifically solana proposals),
 	// but this might change as new chain families are added
 	for chainSelector, metadata := range p.ChainMetadata {
-		if err := validateChainMetadata(metadata, chainSelector); err != nil {
-			return fmt.Errorf("error validating proposal: %w", err)
+		for _, instance := range metadata.AllMCMs() {
+			if err := validateChainMetadata(instance, chainSelector); err != nil {
+				return fmt.Errorf("error validating proposal: %w", err)
+			}
 		}
 	}
 
-	// Validate all chains in operations have an entry in chain metadata
+	// Validate multi-MCM invariants and version gating
+	if err := p.validateMultiMCM(); err != nil {
+		return err
+	}
+
+	// Validate all chains in operations have an entry in chain metadata, and that any
+	// operation-level MCM address resolves to a known instance
 	for _, op := range p.Operations {
-		if _, ok := p.ChainMetadata[op.ChainSelector]; !ok {
-			return NewChainMetadataNotFoundError(op.ChainSelector)
+		if op.McmAddress != "" && p.Version != "v2" {
+			return fmt.Errorf(
+				"chain %d: operation mcmAddress requires proposal version v2, got %q",
+				op.ChainSelector, p.Version)
+		}
+		if _, err := p.mcmMetadataForOp(op); err != nil {
+			return err
 		}
 	}
 
@@ -238,30 +294,41 @@ func (p *Proposal) MerkleTree() (*merkle.Tree, error) {
 		return nil, wrapTreeGenErr(err)
 	}
 
+	// Per-instance encoders carry each instance's own transaction count, so root
+	// metadata leaves hash the correct postOpCount for that instance.
+	instanceEncoders, err := p.GetInstanceEncoders()
+	if err != nil {
+		return nil, wrapTreeGenErr(err)
+	}
+
 	hashLeaves := make([]common.Hash, 0)
 	for _, sel := range p.ChainSelectors() {
-		// Since we create encoders from the list of chain selectors provided in the ChainMetadata,
-		// we can be sure the encoder exists, and don't need to check for existence.
-		encoder := encoders[sel]
+		// One metadata leaf per MCM instance on the chain (the primary MCM plus any
+		// additional instances), sorted by MCM address for deterministic ordering.
+		// For single-MCM chains this is exactly one leaf, as before.
+		instances := p.ChainMetadata[sel].AllMCMs()
+		slices.SortFunc(instances, func(a, b types.ChainMetadata) int {
+			return strings.Compare(a.MCMAddress, b.MCMAddress)
+		})
 
-		// Similarly, we can be sure the metadata exists, as we iterate over the chain selectors,
-		// since the chain selectors are keys in the ChainMetadata map.
-		metadata := p.ChainMetadata[sel]
+		for _, metadata := range instances {
+			encoder := instanceEncoders[instanceKey{chainSelector: sel, mcmAddress: metadata.MCMAddress}]
 
-		encodedRootMetadata, encerr := encoder.HashMetadata(metadata)
-		if encerr != nil {
-			return nil, wrapTreeGenErr(encerr)
+			encodedRootMetadata, encerr := encoder.HashMetadata(metadata)
+			if encerr != nil {
+				return nil, wrapTreeGenErr(encerr)
+			}
+
+			hashLeaves = append(hashLeaves, encodedRootMetadata)
 		}
+	}
 
-		hashLeaves = append(hashLeaves, encodedRootMetadata)
+	txNonces, txerr := p.TransactionNonces()
+	if txerr != nil {
+		return nil, wrapTreeGenErr(txerr)
 	}
 
 	for i, op := range p.Operations {
-		txNonces, txerr := p.TransactionNonces()
-		if txerr != nil {
-			return nil, wrapTreeGenErr(txerr)
-		}
-
 		txNonce, txerr := safecast.Uint64ToUint32(txNonces[i])
 		if txerr != nil {
 			return nil, wrapTreeGenErr(txerr)
@@ -272,9 +339,15 @@ func (p *Proposal) MerkleTree() (*merkle.Tree, error) {
 		// selector defined in the transactions.
 		encoder := encoders[op.ChainSelector]
 
+		// Hash the operation against the metadata of its governing MCM instance.
+		mcmMetadata, mcmErr := p.mcmMetadataForOp(op)
+		if mcmErr != nil {
+			return nil, wrapTreeGenErr(mcmErr)
+		}
+
 		encodedOp, txerr := encoder.HashOperation(
 			txNonce,
-			p.ChainMetadata[op.ChainSelector],
+			mcmMetadata,
 			op,
 		)
 		if txerr != nil {
@@ -330,32 +403,54 @@ func (p *Proposal) TransactionCounts() map[types.ChainSelector]uint64 {
 	return txCounts
 }
 
+// TransactionCountsByInstance returns the number of operations governed by each MCM
+// instance, keyed by (chain selector, MCM address). The count for an instance is used to
+// derive that instance's postOpCount (StartingOpCount + count) in its root metadata leaf.
+// Operations whose governing MCM cannot be resolved are counted under the chain's
+// primary MCM; resolution errors surface during Validate/MerkleTree.
+func (p *Proposal) TransactionCountsByInstance() map[instanceKey]uint64 {
+	counts := make(map[instanceKey]uint64)
+	for _, o := range p.Operations {
+		md, err := p.mcmMetadataForOp(o)
+		if err != nil {
+			counts[instanceKey{chainSelector: o.ChainSelector}]++
+			continue
+		}
+		counts[instanceKey{chainSelector: o.ChainSelector, mcmAddress: md.MCMAddress}]++
+	}
+
+	return counts
+}
+
 // TransactionNonces calculates and returns a slice of nonces for each transaction based on their
 // respective chain selectors and associated metadata.
 //
 // It returns a slice of nonces, where each nonce corresponds to a transaction in the same order
 // as the transactions slice. The nonce is calculated as the local index of the transaction with
-// respect to it's chain  selector, plus the starting op count for that chain selector.
+// respect to its governing MCM instance (chain selector + MCM address), plus the starting op
+// count for that instance. For single-MCM chains this is equivalent to per-chain sequencing.
 func (p *Proposal) TransactionNonces() ([]uint64, error) {
-	// Map to keep track of local index counts for each ChainSelector
-	chainIndexMap := make(map[types.ChainSelector]uint64, len(p.ChainMetadata))
+	// Map to keep track of local index counts for each (ChainSelector, MCMAddress) instance
+	instanceIndexMap := make(map[instanceKey]uint64, len(p.ChainMetadata))
 
 	txNonces := make([]uint64, len(p.Operations))
 	for i, op := range p.Operations {
-		// Get the current local index for this ChainSelector
-		localIndex := chainIndexMap[op.ChainSelector]
-
-		// Lookup the StartingOpCount for this ChainSelector from cmMap
-		md, ok := p.ChainMetadata[op.ChainSelector]
-		if !ok {
-			return nil, NewChainMetadataNotFoundError(op.ChainSelector)
+		// Lookup the governing MCM instance metadata for this operation
+		md, err := p.mcmMetadataForOp(op)
+		if err != nil {
+			return nil, err
 		}
+
+		key := instanceKey{chainSelector: op.ChainSelector, mcmAddress: md.MCMAddress}
+
+		// Get the current local index for this instance
+		localIndex := instanceIndexMap[key]
 
 		// Add the local index to the StartingOpCount to get the final nonce
 		txNonces[i] = localIndex + md.StartingOpCount
 
-		// Increment the local index for the current ChainSelector
-		chainIndexMap[op.ChainSelector]++
+		// Increment the local index for the current instance
+		instanceIndexMap[key]++
 	}
 
 	return txNonces, nil
@@ -372,6 +467,27 @@ func (p *Proposal) GetEncoders() (map[types.ChainSelector]sdk.Encoder, error) {
 		}
 
 		encoders[chainSelector] = encoder
+	}
+
+	return encoders, nil
+}
+
+// GetInstanceEncoders generates one encoder per MCM instance, keyed by (chain selector,
+// MCM address), with each instance's transaction count. These must be used for hashing
+// root metadata leaves, since an instance's postOpCount covers only its own operations.
+func (p *Proposal) GetInstanceEncoders() (map[instanceKey]sdk.Encoder, error) {
+	txCounts := p.TransactionCountsByInstance()
+	encoders := make(map[instanceKey]sdk.Encoder)
+	for chainSelector, metadata := range p.ChainMetadata {
+		for _, instance := range metadata.AllMCMs() {
+			key := instanceKey{chainSelector: chainSelector, mcmAddress: instance.MCMAddress}
+			encoder, err := newEncoder(chainSelector, txCounts[key], p.OverridePreviousRoot, p.useSimulatedBackend)
+			if err != nil {
+				return nil, fmt.Errorf("unable to create encoder: %w", err)
+			}
+
+			encoders[key] = encoder
+		}
 	}
 
 	return encoders, nil

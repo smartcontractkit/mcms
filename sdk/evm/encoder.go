@@ -129,6 +129,16 @@ func (e *Encoder) ToGethOperation(
 // ToGethRootMetadata converts the MCMS ChainMetadata into the format expected by the EVM
 // ManyChainMultiSig contract.
 func (e *Encoder) ToGethRootMetadata(ctx context.Context, metadata types.ChainMetadata) (bindings.ManyChainMultiSigRootMetadata, error) {
+	return e.ToGethRootMetadataWithTxCount(ctx, metadata, e.TxCount)
+}
+
+// ToGethRootMetadataWithTxCount is ToGethRootMetadata with an explicit transaction count
+// for postOpCount derivation. Used for per-instance roots when a chain hosts multiple
+// MCM instances (v2 proposals), where each instance's postOpCount covers only its own
+// operations.
+func (e *Encoder) ToGethRootMetadataWithTxCount(
+	ctx context.Context, metadata types.ChainMetadata, txCount uint64,
+) (bindings.ManyChainMultiSigRootMetadata, error) {
 	evmChainID, err := getEVMChainID(ctx, e.ChainSelector, e.IsSim)
 	if err != nil {
 		return bindings.ManyChainMultiSigRootMetadata{}, err
@@ -138,7 +148,7 @@ func (e *Encoder) ToGethRootMetadata(ctx context.Context, metadata types.ChainMe
 		ChainId:              new(big.Int).SetUint64(evmChainID),
 		MultiSig:             common.HexToAddress(metadata.MCMAddress),
 		PreOpCount:           new(big.Int).SetUint64(metadata.StartingOpCount),
-		PostOpCount:          new(big.Int).SetUint64(metadata.StartingOpCount + e.TxCount),
+		PostOpCount:          new(big.Int).SetUint64(metadata.StartingOpCount + txCount),
 		OverridePreviousRoot: e.OverridePreviousRoot,
 	}, nil
 }

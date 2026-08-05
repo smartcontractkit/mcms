@@ -35,6 +35,13 @@ type RootMetadataEncoder[T any] interface {
 	ToRootMetadata(metadata types.ChainMetadata) (T, error)
 }
 
+// RootMetadataTxCountEncoder is an optional extension of RootMetadataEncoder for
+// per-instance roots (v2 proposals), deriving postOpCount from an explicit transaction
+// count instead of the encoder's chain-wide TxCount.
+type RootMetadataTxCountEncoder[T any] interface {
+	ToRootMetadataWithTxCount(metadata types.ChainMetadata, txCount uint64) (T, error)
+}
+
 // TODO: bubble up to sdk, use in evm as well
 // Defines encoding from sdk types.ChainMetadata + types.Operation to chain type Operation T
 type OperationEncoder[T any] interface {
@@ -162,6 +169,14 @@ func (e *Encoder) ToOperation(opCount uint32, metadata types.ChainMetadata, op t
 }
 
 func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadata, error) {
+	return e.ToRootMetadataWithTxCount(metadata, e.TxCount)
+}
+
+// ToRootMetadataWithTxCount is ToRootMetadata with an explicit transaction count for
+// postOpCount derivation. Used for per-instance roots when a chain hosts multiple MCM
+// instances (v2 proposals), where each instance's postOpCount covers only its own
+// operations.
+func (e *Encoder) ToRootMetadataWithTxCount(metadata types.ChainMetadata, txCount uint64) (mcms.RootMetadata, error) {
 	chainID, err := chainsel.TonChainIdFromSelector(uint64(e.ChainSelector))
 	if err != nil {
 		return mcms.RootMetadata{}, &sdkerrors.InvalidChainIDError{ReceivedChainID: e.ChainSelector}
@@ -177,7 +192,7 @@ func (e *Encoder) ToRootMetadata(metadata types.ChainMetadata) (mcms.RootMetadat
 		ChainID:              new(big.Int).SetInt64(int64(chainID)),
 		MultiSig:             mcmsAddr,
 		PreOpCount:           metadata.StartingOpCount,
-		PostOpCount:          metadata.StartingOpCount + e.TxCount,
+		PostOpCount:          metadata.StartingOpCount + txCount,
 		OverridePreviousRoot: e.OverridePreviousRoot,
 	}, nil
 }

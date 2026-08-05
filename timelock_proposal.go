@@ -95,10 +95,21 @@ func (m *TimelockProposal) Validate() error {
 		return NewInvalidProposalKindError(m.Kind, types.KindTimelockProposal)
 	}
 
-	// Validate all chains in transactions have an entry in chain metadata
+	// Validate multi-MCM invariants and version gating
+	if err := m.validateMultiMCM(); err != nil {
+		return err
+	}
+
+	// Validate all chains in transactions have an entry in chain metadata, and that any
+	// batch-level MCM address resolves to a known instance
 	for _, op := range m.Operations {
-		if _, ok := m.ChainMetadata[op.ChainSelector]; !ok {
-			return NewChainMetadataNotFoundError(op.ChainSelector)
+		if op.McmAddress != "" && m.Version != "v2" {
+			return fmt.Errorf(
+				"chain %d: operation mcmAddress requires proposal version v2, got %q",
+				op.ChainSelector, m.Version)
+		}
+		if _, err := m.mcmMetadataForBatchOp(op); err != nil {
+			return err
 		}
 
 		for _, tx := range op.Transactions {
@@ -110,6 +121,44 @@ func (m *TimelockProposal) Validate() error {
 	}
 
 	return timeLockProposalValidateBasic(*m)
+}
+
+// mcmMetadataForBatchOp resolves the governing MCM instance metadata for a batch
+// operation: the batch's McmAddress if set, otherwise the chain's primary MCM.
+func (m *TimelockProposal) mcmMetadataForBatchOp(bop types.BatchOperation) (types.ChainMetadata, error) {
+	metadata, ok := m.ChainMetadata[bop.ChainSelector]
+	if !ok {
+		return types.ChainMetadata{}, NewChainMetadataNotFoundError(bop.ChainSelector)
+	}
+
+	mcmMetadata, ok := metadata.GetMCM(bop.McmAddress)
+	if !ok {
+		return types.ChainMetadata{}, fmt.Errorf(
+			"chain %d: operation mcmAddress %q does not match the chain's primary MCM or any additional MCM instance",
+			bop.ChainSelector, bop.McmAddress)
+	}
+
+	return mcmMetadata, nil
+}
+
+// TimelockAddressForOp resolves the timelock address governing a batch operation. When
+// the batch targets a non-primary MCM instance, the instance itself is the timelock
+// (the Canton model, where each MCMS contract has a built-in timelock). Otherwise the
+// chain's TimelockAddresses entry is used.
+func (m *TimelockProposal) TimelockAddressForOp(bop types.BatchOperation) string {
+	if bop.McmAddress == "" {
+		return m.TimelockAddresses[bop.ChainSelector]
+	}
+
+	metadata, ok := m.ChainMetadata[bop.ChainSelector]
+	if !ok {
+		return m.TimelockAddresses[bop.ChainSelector]
+	}
+	if bop.McmAddress == metadata.MCMAddress {
+		return m.TimelockAddresses[bop.ChainSelector]
+	}
+
+	return bop.McmAddress
 }
 
 func replaceChainMetadataWithAddresses(p *TimelockProposal, addresses map[types.ChainSelector]types.ChainMetadata) error {
@@ -179,11 +228,14 @@ func (m *TimelockProposal) Convert(
 	// 2) Initialize the global predecessors slice
 	predecessors := make([]common.Hash, len(m.Operations))
 
-	// 3) Keep track of the last operation ID per chain
-	lastOpID := make(map[types.ChainSelector]common.Hash)
+	// 3) Keep track of the last operation ID per MCM instance (chain + MCM address).
+	// For single-MCM chains this is equivalent to per-chain chaining.
+	lastOpID := make(map[instanceKey]common.Hash)
 	// Initialize them to ZeroHash
-	for sel := range m.ChainMetadata {
-		lastOpID[sel] = ZeroHash
+	for sel, metadata := range m.ChainMetadata {
+		for _, instance := range metadata.AllMCMs() {
+			lastOpID[instanceKey{chainSelector: sel, mcmAddress: instance.MCMAddress}] = ZeroHash
+		}
 	}
 
 	// 4) Rebuild chainMetadata in baseProposal
@@ -208,24 +260,27 @@ func (m *TimelockProposal) Convert(
 			return Proposal{}, nil, fmt.Errorf("unable to find converter for chain selector %d", chainSelector)
 		}
 
-		chainMetadata, ok := m.ChainMetadata[chainSelector]
-		if !ok {
-			return Proposal{}, nil, fmt.Errorf("missing chain metadata for chainSelector %d", chainSelector)
+		// Resolve the governing MCM instance for this batch operation
+		mcmMetadata, err := m.mcmMetadataForBatchOp(bop)
+		if err != nil {
+			return Proposal{}, nil, err
 		}
 
-		// The predecessor for this op is the lastOpID for its chain
-		predecessor := lastOpID[chainSelector]
+		key := instanceKey{chainSelector: chainSelector, mcmAddress: mcmMetadata.MCMAddress}
+
+		// The predecessor for this op is the lastOpID for its MCM instance
+		predecessor := lastOpID[key]
 		predecessors[i] = predecessor
 
-		timelockAddr := m.TimelockAddresses[chainSelector]
+		timelockAddr := m.TimelockAddressForOp(bop)
 
 		// Convert the batch operation
 		convertedOps, operationID, err := converter.ConvertBatchToChainOperations(
 			ctx,
-			chainMetadata,
+			mcmMetadata,
 			bop,
 			timelockAddr,
-			chainMetadata.MCMAddress,
+			mcmMetadata.MCMAddress,
 			m.Delay,
 			m.Action,
 			predecessor,
@@ -235,11 +290,17 @@ func (m *TimelockProposal) Convert(
 			return Proposal{}, nil, err
 		}
 
+		// Preserve the governing MCM instance on the converted operations so the
+		// resulting MCMS proposal sequences nonces per instance.
+		for j := range convertedOps {
+			convertedOps[j].McmAddress = bop.McmAddress
+		}
+
 		// Append the converted operation to the MCMS only proposal
 		result.Operations = append(result.Operations, convertedOps...)
 
-		// Update lastOpID for that chain
-		lastOpID[chainSelector] = operationID
+		// Update lastOpID for that instance
+		lastOpID[key] = operationID
 	}
 
 	// 7) Return the MCMS-only proposal + the single slice of predecessors
@@ -313,13 +374,21 @@ func (m *TimelockProposal) buildTimelockConverters(_ context.Context) (map[types
 func (m *TimelockProposal) calcOperationIDs(ctx context.Context) ([]common.Hash, []common.Hash, error) {
 	operationIDs := make([]common.Hash, len(m.Operations))
 	predecessors := make([]common.Hash, len(m.Operations))
-	lastOpID := make(map[types.ChainSelector]common.Hash)
-	for sel := range m.ChainMetadata {
-		lastOpID[sel] = ZeroHash
+	lastOpID := make(map[instanceKey]common.Hash)
+	for sel, metadata := range m.ChainMetadata {
+		for _, instance := range metadata.AllMCMs() {
+			lastOpID[instanceKey{chainSelector: sel, mcmAddress: instance.MCMAddress}] = ZeroHash
+		}
 	}
 
 	for i, batchOp := range m.Operations {
-		predecessors[i] = lastOpID[batchOp.ChainSelector]
+		mcmMetadata, err := m.mcmMetadataForBatchOp(batchOp)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		key := instanceKey{chainSelector: batchOp.ChainSelector, mcmAddress: mcmMetadata.MCMAddress}
+		predecessors[i] = lastOpID[key]
 
 		calculateOperationID, err := operationIDFn(ctx, batchOp.ChainSelector)
 		if err != nil {
@@ -331,7 +400,7 @@ func (m *TimelockProposal) calcOperationIDs(ctx context.Context) ([]common.Hash,
 			return nil, nil, fmt.Errorf("failed to calculate operation ID for chain selector %d: %w", batchOp.ChainSelector, err)
 		}
 
-		lastOpID[batchOp.ChainSelector] = newOperationID
+		lastOpID[key] = newOperationID
 		operationIDs[i] = newOperationID
 	}
 
@@ -392,20 +461,29 @@ func (m *TimelockProposal) GetOpCount(
 		opt(&options)
 	}
 
+	// Resolve the target MCM instance (primary unless overridden).
+	mcmMetadata, ok := metadata.GetMCM(options.mcmAddress)
+	if !ok {
+		return 0, fmt.Errorf(
+			"chain %d: mcmAddress %q does not match the chain's primary MCM or any additional MCM instance",
+			chainSelector, options.mcmAddress)
+	}
+
 	inspector := options.inspector
 	if inspector == nil {
 		var err error
-		inspector, err = chainwrappers.BuildInspector(chains, chainSelector, m.Action, metadata)
+		inspector, err = chainwrappers.BuildInspector(chains, chainSelector, m.Action, mcmMetadata)
 		if err != nil {
 			return 0, err
 		}
 	}
 
-	return inspector.GetOpCount(ctx, metadata.MCMAddress)
+	return inspector.GetOpCount(ctx, mcmMetadata.MCMAddress)
 }
 
 type getOpCountOptions struct {
-	inspector sdk.Inspector
+	inspector  sdk.Inspector
+	mcmAddress string
 }
 
 type GetOpCountOption func(*getOpCountOptions)
@@ -414,6 +492,13 @@ type GetOpCountOption func(*getOpCountOptions)
 func WithInspector(inspector sdk.Inspector) GetOpCountOption {
 	return func(o *getOpCountOptions) {
 		o.inspector = inspector
+	}
+}
+
+// WithMCMAddress targets a specific MCM instance on the chain instead of the primary MCM.
+func WithMCMAddress(mcmAddress string) GetOpCountOption {
+	return func(o *getOpCountOptions) {
+		o.mcmAddress = mcmAddress
 	}
 }
 

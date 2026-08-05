@@ -47,6 +47,16 @@ func (b *BaseProposalBuilder[T]) AddChainMetadata(selector types.ChainSelector, 
 	return b.builder
 }
 
+// AddAdditionalMCM appends an additional MCM instance to the chain metadata of the given
+// selector. Requires the chain metadata to already exist (set via AddChainMetadata).
+// Multi-MCM proposals must use version v2 (SetVersion("v2")).
+func (b *BaseProposalBuilder[T]) AddAdditionalMCM(selector types.ChainSelector, metadata types.ChainMetadata) T {
+	entry := b.baseProposal.ChainMetadata[selector]
+	entry.AdditionalMCMs = append(entry.AdditionalMCMs, metadata)
+	b.baseProposal.ChainMetadata[selector] = entry
+	return b.builder
+}
+
 // SetChainMetadata sets the chain metadata of the BaseProposal.
 func (b *BaseProposalBuilder[T]) SetChainMetadata(metadata map[types.ChainSelector]types.ChainMetadata) T {
 	b.baseProposal.ChainMetadata = metadata
