@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.52.1](https://github.com/smartcontractkit/mcms/compare/v0.52.0...v0.52.1) (2026-08-13)
+
+
+### Bug Fixes
+
+* **evm:** update CallProxy bindings ([#824](https://github.com/smartcontractkit/mcms/issues/824)) ([8e40a43](https://github.com/smartcontractkit/mcms/commit/8e40a43d4827e35baf56a3c51a920dfe2baaafcd))
+
 ## [0.52.0](https://github.com/smartcontractkit/mcms/compare/v0.51.0...v0.52.0) (2026-07-14)
 
 
