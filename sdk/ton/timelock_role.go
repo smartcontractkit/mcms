@@ -24,5 +24,5 @@ func TimelockRoleHash(role sdk.TimelockRole) (*big.Int, error) {
 		return nil, fmt.Errorf("invalid timelock role: %d", role)
 	}
 
-	return hash, nil
+	return new(big.Int).Set(hash), nil
 }
