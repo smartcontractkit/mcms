@@ -9,10 +9,11 @@ import (
 	"github.com/xssnick/tonutils-go/address"
 	"github.com/xssnick/tonutils-go/tlb"
 	"github.com/xssnick/tonutils-go/ton/wallet"
-	"github.com/xssnick/tonutils-go/tvm/cell"
 
+	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/tlbe"
 	"github.com/smartcontractkit/chainlink-ton/cciplib/ton/tvm"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings"
+	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/lib/access/rbac"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
 
 	"github.com/smartcontractkit/mcms/sdk"
@@ -42,6 +43,26 @@ func NewTimelockConfigurer(w *wallet.Wallet, amount tlb.Coins, opts ...TimelockC
 
 type TimelockConfigurerOption func(*TimelockConfigurer)
 
+// resolveQueryID returns a deterministic QueryID for prepared (skipSend) transactions,
+// or a random QueryID for direct-send transactions.
+func (c *TimelockConfigurer) resolveQueryID(dst *address.Address, operation string, msg any) (uint64, error) {
+	if c.skipSend {
+		body, err := tlb.ToCell(msg)
+		if err != nil {
+			return 0, fmt.Errorf("failed to encode %s body for query ID: %w", operation, err)
+		}
+
+		return deterministicPreparedQueryID(dst, operation, body), nil
+	}
+
+	qID, err := tvm.RandomQueryID()
+	if err != nil {
+		return 0, fmt.Errorf("failed to generate random query ID: %w", err)
+	}
+
+	return qID, nil
+}
+
 func WithDoNotSendTimelockInstructionsOnChain() TimelockConfigurerOption {
 	return func(c *TimelockConfigurer) {
 		c.skipSend = true
@@ -65,22 +86,13 @@ func (c *TimelockConfigurer) UpdateDelay(
 	msg := timelock.UpdateDelay{
 		NewDelay: uint32(newDelay),
 	}
-	var body *cell.Cell
-	if c.skipSend {
-		body, err = tlb.ToCell(msg)
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to encode UpdateDelay body: %w", err)
-		}
 
-		msg.QueryID = deterministicPreparedQueryID(dstAddr, "RBACTimelock:UpdateDelay", body)
-	} else {
-		msg.QueryID, err = tvm.RandomQueryID()
-		if err != nil {
-			return types.TransactionResult{}, fmt.Errorf("failed to generate random query ID: %w", err)
-		}
+	msg.QueryID, err = c.resolveQueryID(dstAddr, "RBACTimelock:UpdateDelay", msg)
+	if err != nil {
+		return types.TransactionResult{}, err
 	}
 
-	body, err = tlb.ToCell(msg)
+	body, err := tlb.ToCell(msg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("failed to encode UpdateDelay body: %w", err)
 	}
@@ -106,12 +118,61 @@ func (c *TimelockConfigurer) UpdateDelay(
 	})
 }
 
-// GrantRole grants a timelock role to an address.
+// GrantRole sends the RBACTimelock GrantRole message to the given timelock
+// address, granting role to targetAddress.
 func (c *TimelockConfigurer) GrantRole(
 	ctx context.Context,
 	timelockAddress string,
 	role sdk.TimelockRole,
 	targetAddress string,
 ) (types.TransactionResult, error) {
-	panic("not implemented")
+	dstAddr, err := address.ParseAddr(timelockAddress)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("invalid timelock address: %w", err)
+	}
+
+	account, err := address.ParseAddr(targetAddress)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("invalid target address: %w", err)
+	}
+
+	roleHash, err := TimelockRoleHash(role)
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
+
+	msg := rbac.GrantRole{
+		Role:    tlbe.NewUint256(roleHash),
+		Account: account,
+	}
+
+	msg.QueryID, err = c.resolveQueryID(dstAddr, "RBACTimelock:GrantRole", msg)
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
+
+	body, err := tlb.ToCell(msg)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("failed to encode GrantRole body: %w", err)
+	}
+
+	if c.skipSend {
+		tx, err := NewTransaction(dstAddr, body.ToBuilder().ToSlice(), c.amount.Nano(), bindings.ShortTimelock, nil, bindings.TypeTimelock, []string{bindings.ShortTimelock, "GrantRole"})
+		if err != nil {
+			return types.TransactionResult{}, fmt.Errorf("error encoding transaction: %w", err)
+		}
+
+		return types.TransactionResult{
+			Hash:        "",
+			ChainFamily: chainsel.FamilyTon,
+			RawData:     tx,
+		}, nil
+	}
+
+	return SendTx(ctx, TxOpts{
+		Wallet:  c.wallet,
+		DstAddr: dstAddr,
+		Amount:  c.amount,
+		Body:    body,
+	})
 }
