@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.53.0](https://github.com/smartcontractkit/mcms/compare/v0.52.1...v0.53.0) (2026-08-18)
+
+
+### Features
+
+* Add TimelockConfigurer.GrantRole support for TON ([#821](https://github.com/smartcontractkit/mcms/issues/821)) ([541ae5d](https://github.com/smartcontractkit/mcms/commit/541ae5d04e7fe9aa90d75fafef1df4fd0b7984ec))
+
 ## [0.52.1](https://github.com/smartcontractkit/mcms/compare/v0.52.0...v0.52.1) (2026-08-13)
 
 
