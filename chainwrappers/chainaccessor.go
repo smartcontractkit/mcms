@@ -4,6 +4,8 @@ import (
 	aptoslib "github.com/aptos-labs/aptos-go-sdk"
 	sol "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
+	stellarbindings "github.com/smartcontractkit/chainlink-stellar/bindings"
+	stellarrpc "github.com/stellar/go-stellar-sdk/clients/rpcclient"
 	"github.com/xssnick/tonutils-go/ton"
 	tonwallet "github.com/xssnick/tonutils-go/ton/wallet"
 
@@ -26,5 +28,7 @@ type ChainAccessor interface {
 	SuiSigner(selector uint64) (suisdk.SuiSigner, bool)
 	TonClient(selector uint64) (ton.APIClientWrapped, bool)
 	TonSigner(selector uint64) (*tonwallet.Wallet, bool)
+	StellarClient(selector uint64) (*stellarrpc.Client, bool)
+	StellarSigner(selector uint64) (stellarbindings.Signer, bool)
 	CantonChain(selector uint64) (cantonsdk.Chain, bool)
 }
