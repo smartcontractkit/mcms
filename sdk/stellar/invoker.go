@@ -132,6 +132,7 @@ func (i *rpcInvoker) GetEvents(ctx context.Context, contractID string, startLedg
 	if err != nil {
 		return nil, fmt.Errorf("get Stellar events: %w", err)
 	}
+
 	return response.Events, nil
 }
 
@@ -144,6 +145,7 @@ func (i *rpcInvoker) invokeOperation(contractID, functionName string, args []xdr
 	if contractAddress == nil {
 		return nil, fmt.Errorf("build Stellar contract address")
 	}
+
 	return &txnbuild.InvokeHostFunction{
 		HostFunction: xdr.HostFunction{
 			Type: xdr.HostFunctionTypeHostFunctionTypeInvokeContract,
@@ -176,6 +178,7 @@ func (i *rpcInvoker) sourceAccount(ctx context.Context) (*txnbuild.SimpleAccount
 		}
 		sequence = int64(entry.MustAccount().SeqNum)
 	}
+
 	return &txnbuild.SimpleAccount{AccountID: i.signer.Address(), Sequence: sequence}, nil
 }
 

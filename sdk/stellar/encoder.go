@@ -143,8 +143,8 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 			ConfigVersion   *uint64 `json:"configVersion"`
 			EncodingVersion *uint32 `json:"encodingVersion"`
 		}
-		if err := json.Unmarshal(metadata.AdditionalFields, &fields); err != nil {
-			return common.Hash{}, fmt.Errorf("HashMetadata: additional fields: %w", err)
+		if uerr := json.Unmarshal(metadata.AdditionalFields, &fields); uerr != nil {
+			return common.Hash{}, fmt.Errorf("HashMetadata: additional fields: %w", uerr)
 		}
 		if fields.ConfigVersion != nil {
 			configVersion = *fields.ConfigVersion
