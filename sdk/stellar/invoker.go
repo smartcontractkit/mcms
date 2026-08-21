@@ -275,6 +275,7 @@ func (i *rpcInvoker) submit(ctx context.Context, op *txnbuild.InvokeHostFunction
 				if err := xdr.SafeUnmarshalBase64(result.ResultMetaXDR, &meta); err != nil {
 					return nil, fmt.Errorf("decode Stellar transaction result: %w", err)
 				}
+
 				return &meta, nil
 			case "FAILED":
 				return nil, fmt.Errorf("stellar transaction failed: %s", submitted.Hash)
@@ -286,6 +287,7 @@ func (i *rpcInvoker) submit(ctx context.Context, op *txnbuild.InvokeHostFunction
 		case <-time.After(time.Second):
 		}
 	}
+
 	return nil, fmt.Errorf("Stellar transaction timed out: %s", submitted.Hash)
 }
 
