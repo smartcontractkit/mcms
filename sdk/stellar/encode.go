@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"math"
 	"regexp"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -56,42 +57,11 @@ func appendU64(buf *[]byte, value uint64) {
 }
 func appendBytes32(buf *[]byte, value [32]byte) { *buf = append(*buf, value[:]...) }
 func appendSized(buf *[]byte, value []byte) {
-	if len(value) > int(^uint32(0)) {
+	if len(value) > math.MaxUint32 {
 		panic("value too large for uint32")
 	}
 	appendU32(buf, uint32(len(value))) //nolint:gosec // len checked above
 	*buf = append(*buf, value...)
-}
-
-// Legacy ABI helpers are kept unexported so older package tests and downstream
-// code compiled against the package continue to build during the migration.
-func appendWord32(buf *[]byte, word [32]byte)           { *buf = append(*buf, word[:]...) }
-func appendUint256FromBytes(buf *[]byte, word [32]byte) { appendWord32(buf, word) }
-func appendUint40(buf *[]byte, value uint64) error {
-	if value >= uint40MaxExclusive {
-		return ErrUint40Overflow
-	}
-	var w [32]byte
-	binary.BigEndian.PutUint64(w[24:], value)
-	appendWord32(buf, w)
-
-	return nil
-}
-func appendBool(buf *[]byte, value bool) {
-	var w [32]byte
-	if value {
-		w[31] = 1
-	}
-	appendWord32(buf, w)
-}
-func appendABIBytes(buf *[]byte, value []byte) {
-	var w [32]byte
-	binary.BigEndian.PutUint64(w[24:], uint64(len(value)))
-	appendWord32(buf, w)
-	*buf = append(*buf, value...)
-	for len(*buf)%32 != 0 {
-		*buf = append(*buf, 0)
-	}
 }
 
 func HashStellarRootMetadata(domain, networkID, multisig [32]byte, preOpCount, postOpCount uint64, override bool, configVersion uint64, version uint32) (common.Hash, error) {
@@ -143,45 +113,6 @@ func HashCurrentStellarOp(domain, networkID, multisig [32]byte, nonce uint64, ta
 	appendBytes32(&buf, target)
 	appendSized(&buf, functionXDR)
 	appendSized(&buf, argsXDR)
-
-	return crypto.Keccak256Hash(buf), nil
-}
-
-// Compatibility helper for the pre-versioned API. New code should use HashStellarRootMetadata.
-func HashRootMetadata(domain, chainID, multisig [32]byte, preOpCount, postOpCount uint64, override bool) (common.Hash, error) {
-	var buf []byte
-	appendWord32(&buf, domain)
-	appendWord32(&buf, chainID)
-	appendWord32(&buf, multisig)
-	if err := appendUint40(&buf, preOpCount); err != nil {
-		return common.Hash{}, err
-	}
-	if err := appendUint40(&buf, postOpCount); err != nil {
-		return common.Hash{}, err
-	}
-	appendBool(&buf, override)
-
-	return crypto.Keccak256Hash(buf), nil
-}
-
-// HashStellarOp remains source-compatible for old callers; current encoders use HashCurrentStellarOp.
-func HashStellarOp(domain, chainID, multisig [32]byte, nonce uint64, to, value [32]byte, data []byte) (common.Hash, error) {
-	if nonce >= uint40MaxExclusive {
-		return common.Hash{}, ErrUint40Overflow
-	}
-	var buf []byte
-	appendWord32(&buf, domain)
-	appendWord32(&buf, chainID)
-	appendWord32(&buf, multisig)
-	if err := appendUint40(&buf, nonce); err != nil {
-		return common.Hash{}, err
-	}
-	appendWord32(&buf, to)
-	appendWord32(&buf, value)
-	var off [32]byte
-	binary.BigEndian.PutUint64(off[24:], stellarOpDataABIByteOffset)
-	appendWord32(&buf, off)
-	appendABIBytes(&buf, data)
 
 	return crypto.Keccak256Hash(buf), nil
 }
