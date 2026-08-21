@@ -300,13 +300,16 @@ func returnValue(meta *xdr.TransactionMeta) (*xdr.ScVal, error) {
 		if meta.MustV4().SorobanMeta == nil {
 			return nil, errStellarVoidReturn
 		}
+
 		return meta.MustV4().SorobanMeta.ReturnValue, nil
 	case 3: //nolint:mnd // protocol version
 		if meta.MustV3().SorobanMeta == nil {
 			return nil, errStellarVoidReturn
 		}
+
 		return &meta.MustV3().SorobanMeta.ReturnValue, nil
 	default:
+
 		return nil, fmt.Errorf("unsupported Stellar transaction meta version: %d", meta.V)
 	}
 }
