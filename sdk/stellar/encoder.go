@@ -9,6 +9,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 
+	chainsel "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
@@ -37,7 +39,7 @@ func decodeTransactionAdditionalFields(raw json.RawMessage) (transactionAddition
 
 		return transactionAdditionalFields{}, fmt.Errorf("decode Stellar transaction additional fields: %w", err)
 	}
-	if fields.Family == nil || *fields.Family != "stellar" {
+	if fields.Family == nil || *fields.Family != chainsel.FamilyStellar {
 		return transactionAdditionalFields{}, fmt.Errorf("invalid Stellar transaction family")
 	}
 	if fields.EncodingVersion == nil {

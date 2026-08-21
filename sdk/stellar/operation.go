@@ -5,72 +5,11 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
-	mcmsbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/mcms"
-	"github.com/smartcontractkit/chainlink-stellar/bindings/scval"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/stellar/go-stellar-sdk/xdr"
 
-	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
-
-// ConfigToSetConfigInputs flattens a nested MCMS [types.Config] tree into the
-// canonical Stellar set_config / initialize parameter types. Signer addresses are
-// left-padded to 32 bytes (Solidity address layout).
-func ConfigToSetConfigInputs(cfg *types.Config) (mcmsbindings.SignerAddresses, mcmsbindings.SignerGroups, [32]byte, [32]byte, error) {
-	groupQuorums, groupParents, signerAddrs, signerGroups, err := sdk.ExtractSetConfigInputs(cfg)
-	if err != nil {
-		return mcmsbindings.SignerAddresses{}, mcmsbindings.SignerGroups{}, [32]byte{}, [32]byte{}, err
-	}
-
-	addresses := make([][32]byte, len(signerAddrs))
-	for i, addr := range signerAddrs {
-		copy(addresses[i][12:], addr.Bytes())
-	}
-
-	groups := make([]uint32, len(signerGroups))
-	for i, g := range signerGroups {
-		groups[i] = uint32(g)
-	}
-
-	var gq, gp [32]byte
-	for i := range 32 {
-		gq[i] = groupQuorums[i]
-		gp[i] = groupParents[i]
-	}
-
-	return mcmsbindings.SignerAddresses{Inner: addresses},
-		mcmsbindings.SignerGroups{Inner: groups},
-		gq, gp, nil
-}
-
-// NewSetConfigOperation creates the canonical Stellar MCMS set_config
-// operation. It is used when configuration must be submitted through an
-// MCMS proposal instead of directly by the deployer.
-func NewSetConfigOperation(target string, cfg *types.Config, clearRoot bool, contractType string, tags []string) (types.Transaction, error) {
-	signerAddresses, signerGroups, groupQuorums, groupParents, err := ConfigToSetConfigInputs(cfg)
-	if err != nil {
-		return types.Transaction{}, fmt.Errorf("stellar set_config inputs: %w", err)
-	}
-
-	addresses, err := signerAddresses.ToScVal()
-	if err != nil {
-		return types.Transaction{}, fmt.Errorf("stellar signer addresses: %w", err)
-	}
-	groups, err := signerGroups.ToScVal()
-	if err != nil {
-		return types.Transaction{}, fmt.Errorf("stellar signer groups: %w", err)
-	}
-
-	args := []xdr.ScVal{
-		addresses,
-		groups,
-		scval.Bytes32ToScVal(groupQuorums),
-		scval.Bytes32ToScVal(groupParents),
-		scval.BoolToScVal(clearRoot),
-	}
-
-	return NewTransaction(target, "set_config", args, contractType, tags)
-}
 
 // NewTransaction creates the canonical generic MCMS transaction for a Soroban
 // invocation. The target and invocation payload remain in the generic
@@ -87,7 +26,7 @@ func NewTransaction(target, function string, args []xdr.ScVal, contractType stri
 	additionalFields, err := json.Marshal(struct {
 		Family          string `json:"family"`
 		EncodingVersion uint32 `json:"encodingVersion"`
-	}{Family: "stellar", EncodingVersion: encodingVersion})
+	}{Family: chainsel.FamilyStellar, EncodingVersion: encodingVersion})
 	if err != nil {
 		return types.Transaction{}, fmt.Errorf("encode Stellar transaction metadata: %w", err)
 	}

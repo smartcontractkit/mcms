@@ -3,41 +3,10 @@ package stellar
 import (
 	"testing"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/types"
 )
-
-func TestConfigToSetConfigInputs_FlattensNestedConfig(t *testing.T) {
-	t.Parallel()
-	cfg := &types.Config{
-		Quorum: 2,
-		Signers: []common.Address{
-			common.HexToAddress("0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB"),
-		},
-		GroupSigners: []types.Config{{
-			Quorum: 1,
-			Signers: []common.Address{
-				common.HexToAddress("0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA"),
-			},
-		}},
-	}
-	addrs, groups, gq, gp, err := ConfigToSetConfigInputs(cfg)
-	require.NoError(t, err)
-
-	// Two signers total, sorted by address (0xAA.. < 0xBB..).
-	require.Len(t, addrs.Inner, 2)
-	require.Equal(t, common.HexToAddress("0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA").Bytes(), addrs.Inner[0][12:])
-	require.Equal(t, common.HexToAddress("0xBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB").Bytes(), addrs.Inner[1][12:])
-
-	// Signer 0xAAAA is in the child group (index 1); 0xBBBB is in root (index 0).
-	// After sorting by address, groups come out [1, 0].
-	require.Equal(t, []uint32{1, 0}, groups.Inner[:])
-	require.Equal(t, uint8(2), gq[0])
-	require.Equal(t, uint8(1), gq[1])
-	require.Equal(t, uint8(0), gp[1]) // child group parent is root
-}
 
 func TestNewBatchOperationUsesCanonicalSorobanPayload(t *testing.T) {
 	t.Parallel()
