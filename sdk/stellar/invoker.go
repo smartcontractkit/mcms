@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	chain_selectors "github.com/smartcontractkit/chain-selectors"
+	chainselectors "github.com/smartcontractkit/chain-selectors"
 	stellarrpc "github.com/stellar/go-stellar-sdk/clients/rpcclient"
 	"github.com/stellar/go-stellar-sdk/network"
 	protocolrpc "github.com/stellar/go-stellar-sdk/protocols/rpc"
@@ -19,18 +19,11 @@ import (
 
 const defaultTransactionWindow = 120 * time.Second
 
-// Signer is the minimal signing surface needed by the Stellar SDK. Keeping it
-// here avoids coupling the SDK API to a concrete deployment implementation.
-type Signer interface {
-	Address() string
-	SignDecorated([]byte) (xdr.DecoratedSignature, error)
-}
-
 // NewInvoker creates the contract invoker used by the Stellar MCMS SDK.
 // It follows the same client-plus-signer pattern used by the other MCMS
 // families. The deployment framework supplies the RPC client and signer.
-func NewInvoker(client *stellarrpc.Client, signer Signer, selector uint64) (bindings.Invoker, error) {
-	chain, exists := chain_selectors.StellarChainBySelector(selector)
+func NewInvoker(client *stellarrpc.Client, signer bindings.Signer, selector uint64) (bindings.Invoker, error) {
+	chain, exists := chainselectors.StellarChainBySelector(selector)
 	if !exists {
 		return nil, fmt.Errorf("stellar chain with selector %d does not exist", selector)
 	}
@@ -41,7 +34,7 @@ func NewInvoker(client *stellarrpc.Client, signer Signer, selector uint64) (bind
 // NewInvokerWithNetworkPassphrase creates an invoker with an explicit network
 // passphrase. Deployment frameworks must use this constructor when they hold
 // a chain with a custom or local network passphrase.
-func NewInvokerWithNetworkPassphrase(client *stellarrpc.Client, signer Signer, networkPassphrase string) (bindings.Invoker, error) {
+func NewInvokerWithNetworkPassphrase(client *stellarrpc.Client, signer bindings.Signer, networkPassphrase string) (bindings.Invoker, error) {
 	if client == nil {
 		return nil, fmt.Errorf("stellar RPC client is nil")
 	}
@@ -57,7 +50,7 @@ func NewInvokerWithNetworkPassphrase(client *stellarrpc.Client, signer Signer, n
 
 type rpcInvoker struct {
 	client            *stellarrpc.Client
-	signer            Signer
+	signer            bindings.Signer
 	networkPassphrase string
 }
 
@@ -288,7 +281,7 @@ func (i *rpcInvoker) submit(ctx context.Context, op *txnbuild.InvokeHostFunction
 		}
 	}
 
-	return nil, fmt.Errorf("Stellar transaction timed out: %s", submitted.Hash)
+	return nil, fmt.Errorf("stellar transaction timed out: %s", submitted.Hash)
 }
 
 var errStellarVoidReturn = fmt.Errorf("stellar void return")

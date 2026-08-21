@@ -103,9 +103,9 @@ func (e *Encoder) HashOperation(
 	h, err := HashCurrentStellarOp(
 		domainOpStellar,
 		chainID,
-		[32]byte(multisig),
+		multisig,
 		uint64(opCount),
-		[32]byte(to),
+		to,
 		payload.Function,
 		payload.ArgsXDR,
 		*fields.EncodingVersion,
