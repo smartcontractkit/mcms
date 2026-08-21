@@ -9,8 +9,6 @@ replace github.com/fbsobreira/gotron-sdk => github.com/smartcontractkit/chainlin
 
 replace github.com/digital-asset/dazl-client/v8 => github.com/noders-team/dazl-client/v8 v8.7.1-2
 
-replace github.com/smartcontractkit/chainlink-stellar/bindings => ../chainlink-stellar/bindings
-
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/aptos-labs/aptos-go-sdk v1.13.0
