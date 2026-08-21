@@ -5,11 +5,43 @@ import (
 	"fmt"
 
 	"github.com/ethereum/go-ethereum/common"
+	mcmsbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/mcms"
 	"github.com/smartcontractkit/chainlink-stellar/bindings/scval"
 	"github.com/stellar/go-stellar-sdk/xdr"
 
+	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/types"
 )
+
+// ConfigToSetConfigInputs flattens a nested MCMS [types.Config] tree into the
+// canonical Stellar set_config / initialize parameter types. Signer addresses are
+// left-padded to 32 bytes (Solidity address layout).
+func ConfigToSetConfigInputs(cfg *types.Config) (mcmsbindings.SignerAddresses, mcmsbindings.SignerGroups, [32]byte, [32]byte, error) {
+	groupQuorums, groupParents, signerAddrs, signerGroups, err := sdk.ExtractSetConfigInputs(cfg)
+	if err != nil {
+		return mcmsbindings.SignerAddresses{}, mcmsbindings.SignerGroups{}, [32]byte{}, [32]byte{}, err
+	}
+
+	addresses := make([][32]byte, len(signerAddrs))
+	for i, addr := range signerAddrs {
+		copy(addresses[i][12:], addr.Bytes())
+	}
+
+	groups := make([]uint32, len(signerGroups))
+	for i, g := range signerGroups {
+		groups[i] = uint32(g)
+	}
+
+	var gq, gp [32]byte
+	for i := 0; i < 32; i++ {
+		gq[i] = groupQuorums[i]
+		gp[i] = groupParents[i]
+	}
+
+	return mcmsbindings.SignerAddresses{Inner: addresses},
+		mcmsbindings.SignerGroups{Inner: groups},
+		gq, gp, nil
+}
 
 // NewSetConfigOperation creates the canonical Stellar MCMS set_config
 // operation. It is used when configuration must be submitted through an
