@@ -3,6 +3,7 @@ package stellar
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 
@@ -29,10 +30,11 @@ func decodeTransactionAdditionalFields(raw json.RawMessage) (transactionAddition
 	if err := decoder.Decode(&fields); err != nil {
 		return transactionAdditionalFields{}, fmt.Errorf("decode Stellar transaction additional fields: %w", err)
 	}
-	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
 		if err == nil {
 			err = fmt.Errorf("multiple JSON values")
 		}
+
 		return transactionAdditionalFields{}, fmt.Errorf("decode Stellar transaction additional fields: %w", err)
 	}
 	if fields.Family == nil || *fields.Family != "stellar" {
@@ -94,9 +96,9 @@ func (e *Encoder) HashOperation(
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("HashOperation: transaction data: %w", err)
 	}
-	fields, err := decodeTransactionAdditionalFields(op.Transaction.AdditionalFields)
-	if err != nil {
-		return common.Hash{}, fmt.Errorf("HashOperation: additional fields: %w", err)
+	fields, decErr := decodeTransactionAdditionalFields(op.Transaction.AdditionalFields)
+	if decErr != nil {
+		return common.Hash{}, fmt.Errorf("HashOperation: additional fields: %w", decErr)
 	}
 	h, err := HashCurrentStellarOp(
 		domainOpStellar,

@@ -9,6 +9,7 @@ import (
 )
 
 func TestNewBatchOperationUsesCanonicalSorobanPayload(t *testing.T) {
+	t.Parallel()
 	const target = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
 
 	batch, err := NewBatchOperation(
@@ -32,6 +33,7 @@ func TestNewBatchOperationUsesCanonicalSorobanPayload(t *testing.T) {
 }
 
 func TestNewTransactionRejectsInvalidTarget(t *testing.T) {
+	t.Parallel()
 	_, err := NewTransaction("not-a-contract", "accept_ownership", nil, "", nil)
 	require.Error(t, err)
 }

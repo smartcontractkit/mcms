@@ -72,6 +72,7 @@ func (i *rpcInvoker) InvokeContract(ctx context.Context, contractID, functionNam
 	if err != nil {
 		return nil, err
 	}
+
 	return returnValue(meta)
 }
 
@@ -103,12 +104,13 @@ func (i *rpcInvoker) SimulateContract(ctx context.Context, contractID, functionN
 		return nil, fmt.Errorf("simulate Stellar contract call requires ledger restore")
 	}
 	if len(result.Results) == 0 || result.Results[0].ReturnValueXDR == nil || *result.Results[0].ReturnValueXDR == "" {
-		return nil, nil
+		return nil, errStellarVoidReturn
 	}
 	var value xdr.ScVal
 	if err := xdr.SafeUnmarshalBase64(*result.Results[0].ReturnValueXDR, &value); err != nil {
 		return nil, fmt.Errorf("decode simulation return value: %w", err)
 	}
+
 	return &value, nil
 }
 
@@ -212,15 +214,15 @@ func (i *rpcInvoker) submit(ctx context.Context, op *txnbuild.InvokeHostFunction
 	}
 	if simulation.TransactionDataXDR != "" {
 		var sorobanData xdr.SorobanTransactionData
-		if err := xdr.SafeUnmarshalBase64(simulation.TransactionDataXDR, &sorobanData); err != nil {
-			return nil, fmt.Errorf("decode Soroban transaction data: %w", err)
+		if derr := xdr.SafeUnmarshalBase64(simulation.TransactionDataXDR, &sorobanData); derr != nil {
+			return nil, fmt.Errorf("decode Soroban transaction data: %w", derr)
 		}
 		op.Ext = xdr.TransactionExt{V: 1, SorobanData: &sorobanData}
 		if len(simulation.Results) > 0 && simulation.Results[0].AuthXDR != nil {
 			op.Auth = make([]xdr.SorobanAuthorizationEntry, len(*simulation.Results[0].AuthXDR))
 			for idx, authXDR := range *simulation.Results[0].AuthXDR {
-				if err := xdr.SafeUnmarshalBase64(authXDR, &op.Auth[idx]); err != nil {
-					return nil, fmt.Errorf("decode Soroban authorization: %w", err)
+				if aerr := xdr.SafeUnmarshalBase64(authXDR, &op.Auth[idx]); aerr != nil {
+					return nil, fmt.Errorf("decode Soroban authorization: %w", aerr)
 				}
 			}
 		}
@@ -272,7 +274,7 @@ func (i *rpcInvoker) submit(ctx context.Context, op *txnbuild.InvokeHostFunction
 				}
 				return &meta, nil
 			case "FAILED":
-				return nil, fmt.Errorf("Stellar transaction failed: %s", submitted.Hash)
+				return nil, fmt.Errorf("stellar transaction failed: %s", submitted.Hash)
 			}
 		}
 		select {
@@ -284,19 +286,21 @@ func (i *rpcInvoker) submit(ctx context.Context, op *txnbuild.InvokeHostFunction
 	return nil, fmt.Errorf("Stellar transaction timed out: %s", submitted.Hash)
 }
 
+var errStellarVoidReturn = fmt.Errorf("stellar void return")
+
 func returnValue(meta *xdr.TransactionMeta) (*xdr.ScVal, error) {
 	if meta == nil {
-		return nil, nil
+		return nil, errStellarVoidReturn
 	}
 	switch meta.V {
-	case 4:
+	case 4: //nolint:mnd // protocol version
 		if meta.MustV4().SorobanMeta == nil {
-			return nil, nil
+			return nil, errStellarVoidReturn
 		}
 		return meta.MustV4().SorobanMeta.ReturnValue, nil
-	case 3:
+	case 3: //nolint:mnd // protocol version
 		if meta.MustV3().SorobanMeta == nil {
-			return nil, nil
+			return nil, errStellarVoidReturn
 		}
 		return &meta.MustV3().SorobanMeta.ReturnValue, nil
 	default:

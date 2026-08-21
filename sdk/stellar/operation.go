@@ -33,7 +33,7 @@ func ConfigToSetConfigInputs(cfg *types.Config) (mcmsbindings.SignerAddresses, m
 	}
 
 	var gq, gp [32]byte
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		gq[i] = groupQuorums[i]
 		gp[i] = groupParents[i]
 	}

@@ -56,7 +56,10 @@ func appendU64(buf *[]byte, value uint64) {
 }
 func appendBytes32(buf *[]byte, value [32]byte) { *buf = append(*buf, value[:]...) }
 func appendSized(buf *[]byte, value []byte) {
-	appendU32(buf, uint32(len(value)))
+	if len(value) > int(^uint32(0)) {
+		panic("value too large for uint32")
+	}
+	appendU32(buf, uint32(len(value))) //nolint:gosec // len checked above
 	*buf = append(*buf, value...)
 }
 
@@ -98,7 +101,8 @@ func HashStellarRootMetadata(domain, networkID, multisig [32]byte, preOpCount, p
 	if preOpCount >= uint40MaxExclusive || postOpCount >= uint40MaxExclusive {
 		return common.Hash{}, ErrUint40Overflow
 	}
-	buf := make([]byte, 0, 125)
+	// 125 = 4*32 (domain+networkID+multisig+reserved) + 4 (version) + 2*8 (counts) + 1 (override) + 8 (configVersion)
+	buf := make([]byte, 0, 125) //nolint:mnd
 	appendBytes32(&buf, domain)
 	appendU32(&buf, version)
 	appendBytes32(&buf, networkID)
@@ -129,7 +133,8 @@ func HashCurrentStellarOp(domain, networkID, multisig [32]byte, nonce uint64, ta
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("encode function: %w", err)
 	}
-	buf := make([]byte, 0, 184)
+	// 184 = 4*32 (domain+networkID+multisig+target) + 4 (version) + 8 (nonce) + 2*4 (sizes) + functionXDR + argsXDR
+	buf := make([]byte, 0, 184) //nolint:mnd
 	appendBytes32(&buf, domain)
 	appendU32(&buf, version)
 	appendBytes32(&buf, networkID)

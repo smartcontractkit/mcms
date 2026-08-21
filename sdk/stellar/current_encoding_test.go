@@ -9,6 +9,7 @@ import (
 )
 
 func TestCurrentEncodingMatchesContractGoldenVector(t *testing.T) {
+	t.Parallel()
 	network := mustBytes32(t, "000102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f")
 	multisig := mustBytes32(t, "202122232425262728292a2b2c2d2e2f303132333435363738393a3b3c3d3e3f")
 	target := mustBytes32(t, "404142434445464748494a4b4c4d4e4f505152535455565758595a5b5c5d5e5f")

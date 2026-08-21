@@ -167,6 +167,7 @@ func TestEncoder_HashOperation_RejectsUnsupportedOrNonCanonicalAdditionalFields(
 		"unknown field":       json.RawMessage(`{"family":"stellar","encodingVersion":1,"target":"forbidden"}`),
 	} {
 		t.Run(name, func(t *testing.T) {
+			t.Parallel()
 			op := types.Operation{Transaction: types.Transaction{
 				To:               "0x" + strings.Repeat("22", stellarContractIDBytes),
 				Data:             payload,
