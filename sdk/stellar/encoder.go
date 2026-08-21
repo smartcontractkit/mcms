@@ -1,9 +1,10 @@
 package stellar
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
-	"math/big"
+	"io"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -12,6 +13,40 @@ import (
 )
 
 var _ sdk.Encoder = (*Encoder)(nil)
+
+type transactionAdditionalFields struct {
+	Family          *string `json:"family"`
+	EncodingVersion *uint32 `json:"encodingVersion"`
+}
+
+func decodeTransactionAdditionalFields(raw json.RawMessage) (transactionAdditionalFields, error) {
+	if len(raw) == 0 {
+		return transactionAdditionalFields{}, fmt.Errorf("missing Stellar transaction additional fields")
+	}
+	var fields transactionAdditionalFields
+	decoder := json.NewDecoder(bytes.NewReader(raw))
+	decoder.DisallowUnknownFields()
+	if err := decoder.Decode(&fields); err != nil {
+		return transactionAdditionalFields{}, fmt.Errorf("decode Stellar transaction additional fields: %w", err)
+	}
+	if err := decoder.Decode(&struct{}{}); err != io.EOF {
+		if err == nil {
+			err = fmt.Errorf("multiple JSON values")
+		}
+		return transactionAdditionalFields{}, fmt.Errorf("decode Stellar transaction additional fields: %w", err)
+	}
+	if fields.Family == nil || *fields.Family != "stellar" {
+		return transactionAdditionalFields{}, fmt.Errorf("invalid Stellar transaction family")
+	}
+	if fields.EncodingVersion == nil {
+		return transactionAdditionalFields{}, fmt.Errorf("missing Stellar transaction encodingVersion")
+	}
+	if *fields.EncodingVersion != encodingVersion {
+		return transactionAdditionalFields{}, fmt.Errorf("%w: %d", ErrUnsupportedEncodingVersion, *fields.EncodingVersion)
+	}
+
+	return fields, nil
+}
 
 // Encoder implements sdk.Encoder for the Soroban MCMS contract (Stellar), matching
 // chainlink-stellar contracts/mcms ABI leaf hashing.
@@ -55,19 +90,23 @@ func (e *Encoder) HashOperation(
 		return common.Hash{}, fmt.Errorf("transaction.to: %w", err)
 	}
 
-	valueWord, err := parseValueWord(op.Transaction.AdditionalFields)
+	payload, err := DecodeSorobanInvokePayload(op.Transaction.Data)
 	if err != nil {
-		return common.Hash{}, fmt.Errorf("HashOperation: additionalFields.value: %w", err)
+		return common.Hash{}, fmt.Errorf("HashOperation: transaction data: %w", err)
 	}
-
-	h, err := HashStellarOp(
+	fields, err := decodeTransactionAdditionalFields(op.Transaction.AdditionalFields)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("HashOperation: additional fields: %w", err)
+	}
+	h, err := HashCurrentStellarOp(
 		domainOpStellar,
 		chainID,
 		[32]byte(multisig),
 		uint64(opCount),
 		[32]byte(to),
-		valueWord,
-		op.Transaction.Data,
+		payload.Function,
+		payload.ArgsXDR,
+		*fields.EncodingVersion,
 	)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("HashOperation: stellar op preimage: %w", err)
@@ -96,56 +135,35 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		return common.Hash{}, fmt.Errorf("mcmAddress: %w", err)
 	}
 
-	h, err := HashRootMetadata(
+	configVersion := uint64(1)
+	if len(metadata.AdditionalFields) > 0 {
+		var fields struct {
+			ConfigVersion   *uint64 `json:"configVersion"`
+			EncodingVersion *uint32 `json:"encodingVersion"`
+		}
+		if err := json.Unmarshal(metadata.AdditionalFields, &fields); err != nil {
+			return common.Hash{}, fmt.Errorf("HashMetadata: additional fields: %w", err)
+		}
+		if fields.ConfigVersion != nil {
+			configVersion = *fields.ConfigVersion
+		}
+		if fields.EncodingVersion != nil && *fields.EncodingVersion != encodingVersion {
+			return common.Hash{}, fmt.Errorf("%w: %d", ErrUnsupportedEncodingVersion, *fields.EncodingVersion)
+		}
+	}
+	h, err := HashStellarRootMetadata(
 		domainMetaStellar,
 		chainID,
-		[32]byte(multisig),
+		multisig,
 		metadata.StartingOpCount,
 		post,
 		e.OverridePreviousRoot,
+		configVersion,
+		encodingVersion,
 	)
 	if err != nil {
 		return common.Hash{}, fmt.Errorf("HashMetadata: root metadata preimage: %w", err)
 	}
 
 	return h, nil
-}
-
-// parseValueWord reads optional transaction.additionalFields JSON for StellarOp.value (uint256).
-// V1 on-chain requires zero; omit additionalFields or use "{}" unless supplying non-zero value as hex.
-func parseValueWord(raw json.RawMessage) ([32]byte, error) {
-	var zero [32]byte
-	if len(raw) == 0 {
-		return zero, nil
-	}
-
-	var af struct {
-		Value *string `json:"value,omitempty"`
-	}
-	if err := json.Unmarshal(raw, &af); err != nil {
-		return zero, fmt.Errorf("unmarshal stellar additionalFields: %w", err)
-	}
-	if af.Value == nil || *af.Value == "" {
-		return zero, nil
-	}
-
-	s := *af.Value
-	if len(s) >= hexPrefixLen && (s[0:hexPrefixLen] == "0x" || s[0:hexPrefixLen] == "0X") {
-		s = s[hexPrefixLen:]
-	}
-	if len(s) != stellarChainHexCharLen {
-		return zero, fmt.Errorf("value must be 32-byte hex (64 chars), got length %d", len(s))
-	}
-	n := new(big.Int)
-	_, ok := n.SetString(s, hexRadix)
-	if !ok {
-		return zero, fmt.Errorf("invalid value hex")
-	}
-	if n.Sign() < 0 || n.BitLen() > uint256BitWidth {
-		return zero, fmt.Errorf("value out of uint256 range")
-	}
-	var out [32]byte
-	n.FillBytes(out[:])
-
-	return out, nil
 }

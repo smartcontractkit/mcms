@@ -9,6 +9,8 @@ replace github.com/fbsobreira/gotron-sdk => github.com/smartcontractkit/chainlin
 
 replace github.com/digital-asset/dazl-client/v8 => github.com/noders-team/dazl-client/v8 v8.7.1-2
 
+replace github.com/smartcontractkit/chainlink-stellar/bindings => ../chainlink-stellar/bindings
+
 require (
 	github.com/Masterminds/semver/v3 v3.5.0
 	github.com/aptos-labs/aptos-go-sdk v1.13.0
@@ -30,6 +32,7 @@ require (
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-common v0.11.2-0.20260506120607-7f10be016c89
+	github.com/smartcontractkit/chainlink-stellar/bindings v0.0.0-20260820183952-fd8918f1c712
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260630144638-b69f16bdddd8
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.16.6
 	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260713162202-124316cd10ff
