@@ -27,41 +27,44 @@ func TestEncoder_HashMetadataAndOperation(t *testing.T) {
 	metaAddr := "00000000000000000000000000000000000000000000000000000000000000aa"
 	toAddr := "00000000000000000000000000000000000000000000000000000000000000bb"
 
-	metaHashManual, err := HashRootMetadata(
+	metaHashManual, err := HashStellarRootMetadata(
 		domainMetaStellar,
 		chainNet,
 		hashBytes(t, metaAddr),
 		0,
 		1,
 		false,
+		1,
+		encodingVersion,
 	)
 	require.NoError(t, err)
 
 	md := types.ChainMetadata{
 		StartingOpCount:  0,
 		MCMAddress:       "0x" + metaAddr,
-		AdditionalFields: nil,
+		AdditionalFields: json.RawMessage(`{"configVersion":1,"encodingVersion":1}`),
 	}
 	metaHashEnc, err := enc.HashMetadata(md)
 	require.NoError(t, err)
 	require.Equal(t, metaHashManual, metaHashEnc)
 
+	tx, err := NewTransaction("0x"+toAddr, "accept_ownership", nil, "Ownable", nil)
+	require.NoError(t, err)
 	op := types.Operation{
 		ChainSelector: stellarTestnetSelector,
-		Transaction: types.Transaction{
-			To:               "0x" + toAddr,
-			Data:             []byte{0xde, 0xad},
-			AdditionalFields: nil,
-		},
+		Transaction:   tx,
 	}
-	opHashManual, err := HashStellarOp(
+	payload, err := DecodeSorobanInvokePayload(tx.Data)
+	require.NoError(t, err)
+	opHashManual, err := HashCurrentStellarOp(
 		domainOpStellar,
 		chainNet,
 		hashBytes(t, metaAddr),
 		0,
 		hashBytes(t, toAddr),
-		[32]byte{},
-		op.Transaction.Data,
+		payload.Function,
+		payload.ArgsXDR,
+		encodingVersion,
 	)
 	require.NoError(t, err)
 
@@ -130,113 +133,48 @@ func TestEncoder_HashOperation_InvalidChainSelector(t *testing.T) {
 	require.ErrorContains(t, err, "selector 0")
 }
 
-func Test_parseValueWord(t *testing.T) {
-	t.Parallel()
-
-	t.Run("empty raw", func(t *testing.T) {
-		t.Parallel()
-		got, err := parseValueWord(nil)
-		require.NoError(t, err)
-		require.Equal(t, [32]byte{}, got)
-	})
-
-	t.Run("empty json object", func(t *testing.T) {
-		t.Parallel()
-		got, err := parseValueWord(json.RawMessage(`{}`))
-		require.NoError(t, err)
-		require.Equal(t, [32]byte{}, got)
-	})
-
-	t.Run("null value", func(t *testing.T) {
-		t.Parallel()
-		got, err := parseValueWord(json.RawMessage(`{"value":null}`))
-		require.NoError(t, err)
-		require.Equal(t, [32]byte{}, got)
-	})
-
-	t.Run("empty string value", func(t *testing.T) {
-		t.Parallel()
-		got, err := parseValueWord(json.RawMessage(`{"value":""}`))
-		require.NoError(t, err)
-		require.Equal(t, [32]byte{}, got)
-	})
-
-	t.Run("64 hex without 0x", func(t *testing.T) {
-		t.Parallel()
-		hexDigits := strings.Repeat("3a", 32)
-		raw := json.RawMessage(`{"value":"` + hexDigits + `"}`)
-		got, err := parseValueWord(raw)
-		require.NoError(t, err)
-		want := common.HexToHash("0x" + hexDigits)
-		require.Equal(t, [32]byte(want), got)
-	})
-
-	t.Run("0x prefix", func(t *testing.T) {
-		t.Parallel()
-		hexDigits := strings.Repeat("01", 32)
-		raw := json.RawMessage(`{"value":"0x` + hexDigits + `"}`)
-		got, err := parseValueWord(raw)
-		require.NoError(t, err)
-		want := common.HexToHash("0x" + hexDigits)
-		require.Equal(t, [32]byte(want), got)
-	})
-
-	t.Run("0X prefix", func(t *testing.T) {
-		t.Parallel()
-		hexDigits := strings.Repeat("fe", 32)
-		raw := json.RawMessage(`{"value":"0X` + hexDigits + `"}`)
-		got, err := parseValueWord(raw)
-		require.NoError(t, err)
-		want := common.HexToHash("0x" + hexDigits)
-		require.Equal(t, [32]byte(want), got)
-	})
-
-	t.Run("max uint256", func(t *testing.T) {
-		t.Parallel()
-		raw := json.RawMessage(`{"value":"` + strings.Repeat("f", 64) + `"}`)
-		got, err := parseValueWord(raw)
-		require.NoError(t, err)
-		var want [32]byte
-		for i := range want {
-			want[i] = 0xff
-		}
-		require.Equal(t, want, got)
-	})
-
-	t.Run("invalid json", func(t *testing.T) {
-		t.Parallel()
-		_, err := parseValueWord(json.RawMessage(`{`))
-		require.ErrorContains(t, err, "unmarshal stellar additionalFields")
-	})
-
-	t.Run("wrong hex length", func(t *testing.T) {
-		t.Parallel()
-		raw := json.RawMessage(`{"value":"` + strings.Repeat("0", 62) + `"}`)
-		_, err := parseValueWord(raw)
-		require.ErrorContains(t, err, "value must be 32-byte hex")
-	})
-
-	t.Run("invalid hex digit", func(t *testing.T) {
-		t.Parallel()
-		raw := json.RawMessage(`{"value":"` + strings.Repeat("g", 64) + `"}`)
-		_, err := parseValueWord(raw)
-		require.ErrorContains(t, err, "invalid value hex")
-	})
-}
-
 func TestEncoder_HashOperation_InvalidAdditionalFields(t *testing.T) {
 	t.Parallel()
 	enc := NewEncoder(stellarTestnetSelector, 1, false)
+	payload, err := EncodeSorobanInvokePayload("accept_ownership", nil)
+	require.NoError(t, err)
 	md := types.ChainMetadata{
 		MCMAddress: "0x" + strings.Repeat("11", stellarContractIDBytes),
 	}
 	op := types.Operation{
 		Transaction: types.Transaction{
 			To:               "0x" + strings.Repeat("22", stellarContractIDBytes),
+			Data:             payload,
 			AdditionalFields: json.RawMessage(`{`),
 		},
 	}
-	_, err := enc.HashOperation(0, md, op)
-	require.ErrorContains(t, err, "HashOperation: additionalFields.value:")
-	require.ErrorContains(t, err, "unmarshal stellar additionalFields")
+	_, err = enc.HashOperation(0, md, op)
+	require.ErrorContains(t, err, "HashOperation: additional fields:")
+	require.ErrorContains(t, err, "decode Stellar transaction additional fields")
+}
+
+func TestEncoder_HashOperation_RejectsUnsupportedOrNonCanonicalAdditionalFields(t *testing.T) {
+	t.Parallel()
+	enc := NewEncoder(stellarTestnetSelector, 1, false)
+	md := types.ChainMetadata{MCMAddress: "0x" + strings.Repeat("11", stellarContractIDBytes)}
+	payload, err := EncodeSorobanInvokePayload("accept_ownership", nil)
+	require.NoError(t, err)
+
+	for name, additionalFields := range map[string]json.RawMessage{
+		"missing":             nil,
+		"unsupported version": json.RawMessage(`{"family":"stellar","encodingVersion":2}`),
+		"wrong family":        json.RawMessage(`{"family":"evm","encodingVersion":1}`),
+		"unknown field":       json.RawMessage(`{"family":"stellar","encodingVersion":1,"target":"forbidden"}`),
+	} {
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			op := types.Operation{Transaction: types.Transaction{
+				To:               "0x" + strings.Repeat("22", stellarContractIDBytes),
+				Data:             payload,
+				AdditionalFields: additionalFields,
+			}}
+			_, err := enc.HashOperation(0, md, op)
+			require.Error(t, err)
+		})
+	}
 }
