@@ -49,7 +49,7 @@ func NewInvokerWithNetworkPassphrase(client *stellarrpc.Client, signer bindings.
 }
 
 type rpcInvoker struct {
-	client            *stellarrpc.Client
+	client            RpcClient
 	signer            bindings.Signer
 	networkPassphrase string
 }
