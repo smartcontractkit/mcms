@@ -74,16 +74,13 @@ func toSDKConfig(cfg *mcmsbindings.Config) (*types.Config, error) {
 	}
 	for _, s := range cfg.Signers {
 		if int(s.Group) >= numGroups {
-
 			return nil, fmt.Errorf("signer index %d belongs to inactive group %d", s.Index, s.Group)
 		}
 		if cfg.GroupQuorums[s.Group] == 0 {
-
 			return nil, fmt.Errorf("signer index %d belongs to disabled group %d", s.Index, s.Group)
 		}
 		for _, prefix := range s.Addr[:12] {
 			if prefix != 0 {
-
 				return nil, fmt.Errorf("signer index %d is not a padded EVM address", s.Index)
 			}
 		}

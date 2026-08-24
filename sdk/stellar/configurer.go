@@ -79,6 +79,7 @@ func (c *Configurer) InitializeInputs(
 	if err := client.Initialize(ctx, owner, networkID, signerAddresses, signerGroups, groupQuorums, groupParents, instanceLabel); err != nil {
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms initialize: %w", err)
 	}
+
 	return types.NewTransactionResult("", nil, "stellar"), nil
 }
 
