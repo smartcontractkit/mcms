@@ -165,6 +165,29 @@ packages:
           dir: "./sdk/sui/mocks/mcmsdeployer"
           filename: "mcmsdeployerencoder.go"
 
+  github.com/smartcontractkit/mcms/sdk/stellar:
+    config:
+      all: false
+      outpkg: "mocks"
+    interfaces:
+      RpcClient:
+        config:
+          dir: "./sdk/stellar/mocks"
+          filename: "rpc_client.go"
+  github.com/smartcontractkit/chainlink-stellar/bindings:
+    config:
+      all: false
+      outpkg: "mocks"
+    interfaces:
+      Invoker:
+        config:
+          dir: "./sdk/stellar/mocks"
+          filename: "invoker.go"
+      Signer:
+        config:
+          dir: "./sdk/stellar/mocks"
+          filename: "signer.go"
+
 # Required to fix the following deprecation warning:
 # https://vektra.github.io/mockery/v2.48/deprecations/#issue-845-fix
 #
