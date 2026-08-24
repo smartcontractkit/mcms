@@ -74,13 +74,16 @@ func toSDKConfig(cfg *mcmsbindings.Config) (*types.Config, error) {
 	}
 	for _, s := range cfg.Signers {
 		if int(s.Group) >= numGroups {
+
 			return nil, fmt.Errorf("signer index %d belongs to inactive group %d", s.Index, s.Group)
 		}
 		if cfg.GroupQuorums[s.Group] == 0 {
+
 			return nil, fmt.Errorf("signer index %d belongs to disabled group %d", s.Index, s.Group)
 		}
 		for _, prefix := range s.Addr[:12] {
 			if prefix != 0 {
+
 				return nil, fmt.Errorf("signer index %d is not a padded EVM address", s.Index)
 			}
 		}
@@ -110,12 +113,14 @@ func toSDKConfig(cfg *mcmsbindings.Config) (*types.Config, error) {
 		}
 		parent := cfg.GroupParents[i]
 		if int(parent) >= i || groups[parent].Quorum == 0 {
+
 			return nil, fmt.Errorf("active group %d has invalid parent %d", i, parent)
 		}
 		groups[parent].GroupSigners = append([]types.Config{groups[i]}, groups[parent].GroupSigners...)
 	}
 
 	if err := groups[0].Validate(); err != nil {
+
 		return nil, fmt.Errorf("invalid on-chain config: %w", err)
 	}
 
