@@ -17,7 +17,13 @@ import (
 	"github.com/smartcontractkit/chainlink-stellar/bindings/scval"
 )
 
-const defaultTransactionWindow = 120 * time.Second
+const (
+	defaultTransactionWindow = 120 * time.Second
+
+	// Stellar transaction status strings.
+	txStatusPending = "PENDING"
+	txStatusSuccess = "SUCCESS"
+)
 
 // NewInvoker creates the contract invoker used by the Stellar MCMS SDK.
 // It follows the same client-plus-signer pattern used by the other MCMS
@@ -255,7 +261,7 @@ func (i *rpcInvoker) submit(ctx context.Context, op *txnbuild.InvokeHostFunction
 	if err != nil {
 		return nil, fmt.Errorf("submit Stellar transaction: %w", err)
 	}
-	if submitted.Status != "PENDING" && submitted.Status != "DUPLICATE" {
+	if submitted.Status != txStatusPending && submitted.Status != "DUPLICATE" {
 		return nil, fmt.Errorf("submit Stellar transaction: status %s", submitted.Status)
 	}
 	deadline := time.Now().Add(defaultTransactionWindow)
@@ -263,7 +269,7 @@ func (i *rpcInvoker) submit(ctx context.Context, op *txnbuild.InvokeHostFunction
 		result, err := i.client.GetTransaction(ctx, protocolrpc.GetTransactionRequest{Hash: submitted.Hash})
 		if err == nil {
 			switch result.Status {
-			case "SUCCESS":
+			case txStatusSuccess:
 				var meta xdr.TransactionMeta
 				if err := xdr.SafeUnmarshalBase64(result.ResultMetaXDR, &meta); err != nil {
 					return nil, fmt.Errorf("decode Stellar transaction result: %w", err)

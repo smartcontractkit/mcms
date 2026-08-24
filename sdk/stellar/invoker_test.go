@@ -103,7 +103,7 @@ func (f *submitTestFixtures) stubSimulate(t *testing.T) {
 	f.rpc.On("SimulateTransaction", mock.Anything, mock.Anything).Return(simResult, nil)
 }
 
-func marshalB64(t *testing.T, v interface{}) string {
+func marshalB64(t *testing.T, v any) string {
 	t.Helper()
 	b64, err := xdr.MarshalBase64(v)
 	require.NoError(t, err)
