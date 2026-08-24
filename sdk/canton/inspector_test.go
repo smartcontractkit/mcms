@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/api"
-	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
-	"github.com/smartcontractkit/chainlink-canton/contracts"
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/mcms/core"
 	damltypes "github.com/smartcontractkit/go-daml/pkg/types"
 	"github.com/stretchr/testify/require"
 

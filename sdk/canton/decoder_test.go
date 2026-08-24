@@ -7,12 +7,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/ccip/ratelimiter"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/ccip/core"
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/ccip/factory"
-	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/api"
-	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/ccip/core"
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/ccip/factory"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/mcms/core"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 
 	"github.com/smartcontractkit/mcms/types"
@@ -315,8 +316,8 @@ func TestDecoder_DeployRateLimiter_EnumFields(t *testing.T) {
 		PoolInstanceId:      "pool-1",
 		PoolOwner:           cantontypes.PARTY("owner::abc123"),
 		RemoteChainSelector: cantontypes.NUMERIC("16015286601757825753"),
-		Direction:           core.RateLimitDirectionRateLimitDirection_Outbound,
-		Mode:                core.RateLimitModeRateLimitMode_DefaultFinality,
+		Direction:           ratelimiter.RateLimitDirectionRateLimitDirection_Outbound,
+		Mode:                ratelimiter.RateLimitModeRateLimitMode_DefaultFinality,
 		IsEnabled:           true,
 		Capacity:            cantontypes.NUMERIC("1000"),
 		Rate:                cantontypes.NUMERIC("10"),
