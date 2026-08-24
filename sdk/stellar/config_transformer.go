@@ -27,6 +27,7 @@ func (e *ConfigTransformer) ToChainConfig(cfg types.Config, _ any) (*mcmsbinding
 	if err != nil {
 		return nil, err
 	}
+
 	signers := make([]mcmsbindings.Signer, len(signerAddresses.Inner))
 	for i := range signerAddresses.Inner {
 		signers[i] = mcmsbindings.Signer{
@@ -84,6 +85,7 @@ func toSDKConfig(cfg *mcmsbindings.Config) (*types.Config, error) {
 				return nil, fmt.Errorf("signer index %d is not a padded EVM address", s.Index)
 			}
 		}
+
 		var addr common.Address
 		copy(addr[:], s.Addr[12:]) // EVM addresses are 20 bytes padded to 32
 		groupToSigners[s.Group] = append(groupToSigners[s.Group], addr)
@@ -108,16 +110,15 @@ func toSDKConfig(cfg *mcmsbindings.Config) (*types.Config, error) {
 		if groups[i].Quorum == 0 {
 			continue
 		}
+
 		parent := cfg.GroupParents[i]
 		if int(parent) >= i || groups[parent].Quorum == 0 {
-
 			return nil, fmt.Errorf("active group %d has invalid parent %d", i, parent)
 		}
 		groups[parent].GroupSigners = append([]types.Config{groups[i]}, groups[parent].GroupSigners...)
 	}
 
 	if err := groups[0].Validate(); err != nil {
-
 		return nil, fmt.Errorf("invalid on-chain config: %w", err)
 	}
 
