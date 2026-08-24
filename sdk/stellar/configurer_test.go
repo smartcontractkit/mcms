@@ -5,8 +5,10 @@ import (
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/smartcontractkit/mcms/sdk/stellar/mocks"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -16,8 +18,9 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	const mcmAddr = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
 	signer1 := common.HexToAddress("0x1234")
 
-	invoker := newMockInvoker()
-	configurer := NewConfigurer(invoker)
+	minvoker := mocks.NewInvoker(t)
+	minvoker.EXPECT().InvokeContract(mock.Anything, mcmAddr, "set_config", mock.Anything).Return(nil, nil)
+	configurer := NewConfigurer(minvoker)
 
 	cfg, err := types.NewConfig(1, []common.Address{signer1}, nil)
 	require.NoError(t, err)
@@ -25,10 +28,6 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	res, err := configurer.SetConfig(context.Background(), mcmAddr, &cfg, true)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
-
-	require.Len(t, invoker.calls, 1)
-	require.Equal(t, "set_config", invoker.calls[0].FunctionName)
-	require.Equal(t, mcmAddr, invoker.calls[0].ContractID)
 }
 
 func TestConfigurer_Ownership(t *testing.T) {
@@ -37,27 +36,24 @@ func TestConfigurer_Ownership(t *testing.T) {
 	const mcmAddr = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
 	const newOwner = "CB7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
 
-	invoker := newMockInvoker()
-	configurer := NewConfigurer(invoker)
+	minvoker := mocks.NewInvoker(t)
+	minvoker.EXPECT().InvokeContract(mock.Anything, mcmAddr, "transfer_ownership", mock.Anything).Return(nil, nil)
+	minvoker.EXPECT().InvokeContract(mock.Anything, mcmAddr, "accept_ownership", mock.Anything).Return(nil, nil)
+	minvoker.EXPECT().InvokeContract(mock.Anything, mcmAddr, "cancel_ownership_transfer", mock.Anything).Return(nil, nil)
+	configurer := NewConfigurer(minvoker)
 
 	// Transfer
 	res, err := configurer.TransferOwnership(context.Background(), mcmAddr, newOwner)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
-	require.Len(t, invoker.calls, 1)
-	require.Equal(t, "transfer_ownership", invoker.calls[0].FunctionName)
 
 	// Accept
 	res, err = configurer.AcceptOwnership(context.Background(), mcmAddr)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
-	require.Len(t, invoker.calls, 2)
-	require.Equal(t, "accept_ownership", invoker.calls[1].FunctionName)
 
 	// Cancel
 	res, err = configurer.CancelOwnershipTransfer(context.Background(), mcmAddr)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
-	require.Len(t, invoker.calls, 3)
-	require.Equal(t, "cancel_ownership_transfer", invoker.calls[2].FunctionName)
 }
