@@ -35,6 +35,7 @@ func (e *ConfigTransformer) ToChainConfig(cfg types.Config, _ any) (*mcmsbinding
 			Index: uint32(i),
 		}
 	}
+
 	return &mcmsbindings.Config{
 		Signers:      signers,
 		GroupQuorums: groupQuorums,
@@ -57,7 +58,7 @@ func toSDKConfig(cfg *mcmsbindings.Config) (*types.Config, error) {
 
 	// Determine number of active groups (entries with non-zero quorum).
 	numGroups := 0
-	for i := 0; i < 32; i++ {
+	for i := range 32 {
 		if cfg.GroupQuorums[i] != 0 {
 			numGroups = i + 1
 		}
@@ -90,7 +91,7 @@ func toSDKConfig(cfg *mcmsbindings.Config) (*types.Config, error) {
 
 	// Build SDK group configs.
 	groups := make([]types.Config, numGroups)
-	for i := 0; i < numGroups; i++ {
+	for i := range numGroups {
 		signers := groupToSigners[i]
 		if signers == nil {
 			signers = []common.Address{}
