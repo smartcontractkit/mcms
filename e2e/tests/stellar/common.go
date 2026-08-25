@@ -11,6 +11,8 @@ import (
 )
 
 func FundStellarKey(t *testing.T, nodeURL string, stellarSigner *keypair.Full) {
+	t.Helper()
+
 	friendbotURL := strings.TrimRight(nodeURL, "/") +
 		"/friendbot?addr=" +
 		stellarSigner.Address()
