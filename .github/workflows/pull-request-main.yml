@@ -170,14 +170,17 @@ jobs:
             [[ -n "${aptos_failure}" ]] && echo "🚨 Aptos e2e tests failed."
             [[ -n "${sui_failure}" ]] && echo "🚨 Sui e2e tests failed."
             [[ -n "${stellar_failure}" ]] && echo "🚨 Stellar e2e tests failed."
-            [[ -n "${evm_failure}" || -n "${solana_failure}" || -n "${aptos_failure}" || -n "${sui_failure || -n "${stellar_failure}" ]] && {
-              exit 1
-            } || {
-              echo "Exiting"
-              exit 0
-            }
 
-  ci-sonarqube:
+            if [[ -n "${evm_failure}" ||
+                  -n "${solana_failure}" ||
+                  -n "${aptos_failure}" ||
+                  -n "${sui_failure}" ||
+                  -n "${stellar_failure}" ]]; then
+              exit 1
+            fi
+
+            echo "Exiting"
+            exit 0  ci-sonarqube:
     name: Sonarqube Scan
     runs-on: ubuntu-latest
     needs: [ci-lint, ci-lint-misc, ci-test]
