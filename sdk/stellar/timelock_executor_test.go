@@ -1,6 +1,7 @@
 package stellar
 
 import (
+	"context"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -21,13 +22,15 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 	invoker := mocks.NewInvoker(t)
 
 	invoker.
-		EXPECT().
-		InvokeContract(
+		On(
+			"InvokeContract",
 			mock.Anything,
 			timelockAddr,
 			"execute_batch",
 			mock.Anything,
-		).Return(nil, nil)
+		).
+		Return(nil, nil).
+		Once()
 
 	executor := &TimelockExecutor{
 		TimelockInspector: NewTimelockInspectorFromInvoker(invoker),
@@ -53,7 +56,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 	salt := common.HexToHash("0x2")
 
 	res, err := executor.Execute(
-		t.Context(),
+		context.Background(),
 		batch,
 		timelockAddr,
 		predecessor,
@@ -61,4 +64,14 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
+
+	invoker.AssertNumberOfCalls(t, "InvokeContract", 1)
+	invoker.AssertCalled(
+		t,
+		"InvokeContract",
+		mock.Anything,
+		timelockAddr,
+		"execute_batch",
+		mock.Anything,
+	)
 }
