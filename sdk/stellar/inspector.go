@@ -27,7 +27,7 @@ type Inspector struct {
 
 // NewInspector creates a new Inspector backed by the given Soroban invoker.
 // The invoker can be a *deployment.Deployer or any other bindings.Invoker.
-func NewInspector(client *stellarrpc.Client, auth Signer, selector uint64) (*Inspector, error) {
+func NewInspector(client *stellarrpc.Client, auth bindings.Signer, selector uint64) (*Inspector, error) {
 	invoker, err := NewInvoker(client, auth, selector)
 	if err != nil {
 		return nil, err
@@ -38,7 +38,7 @@ func NewInspector(client *stellarrpc.Client, auth Signer, selector uint64) (*Ins
 
 // NewInspectorWithNetworkPassphrase creates an inspector with an explicit
 // network passphrase supplied by the deployment framework.
-func NewInspectorWithNetworkPassphrase(client *stellarrpc.Client, auth Signer, passphrase string) (*Inspector, error) {
+func NewInspectorWithNetworkPassphrase(client *stellarrpc.Client, auth bindings.Signer, passphrase string) (*Inspector, error) {
 	invoker, err := NewInvokerWithNetworkPassphrase(client, auth, passphrase)
 	if err != nil {
 		return nil, err
