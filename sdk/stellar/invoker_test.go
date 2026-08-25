@@ -227,7 +227,7 @@ func TestSourceAccount_EmptyLedger(t *testing.T) {
 		})).
 		Return(protocolrpc.GetLedgerEntriesResponse{Entries: nil}, nil)
 
-	acct, err := invoker.sourceAccount(context.Background())
+	acct, err := invoker.sourceAccount(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, signer.Address(), acct.AccountID)
 	assert.Equal(t, int64(0), acct.Sequence)
@@ -248,7 +248,7 @@ func TestSourceAccount_WithExistingAccount(t *testing.T) {
 			}},
 		}, nil)
 
-	acct, err := invoker.sourceAccount(context.Background())
+	acct, err := invoker.sourceAccount(t.Context())
 	require.NoError(t, err)
 	assert.Equal(t, signer.Address(), acct.AccountID)
 	assert.Equal(t, int64(42), acct.Sequence)
@@ -265,7 +265,7 @@ func TestSourceAccount_RPCError(t *testing.T) {
 		})).
 		Return(protocolrpc.GetLedgerEntriesResponse{}, fmt.Errorf("rpc down"))
 
-	_, err := invoker.sourceAccount(context.Background())
+	_, err := invoker.sourceAccount(t.Context())
 	require.ErrorContains(t, err, "rpc down")
 }
 
@@ -396,7 +396,7 @@ func TestSimulateContract_ReturnsValue(t *testing.T) {
 			}},
 		}, nil)
 
-	rv, err := invoker.SimulateContract(context.Background(), contractID, "read_count", nil)
+	rv, err := invoker.SimulateContract(t.Context(), contractID, "read_count", nil)
 	require.NoError(t, err)
 	require.NotNil(t, rv)
 	assert.Equal(t, xdr.ScValTypeScvU32, rv.Type)
@@ -419,7 +419,7 @@ func TestSimulateContract_SimulationError(t *testing.T) {
 		Return(protocolrpc.SimulateTransactionResponse{Error: "HostError"}, nil)
 
 	contractID := validContractStrkey(t)
-	_, err := invoker.SimulateContract(context.Background(), contractID, "bad_fn", nil)
+	_, err := invoker.SimulateContract(t.Context(), contractID, "bad_fn", nil)
 	require.ErrorContains(t, err, "HostError")
 }
 
@@ -441,7 +441,7 @@ func TestSimulateContract_NoReturnValue(t *testing.T) {
 		}, nil)
 
 	contractID := validContractStrkey(t)
-	_, err := invoker.SimulateContract(context.Background(), contractID, "fn", nil)
+	_, err := invoker.SimulateContract(t.Context(), contractID, "fn", nil)
 	require.ErrorIs(t, err, errStellarVoidReturn)
 }
 
@@ -491,7 +491,7 @@ func TestSubmit_Success(t *testing.T) {
 			},
 		}, nil)
 
-	meta, err := f.invoker.submit(context.Background(), f.op)
+	meta, err := f.invoker.submit(t.Context(), f.op)
 	require.NoError(t, err)
 	require.NotNil(t, meta)
 	assert.Equal(t, int32(3), meta.V)
@@ -503,7 +503,7 @@ func TestSubmit_SimulationError(t *testing.T) {
 	f.rpc.On("SimulateTransaction", mock.Anything, mock.Anything).
 		Return(protocolrpc.SimulateTransactionResponse{Error: "ContractError(1)"}, nil)
 
-	_, err := f.invoker.submit(context.Background(), f.op)
+	_, err := f.invoker.submit(t.Context(), f.op)
 	require.ErrorContains(t, err, "ContractError")
 }
 
@@ -523,7 +523,7 @@ func TestSubmit_ContextCancel(t *testing.T) {
 			TransactionDetails: protocolrpc.TransactionDetails{Status: "NOT_FOUND"},
 		}, nil)
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(t.Context())
 	go func() {
 		time.Sleep(100 * time.Millisecond)
 		cancel()
@@ -549,7 +549,7 @@ func TestSubmit_FailedTransaction(t *testing.T) {
 			TransactionDetails: protocolrpc.TransactionDetails{Status: "FAILED"},
 		}, nil)
 
-	_, err := f.invoker.submit(context.Background(), f.op)
+	_, err := f.invoker.submit(t.Context(), f.op)
 	require.ErrorContains(t, err, "stellar transaction failed")
 	require.ErrorContains(t, err, "deadbeef")
 }
@@ -576,7 +576,7 @@ func TestInvokeContract_ReturnsValue(t *testing.T) {
 			},
 		}, nil)
 
-	result, err := f.invoker.InvokeContract(context.Background(), validContractStrkey(t), "get_count", nil)
+	result, err := f.invoker.InvokeContract(t.Context(), validContractStrkey(t), "get_count", nil)
 	require.NoError(t, err)
 	require.NotNil(t, result)
 	assert.Equal(t, xdr.ScValTypeScvU32, result.Type)
@@ -595,7 +595,7 @@ func TestGetEvents_ReturnsFilteredEvents(t *testing.T) {
 	rpc.On("GetEvents", mock.Anything, mock.Anything).
 		Return(protocolrpc.GetEventsResponse{Events: expected}, nil)
 
-	events, err := invoker.GetEvents(context.Background(), "contract", 0, []string{"event_topic"})
+	events, err := invoker.GetEvents(t.Context(), "contract", 0, []string{"event_topic"})
 	require.NoError(t, err)
 	assert.Equal(t, expected, events)
 }
@@ -608,7 +608,7 @@ func TestGetEvents_RPCError(t *testing.T) {
 	rpc.On("GetEvents", mock.Anything, mock.Anything).
 		Return(protocolrpc.GetEventsResponse{}, fmt.Errorf("rpc error"))
 
-	_, err := invoker.GetEvents(context.Background(), "contract", 0, nil)
+	_, err := invoker.GetEvents(t.Context(), "contract", 0, nil)
 	require.ErrorContains(t, err, "rpc error")
 }
 
@@ -639,7 +639,7 @@ func TestSubmit_RejectsRestorePreamble(t *testing.T) {
 	f.rpc.On("SimulateTransaction", mock.Anything, mock.Anything).
 		Return(protocolrpc.SimulateTransactionResponse{RestorePreamble: &restorePreamble}, nil)
 
-	_, err := f.invoker.submit(context.Background(), f.op)
+	_, err := f.invoker.submit(t.Context(), f.op)
 	require.ErrorContains(t, err, "ledger restore")
 }
 
@@ -654,7 +654,7 @@ func TestSendTransaction_NonPendingStatus(t *testing.T) {
 			Status: "ERROR",
 		}, nil)
 
-	_, err := f.invoker.submit(context.Background(), f.op)
+	_, err := f.invoker.submit(t.Context(), f.op)
 	require.ErrorContains(t, err, "status ERROR")
 }
 

@@ -1,7 +1,6 @@
 package stellar
 
 import (
-	"context"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -25,7 +24,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 	cfg, err := types.NewConfig(1, []common.Address{signer1}, nil)
 	require.NoError(t, err)
 
-	res, err := configurer.SetConfig(context.Background(), mcmAddr, &cfg, true)
+	res, err := configurer.SetConfig(t.Context(), mcmAddr, &cfg, true)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
 }
@@ -43,17 +42,17 @@ func TestConfigurer_Ownership(t *testing.T) {
 	configurer := NewConfigurer(minvoker)
 
 	// Transfer
-	res, err := configurer.TransferOwnership(context.Background(), mcmAddr, newOwner)
+	res, err := configurer.TransferOwnership(t.Context(), mcmAddr, newOwner)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
 
 	// Accept
-	res, err = configurer.AcceptOwnership(context.Background(), mcmAddr)
+	res, err = configurer.AcceptOwnership(t.Context(), mcmAddr)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
 
 	// Cancel
-	res, err = configurer.CancelOwnershipTransfer(context.Background(), mcmAddr)
+	res, err = configurer.CancelOwnershipTransfer(t.Context(), mcmAddr)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
 }

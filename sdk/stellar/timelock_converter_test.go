@@ -1,7 +1,6 @@
 package stellar
 
 import (
-	"context"
 	"testing"
 	"time"
 
@@ -34,7 +33,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 
 	// Schedule
 	ops, opID, err := converter.ConvertBatchToChainOperations(
-		context.Background(),
+		t.Context(),
 		types.ChainMetadata{},
 		batch,
 		timelockAddr,
@@ -55,7 +54,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 
 	// Cancel
 	ops, _, err = converter.ConvertBatchToChainOperations(
-		context.Background(),
+		t.Context(),
 		types.ChainMetadata{},
 		batch,
 		timelockAddr,
@@ -73,7 +72,7 @@ func TestTimelockConverter_ConvertBatchToChainOperations(t *testing.T) {
 
 	// Bypass
 	ops, _, err = converter.ConvertBatchToChainOperations(
-		context.Background(),
+		t.Context(),
 		types.ChainMetadata{},
 		batch,
 		timelockAddr,
