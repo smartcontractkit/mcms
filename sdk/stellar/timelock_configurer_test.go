@@ -1,6 +1,7 @@
 package stellar
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -21,36 +22,63 @@ func TestTimelockConfigurer_UpdateDelayAndGrantRole(t *testing.T) {
 	invoker := mocks.NewInvoker(t)
 
 	invoker.
-		EXPECT().InvokeContract(
-		mock.Anything,
-		timelockAddr,
-		"update_delay",
-		mock.Anything,
-	).Return(nil, nil)
+		On(
+			"InvokeContract",
+			mock.Anything,
+			timelockAddr,
+			"update_delay",
+			mock.Anything,
+		).
+		Return(nil, nil).
+		Once()
 
-	invoker.EXPECT().InvokeContract(
-		mock.Anything,
-		timelockAddr,
-		"grant_role",
-		mock.Anything,
-	).Return(nil, nil)
+	invoker.
+		On(
+			"InvokeContract",
+			mock.Anything,
+			timelockAddr,
+			"grant_role",
+			mock.Anything,
+		).
+		Return(nil, nil).
+		Once()
 
 	configurer := NewTimelockConfigurerFromInvoker(invoker, caller)
 
 	res, err := configurer.UpdateDelay(
-		t.Context(),
+		context.Background(),
 		timelockAddr,
 		200,
 	)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
 
+	invoker.AssertNumberOfCalls(t, "InvokeContract", 1)
+	invoker.AssertCalled(
+		t,
+		"InvokeContract",
+		mock.Anything,
+		timelockAddr,
+		"update_delay",
+		mock.Anything,
+	)
+
 	res, err = configurer.GrantRole(
-		t.Context(),
+		context.Background(),
 		timelockAddr,
 		sdk.TimelockRoleProposer,
 		target,
 	)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
+
+	invoker.AssertNumberOfCalls(t, "InvokeContract", 2)
+	invoker.AssertCalled(
+		t,
+		"InvokeContract",
+		mock.Anything,
+		timelockAddr,
+		"grant_role",
+		mock.Anything,
+	)
 }
