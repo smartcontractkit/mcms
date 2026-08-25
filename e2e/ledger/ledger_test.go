@@ -20,9 +20,8 @@ import (
 
 	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
-	"github.com/smartcontractkit/mcms/e2e/tests/stellar"
-
 	solanae2e "github.com/smartcontractkit/mcms/e2e/tests/solana"
+	"github.com/smartcontractkit/mcms/e2e/tests/stellar"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
@@ -124,7 +123,7 @@ func (s *ManualLedgerSigningTestSuite) setRootEVM(
 
 	// set root
 
-	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck //OPT-400
+	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck // OPT-400
 	s.Require().NoError(err)
 	tx, err = executable.SetRoot(ctx, s.chainSelectorEVM)
 	s.Require().NoError(err)
@@ -141,7 +140,8 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 	mcmProgramID solana.PublicKey,
 	ledgerAccount common.Address,
 	proposal *mcms.Proposal,
-	executorsMap map[types.ChainSelector]sdk.Executor) {
+	executorsMap map[types.ChainSelector]sdk.Executor,
+) {
 	// set config
 	mcmAddress := solanamcms.ContractAddress(mcmProgramID, mcmInstanceSeed)
 	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{ledgerAccount}}
@@ -151,7 +151,7 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 
 	// set root
 
-	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck //OPT-400
+	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck // OPT-400
 	s.Require().NoError(err)
 	tx, err := executable.SetRoot(ctx, s.chainSelectorSolana)
 	s.Require().NoError(err)
@@ -250,10 +250,10 @@ func (s *ManualLedgerSigningTestSuite) setRootStellar(
 		"Failed to configure Stellar MCMS",
 	)
 
-	executable, err := mcms.NewExecutable(
+	executable, err := mcms.NewExecutable( //nolint:contextcheck // OPT-400
 		proposal,
 		executorsMap,
-	) //nolint:contextcheck // OPT-400
+	)
 	s.Require().NoError(err)
 
 	_, err = executable.SetRoot(
@@ -387,7 +387,6 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 		encoderStellar,
 		stellarInspector,
 	)
-
 	s.Require().NoError(err)
 	executorsMap := map[types.ChainSelector]sdk.Executor{
 		s.chainSelectorEVM:     executorEVM,
