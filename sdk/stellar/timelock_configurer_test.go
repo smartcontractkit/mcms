@@ -1,7 +1,6 @@
 package stellar
 
 import (
-	"context"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -39,7 +38,7 @@ func TestTimelockConfigurer_UpdateDelayAndGrantRole(t *testing.T) {
 	configurer := NewTimelockConfigurerFromInvoker(invoker, caller)
 
 	res, err := configurer.UpdateDelay(
-		context.Background(),
+		t.Context(),
 		timelockAddr,
 		200,
 	)
@@ -47,7 +46,7 @@ func TestTimelockConfigurer_UpdateDelayAndGrantRole(t *testing.T) {
 	require.Equal(t, "stellar", res.ChainFamily)
 
 	res, err = configurer.GrantRole(
-		context.Background(),
+		t.Context(),
 		timelockAddr,
 		sdk.TimelockRoleProposer,
 		target,

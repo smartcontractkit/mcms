@@ -1,7 +1,6 @@
 package stellar
 
 import (
-	"context"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -54,7 +53,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 	salt := common.HexToHash("0x2")
 
 	res, err := executor.Execute(
-		context.Background(),
+		t.Context(),
 		batch,
 		timelockAddr,
 		predecessor,
