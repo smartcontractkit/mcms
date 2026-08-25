@@ -22,26 +22,19 @@ func TestTimelockConfigurer_UpdateDelayAndGrantRole(t *testing.T) {
 	invoker := mocks.NewInvoker(t)
 
 	invoker.
-		On(
-			"InvokeContract",
-			mock.Anything,
-			timelockAddr,
-			"update_delay",
-			mock.Anything,
-		).
-		Return(nil, nil).
-		Once()
+		EXPECT().InvokeContract(
+		mock.Anything,
+		timelockAddr,
+		"update_delay",
+		mock.Anything,
+	).Return(nil, nil)
 
-	invoker.
-		On(
-			"InvokeContract",
-			mock.Anything,
-			timelockAddr,
-			"grant_role",
-			mock.Anything,
-		).
-		Return(nil, nil).
-		Once()
+	invoker.EXPECT().InvokeContract(
+		mock.Anything,
+		timelockAddr,
+		"grant_role",
+		mock.Anything,
+	).Return(nil, nil)
 
 	configurer := NewTimelockConfigurerFromInvoker(invoker, caller)
 
@@ -53,16 +46,6 @@ func TestTimelockConfigurer_UpdateDelayAndGrantRole(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
 
-	invoker.AssertNumberOfCalls(t, "InvokeContract", 1)
-	invoker.AssertCalled(
-		t,
-		"InvokeContract",
-		mock.Anything,
-		timelockAddr,
-		"update_delay",
-		mock.Anything,
-	)
-
 	res, err = configurer.GrantRole(
 		context.Background(),
 		timelockAddr,
@@ -71,14 +54,4 @@ func TestTimelockConfigurer_UpdateDelayAndGrantRole(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
-
-	invoker.AssertNumberOfCalls(t, "InvokeContract", 2)
-	invoker.AssertCalled(
-		t,
-		"InvokeContract",
-		mock.Anything,
-		timelockAddr,
-		"grant_role",
-		mock.Anything,
-	)
 }

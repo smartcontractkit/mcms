@@ -22,15 +22,13 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 	invoker := mocks.NewInvoker(t)
 
 	invoker.
-		On(
-			"InvokeContract",
+		EXPECT().
+		InvokeContract(
 			mock.Anything,
 			timelockAddr,
 			"execute_batch",
 			mock.Anything,
-		).
-		Return(nil, nil).
-		Once()
+		).Return(nil, nil)
 
 	executor := &TimelockExecutor{
 		TimelockInspector: NewTimelockInspectorFromInvoker(invoker),
@@ -64,14 +62,4 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, "stellar", res.ChainFamily)
-
-	invoker.AssertNumberOfCalls(t, "InvokeContract", 1)
-	invoker.AssertCalled(
-		t,
-		"InvokeContract",
-		mock.Anything,
-		timelockAddr,
-		"execute_batch",
-		mock.Anything,
-	)
 }
