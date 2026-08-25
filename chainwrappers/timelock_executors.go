@@ -11,6 +11,7 @@ import (
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
@@ -48,6 +49,23 @@ func BuildTimelockExecutor(
 	rawSelector := uint64(chainSelector)
 
 	switch family {
+	case chainsel.FamilyStellar:
+		client, ok := chains.StellarClient(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing Stellar client for selector %d", rawSelector)
+		}
+
+		auth, ok := chains.StellarSigner(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing Stellar signer for selector %d", rawSelector)
+		}
+
+		chain, ok := chainsel.StellarChainBySelector(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("invalid chain selector %d", rawSelector)
+		}
+
+		return stellar.NewTimelockExecutorWithNetworkPassphrase(client, auth, chain.Passphrase, metadata.MCMAddress)
 	case chainsel.FamilyEVM:
 		client, ok := chains.EVMClient(rawSelector)
 		if !ok {

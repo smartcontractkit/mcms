@@ -11,6 +11,7 @@ import (
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
@@ -54,6 +55,33 @@ func BuildExecutor(
 	rawSelector := uint64(chainSelector)
 
 	switch family {
+	case chainsel.FamilyStellar:
+		stellarEncoder, ok := encoder.(*stellar.Encoder)
+		if !ok {
+			return nil, fmt.Errorf("invalid encoder type for selector %d: %T", chainSelector, encoder)
+		}
+
+		client, ok := chains.StellarClient(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing Stellar client for selector %d", rawSelector)
+		}
+
+		auth, ok := chains.StellarSigner(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("missing Stellar signer for selector %d", rawSelector)
+		}
+
+		chain, ok := chainsel.StellarChainBySelector(rawSelector)
+		if !ok {
+			return nil, fmt.Errorf("invalid chain selector %d", rawSelector)
+		}
+
+		inspector, err := stellar.NewInspectorWithNetworkPassphrase(client, auth, chain.Passphrase)
+		if err != nil {
+			return nil, err
+		}
+
+		return stellar.NewExecutor(stellarEncoder, inspector)
 	case chainsel.FamilyEVM:
 		evmEncoder, ok := encoder.(*evm.Encoder)
 		if !ok {
