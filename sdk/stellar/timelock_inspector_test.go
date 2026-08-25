@@ -117,5 +117,4 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 	)
 	require.NoError(t, err)
 	require.Equal(t, uint64(42), minDelay)
-
 }
