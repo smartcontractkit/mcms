@@ -3,6 +3,7 @@ package e2e
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -16,6 +17,8 @@ import (
 	"github.com/gagliardetto/solana-go/rpc"
 	"github.com/gagliardetto/solana-go/rpc/ws"
 	"github.com/joho/godotenv"
+	stellarrpc "github.com/stellar/go-stellar-sdk/clients/rpcclient"
+	"github.com/stellar/go-stellar-sdk/keypair"
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/ton"
 
@@ -24,6 +27,7 @@ import (
 
 	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
+	"github.com/smartcontractkit/mcms/e2e/tests/stellar"
 	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"
@@ -41,13 +45,14 @@ var (
 
 // Config defines the blockchain configuration
 type Config struct {
-	BlockchainA *blockchain.Input `toml:"evm_config_a"`
-	BlockchainB *blockchain.Input `toml:"evm_config_b"`
-	SolanaChain *blockchain.Input `toml:"solana_config"`
-	AptosChain  *blockchain.Input `toml:"aptos_config"`
-	SuiChain    *blockchain.Input `toml:"sui_config"`
-	TonChain    *blockchain.Input `toml:"ton_config"`
-	CantonChain *blockchain.Input `toml:"canton_config"`
+	BlockchainA  *blockchain.Input `toml:"evm_config_a"`
+	BlockchainB  *blockchain.Input `toml:"evm_config_b"`
+	SolanaChain  *blockchain.Input `toml:"solana_config"`
+	AptosChain   *blockchain.Input `toml:"aptos_config"`
+	SuiChain     *blockchain.Input `toml:"sui_config"`
+	TonChain     *blockchain.Input `toml:"ton_config"`
+	CantonChain  *blockchain.Input `toml:"canton_config"`
+	StellarChain *blockchain.Input `toml:"stellar_config"`
 
 	Settings struct {
 		PrivateKeys     []string `toml:"private_keys"`
@@ -57,19 +62,26 @@ type Config struct {
 
 // TestSetup holds common setup for E2E test suites
 type TestSetup struct {
-	ClientA          *ethclient.Client
-	ClientB          *ethclient.Client
-	SolanaClient     *rpc.Client
-	SolanaWSClient   *ws.Client
-	AptosRPCClient   *aptos.NodeClient
-	SolanaBlockchain *blockchain.Output
-	AptosBlockchain  *blockchain.Output
+	ClientA        *ethclient.Client
+	ClientB        *ethclient.Client
+	SolanaClient   *rpc.Client
+	SolanaWSClient *ws.Client
+	AptosRPCClient *aptos.NodeClient
+	StellarClient  *stellarrpc.Client
+
+	SolanaBlockchain  *blockchain.Output
+	AptosBlockchain   *blockchain.Output
+	StellarBlockchain *blockchain.Output
+
+	StellarSigner *keypair.Full
+
 	SuiClient        cslclient.BindingsClient
 	SuiBlockchain    *blockchain.Output
 	SuiNodeURL       string
 	TonClient        *ton.APIClient
 	TonBlockchain    *blockchain.Output
 	CantonBlockchain *blockchain.Output
+
 	Config
 }
 
@@ -262,21 +274,53 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			require.NoError(t, err, "Failed to initialize Canton blockchain")
 		}
 
+		var (
+			stellarClient           *stellarrpc.Client
+			stellarBlockchainOutput *blockchain.Output
+			stellarSigner           *keypair.Full
+		)
+
+		if in.StellarChain != nil {
+			stellarBlockchainOutput, err = blockchain.NewBlockchainNetwork(in.StellarChain)
+			require.NoError(t, err, "Failed to initialize Stellar blockchain")
+
+			require.NotEmpty(t, stellarBlockchainOutput.Nodes, "Stellar blockchain has no nodes")
+
+			nodeURL := stellarBlockchainOutput.Nodes[0].ExternalHTTPUrl
+			require.NotEmpty(t, nodeURL, "Stellar RPC URL is empty")
+
+			stellarClient = stellarrpc.NewClient(nodeURL, &http.Client{})
+
+			stellarSigner, err = keypair.Random()
+			require.NoError(t, err, "Failed to generate Stellar test account")
+
+			stellar.FundStellarKey(t, nodeURL, stellarSigner)
+
+			t.Logf(
+				"Initialized Stellar RPC client @ %s; funded account %s",
+				nodeURL,
+				stellarSigner.Address(),
+			)
+		}
+
 		sharedSetup = &TestSetup{
-			ClientA:          ethClientA,
-			ClientB:          ethClientB,
-			SolanaClient:     solanaClient,
-			SolanaWSClient:   solanaWsClient,
-			AptosRPCClient:   aptosClient,
-			SolanaBlockchain: solanaBlockChainOutput,
-			AptosBlockchain:  aptosBlockchainOutput,
-			SuiClient:        suiClient,
-			SuiBlockchain:    suiBlockchainOutput,
-			SuiNodeURL:       suiNodeURL,
-			TonClient:        tonClient,
-			TonBlockchain:    tonBlockchainOutput,
-			CantonBlockchain: cantonBlockchainOutput,
-			Config:           *in,
+			ClientA:           ethClientA,
+			ClientB:           ethClientB,
+			SolanaClient:      solanaClient,
+			SolanaWSClient:    solanaWsClient,
+			AptosRPCClient:    aptosClient,
+			SolanaBlockchain:  solanaBlockChainOutput,
+			AptosBlockchain:   aptosBlockchainOutput,
+			SuiClient:         suiClient,
+			SuiBlockchain:     suiBlockchainOutput,
+			SuiNodeURL:        suiNodeURL,
+			TonClient:         tonClient,
+			TonBlockchain:     tonBlockchainOutput,
+			CantonBlockchain:  cantonBlockchainOutput,
+			StellarBlockchain: stellarBlockchainOutput,
+			StellarClient:     stellarClient,
+			StellarSigner:     stellarSigner,
+			Config:            *in,
 		}
 	})
 
