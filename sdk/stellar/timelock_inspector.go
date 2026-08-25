@@ -53,8 +53,8 @@ func (i *TimelockInspector) members(ctx context.Context, address, role string) (
 		return nil, err
 	}
 	out := make([]string, 0, n)
-	for j := uint32(0); j < n; j++ {
-		a, e := c.GetRoleMember(ctx, role, j)
+	for j := range 32 {
+		a, e := c.GetRoleMember(ctx, role, uint32(j))
 		if e != nil {
 			return nil, e
 		}

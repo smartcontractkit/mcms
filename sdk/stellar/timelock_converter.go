@@ -77,9 +77,11 @@ func hashTimelockCall(target [32]byte, function string, args []byte) common.Hash
 	b := make([]byte, 0, 32+4+len(f)+4+len(args))
 	b = append(b, target[:]...)
 	var n [4]byte
+	//nolint:gosec // G115 conversion safe
 	binary.BigEndian.PutUint32(n[:], uint32(len(f)))
 	b = append(b, n[:]...)
 	b = append(b, f...)
+	//nolint:gosec // G115 conversion safe
 	binary.BigEndian.PutUint32(n[:], uint32(len(args)))
 	b = append(b, n[:]...)
 	b = append(b, args...)
@@ -91,6 +93,7 @@ func hashTimelockBatch(calls []common.Hash, predecessor, salt common.Hash) commo
 	domain := crypto.Keccak256([]byte(timelockDomain))
 	b := append([]byte{}, domain...)
 	var n [4]byte
+	//nolint:gosec // G115 conversion safe
 	binary.BigEndian.PutUint32(n[:], uint32(len(calls)))
 	b = append(b, n[:]...)
 	for _, h := range calls {
