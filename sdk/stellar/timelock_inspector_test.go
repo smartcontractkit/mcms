@@ -48,7 +48,7 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 			fn,
 			mock.Anything,
 		).
-			Return(new(scval.BoolToScVal(true)), nil).Once()
+			Return(new(scval.BoolToScVal(true)), nil)
 
 		invoker.EXPECT().SimulateContract(
 			mock.Anything,
@@ -56,8 +56,7 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 			"get_min_delay",
 			mock.Anything,
 		).
-			Return(new(scval.Uint64ToScVal(42)), nil).
-			Once()
+			Return(new(scval.Uint64ToScVal(42)), nil)
 	}
 	inspector := NewTimelockInspectorFromInvoker(invoker)
 
