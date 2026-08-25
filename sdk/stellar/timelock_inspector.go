@@ -42,7 +42,6 @@ func NewTimelockInspectorFromInvoker(invoker bindings.Invoker) *TimelockInspecto
 }
 
 func (i *TimelockInspector) client(address string) *tlb.TimelockClient {
-
 	return tlb.NewTimelockClient(i.invoker, address)
 }
 
@@ -65,42 +64,34 @@ func (i *TimelockInspector) members(ctx context.Context, address, role string) (
 }
 
 func (i *TimelockInspector) GetProposers(ctx context.Context, a string) ([]string, error) {
-
 	return i.members(ctx, a, "PROPOSER")
 }
 
 func (i *TimelockInspector) GetExecutors(ctx context.Context, a string) ([]string, error) {
-
 	return i.members(ctx, a, "EXECUTOR")
 }
 
 func (i *TimelockInspector) GetBypassers(ctx context.Context, a string) ([]string, error) {
-
 	return i.members(ctx, a, "BYPASSER")
 }
 
 func (i *TimelockInspector) GetCancellers(ctx context.Context, a string) ([]string, error) {
-
 	return i.members(ctx, a, "CANCELLER")
 }
 
 func (i *TimelockInspector) IsOperation(ctx context.Context, a string, id [32]byte) (bool, error) {
-
 	return i.client(a).IsOperation(ctx, id)
 }
 
 func (i *TimelockInspector) IsOperationPending(ctx context.Context, a string, id [32]byte) (bool, error) {
-
 	return i.client(a).IsOperationPending(ctx, id)
 }
 
 func (i *TimelockInspector) IsOperationReady(ctx context.Context, a string, id [32]byte) (bool, error) {
-
 	return i.client(a).IsOperationReady(ctx, id)
 }
 
 func (i *TimelockInspector) IsOperationDone(ctx context.Context, a string, id [32]byte) (bool, error) {
-
 	return i.client(a).IsOperationDone(ctx, id)
 }
 
