@@ -1,5 +1,17 @@
 # @smartcontractkit/mcms
 
+## [0.54.0](https://github.com/smartcontractkit/mcms/compare/v0.53.0...v0.54.0) (2026-08-25)
+
+
+### Features
+
+* **canton:** bump chainlink-canton to v2 ([#839](https://github.com/smartcontractkit/mcms/issues/839)) ([2cfbd80](https://github.com/smartcontractkit/mcms/commit/2cfbd808785fa34846147ee8c306f43f07d9b3a0))
+* **sdk/stellar:** add ConfigTransformer and Configurer ([#831](https://github.com/smartcontractkit/mcms/issues/831)) ([ca3600d](https://github.com/smartcontractkit/mcms/commit/ca3600de93253188b0ce0164311d42aac4f4d330))
+* **sdk/stellar:** add Inspector and Executor ([#833](https://github.com/smartcontractkit/mcms/issues/833)) ([0c2e84f](https://github.com/smartcontractkit/mcms/commit/0c2e84f2a0c0270cfbb1c04a32f9912c8d915381))
+* **sdk/stellar:** Add stellar sdk mocks and tests for invoker and bump stellar go native sdk ([#837](https://github.com/smartcontractkit/mcms/issues/837)) ([db02c1e](https://github.com/smartcontractkit/mcms/commit/db02c1e0883728d2adbc71f2f28c55496cb16163))
+* **sdk/stellar:** add timelock interfaces and wire into chainwrappers factory ([#830](https://github.com/smartcontractkit/mcms/issues/830)) ([d77dfa2](https://github.com/smartcontractkit/mcms/commit/d77dfa2efba30802d02393b5818503965db56e80))
+* **sdk/stellar:** add timelock interfaces and wire into chainwrappers factory ([#834](https://github.com/smartcontractkit/mcms/issues/834)) ([0e8343d](https://github.com/smartcontractkit/mcms/commit/0e8343d8e57b7f4d639466e2245e284c8fe5a957))
+
 ## [0.53.0](https://github.com/smartcontractkit/mcms/compare/v0.52.1...v0.53.0) (2026-08-18)
 
 
