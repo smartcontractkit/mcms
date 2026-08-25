@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/smartcontractkit/chainlink-stellar/bindings/scval"
+	"github.com/stellar/go-stellar-sdk/xdr"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -13,13 +14,12 @@ import (
 
 func TestTimelockInspector_ReadOperations(t *testing.T) {
 	t.Parallel()
-
+	ctx := t.Context()
 	const timelockAddr = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
 	const member = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
 
 	invoker := mocks.NewInvoker(t)
 
-	// Each role lookup first reads the member count and then reads the member.
 	invoker.
 		On(
 			"SimulateContract",
@@ -28,9 +28,21 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 			"get_role_member_count",
 			mock.Anything,
 		).
-		Return(new(scval.Uint32ToScVal(1)), nil).
+		Return(
+			func(
+				context.Context,
+				string,
+				string,
+				[]xdr.ScVal,
+			) *xdr.ScVal {
+				v := scval.Uint32ToScVal(1)
+				return &v
+			},
+			nil,
+		).
 		Times(4)
 
+	// Return a fresh address ScVal for every invocation.
 	invoker.
 		On(
 			"SimulateContract",
@@ -39,54 +51,49 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 			"get_role_member",
 			mock.Anything,
 		).
-		Return(new(scval.AddressToScVal(member)), nil).
+		Return(
+			func(
+				context.Context,
+				string,
+				string,
+				[]xdr.ScVal,
+			) *xdr.ScVal {
+				v := scval.AddressToScVal(member)
+				return &v
+			},
+			nil,
+		).
 		Times(4)
 
-	boolVal := scval.BoolToScVal(true)
-
-	invoker.
-		On(
-			"SimulateContract",
-			mock.Anything,
-			timelockAddr,
-			"is_operation",
-			mock.Anything,
-		).
-		Return(&boolVal, nil).
-		Once()
-
-	invoker.
-		On(
-			"SimulateContract",
-			mock.Anything,
-			timelockAddr,
-			"is_operation_pending",
-			mock.Anything,
-		).
-		Return(&boolVal, nil).
-		Once()
-
-	invoker.
-		On(
-			"SimulateContract",
-			mock.Anything,
-			timelockAddr,
-			"is_operation_ready",
-			mock.Anything,
-		).
-		Return(&boolVal, nil).
-		Once()
-
-	invoker.
-		On(
-			"SimulateContract",
-			mock.Anything,
-			timelockAddr,
-			"is_operation_done",
-			mock.Anything,
-		).
-		Return(&boolVal, nil).
-		Once()
+	// Return a fresh bool for each operation query.
+	for _, fn := range []string{
+		"is_operation",
+		"is_operation_pending",
+		"is_operation_ready",
+		"is_operation_done",
+	} {
+		invoker.
+			On(
+				"SimulateContract",
+				mock.Anything,
+				timelockAddr,
+				fn,
+				mock.Anything,
+			).
+			Return(
+				func(
+					context.Context,
+					string,
+					string,
+					[]xdr.ScVal,
+				) *xdr.ScVal {
+					v := scval.BoolToScVal(true)
+					return &v
+				},
+				nil,
+			).
+			Once()
+	}
 
 	invoker.
 		On(
@@ -96,43 +103,42 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 			"get_min_delay",
 			mock.Anything,
 		).
-		Return(new(scval.Uint64ToScVal(42)), nil).
+		Return(
+			func(
+				context.Context,
+				string,
+				string,
+				[]xdr.ScVal,
+			) *xdr.ScVal {
+				v := scval.Uint64ToScVal(42)
+				return &v
+			},
+			nil,
+		).
 		Once()
 
 	inspector := NewTimelockInspectorFromInvoker(invoker)
 
-	proposers, err := inspector.GetProposers(
-		context.Background(),
-		timelockAddr,
-	)
+	proposers, err := inspector.GetProposers(ctx, timelockAddr)
 	require.NoError(t, err)
 	require.Equal(t, []string{member}, proposers)
 
-	executors, err := inspector.GetExecutors(
-		context.Background(),
-		timelockAddr,
-	)
+	executors, err := inspector.GetExecutors(ctx, timelockAddr)
 	require.NoError(t, err)
 	require.Equal(t, []string{member}, executors)
 
-	bypassers, err := inspector.GetBypassers(
-		context.Background(),
-		timelockAddr,
-	)
+	bypassers, err := inspector.GetBypassers(ctx, timelockAddr)
 	require.NoError(t, err)
 	require.Equal(t, []string{member}, bypassers)
 
-	cancellers, err := inspector.GetCancellers(
-		context.Background(),
-		timelockAddr,
-	)
+	cancellers, err := inspector.GetCancellers(ctx, timelockAddr)
 	require.NoError(t, err)
 	require.Equal(t, []string{member}, cancellers)
 
 	var opID [32]byte
 
 	isOp, err := inspector.IsOperation(
-		context.Background(),
+		ctx,
 		timelockAddr,
 		opID,
 	)
@@ -140,7 +146,7 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 	require.True(t, isOp)
 
 	isPending, err := inspector.IsOperationPending(
-		context.Background(),
+		ctx,
 		timelockAddr,
 		opID,
 	)
@@ -148,7 +154,7 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 	require.True(t, isPending)
 
 	isReady, err := inspector.IsOperationReady(
-		context.Background(),
+		ctx,
 		timelockAddr,
 		opID,
 	)
@@ -156,7 +162,7 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 	require.True(t, isReady)
 
 	isDone, err := inspector.IsOperationDone(
-		context.Background(),
+		ctx,
 		timelockAddr,
 		opID,
 	)
@@ -164,11 +170,20 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 	require.True(t, isDone)
 
 	minDelay, err := inspector.GetMinDelay(
-		context.Background(),
+		ctx,
 		timelockAddr,
 	)
 	require.NoError(t, err)
 	require.Equal(t, uint64(42), minDelay)
 
-	invoker.AssertNumberOfCalls(t, "SimulateContract", 13)
+	// 4 get_role_member_count
+	// + 4 get_role_member
+	// + 4 operation-state queries
+	// + 1 get_min_delay
+	// = 13
+	invoker.AssertNumberOfCalls(
+		t,
+		"SimulateContract",
+		13,
+	)
 }
