@@ -97,7 +97,7 @@ func (e *Executor) SetRoot(
 	sortedSignatures []types.Signature,
 ) (types.TransactionResult, error) {
 	// Avoid re-submitting the same root.
-	currentRoot, currentValidUntil, err := e.Inspector.GetRoot(ctx, metadata.MCMAddress)
+	currentRoot, currentValidUntil, err := e.GetRoot(ctx, metadata.MCMAddress)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("set_root: get current root: %w", err)
 	}
