@@ -1,11 +1,9 @@
 package stellar
 
 import (
-	"context"
 	"testing"
 
 	"github.com/smartcontractkit/chainlink-stellar/bindings/scval"
-	"github.com/stellar/go-stellar-sdk/xdr"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -20,49 +18,21 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 
 	invoker := mocks.NewInvoker(t)
 
-	invoker.
-		On(
-			"SimulateContract",
-			mock.Anything,
-			timelockAddr,
-			"get_role_member_count",
-			mock.Anything,
-		).
-		Return(
-			func(
-				context.Context,
-				string,
-				string,
-				[]xdr.ScVal,
-			) *xdr.ScVal {
-				v := scval.Uint32ToScVal(1)
-				return &v
-			},
-			nil,
-		).
-		Times(4)
+	invoker.EXPECT().SimulateContract(
+		mock.Anything,
+		timelockAddr,
+		"get_role_member_count",
+		mock.Anything,
+	).Return(new(scval.Uint32ToScVal(1)), nil).Times(4)
 
 	// Return a fresh address ScVal for every invocation.
-	invoker.
-		On(
-			"SimulateContract",
-			mock.Anything,
-			timelockAddr,
-			"get_role_member",
-			mock.Anything,
-		).
-		Return(
-			func(
-				context.Context,
-				string,
-				string,
-				[]xdr.ScVal,
-			) *xdr.ScVal {
-				v := scval.AddressToScVal(member)
-				return &v
-			},
-			nil,
-		).
+	invoker.EXPECT().SimulateContract(
+		mock.Anything,
+		timelockAddr,
+		"get_role_member",
+		mock.Anything,
+	).
+		Return(new(scval.AddressToScVal(member)), nil).
 		Times(4)
 
 	// Return a fresh bool for each operation query.
@@ -72,51 +42,23 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 		"is_operation_ready",
 		"is_operation_done",
 	} {
-		invoker.
-			On(
-				"SimulateContract",
-				mock.Anything,
-				timelockAddr,
-				fn,
-				mock.Anything,
-			).
-			Return(
-				func(
-					context.Context,
-					string,
-					string,
-					[]xdr.ScVal,
-				) *xdr.ScVal {
-					v := scval.BoolToScVal(true)
-					return &v
-				},
-				nil,
-			).
-			Once()
-	}
+		invoker.EXPECT().SimulateContract(
+			mock.Anything,
+			timelockAddr,
+			fn,
+			mock.Anything,
+		).
+			Return(new(scval.BoolToScVal(true)), nil).Once()
 
-	invoker.
-		On(
-			"SimulateContract",
+		invoker.EXPECT().SimulateContract(
 			mock.Anything,
 			timelockAddr,
 			"get_min_delay",
 			mock.Anything,
 		).
-		Return(
-			func(
-				context.Context,
-				string,
-				string,
-				[]xdr.ScVal,
-			) *xdr.ScVal {
-				v := scval.Uint64ToScVal(42)
-				return &v
-			},
-			nil,
-		).
-		Once()
-
+			Return(new(scval.Uint64ToScVal(42)), nil).
+			Once()
+	}
 	inspector := NewTimelockInspectorFromInvoker(invoker)
 
 	proposers, err := inspector.GetProposers(ctx, timelockAddr)
@@ -176,14 +118,4 @@ func TestTimelockInspector_ReadOperations(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, uint64(42), minDelay)
 
-	// 4 get_role_member_count
-	// + 4 get_role_member
-	// + 4 operation-state queries
-	// + 1 get_min_delay
-	// = 13
-	invoker.AssertNumberOfCalls(
-		t,
-		"SimulateContract",
-		13,
-	)
 }
