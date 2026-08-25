@@ -49,7 +49,6 @@ func NewTimelockConfigurerFromInvoker(invoker bindings.Invoker, caller string) *
 // Initialize initializes a newly deployed timelock using the current Stellar
 // contract ABI. WASM deployment remains outside the SDK.
 func (c *TimelockConfigurer) Initialize(ctx context.Context, address string, minDelay uint64, proposers, cancellers, bypassers []string) (types.TransactionResult, error) {
-
 	return c.invoke(ctx, address, "initialize", []xdr.ScVal{
 		scval.Uint64ToScVal(minDelay),
 		scval.AddressSliceToScVal(proposers),
@@ -69,13 +68,13 @@ func (c *TimelockConfigurer) invoke(ctx context.Context, address, fn string, arg
 	return types.NewTransactionResult("", nil, "stellar"), nil
 }
 func (c *TimelockConfigurer) UpdateDelay(ctx context.Context, a string, d uint64) (types.TransactionResult, error) {
-
 	return c.invoke(ctx, a, "update_delay", []xdr.ScVal{scval.AddressToScVal(c.caller), scval.Uint64ToScVal(d)})
 }
-func (c *TimelockConfigurer) GrantRole(ctx context.Context, a string, r sdk.TimelockRole, target string) (types.TransactionResult, error) {
 
+func (c *TimelockConfigurer) GrantRole(ctx context.Context, a string, r sdk.TimelockRole, target string) (types.TransactionResult, error) {
 	return c.invoke(ctx, a, "grant_role", []xdr.ScVal{scval.AddressToScVal(c.caller), scval.SymbolToScVal(stellarRoleName(r)), scval.AddressToScVal(target)})
 }
+
 func stellarRoleName(r sdk.TimelockRole) string {
 	switch r {
 	case sdk.TimelockRoleAdmin:
