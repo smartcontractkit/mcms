@@ -1,7 +1,6 @@
 package stellar
 
 import (
-	"context"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -54,7 +53,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 	}
 
 	res, err := executor.ExecuteOperation(
-		context.Background(),
+		t.Context(),
 		metadata,
 		1,
 		[]common.Hash{},
@@ -131,7 +130,7 @@ func TestExecutor_SetRoot(t *testing.T) {
 	rootToSet[0] = 2
 
 	res, err := executor.SetRoot(
-		context.Background(),
+		t.Context(),
 		metadata,
 		[]common.Hash{},
 		rootToSet,
@@ -206,7 +205,7 @@ func TestExecutor_SetRoot_AlreadySet(t *testing.T) {
 	}
 
 	_, err = executor.SetRoot(
-		context.Background(),
+		t.Context(),
 		metadata,
 		[]common.Hash{},
 		root,
