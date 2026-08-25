@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/smartcontractkit/chainlink-canton/contracts"
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2"
 	"github.com/smartcontractkit/chainlink-canton/testhelpers"
 	"github.com/stretchr/testify/require"
 
@@ -44,7 +44,7 @@ func GetSharedEnvironment(t *testing.T) *SharedCantonEnvironment {
 		t.Logf("Allocated submitting party %s", submittingParty)
 
 		t.Log("Uploading MCMS and MCMSTest DARs (once for all suites)...")
-		mcmsDar, err := contracts.GetDar(contracts.MCMS, contracts.CurrentVersion)
+		mcmsDar, err := contracts.GetDar(contracts.MCMSCore, contracts.CurrentVersion)
 		if err != nil {
 			errSharedEnv = err
 			return

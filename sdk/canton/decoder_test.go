@@ -7,12 +7,14 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/ccip/ratelimiter"
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/splice/splice_api_token_metadata_v1"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/ccip/core"
-	"github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/ccip/factory"
-	mcmsapi "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/api"
-	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/ccip/core"
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/ccip/factory"
+	mcmsapi "github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/mcms/api"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/mcms/core"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 
 	"github.com/smartcontractkit/mcms/types"
@@ -42,7 +44,16 @@ func additionalFields(t *testing.T, af AdditionalFields) json.RawMessage {
 func TestDecoder_ExerciseChoice(t *testing.T) {
 	t.Parallel()
 
-	params := core.IsCursedForChainMCMSParams{ChainSelector: cantontypes.NUMERIC("1234")}
+	params := core.IsCursedForChainMCMSParams{
+		ChainSelector: cantontypes.NUMERIC("1234"),
+		Context: splice_api_token_metadata_v1.ChoiceContext{
+			Values: map[string]splice_api_token_metadata_v1.AnyValue{
+				"test-key": {
+					AVText: new(cantontypes.TEXT("test-value")),
+				},
+			},
+		},
+	}
 
 	tx := types.Transaction{
 		To:   "0x0000000000000000000000000000000000000000000000000000000000000001",
@@ -57,9 +68,27 @@ func TestDecoder_ExerciseChoice(t *testing.T) {
 	dec, err := NewDecoder().Decode(tx, "")
 	require.NoError(t, err)
 	require.Equal(t, "RMNRemote::IsCursedForChain", dec.MethodName())
-	require.Equal(t, []string{"chainSelector"}, dec.Keys())
-	require.Len(t, dec.Args(), 1)
+	require.Equal(t, []string{"chainSelector", "context"}, dec.Keys())
+	require.Len(t, dec.Args(), 2)
 	require.Equal(t, "1234", dec.Args()[0])
+	// Set type
+	require.Equal(t, map[string]any{
+		"values": map[string]any{
+			"test-key": map[string]any{
+				"AV_Bool":       nil,
+				"AV_ContractId": nil,
+				"AV_Date":       nil,
+				"AV_Decimal":    nil,
+				"AV_Int":        nil,
+				"AV_List":       nil,
+				"AV_Map":        nil,
+				"AV_Party":      nil,
+				"AV_Time":       nil,
+				"AV_RelTime":    nil,
+				"AV_Text":       "test-value",
+			},
+		},
+	}, dec.Args()[1])
 }
 
 // TestDecoder_Deploy decodes a factory deploy choice (CCIPFactory::DeployRMNRemote), whose
@@ -315,8 +344,8 @@ func TestDecoder_DeployRateLimiter_EnumFields(t *testing.T) {
 		PoolInstanceId:      "pool-1",
 		PoolOwner:           cantontypes.PARTY("owner::abc123"),
 		RemoteChainSelector: cantontypes.NUMERIC("16015286601757825753"),
-		Direction:           core.RateLimitDirectionRateLimitDirection_Outbound,
-		Mode:                core.RateLimitModeRateLimitMode_DefaultFinality,
+		Direction:           ratelimiter.RateLimitDirectionRateLimitDirection_Outbound,
+		Mode:                ratelimiter.RateLimitModeRateLimitMode_DefaultFinality,
 		IsEnabled:           true,
 		Capacity:            cantontypes.NUMERIC("1000"),
 		Rate:                cantontypes.NUMERIC("10"),
