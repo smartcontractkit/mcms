@@ -87,7 +87,23 @@ tasks:
   ledger:
     desc: "Run ledger signing test"
     env:
-      RUN_LEDGER_SUITE: true
-      CTF_CONFIGS: '{{ .CTF_CONFIGS | default "../config.toml" }}'
+      RUN_LEDGER_SUITE: "true"
     cmds:
-      - go test -tags=e2e -v {{.CLI_ARGS}} ./e2e/ledger
+      - |
+        TMP_CONFIG="$(mktemp /tmp/mcms-ledger-config.XXXXXX)"
+        trap 'rm -f "$TMP_CONFIG"' EXIT
+
+        # EVM config includes the shared [settings].
+        cat ./e2e/config.evm.toml > "$TMP_CONFIG"
+
+        # Solana has the same [settings], so strip that duplicate section.
+        awk '
+          /^\[settings\]/ { skip=1; next }
+          /^\[/ { skip=0 }
+          !skip { print }
+        ' ./e2e/config.solana.toml >> "$TMP_CONFIG"
+
+        # Stellar has no duplicate [settings].
+        cat ./e2e/config.stellar.toml >> "$TMP_CONFIG"
+
+        CTF_CONFIGS="$TMP_CONFIG" go test -tags=e2e -v {{.CLI_ARGS}} ./e2e/ledger
