@@ -42,28 +42,71 @@ func NewTimelockExecutorWithNetworkPassphrase(client *stellarrpc.Client, auth bi
 	return &TimelockExecutor{TimelockInspector: NewTimelockInspectorFromInvoker(invoker), invoker: invoker, caller: caller}, nil
 }
 
-func (e *TimelockExecutor) Execute(ctx context.Context, batch types.BatchOperation, address string, predecessor, salt common.Hash) (types.TransactionResult, error) {
+func (e *TimelockExecutor) Execute(
+	ctx context.Context,
+	batch types.BatchOperation,
+	address string,
+	predecessor common.Hash,
+	salt common.Hash,
+) (types.TransactionResult, error) {
 	if e == nil || e.invoker == nil {
-		return types.TransactionResult{}, fmt.Errorf("stellar timelock invoker is nil")
+		return types.TransactionResult{},
+			fmt.Errorf("stellar timelock invoker is nil")
 	}
+
 	calls, err := stellarCallValues(batch.Transactions)
 	if err != nil {
 		return types.TransactionResult{}, err
 	}
-	data, err := EncodeSorobanInvokePayload("execute_batch", []xdr.ScVal{calls, scval.Bytes32ToScVal([32]byte(predecessor)), scval.Bytes32ToScVal([32]byte(salt))})
+
+	data, err := EncodeSorobanInvokePayload(
+		"execute_batch",
+		[]xdr.ScVal{
+			calls,
+			scval.Bytes32ToScVal([32]byte(predecessor)),
+			scval.Bytes32ToScVal([32]byte(salt)),
+		},
+	)
 	if err != nil {
-		return types.TransactionResult{}, err
-	}
-	p, err := DecodeSorobanInvokePayload(data)
-	if err != nil {
-		return types.TransactionResult{}, err
-	}
-	args := p.Args // execute_batch has no caller in the current contract ABI.
-	if _, err = e.invoker.InvokeContract(ctx, address, "execute_batch", args); err != nil {
 		return types.TransactionResult{}, err
 	}
 
-	return types.NewTransactionResult("", nil, "stellar"), nil
+	payload, err := DecodeSorobanInvokePayload(data)
+	if err != nil {
+		return types.TransactionResult{}, err
+	}
+
+	_, err = e.invoker.InvokeContract(
+		ctx,
+		address,
+		"execute_batch",
+		payload.Args,
+	)
+	if err != nil {
+		originalErr := fmt.Errorf(
+			"stellar timelock execute_batch: %w",
+			err,
+		)
+
+		var failedTransaction *types.Transaction
+		if len(batch.Transactions) == 1 {
+			failedTransaction = &batch.Transactions[0]
+		}
+
+		return types.TransactionResult{}, newExecutionError(
+			failedTransaction,
+			originalErr,
+			map[string]contractKind{
+				canonicalContractID(address): contractKindTimelock,
+			},
+		)
+	}
+
+	return types.NewTransactionResult(
+		"",
+		nil,
+		"stellar",
+	), nil
 }
 
 func stellarCallValues(txs []types.Transaction) (xdr.ScVal, error) {
