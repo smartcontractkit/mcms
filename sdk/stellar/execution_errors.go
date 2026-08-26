@@ -19,10 +19,12 @@ const (
 var mcmsErrorNames = map[uint32]string{
 	12: "OutOfBoundsGroup",
 	45: "CallReverted",
+	55: "CallAborted",
 }
 
 var timelockErrorNames = map[uint32]string{
 	32: "CallReverted",
+	33: "CallAborted",
 }
 
 const maxScValErrorDecodeDepth = 32
