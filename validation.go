@@ -55,6 +55,8 @@ func validateChainMetadata(metadata types.ChainMetadata, csel types.ChainSelecto
 	switch chainFamily {
 	case chainsel.FamilySolana:
 		return solana.ValidateChainMetadata(metadata)
+	case chainsel.FamilyStellar:
+		return nil
 	case chainsel.FamilyEVM:
 		return nil
 	case chainsel.FamilyAptos:
