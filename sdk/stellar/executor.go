@@ -80,8 +80,17 @@ func (e *Executor) ExecuteOperation(
 	merkleProof := mcmsbindings.MerkleProof{Inner: proofInner}
 
 	client := mcmsbindings.NewMcmsClient(e.invoker, metadata.MCMAddress)
-	if err := client.Execute(ctx, stellarOp, merkleProof); err != nil {
-		return types.TransactionResult{}, fmt.Errorf("stellar mcms execute: %w", err)
+	if err = client.Execute(ctx, stellarOp, merkleProof); err != nil {
+		originalErr := fmt.Errorf("stellar mcms execute: %w", err)
+		return types.TransactionResult{}, newExecutionError(
+			&op.Transaction,
+			originalErr,
+			map[string]contractKind{
+				canonicalContractID(
+					metadata.MCMAddress,
+				): contractKindMCMS,
+			},
+		)
 	}
 
 	return types.NewTransactionResult("", nil, chainsel.FamilyStellar), nil

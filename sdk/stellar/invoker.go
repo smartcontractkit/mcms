@@ -25,6 +25,15 @@ const (
 	txStatusSuccess = "SUCCESS"
 )
 
+type SimulationError struct {
+	Message             string
+	DiagnosticEventsXDR []string
+}
+
+func (e *SimulationError) Error() string {
+	return "simulate Stellar transaction: " + e.Message
+}
+
 // NewInvoker creates the contract invoker used by the Stellar MCMS SDK.
 // It follows the same client-plus-signer pattern used by the other MCMS
 // families. The deployment framework supplies the RPC client and signer.
@@ -209,8 +218,12 @@ func (i *rpcInvoker) submit(ctx context.Context, op *txnbuild.InvokeHostFunction
 		return nil, fmt.Errorf("simulate Stellar transaction: %w", err)
 	}
 	if simulation.Error != "" {
-		return nil, fmt.Errorf("simulate Stellar transaction: %s", simulation.Error)
+		return nil, &SimulationError{
+			Message:             simulation.Error,
+			DiagnosticEventsXDR: simulation.EventsXDR,
+		}
 	}
+
 	if simulation.RestorePreamble != nil {
 		return nil, fmt.Errorf("submit Stellar transaction requires ledger restore")
 	}
