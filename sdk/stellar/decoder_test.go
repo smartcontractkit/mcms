@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestDecodeContractErrorFrames(t *testing.T) {
+func TestDecodeContractErrorChain(t *testing.T) {
 	t.Parallel()
 
 	firstContractID := testContractID(1)
@@ -25,31 +25,37 @@ func TestDecodeContractErrorFrames(t *testing.T) {
 		32,
 	)
 
-	frames, err := DecodeContractErrorFrames([]string{
+	errorChain, err := DecodeContractErrorChain([]string{
 		firstEvent,
 		secondEvent,
 	})
 	require.NoError(t, err)
-	require.Len(t, frames, 2)
+	require.Len(t, errorChain, 2)
 
-	firstAddress, err := diagnosticContractID(&firstContractID)
+	firstAddress, err := diagnosticContractID(
+		&firstContractID,
+	)
 	require.NoError(t, err)
 
-	secondAddress, err := diagnosticContractID(&secondContractID)
+	secondAddress, err := diagnosticContractID(
+		&secondContractID,
+	)
 	require.NoError(t, err)
 
 	require.Equal(t, ContractError{
 		ContractID: firstAddress,
 		Code:       12,
-	}, frames[0])
+	}, errorChain[0])
 
 	require.Equal(t, ContractError{
 		ContractID: secondAddress,
 		Code:       32,
-	}, frames[1])
+	}, errorChain[1])
 }
 
-func TestDecodeContractErrorFrames_ErrorInData(t *testing.T) {
+func TestDecodeContractErrorChain_ErrorInData(
+	t *testing.T,
+) {
 	t.Parallel()
 
 	contractID := testContractID(3)
@@ -59,9 +65,11 @@ func TestDecodeContractErrorFrames_ErrorInData(t *testing.T) {
 		45,
 	)
 
-	frames, err := DecodeContractErrorFrames([]string{event})
+	errorChain, err := DecodeContractErrorChain(
+		[]string{event},
+	)
 	require.NoError(t, err)
-	require.Len(t, frames, 1)
+	require.Len(t, errorChain, 1)
 
 	address, err := diagnosticContractID(&contractID)
 	require.NoError(t, err)
@@ -69,10 +77,10 @@ func TestDecodeContractErrorFrames_ErrorInData(t *testing.T) {
 	require.Equal(t, ContractError{
 		ContractID: address,
 		Code:       45,
-	}, frames[0])
+	}, errorChain[0])
 }
 
-func TestDecodeContractErrorFrames_IgnoresEventWithoutError(
+func TestDecodeContractErrorChain_IgnoresEventWithoutError(
 	t *testing.T,
 ) {
 	t.Parallel()
@@ -86,18 +94,36 @@ func TestDecodeContractErrorFrames_IgnoresEventWithoutError(
 				Sym:  new(xdr.ScSymbol("log")),
 			},
 		},
-		xdr.ScVal{Type: xdr.ScValTypeScvVoid},
+		xdr.ScVal{
+			Type: xdr.ScValTypeScvVoid,
+		},
 	)
 
 	encoded, err := xdr.MarshalBase64(event)
 	require.NoError(t, err)
 
-	frames, err := DecodeContractErrorFrames([]string{encoded})
+	errorChain, err := DecodeContractErrorChain(
+		[]string{encoded},
+	)
 	require.NoError(t, err)
-	require.Empty(t, frames)
+	require.Empty(t, errorChain)
 }
 
-func TestDecodeContractErrorFrames_PreservesValidFramesWhenOneEventIsMalformed(
+func TestDecodeContractErrorChain_IgnoresNonContractError(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	event := encodeNonContractErrorEvent(t)
+
+	errorChain, err := DecodeContractErrorChain(
+		[]string{event},
+	)
+	require.NoError(t, err)
+	require.Empty(t, errorChain)
+}
+
+func TestDecodeContractErrorChain_PreservesValidErrorsWhenOneEventIsMalformed(
 	t *testing.T,
 ) {
 	t.Parallel()
@@ -109,26 +135,36 @@ func TestDecodeContractErrorFrames_PreservesValidFramesWhenOneEventIsMalformed(
 		12,
 	)
 
-	frames, err := DecodeContractErrorFrames([]string{
+	errorChain, err := DecodeContractErrorChain([]string{
 		"not-valid-base64-xdr",
 		validEvent,
 	})
 
 	require.Error(t, err)
-	require.ErrorContains(t, err, "decode diagnostic event 0")
-	require.Len(t, frames, 1)
-	require.Equal(t, uint32(12), frames[0].Code)
+	require.ErrorContains(
+		t,
+		err,
+		"decode diagnostic event 0",
+	)
+	require.Len(t, errorChain, 1)
+	require.Equal(
+		t,
+		uint32(12),
+		errorChain[0].Code,
+	)
 }
 
-func TestDecodeContractErrorFrames_NoEvents(t *testing.T) {
+func TestDecodeContractErrorChain_NoEvents(
+	t *testing.T,
+) {
 	t.Parallel()
 
-	frames, err := DecodeContractErrorFrames(nil)
+	errorChain, err := DecodeContractErrorChain(nil)
 	require.NoError(t, err)
-	require.Empty(t, frames)
+	require.Empty(t, errorChain)
 }
 
-func TestDecodeSimulationErrorFrames_UnwrapsSimulationError(
+func TestDecodeSimulationErrorChain_UnwrapsSimulationError(
 	t *testing.T,
 ) {
 	t.Parallel()
@@ -141,8 +177,10 @@ func TestDecodeSimulationErrorFrames_UnwrapsSimulationError(
 	)
 
 	simulationErr := &SimulationError{
-		Message:             "Error(Contract, #12)",
-		DiagnosticEventsXDR: []string{event},
+		Message: "Error(Contract, #12)",
+		DiagnosticEventsXDR: []string{
+			event,
+		},
 	}
 
 	wrapped := fmt.Errorf(
@@ -150,18 +188,22 @@ func TestDecodeSimulationErrorFrames_UnwrapsSimulationError(
 		simulationErr,
 	)
 
-	frames, err := DecodeSimulationErrorFrames(wrapped)
+	errorChain, err := DecodeSimulationErrorChain(wrapped)
 	require.NoError(t, err)
-	require.Len(t, frames, 1)
-	require.Equal(t, uint32(12), frames[0].Code)
+	require.Len(t, errorChain, 1)
+	require.Equal(
+		t,
+		uint32(12),
+		errorChain[0].Code,
+	)
 }
 
-func TestDecodeSimulationErrorFrames_RejectsUnrelatedError(
+func TestDecodeSimulationErrorChain_RejectsUnrelatedError(
 	t *testing.T,
 ) {
 	t.Parallel()
 
-	frames, err := DecodeSimulationErrorFrames(
+	errorChain, err := DecodeSimulationErrorChain(
 		fmt.Errorf("unrelated failure"),
 	)
 
@@ -171,7 +213,81 @@ func TestDecodeSimulationErrorFrames_RejectsUnrelatedError(
 		err,
 		"does not contain a Stellar SimulationError",
 	)
-	require.Empty(t, frames)
+	require.Empty(t, errorChain)
+}
+
+func TestNewExecutionError_NormalizesErrorChain(
+	t *testing.T,
+) {
+	t.Parallel()
+
+	rootContractID := testContractID(1)
+	outerContractID := testContractID(2)
+
+	rootEvent := encodeContractErrorEvent(
+		t,
+		rootContractID,
+		12,
+	)
+	outerEvent := encodeContractErrorEvent(
+		t,
+		outerContractID,
+		32,
+	)
+
+	rootAddress, err := diagnosticContractID(
+		&rootContractID,
+	)
+	require.NoError(t, err)
+
+	outerAddress, err := diagnosticContractID(
+		&outerContractID,
+	)
+	require.NoError(t, err)
+
+	simulationErr := &SimulationError{
+		Message: "contract execution failed",
+		DiagnosticEventsXDR: []string{
+			rootEvent,
+			outerEvent,
+		},
+	}
+
+	result := newExecutionError(
+		nil,
+		simulationErr,
+		map[string]contractKind{
+			rootAddress:  contractKindMCMS,
+			outerAddress: contractKindTimelock,
+		},
+	)
+
+	var executionErr *ExecutionError
+	require.ErrorAs(t, result, &executionErr)
+	require.Len(t, executionErr.ErrorChain, 2)
+
+	require.Equal(t, ContractError{
+		ContractID: outerAddress,
+		Code:       32,
+		Name:       "CallReverted",
+	}, executionErr.ErrorChain[0])
+
+	require.Equal(t, ContractError{
+		ContractID: rootAddress,
+		Code:       12,
+		Name:       "OutOfBoundsGroup",
+	}, executionErr.ErrorChain[1])
+
+	require.Equal(
+		t,
+		executionErr.ErrorChain[0],
+		*executionErr.OuterError(),
+	)
+	require.Equal(
+		t,
+		executionErr.ErrorChain[1],
+		*executionErr.RootCause(),
+	)
 }
 
 func testContractID(lastByte byte) xdr.ContractId {
@@ -194,7 +310,9 @@ func encodeContractErrorEvent(
 		t,
 		contractID,
 		[]xdr.ScVal{errorValue},
-		xdr.ScVal{Type: xdr.ScValTypeScvVoid},
+		xdr.ScVal{
+			Type: xdr.ScValTypeScvVoid,
+		},
 	)
 
 	encoded, err := xdr.MarshalBase64(event)
@@ -223,7 +341,9 @@ func encodeContractErrorDataEvent(
 	return encoded
 }
 
-func encodeNonContractErrorEvent(t *testing.T) string {
+func encodeNonContractErrorEvent(
+	t *testing.T,
+) string {
 	t.Helper()
 
 	scError, err := xdr.NewScError(
@@ -242,7 +362,9 @@ func encodeNonContractErrorEvent(t *testing.T) string {
 		t,
 		testContractID(6),
 		[]xdr.ScVal{errorValue},
-		xdr.ScVal{Type: xdr.ScValTypeScvVoid},
+		xdr.ScVal{
+			Type: xdr.ScValTypeScvVoid,
+		},
 	)
 
 	encoded, err := xdr.MarshalBase64(event)
@@ -297,28 +419,4 @@ func diagnosticEvent(
 			Body:       body,
 		},
 	}
-}
-
-func TestDecodeContractErrorFrames_RealOutOfBoundsGroupFixture(
-	t *testing.T,
-) {
-	t.Parallel()
-
-	events := []string{
-		// Paste the real EventsXDR values here.
-	}
-
-	frames, err := DecodeContractErrorFrames(events)
-	require.NoError(t, err)
-
-	for _, frame := range frames {
-		t.Logf(
-			"contract=%s code=%d",
-			frame.ContractID,
-			frame.Code,
-		)
-	}
-
-	require.NotEmpty(t, frames)
-	require.Equal(t, uint32(12), frames[len(frames)-1].Code)
 }

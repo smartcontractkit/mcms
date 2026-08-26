@@ -33,9 +33,12 @@ type ContractError struct {
 	Name       string
 }
 
+// ExecutionError contains the errors reported by contracts during execution.
+//
+// ErrorChain is ordered from the outer contract error to the root cause.
 type ExecutionError struct {
 	Transaction *types.Transaction
-	Frames      []ContractError
+	ErrorChain  []ContractError
 	OriginalErr error
 }
 
@@ -59,20 +62,23 @@ func (e *ExecutionError) Unwrap() error {
 	return e.OriginalErr
 }
 
+// OuterError returns the error reported by the contract that the SDK called
+// directly.
 func (e *ExecutionError) OuterError() *ContractError {
-	if len(e.Frames) == 0 {
+	if len(e.ErrorChain) == 0 {
 		return nil
 	}
 
-	return &e.Frames[0]
+	return &e.ErrorChain[0]
 }
 
+// RootCause returns the original contract error that caused execution to fail.
 func (e *ExecutionError) RootCause() *ContractError {
-	if len(e.Frames) == 0 {
+	if len(e.ErrorChain) == 0 {
 		return nil
 	}
 
-	return &e.Frames[len(e.Frames)-1]
+	return &e.ErrorChain[len(e.ErrorChain)-1]
 }
 
 func newExecutionError(tx *types.Transaction, err error, knownContracts map[string]contractKind) error {
@@ -80,41 +86,41 @@ func newExecutionError(tx *types.Transaction, err error, knownContracts map[stri
 		return nil
 	}
 
-	frames, decodeErr := DecodeSimulationErrorFrames(err)
-	if decodeErr != nil && len(frames) == 0 {
+	errorChain, decodeErr := DecodeSimulationErrorChain(err)
+	if decodeErr != nil && len(errorChain) == 0 {
 		return &ExecutionError{
 			Transaction: tx,
 			OriginalErr: err,
 		}
 	}
 
-	for i := range frames {
-		kind := knownContracts[canonicalContractID(frames[i].ContractID)]
+	for i := range errorChain {
+		kind := knownContracts[canonicalContractID(errorChain[i].ContractID)]
 
-		frames[i].Name = resolveContractErrorName(
+		errorChain[i].Name = resolveContractErrorName(
 			kind,
-			frames[i].Code,
+			errorChain[i].Code,
 		)
 	}
 
-	// SimulateTransaction.EventsXDR is chronological:
-	// root cause first, outer wrapper last.
+	// SimulateTransaction.EventsXDR is chronological. The original contract
+	// error is first, and the outer contract error is last.
 	//
-	// Normalize ExecutionError.Frames to:
-	// outer wrapper first, root cause last.
-	reverseContractErrors(frames)
+	// Normalize ErrorChain so that the outer contract error is first and the
+	// root cause is last.
+	reverseErrorChain(errorChain)
 
 	return &ExecutionError{
 		Transaction: tx,
-		Frames:      frames,
+		ErrorChain:  errorChain,
 		OriginalErr: err,
 	}
 }
 
-func reverseContractErrors(frames []ContractError) {
-	for left, right := 0, len(frames)-1; left < right; {
-		frames[left], frames[right] =
-			frames[right], frames[left]
+func reverseErrorChain(errorChain []ContractError) {
+	for left, right := 0, len(errorChain)-1; left < right; {
+		errorChain[left], errorChain[right] =
+			errorChain[right], errorChain[left]
 
 		left++
 		right--
@@ -136,9 +142,8 @@ func resolveContractErrorName(
 		}
 	}
 
-	// A diagnostic frame may come from a nested contract not explicitly
-	// registered by the executor. Resolve only codes that are unambiguous
-	// between the MCMS and timelock contracts.
+	// An error can come from a nested contract that the executor does not
+	// know. Resolve the name only when the code has one unambiguous meaning.
 	mcmsName, inMCMS := mcmsErrorNames[code]
 	timelockName, inTimelock := timelockErrorNames[code]
 
