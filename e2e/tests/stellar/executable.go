@@ -1,6 +1,4 @@
-//go:build e2e
-
-package stellare2e
+package stellar
 
 import (
 	"bytes"
@@ -25,7 +23,7 @@ import (
 	mcmtypes "github.com/smartcontractkit/mcms/types"
 )
 
-type StellarChainMeta struct {
+type ChainMeta struct {
 	MCMAddress      string
 	TimelockAddress string
 }
@@ -54,10 +52,6 @@ type ExecutionTestSuite struct {
 	mcmsConfig         *mcmtypes.Config
 
 	deploymentCounter uint64
-
-	// Shared deployment for future tests that do not mutate ownership.
-	// Tests that transfer ownership must call deployChain().
-	Chain StellarChainMeta
 }
 
 func (s *ExecutionTestSuite) SetupSuite() {
@@ -99,8 +93,6 @@ func (s *ExecutionTestSuite) SetupSuite() {
 			},
 		},
 	}
-
-	s.Chain = s.deployChain()
 }
 
 func (s *ExecutionTestSuite) initializeProposalSigners() {
@@ -147,7 +139,24 @@ func (s *ExecutionTestSuite) initializeProposalSigners() {
 	}
 }
 
-func (s *ExecutionTestSuite) deployChain() StellarChainMeta {
+func (s *ExecutionTestSuite) newInspector() *stellarsdk.Inspector {
+	s.T().Helper()
+
+	inspector, err :=
+		stellarsdk.NewInspectorWithNetworkPassphrase(
+			s.StellarClient,
+			s.StellarSigner,
+			s.passphrase,
+		)
+	s.Require().NoError(
+		err,
+		"failed to create Stellar inspector",
+	)
+
+	return inspector
+}
+
+func (s *ExecutionTestSuite) deployChain() ChainMeta {
 	s.T().Helper()
 
 	deploymentID := s.nextDeploymentID()
@@ -164,7 +173,7 @@ func (s *ExecutionTestSuite) deployChain() StellarChainMeta {
 		roles,
 	)
 
-	return StellarChainMeta{
+	return ChainMeta{
 		MCMAddress:      mcmAddress,
 		TimelockAddress: timelockAddress,
 	}
@@ -284,7 +293,7 @@ func (s *ExecutionTestSuite) defaultTimelockRoleConfig(
 }
 
 func (s *ExecutionTestSuite) transferMCMSOwnershipToTimelock(
-	chain StellarChainMeta,
+	chain ChainMeta,
 ) {
 	s.T().Helper()
 
@@ -302,7 +311,7 @@ func (s *ExecutionTestSuite) transferMCMSOwnershipToTimelock(
 }
 
 func (s *ExecutionTestSuite) acceptMCMSOwnershipThroughTimelock(
-	chain StellarChainMeta,
+	chain ChainMeta,
 ) {
 	s.T().Helper()
 
