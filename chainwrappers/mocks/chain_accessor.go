@@ -5,11 +5,11 @@ package mocks
 import (
 	aptos "github.com/aptos-labs/aptos-go-sdk"
 	bind "github.com/ethereum/go-ethereum/accounts/abi/bind/v2"
-	bindings "github.com/smartcontractkit/chainlink-stellar/bindings"
 	canton "github.com/smartcontractkit/mcms/sdk/canton"
 
 	solana "github.com/gagliardetto/solana-go"
 	rpc "github.com/gagliardetto/solana-go/rpc"
+	stellar "github.com/smartcontractkit/chainlink-deployments-framework/chain/stellar"
 	client "github.com/smartcontractkit/chainlink-sui/relayer/client"
 	evm "github.com/smartcontractkit/mcms/sdk/evm"
 	sui "github.com/smartcontractkit/mcms/sdk/sui"
@@ -542,23 +542,23 @@ func (_c *ChainAccessor_StellarClient_Call) RunAndReturn(run func(uint64) (*rpcc
 }
 
 // StellarSigner provides a mock function with given fields: selector
-func (_m *ChainAccessor) StellarSigner(selector uint64) (bindings.Signer, bool) {
+func (_m *ChainAccessor) StellarSigner(selector uint64) (stellar.StellarSigner, bool) {
 	ret := _m.Called(selector)
 
 	if len(ret) == 0 {
 		panic("no return value specified for StellarSigner")
 	}
 
-	var r0 bindings.Signer
+	var r0 stellar.StellarSigner
 	var r1 bool
-	if rf, ok := ret.Get(0).(func(uint64) (bindings.Signer, bool)); ok {
+	if rf, ok := ret.Get(0).(func(uint64) (stellar.StellarSigner, bool)); ok {
 		return rf(selector)
 	}
-	if rf, ok := ret.Get(0).(func(uint64) bindings.Signer); ok {
+	if rf, ok := ret.Get(0).(func(uint64) stellar.StellarSigner); ok {
 		r0 = rf(selector)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(bindings.Signer)
+			r0 = ret.Get(0).(stellar.StellarSigner)
 		}
 	}
 
@@ -589,12 +589,12 @@ func (_c *ChainAccessor_StellarSigner_Call) Run(run func(selector uint64)) *Chai
 	return _c
 }
 
-func (_c *ChainAccessor_StellarSigner_Call) Return(_a0 bindings.Signer, _a1 bool) *ChainAccessor_StellarSigner_Call {
+func (_c *ChainAccessor_StellarSigner_Call) Return(_a0 stellar.StellarSigner, _a1 bool) *ChainAccessor_StellarSigner_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *ChainAccessor_StellarSigner_Call) RunAndReturn(run func(uint64) (bindings.Signer, bool)) *ChainAccessor_StellarSigner_Call {
+func (_c *ChainAccessor_StellarSigner_Call) RunAndReturn(run func(uint64) (stellar.StellarSigner, bool)) *ChainAccessor_StellarSigner_Call {
 	_c.Call.Return(run)
 	return _c
 }
