@@ -14,20 +14,20 @@ const (
 	contractKindUnknown contractKind = iota
 	contractKindMCMS
 	contractKindTimelock
+	maxScValErrorDecodeDepth = 32
+	callRevertedErrorName    = "CallReverted"
 )
 
 var mcmsErrorNames = map[uint32]string{
 	12: "OutOfBoundsGroup",
-	45: "CallReverted",
+	45: callRevertedErrorName,
 	55: "CallAborted",
 }
 
 var timelockErrorNames = map[uint32]string{
-	32: "CallReverted",
+	32: callRevertedErrorName,
 	33: "CallAborted",
 }
-
-const maxScValErrorDecodeDepth = 32
 
 type ContractError struct {
 	ContractID string
@@ -134,6 +134,9 @@ func resolveContractErrorName(
 	code uint32,
 ) string {
 	switch kind {
+	case contractKindUnknown:
+		// The error may come from a nested contract that the executor does not
+		// know. Fall through to the unambiguous error-code resolution below.
 	case contractKindMCMS:
 		if name, ok := mcmsErrorNames[code]; ok {
 			return name

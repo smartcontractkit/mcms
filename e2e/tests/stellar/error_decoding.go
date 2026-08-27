@@ -3,7 +3,6 @@ package stellar
 import (
 	"time"
 
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/stellar/go-stellar-sdk/xdr"
 
 	mcmsbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/mcms"
@@ -39,9 +38,16 @@ func (s *ExecutionTestSuite) TestTimelockExecuteRevertErrorDecoding() {
 		chain.MCMAddress,
 	)
 
-	chainMetadata := map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{s.chainSelector: {StartingOpCount: opCount, MCMAddress: chain.MCMAddress}}
+	chainMetadata := map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{
+		s.chainSelector: {
+			StartingOpCount: opCount,
+			MCMAddress:      chain.MCMAddress,
+		},
+	}
 
-	timelockAddresses := map[mcmtypes.ChainSelector]string{s.chainSelector: chain.TimelockAddress}
+	timelockAddresses := map[mcmtypes.ChainSelector]string{
+		s.chainSelector: chain.TimelockAddress,
+	}
 
 	batchOps := []mcmtypes.BatchOperation{
 		{
@@ -267,7 +273,7 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 			Version:     "v1",
 			Kind:        mcmtypes.KindTimelockProposal,
 			Description: "Stellar bypass error decoding test",
-			ValidUntil: uint32( //nolint:gosec
+			ValidUntil: uint32(
 				time.Now().Add(time.Hour).Unix(),
 			),
 			OverridePreviousRoot: true,
@@ -365,7 +371,7 @@ func (s *ExecutionTestSuite) TestBypassProposalRevertErrorDecoding() {
 	)
 	s.Require().NoError(err)
 	s.Require().Equal(
-		common.Hash(tree.Root),
+		tree.Root,
 		actualRoot,
 		"execution MCMS root mismatch after SetRoot",
 	)
@@ -467,7 +473,8 @@ func (s *ExecutionTestSuite) createRevertingTransaction(
 }
 
 func (s *ExecutionTestSuite) createScheduleTimelockProposal(
-	chainMetadata map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata, timelockAddresses map[mcmtypes.ChainSelector]string,
+	chainMetadata map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata,
+	timelockAddresses map[mcmtypes.ChainSelector]string,
 	batchOperations []mcmtypes.BatchOperation,
 ) mcms.TimelockProposal {
 	s.T().Helper()
@@ -477,7 +484,7 @@ func (s *ExecutionTestSuite) createScheduleTimelockProposal(
 			Version:     "v1",
 			Kind:        mcmtypes.KindTimelockProposal,
 			Description: "Stellar timelock error decoding test",
-			ValidUntil: uint32( //nolint:gosec
+			ValidUntil: uint32(
 				time.Now().Add(time.Hour).Unix(),
 			),
 			OverridePreviousRoot: true,

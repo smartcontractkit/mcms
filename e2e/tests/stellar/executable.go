@@ -102,7 +102,7 @@ func (s *ExecutionTestSuite) initializeProposalSigners() {
 
 	signers := make([]proposalSigner, signerCount)
 
-	for i := 0; i < signerCount; i++ {
+	for i := range signerCount {
 		key, err := crypto.GenerateKey()
 		s.Require().NoError(
 			err,
