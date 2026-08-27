@@ -11,6 +11,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
@@ -39,6 +40,8 @@ func BuildConverter(selector types.ChainSelector, metadata types.ChainMetadata) 
 
 	var converter sdk.TimelockConverter
 	switch fam {
+	case chainsel.FamilyStellar:
+		converter = stellar.NewTimelockConverter()
 	case chainsel.FamilyEVM:
 		converter = evm.NewTimelockConverter()
 	case chainsel.FamilySolana:
