@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+// FundStellarKey funds stellar key.
 func FundStellarKey(t *testing.T, nodeURL string, stellarSigner *keypair.Full) {
 	t.Helper()
 
