@@ -27,7 +27,7 @@ import (
 
 	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
-	"github.com/smartcontractkit/mcms/e2e/tests/stellar"
+	"github.com/smartcontractkit/mcms/e2e/utils/stellar"
 	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"

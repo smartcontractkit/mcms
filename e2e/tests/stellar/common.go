@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// FundStellarKey funds stellar key.
+// FundStellarKey funds stellar key using native friendbot.
 func FundStellarKey(t *testing.T, nodeURL string, stellarSigner *keypair.Full) {
 	t.Helper()
 
