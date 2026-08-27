@@ -136,7 +136,6 @@ jobs:
         run: |
           ./e2e/tests/solana/compile-mcm-contracts.sh
 
-
       - name: Run e2e tests
         uses: smartcontractkit/.github/actions/ci-test-go@ci-test-go/v1
         with:
