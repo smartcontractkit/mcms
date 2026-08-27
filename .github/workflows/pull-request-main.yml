@@ -158,8 +158,8 @@ jobs:
 
             echo "::group::Sui"
             CTF_CONFIGS=../config.sui.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestSuiSuite || sui_failure=true
-
             echo "::endgroup::"
+
             echo "::group::Stellar"
             CTF_CONFIGS=../config.stellar.toml go test -p=1 -tags=e2e -v ./e2e/tests/... -run=TestStellarSuite || stellar_failure=true
             echo "::endgroup::"
@@ -179,7 +179,9 @@ jobs:
             fi
 
             echo "Exiting"
-            exit 0  ci-sonarqube:
+            exit 0
+
+  ci-sonarqube:
     name: Sonarqube Scan
     runs-on: ubuntu-latest
     needs: [ci-lint, ci-lint-misc, ci-test]
