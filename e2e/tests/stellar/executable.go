@@ -13,7 +13,6 @@ import (
 	stellarbindings "github.com/smartcontractkit/chainlink-stellar/bindings"
 	"github.com/stellar/go-stellar-sdk/keypair"
 	"github.com/stellar/go-stellar-sdk/xdr"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	mcmsbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/mcms"
@@ -75,7 +74,7 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.Require().NotEmpty(friendbotURL, "Stellar Friendbot URL is empty")
 
 	signer, err := keypair.Random()
-	require.NoError(s.T(), err, "Failed to generate Stellar test account")
+	s.Require().NoError(err, "Failed to generate Stellar test account")
 
 	FundStellarKey(s.T(), friendbotURL, signer)
 
