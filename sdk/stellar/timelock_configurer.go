@@ -46,17 +46,6 @@ func NewTimelockConfigurerFromInvoker(invoker bindings.Invoker, caller string) *
 	return &TimelockConfigurer{invoker: invoker, caller: caller}
 }
 
-// Initialize initializes a newly deployed timelock using the current Stellar
-// contract ABI. WASM deployment remains outside the SDK.
-func (c *TimelockConfigurer) Initialize(ctx context.Context, address string, minDelay uint64, proposers, cancellers, bypassers []string) (types.TransactionResult, error) {
-	return c.invoke(ctx, address, "initialize", []xdr.ScVal{
-		scval.Uint64ToScVal(minDelay),
-		scval.AddressSliceToScVal(proposers),
-		scval.AddressSliceToScVal(cancellers),
-		scval.AddressSliceToScVal(bypassers),
-	})
-}
-
 func (c *TimelockConfigurer) invoke(ctx context.Context, address, fn string, args []xdr.ScVal) (types.TransactionResult, error) {
 	if c == nil || c.invoker == nil {
 		return types.TransactionResult{}, fmt.Errorf("stellar timelock invoker is nil")
