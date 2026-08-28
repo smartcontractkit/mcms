@@ -3,6 +3,7 @@
 package mocks
 
 import (
+	keypair "github.com/stellar/go-stellar-sdk/keypair"
 	xdr "github.com/stellar/go-stellar-sdk/xdr"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -65,9 +66,114 @@ func (_c *Signer_Address_Call) RunAndReturn(run func() string) *Signer_Address_C
 	return _c
 }
 
-// SignDecorated provides a mock function with given fields: _a0
-func (_m *Signer) SignDecorated(_a0 []byte) (xdr.DecoratedSignature, error) {
-	ret := _m.Called(_a0)
+// KeypairFull provides a mock function with no fields
+func (_m *Signer) KeypairFull() *keypair.Full {
+	ret := _m.Called()
+
+	if len(ret) == 0 {
+		panic("no return value specified for KeypairFull")
+	}
+
+	var r0 *keypair.Full
+	if rf, ok := ret.Get(0).(func() *keypair.Full); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*keypair.Full)
+		}
+	}
+
+	return r0
+}
+
+// Signer_KeypairFull_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'KeypairFull'
+type Signer_KeypairFull_Call struct {
+	*mock.Call
+}
+
+// KeypairFull is a helper method to define mock.On call
+func (_e *Signer_Expecter) KeypairFull() *Signer_KeypairFull_Call {
+	return &Signer_KeypairFull_Call{Call: _e.mock.On("KeypairFull")}
+}
+
+func (_c *Signer_KeypairFull_Call) Run(run func()) *Signer_KeypairFull_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run()
+	})
+	return _c
+}
+
+func (_c *Signer_KeypairFull_Call) Return(_a0 *keypair.Full) *Signer_KeypairFull_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *Signer_KeypairFull_Call) RunAndReturn(run func() *keypair.Full) *Signer_KeypairFull_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// Sign provides a mock function with given fields: message
+func (_m *Signer) Sign(message []byte) ([]byte, error) {
+	ret := _m.Called(message)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Sign")
+	}
+
+	var r0 []byte
+	var r1 error
+	if rf, ok := ret.Get(0).(func([]byte) ([]byte, error)); ok {
+		return rf(message)
+	}
+	if rf, ok := ret.Get(0).(func([]byte) []byte); ok {
+		r0 = rf(message)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]byte)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func([]byte) error); ok {
+		r1 = rf(message)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// Signer_Sign_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Sign'
+type Signer_Sign_Call struct {
+	*mock.Call
+}
+
+// Sign is a helper method to define mock.On call
+//   - message []byte
+func (_e *Signer_Expecter) Sign(message interface{}) *Signer_Sign_Call {
+	return &Signer_Sign_Call{Call: _e.mock.On("Sign", message)}
+}
+
+func (_c *Signer_Sign_Call) Run(run func(message []byte)) *Signer_Sign_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].([]byte))
+	})
+	return _c
+}
+
+func (_c *Signer_Sign_Call) Return(_a0 []byte, _a1 error) *Signer_Sign_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *Signer_Sign_Call) RunAndReturn(run func([]byte) ([]byte, error)) *Signer_Sign_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SignDecorated provides a mock function with given fields: message
+func (_m *Signer) SignDecorated(message []byte) (xdr.DecoratedSignature, error) {
+	ret := _m.Called(message)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SignDecorated")
@@ -76,16 +182,16 @@ func (_m *Signer) SignDecorated(_a0 []byte) (xdr.DecoratedSignature, error) {
 	var r0 xdr.DecoratedSignature
 	var r1 error
 	if rf, ok := ret.Get(0).(func([]byte) (xdr.DecoratedSignature, error)); ok {
-		return rf(_a0)
+		return rf(message)
 	}
 	if rf, ok := ret.Get(0).(func([]byte) xdr.DecoratedSignature); ok {
-		r0 = rf(_a0)
+		r0 = rf(message)
 	} else {
 		r0 = ret.Get(0).(xdr.DecoratedSignature)
 	}
 
 	if rf, ok := ret.Get(1).(func([]byte) error); ok {
-		r1 = rf(_a0)
+		r1 = rf(message)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -99,12 +205,12 @@ type Signer_SignDecorated_Call struct {
 }
 
 // SignDecorated is a helper method to define mock.On call
-//   - _a0 []byte
-func (_e *Signer_Expecter) SignDecorated(_a0 interface{}) *Signer_SignDecorated_Call {
-	return &Signer_SignDecorated_Call{Call: _e.mock.On("SignDecorated", _a0)}
+//   - message []byte
+func (_e *Signer_Expecter) SignDecorated(message interface{}) *Signer_SignDecorated_Call {
+	return &Signer_SignDecorated_Call{Call: _e.mock.On("SignDecorated", message)}
 }
 
-func (_c *Signer_SignDecorated_Call) Run(run func(_a0 []byte)) *Signer_SignDecorated_Call {
+func (_c *Signer_SignDecorated_Call) Run(run func(message []byte)) *Signer_SignDecorated_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		run(args[0].([]byte))
 	})
