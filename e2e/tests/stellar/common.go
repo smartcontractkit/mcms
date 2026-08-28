@@ -1,44 +1,86 @@
 package stellar
 
 import (
+	"fmt"
 	"io"
 	"net/http"
-	"strings"
+	"net/url"
 	"testing"
+	"time"
 
 	"github.com/stellar/go-stellar-sdk/keypair"
 	"github.com/stretchr/testify/require"
 )
 
-// FundStellarKey funds stellar key using native friendbot.
-func FundStellarKey(t *testing.T, nodeURL string, stellarSigner *keypair.Full) {
+func FundStellarKey(
+	t *testing.T,
+	friendbotURL string,
+	signer *keypair.Full,
+) {
 	t.Helper()
 
-	friendbotURL := strings.TrimRight(nodeURL, "/") +
-		"/friendbot?addr=" +
-		stellarSigner.Address()
+	require.NotEmpty(t, friendbotURL, "Stellar Friendbot URL is empty")
+	require.NotNil(t, signer, "Stellar signer is nil")
 
-	req, reqErr := http.NewRequestWithContext(
-		t.Context(),
-		http.MethodGet,
-		friendbotURL,
-		nil,
-	)
-	require.NoError(t, reqErr, "Failed to create Stellar friendbot request")
+	client := &http.Client{
+		Timeout: 15 * time.Second,
+	}
 
-	resp, reqErr := http.DefaultClient.Do(req)
-	require.NoError(t, reqErr, "Failed to fund Stellar account with friendbot")
-	defer resp.Body.Close()
+	deadline := time.Now().Add(3 * time.Minute)
 
-	body, readErr := io.ReadAll(resp.Body)
-	require.NoError(t, readErr, "Failed to read Stellar friendbot response")
+	var lastErr error
 
-	require.Less(
+	for time.Now().Before(deadline) {
+		req, err := http.NewRequestWithContext(
+			t.Context(),
+			http.MethodGet,
+			fmt.Sprintf(
+				"%s?addr=%s",
+				friendbotURL,
+				url.QueryEscape(signer.Address()),
+			),
+			nil,
+		)
+		require.NoError(t, err)
+
+		resp, err := client.Do(req)
+		if err != nil {
+			lastErr = err
+		} else {
+			body, readErr := io.ReadAll(resp.Body)
+			closeErr := resp.Body.Close()
+
+			if readErr != nil {
+				lastErr = readErr
+			} else if closeErr != nil {
+				lastErr = closeErr
+			} else if resp.StatusCode >= http.StatusOK &&
+				resp.StatusCode < http.StatusMultipleChoices {
+				return
+			} else {
+				lastErr = fmt.Errorf(
+					"status=%s body=%s",
+					resp.Status,
+					string(body),
+				)
+			}
+		}
+
+		select {
+		case <-t.Context().Done():
+			require.NoError(
+				t,
+				t.Context().Err(),
+				"context cancelled while waiting for Stellar Friendbot",
+			)
+		case <-time.After(5 * time.Second):
+		}
+	}
+
+	require.FailNowf(
 		t,
-		resp.StatusCode,
-		http.StatusMultipleChoices,
-		"Failed to fund Stellar account: status=%s body=%s",
-		resp.Status,
-		string(body),
+		"Failed to fund Stellar account",
+		"Friendbot did not become ready: %v",
+		lastErr,
 	)
 }
