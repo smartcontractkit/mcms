@@ -5,7 +5,6 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"sort"
-	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -67,28 +66,23 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
 	s.Require().NotNil(s.StellarClient, "Stellar RPC client is not configured")
-	s.Require().NotNil(s.StellarBlockchain, "Stellar blockchain is not configured")
-	s.Require().NotEmpty(s.StellarBlockchain.Nodes, "Stellar blockchain has no nodes")
+	s.Require().NotNil(s.StellarChain, "Stellar chain is not configured")
+	s.Require().NotNil(s.StellarChain.Out, "Stellar chain output is not configured")
+	s.Require().NotNil(s.StellarChain.Out.NetworkSpecificData, "Stellar network-specific data is not configured")
+	s.Require().NotNil(s.StellarChain.Out.NetworkSpecificData.StellarNetwork, "Stellar network data is not configured")
 
-	nodeURL := s.StellarBlockchain.Nodes[0].ExternalHTTPUrl
-	s.Require().NotEmpty(nodeURL, "Stellar RPC URL is empty")
-
-	var t *testing.T = s.T()
-	t.Helper()
-
-	require.NotEmpty(t, nodeURL, "Stellar RPC URL is empty")
+	friendbotURL := s.StellarChain.Out.NetworkSpecificData.StellarNetwork.FriendbotURL
+	s.Require().NotEmpty(friendbotURL, "Stellar Friendbot URL is empty")
 
 	signer, err := keypair.Random()
-	require.NoError(t, err, "Failed to generate Stellar test account")
+	require.NoError(s.T(), err, "Failed to generate Stellar test account")
 
-	FundStellarKey(t, nodeURL, signer)
+	FundStellarKey(s.T(), friendbotURL, signer)
 
-	t.Logf("Funded Stellar test account %s", signer.Address())
+	s.T().Logf("Funded Stellar test account %s", signer.Address())
 	s.StellarSigner = stellarbindings.NewStellarKeypairSigner(signer)
 
-	s.chainSelector = mcmtypes.ChainSelector(
-		chainsel.STELLAR_LOCALNET.Selector,
-	)
+	s.chainSelector = mcmtypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector)
 	s.passphrase = chainsel.STELLAR_LOCALNET.Passphrase
 
 	s.deployer = stellardeployer.NewDeployer(
