@@ -5,12 +5,16 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"sort"
+	"testing"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 	chainsel "github.com/smartcontractkit/chain-selectors"
+	stellarbindings "github.com/smartcontractkit/chainlink-stellar/bindings"
+	"github.com/stellar/go-stellar-sdk/keypair"
 	"github.com/stellar/go-stellar-sdk/xdr"
+	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
 	mcmsbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/mcms"
@@ -50,6 +54,8 @@ type ExecutionTestSuite struct {
 	chainSelector mcmtypes.ChainSelector
 	passphrase    string
 
+	StellarSigner stellarbindings.Signer
+
 	proposalSignerKeys []*ecdsa.PrivateKey
 	signerAddresses    []common.Address
 	mcmsConfig         *mcmtypes.Config
@@ -60,14 +66,25 @@ type ExecutionTestSuite struct {
 func (s *ExecutionTestSuite) SetupSuite() {
 	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
 
-	s.Require().NotNil(
-		s.StellarClient,
-		"Stellar RPC client is not configured",
-	)
-	s.Require().NotNil(
-		s.StellarSigner,
-		"Stellar transaction signer is not configured",
-	)
+	s.Require().NotNil(s.StellarClient, "Stellar RPC client is not configured")
+	s.Require().NotNil(s.StellarBlockchain, "Stellar blockchain is not configured")
+	s.Require().NotEmpty(s.StellarBlockchain.Nodes, "Stellar blockchain has no nodes")
+
+	nodeURL := s.StellarBlockchain.Nodes[0].ExternalHTTPUrl
+	s.Require().NotEmpty(nodeURL, "Stellar RPC URL is empty")
+
+	var t *testing.T = s.T()
+	t.Helper()
+
+	require.NotEmpty(t, nodeURL, "Stellar RPC URL is empty")
+
+	signer, err := keypair.Random()
+	require.NoError(t, err, "Failed to generate Stellar test account")
+
+	FundStellarKey(t, nodeURL, signer)
+
+	t.Logf("Funded Stellar test account %s", signer.Address())
+	s.StellarSigner = stellarbindings.NewStellarKeypairSigner(signer)
 
 	s.chainSelector = mcmtypes.ChainSelector(
 		chainsel.STELLAR_LOCALNET.Selector,
@@ -77,7 +94,7 @@ func (s *ExecutionTestSuite) SetupSuite() {
 	s.deployer = stellardeployer.NewDeployer(
 		s.StellarClient,
 		s.passphrase,
-		s.StellarSigner,
+		s.StellarSigner.KeypairFull(),
 	)
 
 	s.initializeProposalSigners()
@@ -281,12 +298,10 @@ func (s *ExecutionTestSuite) executeAcceptOwnershipProposal(
 
 	proposal := mcms.Proposal{
 		BaseProposal: mcms.BaseProposal{
-			Version:     "v1",
-			Kind:        mcmtypes.KindProposal,
-			Description: "Accept Stellar MCMS ownership",
-			ValidUntil: uint32( //nolint:gosec
-				time.Now().Add(time.Hour).Unix(),
-			),
+			Version:              "v1",
+			Kind:                 mcmtypes.KindProposal,
+			Description:          "Accept Stellar MCMS ownership",
+			ValidUntil:           uint32(time.Now().Add(time.Hour).Unix()),
 			OverridePreviousRoot: false,
 			Signatures:           []mcmtypes.Signature{},
 			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{s.chainSelector: {
@@ -371,7 +386,7 @@ func (s *ExecutionTestSuite) executeAcceptOwnershipProposal(
 	)
 	s.Require().NoError(err)
 	s.Require().Equal(
-		common.Hash(tree.Root),
+		tree.Root,
 		actualRoot,
 		"MCMS root does not match the proposal root",
 	)
