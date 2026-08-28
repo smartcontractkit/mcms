@@ -111,7 +111,8 @@ func (d *Deployer) InitializeMCMS(
 	if in.InstanceLabel == "" {
 		return types.TransactionResult{}, fmt.Errorf("stellar MCMS instance label is empty")
 	}
-	if len(in.InstanceLabel) > 32 {
+	const maxInstanceLabelLength = 32
+	if len(in.InstanceLabel) > maxInstanceLabelLength {
 		return types.TransactionResult{}, fmt.Errorf(
 			"stellar MCMS instance label %q exceeds 32 bytes",
 			in.InstanceLabel,

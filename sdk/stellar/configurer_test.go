@@ -70,14 +70,15 @@ func TestConfigurer_SetConfig_InvalidInput(t *testing.T) {
 				return "not-a-stellar-contract"
 			},
 			config: func(t *testing.T) *types.Config {
-				cfg := validConfig(t)
-				return &cfg
+				t.Helper()
+				return new(validConfig(t))
 			},
 			wantErr: "invalid contract ID",
 		},
 		{
 			name: "nil config",
 			mcmAddr: func(t *testing.T) string {
+				t.Helper()
 				return testContractID(t, 51)
 			},
 			config: func(*testing.T) *types.Config {
@@ -88,6 +89,7 @@ func TestConfigurer_SetConfig_InvalidInput(t *testing.T) {
 		{
 			name: "invalid config",
 			mcmAddr: func(t *testing.T) string {
+				t.Helper()
 				return testContractID(t, 52)
 			},
 			config: func(*testing.T) *types.Config {
