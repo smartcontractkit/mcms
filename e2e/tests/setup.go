@@ -18,7 +18,6 @@ import (
 	"github.com/gagliardetto/solana-go/rpc/ws"
 	"github.com/joho/godotenv"
 	stellarrpc "github.com/stellar/go-stellar-sdk/clients/rpcclient"
-	"github.com/stellar/go-stellar-sdk/keypair"
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/ton"
 
@@ -27,7 +26,6 @@ import (
 
 	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
-	"github.com/smartcontractkit/mcms/e2e/utils/stellar"
 	suisdk "github.com/smartcontractkit/mcms/sdk/sui"
 
 	"github.com/smartcontractkit/chainlink-testing-framework/framework"
@@ -72,8 +70,6 @@ type TestSetup struct {
 	SolanaBlockchain  *blockchain.Output
 	AptosBlockchain   *blockchain.Output
 	StellarBlockchain *blockchain.Output
-
-	StellarSigner *keypair.Full
 
 	SuiClient        cslclient.BindingsClient
 	SuiBlockchain    *blockchain.Output
@@ -277,7 +273,6 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 		var (
 			stellarClient           *stellarrpc.Client
 			stellarBlockchainOutput *blockchain.Output
-			stellarSigner           *keypair.Full
 		)
 
 		if in.StellarChain != nil {
@@ -291,16 +286,7 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 
 			stellarClient = stellarrpc.NewClient(nodeURL, &http.Client{})
 
-			stellarSigner, err = keypair.Random()
-			require.NoError(t, err, "Failed to generate Stellar test account")
-
-			stellar.FundStellarKey(t, nodeURL, stellarSigner)
-
-			t.Logf(
-				"Initialized Stellar RPC client @ %s; funded account %s",
-				nodeURL,
-				stellarSigner.Address(),
-			)
+			t.Logf("Initialized Stellar RPC client @ %s", nodeURL)
 		}
 
 		sharedSetup = &TestSetup{
@@ -319,7 +305,6 @@ func InitializeSharedTestSetup(t *testing.T) *TestSetup {
 			CantonBlockchain:  cantonBlockchainOutput,
 			StellarBlockchain: stellarBlockchainOutput,
 			StellarClient:     stellarClient,
-			StellarSigner:     stellarSigner,
 			Config:            *in,
 		}
 	})
