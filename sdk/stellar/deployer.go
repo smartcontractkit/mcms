@@ -29,7 +29,7 @@ type ContractDeployer interface {
 }
 
 // Deployer provides the low-level Stellar deployment and initialization
-// operations for MCMS and Timelock contracts.
+// operations for MCMS contracts.
 //
 // Deployment orchestration such as salt derivation, collision handling,
 // adoption, datastore updates, qualifiers, and versioning belongs to the
@@ -89,42 +89,41 @@ func (d *Deployer) DeployMCMS(
 
 // InitializeMCMS initializes a newly deployed Stellar MCMS contract.
 //
-// It owns the Stellar-specific conversion from the generic MCMS signer
-// configuration into the generated Soroban binding types.
+// It owns validation of the MCMS initialization inputs and the Stellar-specific
+// conversion from the generic MCMS signer configuration into the generated
+// Soroban binding types.
 func (d *Deployer) InitializeMCMS(
 	ctx context.Context,
 	in InitializeMCMSInput,
 ) (types.TransactionResult, error) {
 	if d == nil || d.deployer == nil {
-		return types.TransactionResult{},
-			fmt.Errorf("stellar MCMS deployer is nil")
+		return types.TransactionResult{}, fmt.Errorf("stellar MCMS deployer is nil")
 	}
 	if in.ContractID == "" {
-		return types.TransactionResult{},
-			fmt.Errorf("stellar MCMS contract ID is empty")
+		return types.TransactionResult{}, fmt.Errorf("stellar MCMS contract ID is empty")
 	}
 	if in.Owner == "" {
-		return types.TransactionResult{},
-			fmt.Errorf("stellar MCMS owner is empty")
+		return types.TransactionResult{}, fmt.Errorf("stellar MCMS owner is empty")
 	}
 	if in.Config == nil {
-		return types.TransactionResult{},
-			fmt.Errorf("stellar MCMS config is nil")
+		return types.TransactionResult{}, fmt.Errorf("stellar MCMS config is nil")
 	}
 	if in.InstanceLabel == "" {
-		return types.TransactionResult{},
-			fmt.Errorf("stellar MCMS instance label is empty")
+		return types.TransactionResult{}, fmt.Errorf("stellar MCMS instance label is empty")
 	}
-
+	if len(in.InstanceLabel) > 32 {
+		return types.TransactionResult{}, fmt.Errorf(
+			"stellar MCMS instance label %q exceeds 32 bytes",
+			in.InstanceLabel,
+		)
+	}
 	if err := in.Config.Validate(); err != nil {
-		return types.TransactionResult{},
-			fmt.Errorf("validate Stellar MCMS config: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("validate Stellar MCMS config: %w", err)
 	}
 
 	networkID, err := chainNetworkID(in.ChainSelector)
 	if err != nil {
-		return types.TransactionResult{},
-			fmt.Errorf("get Stellar chain network ID: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("get Stellar chain network ID: %w", err)
 	}
 
 	signerAddresses,
@@ -133,8 +132,7 @@ func (d *Deployer) InitializeMCMS(
 		groupParents,
 		err := ConfigToSetConfigInputs(in.Config)
 	if err != nil {
-		return types.TransactionResult{},
-			fmt.Errorf("convert Stellar MCMS config: %w", err)
+		return types.TransactionResult{}, fmt.Errorf("convert Stellar MCMS config: %w", err)
 	}
 
 	client := mcmsbindings.NewMcmsClient(
@@ -142,22 +140,21 @@ func (d *Deployer) InitializeMCMS(
 		in.ContractID,
 	)
 
-	if err := client.Initialize(
+	if err = client.Initialize(
 		ctx,
 		in.Owner,
-		[32]byte(networkID),
+		networkID,
 		signerAddresses,
 		signerGroups,
 		groupQuorums,
 		groupParents,
 		in.InstanceLabel,
 	); err != nil {
-		return types.TransactionResult{},
-			fmt.Errorf(
-				"initialize Stellar MCMS %s: %w",
-				in.ContractID,
-				err,
-			)
+		return types.TransactionResult{}, fmt.Errorf(
+			"initialize Stellar MCMS %s: %w",
+			in.ContractID,
+			err,
+		)
 	}
 
 	return types.NewTransactionResult(

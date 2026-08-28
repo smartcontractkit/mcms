@@ -4,11 +4,14 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/smartcontractkit/mcms/sdk"
-	"github.com/smartcontractkit/mcms/types"
+	chainselectors "github.com/smartcontractkit/chain-selectors"
+	"github.com/stellar/go-stellar-sdk/strkey"
 
 	"github.com/smartcontractkit/chainlink-stellar/bindings"
 	mcmsbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/mcms"
+
+	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/types"
 )
 
 var _ sdk.Configurer = (*Configurer)(nil)
@@ -33,6 +36,16 @@ func (c *Configurer) SetConfig(
 	if c == nil || c.invoker == nil {
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: invoker is nil")
 	}
+	if !strkey.IsValidContractAddress(mcmAddr) {
+		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: invalid contract ID %q", mcmAddr)
+	}
+	if cfg == nil {
+		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: config is nil")
+	}
+	if err := cfg.Validate(); err != nil {
+		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: invalid config: %w", err)
+	}
+
 	signerAddresses, signerGroups, groupQuorums, groupParents, err := stellarSetConfigInputs(cfg)
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("extract set_config inputs: %w", err)
@@ -43,7 +56,7 @@ func (c *Configurer) SetConfig(
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: %w", err)
 	}
 
-	return types.NewTransactionResult("", nil, "stellar"), nil
+	return types.NewTransactionResult("", nil, chainselectors.FamilyStellar), nil
 }
 
 // SetConfigInputs submits set_config using already-converted current-binding
@@ -61,12 +74,16 @@ func (c *Configurer) SetConfigInputs(
 	if c == nil || c.invoker == nil {
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: invoker is nil")
 	}
+	if !strkey.IsValidContractAddress(mcmAddr) {
+		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: invalid contract ID %q", mcmAddr)
+	}
+
 	client := mcmsbindings.NewMcmsClient(c.invoker, mcmAddr)
 	if err := client.SetConfig(ctx, signerAddresses, signerGroups, groupQuorums, groupParents, clearRoot); err != nil {
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: %w", err)
 	}
 
-	return types.NewTransactionResult("", nil, "stellar"), nil
+	return types.NewTransactionResult("", nil, chainselectors.FamilyStellar), nil
 }
 
 func stellarSetConfigInputs(cfg *types.Config) (
@@ -79,6 +96,7 @@ func stellarSetConfigInputs(cfg *types.Config) (
 	if cfg == nil {
 		return mcmsbindings.SignerAddresses{}, mcmsbindings.SignerGroups{}, [32]byte{}, [32]byte{}, nil
 	}
+
 	groupQuorums, groupParents, signerAddresses, signerGroups, err := sdk.ExtractSetConfigInputs(cfg)
 	if err != nil {
 		return mcmsbindings.SignerAddresses{}, mcmsbindings.SignerGroups{}, [32]byte{}, [32]byte{}, err
@@ -125,10 +143,15 @@ func ConfigToSetConfigInputs(cfg *types.Config) (
 // The transaction must be authorized by the current owner. The new owner must
 // subsequently call AcceptOwnership from its own account.
 func (c *Configurer) TransferOwnership(
-	ctx context.Context, mcmAddr string, newOwner string,
+	ctx context.Context,
+	mcmAddr string,
+	newOwner string,
 ) (types.TransactionResult, error) {
 	if c == nil || c.invoker == nil {
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms transfer_ownership: invoker is nil")
+	}
+	if !strkey.IsValidContractAddress(mcmAddr) {
+		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: invalid contract ID %q", mcmAddr)
 	}
 	if newOwner == "" {
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms transfer_ownership: new owner is empty")
@@ -139,16 +162,20 @@ func (c *Configurer) TransferOwnership(
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms transfer_ownership: %w", err)
 	}
 
-	return types.NewTransactionResult("", nil, "stellar"), nil
+	return types.NewTransactionResult("", nil, chainselectors.FamilyStellar), nil
 }
 
 // AcceptOwnership completes a pending MCMS ownership transfer. The invoker
 // must submit this transaction as the pending owner.
 func (c *Configurer) AcceptOwnership(
-	ctx context.Context, mcmAddr string,
+	ctx context.Context,
+	mcmAddr string,
 ) (types.TransactionResult, error) {
 	if c == nil || c.invoker == nil {
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms accept_ownership: invoker is nil")
+	}
+	if !strkey.IsValidContractAddress(mcmAddr) {
+		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: invalid contract ID %q", mcmAddr)
 	}
 
 	client := mcmsbindings.NewMcmsClient(c.invoker, mcmAddr)
@@ -156,21 +183,24 @@ func (c *Configurer) AcceptOwnership(
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms accept_ownership: %w", err)
 	}
 
-	return types.NewTransactionResult("", nil, "stellar"), nil
+	return types.NewTransactionResult("", nil, chainselectors.FamilyStellar), nil
 }
 
 // CancelOwnershipTransfer cancels the currently pending ownership transfer.
 func (c *Configurer) CancelOwnershipTransfer(
-	ctx context.Context, mcmAddr string,
+	ctx context.Context,
+	mcmAddr string,
 ) (types.TransactionResult, error) {
 	if c == nil || c.invoker == nil {
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms cancel_ownership_transfer: invoker is nil")
 	}
-
+	if !strkey.IsValidContractAddress(mcmAddr) {
+		return types.TransactionResult{}, fmt.Errorf("stellar mcms set_config: invalid contract ID %q", mcmAddr)
+	}
 	client := mcmsbindings.NewMcmsClient(c.invoker, mcmAddr)
 	if err := client.CancelOwnershipTransfer(ctx); err != nil {
 		return types.TransactionResult{}, fmt.Errorf("stellar mcms cancel_ownership_transfer: %w", err)
 	}
 
-	return types.NewTransactionResult("", nil, "stellar"), nil
+	return types.NewTransactionResult("", nil, chainselectors.FamilyStellar), nil
 }
