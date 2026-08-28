@@ -11,7 +11,6 @@ import (
 	"github.com/stellar/go-stellar-sdk/strkey"
 	"github.com/stellar/go-stellar-sdk/txnbuild"
 	"github.com/stellar/go-stellar-sdk/xdr"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -22,27 +21,41 @@ import (
 
 const testNetworkPassphrase = "Test SDF Network ; September 2015"
 
-type testSigner struct {
-	kp *keypair.Full
-}
-
-func (s *testSigner) Address() string { return s.kp.Address() }
-func (s *testSigner) SignDecorated(data []byte) (xdr.DecoratedSignature, error) {
-	return s.kp.SignDecorated(data)
-}
-
-func newTestSigner() *testSigner {
-	kp, err := keypair.Random()
-	if err != nil {
-		panic("failed to generate test signer: " + err.Error())
-	}
-
-	return &testSigner{kp: kp}
-}
-
-func newTestInvoker(t *testing.T, rpc *mocks.RpcClient) (*rpcInvoker, *testSigner) {
+func newTestSigner(t *testing.T) *mocks.Signer {
 	t.Helper()
-	signer := newTestSigner()
+
+	kp, err := keypair.Random()
+	require.NoError(t, err)
+
+	signer := mocks.NewSigner(t)
+
+	signer.On("Address").
+		Return(kp.Address()).
+		Maybe()
+
+	signer.On("Sign", mock.Anything).
+		Return(func(message []byte) ([]byte, error) {
+			return kp.Sign(message)
+		}).
+		Maybe()
+
+	signer.On("SignDecorated", mock.Anything).
+		Return(func(message []byte) (xdr.DecoratedSignature, error) {
+			return kp.SignDecorated(message)
+		}).
+		Maybe()
+
+	signer.On("KeypairFull").
+		Return(kp).
+		Maybe()
+
+	return signer
+}
+
+func newTestInvoker(t *testing.T, rpc *mocks.RpcClient) (*rpcInvoker, *mocks.Signer) {
+	t.Helper()
+
+	signer := newTestSigner(t)
 	invoker := newTestInvokerWithSigner(rpc, signer, testNetworkPassphrase)
 
 	return invoker, signer
@@ -53,15 +66,21 @@ func newTestInvoker(t *testing.T, rpc *mocks.RpcClient) (*rpcInvoker, *testSigne
 func newTestInvokerBare(t *testing.T) *rpcInvoker {
 	t.Helper()
 
-	return newTestInvokerWithSigner(&mocks.RpcClient{}, newTestSigner(), testNetworkPassphrase)
+	return newTestInvokerWithSigner(
+		mocks.NewRpcClient(t),
+		newTestSigner(t),
+		testNetworkPassphrase,
+	)
 }
 
-func newTestInvokerWithSigner(rpc *mocks.RpcClient, signer *testSigner, passphrase string) *rpcInvoker {
-	var s bindings.Signer = signer
-
+func newTestInvokerWithSigner(
+	rpc *mocks.RpcClient,
+	signer bindings.Signer,
+	passphrase string,
+) *rpcInvoker {
 	return &rpcInvoker{
 		client:            rpc,
-		signer:            s,
+		signer:            signer,
 		networkPassphrase: passphrase,
 	}
 }
@@ -70,7 +89,7 @@ func newTestInvokerWithSigner(rpc *mocks.RpcClient, signer *testSigner, passphra
 type submitTestFixtures struct {
 	rpc     *mocks.RpcClient
 	invoker *rpcInvoker
-	signer  *testSigner
+	signer  *mocks.Signer
 	op      *txnbuild.InvokeHostFunction
 }
 
@@ -80,7 +99,7 @@ type submitTestFixtures struct {
 // expectations so that error-path tests can override the simulation result.
 func setupSubmitTest(t *testing.T) submitTestFixtures {
 	t.Helper()
-	rpc := new(mocks.RpcClient)
+	rpc := mocks.NewRpcClient(t)
 	invoker, signer := newTestInvoker(t, rpc)
 
 	contractID := validContractStrkey(t)
@@ -91,7 +110,8 @@ func setupSubmitTest(t *testing.T) submitTestFixtures {
 	rpc.On("GetLedgerEntries", mock.Anything, mock.Anything).
 		Return(protocolrpc.GetLedgerEntriesResponse{
 			Entries: []protocolrpc.LedgerEntryResult{{DataXDR: accountB64}},
-		}, nil)
+		}, nil).
+		Maybe()
 
 	return submitTestFixtures{rpc: rpc, invoker: invoker, signer: signer, op: op}
 }
@@ -111,7 +131,7 @@ func marshalB64(t *testing.T, v any) string {
 	return b64
 }
 
-func ledgerEntryB64(t *testing.T, signer *testSigner, seqNum uint32) string {
+func ledgerEntryB64(t *testing.T, signer bindings.Signer, seqNum uint32) string {
 	t.Helper()
 	acctID := xdr.MustAddress(signer.Address())
 	entry := xdr.LedgerEntryData{
@@ -126,7 +146,7 @@ func ledgerEntryB64(t *testing.T, signer *testSigner, seqNum uint32) string {
 	return marshalB64(t, &entry)
 }
 
-func accountKeyB64(t *testing.T, signer *testSigner) string {
+func accountKeyB64(t *testing.T, signer bindings.Signer) string {
 	t.Helper()
 	acctID := xdr.MustAddress(signer.Address())
 	key := xdr.LedgerKey{
@@ -199,26 +219,26 @@ func buildSuccessMeta(t *testing.T, returnValue *xdr.ScVal) string {
 
 func TestNewInvoker_RejectsNilClient(t *testing.T) {
 	t.Parallel()
-	_, err := NewInvokerWithNetworkPassphrase(nil, newTestSigner(), testNetworkPassphrase)
+	_, err := NewInvokerWithNetworkPassphrase(nil, newTestSigner(t), testNetworkPassphrase)
 	require.ErrorContains(t, err, "RPC client is nil")
 }
 
 func TestNewInvoker_RejectsNilSigner(t *testing.T) {
 	t.Parallel()
-	invoker := newTestInvokerWithSigner(&mocks.RpcClient{}, nil, testNetworkPassphrase)
-	assert.Nil(t, invoker.signer)
+	invoker := newTestInvokerWithSigner(mocks.NewRpcClient(t), nil, testNetworkPassphrase)
+	require.Nil(t, invoker.signer)
 }
 
 func TestNewInvoker_RejectsEmptyPassphrase(t *testing.T) {
 	t.Parallel()
-	invoker := newTestInvokerWithSigner(&mocks.RpcClient{}, newTestSigner(), "")
-	assert.NotNil(t, invoker)
-	assert.Empty(t, invoker.networkPassphrase)
+	invoker := newTestInvokerWithSigner(mocks.NewRpcClient(t), newTestSigner(t), "")
+	require.NotNil(t, invoker)
+	require.Empty(t, invoker.networkPassphrase)
 }
 
 func TestSourceAccount_EmptyLedger(t *testing.T) {
 	t.Parallel()
-	rpc := new(mocks.RpcClient)
+	rpc := mocks.NewRpcClient(t)
 	invoker, signer := newTestInvoker(t, rpc)
 
 	rpc.On("GetLedgerEntries", mock.Anything,
@@ -229,13 +249,13 @@ func TestSourceAccount_EmptyLedger(t *testing.T) {
 
 	acct, err := invoker.sourceAccount(t.Context())
 	require.NoError(t, err)
-	assert.Equal(t, signer.Address(), acct.AccountID)
-	assert.Equal(t, int64(0), acct.Sequence)
+	require.Equal(t, signer.Address(), acct.AccountID)
+	require.Equal(t, int64(0), acct.Sequence)
 }
 
 func TestSourceAccount_WithExistingAccount(t *testing.T) {
 	t.Parallel()
-	rpc := new(mocks.RpcClient)
+	rpc := mocks.NewRpcClient(t)
 	invoker, signer := newTestInvoker(t, rpc)
 
 	rpc.On("GetLedgerEntries", mock.Anything,
@@ -250,13 +270,13 @@ func TestSourceAccount_WithExistingAccount(t *testing.T) {
 
 	acct, err := invoker.sourceAccount(t.Context())
 	require.NoError(t, err)
-	assert.Equal(t, signer.Address(), acct.AccountID)
-	assert.Equal(t, int64(42), acct.Sequence)
+	require.Equal(t, signer.Address(), acct.AccountID)
+	require.Equal(t, int64(42), acct.Sequence)
 }
 
 func TestSourceAccount_RPCError(t *testing.T) {
 	t.Parallel()
-	rpc := new(mocks.RpcClient)
+	rpc := mocks.NewRpcClient(t)
 	invoker, signer := newTestInvoker(t, rpc)
 
 	rpc.On("GetLedgerEntries", mock.Anything,
@@ -272,16 +292,16 @@ func TestSourceAccount_RPCError(t *testing.T) {
 func TestInvokeOperation_BuildsCorrectInvoke(t *testing.T) {
 	t.Parallel()
 	contractID := validContractStrkey(t)
-	signer := newTestSigner()
-	invoker := newTestInvokerWithSigner(&mocks.RpcClient{}, signer, testNetworkPassphrase)
+	signer := newTestSigner(t)
+	invoker := newTestInvokerWithSigner(mocks.NewRpcClient(t), signer, testNetworkPassphrase)
 
 	op, err := invoker.invokeOperation(contractID, "test_fn", nil)
 	require.NoError(t, err)
 
-	assert.Equal(t, signer.Address(), op.SourceAccount)
-	assert.Equal(t, xdr.HostFunctionTypeHostFunctionTypeInvokeContract, op.HostFunction.Type)
-	assert.Equal(t, xdr.ScSymbol("test_fn"), op.HostFunction.InvokeContract.FunctionName)
-	assert.Empty(t, op.HostFunction.InvokeContract.Args)
+	require.Equal(t, signer.Address(), op.SourceAccount)
+	require.Equal(t, xdr.HostFunctionTypeHostFunctionTypeInvokeContract, op.HostFunction.Type)
+	require.Equal(t, xdr.ScSymbol("test_fn"), op.HostFunction.InvokeContract.FunctionName)
+	require.Empty(t, op.HostFunction.InvokeContract.Args)
 }
 
 func TestInvokeOperation_BadContractID(t *testing.T) {
@@ -303,12 +323,12 @@ func TestNewTransaction_ProducesValidTransaction(t *testing.T) {
 	tx, err := invoker.newTransaction(new(txnbuild.NewSimpleAccount(invoker.signer.Address(), 1)), op, txnbuild.MinBaseFee)
 	require.NoError(t, err)
 
-	assert.NotNil(t, tx)
-	assert.Equal(t, invoker.signer.Address(), tx.SourceAccount().AccountID)
+	require.NotNil(t, tx)
+	require.Equal(t, invoker.signer.Address(), tx.SourceAccount().AccountID)
 
 	xdrStr, err := tx.Base64()
 	require.NoError(t, err)
-	assert.NotEmpty(t, xdrStr)
+	require.NotEmpty(t, xdrStr)
 }
 
 func TestReturnValue_VoidReturn(t *testing.T) {
@@ -343,8 +363,8 @@ func TestReturnValue_V3WithValue(t *testing.T) {
 	rv, err := returnValue(meta)
 	require.NoError(t, err)
 	require.NotNil(t, rv)
-	assert.Equal(t, xdr.ScValTypeScvU32, rv.Type)
-	assert.EqualValues(t, 999, *rv.U32)
+	require.Equal(t, xdr.ScValTypeScvU32, rv.Type)
+	require.EqualValues(t, 999, *rv.U32)
 }
 
 func TestReturnValue_V4WithValue(t *testing.T) {
@@ -359,8 +379,8 @@ func TestReturnValue_V4WithValue(t *testing.T) {
 	rv, err := returnValue(meta)
 	require.NoError(t, err)
 	require.NotNil(t, rv)
-	assert.Equal(t, xdr.ScValTypeScvBool, rv.Type)
-	assert.True(t, *rv.B)
+	require.Equal(t, xdr.ScValTypeScvBool, rv.Type)
+	require.True(t, *rv.B)
 }
 
 func TestReturnValue_UnsupportedVersion(t *testing.T) {
@@ -372,7 +392,7 @@ func TestReturnValue_UnsupportedVersion(t *testing.T) {
 
 func TestSimulateContract_ReturnsValue(t *testing.T) {
 	t.Parallel()
-	rpc := new(mocks.RpcClient)
+	rpc := mocks.NewRpcClient(t)
 	invoker, signer := newTestInvoker(t, rpc)
 
 	contractID := validContractStrkey(t)
@@ -399,13 +419,13 @@ func TestSimulateContract_ReturnsValue(t *testing.T) {
 	rv, err := invoker.SimulateContract(t.Context(), contractID, "read_count", nil)
 	require.NoError(t, err)
 	require.NotNil(t, rv)
-	assert.Equal(t, xdr.ScValTypeScvU32, rv.Type)
-	assert.EqualValues(t, 1, *rv.U32)
+	require.Equal(t, xdr.ScValTypeScvU32, rv.Type)
+	require.EqualValues(t, 1, *rv.U32)
 }
 
 func TestSimulateContract_SimulationError(t *testing.T) {
 	t.Parallel()
-	rpc := new(mocks.RpcClient)
+	rpc := mocks.NewRpcClient(t)
 	invoker, signer := newTestInvoker(t, rpc)
 
 	accountB64 := ledgerEntryB64(t, signer, 5)
@@ -425,7 +445,7 @@ func TestSimulateContract_SimulationError(t *testing.T) {
 
 func TestSimulateContract_NoReturnValue(t *testing.T) {
 	t.Parallel()
-	rpc := new(mocks.RpcClient)
+	rpc := mocks.NewRpcClient(t)
 	invoker, signer := newTestInvoker(t, rpc)
 
 	accountB64 := ledgerEntryB64(t, signer, 5)
@@ -449,29 +469,9 @@ func TestSubmit_Success(t *testing.T) {
 	t.Parallel()
 	f := setupSubmitTest(t)
 
-	keyB64 := accountKeyB64(t, f.signer)
-	accountB64 := ledgerEntryB64(t, f.signer, 10)
-
-	// Override the loose GetLedgerEntries mock with exact .Once() matchers.
-	f.rpc.On("GetLedgerEntries", mock.Anything,
-		mock.MatchedBy(func(req protocolrpc.GetLedgerEntriesRequest) bool {
-			return len(req.Keys) == 1 && req.Keys[0] == keyB64
-		})).
-		Return(protocolrpc.GetLedgerEntriesResponse{
-			Entries: []protocolrpc.LedgerEntryResult{{DataXDR: accountB64}},
-		}, nil).Once()
-
 	simResult := buildSimResponse(t, f.op)
 	f.rpc.On("SimulateTransaction", mock.Anything, mock.Anything).
 		Return(simResult, nil).Once()
-
-	f.rpc.On("GetLedgerEntries", mock.Anything,
-		mock.MatchedBy(func(req protocolrpc.GetLedgerEntriesRequest) bool {
-			return len(req.Keys) == 1 && req.Keys[0] == keyB64
-		})).
-		Return(protocolrpc.GetLedgerEntriesResponse{
-			Entries: []protocolrpc.LedgerEntryResult{{DataXDR: accountB64}},
-		}, nil).Once()
 
 	f.rpc.On("SendTransaction", mock.Anything, mock.Anything).
 		Return(protocolrpc.SendTransactionResponse{
@@ -494,7 +494,7 @@ func TestSubmit_Success(t *testing.T) {
 	meta, err := f.invoker.submit(t.Context(), f.op)
 	require.NoError(t, err)
 	require.NotNil(t, meta)
-	assert.Equal(t, int32(3), meta.V)
+	require.Equal(t, int32(3), meta.V)
 }
 
 func TestSubmit_SimulationError(t *testing.T) {
@@ -579,13 +579,13 @@ func TestInvokeContract_ReturnsValue(t *testing.T) {
 	result, err := f.invoker.InvokeContract(t.Context(), validContractStrkey(t), "get_count", nil)
 	require.NoError(t, err)
 	require.NotNil(t, result)
-	assert.Equal(t, xdr.ScValTypeScvU32, result.Type)
-	assert.EqualValues(t, 7, *result.U32)
+	require.Equal(t, xdr.ScValTypeScvU32, result.Type)
+	require.EqualValues(t, 7, *result.U32)
 }
 
 func TestGetEvents_ReturnsFilteredEvents(t *testing.T) {
 	t.Parallel()
-	rpc := new(mocks.RpcClient)
+	rpc := mocks.NewRpcClient(t)
 	invoker, _ := newTestInvoker(t, rpc)
 
 	expected := []protocolrpc.EventInfo{{
@@ -597,12 +597,12 @@ func TestGetEvents_ReturnsFilteredEvents(t *testing.T) {
 
 	events, err := invoker.GetEvents(t.Context(), "contract", 0, []string{"event_topic"})
 	require.NoError(t, err)
-	assert.Equal(t, expected, events)
+	require.Equal(t, expected, events)
 }
 
 func TestGetEvents_RPCError(t *testing.T) {
 	t.Parallel()
-	rpc := new(mocks.RpcClient)
+	rpc := mocks.NewRpcClient(t)
 	invoker, _ := newTestInvoker(t, rpc)
 
 	rpc.On("GetEvents", mock.Anything, mock.Anything).
@@ -626,9 +626,9 @@ func TestInvokeOperation_StrkeyDecodeRoundtrip(t *testing.T) {
 	require.NoError(t, err)
 
 	args := op.HostFunction.InvokeContract
-	assert.Equal(t, xdr.ScSymbol("fn"), args.FunctionName)
+	require.Equal(t, xdr.ScSymbol("fn"), args.FunctionName)
 	addrBytes := args.ContractAddress.MustContractId()
-	assert.Equal(t, xdr.ContractId(contractID), addrBytes)
+	require.Equal(t, xdr.ContractId(contractID), addrBytes)
 }
 
 func TestSubmit_RejectsRestorePreamble(t *testing.T) {

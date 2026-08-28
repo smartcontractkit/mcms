@@ -5,11 +5,10 @@ import (
 	sol "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	stellarbindings "github.com/smartcontractkit/chainlink-stellar/bindings"
+	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 	stellarrpc "github.com/stellar/go-stellar-sdk/clients/rpcclient"
 	"github.com/xssnick/tonutils-go/ton"
 	tonwallet "github.com/xssnick/tonutils-go/ton/wallet"
-
-	cslclient "github.com/smartcontractkit/chainlink-sui/relayer/client"
 
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	evmsdk "github.com/smartcontractkit/mcms/sdk/evm"
