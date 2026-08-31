@@ -15,10 +15,6 @@ import (
 
 // ContractDeployer is the minimal Stellar deployment surface required by the
 // MCMS SDK.
-//
-// *chainlink-stellar/deployment.Deployer satisfies this interface, allowing
-// chainlink/deployment to construct an SDK Deployer without coupling the MCMS
-// SDK to the concrete chainlink-stellar deployment package.
 type ContractDeployer interface {
 	bindings.Invoker
 
