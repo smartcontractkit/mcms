@@ -23,6 +23,7 @@ func TestTimelockInspector_IsInitialized_RoleMembership(t *testing.T) {
 		t.Run(activeRole, func(t *testing.T) {
 			t.Parallel()
 
+			//nolint:gosec // G115 conversion safe
 			address := testContractID(t, byte(100+activeIndex))
 			invoker := stellarmocks.NewInvoker(t)
 

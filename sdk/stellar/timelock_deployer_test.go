@@ -324,6 +324,7 @@ func TestTimelockDeployer_InitializeTimelock_InvalidInput(t *testing.T) {
 		{
 			name: "duplicate proposer",
 			mutate: func(t *testing.T, in *stellar.InitializeTimelockInput) {
+				t.Helper()
 				address := testContractID(t, 90)
 				in.Proposers = []string{address, address}
 			},
@@ -332,6 +333,7 @@ func TestTimelockDeployer_InitializeTimelock_InvalidInput(t *testing.T) {
 		{
 			name: "duplicate canceller",
 			mutate: func(t *testing.T, in *stellar.InitializeTimelockInput) {
+				t.Helper()
 				address := testContractID(t, 91)
 				in.Cancellers = []string{address, address}
 			},
@@ -340,6 +342,7 @@ func TestTimelockDeployer_InitializeTimelock_InvalidInput(t *testing.T) {
 		{
 			name: "duplicate bypasser",
 			mutate: func(t *testing.T, in *stellar.InitializeTimelockInput) {
+				t.Helper()
 				address := testContractID(t, 92)
 				in.Bypassers = []string{address, address}
 			},
