@@ -243,6 +243,7 @@ func TestConfigurer_TransferOwnership_InvalidInput(t *testing.T) {
 				return "not-a-stellar-contract"
 			},
 			newOwner: func(t *testing.T) string {
+				t.Helper()
 				return testContractID(t, 70)
 			},
 			wantErr: "invalid contract ID",
@@ -250,6 +251,7 @@ func TestConfigurer_TransferOwnership_InvalidInput(t *testing.T) {
 		{
 			name: "empty new owner",
 			mcmAddr: func(t *testing.T) string {
+				t.Helper()
 				return testContractID(t, 71)
 			},
 			newOwner: func(*testing.T) string {

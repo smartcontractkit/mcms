@@ -1,119 +1,146 @@
-package stellar
+package stellar_test
 
 import (
+	"errors"
 	"testing"
 
-	"github.com/smartcontractkit/chainlink-stellar/bindings/scval"
+	"github.com/stellar/go-stellar-sdk/xdr"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/smartcontractkit/mcms/sdk/stellar/mocks"
+	"github.com/smartcontractkit/chainlink-stellar/bindings/scval"
+
+	"github.com/smartcontractkit/mcms/sdk/stellar"
+	stellarmocks "github.com/smartcontractkit/mcms/sdk/stellar/mocks"
 )
 
-func TestTimelockInspector_ReadOperations(t *testing.T) {
+func TestTimelockInspector_IsInitialized_RoleMembership(t *testing.T) {
 	t.Parallel()
-	ctx := t.Context()
-	const timelockAddr = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
-	const member = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
 
-	invoker := mocks.NewInvoker(t)
+	roles := []string{"ADMIN", "PROPOSER", "CANCELLER", "BYPASSER"}
 
-	invoker.EXPECT().SimulateContract(
-		mock.Anything,
-		timelockAddr,
-		"get_role_member_count",
-		mock.Anything,
-	).Return(new(scval.Uint32ToScVal(1)), nil).Times(4)
+	for activeIndex, activeRole := range roles {
+		t.Run(activeRole, func(t *testing.T) {
+			t.Parallel()
 
-	// Return a fresh address ScVal for every invocation.
-	invoker.EXPECT().SimulateContract(
-		mock.Anything,
-		timelockAddr,
-		"get_role_member",
-		mock.Anything,
-	).
-		Return(new(scval.AddressToScVal(member)), nil).
-		Times(4)
+			address := testContractID(t, byte(100+activeIndex))
+			invoker := stellarmocks.NewInvoker(t)
 
-	// Return a fresh bool for each operation query.
-	for _, fn := range []string{
-		"is_operation",
-		"is_operation_pending",
-		"is_operation_ready",
-		"is_operation_done",
-	} {
-		invoker.EXPECT().SimulateContract(
-			mock.Anything,
-			timelockAddr,
-			fn,
-			mock.Anything,
-		).
-			Return(new(scval.BoolToScVal(true)), nil)
+			for index := 0; index <= activeIndex; index++ {
+				count := uint32(0)
+				if index == activeIndex {
+					count = 1
+				}
 
-		invoker.EXPECT().SimulateContract(
-			mock.Anything,
-			timelockAddr,
-			"get_min_delay",
-			mock.Anything,
-		).
-			Return(new(scval.Uint64ToScVal(42)), nil)
+				invoker.On("SimulateContract", mock.Anything, address, "get_role_member_count", []xdr.ScVal{scval.SymbolToScVal(roles[index])}).Return(new(scval.Uint32ToScVal(count)), nil).Once()
+			}
+
+			inspector := stellar.NewTimelockInspectorFromInvoker(invoker)
+
+			initialized, err := inspector.IsInitialized(t.Context(), address)
+			require.NoError(t, err)
+			require.True(t, initialized)
+
+			invoker.AssertNotCalled(t, "SimulateContract", mock.Anything, address, "get_min_delay", mock.Anything)
+		})
 	}
-	inspector := NewTimelockInspectorFromInvoker(invoker)
+}
 
-	proposers, err := inspector.GetProposers(ctx, timelockAddr)
+func TestTimelockInspector_IsInitialized_MinDelay(t *testing.T) {
+	t.Parallel()
+
+	address := testContractID(t, 110)
+	invoker := stellarmocks.NewInvoker(t)
+
+	for _, role := range []string{"ADMIN", "PROPOSER", "CANCELLER", "BYPASSER"} {
+		invoker.On("SimulateContract", mock.Anything, address, "get_role_member_count", []xdr.ScVal{scval.SymbolToScVal(role)}).Return(new(scval.Uint32ToScVal(0)), nil).Once()
+	}
+
+	invoker.On("SimulateContract", mock.Anything, address, "get_min_delay", []xdr.ScVal{}).Return(new(scval.Uint64ToScVal(1)), nil).Once()
+
+	inspector := stellar.NewTimelockInspectorFromInvoker(invoker)
+
+	initialized, err := inspector.IsInitialized(t.Context(), address)
 	require.NoError(t, err)
-	require.Equal(t, []string{member}, proposers)
+	require.True(t, initialized)
+}
 
-	executors, err := inspector.GetExecutors(ctx, timelockAddr)
+func TestTimelockInspector_IsInitialized_EmptyState(t *testing.T) {
+	t.Parallel()
+
+	address := testContractID(t, 111)
+	invoker := stellarmocks.NewInvoker(t)
+
+	for _, role := range []string{"ADMIN", "PROPOSER", "CANCELLER", "BYPASSER"} {
+		invoker.On("SimulateContract", mock.Anything, address, "get_role_member_count", []xdr.ScVal{scval.SymbolToScVal(role)}).Return(new(scval.Uint32ToScVal(0)), nil).Once()
+	}
+
+	invoker.On("SimulateContract", mock.Anything, address, "get_min_delay", []xdr.ScVal{}).Return(new(scval.Uint64ToScVal(0)), nil).Once()
+
+	inspector := stellar.NewTimelockInspectorFromInvoker(invoker)
+
+	initialized, err := inspector.IsInitialized(t.Context(), address)
 	require.NoError(t, err)
-	require.Equal(t, []string{member}, executors)
+	require.False(t, initialized)
+}
 
-	bypassers, err := inspector.GetBypassers(ctx, timelockAddr)
-	require.NoError(t, err)
-	require.Equal(t, []string{member}, bypassers)
+func TestTimelockInspector_IsInitialized_RoleReadError(t *testing.T) {
+	t.Parallel()
 
-	cancellers, err := inspector.GetCancellers(ctx, timelockAddr)
-	require.NoError(t, err)
-	require.Equal(t, []string{member}, cancellers)
+	address := testContractID(t, 112)
+	expectedErr := errors.New("role read failed")
+	invoker := stellarmocks.NewInvoker(t)
 
-	var opID [32]byte
+	invoker.On("SimulateContract", mock.Anything, address, "get_role_member_count", []xdr.ScVal{scval.SymbolToScVal("ADMIN")}).Return((*xdr.ScVal)(nil), expectedErr).Once()
 
-	isOp, err := inspector.IsOperation(
-		ctx,
-		timelockAddr,
-		opID,
-	)
-	require.NoError(t, err)
-	require.True(t, isOp)
+	inspector := stellar.NewTimelockInspectorFromInvoker(invoker)
 
-	isPending, err := inspector.IsOperationPending(
-		ctx,
-		timelockAddr,
-		opID,
-	)
-	require.NoError(t, err)
-	require.True(t, isPending)
+	initialized, err := inspector.IsInitialized(t.Context(), address)
+	require.False(t, initialized)
+	require.ErrorIs(t, err, expectedErr)
+	require.ErrorContains(t, err, "ADMIN role member count")
+}
 
-	isReady, err := inspector.IsOperationReady(
-		ctx,
-		timelockAddr,
-		opID,
-	)
-	require.NoError(t, err)
-	require.True(t, isReady)
+func TestTimelockInspector_IsInitialized_MinDelayReadError(t *testing.T) {
+	t.Parallel()
 
-	isDone, err := inspector.IsOperationDone(
-		ctx,
-		timelockAddr,
-		opID,
-	)
-	require.NoError(t, err)
-	require.True(t, isDone)
+	address := testContractID(t, 113)
+	expectedErr := errors.New("minimum delay read failed")
+	invoker := stellarmocks.NewInvoker(t)
 
-	minDelay, err := inspector.GetMinDelay(
-		ctx,
-		timelockAddr,
-	)
-	require.NoError(t, err)
-	require.Equal(t, uint64(42), minDelay)
+	for _, role := range []string{"ADMIN", "PROPOSER", "CANCELLER", "BYPASSER"} {
+		invoker.On("SimulateContract", mock.Anything, address, "get_role_member_count", []xdr.ScVal{scval.SymbolToScVal(role)}).Return(new(scval.Uint32ToScVal(0)), nil).Once()
+	}
+
+	invoker.On("SimulateContract", mock.Anything, address, "get_min_delay", []xdr.ScVal{}).Return((*xdr.ScVal)(nil), expectedErr).Once()
+
+	inspector := stellar.NewTimelockInspectorFromInvoker(invoker)
+
+	initialized, err := inspector.IsInitialized(t.Context(), address)
+	require.False(t, initialized)
+	require.ErrorIs(t, err, expectedErr)
+	require.ErrorContains(t, err, "minimum delay")
+}
+
+func TestTimelockInspector_IsInitialized_NilInvoker(t *testing.T) {
+	t.Parallel()
+
+	inspector := stellar.NewTimelockInspectorFromInvoker(nil)
+
+	initialized, err := inspector.IsInitialized(t.Context(), testContractID(t, 114))
+	require.False(t, initialized)
+	require.ErrorContains(t, err, "invoker is nil")
+}
+
+func TestTimelockInspector_IsInitialized_EmptyContractID(t *testing.T) {
+	t.Parallel()
+
+	invoker := stellarmocks.NewInvoker(t)
+	inspector := stellar.NewTimelockInspectorFromInvoker(invoker)
+
+	initialized, err := inspector.IsInitialized(t.Context(), "")
+	require.False(t, initialized)
+	require.ErrorContains(t, err, "contract ID is empty")
+
+	invoker.AssertNotCalled(t, "SimulateContract", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }

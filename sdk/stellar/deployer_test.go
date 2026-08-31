@@ -7,6 +7,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/stellar/go-stellar-sdk/keypair"
+	"github.com/stellar/go-stellar-sdk/network"
 	"github.com/stellar/go-stellar-sdk/strkey"
 	"github.com/stellar/go-stellar-sdk/xdr"
 	"github.com/stretchr/testify/mock"
@@ -30,22 +31,11 @@ func TestDeployer_DeployMCMS(t *testing.T) {
 	salt := [32]byte{1, 2, 3, 4}
 	contractID := testContractID(t, 1)
 
-	dependency.EXPECT().
-		DeployContract(
-			mock.Anything,
-			wasmPath,
-			salt,
-		).
-		Return(contractID, nil).
-		Once()
+	dependency.On("DeployContract", mock.Anything, wasmPath, salt).Return(contractID, nil).Once()
 
 	deployer := stellar.NewDeployer(dependency)
 
-	got, err := deployer.DeployMCMS(
-		t.Context(),
-		wasmPath,
-		salt,
-	)
+	got, err := deployer.DeployMCMS(t.Context(), wasmPath, salt)
 	require.NoError(t, err)
 	require.Equal(t, contractID, got)
 }
@@ -56,25 +46,14 @@ func TestDeployer_DeployMCMS_DeployError(t *testing.T) {
 	dependency := stellarmocks.NewContractDeployer(t)
 	expectedErr := errors.New("deploy failed")
 
-	dependency.EXPECT().
-		DeployContract(
-			mock.Anything,
-			"/tmp/mcms.wasm",
-			[32]byte{},
-		).
-		Return("", expectedErr).
-		Once()
+	dependency.On("DeployContract", mock.Anything, "/tmp/mcms.wasm", [32]byte{}).Return("", expectedErr).Once()
 
 	deployer := stellar.NewDeployer(dependency)
 
-	_, err := deployer.DeployMCMS(
-		t.Context(),
-		"/tmp/mcms.wasm",
-		[32]byte{},
-	)
+	_, err := deployer.DeployMCMS(t.Context(), "/tmp/mcms.wasm", [32]byte{})
 
 	require.ErrorIs(t, err, expectedErr)
-	require.ErrorContains(t, err, "deploy Stellar MCMS")
+	require.ErrorContains(t, err, "deploy stellar MCMS")
 }
 
 func TestDeployer_DeployMCMS_EmptyWASMPath(t *testing.T) {
@@ -83,20 +62,10 @@ func TestDeployer_DeployMCMS_EmptyWASMPath(t *testing.T) {
 	dependency := stellarmocks.NewContractDeployer(t)
 	deployer := stellar.NewDeployer(dependency)
 
-	_, err := deployer.DeployMCMS(
-		t.Context(),
-		"",
-		[32]byte{},
-	)
+	_, err := deployer.DeployMCMS(t.Context(), "", [32]byte{})
 
 	require.ErrorContains(t, err, "WASM path is empty")
-	dependency.AssertNotCalled(
-		t,
-		"DeployContract",
-		mock.Anything,
-		mock.Anything,
-		mock.Anything,
-	)
+	dependency.AssertNotCalled(t, "DeployContract", mock.Anything, mock.Anything, mock.Anything)
 }
 
 func TestDeployer_DeployMCMS_EmptyContractID(t *testing.T) {
@@ -104,22 +73,11 @@ func TestDeployer_DeployMCMS_EmptyContractID(t *testing.T) {
 
 	dependency := stellarmocks.NewContractDeployer(t)
 
-	dependency.EXPECT().
-		DeployContract(
-			mock.Anything,
-			"/tmp/mcms.wasm",
-			[32]byte{},
-		).
-		Return("", nil).
-		Once()
+	dependency.On("DeployContract", mock.Anything, "/tmp/mcms.wasm", [32]byte{}).Return("", nil).Once()
 
 	deployer := stellar.NewDeployer(dependency)
 
-	_, err := deployer.DeployMCMS(
-		t.Context(),
-		"/tmp/mcms.wasm",
-		[32]byte{},
-	)
+	_, err := deployer.DeployMCMS(t.Context(), "/tmp/mcms.wasm", [32]byte{})
 
 	require.ErrorContains(t, err, "empty contract ID")
 }
@@ -129,11 +87,7 @@ func TestDeployer_DeployMCMS_NilDeployer(t *testing.T) {
 
 	deployer := stellar.NewDeployer(nil)
 
-	_, err := deployer.DeployMCMS(
-		t.Context(),
-		"/tmp/mcms.wasm",
-		[32]byte{},
-	)
+	_, err := deployer.DeployMCMS(t.Context(), "/tmp/mcms.wasm", [32]byte{})
 
 	require.ErrorContains(t, err, "deployer is nil")
 }
@@ -143,25 +97,19 @@ func TestDeployer_InitializeMCMS(t *testing.T) {
 
 	dependency := stellarmocks.NewContractDeployer(t)
 
-	selector := types.ChainSelector(chainselectors.STELLAR_LOCALNET.Selector)
+	chainID := chainselectors.STELLAR_LOCALNET.ChainID
 	contractID := testContractID(t, 1)
 	owner := testAccountAddress(t)
 	cfg := testMCMSConfig(t)
 
-	signerAddresses,
-		signerGroups,
-		groupQuorums,
-		groupParents,
-		err := stellar.ConfigToSetConfigInputs(&cfg)
+	signerAddresses, signerGroups, groupQuorums, groupParents, err := stellar.ConfigToSetConfigInputs(&cfg)
 	require.NoError(t, err)
 
-	networkIDHex, err := chainselectors.StellarChainIdFromSelector(uint64(selector))
-	require.NoError(t, err)
-	networkID := common.HexToHash(networkIDHex)
+	networkID := network.ID(chainselectors.STELLAR_LOCALNET.Passphrase)
 
 	expectedArgs := []xdr.ScVal{
 		scval.AddressToScVal(owner),
-		scval.Bytes32ToScVal([32]byte(networkID)),
+		scval.Bytes32ToScVal(networkID),
 		scval.MustToScVal(signerAddresses.ToScVal()),
 		scval.MustToScVal(signerGroups.ToScVal()),
 		scval.Bytes32ToScVal(groupQuorums),
@@ -169,28 +117,17 @@ func TestDeployer_InitializeMCMS(t *testing.T) {
 		scval.SymbolToScVal("PROPOSER"),
 	}
 
-	dependency.EXPECT().
-		InvokeContract(
-			mock.Anything,
-			contractID,
-			"initialize",
-			expectedArgs,
-		).
-		Return((*xdr.ScVal)(nil), nil).
-		Once()
+	dependency.On("InvokeContract", mock.Anything, contractID, "initialize", expectedArgs).Return((*xdr.ScVal)(nil), nil).Once()
 
 	deployer := stellar.NewDeployer(dependency)
 
-	result, err := deployer.InitializeMCMS(
-		t.Context(),
-		stellar.InitializeMCMSInput{
-			ContractID:    contractID,
-			Owner:         owner,
-			ChainSelector: selector,
-			Config:        &cfg,
-			InstanceLabel: "PROPOSER",
-		},
-	)
+	result, err := deployer.InitializeMCMS(t.Context(), stellar.InitializeMCMSInput{
+		ContractID:    contractID,
+		Owner:         owner,
+		ChainID:       chainID,
+		Config:        &cfg,
+		InstanceLabel: "PROPOSER",
+	})
 	require.NoError(t, err)
 	require.Equal(t, chainselectors.FamilyStellar, result.ChainFamily)
 }
@@ -202,33 +139,20 @@ func TestDeployer_InitializeMCMS_InvokeError(t *testing.T) {
 	expectedErr := errors.New("invoke failed")
 	cfg := testMCMSConfig(t)
 
-	dependency.EXPECT().
-		InvokeContract(
-			mock.Anything,
-			mock.Anything,
-			"initialize",
-			mock.Anything,
-		).
-		Return((*xdr.ScVal)(nil), expectedErr).
-		Once()
+	dependency.On("InvokeContract", mock.Anything, mock.Anything, "initialize", mock.Anything).Return((*xdr.ScVal)(nil), expectedErr).Once()
 
 	deployer := stellar.NewDeployer(dependency)
 
-	_, err := deployer.InitializeMCMS(
-		t.Context(),
-		stellar.InitializeMCMSInput{
-			ContractID: testContractID(t, 1),
-			Owner:      testAccountAddress(t),
-			ChainSelector: types.ChainSelector(
-				chainselectors.STELLAR_LOCALNET.Selector,
-			),
-			Config:        &cfg,
-			InstanceLabel: "PROPOSER",
-		},
-	)
+	_, err := deployer.InitializeMCMS(t.Context(), stellar.InitializeMCMSInput{
+		ContractID:    testContractID(t, 1),
+		Owner:         testAccountAddress(t),
+		ChainID:       chainselectors.STELLAR_LOCALNET.ChainID,
+		Config:        &cfg,
+		InstanceLabel: "PROPOSER",
+	})
 
 	require.ErrorIs(t, err, expectedErr)
-	require.ErrorContains(t, err, "initialize Stellar MCMS")
+	require.ErrorContains(t, err, "initialize stellar MCMS")
 }
 
 func TestDeployer_InitializeMCMS_NilDeployer(t *testing.T) {
@@ -236,10 +160,7 @@ func TestDeployer_InitializeMCMS_NilDeployer(t *testing.T) {
 
 	deployer := stellar.NewDeployer(nil)
 
-	_, err := deployer.InitializeMCMS(
-		t.Context(),
-		stellar.InitializeMCMSInput{},
-	)
+	_, err := deployer.InitializeMCMS(t.Context(), stellar.InitializeMCMSInput{})
 
 	require.ErrorContains(t, err, "deployer is nil")
 }
@@ -250,69 +171,74 @@ func TestDeployer_InitializeMCMS_InvalidInput(t *testing.T) {
 	cfg := testMCMSConfig(t)
 
 	valid := stellar.InitializeMCMSInput{
-		ContractID: testContractID(t, 1),
-		Owner:      testAccountAddress(t),
-		ChainSelector: types.ChainSelector(
-			chainselectors.STELLAR_LOCALNET.Selector,
-		),
+		ContractID:    testContractID(t, 1),
+		Owner:         testAccountAddress(t),
+		ChainID:       chainselectors.STELLAR_LOCALNET.ChainID,
 		Config:        &cfg,
 		InstanceLabel: "PROPOSER",
 	}
 
 	tests := []struct {
 		name    string
-		mutate  func(*testing.T, *stellar.InitializeMCMSInput)
+		mutate  func(*stellar.InitializeMCMSInput)
 		wantErr string
 	}{
 		{
 			name: "empty contract ID",
-			mutate: func(_ *testing.T, in *stellar.InitializeMCMSInput) {
+			mutate: func(in *stellar.InitializeMCMSInput) {
 				in.ContractID = ""
 			},
 			wantErr: "contract ID is empty",
 		},
 		{
 			name: "empty owner",
-			mutate: func(_ *testing.T, in *stellar.InitializeMCMSInput) {
+			mutate: func(in *stellar.InitializeMCMSInput) {
 				in.Owner = ""
 			},
 			wantErr: "owner is empty",
 		},
 		{
+			name: "empty chain ID",
+			mutate: func(in *stellar.InitializeMCMSInput) {
+				in.ChainID = ""
+			},
+			wantErr: "chain ID is empty",
+		},
+		{
 			name: "nil config",
-			mutate: func(_ *testing.T, in *stellar.InitializeMCMSInput) {
+			mutate: func(in *stellar.InitializeMCMSInput) {
 				in.Config = nil
 			},
 			wantErr: "config is nil",
 		},
 		{
 			name: "empty instance label",
-			mutate: func(_ *testing.T, in *stellar.InitializeMCMSInput) {
+			mutate: func(in *stellar.InitializeMCMSInput) {
 				in.InstanceLabel = ""
 			},
 			wantErr: "instance label is empty",
 		},
 		{
 			name: "instance label too long",
-			mutate: func(_ *testing.T, in *stellar.InitializeMCMSInput) {
+			mutate: func(in *stellar.InitializeMCMSInput) {
 				in.InstanceLabel = strings.Repeat("a", 33)
 			},
 			wantErr: "exceeds 32 bytes",
 		},
 		{
 			name: "invalid config",
-			mutate: func(_ *testing.T, in *stellar.InitializeMCMSInput) {
+			mutate: func(in *stellar.InitializeMCMSInput) {
 				invalidConfig := types.Config{}
 				in.Config = &invalidConfig
 			},
-			wantErr: "validate Stellar MCMS config",
+			wantErr: "validate stellar MCMS config",
 		},
 		{
-			name: "unknown chain selector",
-			mutate: func(_ *testing.T, in *stellar.InitializeMCMSInput) {
-				in.ChainSelector = types.ChainSelector(1)
+			name: "unknown chain ID",
+			mutate: func(in *stellar.InitializeMCMSInput) {
+				in.ChainID = "unknown-chain-id"
 			},
-			wantErr: "chain network ID",
+			wantErr: "get stellar network passphrase from chain ID",
 		},
 	}
 
@@ -324,22 +250,12 @@ func TestDeployer_InitializeMCMS_InvalidInput(t *testing.T) {
 			deployer := stellar.NewDeployer(dependency)
 
 			input := valid
-			tt.mutate(t, &input)
+			tt.mutate(&input)
 
-			_, err := deployer.InitializeMCMS(
-				t.Context(),
-				input,
-			)
+			_, err := deployer.InitializeMCMS(t.Context(), input)
 
 			require.ErrorContains(t, err, tt.wantErr)
-			dependency.AssertNotCalled(
-				t,
-				"InvokeContract",
-				mock.Anything,
-				mock.Anything,
-				mock.Anything,
-				mock.Anything,
-			)
+			dependency.AssertNotCalled(t, "InvokeContract", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 		})
 	}
 }
@@ -347,13 +263,7 @@ func TestDeployer_InitializeMCMS_InvalidInput(t *testing.T) {
 func testMCMSConfig(t *testing.T) types.Config {
 	t.Helper()
 
-	cfg, err := types.NewConfig(
-		1,
-		[]common.Address{
-			common.HexToAddress("0x1111111111111111111111111111111111111111"),
-		},
-		nil,
-	)
+	cfg, err := types.NewConfig(1, []common.Address{common.HexToAddress("0x1111111111111111111111111111111111111111")}, nil)
 	require.NoError(t, err)
 
 	return cfg
