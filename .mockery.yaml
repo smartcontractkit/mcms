@@ -174,11 +174,6 @@ packages:
         config:
           dir: "./sdk/stellar/mocks"
           filename: "rpc_client.go"
-      ContractDeployer:
-        config:
-          dir: "./sdk/stellar/mocks"
-          filename: "contract_deployer.go"
-
   github.com/smartcontractkit/chainlink-stellar/bindings:
     config:
       all: false
