@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.55.0](https://github.com/smartcontractkit/mcms/compare/v0.54.0...v0.55.0) (2026-09-01)
+
+
+### Features
+
+* **sdk/stellar:** Ilija/stellar sdk 07 stellar deployers ([#844](https://github.com/smartcontractkit/mcms/issues/844)) ([bef7af6](https://github.com/smartcontractkit/mcms/commit/bef7af6e18f9520e8af69a3fa25f5223e862a44f))
+
 ## [0.54.0](https://github.com/smartcontractkit/mcms/compare/v0.53.0...v0.54.0) (2026-08-25)
 
 
