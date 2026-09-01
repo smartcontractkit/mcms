@@ -19,8 +19,7 @@ import (
 	mcmtypes "github.com/smartcontractkit/mcms/types"
 )
 
-// TestTimelockProposalSchedule is the happy-path timelock flow every other
-// chain family covers in e2e: build a schedule proposal, sign, SetRoot,
+// TestTimelockProposalSchedule builds a schedule proposal, sign, SetRoot,
 // execute through MCMS (schedule_batch), wait for the delay, then execute
 // through the timelock (execute_batch). The batch carries TWO transactions —
 // the shape governed forwarder allow-list changes produce — targeting the CRE
