@@ -13,6 +13,7 @@ import (
 
 	"github.com/smartcontractkit/chainlink-stellar/bindings"
 	mcmsbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/mcms"
+	"github.com/smartcontractkit/chainlink-stellar/bindings/scval"
 )
 
 var _ sdk.Inspector = (*Inspector)(nil)
@@ -59,6 +60,7 @@ func NewInspectorFromInvoker(invoker bindings.Invoker) *Inspector {
 // GetConfig reads the current MCMS signer/group config from the chain.
 func (i *Inspector) GetConfig(ctx context.Context, mcmAddr string) (*types.Config, error) {
 	client := mcmsbindings.NewMcmsClient(i.invoker, mcmAddr)
+
 	cfg, err := client.GetConfig(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("stellar mcms get_config: %w", err)
@@ -75,6 +77,7 @@ func (i *Inspector) GetConfig(ctx context.Context, mcmAddr string) (*types.Confi
 // GetOpCount reads the current op counter from the MCMS contract.
 func (i *Inspector) GetOpCount(ctx context.Context, mcmAddr string) (uint64, error) {
 	client := mcmsbindings.NewMcmsClient(i.invoker, mcmAddr)
+
 	count, err := client.GetOpCount(ctx)
 	if err != nil {
 		return 0, fmt.Errorf("stellar mcms get_op_count: %w", err)
@@ -86,6 +89,7 @@ func (i *Inspector) GetOpCount(ctx context.Context, mcmAddr string) (uint64, err
 // GetRoot reads the current Merkle root and validUntil from the MCMS contract.
 func (i *Inspector) GetRoot(ctx context.Context, mcmAddr string) (common.Hash, uint32, error) {
 	client := mcmsbindings.NewMcmsClient(i.invoker, mcmAddr)
+
 	root, validUntil, err := client.GetRoot(ctx)
 	if err != nil {
 		return common.Hash{}, 0, fmt.Errorf("stellar mcms get_root: %w", err)
@@ -97,6 +101,7 @@ func (i *Inspector) GetRoot(ctx context.Context, mcmAddr string) (common.Hash, u
 // GetRootMetadata reads the chain metadata from the MCMS contract's root_metadata.
 func (i *Inspector) GetRootMetadata(ctx context.Context, mcmAddr string) (types.ChainMetadata, error) {
 	client := mcmsbindings.NewMcmsClient(i.invoker, mcmAddr)
+
 	metadata, err := client.GetRootMetadata(ctx)
 	if err != nil {
 		return types.ChainMetadata{}, fmt.Errorf("stellar mcms get_root_metadata: %w", err)
@@ -109,7 +114,10 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmAddr string) (types.
 			b, _ := json.Marshal(struct {
 				ConfigVersion   uint64 `json:"configVersion"`
 				EncodingVersion uint32 `json:"encodingVersion"`
-			}{metadata.ConfigVersion, metadata.EncodingVersion})
+			}{
+				ConfigVersion:   metadata.ConfigVersion,
+				EncodingVersion: metadata.EncodingVersion,
+			})
 
 			return b
 		}(),
@@ -120,6 +128,7 @@ func (i *Inspector) GetRootMetadata(ctx context.Context, mcmAddr string) (types.
 // no owner, as defined by the common Ownable implementation.
 func (i *Inspector) GetOwner(ctx context.Context, mcmAddr string) (*string, error) {
 	client := mcmsbindings.NewMcmsClient(i.invoker, mcmAddr)
+
 	owner, err := client.Owner(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("stellar mcms owner: %w", err)
@@ -131,10 +140,35 @@ func (i *Inspector) GetOwner(ctx context.Context, mcmAddr string) (*string, erro
 // GetPendingOwner reads the address that has been proposed as the next owner.
 func (i *Inspector) GetPendingOwner(ctx context.Context, mcmAddr string) (*string, error) {
 	client := mcmsbindings.NewMcmsClient(i.invoker, mcmAddr)
+
 	pending, err := client.GetPendingOwner(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("stellar mcms get_pending_owner: %w", err)
 	}
 
 	return pending, nil
+}
+
+// GetChainNetworkID reads the 32-byte network identifier the MCMS contract
+// was initialized with, used by the encoder for op-id domain separation.
+func (i *Inspector) GetChainNetworkID(ctx context.Context, mcmAddr string) ([32]byte, error) {
+	if i == nil || i.invoker == nil {
+		return [32]byte{}, fmt.Errorf("stellar mcms inspector invoker is nil")
+	}
+
+	result, err := i.invoker.SimulateContract(ctx, mcmAddr, "chain_network_id", nil)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf("stellar mcms chain_network_id: %w", err)
+	}
+
+	if result == nil {
+		return [32]byte{}, fmt.Errorf("stellar mcms chain_network_id returned no value")
+	}
+
+	networkID, err := scval.Bytes32FromScVal(*result)
+	if err != nil {
+		return [32]byte{}, fmt.Errorf("stellar mcms decode chain_network_id: %w", err)
+	}
+
+	return networkID, nil
 }
