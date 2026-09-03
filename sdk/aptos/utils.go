@@ -4,8 +4,9 @@ import (
 	"github.com/aptos-labs/aptos-go-sdk"
 )
 
+//go:fix inline
 func pointerTo[T any](v T) *T {
-	return &v
+	return new(v)
 }
 
 func hexToAddress(address string) (aptos.AccountAddress, error) {

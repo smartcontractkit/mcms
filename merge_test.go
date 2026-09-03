@@ -287,11 +287,11 @@ func TestTimelockProposal_Merge(t *testing.T) {
 		},
 		{
 			name:      "success: merge salt",
-			proposal1: mustBuild(t, baseProposalBuilder().SetSalt(pointerTo(common.HexToHash("0x0123456789abcdef")))),
-			proposal2: mustBuild(t, baseProposalBuilder().SetSalt(pointerTo(common.HexToHash("0x9876543210fedcba")))),
+			proposal1: mustBuild(t, baseProposalBuilder().SetSalt(new(common.HexToHash("0x0123456789abcdef")))),
+			proposal2: mustBuild(t, baseProposalBuilder().SetSalt(new(common.HexToHash("0x9876543210fedcba")))),
 			assert: func(t *testing.T, merged *TimelockProposal) {
 				t.Helper()
-				want := pointerTo(common.HexToHash("0x9955115599551155"))
+				want := new(common.HexToHash("0x9955115599551155"))
 				require.Equal(t, want, merged.SaltOverride)
 			},
 		},
