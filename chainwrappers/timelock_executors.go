@@ -80,8 +80,12 @@ func BuildTimelockExecutor(
 		if err1 != nil {
 			return nil, fmt.Errorf("failed to parse EVM chain metadata for selector %d: %w", rawSelector, err1)
 		}
-		auth.GasPrice = evmChainMetadata.GasPrice
-		auth.GasLimit = evmChainMetadata.GasLimit
+		if evmChainMetadata.GasPrice != nil {
+			auth.GasPrice = evmChainMetadata.GasPrice
+		}
+		if evmChainMetadata.GasLimit != 0 {
+			auth.GasLimit = evmChainMetadata.GasLimit
+		}
 
 		return evm.NewTimelockExecutor(client, auth), nil
 

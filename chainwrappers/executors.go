@@ -100,8 +100,12 @@ func BuildExecutor(
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse EVM chain metadata for selector %d: %w", rawSelector, err)
 		}
-		auth.GasPrice = evmChainMetadata.GasPrice
-		auth.GasLimit = evmChainMetadata.GasLimit
+		if evmChainMetadata.GasPrice != nil {
+			auth.GasPrice = evmChainMetadata.GasPrice
+		}
+		if evmChainMetadata.GasLimit != 0 {
+			auth.GasLimit = evmChainMetadata.GasLimit
+		}
 
 		return evm.NewExecutor(evmEncoder, client, auth), nil
 
