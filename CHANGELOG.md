@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.55.1](https://github.com/smartcontractkit/mcms/compare/v0.55.0...v0.55.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **evm:** don't override gasLimit+gasPrice when not set in chainMetadata ([#849](https://github.com/smartcontractkit/mcms/issues/849)) ([e539861](https://github.com/smartcontractkit/mcms/commit/e5398619dd9348643849c7126381a2ca5d87afd8))
+
 ## [0.55.0](https://github.com/smartcontractkit/mcms/compare/v0.54.0...v0.55.0) (2026-09-01)
 
 
