@@ -82,7 +82,7 @@ func (s *Simulator) collectInstructions(
 
 	result := &rpc.GetTransactionResult{
 		Slot:        1,
-		BlockTime:   pointerTo(solana.UnixTimeSeconds(time.Now().Unix())),
+		BlockTime:   new(solana.UnixTimeSeconds(time.Now().Unix())),
 		Transaction: &rpc.TransactionResultEnvelope{},
 		Meta:        &rpc.TransactionMeta{},
 		Version:     1,
@@ -117,6 +117,7 @@ func (e SimulateError) Logs() []string {
 	return e.result.Logs
 }
 
+//go:fix inline
 func pointerTo[T any](v T) *T {
-	return &v
+	return new(v)
 }
