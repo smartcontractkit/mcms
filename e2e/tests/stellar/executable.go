@@ -1,25 +1,18 @@
 package stellar
 
 import (
-	"bytes"
 	"crypto/ecdsa"
 	"fmt"
-	"sort"
 	"time"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	chainsel "github.com/smartcontractkit/chain-selectors"
 	stellarbindings "github.com/smartcontractkit/chainlink-stellar/bindings"
-	"github.com/stellar/go-stellar-sdk/keypair"
 	"github.com/stellar/go-stellar-sdk/xdr"
 	"github.com/stretchr/testify/suite"
 
 	mcmsbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/mcms"
 	timelockbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/timelock"
 	stellardeployer "github.com/smartcontractkit/chainlink-stellar/deployment"
-	"github.com/smartcontractkit/chainlink-stellar/deployment/cre"
-	stellarmcmsutil "github.com/smartcontractkit/chainlink-stellar/deployment/mcmsutil"
 
 	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
@@ -37,11 +30,6 @@ type timelockRoleConfig struct {
 	Proposers  []string
 	Cancellers []string
 	Bypassers  []string
-}
-
-type proposalSigner struct {
-	key     *ecdsa.PrivateKey
-	address common.Address
 }
 
 type ExecutionTestSuite struct {
@@ -62,33 +50,13 @@ type ExecutionTestSuite struct {
 }
 
 func (s *ExecutionTestSuite) SetupSuite() {
-	s.TestSetup = *e2e.InitializeSharedTestSetup(s.T())
+	env := bootstrapStellarChainEnv(s.T())
 
-	s.Require().NotNil(s.StellarClient, "Stellar RPC client is not configured")
-	s.Require().NotNil(s.StellarChain, "Stellar chain is not configured")
-	s.Require().NotNil(s.StellarChain.Out, "Stellar chain output is not configured")
-	s.Require().NotNil(s.StellarChain.Out.NetworkSpecificData, "Stellar network-specific data is not configured")
-	s.Require().NotNil(s.StellarChain.Out.NetworkSpecificData.StellarNetwork, "Stellar network data is not configured")
-
-	friendbotURL := s.StellarChain.Out.NetworkSpecificData.StellarNetwork.FriendbotURL
-	s.Require().NotEmpty(friendbotURL, "Stellar Friendbot URL is empty")
-
-	signer, err := keypair.Random()
-	s.Require().NoError(err, "Failed to generate Stellar test account")
-
-	FundStellarKey(s.T(), friendbotURL, signer)
-
-	s.T().Logf("Funded Stellar test account %s", signer.Address())
-	s.StellarSigner = stellarbindings.NewStellarKeypairSigner(signer)
-
-	s.chainSelector = mcmtypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector)
-	s.passphrase = chainsel.STELLAR_LOCALNET.Passphrase
-
-	s.deployer = stellardeployer.NewDeployer(
-		s.StellarClient,
-		s.passphrase,
-		s.StellarSigner.KeypairFull(),
-	)
+	s.TestSetup = env.testSetup
+	s.StellarSigner = env.signer
+	s.deployer = env.deployer
+	s.chainSelector = env.chainSelector
+	s.passphrase = env.passphrase
 
 	s.initializeProposalSigners()
 
@@ -435,62 +403,13 @@ func (s *ExecutionTestSuite) executeAcceptOwnershipProposal(
 func (s *ExecutionTestSuite) initializeProposalSigners() {
 	s.T().Helper()
 
-	const signerCount = 2
-
-	signers := make([]proposalSigner, signerCount)
-
-	for i := range signerCount {
-		key, err := crypto.GenerateKey()
-		s.Require().NoError(
-			err,
-			"failed to generate Stellar MCMS proposal signer",
-		)
-
-		signers[i] = proposalSigner{
-			key:     key,
-			address: crypto.PubkeyToAddress(key.PublicKey),
-		}
-	}
-
-	// The Stellar MCMS contract requires signer addresses to be strictly
-	// increasing. Keep each private key paired with its sorted address.
-	sort.Slice(signers, func(i, j int) bool {
-		return bytes.Compare(
-			signers[i].address.Bytes(),
-			signers[j].address.Bytes(),
-		) < 0
-	})
-
-	s.proposalSignerKeys = make(
-		[]*ecdsa.PrivateKey,
-		signerCount,
-	)
-	s.signerAddresses = make(
-		[]common.Address,
-		signerCount,
-	)
-
-	for i, signer := range signers {
-		s.proposalSignerKeys[i] = signer.key
-		s.signerAddresses[i] = signer.address
-	}
+	s.proposalSignerKeys, s.signerAddresses = generateSortedSigners(s.T(), 2)
 }
 
 func (s *ExecutionTestSuite) newInspector() *stellarsdk.Inspector {
 	s.T().Helper()
 
-	inspector, err :=
-		stellarsdk.NewInspectorWithNetworkPassphrase(
-			s.StellarClient,
-			s.StellarSigner,
-			s.passphrase,
-		)
-	s.Require().NoError(
-		err,
-		"failed to create Stellar inspector",
-	)
-
-	return inspector
+	return newStellarInspector(s.T(), s.StellarClient, s.StellarSigner, s.passphrase)
 }
 
 func (s *ExecutionTestSuite) deployChain() ChainMeta {
@@ -500,7 +419,7 @@ func (s *ExecutionTestSuite) deployChain() ChainMeta {
 
 	mcmAddress := s.deployMCMSContract(deploymentID)
 
-	roles := s.defaultTimelockRoleConfig(
+	roles := defaultTimelockRoleConfig(
 		mcmAddress,
 		s.StellarSigner.Address(),
 	)
@@ -521,41 +440,14 @@ func (s *ExecutionTestSuite) deployMCMSContract(
 ) string {
 	s.T().Helper()
 
-	networkIDHex, err := chainsel.StellarChainIdFromSelector(
-		uint64(s.chainSelector),
-	)
-	s.Require().NoError(err)
-	s.Require().True(
-		common.IsHexHash(networkIDHex),
-		"invalid Stellar network ID %q",
-		networkIDHex,
-	)
-
-	instanceLabel := fmt.Sprintf("e2e_%d", deploymentID)
-	s.Require().LessOrEqual(
-		len(instanceLabel),
-		32,
-		"Soroban instance label exceeds symbol length",
-	)
-
-	contractID, err := stellarmcmsutil.DeployMCMS(
-		s.T().Context(),
+	return deployStellarMCMSContract(
+		s.T(),
 		s.deployer,
 		s.StellarSigner.Address(),
-		common.HexToHash(networkIDHex),
+		s.chainSelector,
 		s.mcmsConfig,
-		instanceLabel,
-		stellarmcmsutil.MCMSDeploySalt(
-			uint64(s.chainSelector),
-			instanceLabel,
-		),
+		fmt.Sprintf("e2e_exec_%d", deploymentID),
 	)
-	s.Require().NoError(
-		err,
-		"failed to deploy Stellar MCMS",
-	)
-
-	return contractID
 }
 
 func (s *ExecutionTestSuite) deployTimelockContract(
@@ -564,69 +456,13 @@ func (s *ExecutionTestSuite) deployTimelockContract(
 ) string {
 	s.T().Helper()
 
-	wasm, err := cre.Artifact(cre.TimelockWasm)
-	s.Require().NoError(
-		err,
-		"failed to load Stellar timelock WASM",
-	)
-
-	salt := [32]byte(
-		crypto.Keccak256Hash(
-			[]byte(
-				fmt.Sprintf(
-					"stellar_execution_timelock_%d",
-					deploymentID,
-				),
-			),
-		),
-	)
-
-	contractID, err := s.deployer.DeployContractBytes(
-		s.T().Context(),
-		wasm,
-		salt,
-	)
-	s.Require().NoError(
-		err,
-		"failed to deploy Stellar timelock",
-	)
-
-	client := timelockbindings.NewTimelockClient(
+	return deployStellarTimelockContract(
+		s.T(),
 		s.deployer,
-		contractID,
+		"exec",
+		deploymentID,
+		roles,
 	)
-
-	err = client.Initialize(
-		s.T().Context(),
-		0,
-		roles.Proposers,
-		roles.Cancellers,
-		roles.Bypassers,
-	)
-	s.Require().NoError(
-		err,
-		"failed to initialize Stellar timelock",
-	)
-
-	return contractID
-}
-
-func (s *ExecutionTestSuite) defaultTimelockRoleConfig(
-	mcmAddress string,
-	operator string,
-) timelockRoleConfig {
-	s.T().Helper()
-
-	base := uniqueStrings([]string{
-		mcmAddress,
-		operator,
-	})
-
-	return timelockRoleConfig{
-		Proposers:  append([]string(nil), base...),
-		Cancellers: append([]string(nil), base...),
-		Bypassers:  append([]string(nil), base...),
-	}
 }
 
 func (s *ExecutionTestSuite) transferMCMSOwnershipToTimelock(
@@ -721,23 +557,4 @@ func (s *ExecutionTestSuite) nextDeploymentID() uint64 {
 	s.deploymentCounter++
 
 	return s.deploymentCounter
-}
-
-func uniqueStrings(values []string) []string {
-	seen := make(map[string]struct{}, len(values))
-	result := make([]string, 0, len(values))
-
-	for _, value := range values {
-		if value == "" {
-			continue
-		}
-		if _, exists := seen[value]; exists {
-			continue
-		}
-
-		seen[value] = struct{}{}
-		result = append(result, value)
-	}
-
-	return result
 }
