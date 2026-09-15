@@ -105,3 +105,59 @@ func TestDecoder_Decode_InterfaceContractIgnored(t *testing.T) {
 	require.Equal(t, withInterfaces.MethodName(), withoutInterfaces.MethodName())
 	require.Equal(t, withInterfaces.Args(), withoutInterfaces.Args())
 }
+
+func TestDecoder_Decode_TimelockEntrypointArgNames(t *testing.T) {
+	t.Parallel()
+
+	target := testContractID(t, 145)
+
+	// schedule_batch(caller, calls, predecessor, salt, delay) — the recorded
+	// parameter names are used instead of positional placeholders, matching
+	// the CLDF Stellar analyzer.
+	args := []xdr.ScVal{
+		scvStr("caller-address"),
+		scvVec(scvStr("inner-call")),
+		scvBytes(make([]byte, 32)),
+		scvBytes(make([]byte, 32)),
+		scvU64(3600),
+	}
+
+	tx, err := stellar.NewTransaction(target, "schedule_batch", args, "Timelock", nil)
+	require.NoError(t, err)
+
+	decoded, err := stellar.NewDecoder().Decode(tx, "")
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"caller", "calls", "predecessor", "salt", "delay"}, decoded.Keys())
+	require.Len(t, decoded.Args(), 5)
+
+	method, argsStr, err := decoded.String()
+	require.NoError(t, err)
+	require.Equal(t, "schedule_batch", method)
+	require.Contains(t, argsStr, `"caller": "caller-address"`)
+	require.Contains(t, argsStr, `"delay": 3600`)
+}
+
+func TestDecoder_Decode_TimelockArgCountMismatchFallsBackToPositional(t *testing.T) {
+	t.Parallel()
+
+	target := testContractID(t, 146)
+
+	// A schedule_batch-shaped call whose argument count does not match the
+	// recorded signature must fall back to positional names rather than
+	// mislabeling arguments.
+	args := []xdr.ScVal{
+		scvStr("caller-address"),
+		scvVec(scvStr("inner-call")),
+		scvU64(3600),
+	}
+
+	tx, err := stellar.NewTransaction(target, "schedule_batch", args, "Timelock", nil)
+	require.NoError(t, err)
+
+	decoded, err := stellar.NewDecoder().Decode(tx, "")
+	require.NoError(t, err)
+
+	require.Equal(t, []string{"arg0", "arg1", "arg2"}, decoded.Keys())
+	require.Len(t, decoded.Args(), 3)
+}
