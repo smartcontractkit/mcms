@@ -9,6 +9,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 	"github.com/google/go-cmp/cmp/cmpopts"
 	chainsel "github.com/smartcontractkit/chain-selectors"
+	stellarrpc "github.com/stellar/go-stellar-sdk/clients/rpcclient"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	tonwallet "github.com/xssnick/tonutils-go/ton/wallet"
@@ -20,6 +21,8 @@ import (
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	stellarsdk "github.com/smartcontractkit/mcms/sdk/stellar"
+	stellarmocks "github.com/smartcontractkit/mcms/sdk/stellar/mocks"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	suibindmocks "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
 	suimocks "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
@@ -29,12 +32,13 @@ import (
 )
 
 var (
-	evmSelector    = mcmstypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
-	solSelector    = mcmstypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
-	aptosSelector  = mcmstypes.ChainSelector(chainsel.APTOS_TESTNET.Selector)
-	suiSelector    = mcmstypes.ChainSelector(chainsel.SUI_TESTNET.Selector)
-	tonSelector    = mcmstypes.ChainSelector(chainsel.TON_TESTNET.Selector)
-	cantonSelector = mcmstypes.ChainSelector(chainsel.CANTON_TESTNET.Selector)
+	evmSelector     = mcmstypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector)
+	solSelector     = mcmstypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector)
+	aptosSelector   = mcmstypes.ChainSelector(chainsel.APTOS_TESTNET.Selector)
+	suiSelector     = mcmstypes.ChainSelector(chainsel.SUI_TESTNET.Selector)
+	tonSelector     = mcmstypes.ChainSelector(chainsel.TON_TESTNET.Selector)
+	cantonSelector  = mcmstypes.ChainSelector(chainsel.CANTON_TESTNET.Selector)
+	stellarSelector = mcmstypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector)
 )
 
 func TestBuildExecutors(t *testing.T) {
@@ -74,6 +78,12 @@ func TestBuildExecutors(t *testing.T) {
 	cantonExecutor, err := cantonsdk.NewExecutor(cantonEncoder, cantonInspector,
 		cantonChain.Participants[0].LedgerServices.Command, "party::test", []string{"party::test"}, cantonsdk.TimelockRoleProposer)
 	require.NoError(t, err)
+	stellarSigner := stellarmocks.NewSigner(t)
+	stellarEncoder := stellarsdk.NewEncoder(stellarSelector, 0, false)
+	stellarInspector, err := stellarsdk.NewInspectorWithNetworkPassphrase(new(stellarrpc.Client), stellarSigner, chainsel.STELLAR_LOCALNET.Passphrase)
+	require.NoError(t, err)
+	stellarExecutor, err := stellarsdk.NewExecutor(stellarEncoder, stellarInspector)
+	require.NoError(t, err)
 
 	tests := []struct {
 		name          string
@@ -86,12 +96,13 @@ func TestBuildExecutors(t *testing.T) {
 		{
 			name: "success",
 			encoders: map[mcmstypes.ChainSelector]mcmssdk.Encoder{
-				evmSelector:    evmEncoder,
-				solSelector:    solEncoder,
-				aptosSelector:  aptosEncoder,
-				suiSelector:    suiEncoder,
-				tonSelector:    tonEncoder,
-				cantonSelector: cantonEncoder,
+				evmSelector:     evmEncoder,
+				solSelector:     solEncoder,
+				aptosSelector:   aptosEncoder,
+				suiSelector:     suiEncoder,
+				tonSelector:     tonEncoder,
+				cantonSelector:  cantonEncoder,
+				stellarSelector: stellarEncoder,
 			},
 			chainMetadata: map[mcmstypes.ChainSelector]mcmstypes.ChainMetadata{
 				mcmstypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): {
@@ -127,6 +138,10 @@ func TestBuildExecutors(t *testing.T) {
 					MCMAddress:      "0xcanton",
 					StartingOpCount: 0,
 				},
+				mcmstypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector): {
+					MCMAddress:      "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					StartingOpCount: 0,
+				},
 			},
 			setup: func(accessor *mocks.ChainAccessor) {
 				accessor.EXPECT().EVMClient(mock.Anything).Return(nil, true)
@@ -140,14 +155,17 @@ func TestBuildExecutors(t *testing.T) {
 				accessor.EXPECT().TonClient(mock.Anything).Return(tonClient, true)
 				accessor.EXPECT().TonSigner(mock.Anything).Return(tonSigner, true)
 				accessor.EXPECT().CantonChain(mock.Anything).Return(cantonChain, true)
+				accessor.EXPECT().StellarClient(mock.Anything).Return(new(stellarrpc.Client), true)
+				accessor.EXPECT().StellarSigner(mock.Anything).Return(stellarSigner, true)
 			},
 			want: map[mcmstypes.ChainSelector]mcmssdk.Executor{
-				evmSelector:    evmExecutor,
-				solSelector:    solExecutor,
-				aptosSelector:  aptosExecutor,
-				suiSelector:    suiExecutor,
-				tonSelector:    tonExecutor,
-				cantonSelector: cantonExecutor,
+				evmSelector:     evmExecutor,
+				solSelector:     solExecutor,
+				aptosSelector:   aptosExecutor,
+				suiSelector:     suiExecutor,
+				tonSelector:     tonExecutor,
+				cantonSelector:  cantonExecutor,
+				stellarSelector: stellarExecutor,
 			},
 		},
 		{
@@ -183,7 +201,7 @@ func TestBuildExecutors(t *testing.T) {
 			if tt.wantErr == "" {
 				require.NoError(t, err)
 				require.Empty(t, cmp.Diff(tt.want, got,
-					cmpopts.IgnoreUnexported(cantonsdk.Inspector{}, cantonsdk.Executor{})))
+					cmpopts.IgnoreUnexported(cantonsdk.Inspector{}, cantonsdk.Executor{}, stellarsdk.Inspector{}, stellarsdk.Executor{})))
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}

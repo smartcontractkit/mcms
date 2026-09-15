@@ -9,6 +9,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
@@ -31,6 +32,7 @@ func TestBuildConverters(t *testing.T) {
 				chaintest.Chain5Selector: {},
 				chaintest.Chain6Selector: {},
 				chaintest.Chain7Selector: {},
+				chaintest.Chain9Selector: {},
 			},
 			expectTypes: map[types.ChainSelector]any{
 				chaintest.Chain2Selector: (*evm.TimelockConverter)(nil),
@@ -38,6 +40,7 @@ func TestBuildConverters(t *testing.T) {
 				chaintest.Chain5Selector: (*aptos.TimelockConverter)(nil),
 				chaintest.Chain6Selector: (*sui.TimelockConverter)(nil),
 				chaintest.Chain7Selector: (*ton.TimelockConverter)(nil),
+				chaintest.Chain9Selector: (*stellar.TimelockConverter)(nil),
 			},
 		},
 		{

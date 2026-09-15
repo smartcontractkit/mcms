@@ -5,11 +5,13 @@ import (
 	"testing"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
+	stellarrpc "github.com/stellar/go-stellar-sdk/clients/rpcclient"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/smartcontractkit/mcms/chainwrappers/mocks"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	stellarmocks "github.com/smartcontractkit/mcms/sdk/stellar/mocks"
 
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
 )
@@ -60,6 +62,10 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 						"deployer_state_obj":"0xdeployer"
 					}`),
 				},
+				mcmsTypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector): {
+					MCMAddress:      "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					StartingOpCount: 0,
+				},
 			},
 			chainAccess: mocks.NewChainAccessor(t),
 			expectErr:   false,
@@ -70,8 +76,41 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 				access.EXPECT().SuiClient(mock.Anything).Return(nil, true)
 				access.EXPECT().SuiSigner(mock.Anything).Return(nil, true)
 				access.EXPECT().TonClient(mock.Anything).Return(nil, true)
+				access.EXPECT().StellarClient(mock.Anything).Return(new(stellarrpc.Client), true)
+				access.EXPECT().StellarSigner(mock.Anything).Return(stellarmocks.NewSigner(t), true)
 			},
-			expectedInspectorsCount: 5,
+			expectedInspectorsCount: 6,
+		},
+		{
+			name: "missing stellar client",
+			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
+				mcmsTypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector): {
+					MCMAddress:      "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					StartingOpCount: 0,
+				},
+			},
+			chainAccess: mocks.NewChainAccessor(t),
+			expectErr:   true,
+			errContains: "missing Stellar client",
+			setup: func(access *mocks.ChainAccessor) {
+				access.EXPECT().StellarClient(mock.Anything).Return(nil, false)
+			},
+		},
+		{
+			name: "missing stellar signer",
+			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
+				mcmsTypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector): {
+					MCMAddress:      "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+					StartingOpCount: 0,
+				},
+			},
+			chainAccess: mocks.NewChainAccessor(t),
+			expectErr:   true,
+			errContains: "missing Stellar signer",
+			setup: func(access *mocks.ChainAccessor) {
+				access.EXPECT().StellarClient(mock.Anything).Return(new(stellarrpc.Client), true)
+				access.EXPECT().StellarSigner(mock.Anything).Return(nil, false)
+			},
 		},
 		{
 			name: "aptos curse mcms from metadata",
@@ -104,7 +143,7 @@ func TestMCMInspectorBuilder_BuildInspectors(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			tc.chainAccess = mocks.NewChainAccessor(t)
-			if tc.expectedInspectorsCount > 0 {
+			if tc.setup != nil {
 				tc.setup(tc.chainAccess)
 			}
 

@@ -98,7 +98,11 @@ func (i *Inspector) GetRoot(ctx context.Context, mcmAddr string) (common.Hash, u
 	return root, validUntil, nil
 }
 
-// GetRootMetadata reads the chain metadata from the MCMS contract's root_metadata.
+// GetRootMetadata reads the chain metadata from the MCMS contract's root_metadata,
+// including StartingOpCount derived from the root's PreOpCount. This mirrors every
+// other family (see sdk/evm): the value is the root metadata as recorded on chain.
+// Callers building a *new* proposal must use GetOpCount, which reads the live
+// counter, not this value.
 func (i *Inspector) GetRootMetadata(ctx context.Context, mcmAddr string) (types.ChainMetadata, error) {
 	client := mcmsbindings.NewMcmsClient(i.invoker, mcmAddr)
 
