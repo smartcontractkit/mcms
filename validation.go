@@ -12,6 +12,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 )
@@ -40,6 +41,9 @@ func validateAdditionalFields(additionalFields json.RawMessage, csel types.Chain
 
 	case chainsel.FamilyCanton:
 		return canton.ValidateAdditionalFields(additionalFields)
+
+	case chainsel.FamilyStellar:
+		return stellar.ValidateAdditionalFields(additionalFields)
 	}
 
 	return nil
@@ -56,7 +60,7 @@ func validateChainMetadata(metadata types.ChainMetadata, csel types.ChainSelecto
 	case chainsel.FamilySolana:
 		return solana.ValidateChainMetadata(metadata)
 	case chainsel.FamilyStellar:
-		return nil
+		return stellar.ValidateChainMetadata(metadata)
 	case chainsel.FamilyEVM:
 		return nil
 	case chainsel.FamilyAptos:

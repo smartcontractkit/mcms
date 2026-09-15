@@ -2,6 +2,7 @@ package stellar
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/smartcontractkit/chainlink-stellar/bindings"
@@ -75,8 +76,11 @@ func (i *TimelockInspector) GetProposers(ctx context.Context, address string) ([
 	return i.members(ctx, address, "PROPOSER")
 }
 
-func (i *TimelockInspector) GetExecutors(ctx context.Context, address string) ([]string, error) {
-	return i.members(ctx, address, "EXECUTOR")
+// GetExecutors is unsupported on Stellar. The timelock has no executor role:
+// execute_batch is permissionless once an operation is ready, so there is no
+// address set to return. Mirrors the Canton inspector.
+func (i *TimelockInspector) GetExecutors(_ context.Context, _ string) ([]string, error) {
+	return nil, errors.New("unsupported on Stellar: execution is permissionless, there is no executor role")
 }
 
 func (i *TimelockInspector) GetBypassers(ctx context.Context, address string) ([]string, error) {
@@ -128,6 +132,8 @@ func (i *TimelockInspector) GetMinDelay(ctx context.Context, address string) (ui
 }
 
 // IsInitialized reports whether the timelock has already been initialized.
+// It is not part of the sdk.TimelockInspector interface; it is used by
+// deployment tooling to decide whether Initialize must be called.
 func (i *TimelockInspector) IsInitialized(ctx context.Context, address string) (bool, error) {
 	if i == nil || i.invoker == nil {
 		return false, fmt.Errorf("stellar timelock invoker is nil")

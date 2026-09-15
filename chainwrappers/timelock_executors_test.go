@@ -7,7 +7,9 @@ import (
 	sol "github.com/gagliardetto/solana-go"
 	solrpc "github.com/gagliardetto/solana-go/rpc"
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	chainsel "github.com/smartcontractkit/chain-selectors"
+	stellarrpc "github.com/stellar/go-stellar-sdk/clients/rpcclient"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	tonwallet "github.com/xssnick/tonutils-go/ton/wallet"
@@ -18,6 +20,8 @@ import (
 	aptosmocks "github.com/smartcontractkit/mcms/sdk/aptos/mocks/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/solana"
+	stellarsdk "github.com/smartcontractkit/mcms/sdk/stellar"
+	stellarmocks "github.com/smartcontractkit/mcms/sdk/stellar/mocks"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	suibindmocks "github.com/smartcontractkit/mcms/sdk/sui/mocks/bindutils"
 	suimocks "github.com/smartcontractkit/mcms/sdk/sui/mocks/sui"
@@ -25,6 +29,8 @@ import (
 	tonmocks "github.com/smartcontractkit/mcms/sdk/ton/mocks"
 	mcmstypes "github.com/smartcontractkit/mcms/types"
 )
+
+const stellarTestMCMAddress = "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 
 func TestBuildTimelockExecutors(t *testing.T) {
 	t.Parallel()
@@ -46,6 +52,10 @@ func TestBuildTimelockExecutors(t *testing.T) {
 	tonSigner := &tonwallet.Wallet{}
 	tonExecutor, err := ton.NewTimelockExecutor(
 		ton.TimelockExecutorOpts{Client: tonClient, Wallet: tonSigner, Amount: ton.DefaultSendAmount})
+	require.NoError(t, err)
+	stellarSigner := stellarmocks.NewSigner(t)
+	stellarExecutor, err := stellarsdk.NewTimelockExecutorWithNetworkPassphrase(
+		new(stellarrpc.Client), stellarSigner, chainsel.STELLAR_LOCALNET.Passphrase, stellarTestMCMAddress)
 	require.NoError(t, err)
 
 	tests := []struct {
@@ -87,6 +97,10 @@ func TestBuildTimelockExecutors(t *testing.T) {
 					MCMAddress:      "0xton",
 					StartingOpCount: 0,
 				},
+				mcmstypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector): {
+					MCMAddress:      stellarTestMCMAddress,
+					StartingOpCount: 0,
+				},
 			},
 			setup: func(accessor *mocks.ChainAccessor) {
 				accessor.EXPECT().EVMClient(mock.Anything).Return(nil, true)
@@ -99,13 +113,16 @@ func TestBuildTimelockExecutors(t *testing.T) {
 				accessor.EXPECT().SuiSigner(mock.Anything).Return(nil, true)
 				accessor.EXPECT().TonClient(mock.Anything).Return(tonClient, true)
 				accessor.EXPECT().TonSigner(mock.Anything).Return(tonSigner, true)
+				accessor.EXPECT().StellarClient(mock.Anything).Return(new(stellarrpc.Client), true)
+				accessor.EXPECT().StellarSigner(mock.Anything).Return(stellarSigner, true)
 			},
 			want: map[mcmstypes.ChainSelector]mcmssdk.TimelockExecutor{
-				evmSelector:   evmExecutor,
-				solSelector:   solExecutor,
-				aptosSelector: aptosExecutor,
-				suiSelector:   suiExecutor,
-				tonSelector:   tonExecutor,
+				evmSelector:     evmExecutor,
+				solSelector:     solExecutor,
+				aptosSelector:   aptosExecutor,
+				suiSelector:     suiExecutor,
+				tonSelector:     tonExecutor,
+				stellarSelector: stellarExecutor,
 			},
 		},
 	}
@@ -120,7 +137,8 @@ func TestBuildTimelockExecutors(t *testing.T) {
 			got, err := BuildTimelockExecutors(chainAccessor, tt.chainMetadata, mcmstypes.TimelockActionSchedule)
 			if tt.wantErr == "" {
 				require.NoError(t, err)
-				require.Empty(t, cmp.Diff(tt.want, got))
+				require.Empty(t, cmp.Diff(tt.want, got,
+					cmpopts.IgnoreUnexported(stellarsdk.TimelockExecutor{}, stellarsdk.TimelockInspector{})))
 			} else {
 				require.ErrorContains(t, err, tt.wantErr)
 			}
