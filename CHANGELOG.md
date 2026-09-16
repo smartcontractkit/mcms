@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.55.2](https://github.com/smartcontractkit/mcms/compare/v0.55.1...v0.55.2) (2026-09-16)
+
+
+### Bug Fixes
+
+* **stellar:** reject unsupported timelock executor role and validate stellar proposal fields ([#855](https://github.com/smartcontractkit/mcms/issues/855)) ([889e14e](https://github.com/smartcontractkit/mcms/commit/889e14ec9b8266c9dd08087692de1dceed7c53fc))
+
 ## [0.55.1](https://github.com/smartcontractkit/mcms/compare/v0.55.0...v0.55.1) (2026-09-09)
 
 
