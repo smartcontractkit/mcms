@@ -64,4 +64,6 @@ func TestCantonSuite(t *testing.T) {
 
 func TestStellarSuite(t *testing.T) {
 	suite.Run(t, new(stellare2e.ExecutionTestSuite))
+	suite.Run(t, new(stellare2e.MCMSInspectorTestSuite))
+	suite.Run(t, new(stellare2e.TimelockInspectionTestSuite))
 }
