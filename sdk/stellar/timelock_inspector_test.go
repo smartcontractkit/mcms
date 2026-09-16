@@ -145,3 +145,16 @@ func TestTimelockInspector_IsInitialized_EmptyContractID(t *testing.T) {
 
 	invoker.AssertNotCalled(t, "SimulateContract", mock.Anything, mock.Anything, mock.Anything, mock.Anything)
 }
+
+func TestTimelockInspector_GetExecutors_Unsupported(t *testing.T) {
+	t.Parallel()
+
+	// No invoker expectations: GetExecutors must fail without issuing any RPC,
+	// because the Stellar timelock defines no executor role.
+	inspector := stellar.NewTimelockInspectorFromInvoker(stellarmocks.NewInvoker(t))
+
+	executors, err := inspector.GetExecutors(t.Context(), testContractID(t, 120))
+	require.Error(t, err)
+	require.Nil(t, executors)
+	require.Contains(t, err.Error(), "unsupported on Stellar")
+}

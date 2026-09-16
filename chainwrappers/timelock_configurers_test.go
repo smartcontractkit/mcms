@@ -7,6 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/gagliardetto/solana-go"
 	chainsel "github.com/smartcontractkit/chain-selectors"
+	stellarrpc "github.com/stellar/go-stellar-sdk/clients/rpcclient"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/xssnick/tonutils-go/ton/wallet"
@@ -15,6 +16,8 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
+	stellarsdk "github.com/smartcontractkit/mcms/sdk/stellar"
+	stellarmocks "github.com/smartcontractkit/mcms/sdk/stellar/mocks"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
@@ -51,6 +54,9 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 				mcmsTypes.ChainSelector(chainsel.SOLANA_DEVNET.Selector):            {MCMAddress: "0xsolana"},
 				mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector):            {MCMAddress: "0xaptos"},
 				mcmsTypes.ChainSelector(chainsel.TON_TESTNET.Selector):              {MCMAddress: "0xton"},
+				mcmsTypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector): {
+					MCMAddress: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				},
 				mcmsTypes.ChainSelector(chainsel.SUI_TESTNET.Selector): {
 					MCMAddress: "0xsui",
 					AdditionalFields: []byte(`{
@@ -77,6 +83,9 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 				access.EXPECT().AptosClient(mock.Anything).Return(nil, true)
 
 				access.EXPECT().TonSigner(mock.Anything).Return(&wallet.Wallet{}, true)
+
+				access.EXPECT().StellarClient(mock.Anything).Return(new(stellarrpc.Client), true)
+				access.EXPECT().StellarSigner(mock.Anything).Return(stellarmocks.NewSigner(t), true)
 			},
 			expectTypes: map[mcmsTypes.ChainSelector]any{
 				mcmsTypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): (*evm.TimelockConfigurer)(nil),
@@ -84,6 +93,7 @@ func TestBuildTimelockConfigurers(t *testing.T) {
 				mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector):            (*aptos.TimelockConfigurer)(nil),
 				mcmsTypes.ChainSelector(chainsel.SUI_TESTNET.Selector):              (*sui.TimelockConfigurer)(nil),
 				mcmsTypes.ChainSelector(chainsel.TON_TESTNET.Selector):              (*ton.TimelockConfigurer)(nil),
+				mcmsTypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector):         (*stellarsdk.TimelockConfigurer)(nil),
 			},
 		},
 		{
