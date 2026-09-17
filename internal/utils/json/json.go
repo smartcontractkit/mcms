@@ -1,5 +1,7 @@
 package json
 
+import "maps"
+
 import "encoding/json"
 
 func Merge(json1, json2 []byte) ([]byte, error) {
@@ -14,9 +16,7 @@ func Merge(json1, json2 []byte) ([]byte, error) {
 	}
 
 	// Merge map2 into map1
-	for key, value := range map2 {
-		map1[key] = value
-	}
+	maps.Copy(map1, map2)
 
 	// Marshal the merged result back into JSON
 	return json.Marshal(map1)

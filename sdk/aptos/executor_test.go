@@ -128,7 +128,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				mcms.EXPECT().MCMSExecutor().Return(mockMCMSExecutorModule)
 				mockMCMSExecutorModule.EXPECT().StageData(
 					&bind.TransactOpts{
-						SequenceNumber: pointerTo(uint64(789)),
+						SequenceNumber: new(uint64(789)),
 						Signer:         signer,
 					},
 					generateData(50_000),
@@ -136,7 +136,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				).Return(&api.PendingTransaction{Hash: "0xdeadbeef1"}, nil)
 				mockMCMSExecutorModule.EXPECT().StageData(
 					&bind.TransactOpts{
-						SequenceNumber: pointerTo(uint64(790)),
+						SequenceNumber: new(uint64(790)),
 						Signer:         signer,
 					},
 					generateData(50_000),
@@ -144,7 +144,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				).Return(&api.PendingTransaction{Hash: "0xdeadbeef2"}, nil)
 				mockMCMSExecutorModule.EXPECT().StageDataAndExecute(
 					&bind.TransactOpts{
-						SequenceNumber: pointerTo(uint64(791)),
+						SequenceNumber: new(uint64(791)),
 						Signer:         signer,
 					},
 					TimelockRoleProposer.Byte(),
@@ -317,7 +317,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				mcms.EXPECT().MCMSExecutor().Return(mockMCMSExecutorModule)
 				mockMCMSExecutorModule.EXPECT().StageData(
 					&bind.TransactOpts{
-						SequenceNumber: pointerTo(uint64(789)),
+						SequenceNumber: new(uint64(789)),
 						Signer:         signer,
 					},
 					generateData(50_000),
@@ -354,7 +354,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				mcms.EXPECT().MCMSExecutor().Return(mockMCMSExecutorModule)
 				mockMCMSExecutorModule.EXPECT().StageData(
 					&bind.TransactOpts{
-						SequenceNumber: pointerTo(uint64(789)),
+						SequenceNumber: new(uint64(789)),
 						Signer:         signer,
 					},
 					generateData(50_000),
@@ -362,7 +362,7 @@ func TestExecutor_ExecuteOperation(t *testing.T) {
 				).Return(&api.PendingTransaction{Hash: "0xdeadbeef1"}, nil)
 				mockMCMSExecutorModule.EXPECT().StageDataAndExecute(
 					&bind.TransactOpts{
-						SequenceNumber: pointerTo(uint64(790)),
+						SequenceNumber: new(uint64(790)),
 						Signer:         signer,
 					},
 					TimelockRoleBypasser.Byte(),
