@@ -117,7 +117,7 @@ func deployStellarMCMSContract(
 		common.HexToHash(networkIDHex),
 		config,
 		instanceLabel,
-		stellarmcmsutil.MCMSDeploySalt(uint64(chainSelector), instanceLabel),
+		stellarmcmsutil.TimelockDeploySalt(uint64(chainSelector), instanceLabel),
 	)
 	require.NoError(t, err, "failed to deploy Stellar MCMS")
 

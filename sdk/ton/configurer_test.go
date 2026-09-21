@@ -195,7 +195,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 					require.True(t, ok)
 					preparedBody := must(cell.FromBOC(preparedTx.Data))
 					var preparedMsg mcms.SetConfig
-					require.NoError(t, tlb.LoadFromCell(&preparedMsg, preparedBody.BeginParse()))
+					require.NoError(t, tlb.LoadFromCell(&preparedMsg, preparedBody.MustBeginParse()))
 
 					tx2, err := configurer.SetConfig(ctx, tt.mcmAddr, tt.cfg, tt.clearRoot)
 					require.NoError(t, err)
@@ -203,7 +203,7 @@ func TestConfigurer_SetConfig(t *testing.T) {
 					require.True(t, ok)
 					preparedBody2 := must(cell.FromBOC(preparedTx2.Data))
 					var preparedMsg2 mcms.SetConfig
-					require.NoError(t, tlb.LoadFromCell(&preparedMsg2, preparedBody2.BeginParse()))
+					require.NoError(t, tlb.LoadFromCell(&preparedMsg2, preparedBody2.MustBeginParse()))
 
 					assert.Equal(t, preparedTx.Data, preparedTx2.Data)
 					assert.Equal(t, preparedTx.ContractType, preparedTx2.ContractType)

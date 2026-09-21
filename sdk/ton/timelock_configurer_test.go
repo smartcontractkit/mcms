@@ -135,7 +135,7 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 				assert.Equal(t, []string{"UpdateDelay"}, tx.Tags)
 				body := must(cell.FromBOC(tx.Data))
 				var msg timelock.UpdateDelay
-				require.NoError(t, tlb.LoadFromCell(&msg, body.BeginParse()))
+				require.NoError(t, tlb.LoadFromCell(&msg, body.MustBeginParse()))
 
 				result2, err := configurer.UpdateDelay(t.Context(), tt.timelockAddress, tt.newDelay)
 				require.NoError(t, err)
@@ -143,7 +143,7 @@ func TestTimelockConfigurer_UpdateDelay(t *testing.T) {
 				require.True(t, ok)
 				body2 := must(cell.FromBOC(tx2.Data))
 				var msg2 timelock.UpdateDelay
-				require.NoError(t, tlb.LoadFromCell(&msg2, body2.BeginParse()))
+				require.NoError(t, tlb.LoadFromCell(&msg2, body2.MustBeginParse()))
 				assert.Equal(t, tx.Data, tx2.Data)
 				assert.Equal(t, msg.QueryID, msg2.QueryID)
 				assert.NotZero(t, msg.QueryID)
@@ -289,7 +289,7 @@ func TestTimelockConfigurer_GrantRole(t *testing.T) {
 				assert.Equal(t, []string{"RBACTimelock", "GrantRole"}, tx.Tags)
 				body := must(cell.FromBOC(tx.Data))
 				var msg rbac.GrantRole
-				require.NoError(t, tlb.LoadFromCell(&msg, body.BeginParse()))
+				require.NoError(t, tlb.LoadFromCell(&msg, body.MustBeginParse()))
 
 				roleHash, err := mcmston.TimelockRoleHash(tt.role)
 				require.NoError(t, err)
@@ -303,7 +303,7 @@ func TestTimelockConfigurer_GrantRole(t *testing.T) {
 				require.True(t, ok)
 				body2 := must(cell.FromBOC(tx2.Data))
 				var msg2 rbac.GrantRole
-				require.NoError(t, tlb.LoadFromCell(&msg2, body2.BeginParse()))
+				require.NoError(t, tlb.LoadFromCell(&msg2, body2.MustBeginParse()))
 				assert.Equal(t, tx.Data, tx2.Data)
 				assert.Equal(t, msg.QueryID, msg2.QueryID)
 			}
