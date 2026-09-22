@@ -9,10 +9,11 @@ import (
 	"os"
 	"testing"
 
-	stellardeployer "github.com/smartcontractkit/chainlink-stellar/deployment"
 	"github.com/stellar/go-stellar-sdk/keypair"
 	"github.com/stellar/go-stellar-sdk/xdr"
 	"github.com/stretchr/testify/suite"
+
+	stellardeployer "github.com/smartcontractkit/chainlink-stellar/deployment"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
