@@ -263,7 +263,7 @@ require (
 	github.com/shopspring/decimal v1.4.0 // indirect
 	github.com/sirupsen/logrus v1.9.4 // indirect
 	github.com/smartcontractkit/chainlink-canton/authentication v1.0.0 // indirect
-	github.com/smartcontractkit/chainlink-ccip/deployment v0.0.0-20260918135944-fa1a268dac47 // indirect
+	github.com/smartcontractkit/chainlink-ccip/deployment v0.0.0-20260922043016-517a12a4220e // indirect
 	github.com/smartcontractkit/chainlink-common/pkg/chipingress v0.0.11-0.20260724142814-45996a1bcb72 // indirect
 	github.com/smartcontractkit/chainlink-deployments-framework v0.123.4-0.20260921213414-72114504884b // indirect
 	github.com/smartcontractkit/chainlink-protos/cre/go v0.0.0-20260804200254-c1accce563a8 // indirect
