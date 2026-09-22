@@ -24,7 +24,7 @@ require (
 	github.com/samber/lo v1.53.0
 	github.com/smartcontractkit/chain-selectors v1.0.111
 	github.com/smartcontractkit/chainlink-aptos v0.0.0-20260428085939-5c70de12dbfc
-	github.com/smartcontractkit/chainlink-canton v0.0.0-20260921093807-f6b69f48962e
+	github.com/smartcontractkit/chainlink-canton v0.0.0-20260922192949-eaae85b6afe5
 	github.com/smartcontractkit/chainlink-canton/contracts/v2 v2.1.0
 	github.com/smartcontractkit/chainlink-ccip/chains/solana v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139

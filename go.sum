@@ -713,8 +713,8 @@ github.com/smartcontractkit/chain-selectors v1.0.111 h1:urb/qOyRanxDn+Wras+LULHE
 github.com/smartcontractkit/chain-selectors v1.0.111/go.mod h1:qy7whtgG5g+7z0jt0nRyii9bLND9m15NZTzuQPkMZ5w=
 github.com/smartcontractkit/chainlink-aptos v0.0.0-20260428085939-5c70de12dbfc h1:Um9FBcf0JNSFuGbxgccDG1vM3cNrMGy0SdJ7r6VbX0o=
 github.com/smartcontractkit/chainlink-aptos v0.0.0-20260428085939-5c70de12dbfc/go.mod h1:zfE2R7887kiwXkGTHKPe5NBgwhFwIC3pnA2uAxrbvig=
-github.com/smartcontractkit/chainlink-canton v0.0.0-20260921093807-f6b69f48962e h1:Db+vIQoa5wDt0piAaf2ccBKaB1X2T4TRNGXPrNPaKfo=
-github.com/smartcontractkit/chainlink-canton v0.0.0-20260921093807-f6b69f48962e/go.mod h1:Y11LzSqNqOxCekfgHSJ2IQVMhZCg4WtccR5DBZiN9Vk=
+github.com/smartcontractkit/chainlink-canton v0.0.0-20260922192949-eaae85b6afe5 h1:nhlbr97l1kHTFtAZdwvsN8va02Arc+cIXLFSFwwKuXM=
+github.com/smartcontractkit/chainlink-canton v0.0.0-20260922192949-eaae85b6afe5/go.mod h1:Y11LzSqNqOxCekfgHSJ2IQVMhZCg4WtccR5DBZiN9Vk=
 github.com/smartcontractkit/chainlink-canton/authentication v1.0.0 h1:oCgOHdTA7y/cIhTomSK2mc9ARyANF7zXng+0jyCmsKQ=
 github.com/smartcontractkit/chainlink-canton/authentication v1.0.0/go.mod h1:5J2EGdvEbeddbgEkYBzn/BCMKILs+UUYJglCP2VOFGE=
 github.com/smartcontractkit/chainlink-canton/contracts/v2 v2.1.0 h1:3LH270uR1IYmyJiaxMTw7fzG1ZLnPO/3Np5kttyZC1I=
