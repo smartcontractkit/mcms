@@ -21,7 +21,7 @@ jobs:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@ci-lint-go/v4
         with:
-          golangci-lint-version: v2.12.2
+          golangci-lint-version: v2.13.2
           use-go-cache: true
           only-new-issues: false
           golangci-lint-config: .golangci.yml
@@ -37,7 +37,7 @@ jobs:
       - name: Linting Go
         uses: smartcontractkit/.github/actions/ci-lint-go@ci-lint-go/v4
         with:
-          golangci-lint-version: v2.12.2
+          golangci-lint-version: v2.13.2
           golangci-lint-args: --build-tags="e2e"
           use-go-cache: true
           only-new-issues: false
