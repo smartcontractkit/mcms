@@ -44,6 +44,12 @@ const (
 	selectorSize             = 4
 	revertPrefix             = "revert:"
 	errCallRevertedTruncated = "CallReverted(truncated)"
+
+	// defaultSimulationGasLimit is used as a fallback gas limit for CallContract
+	// simulations when opts.GasLimit is 0 and the block gas limit query fails.
+	// 10M is conservative enough to work on most chains while being high enough
+	// for typical contract calls.
+	defaultSimulationGasLimit = 10_000_000
 )
 
 // CustomErrorData contains the error selector and its arguments separately.
@@ -138,25 +144,39 @@ type ExecutionError struct {
 	UnderlyingReasonRaw string
 	// UnderlyingReasonDecoded is the human-readable decoded underlying revert reason (if decoding succeeded)
 	UnderlyingReasonDecoded string
+	// IsLikelyGasEstimationFailure indicates that the execution failure is likely
+	// caused by gas estimation limits rather than a true contract logic revert.
+	// This is set when the RBACTimelock reports "underlying transaction reverted" but
+	// the underlying revert reason could not be extracted (e.g., because the simulation
+	// ran out of gas).
+	IsLikelyGasEstimationFailure bool `json:"IsLikelyGasEstimationFailure,omitempty"`
+	// Hint provides actionable guidance to the user for resolving the error.
+	// For example, when a gas estimation failure is detected, this field suggests
+	// setting gasLimit in the proposal's chainMetadata.additionalFields.
+	Hint string `json:"Hint,omitempty"`
 	// OriginalError is the original error from the contract binding
 	OriginalError error `json:"-"`
 }
 
 func (e *ExecutionError) Error() string {
+	var msg string
 	if e.UnderlyingReasonDecoded != "" {
-		return fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.UnderlyingReasonDecoded)
-	}
-	if e.UnderlyingReasonRaw != "" {
-		return fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.UnderlyingReasonRaw)
-	}
-	if e.RevertReasonDecoded != "" {
-		return fmt.Sprintf("execution failed: %v (revert reason: %s)", e.OriginalError, e.RevertReasonDecoded)
-	}
-	if e.RevertReasonRaw != nil && len(e.RevertReasonRaw.Combined()) > 0 {
-		return fmt.Sprintf("execution failed: %v (raw revert data: %s)", e.OriginalError, common.Bytes2Hex(e.RevertReasonRaw.Combined()))
+		msg = fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.UnderlyingReasonDecoded)
+	} else if e.UnderlyingReasonRaw != "" {
+		msg = fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.UnderlyingReasonRaw)
+	} else if e.RevertReasonDecoded != "" {
+		msg = fmt.Sprintf("execution failed: %v (revert reason: %s)", e.OriginalError, e.RevertReasonDecoded)
+	} else if e.RevertReasonRaw != nil && len(e.RevertReasonRaw.Combined()) > 0 {
+		msg = fmt.Sprintf("execution failed: %v (raw revert data: %s)", e.OriginalError, common.Bytes2Hex(e.RevertReasonRaw.Combined()))
+	} else {
+		msg = fmt.Sprintf("execution failed: %v", e.OriginalError)
 	}
 
-	return fmt.Sprintf("execution failed: %v", e.OriginalError)
+	if e.Hint != "" {
+		msg += fmt.Sprintf("\n💡 Hint: %s", e.Hint)
+	}
+
+	return msg
 }
 
 func (e *ExecutionError) Unwrap() error {
@@ -214,11 +234,13 @@ func (e *ExecutionError) UnmarshalJSON(data []byte) error {
 	}
 
 	type executionErrorAlias struct {
-		Transaction             *gethtypes.Transaction `json:"Transaction"`
-		RawRevertReason         *CustomErrorData       `json:"RevertReasonRaw"`
-		DecodedRevertReason     string                 `json:"RevertReasonDecoded"`
-		UnderlyingReason        string                 `json:"UnderlyingReasonRaw"`
-		DecodedUnderlyingReason string                 `json:"UnderlyingReasonDecoded"`
+		Transaction                  *gethtypes.Transaction `json:"Transaction"`
+		RawRevertReason              *CustomErrorData       `json:"RevertReasonRaw"`
+		DecodedRevertReason          string                 `json:"RevertReasonDecoded"`
+		UnderlyingReason             string                 `json:"UnderlyingReasonRaw"`
+		DecodedUnderlyingReason      string                 `json:"UnderlyingReasonDecoded"`
+		IsLikelyGasEstimationFailure bool                   `json:"IsLikelyGasEstimationFailure,omitempty"`
+		Hint                         string                 `json:"Hint,omitempty"`
 	}
 
 	var temp executionErrorAlias
@@ -231,6 +253,8 @@ func (e *ExecutionError) UnmarshalJSON(data []byte) error {
 	e.RevertReasonDecoded = temp.DecodedRevertReason
 	e.UnderlyingReasonRaw = temp.UnderlyingReason
 	e.UnderlyingReasonDecoded = temp.DecodedUnderlyingReason
+	e.IsLikelyGasEstimationFailure = temp.IsLikelyGasEstimationFailure
+	e.Hint = temp.Hint
 	if originalErr != nil {
 		e.OriginalError = originalErr
 	}
@@ -307,6 +331,19 @@ func BuildExecutionError(
 		rawUnderlyingReason, decodedUnderlyingReason := getUnderlyingRevertReason(ctx, underlyingCallSender, timelockCallData, opts, client)
 		execErr.UnderlyingReasonRaw = rawUnderlyingReason
 		execErr.UnderlyingReasonDecoded = decodedUnderlyingReason
+	}
+
+	// Best-effort detection for gas estimation failures: when the RBACTimelock reports
+	// "underlying transaction reverted" but we could not extract the underlying
+	// reason (both raw and decoded are empty), or the underlying reason indicates
+	// an out-of-gas error, the failure is likely caused by gas estimation limits
+	// rather than a true contract logic revert.
+	if strings.Contains(errStr, "RBACTimelock: underlying transaction reverted") &&
+		(execErr.UnderlyingReasonRaw == "" && execErr.UnderlyingReasonDecoded == "" ||
+			strings.Contains(execErr.UnderlyingReasonRaw, "out of gas") ||
+			strings.Contains(execErr.UnderlyingReasonRaw, "gas required exceeds")) {
+		execErr.IsLikelyGasEstimationFailure = true
+		execErr.Hint = "This failure may be caused by gas estimation limits, not a contract logic error. Try setting 'gasLimit' in the proposal's chainMetadata.additionalFields (e.g., 30000000) - https://docs.cld.cldev.sh/guides/mcms/gas-boosting"
 	}
 
 	return execErr
@@ -665,6 +702,21 @@ func getUnderlyingRevertReason(
 		return "", ""
 	}
 
+	// Determine the gas limit to use for the simulation.
+	// When opts.GasLimit is 0 (the default when the proposal doesn't set gasLimit in
+	// chainMetadata.additionalFields), the RPC may use a low default gas that causes
+	// the simulation to fail with "out of gas" rather than returning the real revert
+	// reason. To avoid this, we query the chain's block gas limit and use 90% of it,
+	// which adapts to each chain automatically. If the header query fails, we fall
+	// back to a conservative default.
+	simulationGas := opts.GasLimit
+	if simulationGas == 0 {
+		simulationGas = defaultSimulationGasLimit
+		if header, headerErr := client.HeaderByNumber(ctx, nil); headerErr == nil && header != nil && header.GasLimit > 0 {
+			simulationGas = header.GasLimit * 9 / 10 // 90% of block gas limit
+		}
+	}
+
 	// Simulate the underlying transaction using CallContract (best-effort).
 	// timelockAddr is the underlying-call sender (RBACTimelock), including after CallProxy resolution.
 	_, err := client.CallContract(ctx, ethereum.CallMsg{
@@ -672,7 +724,7 @@ func getUnderlyingRevertReason(
 		To:    &underlyingCall.Target,
 		Value: underlyingCall.Value,
 		Data:  underlyingCall.Data,
-		Gas:   opts.GasLimit,
+		Gas:   simulationGas,
 	}, nil)
 
 	if err == nil {
@@ -683,7 +735,14 @@ func getUnderlyingRevertReason(
 
 	// Check if error contains revert data
 	if !strings.Contains(errStr, "execution reverted") && !strings.Contains(errStr, "revert") {
-		return "", ""
+		// The simulation failed with a non-revert error (e.g., "out of gas",
+		// "gas required exceeds", timeout, rate limit). Instead of silently
+		// returning empty strings, return a descriptive message so the user
+		// can understand what went wrong.
+		if strings.Contains(errStr, "out of gas") || strings.Contains(errStr, "gas required exceeds") {
+			return "underlying call failed: out of gas (try setting gasLimit in proposal chainMetadata.additionalFields)", ""
+		}
+		return fmt.Sprintf("underlying call simulation failed: %s", errStr), ""
 	}
 
 	var rawReason string
