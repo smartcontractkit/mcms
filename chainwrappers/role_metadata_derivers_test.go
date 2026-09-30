@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gagliardetto/solana-go"
+	chainsel "github.com/smartcontractkit/chain-selectors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/smartcontractkit/mcms/internal/testutils/chaintest"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/aptos"
+	"github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/stellar"
@@ -36,6 +38,7 @@ func TestBuildRoleMetadataDeriver(t *testing.T) {
 		{name: "sui", selector: chaintest.Chain6Selector, expectType: (*sui.RoleMetadataDeriver)(nil)},
 		{name: "ton", selector: chaintest.Chain7Selector, expectType: (*ton.RoleMetadataDeriver)(nil)},
 		{name: "stellar", selector: chaintest.Chain9Selector, expectType: (*stellar.RoleMetadataDeriver)(nil)},
+		{name: "canton", selector: types.ChainSelector(chainsel.CANTON_TESTNET.Selector), expectType: (*canton.RoleMetadataDeriver)(nil)},
 		{name: "unsupported family", selector: chaintest.Chain8Selector, expectErr: "unsupported chain family"},
 		{name: "invalid selector", selector: chaintest.ChainInvalidSelector, expectErr: "error getting chain family"},
 	}
