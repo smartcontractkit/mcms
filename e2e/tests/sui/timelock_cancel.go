@@ -220,8 +220,10 @@ func (s *TimelockCancelProposalTestSuite) TestTimelock_CancelProposal() {
 	currentCancelOpCount, err := cancelOpCountInspector.GetOpCount(s.T().Context(), s.mcmsObj)
 	s.Require().NoError(err, "Failed to get current operation count for cancellation")
 
-	metadata, err := suisdk.NewChainMetadata(currentCancelOpCount, suisdk.TimelockRoleCanceller, s.mcmsPackageID, s.mcmsObj, s.accountObj, s.registryObj, s.timelockObj, s.depStateObj)
-	s.Require().NoError(err, "Failed to create chain metadata for cancellation proposal")
+	metadata, err := suisdk.NewRoleMetadataDeriver().DeriveRoleMetadata(
+		s.T().Context(), s.chainSelector, timelockProposal.ChainMetadata[s.chainSelector], types.TimelockActionCancel, nil)
+	s.Require().NoError(err, "Failed to derive chain metadata for cancellation proposal")
+	metadata.StartingOpCount = currentCancelOpCount
 
 	cancelTimelockProposal, err := timelockProposal.DeriveCancellationProposal(map[types.ChainSelector]types.ChainMetadata{
 		s.chainSelector: metadata,
