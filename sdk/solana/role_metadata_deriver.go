@@ -50,10 +50,11 @@ func (d *RoleMetadataDeriver) DeriveRoleMetadata(
 	}
 
 	var additionalFields AdditionalFieldsMetadata
-	if len(derived.AdditionalFields) > 0 {
-		if err = json.Unmarshal(derived.AdditionalFields, &additionalFields); err != nil {
-			return types.ChainMetadata{}, fmt.Errorf("unable to unmarshal solana additional fields: %w", err)
-		}
+	if err = json.Unmarshal(derived.AdditionalFields, &additionalFields); err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("unable to unmarshal solana additional fields: %w", err)
+	}
+	if err = additionalFields.Validate(); err != nil {
+		return types.ChainMetadata{}, fmt.Errorf("invalid solana additional fields: %w", err)
 	}
 	derived.AdditionalFields, err = json.Marshal(additionalFields.WithExecutePayer(*d.executePayer))
 	if err != nil {
