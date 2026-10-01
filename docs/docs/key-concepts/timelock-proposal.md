@@ -116,6 +116,8 @@ Specifies the high-level action for the proposal. Can be one of:
 - `cancel`: Cancels previously scheduled transactions.
 - `bypass`: Directly executes transactions, skipping the timelock. For Solana bypass proposals, if the execute fee payer also appears in a batch op's remaining accounts, set `executePayer` in that chain's `additionalFields` so Merkle proof verification succeeds. See [Chain Metadata — Solana Additional Fields](./chain-metadata.md#solana-additional-fields).
 
+When deriving a `cancel` or `bypass` proposal from a `schedule` proposal, build each chain's metadata with the family's `RoleMetadataDeriver`. See [Chain Metadata — Deriving cancel/bypass metadata](./chain-metadata.md#deriving-cancelbypass-metadata).
+
 ---
 
 **delay** string<br/>
