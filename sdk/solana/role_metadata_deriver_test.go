@@ -62,7 +62,7 @@ func TestRoleMetadataDeriver_DeriveRoleMetadata(t *testing.T) {
 			payer:   &payer,
 			action:  types.TimelockActionBypass,
 			wantErr: "unable to unmarshal solana additional fields",
-		}
+		},
 		{
 			name:       "cancel does not require payer",
 			action:     types.TimelockActionCancel,
