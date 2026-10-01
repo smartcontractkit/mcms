@@ -58,12 +58,11 @@ func TestRoleMetadataDeriver_DeriveRoleMetadata(t *testing.T) {
 			wantFields: sourceFields.WithExecutePayer(payer),
 		},
 		{
-			name:       "bypass with empty additional fields",
-			payer:      &payer,
-			action:     types.TimelockActionBypass,
-			wantAddr:   "bypasser.seed",
-			wantFields: AdditionalFieldsMetadata{}.WithExecutePayer(payer),
-		},
+			name:    "bypass rejects empty additional fields",
+			payer:   &payer,
+			action:  types.TimelockActionBypass,
+			wantErr: "unable to unmarshal solana additional fields",
+		}
 		{
 			name:       "cancel does not require payer",
 			action:     types.TimelockActionCancel,
