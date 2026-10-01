@@ -92,11 +92,14 @@ func (a *TestSuite) TestTimelock_Cancel() {
 		},
 		DeriveCancellationMetadata: func(t *testing.T, selector types.ChainSelector, scheduleMetadata types.ChainMetadata) (types.ChainMetadata, error) {
 			t.Helper()
-			// For the cancellation proposal, the MCMS role in AdditionalFields must be switched
-			// from the schedule role (Proposer) to the Canceller role. The Aptos SetRoot call
-			// reads the role from this metadata field and passes it to the on-chain contract.
-			next := scheduleMetadata
-			next.AdditionalFields = Must(json.Marshal(aptossdk.AdditionalFieldsMetadata{Role: aptossdk.TimelockRoleCanceller}))
+			// The SDK deriver switches the MCMS role in AdditionalFields from the schedule role
+			// (Proposer) to the Canceller role. The Aptos SetRoot call reads the role from this
+			// metadata field and passes it to the on-chain contract.
+			next, err := aptossdk.NewRoleMetadataDeriver().DeriveRoleMetadata(
+				t.Context(), selector, scheduleMetadata, types.TimelockActionCancel, nil)
+			if err != nil {
+				return types.ChainMetadata{}, err
+			}
 
 			cancellerInspector := aptossdk.NewInspector(a.AptosRPCClient, aptossdk.TimelockRoleCanceller)
 			cancellerOpCount, err := cancellerInspector.GetOpCount(t.Context(), next.MCMAddress)
