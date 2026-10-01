@@ -40,5 +40,5 @@ func TestRoleMetadataDeriver_DeriveRoleMetadata(t *testing.T) {
 	}, requested)
 
 	_, err = NewRoleMetadataDeriver().DeriveRoleMetadata(t.Context(), 1, source, types.TimelockActionCancel, nil)
-	require.ErrorContains(t, err, "role address resolver is required")
+	require.EqualError(t, err, "role address resolver is required to resolve the Canceller MCM address")
 }
