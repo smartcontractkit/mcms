@@ -61,7 +61,13 @@ func TestBuildRoleMetadataDeriver_SolanaExecutePayerFromChainAccessor(t *testing
 	resolver := sdk.RoleAddressResolverFunc(func(context.Context, sdk.RoleAddressRequest) (string, error) {
 		return "bypasser.seed", nil
 	})
-	got, err := deriver.DeriveRoleMetadata(t.Context(), chaintest.Chain4Selector, types.ChainMetadata{}, types.TimelockActionBypass, resolver)
+	sourceFields, err := json.Marshal(solanasdk.AdditionalFieldsMetadata{
+		ProposerRoleAccessController:  solana.NewWallet().PublicKey(),
+		CancellerRoleAccessController: solana.NewWallet().PublicKey(),
+		BypasserRoleAccessController:  solana.NewWallet().PublicKey(),
+	})
+	require.NoError(t, err)
+	got, err := deriver.DeriveRoleMetadata(t.Context(), chaintest.Chain4Selector, types.ChainMetadata{AdditionalFields: sourceFields}, types.TimelockActionBypass, resolver)
 	require.NoError(t, err)
 
 	var fields solanasdk.AdditionalFieldsMetadata
