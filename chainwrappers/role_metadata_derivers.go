@@ -3,7 +3,10 @@ package chainwrappers
 import (
 	"fmt"
 
+	chainsel "github.com/smartcontractkit/chain-selectors"
+
 	"github.com/smartcontractkit/mcms/sdk"
+	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -16,5 +19,10 @@ func BuildRoleMetadataDeriver(_ ChainAccessor, selector types.ChainSelector) (sd
 		return nil, fmt.Errorf("error getting chain family: %w", err)
 	}
 
-	return nil, fmt.Errorf("unsupported chain family %s", family)
+	switch family {
+	case chainsel.FamilyEVM:
+		return evm.NewRoleMetadataDeriver(), nil
+	default:
+		return nil, fmt.Errorf("unsupported chain family %s", family)
+	}
 }

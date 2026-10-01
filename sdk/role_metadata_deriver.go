@@ -22,6 +22,21 @@ type RoleAddressRequest struct {
 // It is implemented by callers (e.g. backed by a datastore, an address file, explicit flags or an
 // on-chain lookup) and consulted by a RoleMetadataDeriver when the role is held by a different MCM
 // instance than the source proposal's.
+//
+// Note on the current design
+// The resolver is injected, rather than having callers look up every role address up front,
+// because datastores do not store role MCMs uniformly across chain families: families with one MCM
+// per role (EVM, Solana, TON) register CancellerManyChainMultiSig/BypasserManyChainMultiSig refs,
+// while single-MCMS families (Sui, Aptos, Canton) register them inconsistently or not at all (e.g.
+// with a different qualifier, see CCIP-13301). Only the chain family knows whether a lookup is
+// needed, so the deriver decides whether to call the resolver.
+//
+// TODO: if every chain family registered its role MCMs in the same shape (single-MCMS families
+// writing Proposer/Canceller/Bypasser alias refs to their one MCMS with the deployment's qualifier,
+// as Stellar already does), every deriver would need the same lookup. RoleAddressResolver could
+// then be dropped: callers would resolve the role MCM address themselves and pass it directly to
+// DeriveRoleMetadata, which would become a pure function. This needs changes to each family's
+// deployment changesets plus a backfill of existing datastores.
 type RoleAddressResolver interface {
 	ResolveRoleAddress(ctx context.Context, req RoleAddressRequest) (string, error)
 }
