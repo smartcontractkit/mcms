@@ -78,6 +78,13 @@ func TestRoleMetadataDeriver_DeriveRoleMetadata(t *testing.T) {
 			wantErr: "solana execute payer is required",
 		},
 		{
+			name:    "bypass rejects zero payer",
+			payer:   &solana.PublicKey{},
+			action:  types.TimelockActionBypass,
+			fields:  rawSourceFields,
+			wantErr: "solana execute payer is required",
+		},
+		{
 			name:    "bypass with invalid additional fields",
 			payer:   &payer,
 			action:  types.TimelockActionBypass,

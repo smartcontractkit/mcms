@@ -43,7 +43,9 @@ func (d *RoleMetadataDeriver) DeriveRoleMetadata(
 		return derived, nil
 	}
 
-	if d.executePayer == nil {
+	// A zero key is treated as absent by AdditionalFieldsMetadata.HasExecutePayer, so the converter
+	// would skip the signer override; reject it like a missing payer.
+	if d.executePayer == nil || d.executePayer.IsZero() {
 		return types.ChainMetadata{}, errors.New("solana execute payer is required to derive bypass metadata")
 	}
 
