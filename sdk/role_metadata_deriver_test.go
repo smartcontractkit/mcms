@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -61,11 +62,12 @@ func TestResolveRoleMetadata(t *testing.T) {
 			name:   "cancel resolves the canceller address",
 			action: types.TimelockActionCancel,
 			resolver: RoleAddressResolverFunc(func(_ context.Context, req RoleAddressRequest) (string, error) {
-				require.Equal(t, RoleAddressRequest{
-					Selector:         selector,
-					Role:             TimelockRoleCanceller,
-					SourceMCMAddress: "0xproposer",
-				}, req)
+				// Return an error instead of asserting: this runs inside a parallel subtest, so the
+				// parent test's t must not be used here.
+				want := RoleAddressRequest{Selector: selector, Role: TimelockRoleCanceller, SourceMCMAddress: "0xproposer"}
+				if req != want {
+					return "", fmt.Errorf("unexpected role address request %+v", req)
+				}
 
 				return "0xcanceller", nil
 			}),
@@ -75,7 +77,9 @@ func TestResolveRoleMetadata(t *testing.T) {
 			name:   "bypass resolves the bypasser address",
 			action: types.TimelockActionBypass,
 			resolver: RoleAddressResolverFunc(func(_ context.Context, req RoleAddressRequest) (string, error) {
-				require.Equal(t, TimelockRoleBypasser, req.Role)
+				if req.Role != TimelockRoleBypasser {
+					return "", fmt.Errorf("unexpected role %s", req.Role)
+				}
 
 				return "0xbypasser", nil
 			}),
