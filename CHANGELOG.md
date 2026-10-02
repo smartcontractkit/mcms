@@ -1,5 +1,19 @@
 # @smartcontractkit/mcms
 
+## [0.56.0](https://github.com/smartcontractkit/mcms/compare/v0.55.2...v0.56.0) (2026-10-02)
+
+
+### Features
+
+* add RoleMetadataDeriver interfaces and chainwrappers ([#874](https://github.com/smartcontractkit/mcms/issues/874)) ([7fc1ff4](https://github.com/smartcontractkit/mcms/commit/7fc1ff4dd8eb2fd83407e76a49a707a39e89b268))
+* **aptos:** implement RoleMetadataDeriver ([#878](https://github.com/smartcontractkit/mcms/issues/878)) ([1d846e2](https://github.com/smartcontractkit/mcms/commit/1d846e29ab15b9771aa5542e88286765162c5c48))
+* **canton:** implement RoleMetadataDeriver ([#883](https://github.com/smartcontractkit/mcms/issues/883)) ([6adddec](https://github.com/smartcontractkit/mcms/commit/6adddec68b709cb3440fdffb33fb14ef2af41c78))
+* **evm:** metadata deriver evm ([#876](https://github.com/smartcontractkit/mcms/issues/876)) ([a05f590](https://github.com/smartcontractkit/mcms/commit/a05f590fe06d1eff01eb4495202411dc0f6790b5))
+* **solana:** implement RoleMetadataDeriver ([#877](https://github.com/smartcontractkit/mcms/issues/877)) ([d2fd761](https://github.com/smartcontractkit/mcms/commit/d2fd7619c3f9fb8a968977c3ff86801ab57e9584))
+* **stellar:** implement RoleMetadataDeriver ([#882](https://github.com/smartcontractkit/mcms/issues/882)) ([ae65bd2](https://github.com/smartcontractkit/mcms/commit/ae65bd21df24fa70ed93d79aa86eb2eb04cc6469))
+* **sui:** implement RoleMetadataDeriver ([#880](https://github.com/smartcontractkit/mcms/issues/880)) ([3c0ecc3](https://github.com/smartcontractkit/mcms/commit/3c0ecc3a3ab2b9c220034bd1c386e6bb474a1db0))
+* **ton:** implement RoleMetadataDeriver ([#881](https://github.com/smartcontractkit/mcms/issues/881)) ([d7b6988](https://github.com/smartcontractkit/mcms/commit/d7b69889c928e809230c1e59bf8189b42f31265c))
+
 ## [0.55.2](https://github.com/smartcontractkit/mcms/compare/v0.55.1...v0.55.2) (2026-09-16)
 
 
