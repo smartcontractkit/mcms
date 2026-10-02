@@ -16,6 +16,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
 	"github.com/smartcontractkit/mcms/sdk/sui"
+	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
 )
 
@@ -32,6 +33,7 @@ func TestBuildRoleMetadataDeriver(t *testing.T) {
 		{name: "solana", selector: chaintest.Chain4Selector, expectType: (*solanasdk.RoleMetadataDeriver)(nil)},
 		{name: "aptos", selector: chaintest.Chain5Selector, expectType: (*aptos.RoleMetadataDeriver)(nil)},
 		{name: "sui", selector: chaintest.Chain6Selector, expectType: (*sui.RoleMetadataDeriver)(nil)},
+		{name: "ton", selector: chaintest.Chain7Selector, expectType: (*ton.RoleMetadataDeriver)(nil)},
 		{name: "unsupported family", selector: chaintest.Chain8Selector, expectErr: "unsupported chain family"},
 		{name: "invalid selector", selector: chaintest.ChainInvalidSelector, expectErr: "error getting chain family"},
 	}
