@@ -10,6 +10,7 @@ import (
 	"github.com/smartcontractkit/mcms/sdk/aptos"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
+	"github.com/smartcontractkit/mcms/sdk/stellar"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	"github.com/smartcontractkit/mcms/sdk/ton"
 	"github.com/smartcontractkit/mcms/types"
@@ -35,6 +36,8 @@ func BuildRoleMetadataDeriver(chains ChainAccessor, selector types.ChainSelector
 		return sui.NewRoleMetadataDeriver(), nil
 	case chainsel.FamilyTon:
 		return ton.NewRoleMetadataDeriver(), nil
+	case chainsel.FamilyStellar:
+		return stellar.NewRoleMetadataDeriver(), nil
 	default:
 		return nil, fmt.Errorf("unsupported chain family %s", family)
 	}
