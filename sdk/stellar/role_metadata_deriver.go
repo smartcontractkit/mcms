@@ -9,9 +9,9 @@ import (
 
 var _ sdk.RoleMetadataDeriver = (*RoleMetadataDeriver)(nil)
 
-// RoleMetadataDeriver derives role-specific chain metadata. Each timelock role is held by a
-// separate MCM contract, so the role's MCM address is resolved via the RoleAddressResolver and
-// AdditionalFields are kept unchanged.
+// RoleMetadataDeriver derives role-specific Stellar chain metadata. Stellar registers role-specific
+// aliases for its MCMS address, so the role address is resolved via RoleAddressResolver while
+// AdditionalFields remain unchanged.
 type RoleMetadataDeriver struct{}
 
 // NewRoleMetadataDeriver returns a new RoleMetadataDeriver.
