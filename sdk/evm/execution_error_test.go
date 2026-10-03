@@ -1301,6 +1301,9 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 	opts := &bind.TransactOpts{
 		GasLimit: 1000000,
 	}
+	optsZeroGas := &bind.TransactOpts{
+		GasLimit: 0,
+	}
 
 	tests := []struct {
 		name            string
@@ -1388,7 +1391,7 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 			expectedDecoded: "Ownable: caller is not the owner",
 		},
 		{
-			name:         "non-revert error",
+			name:         "non-revert error - returns descriptive message",
 			timelockAddr: timelockAddr,
 			callData:     callData,
 			opts:         opts,
@@ -1396,8 +1399,60 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, errors.New("network error")).Maybe()
 			},
-			expectedRaw:     "",
+			expectedRaw:     "underlying call simulation failed: network error",
 			expectedDecoded: "",
+		},
+		{
+			name:         "out of gas error - returns gas-specific message",
+			timelockAddr: timelockAddr,
+			callData:     callData,
+			opts:         opts,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, errors.New("out of gas: gas required exceeds 10000000")).Maybe()
+			},
+			expectedRaw:     "underlying call failed: out of gas (try setting gasLimit in proposal chainMetadata.additionalFields)",
+			expectedDecoded: "",
+		},
+		{
+			name:         "gas required exceeds error - returns gas-specific message",
+			timelockAddr: timelockAddr,
+			callData:     callData,
+			opts:         opts,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, errors.New("gas required exceeds 30000000")).Maybe()
+			},
+			expectedRaw:     "underlying call failed: out of gas (try setting gasLimit in proposal chainMetadata.additionalFields)",
+			expectedDecoded: "",
+		},
+		{
+			name:         "GasLimit 0 - queries block gas limit for simulation",
+			timelockAddr: timelockAddr,
+			callData:     callData,
+			opts:         optsZeroGas,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("HeaderByNumber", mock.Anything, mock.Anything).
+					Return((*gethtypes.Header)(nil), nil).Maybe()
+				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, errors.New("execution reverted: revert: SomeError")).Maybe()
+			},
+			expectedRaw:     "SomeError",
+			expectedDecoded: "SomeError",
+		},
+		{
+			name:         "GasLimit 0 - falls back to default when header query fails",
+			timelockAddr: timelockAddr,
+			callData:     callData,
+			opts:         optsZeroGas,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("HeaderByNumber", mock.Anything, mock.Anything).
+					Return((*gethtypes.Header)(nil), errors.New("rpc error")).Maybe()
+				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, errors.New("execution reverted: revert: SomeError")).Maybe()
+			},
+			expectedRaw:     "SomeError",
+			expectedDecoded: "SomeError",
 		},
 	}
 
@@ -1430,6 +1485,91 @@ const (
 	onlyCallableByOwnerSelector = "0x2b5c74de"
 	realUnderlyingErrorSelector = "0x4b5786e7"
 )
+
+func TestBuildExecutionError_GasEstimationFailure(t *testing.T) {
+	t.Parallel()
+
+	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err, errMsgFailedTimelockABI)
+
+	testCall := bindings.RBACTimelockCall{
+		Target: common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		Value:  big.NewInt(0),
+		Data:   []byte{0x12, 0x34, 0x56, 0x78},
+	}
+
+	timelockAddr := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+	callData := packBypasserExecuteBatch(t, timelockABI, []bindings.RBACTimelockCall{testCall})
+	opts := &bind.TransactOpts{GasLimit: 0}
+
+	mockClient := mocks.NewContractDeployBackend(t)
+
+	mockClient.On("CodeAt", mock.Anything, mock.Anything, mock.Anything).
+		Return([]byte{0x00}, nil).Maybe()
+	mockClient.On("HeaderByNumber", mock.Anything, mock.Anything).
+		Return(&gethtypes.Header{GasLimit: 60000000}, nil).Maybe()
+	mockClient.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, errors.New("out of gas: gas required exceeds 54000000")).Maybe()
+
+	originalErr := errors.New("execution reverted: RBACTimelock: underlying transaction reverted")
+	execErr := BuildExecutionError(
+		context.Background(),
+		originalErr,
+		nil,
+		opts,
+		timelockAddr,
+		mockClient,
+		timelockAddr,
+		callData,
+	)
+
+	require.NotNil(t, execErr)
+	assert.True(t, execErr.IsLikelyGasEstimationFailure, "IsLikelyGasEstimationFailure should be true")
+	assert.NotEmpty(t, execErr.Hint, "Hint should be populated")
+	assert.Contains(t, execErr.Hint, "gasLimit")
+	assert.Contains(t, execErr.Hint, "chainMetadata.additionalFields")
+}
+
+func TestBuildExecutionError_RealRevert_NotGasFailure(t *testing.T) {
+	t.Parallel()
+
+	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err, errMsgFailedTimelockABI)
+
+	testCall := bindings.RBACTimelockCall{
+		Target: common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		Value:  big.NewInt(0),
+		Data:   []byte{0x12, 0x34, 0x56, 0x78},
+	}
+
+	timelockAddr := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+	callData := packBypasserExecuteBatch(t, timelockABI, []bindings.RBACTimelockCall{testCall})
+	opts := &bind.TransactOpts{GasLimit: 1000000}
+
+	mockClient := mocks.NewContractDeployBackend(t)
+
+	mockClient.On("CodeAt", mock.Anything, mock.Anything, mock.Anything).
+		Return([]byte{0x00}, nil).Maybe()
+	mockClient.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, errors.New("execution reverted: revert: Ownable: caller is not the owner")).Maybe()
+
+	originalErr := errors.New("execution reverted: RBACTimelock: underlying transaction reverted")
+	execErr := BuildExecutionError(
+		context.Background(),
+		originalErr,
+		nil,
+		opts,
+		timelockAddr,
+		mockClient,
+		timelockAddr,
+		callData,
+	)
+
+	require.NotNil(t, execErr)
+	assert.False(t, execErr.IsLikelyGasEstimationFailure, "IsLikelyGasEstimationFailure should be false when underlying reason is extracted")
+	assert.Empty(t, execErr.Hint, "Hint should be empty when not a gas estimation failure")
+	assert.Equal(t, "Ownable: caller is not the owner", execErr.UnderlyingReasonDecoded)
+}
 
 func TestCallProxyBytecodeFingerprintMatchesBinding(t *testing.T) {
 	t.Parallel()
