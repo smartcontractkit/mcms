@@ -1,9 +1,11 @@
 package stellar
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/ethereum/go-ethereum/common"
+	mcmsbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/mcms"
 	"github.com/smartcontractkit/chainlink-stellar/bindings/scval"
 	"github.com/stellar/go-stellar-sdk/xdr"
 	"github.com/stretchr/testify/mock"
@@ -160,6 +162,98 @@ func TestExecutor_SetRoot(t *testing.T) {
 		"set_root",
 		mock.Anything,
 	)
+}
+
+func TestExecutor_SetRoot_ConfigVersionFromAdditionalFields(t *testing.T) {
+	t.Parallel()
+
+	const mcmAddr = "CA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJUWDA"
+
+	invoker := mocks.NewInvoker(t)
+
+	// Return a different root so SetRoot doesn't exit early.
+	var differentRoot [32]byte
+	differentRoot[0] = 1
+
+	rootTuple := xdr.ScVec{
+		scval.Bytes32ToScVal(differentRoot),
+		scval.Uint32ToScVal(0),
+	}
+	rootTuplePtr := &rootTuple
+	rootValue := xdr.ScVal{
+		Type: xdr.ScValTypeScvVec,
+		Vec:  &rootTuplePtr,
+	}
+
+	invoker.
+		On(
+			"SimulateContract",
+			mock.Anything,
+			mcmAddr,
+			"get_root",
+			mock.Anything,
+		).
+		Return(&rootValue, nil).
+		Once()
+
+	var invokedArgs []xdr.ScVal
+	invoker.
+		On(
+			"InvokeContract",
+			mock.Anything,
+			mcmAddr,
+			"set_root",
+			mock.Anything,
+		).
+		Return(nil, nil).
+		Run(func(args mock.Arguments) {
+			invokedArgs = args.Get(3).([]xdr.ScVal)
+		}).
+		Once()
+
+	inspector := NewInspectorFromInvoker(invoker)
+	encoder := NewEncoder(types.ChainSelector(4894814558906953166), 1, false)
+
+	executor, err := NewExecutor(encoder, inspector)
+	require.NoError(t, err)
+
+	metadata := types.ChainMetadata{
+		MCMAddress:       mcmAddr,
+		AdditionalFields: json.RawMessage(`{"configVersion":2}`),
+	}
+
+	var rootToSet [32]byte
+	rootToSet[0] = 2
+
+	_, err = executor.SetRoot(
+		t.Context(),
+		metadata,
+		[]common.Hash{},
+		rootToSet,
+		100,
+		[]types.Signature{},
+	)
+	require.NoError(t, err)
+
+	chainNet, err := chainNetworkID(types.ChainSelector(4894814558906953166))
+	require.NoError(t, err)
+
+	expectedArgs := []xdr.ScVal{
+		scval.Bytes32ToScVal(rootToSet),
+		scval.Uint32ToScVal(100),
+		scval.MustToScVal(mcmsbindings.StellarRootMetadata{
+			NetworkId:            chainNet,
+			Multisig:             mcmAddr,
+			PreOpCount:           0,
+			PostOpCount:          1,
+			OverridePreviousRoot: false,
+			ConfigVersion:        2,
+			EncodingVersion:      encodingVersion,
+		}.ToScVal()),
+		scval.MustToScVal(mcmsbindings.MerkleProof{Inner: [][32]byte{}}.ToScVal()),
+		scval.MustToScVal(mcmsbindings.SignatureVec{Inner: []mcmsbindings.Signature{}}.ToScVal()),
+	}
+	require.Equal(t, expectedArgs, invokedArgs)
 }
 
 func TestExecutor_SetRoot_AlreadySet(t *testing.T) {

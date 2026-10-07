@@ -2,6 +2,7 @@ package stellar
 
 import (
 	"crypto/ecdsa"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -96,6 +97,64 @@ func (s *ExecutionTestSuite) TestExecuteProposal() {
 	s.executeAcceptOwnershipProposal(
 		executionMCMAddress,
 		targetMCMAddress,
+		nil,
+	)
+}
+
+// TestExecuteProposalAfterSetConfig executes a proposal after set_config
+// bumped the on-chain config version. The proposal's chain metadata carries
+// the on-chain version; the executor must submit the same value the encoder
+// hashed, or SetRoot fails with ConfigVersionMismatch.
+func (s *ExecutionTestSuite) TestExecuteProposalAfterSetConfig() {
+	ctx := s.T().Context()
+
+	executionMCMAddress := s.deployMCMSContract(
+		s.nextDeploymentID(),
+	)
+	targetMCMAddress := s.deployMCMSContract(
+		s.nextDeploymentID(),
+	)
+
+	configurer := stellarsdk.NewConfigurer(s.deployer)
+
+	_, err := configurer.SetConfig(
+		ctx,
+		executionMCMAddress,
+		s.mcmsConfig,
+		false,
+	)
+	s.Require().NoError(
+		err,
+		"set_config should succeed while the deployer owns the MCMS",
+	)
+
+	mcmsClient := mcmsbindings.NewMcmsClient(
+		s.deployer,
+		executionMCMAddress,
+	)
+
+	configVersion, err := mcmsClient.GetConfigVersion(ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(
+		uint64(2),
+		configVersion,
+		"set_config should have bumped the config version to 2",
+	)
+
+	additionalFields, err := json.Marshal(
+		map[string]uint64{"configVersion": configVersion},
+	)
+	s.Require().NoError(err)
+
+	s.prepareMCMSOwnershipTransfer(
+		targetMCMAddress,
+		executionMCMAddress,
+	)
+
+	s.executeAcceptOwnershipProposal(
+		executionMCMAddress,
+		targetMCMAddress,
+		additionalFields,
 	)
 }
 
@@ -136,6 +195,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.executeAcceptOwnershipProposal(
 		executionMCMAddress,
 		firstTargetMCMAddress,
+		nil,
 	)
 
 	afterFirstProposal, err := inspector.GetOpCount(
@@ -152,6 +212,7 @@ func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
 	s.executeAcceptOwnershipProposal(
 		executionMCMAddress,
 		secondTargetMCMAddress,
+		nil,
 	)
 
 	afterSecondProposal, err := inspector.GetOpCount(
@@ -230,10 +291,12 @@ func (s *ExecutionTestSuite) prepareMCMSOwnershipTransfer(
 }
 
 // executeAcceptOwnershipProposal builds and executes one proposal that calls
-// accept_ownership on targetMCMAddress.
+// accept_ownership on targetMCMAddress. additionalFields is set on the
+// proposal's chain metadata; nil keeps it minimal.
 func (s *ExecutionTestSuite) executeAcceptOwnershipProposal(
 	executionMCMAddress string,
 	targetMCMAddress string,
+	additionalFields json.RawMessage,
 ) {
 	s.T().Helper()
 
@@ -266,8 +329,9 @@ func (s *ExecutionTestSuite) executeAcceptOwnershipProposal(
 			OverridePreviousRoot: false,
 			Signatures:           []mcmtypes.Signature{},
 			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{s.chainSelector: {
-				StartingOpCount: startingOpCount,
-				MCMAddress:      executionMCMAddress,
+				StartingOpCount:  startingOpCount,
+				MCMAddress:       executionMCMAddress,
+				AdditionalFields: additionalFields,
 			},
 			},
 		},

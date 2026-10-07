@@ -52,6 +52,25 @@ func decodeTransactionAdditionalFields(raw json.RawMessage) (transactionAddition
 	return fields, nil
 }
 
+// decodeChainMetadataAdditionalFields decodes the optional chain-metadata
+// additional fields, defaulting configVersion to 1 when absent. It is shared
+// by Encoder.HashMetadata (which hashes the value) and Executor.SetRoot (which
+// submits it), so the hashed and submitted metadata always agree.
+func decodeChainMetadataAdditionalFields(raw json.RawMessage) (configVersion uint64, encodingVersion *uint32, err error) {
+	var fields chainMetadataAdditionalFields
+	if len(raw) > 0 {
+		if uerr := json.Unmarshal(raw, &fields); uerr != nil {
+			return 0, nil, fmt.Errorf("decode Stellar chain metadata additional fields: %w", uerr)
+		}
+	}
+	configVersion = 1
+	if fields.ConfigVersion != nil {
+		configVersion = *fields.ConfigVersion
+	}
+
+	return configVersion, fields.EncodingVersion, nil
+}
+
 // Encoder implements sdk.Encoder for the Soroban MCMS contract (Stellar), matching
 // chainlink-stellar contracts/mcms ABI leaf hashing.
 type Encoder struct {
@@ -139,21 +158,12 @@ func (e *Encoder) HashMetadata(metadata types.ChainMetadata) (common.Hash, error
 		return common.Hash{}, fmt.Errorf("mcmAddress: %w", err)
 	}
 
-	configVersion := uint64(1)
-	if len(metadata.AdditionalFields) > 0 {
-		var fields struct {
-			ConfigVersion   *uint64 `json:"configVersion"`
-			EncodingVersion *uint32 `json:"encodingVersion"`
-		}
-		if uerr := json.Unmarshal(metadata.AdditionalFields, &fields); uerr != nil {
-			return common.Hash{}, fmt.Errorf("HashMetadata: additional fields: %w", uerr)
-		}
-		if fields.ConfigVersion != nil {
-			configVersion = *fields.ConfigVersion
-		}
-		if fields.EncodingVersion != nil && *fields.EncodingVersion != encodingVersion {
-			return common.Hash{}, fmt.Errorf("%w: %d", ErrUnsupportedEncodingVersion, *fields.EncodingVersion)
-		}
+	configVersion, encodingVersionField, err := decodeChainMetadataAdditionalFields(metadata.AdditionalFields)
+	if err != nil {
+		return common.Hash{}, fmt.Errorf("HashMetadata: additional fields: %w", err)
+	}
+	if encodingVersionField != nil && *encodingVersionField != encodingVersion {
+		return common.Hash{}, fmt.Errorf("%w: %d", ErrUnsupportedEncodingVersion, *encodingVersionField)
 	}
 	h, err := HashStellarRootMetadata(
 		domainMetaStellar,
