@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.56.1](https://github.com/smartcontractkit/mcms/compare/v0.56.0...v0.56.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* **stellar:** honor chain metadata config version in SetRoot ([#886](https://github.com/smartcontractkit/mcms/issues/886)) ([bc7ef83](https://github.com/smartcontractkit/mcms/commit/bc7ef8347c3cd164f4d04ba3ee508e9cd87c6c95))
+
 ## [0.56.0](https://github.com/smartcontractkit/mcms/compare/v0.55.2...v0.56.0) (2026-10-02)
 
 
