@@ -73,6 +73,52 @@ func TestEncoder_HashMetadataAndOperation(t *testing.T) {
 	require.Equal(t, opHashManual, opHashEnc)
 }
 
+func TestEncoder_HashMetadata_ConfigVersionFromAdditionalFields(t *testing.T) {
+	t.Parallel()
+	enc := NewEncoder(stellarTestnetSelector, 1, false)
+
+	chainNet, err := chainNetworkID(stellarTestnetSelector)
+	require.NoError(t, err)
+
+	const metaAddr = "00000000000000000000000000000000000000000000000000000000000000aa"
+
+	cases := []struct {
+		name            string
+		additional      json.RawMessage
+		expectedVersion uint64
+	}{
+		{"defaults to 1 when absent", nil, 1},
+		{"honors configVersion 2", json.RawMessage(`{"configVersion":2}`), 2},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			metaHashManual, err := HashStellarRootMetadata(
+				domainMetaStellar,
+				chainNet,
+				hashBytes(t, metaAddr),
+				0,
+				1,
+				false,
+				tc.expectedVersion,
+				encodingVersion,
+			)
+			require.NoError(t, err)
+
+			md := types.ChainMetadata{
+				StartingOpCount:  0,
+				MCMAddress:       "0x" + metaAddr,
+				AdditionalFields: tc.additional,
+			}
+			metaHashEnc, err := enc.HashMetadata(md)
+			require.NoError(t, err)
+			require.Equal(t, metaHashManual, metaHashEnc)
+		})
+	}
+}
+
 func Test_parseContractID_Strkey(t *testing.T) {
 	t.Parallel()
 	// Vector from github.com/stellar/go-stellar-sdk/strkey decode_test ("Contract" case).

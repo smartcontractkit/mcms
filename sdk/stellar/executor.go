@@ -128,13 +128,18 @@ func (e *Executor) SetRoot(
 	if err != nil {
 		return types.TransactionResult{}, fmt.Errorf("set_root: parse mcm address: %w", err)
 	}
+	configVersion, _, err := decodeChainMetadataAdditionalFields(metadata.AdditionalFields)
+	if err != nil {
+		return types.TransactionResult{}, fmt.Errorf("set_root: additional fields: %w", err)
+	}
+
 	stellarMeta := mcmsbindings.StellarRootMetadata{
 		NetworkId:            chainNetworkID,
 		Multisig:             metadata.MCMAddress,
 		PreOpCount:           metadata.StartingOpCount,
 		PostOpCount:          metadata.StartingOpCount + e.TxCount,
 		OverridePreviousRoot: e.OverridePreviousRoot,
-		ConfigVersion:        1,
+		ConfigVersion:        configVersion,
 		EncodingVersion:      encodingVersion,
 	}
 
