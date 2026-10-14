@@ -2,6 +2,7 @@ package sui
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	suibindings "github.com/smartcontractkit/chainlink-sui/bindings"
@@ -25,3 +26,16 @@ func SuiMetadata(chainMetadata types.ChainMetadata) (AdditionalFieldsMetadata, e
 }
 
 var NewCCIPEntrypointArgEncoder = suibindings.NewCCIPEntrypointArgEncoder
+
+func SuiRoleFromAction(action types.TimelockAction) (TimelockRole, error) {
+	switch action {
+	case types.TimelockActionBypass:
+		return TimelockRoleBypasser, nil
+	case types.TimelockActionSchedule:
+		return TimelockRoleProposer, nil
+	case types.TimelockActionCancel:
+		return TimelockRoleCanceller, nil
+	default:
+		return 0, errors.New("unknown timelock action")
+	}
+}

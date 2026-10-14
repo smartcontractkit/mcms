@@ -10,9 +10,9 @@ import (
 	apiv2 "github.com/digital-asset/dazl-client/v8/go/api/com/daml/ledger/api/v2"
 	cantontypes "github.com/smartcontractkit/go-daml/pkg/types"
 
-	"github.com/smartcontractkit/chainlink-canton/bindings"
-	mcmscore "github.com/smartcontractkit/chainlink-canton/bindings/generated/latest/mcms/core"
-	"github.com/smartcontractkit/chainlink-canton/contracts"
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2"
+	"github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings"
+	mcmscore "github.com/smartcontractkit/chainlink-canton/contracts/v2/bindings/generated/mcms/core"
 )
 
 // ResolveMCMSContractID resolves an MCMS InstanceAddress (hex string) to the current active contract ID.

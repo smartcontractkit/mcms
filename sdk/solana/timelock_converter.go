@@ -53,6 +53,12 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	bindings.SetProgramID(timelockProgramID)
 
 	tags := getTagsFromBatchOperation(batchOp)
+
+	var additionalFields AdditionalFieldsMetadata
+	if err = json.Unmarshal(metadata.AdditionalFields, &additionalFields); err != nil {
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to unmarshal solana-specific additional fields from chain metadata: %w", err)
+	}
+
 	instructionsData, err := getInstructionDataFromBatchOperation(batchOp)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to convert batch operation to solana instructions: %w", err)
@@ -86,10 +92,7 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to find mcm signer address: %w", err)
 	}
-	var additionalFields AdditionalFieldsMetadata
-	if err = json.Unmarshal(metadata.AdditionalFields, &additionalFields); err != nil {
-		return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to unmarshal solana-specific additional fields from chain metada: %w", err)
-	}
+
 	// encode the data based on the operation
 	var instructions []solana.Instruction
 	switch action {
@@ -101,13 +104,13 @@ func (t TimelockConverter) ConvertBatchToChainOperations(
 		instructions, err = cancelInstructions(timelockPDASeed, operationID, additionalFields.CancellerRoleAccessController,
 			operationPDA, configPDA, mcmSignerPDA)
 	case types.TimelockActionBypass:
-		accounts, rerr := getAccountsFromBatchOperation(batchOp)
-		if rerr != nil {
-			return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", err)
+		bypassAccounts, bypassErr := bypassRemainingAccounts(batchOp, additionalFields)
+		if bypassErr != nil {
+			return []types.Operation{}, common.Hash{}, fmt.Errorf("unable to get accounts from batch operation: %w", bypassErr)
 		}
 		instructions, err = bypassInstructions(timelockPDASeed, operationID, additionalFields.BypasserRoleAccessController,
 			operationBypasserPDA, configPDA, signerPDA, mcmSignerPDA, salt, uint32(len(batchOp.Transactions)), instructionsData, //nolint:gosec
-			accounts)
+			bypassAccounts)
 	default:
 		err = fmt.Errorf("invalid timelock operation: %s", string(action))
 	}
@@ -198,12 +201,9 @@ func getInstructionDataFromBatchOperation(batchOp types.BatchOperation) ([]bindi
 			return nil, fmt.Errorf("unable to parse program id from To field: %w", err)
 		}
 
-		var additionalFields AdditionalFields
-		if len(tx.AdditionalFields) > 0 {
-			err = json.Unmarshal(tx.AdditionalFields, &additionalFields)
-			if err != nil {
-				return nil, fmt.Errorf("unable to unmarshal Solana additional fields: %w\n%v", err, string(tx.AdditionalFields))
-			}
+		additionalFields, err := ParseAdditionalFields(tx.AdditionalFields)
+		if err != nil {
+			return nil, err
 		}
 
 		instructionsData = append(instructionsData, bindings.InstructionData{
@@ -225,12 +225,9 @@ func getAccountsFromBatchOperation(batchOp types.BatchOperation) ([]*solana.Acco
 		}
 		accounts = append(accounts, &solana.AccountMeta{PublicKey: toProgramID})
 
-		var additionalFields AdditionalFields
-		if len(tx.AdditionalFields) > 0 {
-			err = json.Unmarshal(tx.AdditionalFields, &additionalFields)
-			if err != nil {
-				return nil, fmt.Errorf("unable to unmarshal additional fields: %w\n%v", err, string(tx.AdditionalFields))
-			}
+		additionalFields, err := ParseAdditionalFields(tx.AdditionalFields)
+		if err != nil {
+			return nil, err
 		}
 		accounts = append(accounts, additionalFields.Accounts...)
 	}
@@ -251,6 +248,32 @@ func getAccountsFromBatchOperation(batchOp types.BatchOperation) ([]*solana.Acco
 	}
 
 	return uniqueAccounts, nil
+}
+
+// bypassRemainingAccounts collects remaining accounts for a bypass op and applies
+// the execute-payer signer override when ExecutePayer is set in chain metadata.
+func bypassRemainingAccounts(
+	batchOp types.BatchOperation, additionalFields AdditionalFieldsMetadata,
+) ([]*solana.AccountMeta, error) {
+	accounts, err := getAccountsFromBatchOperation(batchOp)
+	if err != nil {
+		return nil, err
+	}
+	if additionalFields.HasExecutePayer() {
+		applyExecutePayerSignerOverride(accounts, *additionalFields.ExecutePayer)
+	}
+
+	return accounts, nil
+}
+
+// applyExecutePayerSignerOverride marks payer as IsSigner=true in accounts (in place).
+func applyExecutePayerSignerOverride(accounts []*solana.AccountMeta, payer solana.PublicKey) {
+	for _, acc := range accounts {
+		if acc != nil && acc.PublicKey.Equals(payer) {
+			acc.IsSigner = true
+			return
+		}
+	}
 }
 
 func syncWritableAttribute(accounts []*solana.AccountMeta) []*solana.AccountMeta {

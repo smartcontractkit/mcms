@@ -2,7 +2,6 @@ package solana
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"math"
 	"regexp"
@@ -90,10 +89,9 @@ func (e *Executor) ExecuteOperation(
 		return types.TransactionResult{}, err
 	}
 
-	// Unmarshal the AdditionalFields from the operation
-	var additionalFields AdditionalFields
-	if err = json.Unmarshal(op.Transaction.AdditionalFields, &additionalFields); err != nil {
-		return types.TransactionResult{}, fmt.Errorf("unable to unmarshal additional fields: %w", err)
+	additionalFields, err := ParseAdditionalFields(op.Transaction.AdditionalFields)
+	if err != nil {
+		return types.TransactionResult{}, err
 	}
 	toProgramID, err := ParseProgramID(op.Transaction.To)
 	if err != nil {

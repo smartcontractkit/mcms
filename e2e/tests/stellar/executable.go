@@ -1,0 +1,624 @@
+package stellar
+
+import (
+	"crypto/ecdsa"
+	"encoding/json"
+	"fmt"
+	"time"
+
+	"github.com/ethereum/go-ethereum/common"
+	stellarbindings "github.com/smartcontractkit/chainlink-stellar/bindings"
+	"github.com/stellar/go-stellar-sdk/xdr"
+	"github.com/stretchr/testify/suite"
+
+	mcmsbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/mcms"
+	timelockbindings "github.com/smartcontractkit/chainlink-stellar/bindings/contracts/timelock"
+	stellardeployer "github.com/smartcontractkit/chainlink-stellar/deployment"
+
+	"github.com/smartcontractkit/mcms"
+	e2e "github.com/smartcontractkit/mcms/e2e/tests"
+	"github.com/smartcontractkit/mcms/sdk"
+	stellarsdk "github.com/smartcontractkit/mcms/sdk/stellar"
+	mcmtypes "github.com/smartcontractkit/mcms/types"
+)
+
+type ChainMeta struct {
+	MCMAddress      string
+	TimelockAddress string
+}
+
+type timelockRoleConfig struct {
+	Proposers  []string
+	Cancellers []string
+	Bypassers  []string
+}
+
+type ExecutionTestSuite struct {
+	suite.Suite
+	e2e.TestSetup
+
+	deployer      *stellardeployer.Deployer
+	chainSelector mcmtypes.ChainSelector
+	passphrase    string
+
+	StellarSigner stellarbindings.Signer
+
+	proposalSignerKeys []*ecdsa.PrivateKey
+	signerAddresses    []common.Address
+	mcmsConfig         *mcmtypes.Config
+
+	deploymentCounter uint64
+}
+
+func (s *ExecutionTestSuite) SetupSuite() {
+	env := bootstrapStellarChainEnv(s.T())
+
+	s.TestSetup = env.testSetup
+	s.StellarSigner = env.signer
+	s.deployer = env.deployer
+	s.chainSelector = env.chainSelector
+	s.passphrase = env.passphrase
+
+	s.initializeProposalSigners()
+
+	// Group 0 contains signer 0.
+	// Group 1 contains signer 1 and is a child of group 0.
+	s.mcmsConfig = &mcmtypes.Config{
+		Quorum:  1,
+		Signers: []common.Address{s.signerAddresses[0]},
+		GroupSigners: []mcmtypes.Config{
+			{
+				Quorum: 1,
+				Signers: []common.Address{
+					s.signerAddresses[1],
+				},
+			},
+		},
+	}
+}
+
+// TestExecuteProposal verifies successful Stellar MCMS proposal execution.
+//
+// The execution MCMS accepts ownership of another MCMS contract. The test
+// verifies the Merkle root, operation count, and resulting ownership state.
+func (s *ExecutionTestSuite) TestExecuteProposal() {
+	executionMCMAddress := s.deployMCMSContract(
+		s.nextDeploymentID(),
+	)
+	targetMCMAddress := s.deployMCMSContract(
+		s.nextDeploymentID(),
+	)
+
+	s.prepareMCMSOwnershipTransfer(
+		targetMCMAddress,
+		executionMCMAddress,
+	)
+
+	s.executeAcceptOwnershipProposal(
+		executionMCMAddress,
+		targetMCMAddress,
+		nil,
+	)
+}
+
+// TestExecuteProposalAfterSetConfig executes a proposal after set_config
+// bumped the on-chain config version. The proposal's chain metadata carries
+// the on-chain version; the executor must submit the same value the encoder
+// hashed, or SetRoot fails with ConfigVersionMismatch.
+func (s *ExecutionTestSuite) TestExecuteProposalAfterSetConfig() {
+	ctx := s.T().Context()
+
+	executionMCMAddress := s.deployMCMSContract(
+		s.nextDeploymentID(),
+	)
+	targetMCMAddress := s.deployMCMSContract(
+		s.nextDeploymentID(),
+	)
+
+	configurer := stellarsdk.NewConfigurer(s.deployer)
+
+	_, err := configurer.SetConfig(
+		ctx,
+		executionMCMAddress,
+		s.mcmsConfig,
+		false,
+	)
+	s.Require().NoError(
+		err,
+		"set_config should succeed while the deployer owns the MCMS",
+	)
+
+	mcmsClient := mcmsbindings.NewMcmsClient(
+		s.deployer,
+		executionMCMAddress,
+	)
+
+	configVersion, err := mcmsClient.GetConfigVersion(ctx)
+	s.Require().NoError(err)
+	s.Require().Equal(
+		uint64(2),
+		configVersion,
+		"set_config should have bumped the config version to 2",
+	)
+
+	additionalFields, err := json.Marshal(
+		map[string]uint64{"configVersion": configVersion},
+	)
+	s.Require().NoError(err)
+
+	s.prepareMCMSOwnershipTransfer(
+		targetMCMAddress,
+		executionMCMAddress,
+	)
+
+	s.executeAcceptOwnershipProposal(
+		executionMCMAddress,
+		targetMCMAddress,
+		additionalFields,
+	)
+}
+
+// TestExecuteProposalMultiple executes two proposals on the same MCMS.
+//
+// The test verifies that the second proposal uses the operation count produced
+// by the first proposal.
+func (s *ExecutionTestSuite) TestExecuteProposalMultiple() {
+	ctx := s.T().Context()
+
+	executionMCMAddress := s.deployMCMSContract(
+		s.nextDeploymentID(),
+	)
+	firstTargetMCMAddress := s.deployMCMSContract(
+		s.nextDeploymentID(),
+	)
+	secondTargetMCMAddress := s.deployMCMSContract(
+		s.nextDeploymentID(),
+	)
+
+	s.prepareMCMSOwnershipTransfer(
+		firstTargetMCMAddress,
+		executionMCMAddress,
+	)
+	s.prepareMCMSOwnershipTransfer(
+		secondTargetMCMAddress,
+		executionMCMAddress,
+	)
+
+	inspector := s.newInspector()
+
+	initialOpCount, err := inspector.GetOpCount(
+		ctx,
+		executionMCMAddress,
+	)
+	s.Require().NoError(err)
+
+	s.executeAcceptOwnershipProposal(
+		executionMCMAddress,
+		firstTargetMCMAddress,
+		nil,
+	)
+
+	afterFirstProposal, err := inspector.GetOpCount(
+		ctx,
+		executionMCMAddress,
+	)
+	s.Require().NoError(err)
+	s.Require().Equal(
+		initialOpCount+1,
+		afterFirstProposal,
+		"first proposal should increment the operation count",
+	)
+
+	s.executeAcceptOwnershipProposal(
+		executionMCMAddress,
+		secondTargetMCMAddress,
+		nil,
+	)
+
+	afterSecondProposal, err := inspector.GetOpCount(
+		ctx,
+		executionMCMAddress,
+	)
+	s.Require().NoError(err)
+	s.Require().Equal(
+		initialOpCount+2,
+		afterSecondProposal,
+		"second proposal should increment the operation count",
+	)
+
+	firstOwner, err := inspector.GetOwner(
+		ctx,
+		firstTargetMCMAddress,
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(firstOwner)
+	s.Require().Equal(
+		executionMCMAddress,
+		*firstOwner,
+		"execution MCMS should own the first target MCMS",
+	)
+
+	secondOwner, err := inspector.GetOwner(
+		ctx,
+		secondTargetMCMAddress,
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(secondOwner)
+	s.Require().Equal(
+		executionMCMAddress,
+		*secondOwner,
+		"execution MCMS should own the second target MCMS",
+	)
+}
+
+// prepareMCMSOwnershipTransfer makes executionMCMAddress the pending owner of
+// targetMCMAddress.
+func (s *ExecutionTestSuite) prepareMCMSOwnershipTransfer(
+	targetMCMAddress string,
+	executionMCMAddress string,
+) {
+	s.T().Helper()
+
+	ctx := s.T().Context()
+	configurer := stellarsdk.NewConfigurer(s.deployer)
+
+	_, err := configurer.TransferOwnership(
+		ctx,
+		targetMCMAddress,
+		executionMCMAddress,
+	)
+	s.Require().NoError(
+		err,
+		"failed to start MCMS ownership transfer",
+	)
+
+	inspector := s.newInspector()
+
+	pendingOwner, err := inspector.GetPendingOwner(
+		ctx,
+		targetMCMAddress,
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(
+		pendingOwner,
+		"target MCMS should have a pending owner",
+	)
+	s.Require().Equal(
+		executionMCMAddress,
+		*pendingOwner,
+		"execution MCMS should be the pending owner",
+	)
+}
+
+// executeAcceptOwnershipProposal builds and executes one proposal that calls
+// accept_ownership on targetMCMAddress. additionalFields is set on the
+// proposal's chain metadata; nil keeps it minimal.
+func (s *ExecutionTestSuite) executeAcceptOwnershipProposal(
+	executionMCMAddress string,
+	targetMCMAddress string,
+	additionalFields json.RawMessage,
+) {
+	s.T().Helper()
+
+	ctx := s.T().Context()
+	inspector := s.newInspector()
+
+	startingOpCount, err := inspector.GetOpCount(
+		ctx,
+		executionMCMAddress,
+	)
+	s.Require().NoError(err)
+
+	transaction, err := stellarsdk.NewTransaction(
+		targetMCMAddress,
+		"accept_ownership",
+		nil,
+		"ManyChainMultiSig",
+		[]string{
+			"AcceptOwnership",
+		},
+	)
+	s.Require().NoError(err)
+
+	proposal := mcms.Proposal{
+		BaseProposal: mcms.BaseProposal{
+			Version:              "v1",
+			Kind:                 mcmtypes.KindProposal,
+			Description:          "Accept Stellar MCMS ownership",
+			ValidUntil:           uint32(time.Now().Add(time.Hour).Unix()),
+			OverridePreviousRoot: false,
+			Signatures:           []mcmtypes.Signature{},
+			ChainMetadata: map[mcmtypes.ChainSelector]mcmtypes.ChainMetadata{s.chainSelector: {
+				StartingOpCount:  startingOpCount,
+				MCMAddress:       executionMCMAddress,
+				AdditionalFields: additionalFields,
+			},
+			},
+		},
+		Operations: []mcmtypes.Operation{
+			{
+				ChainSelector: s.chainSelector,
+				Transaction:   transaction,
+			},
+		},
+	}
+
+	tree, err := proposal.MerkleTree()
+	s.Require().NoError(err)
+
+	signable, err := mcms.NewSignable(
+		&proposal,
+		map[mcmtypes.ChainSelector]sdk.Inspector{
+			s.chainSelector: inspector,
+		},
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(signable)
+
+	err = signable.ValidateConfigs(ctx)
+	s.Require().NoError(err)
+
+	for _, key := range s.proposalSignerKeys {
+		_, err = signable.SignAndAppend(
+			mcms.NewPrivateKeySigner(key),
+		)
+		s.Require().NoError(err)
+	}
+
+	quorumMet, err := signable.ValidateSignatures(ctx)
+	s.Require().NoError(err)
+	s.Require().True(
+		quorumMet,
+		"MCMS signer quorum was not met",
+	)
+
+	encoders, err := proposal.GetEncoders()
+	s.Require().NoError(err)
+
+	encoder, ok :=
+		encoders[s.chainSelector].(*stellarsdk.Encoder)
+	s.Require().True(
+		ok,
+		"proposal encoder is not a Stellar encoder",
+	)
+
+	executor, err := stellarsdk.NewExecutor(
+		encoder,
+		inspector,
+	)
+	s.Require().NoError(err)
+
+	executable, err := mcms.NewExecutable(
+		&proposal,
+		map[mcmtypes.ChainSelector]sdk.Executor{
+			s.chainSelector: executor,
+		},
+	)
+	s.Require().NoError(err)
+
+	_, err = executable.SetRoot(
+		ctx,
+		s.chainSelector,
+	)
+	s.Require().NoError(
+		err,
+		"failed to set the Stellar MCMS root",
+	)
+
+	actualRoot, actualValidUntil, err := inspector.GetRoot(
+		ctx,
+		executionMCMAddress,
+	)
+	s.Require().NoError(err)
+	s.Require().Equal(
+		tree.Root,
+		actualRoot,
+		"MCMS root does not match the proposal root",
+	)
+	s.Require().Equal(
+		proposal.ValidUntil,
+		actualValidUntil,
+		"MCMS root validity does not match the proposal",
+	)
+
+	_, err = executable.Execute(ctx, 0)
+	s.Require().NoError(
+		err,
+		"failed to execute the Stellar MCMS proposal",
+	)
+
+	endingOpCount, err := inspector.GetOpCount(
+		ctx,
+		executionMCMAddress,
+	)
+	s.Require().NoError(err)
+	s.Require().Equal(
+		startingOpCount+1,
+		endingOpCount,
+		"proposal should increment the MCMS operation count",
+	)
+
+	owner, err := inspector.GetOwner(
+		ctx,
+		targetMCMAddress,
+	)
+	s.Require().NoError(err)
+	s.Require().NotNil(
+		owner,
+		"target MCMS should have an owner",
+	)
+	s.Require().Equal(
+		executionMCMAddress,
+		*owner,
+		"execution MCMS should own the target MCMS",
+	)
+
+	pendingOwner, err := inspector.GetPendingOwner(
+		ctx,
+		targetMCMAddress,
+	)
+	s.Require().NoError(err)
+	s.Require().Nil(
+		pendingOwner,
+		"pending owner should be cleared after ownership acceptance",
+	)
+}
+
+func (s *ExecutionTestSuite) initializeProposalSigners() {
+	s.T().Helper()
+
+	s.proposalSignerKeys, s.signerAddresses = generateSortedSigners(s.T(), 2)
+}
+
+func (s *ExecutionTestSuite) newInspector() *stellarsdk.Inspector {
+	s.T().Helper()
+
+	return newStellarInspector(s.T(), s.StellarClient, s.StellarSigner, s.passphrase)
+}
+
+func (s *ExecutionTestSuite) deployChain() ChainMeta {
+	s.T().Helper()
+
+	deploymentID := s.nextDeploymentID()
+
+	mcmAddress := s.deployMCMSContract(deploymentID)
+
+	roles := defaultTimelockRoleConfig(
+		mcmAddress,
+		s.StellarSigner.Address(),
+	)
+
+	timelockAddress := s.deployTimelockContract(
+		deploymentID,
+		roles,
+	)
+
+	return ChainMeta{
+		MCMAddress:      mcmAddress,
+		TimelockAddress: timelockAddress,
+	}
+}
+
+func (s *ExecutionTestSuite) deployMCMSContract(
+	deploymentID uint64,
+) string {
+	s.T().Helper()
+
+	return deployStellarMCMSContract(
+		s.T(),
+		s.deployer,
+		s.StellarSigner.Address(),
+		s.chainSelector,
+		s.mcmsConfig,
+		fmt.Sprintf("e2e_exec_%d", deploymentID),
+	)
+}
+
+func (s *ExecutionTestSuite) deployTimelockContract(
+	deploymentID uint64,
+	roles timelockRoleConfig,
+) string {
+	s.T().Helper()
+
+	return deployStellarTimelockContract(
+		s.T(),
+		s.deployer,
+		"exec",
+		deploymentID,
+		roles,
+	)
+}
+
+func (s *ExecutionTestSuite) transferMCMSOwnershipToTimelock(
+	chain ChainMeta,
+) {
+	s.T().Helper()
+
+	configurer := stellarsdk.NewConfigurer(s.deployer)
+
+	_, err := configurer.TransferOwnership(
+		s.T().Context(),
+		chain.MCMAddress,
+		chain.TimelockAddress,
+	)
+	s.Require().NoError(
+		err,
+		"failed to transfer MCMS ownership to timelock",
+	)
+}
+
+func (s *ExecutionTestSuite) acceptMCMSOwnershipThroughTimelock(
+	chain ChainMeta,
+) {
+	s.T().Helper()
+
+	encodedPayload := s.mustEncodeInvokePayload(
+		"accept_ownership",
+		nil,
+	)
+
+	payload, err := stellarsdk.DecodeSorobanInvokePayload(
+		encodedPayload,
+	)
+	s.Require().NoError(err)
+
+	calls := timelockbindings.Calls{
+		Inner: []timelockbindings.Call{
+			{
+				Target:   chain.MCMAddress,
+				Function: "accept_ownership",
+				ArgsXdr:  payload.ArgsXDR,
+			},
+		},
+	}
+
+	timelockClient := timelockbindings.NewTimelockClient(
+		s.deployer,
+		chain.TimelockAddress,
+	)
+
+	err = timelockClient.BypasserExecuteBatch(
+		s.T().Context(),
+		s.StellarSigner.Address(),
+		calls,
+	)
+	s.Require().NoError(
+		err,
+		"timelock failed to accept MCMS ownership",
+	)
+
+	mcmsClient := mcmsbindings.NewMcmsClient(
+		s.deployer,
+		chain.MCMAddress,
+	)
+
+	owner, err := mcmsClient.Owner(s.T().Context())
+	s.Require().NoError(err)
+	s.Require().NotNil(owner)
+	s.Require().Equal(
+		chain.TimelockAddress,
+		*owner,
+		"timelock should own MCMS",
+	)
+}
+
+func (s *ExecutionTestSuite) mustEncodeInvokePayload(
+	function string,
+	args []xdr.ScVal,
+) []byte {
+	s.T().Helper()
+
+	payload, err := stellarsdk.EncodeSorobanInvokePayload(
+		function,
+		args,
+	)
+	s.Require().NoError(err)
+
+	return payload
+}
+
+func (s *ExecutionTestSuite) nextDeploymentID() uint64 {
+	s.deploymentCounter++
+
+	return s.deploymentCounter
+}

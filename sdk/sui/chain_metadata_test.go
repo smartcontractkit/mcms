@@ -92,6 +92,51 @@ func TestTimelockRole_Constants(t *testing.T) {
 	assert.Equal(t, TimelockRoleProposer, TimelockRole(2))
 }
 
+func TestSuiRoleFromAction(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name    string
+		action  types.TimelockAction
+		want    TimelockRole
+		wantErr bool
+	}{
+		{
+			name:   "bypass action",
+			action: types.TimelockActionBypass,
+			want:   TimelockRoleBypasser,
+		},
+		{
+			name:   "schedule action",
+			action: types.TimelockActionSchedule,
+			want:   TimelockRoleProposer,
+		},
+		{
+			name:   "cancel action",
+			action: types.TimelockActionCancel,
+			want:   TimelockRoleCanceller,
+		},
+		{
+			name:    "unknown action",
+			action:  types.TimelockAction("unknown"),
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+			got, err := SuiRoleFromAction(tt.action)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.want, got)
+		})
+	}
+}
+
 func TestAdditionalFieldsMetadata_JSON(t *testing.T) {
 	t.Parallel()
 

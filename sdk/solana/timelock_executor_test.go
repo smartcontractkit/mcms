@@ -114,9 +114,8 @@ func TestTimelockExecutor_Execute(t *testing.T) { //nolint:paralleltest
 			},
 			setup: func(t *testing.T, e *TimelockExecutor, m *mocks.JSONRPCClient) { t.Helper() },
 			assertion: assertErrorEquals("unable to get InstructionData from batch operation: " +
-				"unable to unmarshal Solana additional fields: " +
-				"invalid character 'i' looking for beginning of value\n" +
-				"invalid JSON"),
+				"unable to unmarshal additional fields: " +
+				"invalid character 'i' looking for beginning of value"),
 		},
 		{
 			name: "error: invalid To program field",

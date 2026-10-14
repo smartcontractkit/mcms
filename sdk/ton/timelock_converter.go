@@ -110,8 +110,12 @@ func (t *TimelockConverter) ConvertBatchToChainOperations(
 
 	// TODO (ton): amount can be taken from metadata.AdditionalFields
 	// Notice: EVM just sets 0 here, but on TON we need to set some value to cover gas fees
+	dataSlice, err := data.BeginParse()
+	if err != nil {
+		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to begin parsing timelock action data: %w", err)
+	}
 	var tx types.Transaction
-	tx, err = NewTransaction(dstAddr, data.BeginParse(), t.amount.Nano(), bindings.ShortTimelock, nil, bindings.TypeTimelock, tags)
+	tx, err = NewTransaction(dstAddr, dataSlice, t.amount.Nano(), bindings.ShortTimelock, nil, bindings.TypeTimelock, tags)
 	if err != nil {
 		return []types.Operation{}, common.Hash{}, fmt.Errorf("failed to create transaction: %w", err)
 	}

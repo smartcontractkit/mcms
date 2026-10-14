@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
+	stellarrpc "github.com/stellar/go-stellar-sdk/clients/rpcclient"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -14,6 +15,8 @@ import (
 	cantonsdk "github.com/smartcontractkit/mcms/sdk/canton"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	solanasdk "github.com/smartcontractkit/mcms/sdk/solana"
+	stellarsdk "github.com/smartcontractkit/mcms/sdk/stellar"
+	stellarmocks "github.com/smartcontractkit/mcms/sdk/stellar/mocks"
 	"github.com/smartcontractkit/mcms/sdk/sui"
 	tonsdk "github.com/smartcontractkit/mcms/sdk/ton"
 	mcmsTypes "github.com/smartcontractkit/mcms/types"
@@ -162,6 +165,33 @@ func TestBuildTimelockInspectors(t *testing.T) {
 			wantErr: "missing TON chain client",
 		},
 		{
+			name: "missing stellar client",
+			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
+				mcmsTypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector): {
+					MCMAddress: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				},
+			},
+			setup: func(t *testing.T, access *mocks.ChainAccessor) {
+				t.Helper()
+				access.EXPECT().StellarClient(mock.Anything).Return(nil, false)
+			},
+			wantErr: "missing Stellar client",
+		},
+		{
+			name: "missing stellar signer",
+			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
+				mcmsTypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector): {
+					MCMAddress: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				},
+			},
+			setup: func(t *testing.T, access *mocks.ChainAccessor) {
+				t.Helper()
+				access.EXPECT().StellarClient(mock.Anything).Return(new(stellarrpc.Client), true)
+				access.EXPECT().StellarSigner(mock.Anything).Return(nil, false)
+			},
+			wantErr: "missing Stellar signer",
+		},
+		{
 			name: "canton missing participant",
 			chainMetadata: map[mcmsTypes.ChainSelector]mcmsTypes.ChainMetadata{
 				mcmsTypes.ChainSelector(chainsel.CANTON_TESTNET.Selector): {MCMAddress: "0xcanton"},
@@ -191,6 +221,9 @@ func TestBuildTimelockInspectors(t *testing.T) {
 				mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector):            {MCMAddress: "0xaptos"},
 				mcmsTypes.ChainSelector(chainsel.TON_TESTNET.Selector):              {MCMAddress: "0xton"},
 				mcmsTypes.ChainSelector(chainsel.CANTON_TESTNET.Selector):           {MCMAddress: "0xcanton"},
+				mcmsTypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector): {
+					MCMAddress: "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+				},
 				mcmsTypes.ChainSelector(chainsel.SUI_TESTNET.Selector): {
 					MCMAddress: "0xsui",
 					AdditionalFields: []byte(`{
@@ -217,6 +250,8 @@ func TestBuildTimelockInspectors(t *testing.T) {
 						{PartyID: "party::testnet"},
 					},
 				}, true)
+				access.EXPECT().StellarClient(mock.Anything).Return(new(stellarrpc.Client), true)
+				access.EXPECT().StellarSigner(mock.Anything).Return(stellarmocks.NewSigner(t), true)
 			},
 			wantTypes: map[mcmsTypes.ChainSelector]any{
 				mcmsTypes.ChainSelector(chainsel.ETHEREUM_TESTNET_SEPOLIA.Selector): (*evm.TimelockInspector)(nil),
@@ -224,6 +259,7 @@ func TestBuildTimelockInspectors(t *testing.T) {
 				mcmsTypes.ChainSelector(chainsel.APTOS_TESTNET.Selector):            (*aptos.TimelockInspector)(nil),
 				mcmsTypes.ChainSelector(chainsel.TON_TESTNET.Selector):              (*tonsdk.TimelockInspector)(nil),
 				mcmsTypes.ChainSelector(chainsel.CANTON_TESTNET.Selector):           (*cantonsdk.TimelockInspector)(nil),
+				mcmsTypes.ChainSelector(chainsel.STELLAR_LOCALNET.Selector):         (*stellarsdk.TimelockInspector)(nil),
 				mcmsTypes.ChainSelector(chainsel.SUI_TESTNET.Selector):              (*sui.TimelockInspector)(nil),
 			},
 		},

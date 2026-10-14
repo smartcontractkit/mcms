@@ -39,6 +39,9 @@ var (
 	Chain8Selector    = types.ChainSelector(Chain8RawSelector)
 	Chain8StarknetID  = chainsel.ETHEREUM_MAINNET_STARKNET_1.ChainID
 
+	Chain9RawSelector = chainsel.STELLAR_LOCALNET.Selector
+	Chain9Selector    = types.ChainSelector(Chain9RawSelector)
+
 	// ChainInvalidSelector is a chain selector that doesn't exist.
 	ChainInvalidSelector = types.ChainSelector(0)
 )

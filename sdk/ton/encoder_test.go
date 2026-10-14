@@ -252,7 +252,7 @@ func TestEncoder_ToRootMetadata(t *testing.T) {
 				StartingOpCount: 0,
 				MCMAddress:      "EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-", // invalid address
 			},
-			wantErr: "invalid mcms address: incorrect address data",
+			wantErr: "invalid mcms address: incorrect address data EQADa3W6G0nSiTV4a6euRA42fU9QxSEnb-",
 		},
 	}
 

@@ -11,6 +11,7 @@ import (
 	cantone2e "github.com/smartcontractkit/mcms/e2e/tests/canton"
 	evme2e "github.com/smartcontractkit/mcms/e2e/tests/evm"
 	solanae2e "github.com/smartcontractkit/mcms/e2e/tests/solana"
+	stellare2e "github.com/smartcontractkit/mcms/e2e/tests/stellar"
 	suie2e "github.com/smartcontractkit/mcms/e2e/tests/sui"
 	tone2e "github.com/smartcontractkit/mcms/e2e/tests/ton"
 )
@@ -59,4 +60,10 @@ func TestCantonSuite(t *testing.T) {
 	suite.Run(t, new(cantone2e.TimelockCancelTestSuite))
 	suite.Run(t, new(cantone2e.TimelockBypassTestSuite))
 	suite.Run(t, new(cantone2e.SetRootExecuteTestSuite))
+}
+
+func TestStellarSuite(t *testing.T) {
+	suite.Run(t, new(stellare2e.ExecutionTestSuite))
+	suite.Run(t, new(stellare2e.MCMSInspectorTestSuite))
+	suite.Run(t, new(stellare2e.TimelockInspectionTestSuite))
 }

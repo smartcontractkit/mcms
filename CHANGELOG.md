@@ -1,5 +1,80 @@
 # @smartcontractkit/mcms
 
+## [0.56.1](https://github.com/smartcontractkit/mcms/compare/v0.56.0...v0.56.1) (2026-10-08)
+
+
+### Bug Fixes
+
+* **stellar:** honor chain metadata config version in SetRoot ([#886](https://github.com/smartcontractkit/mcms/issues/886)) ([bc7ef83](https://github.com/smartcontractkit/mcms/commit/bc7ef8347c3cd164f4d04ba3ee508e9cd87c6c95))
+
+## [0.56.0](https://github.com/smartcontractkit/mcms/compare/v0.55.2...v0.56.0) (2026-10-02)
+
+
+### Features
+
+* add RoleMetadataDeriver interfaces and chainwrappers ([#874](https://github.com/smartcontractkit/mcms/issues/874)) ([7fc1ff4](https://github.com/smartcontractkit/mcms/commit/7fc1ff4dd8eb2fd83407e76a49a707a39e89b268))
+* **aptos:** implement RoleMetadataDeriver ([#878](https://github.com/smartcontractkit/mcms/issues/878)) ([1d846e2](https://github.com/smartcontractkit/mcms/commit/1d846e29ab15b9771aa5542e88286765162c5c48))
+* **canton:** implement RoleMetadataDeriver ([#883](https://github.com/smartcontractkit/mcms/issues/883)) ([6adddec](https://github.com/smartcontractkit/mcms/commit/6adddec68b709cb3440fdffb33fb14ef2af41c78))
+* **evm:** metadata deriver evm ([#876](https://github.com/smartcontractkit/mcms/issues/876)) ([a05f590](https://github.com/smartcontractkit/mcms/commit/a05f590fe06d1eff01eb4495202411dc0f6790b5))
+* **solana:** implement RoleMetadataDeriver ([#877](https://github.com/smartcontractkit/mcms/issues/877)) ([d2fd761](https://github.com/smartcontractkit/mcms/commit/d2fd7619c3f9fb8a968977c3ff86801ab57e9584))
+* **stellar:** implement RoleMetadataDeriver ([#882](https://github.com/smartcontractkit/mcms/issues/882)) ([ae65bd2](https://github.com/smartcontractkit/mcms/commit/ae65bd21df24fa70ed93d79aa86eb2eb04cc6469))
+* **sui:** implement RoleMetadataDeriver ([#880](https://github.com/smartcontractkit/mcms/issues/880)) ([3c0ecc3](https://github.com/smartcontractkit/mcms/commit/3c0ecc3a3ab2b9c220034bd1c386e6bb474a1db0))
+* **ton:** implement RoleMetadataDeriver ([#881](https://github.com/smartcontractkit/mcms/issues/881)) ([d7b6988](https://github.com/smartcontractkit/mcms/commit/d7b69889c928e809230c1e59bf8189b42f31265c))
+
+## [0.55.2](https://github.com/smartcontractkit/mcms/compare/v0.55.1...v0.55.2) (2026-09-16)
+
+
+### Bug Fixes
+
+* **stellar:** reject unsupported timelock executor role and validate stellar proposal fields ([#855](https://github.com/smartcontractkit/mcms/issues/855)) ([889e14e](https://github.com/smartcontractkit/mcms/commit/889e14ec9b8266c9dd08087692de1dceed7c53fc))
+
+## [0.55.1](https://github.com/smartcontractkit/mcms/compare/v0.55.0...v0.55.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **evm:** don't override gasLimit+gasPrice when not set in chainMetadata ([#849](https://github.com/smartcontractkit/mcms/issues/849)) ([e539861](https://github.com/smartcontractkit/mcms/commit/e5398619dd9348643849c7126381a2ca5d87afd8))
+
+## [0.55.0](https://github.com/smartcontractkit/mcms/compare/v0.54.0...v0.55.0) (2026-09-01)
+
+
+### Features
+
+* **sdk/stellar:** Ilija/stellar sdk 07 stellar deployers ([#844](https://github.com/smartcontractkit/mcms/issues/844)) ([bef7af6](https://github.com/smartcontractkit/mcms/commit/bef7af6e18f9520e8af69a3fa25f5223e862a44f))
+
+## [0.54.0](https://github.com/smartcontractkit/mcms/compare/v0.53.0...v0.54.0) (2026-08-25)
+
+
+### Features
+
+* **canton:** bump chainlink-canton to v2 ([#839](https://github.com/smartcontractkit/mcms/issues/839)) ([2cfbd80](https://github.com/smartcontractkit/mcms/commit/2cfbd808785fa34846147ee8c306f43f07d9b3a0))
+* **sdk/stellar:** add ConfigTransformer and Configurer ([#831](https://github.com/smartcontractkit/mcms/issues/831)) ([ca3600d](https://github.com/smartcontractkit/mcms/commit/ca3600de93253188b0ce0164311d42aac4f4d330))
+* **sdk/stellar:** add Inspector and Executor ([#833](https://github.com/smartcontractkit/mcms/issues/833)) ([0c2e84f](https://github.com/smartcontractkit/mcms/commit/0c2e84f2a0c0270cfbb1c04a32f9912c8d915381))
+* **sdk/stellar:** Add stellar sdk mocks and tests for invoker and bump stellar go native sdk ([#837](https://github.com/smartcontractkit/mcms/issues/837)) ([db02c1e](https://github.com/smartcontractkit/mcms/commit/db02c1e0883728d2adbc71f2f28c55496cb16163))
+* **sdk/stellar:** add timelock interfaces and wire into chainwrappers factory ([#830](https://github.com/smartcontractkit/mcms/issues/830)) ([d77dfa2](https://github.com/smartcontractkit/mcms/commit/d77dfa2efba30802d02393b5818503965db56e80))
+* **sdk/stellar:** add timelock interfaces and wire into chainwrappers factory ([#834](https://github.com/smartcontractkit/mcms/issues/834)) ([0e8343d](https://github.com/smartcontractkit/mcms/commit/0e8343d8e57b7f4d639466e2245e284c8fe5a957))
+
+## [0.53.0](https://github.com/smartcontractkit/mcms/compare/v0.52.1...v0.53.0) (2026-08-18)
+
+
+### Features
+
+* Add TimelockConfigurer.GrantRole support for TON ([#821](https://github.com/smartcontractkit/mcms/issues/821)) ([541ae5d](https://github.com/smartcontractkit/mcms/commit/541ae5d04e7fe9aa90d75fafef1df4fd0b7984ec))
+
+## [0.52.1](https://github.com/smartcontractkit/mcms/compare/v0.52.0...v0.52.1) (2026-08-13)
+
+
+### Bug Fixes
+
+* **evm:** update CallProxy bindings ([#824](https://github.com/smartcontractkit/mcms/issues/824)) ([8e40a43](https://github.com/smartcontractkit/mcms/commit/8e40a43d4827e35baf56a3c51a920dfe2baaafcd))
+
+## [0.52.0](https://github.com/smartcontractkit/mcms/compare/v0.51.0...v0.52.0) (2026-07-14)
+
+
+### Features
+
+* add ExecutePayer field in chain metadata for setting solana execute accounts [CLD-3046] ([#814](https://github.com/smartcontractkit/mcms/issues/814)) ([4e1ae4b](https://github.com/smartcontractkit/mcms/commit/4e1ae4b3e7d2a2941d33f6db1280c66ab555539f))
+
 ## [0.51.0](https://github.com/smartcontractkit/mcms/compare/v0.50.1...v0.51.0) (2026-07-07)
 
 

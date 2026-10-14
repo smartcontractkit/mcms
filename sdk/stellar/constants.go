@@ -1,30 +1,13 @@
 package stellar
 
-// MCMS-Stellar numeric constants (ABI packing; see chainlink-stellar contracts/mcms/src/abi_encoding.rs).
+import "github.com/smartcontractkit/chainlink-stellar/bindings"
+
+// MCMS-Stellar encoding constants. Keep these in lockstep with
+// contracts/mcms/src/{constants,encoding}.rs.
 const (
-	abiWordBytes = 32
-
-	uint40BitWidth     = 40
-	uint40MaxExclusive = uint64(1) << uint40BitWidth
-	// Low 40 bits of a uint64 in big-endian occupy the last 5 bytes.
-	uint40TailBytes = 5
-	uint64ByteLen   = 8
-
-	stellarContractIDBytes = abiWordBytes
-	// Network / contract ids are 32-byte hashes; hex form without 0x is 64 characters.
-	stellarChainHexCharLen = stellarContractIDBytes * 2
-
-	stellarOpStaticWordCount = 6
-	// Byte offset of dynamic `data` from start of StellarOp head (6 words × 32 bytes).
-	stellarOpDataABIByteOffset = stellarOpStaticWordCount * abiWordBytes
-
-	hexRadix = 16
-	// Bits representable in StellarOp.value / metadata words as uint256.
-	uint256BitWidth = 256
-
-	hexPrefixLen = 2 // "0x" / "0X"
-
-	uint32ByteLen = 4
+	uint40MaxExclusive     = 1 << 40
+	stellarContractIDBytes = 32
+	encodingVersion        = bindings.SorobanInvokeEncodingVersion
 )
 
 // Domain separators — must match chainlink-stellar contracts/mcms/src/constants.rs

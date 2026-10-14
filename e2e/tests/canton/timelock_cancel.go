@@ -123,16 +123,11 @@ func (s *TimelockCancelTestSuite) TestTimelockCancel() {
 	cancellerOpCount, err := cancellerInspector.GetOpCount(ctx, s.mcmsInstanceAddress)
 	s.Require().NoError(err)
 
-	// Canceller metadata
-	cancellerMcmsId := fmt.Sprintf("%s@%s-canceller", s.mcmsId, s.participant.PartyID)
-	cancellerMetadata, err := cantonsdk.NewChainMetadata(
-		cancellerOpCount,
-		s.chainId,
-		cancellerMcmsId,
-		s.mcmsInstanceAddress,
-		s.mcmsId,
-	)
+	// Canceller metadata: derived from the schedule metadata by rewriting the multisigId role suffix
+	cancellerMetadata, err := cantonsdk.NewRoleMetadataDeriver().DeriveRoleMetadata(
+		ctx, s.chainSelector, proposerMetadata, types.TimelockActionCancel, nil)
 	s.Require().NoError(err)
+	cancellerMetadata.StartingOpCount = cancellerOpCount
 
 	// Build cancel proposal - reuse the same batch operation (the converter extracts operationId)
 	// Use the same salt as the schedule proposal to derive the same operation ID

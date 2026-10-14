@@ -30,18 +30,19 @@ Before starting, you should have:
 
 All chain family integrations must implement interfaces defined in the `/sdk` folder. Here's a complete overview:
 
-| Interface           | Status       | Purpose                                                   | Definition                                                                                            |
-|---------------------|--------------|-----------------------------------------------------------|-------------------------------------------------------------------------------------------------------|
-| `Executor`          | **Required** | Execute MCMS operations on-chain                          | [executor.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/executor.go)                     |
-| `Inspector`         | **Required** | Query MCMS contract state                                 | [inspector.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/inspector.go)                   |
-| `Encoder`           | **Required** | Hash operations and metadata                              | [encoder.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/encoder.go)                       |
-| `ConfigTransformer` | **Required** | Convert between chain-agnostic and chain-specific configs | [config_transformer.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/config_transformer.go) |
-| `Configurer`        | **Required** | Update MCMS contract configuration                        | [configurer.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/configurer.go)                 |
-| `Decoder`           | Optional     | Decode transaction data for human readability             | [decoder.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/decoder.go)                       |
-| `Simulator`         | Optional     | Simulate transactions before execution                    | [simulator.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/simulator.go)                   |
-| `TimelockExecutor`  | **Required** | Execute timelock operations                               | [timelock_executor.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/timelock_executor.go)   |
-| `TimelockInspector` | **Required** | Query timelock contract state                             | [timelock_inspector.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/timelock_inspector.go) |
-| `TimelockConverter` | **Required** | Convert batch operations to timelock operations           | [timelock_converter.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/timelock_converter.go) |
+| Interface             | Status       | Purpose                                                    | Definition                                                                                                  |
+|-----------------------|--------------|------------------------------------------------------------|-------------------------------------------------------------------------------------------------------------|
+| `Executor`            | **Required** | Execute MCMS operations on-chain                           | [executor.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/executor.go)                           |
+| `Inspector`           | **Required** | Query MCMS contract state                                  | [inspector.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/inspector.go)                         |
+| `Encoder`             | **Required** | Hash operations and metadata                               | [encoder.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/encoder.go)                             |
+| `ConfigTransformer`   | **Required** | Convert between chain-agnostic and chain-specific configs  | [config_transformer.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/config_transformer.go)       |
+| `Configurer`          | **Required** | Update MCMS contract configuration                         | [configurer.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/configurer.go)                       |
+| `Decoder`             | Optional     | Decode transaction data for human readability              | [decoder.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/decoder.go)                             |
+| `Simulator`           | Optional     | Simulate transactions before execution                     | [simulator.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/simulator.go)                         |
+| `TimelockExecutor`    | **Required** | Execute timelock operations                                | [timelock_executor.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/timelock_executor.go)         |
+| `TimelockInspector`   | **Required** | Query timelock contract state                              | [timelock_inspector.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/timelock_inspector.go)       |
+| `TimelockConverter`   | **Required** | Convert batch operations to timelock operations            | [timelock_converter.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/timelock_converter.go)       |
+| `RoleMetadataDeriver` | **Required** | Derive cancel/bypass chain metadata from schedule metadata | [role_metadata_deriver.go](https://github.com/smartcontractkit/mcms/blob/main/sdk/role_metadata_deriver.go) |
 
 ### ChainAccess Registry Adapter
 

@@ -9,18 +9,26 @@ import (
 	"os"
 	"testing"
 
+	stellardeployer "github.com/smartcontractkit/chainlink-stellar/deployment"
+	"github.com/stellar/go-stellar-sdk/keypair"
+	"github.com/stellar/go-stellar-sdk/xdr"
 	"github.com/stretchr/testify/suite"
 
 	chainsel "github.com/smartcontractkit/chain-selectors"
 
+	stellarmcms "github.com/smartcontractkit/chainlink-stellar/deployment/mcmsutil"
+
 	"github.com/smartcontractkit/mcms"
 	e2e "github.com/smartcontractkit/mcms/e2e/tests"
 	solanae2e "github.com/smartcontractkit/mcms/e2e/tests/solana"
+	"github.com/smartcontractkit/mcms/e2e/tests/stellar"
 	testutils "github.com/smartcontractkit/mcms/e2e/utils"
 	"github.com/smartcontractkit/mcms/sdk"
 	"github.com/smartcontractkit/mcms/sdk/evm"
 	"github.com/smartcontractkit/mcms/sdk/evm/bindings"
 	solanamcms "github.com/smartcontractkit/mcms/sdk/solana"
+	stellarsdk "github.com/smartcontractkit/mcms/sdk/stellar"
+
 	"github.com/smartcontractkit/mcms/types"
 
 	"github.com/ethereum/go-ethereum/accounts"
@@ -44,10 +52,15 @@ func TestManualLedgerSigningSuite(t *testing.T) {
 // ManualLedgerSigningTestSuite tests the manual ledger signing functionality
 type ManualLedgerSigningTestSuite struct {
 	suite.Suite
-	authEVM             *bind.TransactOpts
-	authSolana          solana.PrivateKey
-	chainSelectorEVM    types.ChainSelector
-	chainSelectorSolana types.ChainSelector
+
+	authEVM         *bind.TransactOpts
+	authSolana      solana.PrivateKey
+	stellarDeployer *stellardeployer.Deployer
+
+	chainSelectorEVM     types.ChainSelector
+	chainSelectorSolana  types.ChainSelector
+	chainSelectorStellar types.ChainSelector
+
 	e2e.TestSetup
 }
 
@@ -73,6 +86,7 @@ func (s *ManualLedgerSigningTestSuite) deployMCMContractEVM(ctx context.Context)
 
 	return mcmsAddress, instance
 }
+
 func (s *ManualLedgerSigningTestSuite) initializeMCMSolana(ctx context.Context) (solana.PublicKey, string) {
 	var MCMProgramID = solana.MustPublicKeyFromBase58(s.SolanaChain.SolanaPrograms["mcm"])
 	solanae2e.InitializeMCMProgram(
@@ -109,7 +123,7 @@ func (s *ManualLedgerSigningTestSuite) setRootEVM(
 
 	// set root
 
-	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck //OPT-400
+	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck // OPT-400
 	s.Require().NoError(err)
 	tx, err = executable.SetRoot(ctx, s.chainSelectorEVM)
 	s.Require().NoError(err)
@@ -126,7 +140,8 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 	mcmProgramID solana.PublicKey,
 	ledgerAccount common.Address,
 	proposal *mcms.Proposal,
-	executorsMap map[types.ChainSelector]sdk.Executor) {
+	executorsMap map[types.ChainSelector]sdk.Executor,
+) {
 	// set config
 	mcmAddress := solanamcms.ContractAddress(mcmProgramID, mcmInstanceSeed)
 	mcmConfig := types.Config{Quorum: 1, Signers: []common.Address{ledgerAccount}}
@@ -136,7 +151,7 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 
 	// set root
 
-	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck //OPT-400
+	executable, err := mcms.NewExecutable(proposal, executorsMap) //nolint:contextcheck // OPT-400
 	s.Require().NoError(err)
 	tx, err := executable.SetRoot(ctx, s.chainSelectorSolana)
 	s.Require().NoError(err)
@@ -144,6 +159,132 @@ func (s *ManualLedgerSigningTestSuite) setRootSolana(
 	// --- assert ---
 	_, err = solana.SignatureFromBase58(tx.Hash)
 	s.Require().NoError(err)
+}
+
+func (s *ManualLedgerSigningTestSuite) initializeMCMSStellar(
+	ctx context.Context,
+	ledgerAccount common.Address,
+) xdr.AccountId {
+	kp, err := keypair.Random()
+	s.Require().NoError(err)
+
+	stellar.FundStellarKey(
+		s.T(),
+		s.StellarClient.URL(),
+		kp,
+	)
+
+	deployer := stellardeployer.NewDeployer(
+		s.StellarClient,
+		chainsel.STELLAR_LOCALNET.Passphrase,
+		kp,
+	)
+
+	salt := stellarmcms.MCMSDeploySalt(
+		chainsel.STELLAR_LOCALNET.Selector,
+		"",
+	)
+
+	// The Ledger account is the MCMS secp256k1 signer.
+	// It is intentionally an EVM common.Address, not the Stellar
+	// transaction-signing account.
+	mcmConfig := &types.Config{
+		Quorum:  1,
+		Signers: []common.Address{ledgerAccount},
+	}
+
+	// chain-selectors stores the Stellar network ID as the chain ID.
+	networkIDHex, err := chainsel.StellarChainIdFromSelector(
+		chainsel.STELLAR_LOCALNET.Selector,
+	)
+	s.Require().NoError(err)
+	s.Require().True(
+		common.IsHexHash(networkIDHex),
+		"invalid Stellar network ID %q",
+		networkIDHex,
+	)
+
+	chainNetworkID := common.HexToHash(networkIDHex)
+
+	contractID, err := stellarmcms.DeployMCMS(
+		ctx,
+		deployer,
+		kp.Address(),
+		chainNetworkID,
+		mcmConfig,
+		"ledger_test",
+		salt,
+	)
+	s.Require().NoError(err)
+
+	s.stellarDeployer = deployer
+
+	return xdr.MustAddress(contractID)
+}
+
+func (s *ManualLedgerSigningTestSuite) setRootStellar(
+	ctx context.Context,
+	mcmAddress string,
+	ledgerAccount common.Address,
+	proposal *mcms.Proposal,
+	executorsMap map[types.ChainSelector]sdk.Executor,
+) {
+	// Exercise the Configurer too, matching EVM/Solana.
+	mcmConfig := types.Config{
+		Quorum:  1,
+		Signers: []common.Address{ledgerAccount},
+	}
+
+	configurer := stellarsdk.NewConfigurer(
+		s.stellarDeployer,
+	)
+
+	_, err := configurer.SetConfig(
+		ctx,
+		mcmAddress,
+		&mcmConfig,
+		true,
+	)
+	s.Require().NoError(
+		err,
+		"Failed to configure Stellar MCMS",
+	)
+
+	executable, err := mcms.NewExecutable( //nolint:contextcheck // OPT-400
+		proposal,
+		executorsMap,
+	)
+	s.Require().NoError(err)
+
+	_, err = executable.SetRoot(
+		ctx,
+		s.chainSelectorStellar,
+	)
+	s.Require().NoError(
+		err,
+		"Failed to set Stellar MCMS root",
+	)
+
+	inspector := stellarsdk.NewInspectorFromInvoker(
+		s.stellarDeployer,
+	)
+
+	root, validUntil, err := inspector.GetRoot(
+		ctx,
+		mcmAddress,
+	)
+	s.Require().NoError(err)
+
+	s.Require().NotEqual(
+		common.Hash{},
+		root,
+		"Stellar MCMS root should have been set",
+	)
+
+	s.Require().NotZero(
+		validUntil,
+		"Stellar MCMS root should have a validity deadline",
+	)
 }
 
 // This test uses real ledger connected device. Remember to connect, unlock it and open ethereum app.
@@ -195,6 +336,7 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	// Step 2: Deploy and initialize solana and EVM MCMs
 	mcmsAddressEVM, mcmInstanceEVM := s.deployMCMContractEVM(ctx)
 	mcmProgramID, contractIDSolana := s.initializeMCMSolana(ctx)
+	mcmIDStellar := s.initializeMCMSStellar(ctx, account.Address)
 
 	// Step 3: Load a proposal from a fixture
 	s.T().Log("Loading proposal from fixture...")
@@ -218,12 +360,18 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 		MCMAddress:      contractIDSolana,
 		StartingOpCount: 0,
 	}
+	proposal.ChainMetadata[s.chainSelectorStellar] = types.ChainMetadata{
+		MCMAddress:      mcmIDStellar.Address(),
+		StartingOpCount: 0,
+	}
 
 	// Step 4: Create a Signable instance
 	s.T().Log("Creating Signable instance...")
+	stellarInspector := stellarsdk.NewInspectorFromInvoker(s.stellarDeployer)
 	inspectors := map[types.ChainSelector]sdk.Inspector{
-		s.chainSelectorEVM:    evm.NewInspector(s.ClientA),
-		s.chainSelectorSolana: solanamcms.NewInspector(s.SolanaClient),
+		s.chainSelectorEVM:     evm.NewInspector(s.ClientA),
+		s.chainSelectorSolana:  solanamcms.NewInspector(s.SolanaClient),
+		s.chainSelectorStellar: stellarInspector,
 	}
 	encoders, err := proposal.GetEncoders()
 	s.Require().NoError(err)
@@ -232,11 +380,18 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	s.authSolana = authSolana
 	encoderEVM := encoders[s.chainSelectorEVM].(*evm.Encoder)
 	encoderSolana := encoders[s.chainSelectorSolana].(*solanamcms.Encoder)
+	encoderStellar := encoders[s.chainSelectorStellar].(*stellarsdk.Encoder)
 	executorEVM := evm.NewExecutor(encoderEVM, s.ClientA, s.authEVM)
 	executorSolana := solanamcms.NewExecutor(encoderSolana, s.SolanaClient, authSolana)
+	executorStellar, err := stellarsdk.NewExecutor(
+		encoderStellar,
+		stellarInspector,
+	)
+	s.Require().NoError(err)
 	executorsMap := map[types.ChainSelector]sdk.Executor{
-		s.chainSelectorEVM:    executorEVM,
-		s.chainSelectorSolana: executorSolana,
+		s.chainSelectorEVM:     executorEVM,
+		s.chainSelectorSolana:  executorSolana,
+		s.chainSelectorStellar: executorStellar,
 	}
 	signable, err := mcms.NewSignable(proposal, inspectors)
 	s.Require().NoError(err, "Failed to create Signable instance")
@@ -266,4 +421,5 @@ func (s *ManualLedgerSigningTestSuite) TestManualLedgerSigning() {
 	// Step 7: Call Set Root to verify signature
 	s.setRootEVM(ctx, account.Address, proposal, mcmInstanceEVM, executorsMap)
 	s.setRootSolana(ctx, mcmProgramID, account.Address, proposal, executorsMap)
+	s.setRootStellar(ctx, mcmIDStellar.Address(), account.Address, proposal, executorsMap)
 }
