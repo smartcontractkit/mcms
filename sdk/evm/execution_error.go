@@ -168,16 +168,19 @@ type ExecutionError struct {
 	OriginalError error `json:"-"`
 }
 
+// Error leads with the most specific revert reason and ends with the original
+// RPC error, so a truncated message still shows why the execution failed.
 func (e *ExecutionError) Error() string {
 	var msg string
 	if e.UnderlyingReasonDecoded != "" {
-		msg = fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.UnderlyingReasonDecoded)
+		msg = fmt.Sprintf("execution failed: underlying reason: %s; original error: %v", e.UnderlyingReasonDecoded, e.OriginalError)
 	} else if e.UnderlyingReasonRaw != "" {
-		msg = fmt.Sprintf("execution failed: %v (underlying reason: %s)", e.OriginalError, e.UnderlyingReasonRaw)
+		msg = fmt.Sprintf("execution failed: underlying reason: %s; original error: %v", e.UnderlyingReasonRaw, e.OriginalError)
 	} else if e.RevertReasonDecoded != "" {
-		msg = fmt.Sprintf("execution failed: %v (revert reason: %s)", e.OriginalError, e.RevertReasonDecoded)
+		msg = fmt.Sprintf("execution failed: revert reason: %s; original error: %v", e.RevertReasonDecoded, e.OriginalError)
 	} else if e.RevertReasonRaw != nil && len(e.RevertReasonRaw.Combined()) > 0 {
-		msg = fmt.Sprintf("execution failed: %v (raw revert data: %s)", e.OriginalError, common.Bytes2Hex(e.RevertReasonRaw.Combined()))
+		msg = fmt.Sprintf("execution failed: raw revert data: %s; original error: %v",
+			common.Bytes2Hex(e.RevertReasonRaw.Combined()), e.OriginalError)
 	} else {
 		msg = fmt.Sprintf("execution failed: %v", e.OriginalError)
 	}

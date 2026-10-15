@@ -42,6 +42,7 @@ const (
 type executionErrorErrorCase struct {
 	name                string
 	execErr             *ExecutionError
+	expectedPrefix      string
 	expectedContains    []string
 	expectedNotContains []string
 }
@@ -59,6 +60,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
 		},
+		expectedPrefix: "execution failed: underlying reason: decoded underlying revert reason; original error: " + errMsgOriginalError,
 		expectedContains: []string{
 			errMsgExecutionFailed,
 			errMsgOriginalError,
@@ -100,6 +102,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
 		},
+		expectedPrefix: "execution failed: revert reason: OutOfBoundsGroup; original error: " + errMsgOriginalError,
 		expectedContains: []string{
 			errMsgExecutionFailed,
 			errMsgOriginalError,
@@ -119,6 +122,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
 		},
+		expectedPrefix: "execution failed: raw revert data: 12345678aabbcc; original error: " + errMsgOriginalError,
 		expectedContains: []string{
 			errMsgExecutionFailed,
 			errMsgOriginalError,
@@ -223,6 +227,10 @@ func TestExecutionErrorError(t *testing.T) {
 			t.Parallel()
 
 			result := tt.execErr.Error()
+
+			if tt.expectedPrefix != "" {
+				assert.True(t, strings.HasPrefix(result, tt.expectedPrefix), "Error message %q should start with %q", result, tt.expectedPrefix)
+			}
 
 			// Check that all expected substrings are present
 			for _, expected := range tt.expectedContains {
@@ -1622,7 +1630,7 @@ func TestBuildExecutionError_ScheduleBatchCallReverted(t *testing.T) {
 	require.NotNil(t, execErr)
 	assert.Equal(t, "CallReverted(RBACTimelock: insufficient delay)", execErr.RevertReasonDecoded)
 	assert.Empty(t, execErr.UnderlyingReasonRaw)
-	assert.Contains(t, execErr.Error(), "(revert reason: CallReverted(RBACTimelock: insufficient delay))")
+	assert.True(t, strings.HasPrefix(execErr.Error(), "execution failed: revert reason: CallReverted(RBACTimelock: insufficient delay); original error: "))
 }
 
 func TestCallProxyBytecodeFingerprintMatchesBinding(t *testing.T) {
