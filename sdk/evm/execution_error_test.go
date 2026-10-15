@@ -948,6 +948,20 @@ func TestFormatDecodedError(t *testing.T) {
 			decodedValues:  []any{big.NewInt(1000)},
 			expectedResult: "BigIntError(1000)",
 		},
+		{
+			name:      "bytes argument carrying a nested revert reason",
+			errorName: "CallReverted",
+			decodedValues: []any{
+				append([]byte{0x08, 0xc3, 0x79, 0xa0}, encodeErrorString("RBACTimelock: insufficient delay")...),
+			},
+			expectedResult: "CallReverted(RBACTimelock: insufficient delay)",
+		},
+		{
+			name:           "bytes argument without a revert reason is hex",
+			errorName:      "CallReverted",
+			decodedValues:  []any{[]byte{0xde, 0xad, 0xbe, 0xef}},
+			expectedResult: "CallReverted(0xdeadbeef)",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1569,6 +1583,46 @@ func TestBuildExecutionError_RealRevert_NotGasFailure(t *testing.T) {
 	assert.False(t, execErr.IsLikelyGasEstimationFailure, "IsLikelyGasEstimationFailure should be false when underlying reason is extracted")
 	assert.Empty(t, execErr.Hint, "Hint should be empty when not a gas estimation failure")
 	assert.Equal(t, "Ownable: caller is not the owner", execErr.UnderlyingReasonDecoded)
+}
+
+// TestBuildExecutionError_ScheduleBatchCallReverted uses the error an MCMS
+// execute returns when RBACTimelock.scheduleBatch rejects the call: the
+// timelock's own revert travels inside CallReverted, with no underlying call to
+// replay.
+func TestBuildExecutionError_ScheduleBatchCallReverted(t *testing.T) {
+	t.Parallel()
+
+	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err, errMsgFailedTimelockABI)
+
+	timelockAddr := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+	mockClient := mocks.NewContractDeployBackend(t)
+	mockClient.On("CodeAt", mock.Anything, mock.Anything, mock.Anything).Return([]byte{0x00}, nil).Maybe()
+
+	originalErr := errors.New("execution reverted\nexecution reverted: 0x70de1b4b" +
+		"0000000000000000000000000000000000000000000000000000000000000020" +
+		"0000000000000000000000000000000000000000000000000000000000000064" +
+		"08c379a0" +
+		"0000000000000000000000000000000000000000000000000000000000000020" +
+		"0000000000000000000000000000000000000000000000000000000000000020" +
+		"5242414354696d656c6f636b3a20696e73756666696369656e742064656c6179" +
+		"00000000000000000000000000000000000000000000000000000000" +
+		"\nall backup clients failed for chain \"ethereum-testnet-sepolia-optimism-1\"")
+	execErr := BuildExecutionError(
+		context.Background(),
+		originalErr,
+		nil,
+		&bind.TransactOpts{GasLimit: 1000000},
+		common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		mockClient,
+		timelockAddr,
+		timelockABI.Methods["scheduleBatch"].ID,
+	)
+
+	require.NotNil(t, execErr)
+	assert.Equal(t, "CallReverted(RBACTimelock: insufficient delay)", execErr.RevertReasonDecoded)
+	assert.Empty(t, execErr.UnderlyingReasonRaw)
+	assert.Contains(t, execErr.Error(), "(revert reason: CallReverted(RBACTimelock: insufficient delay))")
 }
 
 func TestCallProxyBytecodeFingerprintMatchesBinding(t *testing.T) {

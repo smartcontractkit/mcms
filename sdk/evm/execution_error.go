@@ -43,13 +43,23 @@ var (
 const (
 	selectorSize             = 4
 	revertPrefix             = "revert:"
-	errCallRevertedTruncated = "CallReverted(truncated)"
+	callRevertedErrorName    = "CallReverted"
+	errCallRevertedTruncated = callRevertedErrorName + "(truncated)"
+	errMsgUnderlyingOutOfGas = "underlying call failed: out of gas (try setting gasLimit in proposal chainMetadata.additionalFields)"
+
+	// timelockUnderlyingRevertMessage is the RBACTimelock revert when one of the
+	// calls it executes reverts. It drops that call's revert data.
+	timelockUnderlyingRevertMessage = "RBACTimelock: underlying transaction reverted"
 
 	// defaultSimulationGasLimit is used as a fallback gas limit for CallContract
 	// simulations when opts.GasLimit is 0 and the block gas limit query fails.
 	// 10M is conservative enough to work on most chains while being high enough
 	// for typical contract calls.
 	defaultSimulationGasLimit = 10_000_000
+	// Simulations use blockGasLimitNumerator/blockGasLimitDenominator (90%) of
+	// the block gas limit when opts.GasLimit is 0.
+	blockGasLimitNumerator   = 9
+	blockGasLimitDenominator = 10
 )
 
 // CustomErrorData contains the error selector and its arguments separately.
@@ -315,31 +325,43 @@ func BuildExecutionError(
 	// 1. As a plain string in the error: "RBACTimelock: underlying transaction reverted"
 	// 2. As a decoded custom error that contains this message
 	// 3. As a CallReverted error (selector 0x70de1b4b) which wraps the timelock revert
-	// In this case, we need to use CallContract to get the actual underlying revert reason.
+	// The underlying reason comes from tracing the whole transaction, which runs
+	// every call of the batch in order. When the RPC can't trace, the first
+	// underlying call is replayed on its own with CallContract.
 	// If extraction fails, just leave UnderlyingReasonRaw empty
 	rawRevertReasonHasCallRevertedSelector := execErr.RevertReasonRaw != nil && execErr.RevertReasonRaw.Selector == CallRevertedSelector
 	rawDataHasCallRevertedSelector := len(revertData.RawData) >= selectorSize && string(revertData.RawData[:4]) == string(CallRevertedSelector[:])
-	isCallReverted := strings.Contains(errStr, "CallReverted") ||
-		strings.Contains(execErr.RevertReasonDecoded, "CallReverted") ||
+	isCallReverted := strings.Contains(errStr, callRevertedErrorName) ||
+		strings.Contains(execErr.RevertReasonDecoded, callRevertedErrorName) ||
 		rawRevertReasonHasCallRevertedSelector ||
 		rawDataHasCallRevertedSelector
 
-	if strings.Contains(errStr, "RBACTimelock: underlying transaction reverted") ||
-		strings.Contains(execErr.RevertReasonDecoded, "RBACTimelock: underlying transaction reverted") ||
+	outcome := traceUnavailable
+	if strings.Contains(errStr, timelockUnderlyingRevertMessage) ||
+		strings.Contains(execErr.RevertReasonDecoded, timelockUnderlyingRevertMessage) ||
 		(isCallReverted && timelockAddr != (common.Address{}) && len(timelockCallData) > 0) {
-		underlyingCallSender := resolveUnderlyingCallSender(ctx, timelockAddr, client)
-		rawUnderlyingReason, decodedUnderlyingReason := getUnderlyingRevertReason(ctx, underlyingCallSender, timelockCallData, opts, client)
+		var rawUnderlyingReason, decodedUnderlyingReason string
+		rawUnderlyingReason, decodedUnderlyingReason, outcome = traceUnderlyingRevertReason(ctx, txPreview, opts, client)
+		if outcome == traceUnavailable {
+			underlyingCallSender := resolveUnderlyingCallSender(ctx, timelockAddr, client)
+			rawUnderlyingReason, decodedUnderlyingReason = getUnderlyingRevertReason(ctx, underlyingCallSender, timelockCallData, opts, client)
+		}
 		execErr.UnderlyingReasonRaw = rawUnderlyingReason
 		execErr.UnderlyingReasonDecoded = decodedUnderlyingReason
 	}
 
 	// Best-effort detection for gas estimation failures: when the RBACTimelock reports
-	// "underlying transaction reverted" but we could not extract the underlying
-	// reason (both raw and decoded are empty), or the underlying reason indicates
-	// an out-of-gas error, the failure is likely caused by gas estimation limits
-	// rather than a true contract logic revert.
-	if strings.Contains(errStr, "RBACTimelock: underlying transaction reverted") &&
-		(execErr.UnderlyingReasonRaw == "" && execErr.UnderlyingReasonDecoded == "" ||
+	// "underlying transaction reverted" and the underlying reason indicates an
+	// out-of-gas error, or no call reverts once there is enough gas, the failure is
+	// likely caused by gas estimation limits rather than a true contract logic revert.
+	// No call reverting is known when the trace ran the whole transaction without a
+	// revert, or, without a trace, when the replayed first call is the batch's only
+	// call: in a larger batch, a later call may be the one that reverted.
+	underlyingUnknown := execErr.UnderlyingReasonRaw == "" && execErr.UnderlyingReasonDecoded == ""
+	noCallReverts := outcome == traceSucceeded ||
+		(outcome == traceUnavailable && timelockCallCount(timelockCallData) == 1)
+	if strings.Contains(errStr, timelockUnderlyingRevertMessage) &&
+		(underlyingUnknown && noCallReverts ||
 			strings.Contains(execErr.UnderlyingReasonRaw, "out of gas") ||
 			strings.Contains(execErr.UnderlyingReasonRaw, "gas required exceeds")) {
 		execErr.IsLikelyGasEstimationFailure = true
@@ -492,7 +514,7 @@ func extractRevertReasonFromError(err error) revertReasonData {
 	}
 
 	// Try to extract revert data from error string using array, hex or bytesArray formats
-	if strings.Contains(errStr, "CallReverted") {
+	if strings.Contains(errStr, callRevertedErrorName) {
 		if rawData := extractBytesArrayRevertData(errStr); len(rawData) > 0 {
 			return revertReasonData{
 				RawData: rawData,
@@ -630,7 +652,7 @@ func decodeErrorBySelector(selector []byte, data []byte, contractABI *abi.ABI) s
 
 		decoded, err := errDef.Unpack(fullData)
 		if err != nil {
-			if name == "CallReverted" && strings.Contains(err.Error(), "length insufficient") {
+			if name == callRevertedErrorName && strings.Contains(err.Error(), "length insufficient") {
 				return errCallRevertedTruncated
 			}
 
@@ -669,7 +691,7 @@ func formatDecodedError(errorName string, decodedValues []any) string {
 	var parts []string
 	for _, val := range decodedValues {
 		if val != nil {
-			parts = append(parts, fmt.Sprintf("%v", val))
+			parts = append(parts, formatDecodedValue(val))
 		}
 	}
 	if len(parts) > 0 {
@@ -677,6 +699,40 @@ func formatDecodedError(errorName string, decodedValues []any) string {
 	}
 
 	return errorName
+}
+
+// simulationGasLimit is the gas for simulating a failed call: opts.GasLimit,
+// or, when that is unset, 90% of the block gas limit. The RPC's own default
+// can be low enough to fail the simulation with "out of gas" instead of the
+// real revert reason. Falls back to defaultSimulationGasLimit when the block
+// gas limit can't be read.
+func simulationGasLimit(ctx context.Context, opts *bind.TransactOpts, client ContractDeployBackend) uint64 {
+	if opts != nil && opts.GasLimit > 0 {
+		return opts.GasLimit
+	}
+	if client != nil {
+		if header, err := client.HeaderByNumber(ctx, nil); err == nil && header != nil && header.GasLimit > 0 {
+			return header.GasLimit * blockGasLimitNumerator / blockGasLimitDenominator
+		}
+	}
+
+	return defaultSimulationGasLimit
+}
+
+// formatDecodedValue formats one decoded error argument. A bytes argument is
+// usually revert data from a nested call, e.g. the payload of
+// CallReverted(bytes) when MCMS calls RBACTimelock.scheduleBatch, so it is
+// decoded as a revert reason and falls back to hex.
+func formatDecodedValue(val any) string {
+	data, ok := val.([]byte)
+	if !ok {
+		return fmt.Sprintf("%v", val)
+	}
+	if reason := decodeRevertReason(data); reason != "" {
+		return reason
+	}
+
+	return "0x" + common.Bytes2Hex(data)
 }
 
 // getUnderlyingRevertReason extracts both the raw and decoded underlying revert reasons when MCMS calls
@@ -702,21 +758,6 @@ func getUnderlyingRevertReason(
 		return "", ""
 	}
 
-	// Determine the gas limit to use for the simulation.
-	// When opts.GasLimit is 0 (the default when the proposal doesn't set gasLimit in
-	// chainMetadata.additionalFields), the RPC may use a low default gas that causes
-	// the simulation to fail with "out of gas" rather than returning the real revert
-	// reason. To avoid this, we query the chain's block gas limit and use 90% of it,
-	// which adapts to each chain automatically. If the header query fails, we fall
-	// back to a conservative default.
-	simulationGas := opts.GasLimit
-	if simulationGas == 0 {
-		simulationGas = defaultSimulationGasLimit
-		if header, headerErr := client.HeaderByNumber(ctx, nil); headerErr == nil && header != nil && header.GasLimit > 0 {
-			simulationGas = header.GasLimit * 9 / 10 // 90% of block gas limit
-		}
-	}
-
 	// Simulate the underlying transaction using CallContract (best-effort).
 	// timelockAddr is the underlying-call sender (RBACTimelock), including after CallProxy resolution.
 	_, err := client.CallContract(ctx, ethereum.CallMsg{
@@ -724,7 +765,7 @@ func getUnderlyingRevertReason(
 		To:    &underlyingCall.Target,
 		Value: underlyingCall.Value,
 		Data:  underlyingCall.Data,
-		Gas:   simulationGas,
+		Gas:   simulationGasLimit(ctx, opts, client),
 	}, nil)
 
 	if err == nil {
@@ -740,8 +781,9 @@ func getUnderlyingRevertReason(
 		// returning empty strings, return a descriptive message so the user
 		// can understand what went wrong.
 		if strings.Contains(errStr, "out of gas") || strings.Contains(errStr, "gas required exceeds") {
-			return "underlying call failed: out of gas (try setting gasLimit in proposal chainMetadata.additionalFields)", ""
+			return errMsgUnderlyingOutOfGas, ""
 		}
+
 		return fmt.Sprintf("underlying call simulation failed: %s", errStr), ""
 	}
 
@@ -834,6 +876,35 @@ func extractUnderlyingCall(timelockCallData []byte) *bindings.RBACTimelockCall {
 	}
 
 	return nil
+}
+
+// timelockCallCount returns how many calls a bypasserExecuteBatch or
+// executeBatch calldata carries, or 0 when the calldata is neither.
+func timelockCallCount(timelockCallData []byte) int {
+	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
+	if err != nil || timelockABI == nil || len(timelockCallData) < selectorSize {
+		return 0
+	}
+
+	for _, name := range []string{"bypasserExecuteBatch", "executeBatch"} {
+		method, ok := timelockABI.Methods[name]
+		if !ok || !bytes.Equal(method.ID[:selectorSize], timelockCallData[:selectorSize]) {
+			continue
+		}
+
+		args, err := method.Inputs.UnpackValues(timelockCallData[selectorSize:])
+		if err != nil || len(args) == 0 {
+			return 0
+		}
+		calls := reflect.ValueOf(args[0])
+		if calls.Kind() != reflect.Slice {
+			return 0
+		}
+
+		return calls.Len()
+	}
+
+	return 0
 }
 
 // extractCallFromMethod extracts the first call from a timelock execute method's calldata.
