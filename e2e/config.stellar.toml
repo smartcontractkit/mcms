@@ -1,6 +1,6 @@
 [stellar_config]
 container_name = "blockchain-stellar"
 chain_id = "baefd734b8d3e48472cff83912375fedbc7573701912fe308af730180f97d74a"
-image = "stellar/quickstart:testing"
+image = "stellar/quickstart@sha256:21a149eef1e6636b1447ce826596071bf1fc435db9d0c03169d6e2094610c443"
 port = "8010"
 type = "stellar"
