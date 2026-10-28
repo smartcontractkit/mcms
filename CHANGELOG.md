@@ -1,5 +1,12 @@
 # @smartcontractkit/mcms
 
+## [0.56.2](https://github.com/smartcontractkit/mcms/compare/v0.56.1...v0.56.2) (2026-10-28)
+
+
+### Bug Fixes
+
+* add hints and better error decoding for gas/funding related errors ([#864](https://github.com/smartcontractkit/mcms/issues/864)) ([465f4a0](https://github.com/smartcontractkit/mcms/commit/465f4a0a6c336bf4d32750eaee8160530a5ebecf))
+
 ## [0.56.1](https://github.com/smartcontractkit/mcms/compare/v0.56.0...v0.56.1) (2026-10-08)
 
 
