@@ -78,7 +78,7 @@ jobs:
         uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
 
       - name: Install Solana
-        uses: metaplex-foundation/actions/install-solana@2389940047edc63a5781911f6a53fbdf784748d8 # v1.0.4
+        uses: metaplex-foundation/actions/install-solana@d23217f66ec0f17ef88cc9e85f2ee093076ac869 # v2.1.0
         with:
           version: 1.18.26
 
