@@ -50,11 +50,11 @@ func (s *SigningTestSuite) TestReadAndSign() {
 		mcms.NewPrivateKeySigner(testutils.ParsePrivateKey(s.Settings.PrivateKeys[1])),
 	)
 	s.Require().NoError(err)
-	// Golden for the fixture's current validUntil (anvil key #1).
+	// Golden for the fixture's current validUntil (config.evm.toml key #1).
 	expected := types.Signature{
-		R: common.HexToHash("0x3825fa45d84b9d4bf4130a978af536ada5861977668068ac5555040a4fe92308"),
-		S: common.HexToHash("0x1e03f951ea16f57a49552959bcc7a7d1fc06c9c1f9e3cb1a66f8a17da549d21c"),
-		V: 1,
+		R: common.HexToHash("0xa99fadf0888c96b5bfc28d648aa0524774215e31d5aaa0e3e519b339d75d1172"),
+		S: common.HexToHash("0x4d8dd69e722c6a3aed59a3620ceedb1c0b2a557f9406c94f8da21d3ad7b9b7d6"),
+		V: 0,
 	}
 	s.Require().Equal(expected, signature)
 	// Write the proposal back to a temp file
