@@ -30,7 +30,7 @@ require (
 	github.com/smartcontractkit/chainlink-ccip/chains/solana/gobindings v0.0.0-20260129103204-4c8453dd8139
 	github.com/smartcontractkit/chainlink-common v0.11.2-0.20260915214759-02f2214d5823
 	github.com/smartcontractkit/chainlink-stellar/bindings v0.0.0-20260930174906-8fac26710632
-	github.com/smartcontractkit/chainlink-stellar/deployment v0.0.0-00010101000000-000000000000
+	github.com/smartcontractkit/chainlink-stellar/deployment v0.0.0-20261117153712-0abbec79412b
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260630144638-b69f16bdddd8
 	github.com/smartcontractkit/chainlink-testing-framework/framework v0.16.9
 	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20260923220748-d8bac63fa0a7
@@ -361,9 +361,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
-
-replace github.com/smartcontractkit/chainlink-stellar/deployment => ../chainlink-stellar/deployment
-
-replace github.com/smartcontractkit/chainlink-stellar => ../chainlink-stellar
-
-replace github.com/smartcontractkit/chainlink-stellar/bindings => ../chainlink-stellar/bindings
