@@ -131,7 +131,7 @@ func (s *SetRootTestSuite) TestSetRootProposal() {
 	builder := mcmslib.NewProposalBuilder()
 	builder.
 		SetVersion("v1").
-		SetValidUntil(uint32(time.Now().Add(10 * time.Hour).Unix())).
+		SetValidUntil(uint32(time.Now().Add(10*time.Hour).Unix())).
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
 		AddChainMetadata(
@@ -203,7 +203,7 @@ func (s *SetRootTestSuite) TestSetRootTimelockProposal() {
 	builder := mcmslib.NewTimelockProposalBuilder()
 	builder.
 		SetVersion("v1").
-		SetValidUntil(uint32(time.Now().Add(10 * time.Hour).Unix())).
+		SetValidUntil(uint32(time.Now().Add(10*time.Hour).Unix())).
 		SetDescription("proposal to test SetRoot").
 		SetOverridePreviousRoot(true).
 		SetAction(types.TimelockActionSchedule).
