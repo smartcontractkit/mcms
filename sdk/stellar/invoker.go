@@ -125,7 +125,13 @@ func (i *rpcInvoker) SimulateContract(ctx context.Context, contractID, functionN
 func (i *rpcInvoker) GetEvents(ctx context.Context, contractID string, startLedger uint32, topics []string) ([]protocolrpc.EventInfo, error) {
 	filterTopics := make(protocolrpc.TopicFilter, 0, len(topics)+1)
 	for _, topic := range topics {
-		filterTopics = append(filterTopics, protocolrpc.SegmentFilter{ScVal: scval.SymbolToScValPtr(topic)})
+		// SDK v0.9 SegmentFilter.ScVal takes raw XDR bytes (ScValView).
+		scSym := xdr.ScSymbol(topic)
+		raw, err := (&xdr.ScVal{Type: xdr.ScValTypeScvSymbol, Sym: &scSym}).MarshalBinary()
+		if err != nil {
+			return nil, fmt.Errorf("encode topic symbol %q: %w", topic, err)
+		}
+		filterTopics = append(filterTopics, protocolrpc.SegmentFilter{ScVal: raw})
 	}
 	wildcard := protocolrpc.WildCardZeroOrMore
 	filterTopics = append(filterTopics, protocolrpc.SegmentFilter{Wildcard: &wildcard})

@@ -180,6 +180,7 @@ func scAddressToDisplay(address xdr.ScAddress) string {
 		}
 
 	case xdr.ScAddressTypeScAddressTypeMuxedAccount,
+		xdr.ScAddressTypeScAddressTypeMuxedContract,
 		xdr.ScAddressTypeScAddressTypeClaimableBalance,
 		xdr.ScAddressTypeScAddressTypeLiquidityPool:
 		// Not representable as a plain strkey; fall through to the summary.
