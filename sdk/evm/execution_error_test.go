@@ -1435,9 +1435,9 @@ func TestCallProxyBytecodeFingerprintMatchesBinding(t *testing.T) {
 	t.Parallel()
 
 	runtime := callProxyRuntimeFromBinding(t)
-	require.GreaterOrEqual(t, len(runtime), len(callProxyRuntimePrefix)+common.HashLength+len(callProxyRuntimeSuffix))
-	assert.Equal(t, callProxyRuntimePrefix, runtime[:len(callProxyRuntimePrefix)])
 	suffixStart := len(callProxyRuntimePrefix) + common.HashLength
+	require.Greater(t, len(runtime), suffixStart+len(callProxyRuntimeSuffix))
+	assert.Equal(t, callProxyRuntimePrefix, runtime[:len(callProxyRuntimePrefix)])
 	assert.Equal(t, callProxyRuntimeSuffix, runtime[suffixStart:suffixStart+len(callProxyRuntimeSuffix)])
 
 	target := common.HexToAddress("0x1111111111111111111111111111111111111111")
@@ -1451,6 +1451,8 @@ func TestCallProxyTargetFromRuntime(t *testing.T) {
 	t.Parallel()
 
 	target := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+	wrongSuffix := callProxyRuntime(target)
+	wrongSuffix[len(wrongSuffix)-1] ^= 0xff
 
 	tests := []struct {
 		name     string
@@ -1459,9 +1461,22 @@ func TestCallProxyTargetFromRuntime(t *testing.T) {
 		wantOK   bool
 	}{
 		{
-			name:     "valid call proxy runtime",
+			name:     "current proxy",
 			code:     callProxyRuntime(target),
 			wantAddr: target,
+			wantOK:   true,
+		},
+		{
+			// Builds of the same source differ only in the metadata after the suffix.
+			name:     "current proxy with any metadata",
+			code:     append(callProxyRuntime(target), 0xa2, 0x64, 0x00, 0x33),
+			wantAddr: target,
+			wantOK:   true,
+		},
+		{
+			name:     "legacy proxy",
+			code:     common.FromHex(legacyCallProxyRuntimeHex),
+			wantAddr: common.HexToAddress("0x103f18554fF509572CAc3F261529D1636Cc4024C"),
 			wantOK:   true,
 		},
 		{
@@ -1478,7 +1493,7 @@ func TestCallProxyTargetFromRuntime(t *testing.T) {
 		},
 		{
 			name:     "wrong suffix",
-			code:     append(callProxyRuntime(target)[:len(callProxyRuntime(target))-1], 0xff),
+			code:     wrongSuffix,
 			wantAddr: common.Address{},
 			wantOK:   false,
 		},
@@ -1642,6 +1657,8 @@ func TestBuildExecutionError_callProxyPreservesRealOwnershipFailure(t *testing.T
 	assert.Equal(t, onlyCallableByOwnerSelector, execErr.UnderlyingReasonRaw)
 }
 
+// callProxyRuntime returns bindings.CallProxy runtime for target, without the
+// Solidity metadata that follows the suffix.
 func callProxyRuntime(target common.Address) []byte {
 	code := make([]byte, 0, len(callProxyRuntimePrefix)+common.HashLength+len(callProxyRuntimeSuffix))
 	code = append(code, callProxyRuntimePrefix...)
@@ -1650,6 +1667,9 @@ func callProxyRuntime(target common.Address) []byte {
 
 	return code
 }
+
+// legacyCallProxyRuntimeHex is CallProxy 0xA6A369B798B4Fd815Bf84148a45A6079Fcadb935 on Base Sepolia.
+const legacyCallProxyRuntimeHex = "0x60806040527f000000000000000000000000103f18554ff509572cac3f261529d1636cc4024c366000803760008036600034855af13d6000803e80156043573d6000f35b503d6000fdfea26469706673582212202974aca3a8ae03528c7df03132603029149d639b2cd6de0ce90e33abd7a3eb9064736f6c63430008130033"
 
 func callProxyRuntimeFromBinding(t *testing.T) []byte {
 	t.Helper()
