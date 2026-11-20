@@ -117,7 +117,9 @@ func deployStellarMCMSContract(
 		common.HexToHash(networkIDHex),
 		config,
 		instanceLabel,
-		stellarmcmsutil.MCMSDeploySalt(uint64(chainSelector), instanceLabel),
+		// Current API: role-specific salts; this suite deploys a single
+		// proposer-role instance.
+		stellarmcmsutil.MCMSRoleDeploySalt(uint64(chainSelector), "e2e", instanceLabel, stellarmcmsutil.RoleProposer),
 	)
 	require.NoError(t, err, "failed to deploy Stellar MCMS")
 

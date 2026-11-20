@@ -180,9 +180,11 @@ func (s *ManualLedgerSigningTestSuite) initializeMCMSStellar(
 		kp,
 	)
 
-	salt := stellarmcms.MCMSDeploySalt(
+	salt := stellarmcms.MCMSRoleDeploySalt(
 		chainsel.STELLAR_LOCALNET.Selector,
+		"ledger",
 		"",
+		stellarmcms.RoleProposer,
 	)
 
 	// The Ledger account is the MCMS secp256k1 signer.

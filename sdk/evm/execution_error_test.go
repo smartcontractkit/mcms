@@ -42,6 +42,7 @@ const (
 type executionErrorErrorCase struct {
 	name                string
 	execErr             *ExecutionError
+	expectedPrefix      string
 	expectedContains    []string
 	expectedNotContains []string
 }
@@ -59,6 +60,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
 		},
+		expectedPrefix: "execution failed: underlying reason: decoded underlying revert reason; original error: " + errMsgOriginalError,
 		expectedContains: []string{
 			errMsgExecutionFailed,
 			errMsgOriginalError,
@@ -100,6 +102,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
 		},
+		expectedPrefix: "execution failed: revert reason: OutOfBoundsGroup; original error: " + errMsgOriginalError,
 		expectedContains: []string{
 			errMsgExecutionFailed,
 			errMsgOriginalError,
@@ -119,6 +122,7 @@ var executionErrorErrorCases = []executionErrorErrorCase{
 				Data:     []byte{0xaa, 0xbb, 0xcc},
 			},
 		},
+		expectedPrefix: "execution failed: raw revert data: 12345678aabbcc; original error: " + errMsgOriginalError,
 		expectedContains: []string{
 			errMsgExecutionFailed,
 			errMsgOriginalError,
@@ -223,6 +227,10 @@ func TestExecutionErrorError(t *testing.T) {
 			t.Parallel()
 
 			result := tt.execErr.Error()
+
+			if tt.expectedPrefix != "" {
+				assert.True(t, strings.HasPrefix(result, tt.expectedPrefix), "Error message %q should start with %q", result, tt.expectedPrefix)
+			}
 
 			// Check that all expected substrings are present
 			for _, expected := range tt.expectedContains {
@@ -948,6 +956,20 @@ func TestFormatDecodedError(t *testing.T) {
 			decodedValues:  []any{big.NewInt(1000)},
 			expectedResult: "BigIntError(1000)",
 		},
+		{
+			name:      "bytes argument carrying a nested revert reason",
+			errorName: "CallReverted",
+			decodedValues: []any{
+				append([]byte{0x08, 0xc3, 0x79, 0xa0}, encodeErrorString("RBACTimelock: insufficient delay")...),
+			},
+			expectedResult: "CallReverted(RBACTimelock: insufficient delay)",
+		},
+		{
+			name:           "bytes argument without a revert reason is hex",
+			errorName:      "CallReverted",
+			decodedValues:  []any{[]byte{0xde, 0xad, 0xbe, 0xef}},
+			expectedResult: "CallReverted(0xdeadbeef)",
+		},
 	}
 
 	for _, tt := range tests {
@@ -1301,6 +1323,9 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 	opts := &bind.TransactOpts{
 		GasLimit: 1000000,
 	}
+	optsZeroGas := &bind.TransactOpts{
+		GasLimit: 0,
+	}
 
 	tests := []struct {
 		name            string
@@ -1388,7 +1413,7 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 			expectedDecoded: "Ownable: caller is not the owner",
 		},
 		{
-			name:         "non-revert error",
+			name:         "non-revert error - returns descriptive message",
 			timelockAddr: timelockAddr,
 			callData:     callData,
 			opts:         opts,
@@ -1396,8 +1421,60 @@ func TestGetUnderlyingRevertReason(t *testing.T) {
 				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
 					Return(nil, errors.New("network error")).Maybe()
 			},
-			expectedRaw:     "",
+			expectedRaw:     "underlying call simulation failed: network error",
 			expectedDecoded: "",
+		},
+		{
+			name:         "out of gas error - returns gas-specific message",
+			timelockAddr: timelockAddr,
+			callData:     callData,
+			opts:         opts,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, errors.New("out of gas: gas required exceeds 10000000")).Maybe()
+			},
+			expectedRaw:     "underlying call failed: out of gas (try setting gasLimit in proposal chainMetadata.additionalFields)",
+			expectedDecoded: "",
+		},
+		{
+			name:         "gas required exceeds error - returns gas-specific message",
+			timelockAddr: timelockAddr,
+			callData:     callData,
+			opts:         opts,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, errors.New("gas required exceeds 30000000")).Maybe()
+			},
+			expectedRaw:     "underlying call failed: out of gas (try setting gasLimit in proposal chainMetadata.additionalFields)",
+			expectedDecoded: "",
+		},
+		{
+			name:         "GasLimit 0 - queries block gas limit for simulation",
+			timelockAddr: timelockAddr,
+			callData:     callData,
+			opts:         optsZeroGas,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("HeaderByNumber", mock.Anything, mock.Anything).
+					Return((*gethtypes.Header)(nil), nil).Maybe()
+				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, errors.New("execution reverted: revert: SomeError")).Maybe()
+			},
+			expectedRaw:     "SomeError",
+			expectedDecoded: "SomeError",
+		},
+		{
+			name:         "GasLimit 0 - falls back to default when header query fails",
+			timelockAddr: timelockAddr,
+			callData:     callData,
+			opts:         optsZeroGas,
+			setupMock: func(m *mocks.ContractDeployBackend) {
+				m.On("HeaderByNumber", mock.Anything, mock.Anything).
+					Return((*gethtypes.Header)(nil), errors.New("rpc error")).Maybe()
+				m.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+					Return(nil, errors.New("execution reverted: revert: SomeError")).Maybe()
+			},
+			expectedRaw:     "SomeError",
+			expectedDecoded: "SomeError",
 		},
 	}
 
@@ -1430,6 +1507,131 @@ const (
 	onlyCallableByOwnerSelector = "0x2b5c74de"
 	realUnderlyingErrorSelector = "0x4b5786e7"
 )
+
+func TestBuildExecutionError_GasEstimationFailure(t *testing.T) {
+	t.Parallel()
+
+	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err, errMsgFailedTimelockABI)
+
+	testCall := bindings.RBACTimelockCall{
+		Target: common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		Value:  big.NewInt(0),
+		Data:   []byte{0x12, 0x34, 0x56, 0x78},
+	}
+
+	timelockAddr := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+	callData := packBypasserExecuteBatch(t, timelockABI, []bindings.RBACTimelockCall{testCall})
+	opts := &bind.TransactOpts{GasLimit: 0}
+
+	mockClient := mocks.NewContractDeployBackend(t)
+
+	mockClient.On("CodeAt", mock.Anything, mock.Anything, mock.Anything).
+		Return([]byte{0x00}, nil).Maybe()
+	mockClient.On("HeaderByNumber", mock.Anything, mock.Anything).
+		Return(&gethtypes.Header{GasLimit: 60000000}, nil).Maybe()
+	mockClient.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, errors.New("out of gas: gas required exceeds 54000000")).Maybe()
+
+	originalErr := errors.New("execution reverted: RBACTimelock: underlying transaction reverted")
+	execErr := BuildExecutionError(
+		context.Background(),
+		originalErr,
+		nil,
+		opts,
+		timelockAddr,
+		mockClient,
+		timelockAddr,
+		callData,
+	)
+
+	require.NotNil(t, execErr)
+	assert.True(t, execErr.IsLikelyGasEstimationFailure, "IsLikelyGasEstimationFailure should be true")
+	assert.NotEmpty(t, execErr.Hint, "Hint should be populated")
+	assert.Contains(t, execErr.Hint, "gasLimit")
+	assert.Contains(t, execErr.Hint, "chainMetadata.additionalFields")
+}
+
+func TestBuildExecutionError_RealRevert_NotGasFailure(t *testing.T) {
+	t.Parallel()
+
+	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err, errMsgFailedTimelockABI)
+
+	testCall := bindings.RBACTimelockCall{
+		Target: common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		Value:  big.NewInt(0),
+		Data:   []byte{0x12, 0x34, 0x56, 0x78},
+	}
+
+	timelockAddr := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+	callData := packBypasserExecuteBatch(t, timelockABI, []bindings.RBACTimelockCall{testCall})
+	opts := &bind.TransactOpts{GasLimit: 1000000}
+
+	mockClient := mocks.NewContractDeployBackend(t)
+
+	mockClient.On("CodeAt", mock.Anything, mock.Anything, mock.Anything).
+		Return([]byte{0x00}, nil).Maybe()
+	mockClient.On("CallContract", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil, errors.New("execution reverted: revert: Ownable: caller is not the owner")).Maybe()
+
+	originalErr := errors.New("execution reverted: RBACTimelock: underlying transaction reverted")
+	execErr := BuildExecutionError(
+		context.Background(),
+		originalErr,
+		nil,
+		opts,
+		timelockAddr,
+		mockClient,
+		timelockAddr,
+		callData,
+	)
+
+	require.NotNil(t, execErr)
+	assert.False(t, execErr.IsLikelyGasEstimationFailure, "IsLikelyGasEstimationFailure should be false when underlying reason is extracted")
+	assert.Empty(t, execErr.Hint, "Hint should be empty when not a gas estimation failure")
+	assert.Equal(t, "Ownable: caller is not the owner", execErr.UnderlyingReasonDecoded)
+}
+
+// TestBuildExecutionError_ScheduleBatchCallReverted uses the error an MCMS
+// execute returns when RBACTimelock.scheduleBatch rejects the call: the
+// timelock's own revert travels inside CallReverted, with no underlying call to
+// replay.
+func TestBuildExecutionError_ScheduleBatchCallReverted(t *testing.T) {
+	t.Parallel()
+
+	timelockABI, err := bindings.RBACTimelockMetaData.GetAbi()
+	require.NoError(t, err, errMsgFailedTimelockABI)
+
+	timelockAddr := common.HexToAddress("0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0")
+	mockClient := mocks.NewContractDeployBackend(t)
+	mockClient.On("CodeAt", mock.Anything, mock.Anything, mock.Anything).Return([]byte{0x00}, nil).Maybe()
+
+	originalErr := errors.New("execution reverted\nexecution reverted: 0x70de1b4b" +
+		"0000000000000000000000000000000000000000000000000000000000000020" +
+		"0000000000000000000000000000000000000000000000000000000000000064" +
+		"08c379a0" +
+		"0000000000000000000000000000000000000000000000000000000000000020" +
+		"0000000000000000000000000000000000000000000000000000000000000020" +
+		"5242414354696d656c6f636b3a20696e73756666696369656e742064656c6179" +
+		"00000000000000000000000000000000000000000000000000000000" +
+		"\nall backup clients failed for chain \"ethereum-testnet-sepolia-optimism-1\"")
+	execErr := BuildExecutionError(
+		context.Background(),
+		originalErr,
+		nil,
+		&bind.TransactOpts{GasLimit: 1000000},
+		common.HexToAddress("0x1234567890123456789012345678901234567890"),
+		mockClient,
+		timelockAddr,
+		timelockABI.Methods["scheduleBatch"].ID,
+	)
+
+	require.NotNil(t, execErr)
+	assert.Equal(t, "CallReverted(RBACTimelock: insufficient delay)", execErr.RevertReasonDecoded)
+	assert.Empty(t, execErr.UnderlyingReasonRaw)
+	assert.True(t, strings.HasPrefix(execErr.Error(), "execution failed: revert reason: CallReverted(RBACTimelock: insufficient delay); original error: "))
+}
 
 func TestCallProxyBytecodeFingerprintMatchesBinding(t *testing.T) {
 	t.Parallel()
