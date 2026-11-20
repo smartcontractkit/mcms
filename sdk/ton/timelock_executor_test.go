@@ -110,6 +110,7 @@ func TestTimelockExecutor_Execute(t *testing.T) {
 				big.NewInt(0), // ValidAfter
 				big.NewInt(5), // OpFinalizationTimeout
 				big.NewInt(0), // OpPendingID
+				big.NewInt(0), // OpPendingExecutionLt
 			}), nil)
 
 		// Mock send message

@@ -44,7 +44,7 @@ func sharedMockSetup_TestExecutor(t *testing.T, api *ton_mocks.TonAPI, client *t
 			big.NewInt(0), // ValidAfter
 			big.NewInt(5), // OpFinalizationTimeout
 			cell.BeginCell().MustStoreAddr(nil).ToSlice(), // OpPendingReceiver
-			big.NewInt(0), // OpPendingBodyTruncated
+			big.NewInt(0), // OpPendingExecutionLt
 		}), nil)
 
 	// Mock send message
