@@ -32,7 +32,7 @@ require (
 	github.com/smartcontractkit/chainlink-stellar/bindings v0.0.0-20261118162153-2943dff6b2b4
 	github.com/smartcontractkit/chainlink-stellar/deployment v0.0.0-20261118162153-2943dff6b2b4
 	github.com/smartcontractkit/chainlink-sui v0.0.0-20260630144638-b69f16bdddd8
-	github.com/smartcontractkit/chainlink-testing-framework/framework v0.16.9
+	github.com/smartcontractkit/chainlink-testing-framework/framework v0.17.2
 	github.com/smartcontractkit/chainlink-ton v1.0.5-0.20261120202417-3280f4ab1c6c
 	github.com/smartcontractkit/chainlink-ton/cciplib v0.1.1-0.20261120202417-3280f4ab1c6c
 	github.com/smartcontractkit/freeport v0.1.3-0.20250828155247-add56fa28aad
