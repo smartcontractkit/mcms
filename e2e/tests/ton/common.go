@@ -83,7 +83,7 @@ func DeployContract(ctx context.Context, opts DeployOpts) (*address.Address, err
 	}
 
 	_client := tracetracking.NewSignedAPIClient(opts.Client, *opts.Wallet)
-	addr, _, err := _client.DeployActivateOnlyAndWaitForTrace(ctx, contractCode, contractData, opts.Amount, bodyCell)
+	addr, _, err := _client.DeployAndWaitForTrace(ctx, contractCode, contractData, opts.Amount, bodyCell)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy contract: %w", err)
 	}

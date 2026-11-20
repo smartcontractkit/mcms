@@ -109,7 +109,8 @@ func (s *TimelockInspectionTestSuite) scheduleBatch(timelockAddr *address.Addres
 
 func (s *TimelockInspectionTestSuite) deployTimelockContract(id uint32) (*address.Address, error) {
 	ctx := s.T().Context()
-	amount := tlb.MustFromTON("0.8") // TODO (ton): high gas
+	// Matches chainlink-ton's DefaultDeployValueTON: Init's action phase (role grant events and reply) fails with less.
+	amount := tlb.MustFromTON("1.5")
 
 	// The deployer wallet sends the Init message, so it is the initializer.
 	data, err := timelock.EmptyDataFrom(id, s.wallet.Address())
