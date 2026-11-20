@@ -19,8 +19,8 @@ import (
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/examples/counter"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/mcms"
 	"github.com/smartcontractkit/chainlink-ton/pkg/bindings/mcms/timelock"
+	"github.com/smartcontractkit/chainlink-ton/pkg/ton/boc"
 	"github.com/smartcontractkit/chainlink-ton/pkg/ton/tracetracking"
-	"github.com/smartcontractkit/chainlink-ton/pkg/ton/wrappers"
 
 	"github.com/smartcontractkit/mcms/internal/testutils"
 	"github.com/smartcontractkit/mcms/types"
@@ -56,7 +56,12 @@ type DeployOpts struct {
 }
 
 func DeployContract(ctx context.Context, opts DeployOpts) (*address.Address, error) {
-	contractCode, err := wrappers.ParseCompiledContract(opts.ContractPath)
+	compiled, err := os.ReadFile(opts.ContractPath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read compiled contract: %w", err)
+	}
+
+	contractCode, err := boc.ParseTolkCompiledContract(compiled)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse compiled contract: %w", err)
 	}
@@ -78,12 +83,12 @@ func DeployContract(ctx context.Context, opts DeployOpts) (*address.Address, err
 	}
 
 	_client := tracetracking.NewSignedAPIClient(opts.Client, *opts.Wallet)
-	contract, _, err := wrappers.Deploy(ctx, &_client, contractCode, contractData, opts.Amount, bodyCell)
+	addr, _, err := _client.DeployActivateOnlyAndWaitForTrace(ctx, contractCode, contractData, opts.Amount, bodyCell)
 	if err != nil {
 		return nil, fmt.Errorf("failed to deploy contract: %w", err)
 	}
 
-	return contract.Address, nil
+	return addr, nil
 }
 
 func DeployMCMSContract(ctx context.Context, client *ton.APIClient, w *wallet.Wallet, amount tlb.Coins, data mcms.Data) (*address.Address, error) {

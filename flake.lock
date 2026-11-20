@@ -3,15 +3,14 @@
     "chainlink-ton": {
       "inputs": {
         "flake-utils": "flake-utils",
-        "nixpkgs": "nixpkgs",
-        "nixpkgs-release-25-05": "nixpkgs-release-25-05"
+        "nixpkgs": "nixpkgs"
       },
       "locked": {
-        "lastModified": 1771532347,
-        "narHash": "sha256-lWJEgg2XuY1qHVr7f8H7UZXQgW4NN9dEsEHJOwBVHzQ=",
+        "lastModified": 1795206257,
+        "narHash": "sha256-/5b2HFo0iuY/hgOexIbL0L4ABMnX2qtPQau21GSPD2s=",
         "owner": "smartcontractkit",
         "repo": "chainlink-ton",
-        "rev": "054376f21418c53a897ff095975373d8fd0ee510",
+        "rev": "3280f4ab1c6c1de90d8e12d8f29aff45b23f55f2",
         "type": "github"
       },
       "original": {
@@ -68,22 +67,6 @@
       "original": {
         "owner": "nixos",
         "ref": "nixos-unstable",
-        "repo": "nixpkgs",
-        "type": "github"
-      }
-    },
-    "nixpkgs-release-25-05": {
-      "locked": {
-        "lastModified": 1767313136,
-        "narHash": "sha256-16KkgfdYqjaeRGBaYsNrhPRRENs0qzkQVUooNHtoy2w=",
-        "owner": "NixOS",
-        "repo": "nixpkgs",
-        "rev": "ac62194c3917d5f474c1a844b6fd6da2db95077d",
-        "type": "github"
-      },
-      "original": {
-        "owner": "NixOS",
-        "ref": "release-25.05",
         "repo": "nixpkgs",
         "type": "github"
       }

@@ -1028,7 +1028,9 @@ func (s *ExecutionTestSuite) deployTimelockContract(id uint32) {
 	ctx := s.T().Context()
 	amount := tlb.MustFromTON("0.8") // TODO (ton): high gas
 
-	data := timelock.EmptyDataFrom(id)
+	// The deployer wallet sends the Init message, so it is the initializer.
+	data, err := timelock.EmptyDataFrom(id, s.wallet.Address())
+	s.Require().NoError(err)
 	mcmsAddr := address.MustParseAddr(s.mcmsAddr)
 	// When deploying the contract, send the Init message to initialize the Timelock contract
 	accounts := []toncommon.AddressWrap{
