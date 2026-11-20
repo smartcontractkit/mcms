@@ -35,9 +35,22 @@ var (
 
 	// callProxyRuntimePrefix and callProxyRuntimeSuffix fingerprint the deployed
 	// runtime of bindings.CallProxy (immutable target embedded between them).
+	// The suffix stops before the Solidity metadata, which differs between builds
+	// of the same source.
 	// If CallProxy is recompiled, update these and TestCallProxyBytecodeFingerprintMatchesBinding.
 	callProxyRuntimePrefix = common.FromHex("0x608060405260046000369050108061006957506336568abe60e01b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff1916600036906100479190610135565b7bffffffffffffffffffffffffffffffffffffffffffffffffffffffff191614155b6100a8576040517f08c379a000000000000000000000000000000000000000000000000000000000815260040161009f90610217565b60405180910390fd5b60007f")
-	callProxyRuntimeSuffix = common.FromHex("0x9050366000803760008036600034855af13d6000803e80156100ec573d6000f35b3d6000fd5b600082905092915050565b60007fffffffff0000000000000000000000000000000000000000000000000000000082169050919050565b600082821b905092915050565b600061014183836100f1565b8261014c81356100fc565b9250600482101561018c576101877fffffffff0000000000000000000000000000000000000000000000000000000083600403600802610128565b831692505b505092915050565b600082825260208201905092915050565b7f43616c6c50726f78793a2072656e6f756e6365526f6c6520697320626c6f636b60008201527f6564000000000000000000000000000000000000000000000000000000000000602082015250565b6000610201602283610194565b915061020c826101a5565b604082019050919050565b60006020820190508181036000830152610230816101f4565b905091905056fea2646970667358221220ceb956f2ce4bedb87a33d30f718fb7372f607e76464e64446f747ffc0a5d93c064736f6c63430008130033")
+	callProxyRuntimeSuffix = common.FromHex("0x9050366000803760008036600034855af13d6000803e80156100ec573d6000f35b3d6000fd5b600082905092915050565b60007fffffffff0000000000000000000000000000000000000000000000000000000082169050919050565b600082821b905092915050565b600061014183836100f1565b8261014c81356100fc565b9250600482101561018c576101877fffffffff0000000000000000000000000000000000000000000000000000000083600403600802610128565b831692505b505092915050565b600082825260208201905092915050565b7f43616c6c50726f78793a2072656e6f756e6365526f6c6520697320626c6f636b60008201527f6564000000000000000000000000000000000000000000000000000000000000602082015250565b6000610201602283610194565b915061020c826101a5565b604082019050919050565b60006020820190508181036000830152610230816101f4565b905091905056fe")
+
+	// legacyCallProxyRuntimePrefix and legacyCallProxyRuntimeSuffix fingerprint the
+	// CallProxy runtime from before renounceRole was blocked. It is still deployed
+	// on many chains.
+	legacyCallProxyRuntimePrefix = common.FromHex("0x60806040527f")
+	legacyCallProxyRuntimeSuffix = common.FromHex("0x366000803760008036600034855af13d6000803e80156043573d6000f35b503d6000fdfe")
+
+	callProxyFingerprints = []callProxyFingerprint{
+		{prefix: callProxyRuntimePrefix, suffix: callProxyRuntimeSuffix},
+		{prefix: legacyCallProxyRuntimePrefix, suffix: legacyCallProxyRuntimeSuffix},
+	}
 )
 
 const (
@@ -386,22 +399,27 @@ func resolveUnderlyingCallSender(ctx context.Context, executionAddr common.Addre
 	return executionAddr
 }
 
-// callProxyTargetFromRuntime checks whether code matches bindings.CallProxy runtime
-// (fixed prefix + suffix with a 32-byte immutable target between them) and returns that target.
+// callProxyFingerprint identifies one CallProxy version by the runtime code
+// around its 32-byte immutable target. The suffix stops before the Solidity
+// metadata, which differs between builds of the same source.
+type callProxyFingerprint struct {
+	prefix []byte
+	suffix []byte
+}
+
+// callProxyTargetFromRuntime returns the target if code is a known CallProxy version.
 func callProxyTargetFromRuntime(code []byte) (common.Address, bool) {
-	targetOffset := len(callProxyRuntimePrefix)
-	suffixOffset := targetOffset + common.HashLength
-	if len(code) < suffixOffset+len(callProxyRuntimeSuffix) {
-		return common.Address{}, false
-	}
-	if !bytes.Equal(code[:targetOffset], callProxyRuntimePrefix) {
-		return common.Address{}, false
-	}
-	if !bytes.Equal(code[suffixOffset:suffixOffset+len(callProxyRuntimeSuffix)], callProxyRuntimeSuffix) {
-		return common.Address{}, false
+	for _, f := range callProxyFingerprints {
+		targetEnd := len(f.prefix) + common.HashLength
+		if len(code) < targetEnd+len(f.suffix) {
+			continue
+		}
+		if bytes.HasPrefix(code, f.prefix) && bytes.HasPrefix(code[targetEnd:], f.suffix) {
+			return common.BytesToAddress(code[len(f.prefix):targetEnd]), true
+		}
 	}
 
-	return common.BytesToAddress(code[targetOffset:suffixOffset]), true
+	return common.Address{}, false
 }
 
 // extractHexEncodedRevertData extracts hex-encoded revert data (0x...) from an error string.
